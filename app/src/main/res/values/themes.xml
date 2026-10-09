@@ -1,0 +1,4 @@
+<resources>
+    <!-- 화면은 Compose Material 3가 그린다. 창 테마는 시작 순간의 배경색만 맞춘다. -->
+    <style name="Theme.FoldDpiFix" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

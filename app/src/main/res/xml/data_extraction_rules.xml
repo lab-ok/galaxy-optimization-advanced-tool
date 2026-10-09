@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 설정·학습값은 이 기기의 패널에 묶인 값이라 백업·기기 이전 대상에서 뺀다. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="device_sharedpref" path="." />
+        <exclude domain="device_file" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="device_sharedpref" path="." />
+        <exclude domain="device_file" path="." />
+    </device-transfer>
+</data-extraction-rules>

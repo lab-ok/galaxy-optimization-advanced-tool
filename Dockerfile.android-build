@@ -1,0 +1,11 @@
+# x86_64 Android 빌드 환경 (build-apk.sh --docker).
+# ARM64 Linux에서는 amd64 에뮬레이션(binfmt/qemu)이 기본으로 설정돼 있지 않아 실행되지 않는다.
+# ARM64에서는 build-apk.sh 기본 모드(native)를 사용한다.
+FROM --platform=linux/amd64 eclipse-temurin:17-jdk
+
+ENV ANDROID_HOME=/opt/android-sdk
+RUN apt-get update && apt-get install -y --no-install-recommends unzip curl && rm -rf /var/lib/apt/lists/* \
+ && mkdir -p $ANDROID_HOME/licenses \
+ && printf '\n9002c006f4b8d9a16e715a9fa4df30ddb8abf9d9\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n' > $ANDROID_HOME/licenses/android-sdk-license \
+ && chmod -R a+rwX $ANDROID_HOME
+# platform/build-tools는 첫 빌드 때 AGP가 라이선스 동의 기록을 보고 자동으로 받는다.
