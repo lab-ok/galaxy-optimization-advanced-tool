@@ -160,7 +160,7 @@ app/src/main/java/com/local/folddpifix/
 ├── background/                  BootReceiver · DpiWorker(부팅 재확인) · FoldWatchService(전환 감지)
 │                                · DensityWatchWorker(DPI 변경 감지) · ExternalChangeNotifier/Receiver(선택 알림)
 └── ui/
-    ├── liquid/                  리퀴드모피즘 디자인 시스템(아래)
+    ├── liquid/                  공통 UI 컴포넌트
     ├── text/Copy.kt             화면 문구 한곳(DPI·PPI·권한 등 표준 용어, 내부 구현 이름 금지 — 테스트로 강제)
     ├── art/                     그림: DeviceFrame(공통 기기 틀) 위에 폴드 기기·두 화면 미리보기·원리·연결·안내 장면
     ├── home/                    HomeScreen(상태·할 일·표시 크기·자동 적용·초기화), HomeViewModel, UiState
@@ -170,22 +170,6 @@ app/src/main/java/com/local/folddpifix/
     ├── about/                   앱 정보, 필요 권한(AppPermissions)
     └── components/              InfoRow, CommandBox
 ```
-
-### 리퀴드모피즘 디자인 시스템 (`ui/liquid`)
-
-원본은 trafix_its_edge의 Django 컴포넌트입니다(`templates/component/`, `static/component/core/engine.js`·`tokens.css`·`base.css`). 원본의 동작 수치와 모양을 Compose로 다시 작성했습니다.
-
-| 원본 | Compose |
-|---|---|
-| goo SVG 필터(블러 6 → 알파 행 22a−9) | `Modifier.goo()`: RenderEffect 블러 + ColorMatrix 알파 임계값 |
-| 스프링 calm(320, 0.82) · pop(560, 0.38) · 물(240, 0.42) · lag | `Springs` |
-| press(누르면 퍼지고 눌림 + 햅틱) | `Modifier.liquidPress()` |
-| liquid_chips · pager | `LiquidChips`(꼬리 방울) · `LiquidDots` |
-| liquid_range | `LiquidSlider`(끄는 동안 값 방울이 떨어져 맺힘) |
-| switch · liquid_button(burster) · toast · fab/dropdown | `LiquidSwitch` · `LiquidButton`(누름 1.06×1.16, 18방울 터짐·흔적·재결합, 비활성은 회색+거절 흔들림) · `LiquidToast` · `LiquidMenu` |
-| 유리판·토큰(라이트 #ededed/#151515, 다크 #0f0f0f/#ebebeb, 포인트 검정) | `GlassCard`, `LiquidTheme`(Material 색 체계도 같은 단색으로 맞춤) |
-
-시스템 '애니메이션 제거' 설정이 켜져 있으면 모든 스프링이 즉시 끝납니다. minSdk는 31(Android 12)입니다.
 
 ## 빌드
 
