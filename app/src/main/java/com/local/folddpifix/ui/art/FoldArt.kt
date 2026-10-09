@@ -32,8 +32,8 @@ fun FoldDeviceArt(
     unfolded: Boolean,
     modifier: Modifier = Modifier,
     height: Dp = 132.dp,
-    coverAspect: Float = FoldGeometry.COVER_ASPECT,
-    innerAspect: Float = FoldGeometry.INNER_ASPECT,
+    coverAspect: Float = LocalDeviceShape.current.cover,
+    innerAspect: Float = LocalDeviceShape.current.inner,
     /** true면 테두리 숨쉬기를 멈춘다(사용 중이 아닌 화면). */
     still: Boolean = false,
 ) {

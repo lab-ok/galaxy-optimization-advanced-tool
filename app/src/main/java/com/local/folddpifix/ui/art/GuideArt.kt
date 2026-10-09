@@ -63,8 +63,9 @@ fun GuideSceneArt(scene: GuideScene, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
     val mono = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, color = c.ink, fontSize = 9.sp)
     val ui = MaterialTheme.typography.labelSmall.copy(color = c.ink)
+    val cover = LocalDeviceShape.current.cover
     Canvas(modifier.fillMaxWidth().height(124.dp)) {
-        val k = SceneKit(c, measurer, mono, ui)
+        val k = SceneKit(c, measurer, mono, ui, cover)
         when (scene) {
             GuideScene.DEV_OPTIONS -> k.devOptions(this, t)
             GuideScene.INSTALL -> k.install(this, t)
@@ -88,12 +89,14 @@ private class SceneKit(
     val measurer: TextMeasurer,
     val mono: TextStyle,
     val ui: TextStyle,
+    /** 폰(외부 화면) 가로 ÷ 세로. 기기에 맞춘 비율. */
+    val coverAspect: Float,
 ) {
     // ---- 공통 부품 ----
 
     /** 세로 폰. 화면 영역을 돌려준다. */
     fun DrawScope.phone(center: Offset, h: Float): Rect {
-        val w = h * FoldGeometry.COVER_ASPECT
+        val w = h * coverAspect
         return deviceFrame(c, Offset(center.x - w / 2, center.y - h / 2), Size(w, h))
     }
 
@@ -102,7 +105,7 @@ private class SceneKit(
         val h = size.height
         val pcW = h * pcRatio
         val phH = h * 0.86f
-        val phW = phH * FoldGeometry.COVER_ASPECT
+        val phW = phH * coverAspect
         val gap = h * gapRatio
         val left = (size.width - (pcW + gap + phW)) / 2
         val pcScreen = monitorFrame(c, Offset(left + pcW / 2, h / 2), pcW)

@@ -98,6 +98,9 @@ import com.local.folddpifix.ui.liquid.LiquidSwitch
 import com.local.folddpifix.ui.liquid.LiquidToast
 import com.local.folddpifix.ui.liquid.LocalLiquid
 import com.local.folddpifix.ui.text.Copy
+import com.local.folddpifix.ui.art.LocalDeviceShape
+import com.local.folddpifix.ui.art.DeviceShape
+import androidx.compose.runtime.CompositionLocalProvider
 import com.local.folddpifix.ui.about.ReportMail
 import com.local.folddpifix.domain.ScreenGeometry
 import com.local.folddpifix.background.ExternalChangeNotifier
@@ -182,95 +185,102 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         message?.let { toast.showSnackbar(it); vm.messageShown() }
     }
 
-    Scaffold(
-        containerColor = c.bg,
-        topBar = {
-            TopAppBar(
-                title = { Text(AppInfo.NAME, fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg),
-                actions = {
-                    Box {
-                        IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, "메뉴") }
-                        LiquidMenu(
-                            expanded = menu,
-                            onDismiss = { menu = false },
-                            items = listOf(
-                                Copy.MENU_HELP to { sheet = Sheet.HELP },
-                                Copy.MENU_TEST to { sheet = Sheet.TEST },
-                                Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED },
-                                Copy.MENU_REPORT to report,
-                                Copy.MENU_RESET to { sheet = Sheet.RESET },
-                                Copy.MENU_ABOUT to { sheet = Sheet.ABOUT },
-                            ),
-                        )
-                    }
-                },
-            )
-        },
-        snackbarHost = { SnackbarHost(toast) { LiquidToast(it.visuals.message) } },
-    ) { inner ->
-        LazyColumn(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = inner.calculateTopPadding() + 4.dp, bottom = inner.calculateBottomPadding() + 28.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            item { Box(Modifier.widthIn(max = MAX_WIDTH)) { StatusCard(state) } }
-            items(todosOf(state), key = { it.key }) { todo ->
-                Box(Modifier.widthIn(max = MAX_WIDTH)) { TodoCard(todo) { action ->
-                    when (action) {
-                        TodoAction.SETUP -> sheet = Sheet.GUIDE
-                        TodoAction.RELEARN -> vm.resetLearned()
-                        TodoAction.APPLY -> vm.applyNow()
-                        TodoAction.AUTO -> vm.setAuto(true)
-                        TodoAction.REPORT -> report()
-                        TodoAction.ADOPT -> vm.resolveExternal(adopt = true)
-                        TodoAction.RESTORE -> vm.resolveExternal(adopt = false)
+    // 그림이 이 기기의 실제 화면비를 따르도록, 학습한 두 화면 비율을 모든 그림(시트 포함)에 내려 준다.
+    val deviceShape = DeviceShape(
+        cover = state.aspectOf(ScreenPolicy.Role.OUTER) ?: FoldGeometry.COVER_ASPECT,
+        inner = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT,
+    )
+    CompositionLocalProvider(LocalDeviceShape provides deviceShape) {
+        Scaffold(
+            containerColor = c.bg,
+            topBar = {
+                TopAppBar(
+                    title = { Text(AppInfo.NAME, fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp) },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg),
+                    actions = {
+                        Box {
+                            IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, "메뉴") }
+                            LiquidMenu(
+                                expanded = menu,
+                                onDismiss = { menu = false },
+                                items = listOf(
+                                    Copy.MENU_HELP to { sheet = Sheet.HELP },
+                                    Copy.MENU_TEST to { sheet = Sheet.TEST },
+                                    Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED },
+                                    Copy.MENU_REPORT to report,
+                                    Copy.MENU_RESET to { sheet = Sheet.RESET },
+                                    Copy.MENU_ABOUT to { sheet = Sheet.ABOUT },
+                                ),
+                            )
+                        }
+                    },
+                )
+            },
+            snackbarHost = { SnackbarHost(toast) { LiquidToast(it.visuals.message) } },
+        ) { inner ->
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = inner.calculateTopPadding() + 4.dp, bottom = inner.calculateBottomPadding() + 28.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                item { Box(Modifier.widthIn(max = MAX_WIDTH)) { StatusCard(state) } }
+                items(todosOf(state), key = { it.key }) { todo ->
+                    Box(Modifier.widthIn(max = MAX_WIDTH)) { TodoCard(todo) { action ->
+                        when (action) {
+                            TodoAction.SETUP -> sheet = Sheet.GUIDE
+                            TodoAction.RELEARN -> vm.resetLearned()
+                            TodoAction.APPLY -> vm.applyNow()
+                            TodoAction.AUTO -> vm.setAuto(true)
+                            TodoAction.REPORT -> report()
+                            TodoAction.ADOPT -> vm.resolveExternal(adopt = true)
+                            TodoAction.RESTORE -> vm.resolveExternal(adopt = false)
+                        }
+                    } }
+                }
+                item { Box(Modifier.widthIn(max = MAX_WIDTH)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
+                item { Box(Modifier.widthIn(max = MAX_WIDTH)) {
+                    AutoCard(state.auto) { on ->
+                        if (on && !ExternalChangeNotifier.canNotify(context)) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        vm.setAuto(on)
                     }
                 } }
             }
-            item { Box(Modifier.widthIn(max = MAX_WIDTH)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
-            item { Box(Modifier.widthIn(max = MAX_WIDTH)) {
-                AutoCard(state.auto) { on ->
-                    if (on && !ExternalChangeNotifier.canNotify(context)) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                    vm.setAuto(on)
-                }
-            } }
         }
-    }
 
-    if (counting) RowCountOverlay(onClose = { counting = false; sheet = Sheet.TEST })
+        if (counting) RowCountOverlay(onClose = { counting = false; sheet = Sheet.TEST })
 
-    flying?.let { done ->
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { ReportFlightArt(onDone = done) }
-    }
+        flying?.let { done ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { ReportFlightArt(onDone = done) }
+        }
 
-    sheet?.let { current ->
-        ModalBottomSheet(
-            onDismissRequest = { sheet = null },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = c.bg,
-        ) {
-            when (current) {
-                Sheet.HELP -> HelpSheet(state, onOpenGuide = { sheet = Sheet.GUIDE })
-                Sheet.GUIDE -> GrantGuideSheet(state.hasPermission, onCopied = { vm.say(Copy.TOAST_COPIED) })
-                Sheet.TEST -> SizeTestSheet(state, onCount = { sheet = null; counting = true }, onCalibrate = vm::setRulerPpi)
-                Sheet.ADVANCED -> AdvancedSheet(state, onClearLogs = vm::clearDiagnostics)
-                Sheet.RESET -> ResetSheet(
-                    canReset = state.hasPermission,
-                    onRelearn = { sheet = null; vm.resetLearned() },
-                    onDefault = { sheet = null; vm.resetToDefault() },
-                    onResetPermission = vm::resetPermissionState,
-                    onPoll = { vm.refresh() },
-                    onCopy = { text ->
-                        context.getSystemService(android.content.ClipboardManager::class.java)
-                            .setPrimaryClip(ClipData.newPlainText("adb", text))
-                        vm.say(Copy.TOAST_COPIED)
-                    },
-                )
-                Sheet.ABOUT -> AboutSheet(onMail = { sheet = null; mail(ReportMail.Kind.INQUIRY) })
+        sheet?.let { current ->
+            ModalBottomSheet(
+                onDismissRequest = { sheet = null },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                containerColor = c.bg,
+            ) {
+                when (current) {
+                    Sheet.HELP -> HelpSheet(state, onOpenGuide = { sheet = Sheet.GUIDE })
+                    Sheet.GUIDE -> GrantGuideSheet(state.hasPermission, onCopied = { vm.say(Copy.TOAST_COPIED) })
+                    Sheet.TEST -> SizeTestSheet(state, onCount = { sheet = null; counting = true }, onCalibrate = vm::setRulerPpi)
+                    Sheet.ADVANCED -> AdvancedSheet(state, onClearLogs = vm::clearDiagnostics)
+                    Sheet.RESET -> ResetSheet(
+                        canReset = state.hasPermission,
+                        onRelearn = { sheet = null; vm.resetLearned() },
+                        onDefault = { sheet = null; vm.resetToDefault() },
+                        onResetPermission = vm::resetPermissionState,
+                        onPoll = { vm.refresh() },
+                        onCopy = { text ->
+                            context.getSystemService(android.content.ClipboardManager::class.java)
+                                .setPrimaryClip(ClipData.newPlainText("adb", text))
+                            vm.say(Copy.TOAST_COPIED)
+                        },
+                    )
+                    Sheet.ABOUT -> AboutSheet(onMail = { ReportMail.inquiry(context) })
+                }
             }
         }
     }
@@ -296,8 +306,6 @@ private fun StatusCard(state: UiState) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             FoldDeviceArt(
                 unfolded = unfolded, height = 118.dp,
-                coverAspect = state.aspectOf(ScreenPolicy.Role.OUTER) ?: FoldGeometry.COVER_ASPECT,
-                innerAspect = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT,
             )
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {

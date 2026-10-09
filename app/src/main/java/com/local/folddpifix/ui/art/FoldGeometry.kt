@@ -19,3 +19,9 @@ object FoldGeometry {
     /** 화면 모서리 곡률(높이 대비). 폴드 화면은 모서리가 아주 살짝만 둥글다. */
     const val SCREEN_CORNER = 0.025f
 }
+
+/** 그림에 쓸 기기 화면비(가로 ÷ 세로). 앱이 두 화면 해상도를 알아내면 그 기기의 실제 비율로 바뀐다. */
+data class DeviceShape(val cover: Float = FoldGeometry.COVER_ASPECT, val inner: Float = FoldGeometry.INNER_ASPECT)
+
+/** 모든 그림이 읽는 현재 기기 비율. 홈 화면이 학습한 해상도로 채워 넣고, 모르면 폴드8 비율. */
+val LocalDeviceShape = androidx.compose.runtime.staticCompositionLocalOf { DeviceShape() }

@@ -48,7 +48,6 @@ import com.local.folddpifix.data.display.DisplayDensity
 import com.local.folddpifix.data.log.PublicLogFile
 import com.local.folddpifix.domain.ScreenPolicy
 import com.local.folddpifix.ui.art.FoldDeviceArt
-import com.local.folddpifix.ui.art.FoldGeometry
 import com.local.folddpifix.ui.components.InfoRow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
@@ -135,8 +134,6 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
                 FoldDeviceArt(
                     unfolded = role == ScreenPolicy.Role.INNER,
                     height = 46.dp,
-                    coverAspect = state.aspectOf(ScreenPolicy.Role.OUTER) ?: FoldGeometry.COVER_ASPECT,
-                    innerAspect = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT,
                     still = !active,
                 )
                 Box(

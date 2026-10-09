@@ -87,8 +87,6 @@ internal fun AboutSheet(onMail: () -> Unit) {
             InfoRow("라이선스", DeveloperProfile.LICENSE)
             InfoRow("문의", DeveloperProfile.CONTACT_EMAIL)
             Text(DeveloperProfile.LICENSE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(4.dp))
-            Text("메일에는 진단 파일과 오늘 로그가 자동으로 첨부됩니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth()) {
                 LiquidButton("메일 보내기", modifier = Modifier.fillMaxWidth(), onClick = onMail, primary = false)

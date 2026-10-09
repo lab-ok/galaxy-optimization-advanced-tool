@@ -13,8 +13,8 @@ android {
         // Android 12 이상(방울 효과에 RenderEffect 필요). Android 11은 지원하지 않는다(사용자 결정).
         minSdk = 31
         targetSdk = 35
-        versionCode = 26
-        versionName = "1.0"
+        versionCode = 27
+        versionName = "1.0.1"
     }
 
     buildTypes {

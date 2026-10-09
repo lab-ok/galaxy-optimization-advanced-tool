@@ -37,6 +37,7 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
         0f, 1f, infiniteRepeatable(tween(1800, easing = LinearEasing)), label = "t",
     )
     val t = if (reduce) 0.5f else t0
+    val shape = LocalDeviceShape.current
     Canvas(
         Modifier
             .fillMaxWidth()
@@ -45,7 +46,7 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
         val h = size.height
         val pcW = h * 1.05f
         val phH = h * 0.82f
-        val phW = phH * FoldGeometry.COVER_ASPECT
+        val phW = phH * shape.cover
         val gap = h * 0.72f
         val left = (size.width - (pcW + gap + phW)) / 2
         val pcCenter = Offset(left + pcW / 2, h * 0.46f)
@@ -106,14 +107,15 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
 internal fun DensityIllustration(corrected: Float) {
     val lc = com.local.folddpifix.ui.liquid.LocalLiquid.current
     val glyph = lc.ink.copy(alpha = 0.55f)
+    val shape = LocalDeviceShape.current
     Canvas(
         Modifier
             .fillMaxWidth()
             .height(150.dp),
     ) {
-        // 기기 실제 화면비(SM-F971N). 높이는 같게 두고 폭만 화면비대로.
-        val coverIn = Size(FoldGeometry.COVER_ASPECT, 1f)
-        val mainIn = Size(FoldGeometry.INNER_ASPECT, 1f)
+        // 기기 실제 화면비(앱이 알아낸 해상도, 모르면 폴드8). 높이는 같게 두고 폭만 화면비대로.
+        val coverIn = Size(shape.cover, 1f)
+        val mainIn = Size(shape.inner, 1f)
         val scale = size.height / maxOf(coverIn.height, mainIn.height) * 0.9f
         val gap = size.width * 0.06f
         val coverPx = Size(coverIn.width * scale, coverIn.height * scale)

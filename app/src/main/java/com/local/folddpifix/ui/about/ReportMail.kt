@@ -9,10 +9,24 @@ import android.os.Build
 import com.local.folddpifix.AppInfo
 
 /**
- * 개발자에게 보내는 메일(문의·문제 신고 공통). 받는 사람·제목·본문 양식을 채우고 진단 파일과 오늘 로그를 첨부한다.
- * 메일 앱만 뜨도록 mailto selector를 쓰고, 메일 앱이 없으면 일반 공유 창으로 보낸다.
+ * 개발자에게 보내는 메일.
+ * - 문의([inquiry]): 첨부 없는 메일 작성 창.
+ * - 문제 신고([send]): 받는 사람·제목·본문 양식을 채우고 진단 파일과 오늘 로그를 첨부해 공유 창으로 보낸다.
+ *   (첨부가 있는 메일은 실기기에서 메일 앱으로 바로 열리지 않고 공유 창으로 넘어가므로, 처음부터 공유 창을 쓴다)
  */
 internal object ReportMail {
+
+    /** 앱 정보의 문의 메일: 첨부 없이 받는 사람·제목만 채운 메일 작성 창(mailto). */
+    fun inquiry(context: Context) {
+        val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "-"
+        val mail = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${DeveloperProfile.CONTACT_EMAIL}"))
+            .putExtra(Intent.EXTRA_SUBJECT, "[${AppInfo.NAME} $version] 문의")
+        try {
+            context.startActivity(mail)
+        } catch (e: ActivityNotFoundException) {
+            // 메일 앱이 없으면 아무것도 하지 않는다.
+        }
+    }
 
     enum class Kind(val label: String) { INQUIRY("문의"), REPORT("문제 신고") }
 
@@ -41,10 +55,6 @@ internal object ReportMail {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
         }
-        try {
-            context.startActivity(Intent(mail).apply { selector = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")) })
-        } catch (e: ActivityNotFoundException) {
-            context.startActivity(Intent.createChooser(mail, kind.label))
-        }
+        context.startActivity(Intent.createChooser(mail, kind.label))
     }
 }
