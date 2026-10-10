@@ -17,7 +17,6 @@ import com.local.folddpifix.data.lab.AppDensityProbe
 import com.local.folddpifix.data.lab.DensityServer
 import com.local.folddpifix.data.lab.DensityShell
 import com.local.folddpifix.data.lab.ShizukuAccess
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.local.folddpifix.ui.liquid.LiquidChips
 import androidx.compose.runtime.collectAsState
 import com.local.folddpifix.ui.components.CommandBox
@@ -295,11 +294,7 @@ private fun ShellDensityCard() {
     var message by remember { mutableStateOf("") }
     var showPc by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { AppDensityProbe.launcherApps(context) } }
-    // Shizuku 앱에서 시작·허용하고 돌아오면 상태를 다시 읽는다
-    LifecycleResumeEffect(Unit) {
-        ShizukuAccess.watch(context)
-        onPauseOrDispose { }
-    }
+    LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     LaunchedEffect(ready, shell, apps) {
         if (!ready) { supported = null; values = emptyMap(); return@LaunchedEffect }
         withContext(Dispatchers.IO) {
@@ -312,24 +307,7 @@ private fun ShellDensityCard() {
         Text("앱별 화면 크기", fontWeight = FontWeight.SemiBold, color = c.ink)
         when {
             !ready -> {
-                val (body, button) = when (shizuku) {
-                    ShizukuAccess.State.NOT_INSTALLED ->
-                        "삼성 '앱 화면 크게/작게'를 FoldFit에서 바꾸려면 셸 권한이 필요합니다. 무료 앱 Shizuku를 설치하면 PC 없이 쓸 수 있습니다." to "Shizuku 설치하기"
-                    ShizukuAccess.State.NOT_RUNNING ->
-                        "Shizuku가 꺼져 있습니다. Shizuku를 열고 '무선 디버깅으로 시작'을 눌러 주세요(Wi-Fi 필요, 처음 한 번은 페어링). " +
-                            "Shizuku 설정에서 '부팅 시 시작'을 켜 두면 재부팅 뒤에도 스스로 켜집니다." to "Shizuku 열기"
-                    else -> "Shizuku가 켜져 있습니다. FoldFit이 Shizuku를 쓰도록 허용해 주세요." to "Shizuku 허용하기"
-                }
-                Text(body, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(10.dp))
-                LiquidButton(button, modifier = Modifier.fillMaxWidth(), onClick = {
-                    when (shizuku) {
-                        ShizukuAccess.State.NOT_INSTALLED -> openShizukuStore(context)
-                        ShizukuAccess.State.NOT_RUNNING ->
-                            context.packageManager.getLaunchIntentForPackage(ShizukuAccess.PACKAGE)?.let(context::startActivity)
-                        else -> ShizukuAccess.requestPermission()
-                    }
-                })
+                ShizukuGuide(shizuku)
                 Text(
                     if (showPc) "PC로 하기 접기" else "PC로 하기",
                     color = c.muted, style = MaterialTheme.typography.labelMedium,
@@ -359,6 +337,10 @@ private fun ShellDensityCard() {
                 }
             }
             else -> {
+                if (shell == null && !ShizukuAccess.bootStartOn(context)) Text(
+                    "Shizuku의 '부팅 시 시작'이 꺼져 있어 재부팅하면 다시 켜야 합니다. Shizuku → 설정에서 켜 두세요.",
+                    color = c.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 6.dp),
+                )
                 Text(
                     "앱을 누르고 크기를 고르세요. 숫자가 작을수록 작게 보입니다. 바꾸면 그 앱이 다시 시작되며 바로 적용됩니다.",
                     color = c.muted, style = MaterialTheme.typography.bodySmall,
@@ -411,10 +393,4 @@ private fun ShellDensityCard() {
             }
         }
     }
-}
-
-private fun openShizukuStore(context: Context) {
-    val market = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=${ShizukuAccess.PACKAGE}"))
-    val web = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://shizuku.rikka.app/download/"))
-    runCatching { context.startActivity(market) }.onFailure { runCatching { context.startActivity(web) } }
 }

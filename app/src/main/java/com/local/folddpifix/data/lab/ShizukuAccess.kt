@@ -1,6 +1,11 @@
 package com.local.folddpifix.data.lab
 
+import android.Manifest
+import android.content.ComponentName
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.provider.Settings
 import android.content.pm.PackageManager
 import android.os.IBinder
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +53,39 @@ object ShizukuAccess {
             else -> State.NOT_INSTALLED
         }
     }
+
+    /** 무선 디버깅이 켜져 있는지. */
+    fun wirelessDebugOn(context: Context): Boolean =
+        Settings.Global.getInt(context.contentResolver, "adb_wifi_enabled", 0) == 1
+
+    /** Wi-Fi에 연결돼 있는지(무선 디버깅은 Wi-Fi가 있어야 켜진다). */
+    fun wifiConnected(context: Context): Boolean = runCatching {
+        val cm = context.getSystemService(ConnectivityManager::class.java)
+        cm.getNetworkCapabilities(cm.activeNetwork)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+    }.getOrDefault(true)  // 확인할 수 없으면 막지 않는다
+
+    /**
+     * 무선 디버깅을 켠다. FoldFit은 기본 기능 때문에 WRITE_SECURE_SETTINGS를 이미 받아 두었으므로
+     * 개발자 옵션 화면에 가지 않고 바로 켤 수 있다. 권한이 없으면 false(개발자 옵션 화면으로 안내).
+     */
+    fun enableWirelessDebug(context: Context): Boolean {
+        if (context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) != PackageManager.PERMISSION_GRANTED) return false
+        val cr = context.contentResolver
+        return runCatching {
+            Settings.Global.putInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 1)
+            Settings.Global.putInt(cr, Settings.Global.ADB_ENABLED, 1)
+            Settings.Global.putInt(cr, "adb_wifi_enabled", 1)
+        }.isSuccess
+    }
+
+    /**
+     * Shizuku의 '부팅 시 시작'이 켜져 있는지. Shizuku는 이 설정을 BootCompleteReceiver 컴포넌트를 켜고 끄는 것으로
+     * 저장하고 기본값은 켜짐이다. 셸 권한으로도 다른 앱의 컴포넌트는 바꿀 수 없어(에뮬레이터에서 확인) 확인만 한다.
+     */
+    fun bootStartOn(context: Context): Boolean = runCatching {
+        val cn = ComponentName(PACKAGE, "moe.shizuku.manager.receiver.BootCompleteReceiver")
+        context.packageManager.getComponentEnabledSetting(cn) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+    }.getOrDefault(true)
 
     /** Shizuku 허용 창을 띄운다(Shizuku가 켜져 있을 때만). */
     fun requestPermission() {
