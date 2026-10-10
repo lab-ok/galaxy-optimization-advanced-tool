@@ -5,6 +5,15 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.runtime.LaunchedEffect
+import com.local.folddpifix.data.lab.AppDensityProbe
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -116,6 +125,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             }
         }
         Spacer(Modifier.height(12.dp))
+        AppDensityCard()
+        Spacer(Modifier.height(12.dp))
         GlassCard(padding = 16.dp) {
             Text("시스템 함수 탐색", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
@@ -146,4 +157,91 @@ private fun share(context: Context, uri: android.net.Uri) {
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     context.startActivity(Intent.createChooser(send, "실험실 결과 보내기"))
+}
+
+/**
+ * 앱별 밀도 직접 시험: 앱을 고르고 현재 값을 읽거나, 밀도를 넣어 바꿔 본다.
+ * 바꾸기 전 값을 기록해 두므로 [되돌리기]로 원래 값으로 돌려놓을 수 있다.
+ */
+@Composable
+private fun AppDensityCard() {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var apps by remember { mutableStateOf(emptyList<AppDensityProbe.App>()) }
+    var pkg by remember { mutableStateOf("") }
+    var dpi by remember { mutableStateOf("360") }
+    var result by remember { mutableStateOf("") }
+    var original by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { AppDensityProbe.launcherApps(context) } }
+
+    GlassCard(padding = 16.dp) {
+        Text("앱별 밀도 직접 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
+        Text(
+            "삼성 시스템 함수(getCustomDensity·setUserCustomDensity)를 직접 불러 봅니다. 권한이 모자라면 필요한 권한 이름이 결과에 나옵니다.",
+            color = c.muted, style = MaterialTheme.typography.bodySmall,
+        )
+        Spacer(Modifier.height(10.dp))
+        Text("앱 고르기", color = c.ink, style = MaterialTheme.typography.labelLarge)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(max = 220.dp)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            apps.forEach { app ->
+                val selected = app.pkg == pkg
+                Text(
+                    "${app.label}  ·  ${app.pkg}",
+                    color = if (selected) c.onInk else c.ink,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (selected) c.ink else Color.Transparent)
+                        .clickable { pkg = app.pkg; original = null; result = "" }
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = dpi, onValueChange = { dpi = it.filter(Char::isDigit).take(3) },
+            label = { Text("바꿀 밀도(dpi)") }, singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LiquidButton("현재 값 읽기", modifier = Modifier.weight(1f), primary = false, enabled = pkg.isNotEmpty(), onClick = {
+                scope.launch {
+                    result = withContext(Dispatchers.IO) { AppDensityProbe.read(pkg) }
+                    if (original == null) original = result
+                }
+            })
+            LiquidButton("이 값으로 바꾸기", modifier = Modifier.weight(1f), enabled = pkg.isNotEmpty() && dpi.isNotEmpty(), onClick = {
+                scope.launch {
+                    if (original == null) original = withContext(Dispatchers.IO) { AppDensityProbe.read(pkg) }
+                    result = withContext(Dispatchers.IO) { AppDensityProbe.write(pkg, dpi.toInt()) }
+                }
+            })
+        }
+        if (result.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(result, color = c.ink, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp))
+            Spacer(Modifier.height(6.dp))
+            LiquidButton("결과 파일로 보내기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                scope.launch {
+                    val uri = withContext(Dispatchers.IO) {
+                        val name = "foldfit-lab-density-${SimpleDateFormat("yyMMdd-HHmmss", Locale.US).format(Date())}.txt"
+                        PublicLogFile.saveNew(context, name, "패키지: $pkg\n\n== 처음 값 ==\n${original.orEmpty()}\n\n== 마지막 결과 ==\n$result")
+                    }
+                    uri?.let { share(context, it) }
+                }
+            })
+        }
+        Text(
+            "되돌리려면 설정 → 앱 화면 크게/작게에서 그 앱을 '시스템 설정'으로 바꾸면 됩니다.",
+            color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 6.dp),
+        )
+    }
 }

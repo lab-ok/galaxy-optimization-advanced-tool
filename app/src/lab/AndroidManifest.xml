@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- lab 빌드 전용: 앱별 화면 크기 시험에 필요할 수 있는 권한과 앱 목록 조회. 공개 빌드에는 합쳐지지 않는다. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- adb shell pm grant 로 줄 수 있는 개발용 권한(signature|privileged|development) -->
+    <uses-permission
+        android:name="android.permission.CHANGE_CONFIGURATION"
+        tools:ignore="ProtectedPermissions" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+</manifest>

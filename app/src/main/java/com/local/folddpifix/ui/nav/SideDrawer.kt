@@ -1,7 +1,22 @@
 package com.local.folddpifix.ui.nav
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.foundation.Canvas
+import kotlinx.coroutines.launch
+import com.local.folddpifix.ui.liquid.goo
+import com.local.folddpifix.ui.liquid.Springs
+import com.local.folddpifix.ui.liquid.LocalReduceMotion
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -63,57 +78,146 @@ enum class NavIcon { FOLD, FLASK }
 data class NavSection(val title: String, val items: List<NavItem>)
 
 /**
- * 사이드바 내용: 앱 로고·이름·버전 머리말, 구역별 메뉴. 고른 항목은 잉크색 알약으로 표시하고,
- * 누르면 항목이 살짝 눌리며 색이 부드럽게 바뀐다.
+ * 사이드바 내용(리퀴드): 열릴 때 로고가 방울처럼 톡 튀어나오고 항목이 차례로 미끄러져 들어온다.
+ * 고른 항목 아래의 잉크 방울은 항목을 바꾸면 머리(빠른 스프링)와 꼬리(느린 스프링)가 goo로 이어져
+ * 늘어났다가 합쳐지며 옮겨 간다(LiquidChips와 같은 원리, 세로 방향).
+ * @param visible 사이드바가 열려 있는지. 열릴 때마다 등장 애니메이션을 다시 한다.
  */
 @Composable
-fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, onSelect: (NavItem) -> Unit) {
+fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Boolean, onSelect: (NavItem) -> Unit) {
     val c = LocalLiquid.current
+    val reduce = LocalReduceMotion.current
     val context = LocalContext.current
     val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
-    Column(
+    val items = sections.flatMap { it.items }
+
+    // 등장: 로고 방울, 항목 차례로
+    val logo = remember { Animatable(0f) }
+    val enter = remember { Animatable(0f) }
+    LaunchedEffect(visible) {
+        if (!visible) { logo.snapTo(0f); enter.snapTo(0f); return@LaunchedEffect }
+        if (reduce) { logo.snapTo(1f); enter.snapTo(items.size + 2f); return@LaunchedEffect }
+        launch { logo.animateTo(1f, Springs.pop()) }
+        enter.animateTo(items.size + 2f, tween(120 + 55 * (items.size + 2), easing = LinearEasing))
+    }
+
+    // 고른 항목 방울: 각 항목의 위치를 재고, 머리·꼬리 스프링으로 옮긴다
+    val tops = remember { mutableStateMapOf<NavItem, Float>() }
+    var rowH by remember { mutableFloatStateOf(0f) }
+    val head = remember { Animatable(-1f) }
+    val tail = remember { Animatable(-1f) }
+    val target = current?.let { tops[it] }
+    LaunchedEffect(target) {
+        val y = target ?: return@LaunchedEffect
+        if (head.value < 0f) { head.snapTo(y); tail.snapTo(y); return@LaunchedEffect }
+        launch { head.animateTo(y, Springs.calm(reduce)) }
+        tail.animateTo(y, Springs.lag(reduce))
+    }
+
+    Box(
         Modifier
             .fillMaxHeight()
             .width(300.dp)
             .clip(RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp))
-            .background(c.bg)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 14.dp, vertical = 18.dp),
+            .background(c.bg),
     ) {
-        Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(R.drawable.ic_app_logo), null, Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)))
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text(AppInfo.NAME, fontWeight = FontWeight.Bold, color = c.ink, style = MaterialTheme.typography.titleMedium)
-                Text("버전 $version", color = c.muted, style = MaterialTheme.typography.labelMedium)
+        Column(
+            Modifier
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 14.dp, vertical = 18.dp),
+        ) {
+            Row(
+                Modifier
+                    .padding(horizontal = 8.dp)
+                    .graphicsLayer {
+                        val k = logo.value
+                        scaleX = 0.6f + 0.4f * k; scaleY = 0.6f + 0.4f * k; alpha = k.coerceIn(0f, 1f)
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(painterResource(R.drawable.ic_app_logo), null, Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)))
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(AppInfo.NAME, fontWeight = FontWeight.Bold, color = c.ink, style = MaterialTheme.typography.titleMedium)
+                    Text("버전 $version", color = c.muted, style = MaterialTheme.typography.labelMedium)
+                }
             }
-        }
-        sections.forEach { section ->
-            Spacer(Modifier.height(18.dp))
-            Text(
-                section.title, color = c.muted, style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(start = 14.dp, bottom = 6.dp),
-            )
-            section.items.forEach { item -> DrawerRow(item, item == current) { onSelect(item) } }
+            Box {
+                // 방울 층(항목 뒤): 고른 항목을 따라다니는 잉크 알약
+                Canvas(Modifier.matchParentSize().goo(c.ink, 7.dp)) {
+                    if (head.value < 0f || rowH <= 0f) return@Canvas
+                    // 머리: 고른 항목 크기의 알약. 꼬리: 머리와 이전 자리 사이를 잇는 목(멀수록 가늘게).
+                    // 둘을 goo로 그려 한 덩어리 물방울이 늘어났다 합쳐지는 것처럼 보이게 한다.
+                    drawRoundRect(c.ink, Offset(0f, head.value), Size(size.width, rowH), CornerRadius(rowH / 2))
+                    val gap = kotlin.math.abs(head.value - tail.value)
+                    if (gap > 1f) {
+                        val top = minOf(head.value, tail.value) + rowH * 0.2f
+                        val bottom = maxOf(head.value, tail.value) + rowH * 0.8f
+                        val neck = (size.width * (0.55f - 0.25f * (gap / (rowH * 4f)).coerceIn(0f, 1f)))
+                        drawRoundRect(c.ink, Offset((size.width - neck) / 2, top), Size(neck, bottom - top), CornerRadius(neck / 2))
+                        // 꼬리 끝에 남는 방울(곧 빨려 든다)
+                        val r = rowH * 0.32f * (gap / (rowH * 2f)).coerceIn(0f, 1f)
+                        if (r > 1f) drawCircle(c.ink, r, Offset(size.width / 2, tail.value + rowH / 2))
+                    }
+                }
+                Column {
+                    var index = 0
+                    sections.forEach { section ->
+                        Spacer(Modifier.height(18.dp))
+                        val titleOrder = index
+                        Text(
+                            section.title, color = c.muted, style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.padding(start = 14.dp, bottom = 6.dp).graphicsLayer { alpha = (enter.value - titleOrder).coerceIn(0f, 1f) },
+                        )
+                        section.items.forEach { item ->
+                            val order = ++index
+                            DrawerRow(
+                                item, item == current,
+                                cover = cover@{
+                                    val top = tops[item] ?: return@cover if (item == current) 1f else 0f
+                                    if (head.value < 0f || rowH <= 0f) (if (item == current) 1f else 0f)
+                                    else (1f - kotlin.math.abs(head.value - top) / rowH).coerceIn(0f, 1f)
+                                },
+                                appear = { (enter.value - order).coerceIn(0f, 1f) },
+                                modifier = Modifier.onGloballyPositioned {
+                                    tops[item] = it.positionInParent().y
+                                    rowH = it.size.height.toFloat()
+                                },
+                            ) { onSelect(item) }
+                        }
+                        index++
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun DrawerRow(item: NavItem, selected: Boolean, onClick: () -> Unit) {
+private fun DrawerRow(
+    item: NavItem,
+    selected: Boolean,
+    cover: () -> Float,
+    appear: () -> Float,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
     val c = LocalLiquid.current
     val interaction = remember { MutableInteractionSource() }
-    val bg by animateColorAsState(if (selected) c.ink else Color.Transparent, label = "navBg")
-    val fg by animateColorAsState(if (selected) c.onInk else c.ink, label = "navFg")
+    // 글자·아이콘 색은 잉크 방울이 이 항목을 덮은 만큼 배경색으로 바뀐다(방울이 도착할 때 반전).
+    val fg = lerp(c.ink, c.onInk, cover())
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .height(48.dp)
+            .graphicsLayer {
+                val k = appear()
+                alpha = k; translationX = (1f - k) * -18.dp.toPx()
+            }
             .liquidPress(interaction, sx = 1.02f, sy = 0.95f)
             .clip(RoundedCornerShape(24.dp))
-            .background(bg)
             .clickable(interaction, null, onClick = onClick)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,

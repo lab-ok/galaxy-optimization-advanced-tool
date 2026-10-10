@@ -226,7 +226,12 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             drawerState = drawer,
             scrimColor = c.ink.copy(alpha = 0.32f),
             drawerContent = {
-                SideDrawerContent(sections, current = feature, onSelect = { item -> scope.launch { drawer.close() }; feature = item })
+                SideDrawerContent(sections, current = feature, visible = drawer.targetValue == DrawerValue.Open, onSelect = { item ->
+                    // 방울이 고른 항목으로 옮겨 가는 것을 잠깐 보여 준 뒤 닫는다.
+                    val moved = item != feature
+                    feature = item
+                    scope.launch { if (moved) delay(320); drawer.close() }
+                })
             },
         ) {
             Scaffold(
