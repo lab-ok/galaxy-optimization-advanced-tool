@@ -5,10 +5,11 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -40,11 +41,13 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 실험실(lab 빌드 전용): 삼성 '앱 화면 크게/작게'가 어떤 시스템 설정 키에 저장되는지 찾는다.
+ * 실험실 기능 '앱별 화면 크기'(lab 빌드 전용). 접고 펼 때 DPI를 맞추는 기본 기능과는 다른 갈래로,
+ * 앱마다 화면 크기를 다르게 두는 기능을 만들기 위한 조사 단계다.
+ * 지금은 삼성 '앱 화면 크게/작게'가 어떤 시스템 설정 키에 저장되는지 찾는다:
  * 바꾸기 전 설정 전체를 저장 → 설정 앱에서 앱 하나의 크기를 바꿈 → 바꾼 뒤 비교해 차이를 파일로 저장·공유.
  */
 @Composable
-internal fun LabSheet() {
+internal fun LabScreen(contentPadding: PaddingValues) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -55,16 +58,23 @@ internal fun LabSheet() {
 
     Column(
         Modifier
+            .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .navigationBarsPadding()
-            .padding(bottom = 28.dp),
+            .padding(contentPadding)
+            .padding(horizontal = 16.dp)
+            .padding(top = 4.dp, bottom = 28.dp),
     ) {
-        Text("설정 변경 비교", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
-        Text("개발자 확인용 기능입니다. 공개 버전에는 들어가지 않습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(14.dp))
         GlassCard(padding = 16.dp) {
-            Text("앱별 화면 크기 저장 위치 찾기", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text("앱마다 화면 크기를 다르게", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(
+                "기본 기능(화면 크기 맞추기)과는 별개로, 앱별로 화면 크기를 따로 두는 기능을 준비하는 실험실입니다. " +
+                    "지금은 삼성 '앱 화면 크게/작게' 설정이 어디에 저장되는지 확인하는 단계입니다. 공개 버전에는 들어가지 않습니다.",
+                color = c.muted, style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        GlassCard(padding = 16.dp) {
+            Text("설정 변경 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "① [바꾸기 전 저장]을 누릅니다.\n② 설정 → 디스플레이 → 앱 화면 크게/작게에서 앱 하나의 값을 바꿉니다.\n③ 돌아와 [바꾼 뒤 비교]를 누르면 바뀐 설정 키를 파일로 저장하고 공유 창을 엽니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,

@@ -97,6 +97,9 @@ import com.local.folddpifix.ui.liquid.LiquidSwitch
 import com.local.folddpifix.ui.liquid.LiquidToast
 import com.local.folddpifix.ui.liquid.LocalLiquid
 import com.local.folddpifix.ui.text.Copy
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.local.folddpifix.ui.liquid.LiquidMenu
+import androidx.compose.material.icons.outlined.MoreVert
 import com.local.folddpifix.ui.nav.SideDrawerContent
 import com.local.folddpifix.ui.nav.NavSection
 import com.local.folddpifix.ui.nav.NavItem
@@ -104,7 +107,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.DrawerValue
 import com.local.folddpifix.BuildConfig
-import com.local.folddpifix.ui.lab.LabSheet
+import com.local.folddpifix.ui.lab.LabScreen
 import com.local.folddpifix.ui.art.LocalDeviceShape
 import com.local.folddpifix.ui.art.DeviceShape
 import androidx.compose.runtime.CompositionLocalProvider
@@ -118,7 +121,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, LAB }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,6 +136,9 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
     // 줄 세기 화면(크기 테스트에서 연다). 닫으면 크기 테스트로 돌아간다.
     var counting by remember { mutableStateOf(false) }
     val drawer = rememberDrawerState(DrawerValue.Closed)
+    var menu by remember { mutableStateOf(false) }
+    // 사이드바에서 고른 기능(화면). 기능 안의 세부 설정은 점 세 개 메뉴에 있다.
+    var feature by rememberSaveable { mutableStateOf(NavItem.DPI_MATCH) }
     var flying by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -198,43 +204,59 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         inner = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT,
     )
     CompositionLocalProvider(LocalDeviceShape provides deviceShape) {
-        // 사이드바: 기본 기능과(lab 빌드에서만) 실험실 메뉴. 고르면 서랍이 닫히고 해당 화면이 열린다.
+        // 사이드바는 기능 단위: 화면 크기 맞추기(기본), 앱별 화면 크기(실험실, lab 빌드에서만).
         val sections = buildList {
-            add(NavSection(Copy.MENU_SECTION_BASIC, listOf(NavItem.HOME, NavItem.TEST, NavItem.HELP, NavItem.GUIDE, NavItem.ADVANCED, NavItem.REPORT, NavItem.RESET, NavItem.ABOUT)))
-            if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB)))
+            add(NavSection(Copy.MENU_SECTION_FEATURES, listOf(NavItem.DPI_MATCH)))
+            if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.APP_SIZE)))
         }
-        val navigate: (NavItem) -> Unit = { item ->
-            scope.launch { drawer.close() }
-            when (item) {
-                NavItem.HOME -> Unit
-                NavItem.TEST -> sheet = Sheet.TEST
-                NavItem.HELP -> sheet = Sheet.HELP
-                NavItem.GUIDE -> sheet = Sheet.GUIDE
-                NavItem.ADVANCED -> sheet = Sheet.ADVANCED
-                NavItem.REPORT -> report()
-                NavItem.RESET -> sheet = Sheet.RESET
-                NavItem.ABOUT -> sheet = Sheet.ABOUT
-                NavItem.LAB -> sheet = Sheet.LAB
-            }
+        // 점 세 개 메뉴: 지금 기능의 세부 설정·도구.
+        val menuItems = when (feature) {
+            NavItem.DPI_MATCH -> listOf(
+                Copy.MENU_TEST to { sheet = Sheet.TEST },
+                Copy.MENU_HELP to { sheet = Sheet.HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
+                Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED },
+                Copy.MENU_REPORT to report,
+                Copy.MENU_RESET to { sheet = Sheet.RESET },
+                Copy.MENU_ABOUT to { sheet = Sheet.ABOUT },
+            )
+            NavItem.APP_SIZE -> listOf(Copy.MENU_ABOUT to { sheet = Sheet.ABOUT })
         }
         ModalNavigationDrawer(
             drawerState = drawer,
             scrimColor = c.ink.copy(alpha = 0.32f),
-            drawerContent = { SideDrawerContent(sections, current = NavItem.HOME, onSelect = navigate) },
+            drawerContent = {
+                SideDrawerContent(sections, current = feature, onSelect = { item -> scope.launch { drawer.close() }; feature = item })
+            },
         ) {
             Scaffold(
                 containerColor = c.bg,
                 topBar = {
                     TopAppBar(
-                        title = { Text(AppInfo.NAME, fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp) },
+                        title = {
+                            Text(
+                                if (feature == NavItem.DPI_MATCH) AppInfo.NAME else feature.label,
+                                fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp,
+                            )
+                        },
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg),
                         navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "메뉴 열기") }
+                            IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "기능 메뉴 열기") }
+                        },
+                        actions = {
+                            Box {
+                                IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, "설정 메뉴") }
+                                LiquidMenu(expanded = menu, onDismiss = { menu = false }, items = menuItems)
+                            }
                         },
                     )
                 },
                 snackbarHost = { SnackbarHost(toast) { LiquidToast(it.visuals.message) } },
             ) { inner ->
+                if (feature == NavItem.APP_SIZE) {
+                    LabScreen(inner)
+                    return@Scaffold
+                }
                 LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = inner.calculateTopPadding() + 4.dp, bottom = inner.calculateBottomPadding() + 28.dp),
@@ -297,8 +319,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             vm.say(Copy.TOAST_COPIED)
                         },
                     )
-                    Sheet.LAB -> LabSheet()
-                    Sheet.ABOUT -> AboutSheet(onMail = { ReportMail.inquiry(context) })
+                        Sheet.ABOUT -> AboutSheet(onMail = { ReportMail.inquiry(context) })
                 }
             }
         }
