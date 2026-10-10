@@ -2,8 +2,10 @@ package com.local.folddpifix.ui.nav
 
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.foundation.Canvas
+import com.local.folddpifix.ui.liquid.moveTo
+import com.local.folddpifix.ui.liquid.rememberSoftBlob
+import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.launch
-import com.local.folddpifix.ui.liquid.goo
 import com.local.folddpifix.ui.liquid.Springs
 import com.local.folddpifix.ui.liquid.LocalReduceMotion
 import androidx.compose.ui.layout.positionInParent
@@ -105,7 +107,13 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
     val tops = remember { mutableStateMapOf<NavItem, Float>() }
     var rowH by remember { mutableFloatStateOf(0f) }
     val target = current?.let { tops[it] }
-    val pill = rememberLiquidPill(target, reduce)
+    // 고른 항목 아래 물방울(연체 물리). 항목을 바꾸면 그 자리로 끌려가며 휘었다가 표면장력으로 둥글게 돌아온다.
+    val blob = rememberSoftBlob()
+    var boxW by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(target, rowH, boxW) {
+        val y = target ?: return@LaunchedEffect
+        if (rowH > 0f && boxW > 0f) blob.moveTo(boxW / 2, y + rowH / 2, boxW, rowH, animate = !reduce)
+    }
 
     Box(
         Modifier
@@ -137,10 +145,12 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
                     Text("버전 $version", color = c.muted, style = MaterialTheme.typography.labelMedium)
                 }
             }
-            Box {
-                // 방울 층(항목 뒤): 고른 항목을 따라다니는 잉크 알약
-                Canvas(Modifier.matchParentSize().goo(c.ink, 9.dp)) {
-                    drawLiquidPill(pill, c.ink, size.width, rowH)
+            Box(Modifier.onSizeChanged { boxW = it.width.toFloat() }) {
+                // 방울 층(항목 뒤): 고른 항목을 따라다니는 연체 물방울
+                val path = remember { Path() }
+                Canvas(Modifier.matchParentSize()) {
+                    blob.frame // 프레임마다 다시 그리기
+                    if (blob.blob.ready) drawPath(blob.blob.path(path), c.ink)
                 }
                 Column {
                     var index = 0
@@ -157,8 +167,9 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
                                 item, item == current,
                                 cover = cover@{
                                     val top = tops[item] ?: return@cover if (item == current) 1f else 0f
-                                    if (pill.center < 0f || rowH <= 0f) (if (item == current) 1f else 0f)
-                                    else (1f - kotlin.math.abs(pill.center - top) / rowH).coerceIn(0f, 1f)
+                                    blob.frame
+                                    if (!blob.blob.ready || rowH <= 0f) (if (item == current) 1f else 0f)
+                                    else (1f - kotlin.math.abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
                                 },
                                 appear = { (enter.value - order).coerceIn(0f, 1f) },
                                 modifier = Modifier.onGloballyPositioned {

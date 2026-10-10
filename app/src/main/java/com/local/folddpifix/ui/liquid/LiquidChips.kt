@@ -1,8 +1,11 @@
 package com.local.folddpifix.ui.liquid
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.Path
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -31,12 +34,10 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 /**
- * 액체 칩 선택(원본 liquid_chips): 고른 칩 아래로 방울(head)이 옮겨 가고, 늦게 따라오는 꼬리(tail)와
- * goo로 이어져 늘어났다 합쳐진다. 고른 칩 글자는 방울 위에서 배경색으로 반전된다.
+ * 액체 칩 선택: 고른 칩 아래의 방울이 연체 물리([SoftBlob])로 옮겨 간다. 이동 방향 앞쪽이 먼저 끌려가 길쭉해졌다가
+ * 표면장력과 압력으로 둥글게 돌아오며 한 번 출렁인다. 칩 글자는 방울이 덮은 만큼 배경색으로 반전된다.
  */
 @Composable
 fun <T> LiquidChips(
@@ -50,27 +51,13 @@ fun <T> LiquidChips(
     val reduce = LocalReduceMotion.current
     val lefts = remember(options) { mutableStateListOf<Float>().apply { repeat(options.size) { add(0f) } } }
     val widths = remember(options) { mutableStateListOf<Float>().apply { repeat(options.size) { add(0f) } } }
-    val headX = remember { Animatable(0f) }
-    val headW = remember { Animatable(0f) }
-    val tailX = remember { Animatable(0f) }
-    val tailW = remember { Animatable(0f) }
     val index = options.indexOf(selected).coerceAtLeast(0)
     val measured = widths.getOrNull(index)?.let { it > 0f } == true
-
-    LaunchedEffect(index, measured) {
-        if (!measured) return@LaunchedEffect
-        val tx = lefts[index]
-        val tw = widths[index]
-        if (headW.value == 0f) {
-            headX.snapTo(tx); headW.snapTo(tw); tailX.snapTo(tx); tailW.snapTo(tw)
-            return@LaunchedEffect
-        }
-        coroutineScope {
-            launch { headX.animateTo(tx, Springs.calm(reduce)) }
-            launch { headW.animateTo(tw, Springs.calm(reduce)) }
-            launch { tailX.animateTo(tx, Springs.lag(reduce)) }
-            launch { tailW.animateTo(tw, Springs.lag(reduce)) }
-        }
+    val blob = rememberSoftBlob()
+    var trackH by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(index, measured, trackH) {
+        if (!measured || trackH <= 0f) return@LaunchedEffect
+        blob.moveTo(lefts[index] + widths[index] / 2, trackH / 2, widths[index], trackH, animate = !reduce)
     }
 
     Box(
@@ -87,20 +74,19 @@ fun <T> LiquidChips(
                 CornerRadius(size.height / 2), style = Stroke(stroke),
             )
         }
-        Canvas(Modifier.matchParentSize().goo(c.ink)) {
-            val h = size.height
-            val r = CornerRadius(h / 2, h / 2)
-            if (headW.value > 0f) {
-                drawRoundRect(c.ink, Offset(headX.value, 0f), Size(headW.value, h), r)
-                // 꼬리는 조금 작게: 이동 중 목처럼 늘어나 보인다.
-                val tw = tailW.value * 0.7f
-                drawRoundRect(c.ink, Offset(tailX.value + (tailW.value - tw) / 2, h * 0.15f), Size(tw, h * 0.7f), r)
-            }
+        val path = remember { Path() }
+        Canvas(Modifier.matchParentSize().onSizeChanged { trackH = it.height.toFloat() }) {
+            blob.frame // 프레임마다 다시 그리기
+            if (blob.blob.ready) drawPath(blob.blob.path(path), c.ink)
         }
         Row(Modifier.matchParentSize()) {
             options.forEachIndexed { i, option ->
                 val isSel = i == index
-                val textColor by animateColorAsState(if (isSel) c.onInk else c.ink, label = "chipText")
+                // 방울이 이 칩을 덮은 정도(0~1)만큼 글자를 배경색으로 바꾼다.
+                blob.frame
+                val cover = if (!blob.blob.ready || widths[i] <= 0f) (if (isSel) 1f else 0f)
+                else (1f - kotlin.math.abs(blob.blob.cx - (lefts[i] + widths[i] / 2)) / widths[i]).coerceIn(0f, 1f)
+                val textColor = lerp(c.ink, c.onInk, cover)
                 val interaction = remember { MutableInteractionSource() }
                 Box(
                     Modifier
