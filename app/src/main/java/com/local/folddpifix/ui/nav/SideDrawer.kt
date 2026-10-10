@@ -159,7 +159,7 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
                         val titleOrder = index
                         Text(
                             section.title, color = c.muted, style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier.padding(start = 14.dp, bottom = 6.dp).graphicsLayer { alpha = (enter.value - titleOrder).coerceIn(0f, 1f) },
+                            modifier = Modifier.padding(start = 22.dp, bottom = 6.dp).graphicsLayer { alpha = (enter.value - titleOrder).coerceIn(0f, 1f) },
                         )
                         section.items.forEach { item ->
                             val order = ++index
@@ -210,7 +210,8 @@ private fun DrawerRow(
             .liquidPress(interaction, sx = 1.02f, sy = 0.95f)
             .clip(RoundedCornerShape(24.dp))
             .clickable(interaction, null, onClick = onClick)
-            .padding(horizontal = 14.dp),
+            // 선택 방울의 둥근 끝(반지름 24dp) 안쪽 깊숙이 아이콘을 둬 검은 경계와 붙어 보이지 않게 한다.
+            .padding(start = 22.dp, end = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NavGlyph(item.icon, fg)

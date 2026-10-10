@@ -268,7 +268,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    item { Box(Modifier.widthIn(max = MAX_WIDTH)) { StatusCard(state) } }
+                    // 고정 카드에도 키를 둬, 위에 할 일 카드가 생기거나 없어져도 카드 상태(스위치·슬라이더 방울)가 유지되게 한다.
+                    item(key = "card:status") { Box(Modifier.widthIn(max = MAX_WIDTH)) { StatusCard(state) } }
                     items(todosOf(state), key = { it.key }) { todo ->
                         Box(Modifier.widthIn(max = MAX_WIDTH)) { TodoCard(todo) { action ->
                             when (action) {
@@ -282,8 +283,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             }
                         } }
                     }
-                    item { Box(Modifier.widthIn(max = MAX_WIDTH)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
-                    item { Box(Modifier.widthIn(max = MAX_WIDTH)) {
+                    item(key = "card:size") { Box(Modifier.widthIn(max = MAX_WIDTH)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
+                    item(key = "card:auto") { Box(Modifier.widthIn(max = MAX_WIDTH)) {
                         AutoCard(state.auto) { on ->
                             if (on && !ExternalChangeNotifier.canNotify(context)) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)

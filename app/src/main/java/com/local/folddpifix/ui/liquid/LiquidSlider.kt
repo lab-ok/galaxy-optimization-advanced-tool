@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -72,15 +73,13 @@ fun LiquidSlider(
     var width by remember { mutableFloatStateOf(0f) }
     val measurer = rememberTextMeasurer()
     var active by remember { mutableStateOf(false) }
-    val thumbW = remember { Animatable(52f) }
-    val thumbH = remember { Animatable(30f) }
+    val blob = rememberSoftBlob()
+    val path = remember { Path() }
     val bubbleSize = remember { Animatable(10f) }
     val bubbleLift = remember { Animatable(0f) }
 
     LaunchedEffect(active) {
         kotlinx.coroutines.coroutineScope {
-            launch { thumbW.animateTo(if (active) 60f else 52f, Springs.pop(reduce)) }
-            launch { thumbH.animateTo(if (active) 24f else 30f, Springs.pop(reduce)) }
             launch { bubbleSize.animateTo(if (active) 46f else 10f, Springs.water(reduce)) }
             launch { bubbleLift.animateTo(if (active) 1f else 0f, Springs.water(reduce)) }
         }
@@ -93,6 +92,13 @@ fun LiquidSlider(
     fun valueAt(x: Float): Int {
         val f = ((x - edge) / (width - 2 * edge)).coerceIn(0f, 1f)
         return (range.first + f * span).roundToInt()
+    }
+
+    // 손잡이: 값 자리로 끌려가는 연체 물방울. 잡고 있는 동안은 납작하고 넓게(60×24dp), 놓으면 52×30dp로 돌아온다.
+    val tw = with(density) { (if (active) 60 else 52).dp.toPx() }
+    val tht = with(density) { (if (active) 24 else 30).dp.toPx() }
+    LaunchedEffect(value, width, active) {
+        if (width > 0f) blob.moveTo(xOf(value), trackY, tw, tht, animate = !reduce)
     }
 
     Box(
@@ -134,7 +140,9 @@ fun LiquidSlider(
             val th = 8.dp.toPx()
             val trackColor = if (c.dark) c.muted.copy(alpha = 0.35f) else c.line
             drawRoundRect(trackColor, Offset(edge / 2, trackY - th / 2), Size(width - edge, th), CornerRadius(th / 2))
-            val cx = xOf(value)
+            blob.frame
+            // 채움 끝은 손잡이 방울 중심을 따라가 손잡이와 어긋나지 않는다.
+            val cx = if (blob.blob.ready) blob.blob.cx else xOf(value)
             val from = if (centered) xOf((range.first + range.last) / 2) else edge / 2
             val l = minOf(from, cx)
             val r = maxOf(from, cx)
@@ -142,10 +150,9 @@ fun LiquidSlider(
         }
         // 손잡이 + 값 방울(goo 층: 떨어지는 순간 목처럼 이어진다)
         Canvas(Modifier.matchParentSize().goo(c.ink, 7.dp)) {
-            val cx = xOf(value)
-            val tw = thumbW.value.dp.toPx()
-            val tht = thumbH.value.dp.toPx()
-            drawRoundRect(c.ink, Offset(cx - tw / 2, trackY - tht / 2), Size(tw, tht), CornerRadius(tht / 2))
+            blob.frame
+            val cx = blob.blob.cx
+            drawPath(blob.blob.path(path), c.ink)
             val bs = bubbleSize.value.dp.toPx()
             val by = trackY - bubbleLift.value * 34.dp.toPx()
             drawOval(c.ink, Offset(cx - bs / 2, by - bs / 2), Size(bs, bs))
@@ -153,8 +160,9 @@ fun LiquidSlider(
         // 값 글자(방울 위에서 반전). 글자 크기를 재서 손잡이·방울의 정확한 가운데에 놓는다.
         Canvas(Modifier.matchParentSize()) {
             if (width <= 0f) return@Canvas
+            blob.frame
             val lift = bubbleLift.value
-            val cx = xOf(value)
+            val cx = blob.blob.cx
             val cy = trackY - lift * 34.dp.toPx()
             val layout = measurer.measure(
                 valueText(value),

@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.Path
 import kotlin.math.PI
@@ -43,29 +44,64 @@ class SoftBlob(private val n: Int = N) {
     var cx = 0f; private set
     var cy = 0f; private set
 
-    /** 폭 [w]·높이 [hh] 알약을 중심 ([x],[y])에 쉬는 상태로 놓는다. */
-    fun reset(x: Float, y: Float, w: Float, hh: Float) {
-        h = hh
-        val r = hh / 2; val l = max(0f, w - hh); val per = 2 * l + 2 * PI.toFloat() * r
-        for (i in 0 until n) {
-            val s = per * i / n
-            when {
-                s < l -> { rx[i] = -l / 2 + s; ry[i] = -r }
-                s < l + PI.toFloat() * r -> { val a = -PI.toFloat() / 2 + (s - l) / r; rx[i] = l / 2 + r * cos(a); ry[i] = r * sin(a) }
-                s < 2 * l + PI.toFloat() * r -> { val s2 = s - l - PI.toFloat() * r; rx[i] = l / 2 - s2; ry[i] = r }
-                else -> { val a = PI.toFloat() / 2 + (s - 2 * l - PI.toFloat() * r) / r; rx[i] = -l / 2 + r * cos(a); ry[i] = r * sin(a) }
-            }
-        }
-        val halfW = w / 2
-        for (i in 0 until n) {
-            px[i] = x + rx[i]; py[i] = y + ry[i]; vx[i] = 0f; vy[i] = 0f
-            val p = (i - 1 + n) % n; val q = (i + 1) % n
-            lap0x[i] = rx[p] + rx[q] - 2 * rx[i]; lap0y[i] = ry[p] + ry[q] - 2 * ry[i]
-            mid[i] = 0.5f + 0.5f * cos((abs(rx[i]) / halfW).coerceIn(0f, 1f) * PI.toFloat() / 2)
-        }
-        area0 = abs(area())
+    /**
+     * 폭 [w]·높이 [hh], 모서리 반지름 [corner]인 둥근 사각형을 중심 ([x],[y])에 쉬는 상태로 놓는다.
+     * [corner]가 음수면 짧은 변의 절반, 곧 알약(또는 원)이다.
+     */
+    fun reset(x: Float, y: Float, w: Float, hh: Float, corner: Float = -1f) {
+        restShape(w, hh, corner)
+        for (i in 0 until n) { px[i] = x + rx[i]; py[i] = y + ry[i]; vx[i] = 0f; vy[i] = 0f }
         tx = x; ty = y; cx = x; cy = y
         ready = true
+    }
+
+    /**
+     * 쉬는 모양만 바꾼다(점의 위치·속도는 그대로). 이후 힘이 새 모양 쪽으로 끌어 방울이 부풀거나
+     * 오므라들며 출렁인다(메뉴가 펼쳐질 때, 손잡이를 잡았을 때). 점 번호는 모양과 상관없이 늘
+     * 윗변 가운데에서 시계 방향으로 매겨 두어, 모양이 바뀌어도 같은 번호끼리 자연스럽게 이어진다.
+     */
+    fun reshape(w: Float, hh: Float, corner: Float = -1f) {
+        if (!ready) return
+        restShape(w, hh, corner)
+    }
+
+    private fun restShape(w: Float, hh: Float, corner: Float) {
+        h = minOf(w, hh)
+        val pi = PI.toFloat()
+        val r = max(0.5f, if (corner < 0) h / 2 else minOf(corner, h / 2))
+        val lx = max(0f, w - 2 * r); val ly = max(0f, hh - 2 * r)
+        val arc = pi / 2 * r
+        // 윗변 가운데 → 오른쪽 위 모서리 → 오른쪽 변 → … → 윗변 가운데
+        val seg = floatArrayOf(lx / 2, arc, ly, arc, lx, arc, ly, arc, lx / 2)
+        val per = seg.sum()
+        for (i in 0 until n) {
+            var s = per * i / n
+            var k = 0
+            while (k < seg.size - 1 && s > seg[k]) { s -= seg[k]; k++ }
+            val ex = lx / 2; val ey = ly / 2
+            when (k) {
+                0 -> { rx[i] = s; ry[i] = -ey - r }
+                1 -> { val a = -pi / 2 + s / r; rx[i] = ex + r * cos(a); ry[i] = -ey + r * sin(a) }
+                2 -> { rx[i] = ex + r; ry[i] = -ey + s }
+                3 -> { val a = s / r; rx[i] = ex + r * cos(a); ry[i] = ey + r * sin(a) }
+                4 -> { rx[i] = ex - s; ry[i] = ey + r }
+                5 -> { val a = pi / 2 + s / r; rx[i] = -ex + r * cos(a); ry[i] = ey + r * sin(a) }
+                6 -> { rx[i] = -ex - r; ry[i] = ey - s }
+                7 -> { val a = pi + s / r; rx[i] = -ex + r * cos(a); ry[i] = -ey + r * sin(a) }
+                else -> { rx[i] = -ex + s; ry[i] = -ey - r }
+            }
+        }
+        // 구동력 가중치: 긴 축 가운데일수록 1, 끝으로 갈수록 0.5
+        val longX = w >= hh; val half = maxOf(w, hh) / 2
+        for (i in 0 until n) {
+            val p = (i - 1 + n) % n; val q = (i + 1) % n
+            lap0x[i] = rx[p] + rx[q] - 2 * rx[i]; lap0y[i] = ry[p] + ry[q] - 2 * ry[i]
+            val d = abs(if (longX) rx[i] else ry[i]) / half
+            mid[i] = 0.5f + 0.5f * cos(d.coerceIn(0f, 1f) * pi / 2)
+        }
+        var a = 0f
+        for (i in 0 until n) { val j = (i + 1) % n; a += rx[i] * ry[j] - rx[j] * ry[i] }
+        area0 = abs(a / 2)
     }
 
     fun target(x: Float, y: Float) { tx = x; ty = y }
@@ -156,26 +192,31 @@ class SoftBlobState {
 @Composable
 fun rememberSoftBlob(): SoftBlobState {
     val s = remember { SoftBlobState() }
-    LaunchedEffect(s.wake) {
-        var last = 0L
-        while (true) {
-            val now = withFrameNanos { it }
-            // 실제 흐른 시간만큼 적분한다(프레임이 밀려도 물리 시간은 실제와 같게). 한 번에 1/240초 이하로 쪼갠다.
-            val dt = if (last == 0L) 1f / 60 else ((now - last) / 1e9f).coerceIn(1f / 480, 1f / 12)
-            last = now
-            val sub = kotlin.math.ceil(dt * 240f).toInt().coerceAtLeast(1)
-            var moving = false
-            repeat(sub) { moving = s.blob.step(dt / sub) or moving }
-            s.frame++
-            if (!moving) break
+    // 적분 루프는 하나만 둔다. 끄는 동안처럼 목표가 매 프레임 바뀌어도 루프를 다시 시작하지 않고
+    // 돌던 루프가 새 목표를 그대로 따라간다(다시 시작하면 프레임마다 취소돼 방울이 멈춰 있게 된다).
+    LaunchedEffect(s) {
+        snapshotFlow { s.wake }.collect {
+            var last = 0L
+            while (true) {
+                val now = withFrameNanos { it }
+                // 실제 흐른 시간만큼 적분한다(프레임이 밀려도 물리 시간은 실제와 같게). 한 번에 1/240초 이하로 쪼갠다.
+                val dt = if (last == 0L) 1f / 60 else ((now - last) / 1e9f).coerceIn(1f / 480, 1f / 12)
+                last = now
+                val sub = kotlin.math.ceil(dt * 240f).toInt().coerceAtLeast(1)
+                var moving = false
+                repeat(sub) { moving = s.blob.step(dt / sub) or moving }
+                s.frame++
+                if (!moving) break
+            }
         }
     }
     return s
 }
 
-/** 목표를 바꾸고 적분을 깨운다. 처음이면 그 자리에 놓는다. */
-fun SoftBlobState.moveTo(x: Float, y: Float, w: Float, h: Float, animate: Boolean) {
-    if (!blob.ready || !animate) { blob.reset(x, y, w, h); frame++; return }
+/** 목표를 바꾸고 적분을 깨운다. 처음이면 그 자리에 놓는다. 크기가 달라졌으면 모양도 바꾼다. */
+fun SoftBlobState.moveTo(x: Float, y: Float, w: Float, h: Float, animate: Boolean, corner: Float = -1f) {
+    if (!blob.ready || !animate) { blob.reset(x, y, w, h, corner); frame++; return }
+    blob.reshape(w, h, corner)
     blob.target(x, y)
     wake++
 }
