@@ -8,6 +8,15 @@
         android:name="android.permission.CHANGE_CONFIGURATION"
         tools:ignore="ProtectedPermissions" />
 
+    <application>
+        <!-- 셸 도우미(DensityServer)가 셸 권한으로 바인더를 건네는 통로. 호출자 uid는 코드에서 다시 확인한다. -->
+        <provider
+            android:name="com.local.folddpifix.data.lab.ShellBridgeProvider"
+            android:authorities="${applicationId}.shell"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+    </application>
+
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />

@@ -93,13 +93,11 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
     val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
     val items = sections.flatMap { it.items }
 
-    // 등장: 로고 방울, 항목 차례로
-    val logo = remember { Animatable(0f) }
+    // 등장: 항목이 차례로(머리는 DrawerHeader가 물방울로 맺힌다)
     val enter = remember { Animatable(0f) }
     LaunchedEffect(visible) {
-        if (!visible) { logo.snapTo(0f); enter.snapTo(0f); return@LaunchedEffect }
-        if (reduce) { logo.snapTo(1f); enter.snapTo(items.size + 2f); return@LaunchedEffect }
-        launch { logo.animateTo(1f, Springs.pop()) }
+        if (!visible) { enter.snapTo(0f); return@LaunchedEffect }
+        if (reduce) { enter.snapTo(items.size + 2f); return@LaunchedEffect }
         enter.animateTo(items.size + 2f, tween(120 + 55 * (items.size + 2), easing = LinearEasing))
     }
 
@@ -129,22 +127,7 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 14.dp, vertical = 18.dp),
         ) {
-            Row(
-                Modifier
-                    .padding(horizontal = 8.dp)
-                    .graphicsLayer {
-                        val k = logo.value
-                        scaleX = 0.6f + 0.4f * k; scaleY = 0.6f + 0.4f * k; alpha = k.coerceIn(0f, 1f)
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(painterResource(R.drawable.ic_app_logo), null, Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)))
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(AppInfo.NAME, fontWeight = FontWeight.Bold, color = c.ink, style = MaterialTheme.typography.titleMedium)
-                    Text("버전 $version", color = c.muted, style = MaterialTheme.typography.labelMedium)
-                }
-            }
+            DrawerHeader(version, visible)
             Box(Modifier.onSizeChanged { boxW = it.width.toFloat() }) {
                 // 방울 층(항목 뒤): 고른 항목을 따라다니는 연체 물방울
                 val path = remember { Path() }

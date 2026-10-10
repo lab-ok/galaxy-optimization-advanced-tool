@@ -13,8 +13,8 @@ import java.lang.reflect.Method
  * 실기기(SM-F971N, One UI 9) 탐색 결과 IActivityTaskManager에 아래 함수가 있었다.
  * - getCustomDensity(String, int, boolean): int
  * - setUserCustomDensity(String, int, int, String): void
- * 매개변수 뜻은 공개돼 있지 않아, 읽기는 가능한 조합을 모두 시도해 결과를 그대로 보여 주고,
- * 쓰기는 (패키지, 밀도, 사용자, 메모)로 부른 뒤 다시 읽어 실제로 바뀌었는지 확인한다.
+ * 실기기 services.jar를 풀어 본 결과 쓰기 인자는 (패키지, 사용자, 밀도, 메모)이고, 밀도는
+ * 320·360·420·450·480·510과 0(기본)만 받는다. 읽기는 두 조합을 모두 시도해 결과를 그대로 보여 준다.
  * 권한이 모자라면 SecurityException 문구에 필요한 권한이 나오므로 그것도 그대로 남긴다.
  */
 object AppDensityProbe {
@@ -74,16 +74,16 @@ object AppDensityProbe {
         if (get == null || set == null) return "함수 번호를 찾지 못했습니다(get=$get, set=$set)."
         val user = userId()
         appendLine("읽기:  adb shell service call activity_task $get s16 $pkg i32 $user i32 0")
-        appendLine("바꾸기: adb shell service call activity_task $set s16 $pkg i32 $dpi i32 $user s16 FoldFit")
+        appendLine("바꾸기: adb shell service call activity_task $set s16 $pkg i32 $user i32 $dpi s16 FoldFit")
     }
 
-    /** 값 바꾸기: setUserCustomDensity(패키지, 밀도, 사용자, 메모) 후 다시 읽기. */
+    /** 값 바꾸기: setUserCustomDensity(패키지, 사용자, 밀도, 메모) 후 다시 읽기(실기기 코드에서 확인한 순서). */
     fun write(pkg: String, dpi: Int): String = buildString {
         val svc = runCatching { service() }.getOrElse { return "서비스 연결 실패: ${describe(it)}" }
         val m = method(svc, "setUserCustomDensity") ?: return "setUserCustomDensity 함수가 없습니다."
         appendLine("setUserCustomDensity(${m.parameterTypes.joinToString { it.simpleName }})")
-        val r = runCatching { m.invoke(svc, pkg, dpi, userId(), "FoldFit") }.fold({ "성공(반환 없음)" }, { describe(it) })
-        appendLine("  ($pkg, $dpi, user ${userId()}, \"FoldFit\") → $r")
+        val r = runCatching { m.invoke(svc, pkg, userId(), dpi, "FoldFit") }.fold({ "성공(반환 없음)" }, { describe(it) })
+        appendLine("  ($pkg, user ${userId()}, $dpi, \"FoldFit\") → $r")
         appendLine()
         append(read(pkg))
     }

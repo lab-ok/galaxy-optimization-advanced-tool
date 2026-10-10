@@ -14,6 +14,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.runtime.LaunchedEffect
 import com.local.folddpifix.data.lab.AppDensityProbe
+import com.local.folddpifix.data.lab.DensityServer
+import com.local.folddpifix.data.lab.DensityShell
+import com.local.folddpifix.ui.liquid.LiquidChips
+import androidx.compose.runtime.collectAsState
 import com.local.folddpifix.ui.components.CommandBox
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -78,11 +82,13 @@ internal fun LabScreen(contentPadding: PaddingValues) {
         GlassCard(padding = 16.dp) {
             Text("앱마다 화면 크기를 다르게", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
-                "기본 기능(화면 크기 맞추기)과는 별개로, 앱별로 화면 크기를 따로 두는 기능을 준비하는 실험실입니다. " +
-                    "지금은 삼성 '앱 화면 크게/작게' 설정이 어디에 저장되는지 확인하는 단계입니다. 공개 버전에는 들어가지 않습니다.",
+                "기본 기능(화면 크기 맞추기)과는 별개로, 앱별로 화면 크기를 따로 두는 실험실입니다. " +
+                    "삼성 '앱 화면 크게/작게'와 같은 설정을 씁니다. 아래 조사 도구는 시험용이며, 공개 버전에는 들어가지 않습니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
         }
+        Spacer(Modifier.height(12.dp))
+        ShellDensityCard()
         Spacer(Modifier.height(12.dp))
         GlassCard(padding = 16.dp) {
             Text("설정 변경 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -265,5 +271,109 @@ private fun AppDensityCard() {
             "되돌리려면 설정 → 앱 화면 크게/작게에서 그 앱을 '시스템 설정'으로 바꾸면 됩니다.",
             color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 6.dp),
         )
+    }
+}
+
+/**
+ * 앱별 화면 크기: PC에서 셸 도우미([DensityServer])를 한 번 띄우면, 앱마다 삼성 6단계 중 하나를 고를 수 있다.
+ * 바꾼 값은 시스템에 저장돼 재부팅해도 유지되므로, 도우미는 값을 바꿀 때만 켜 두면 된다.
+ */
+@Composable
+private fun ShellDensityCard() {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val shell by DensityShell.connected.collectAsState()
+    var apps by remember { mutableStateOf(emptyList<AppDensityProbe.App>()) }
+    var values by remember { mutableStateOf(emptyMap<String, Int>()) }
+    var supported by remember { mutableStateOf<Boolean?>(null) }
+    var open by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { AppDensityProbe.launcherApps(context) } }
+    LaunchedEffect(shell, apps) {
+        if (shell == null) { supported = null; values = emptyMap(); return@LaunchedEffect }
+        withContext(Dispatchers.IO) {
+            supported = runCatching { DensityShell.supported() }.getOrDefault(false)
+            if (supported == true) values = apps.associate { it.pkg to runCatching { DensityShell.get(it.pkg) }.getOrDefault(-1) }
+        }
+    }
+
+    GlassCard(padding = 16.dp) {
+        Text("앱별 화면 크기", fontWeight = FontWeight.SemiBold, color = c.ink)
+        when {
+            shell == null -> {
+                Text(
+                    "삼성 '앱 화면 크게/작게'를 FoldFit에서 바꿉니다. 이 기능은 adb 셸 권한이 필요해서, PC에서 아래 명령으로 " +
+                        "셸 도우미를 한 번 켜야 합니다. 켜지면 이 카드가 바로 바뀝니다.",
+                    color = c.muted, style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(8.dp))
+                val cmd = remember { DensityServer.startCommand() }
+                CommandBox(cmd, onCopy = {
+                    context.getSystemService(android.content.ClipboardManager::class.java)
+                        .setPrimaryClip(android.content.ClipData.newPlainText("adb", cmd))
+                })
+                Text(
+                    "바꾼 값은 시스템에 저장돼 재부팅해도 유지됩니다. 도우미는 FoldFit을 닫거나 30분 동안 쓰지 않으면 스스로 꺼집니다.",
+                    color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+            supported == false -> {
+                Text("셸 도우미는 켜졌지만 이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.", color = c.danger, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(10.dp))
+                LiquidButton("셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                    scope.launch(Dispatchers.IO) { DensityShell.stop() }
+                })
+            }
+            else -> {
+                Text(
+                    "앱을 누르고 크기를 고르세요. 숫자가 작을수록 작게 보입니다. 바꾸면 그 앱이 다시 시작되며 바로 적용됩니다.",
+                    color = c.muted, style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(8.dp))
+                Column(Modifier.fillMaxWidth().heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                    apps.forEach { app ->
+                        val v = values[app.pkg]
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { open = if (open == app.pkg) null else app.pkg }
+                                .padding(horizontal = 8.dp, vertical = 10.dp),
+                        ) {
+                            Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                            Text(
+                                when (v) { null -> "…"; -1 -> "?"; 0 -> "기본"; else -> "$v" },
+                                color = if (v != null && v > 0) c.ink else c.muted,
+                                fontWeight = if (v != null && v > 0) FontWeight.SemiBold else FontWeight.Normal,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                        if (open == app.pkg) {
+                            LiquidChips(
+                                options = listOf(0) + DensityServer.STEPS,
+                                selected = v?.takeIf { it == 0 || it in DensityServer.STEPS } ?: 0,
+                                label = { if (it == 0) "기본" else "$it" },
+                                onSelect = { dpi ->
+                                    scope.launch {
+                                        val now = withContext(Dispatchers.IO) {
+                                            runCatching { DensityShell.set(app.pkg, dpi); DensityShell.get(app.pkg) }
+                                        }
+                                        now.onSuccess { values = values + (app.pkg to it); message = "${app.label}: ${if (it == 0) "기본" else "$it dpi"}" }
+                                            .onFailure { message = "바꾸지 못했습니다: ${it.message}" }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                            )
+                        }
+                    }
+                }
+                if (message.isNotEmpty()) Text(message, color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
+                Spacer(Modifier.height(10.dp))
+                LiquidButton("셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                    scope.launch(Dispatchers.IO) { DensityShell.stop() }
+                })
+            }
+        }
     }
 }

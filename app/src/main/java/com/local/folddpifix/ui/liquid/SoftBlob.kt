@@ -115,8 +115,13 @@ class SoftBlob(private val n: Int = N) {
                 else -> { rx[i] = -ex + s; ry[i] = -ey - r }
             }
         }
+        finishRest(w >= hh, maxOf(w, hh) / 2)
+    }
+
+    /** 쉬는 모양을 정한 뒤 곡률·가중치·넓이를 다시 계산한다. */
+    private fun finishRest(longX: Boolean, half: Float) {
+        val pi = PI.toFloat()
         // 구동력 가중치: 긴 축 가운데일수록 1, 끝으로 갈수록 0.5
-        val longX = w >= hh; val half = maxOf(w, hh) / 2
         for (i in 0 until n) {
             val p = (i - 1 + n) % n; val q = (i + 1) % n
             lap0x[i] = rx[p] + rx[q] - 2 * rx[i]; lap0y[i] = ry[p] + ry[q] - 2 * ry[i]
@@ -127,6 +132,45 @@ class SoftBlob(private val n: Int = N) {
         for (i in 0 until n) { val j = (i + 1) % n; a += rx[i] * ry[j] - rx[j] * ry[i] }
         area0 = abs(a / 2)
     }
+
+    /**
+     * 임의 모양: 중심 기준 외곽선 점 [xs]·[ys](점 [n]개, 시계 방향, 윗변 가운데부터)를 쉬는 모양으로 쓴다.
+     * 처음이면 그 자리에 놓고, 이미 있으면 모양만 바꿔 힘으로 그 모양이 되게 한다.
+     */
+    fun shape(x: Float, y: Float, xs: FloatArray, ys: FloatArray) {
+        xs.copyInto(rx); ys.copyInto(ry)
+        var minX = 0f; var maxX = 0f; var minY = 0f; var maxY = 0f
+        for (i in 0 until n) { minX = minOf(minX, rx[i]); maxX = maxOf(maxX, rx[i]); minY = minOf(minY, ry[i]); maxY = maxOf(maxY, ry[i]) }
+        val w = maxX - minX; val hh = maxY - minY
+        h = minOf(w, hh)
+        finishRest(w >= hh, maxOf(w, hh) / 2)
+        if (!ready) {
+            for (i in 0 until n) { px[i] = x + rx[i]; py[i] = y + ry[i]; vx[i] = 0f; vy[i] = 0f }
+            cx = x; cy = y; ready = true
+        }
+        tx = x; ty = y
+    }
+
+    /**
+     * 손가락이 닿은 자리 ([x],[y]) 둘레 반경 [radius] 안의 점에 속도 ([ix],[iy])를 더한다(가까울수록 세게).
+     * 누르면 움푹 들어가고, 끌면 그쪽으로 늘어났다가 표면장력으로 되돌아온다.
+     */
+    fun impulse(x: Float, y: Float, ix: Float, iy: Float, radius: Float) {
+        if (!ready) return
+        val r2 = radius * radius
+        for (i in 0 until n) {
+            val dx = px[i] - x; val dy = py[i] - y
+            val k = kotlin.math.exp(-(dx * dx + dy * dy) / r2)
+            vx[i] += ix * k; vy[i] += iy * k
+        }
+    }
+
+    /** 다음 [shape]가 그 모양 그대로 놓이게 한다. */
+    fun forget() { ready = false }
+
+    /** 점 하나의 위치(그리기용). */
+    fun pointX(i: Int) = px[i]
+    fun pointY(i: Int) = py[i]
 
     fun target(x: Float, y: Float) { tx = x; ty = y }
 
@@ -238,6 +282,26 @@ fun rememberSoftBlob(): SoftBlobState {
         }
     }
     return s
+}
+
+/** 손가락 자극([SoftBlob.impulse])을 주고 적분을 깨운다. */
+fun SoftBlobState.poke(x: Float, y: Float, ix: Float, iy: Float, radius: Float) {
+    blob.impulse(x, y, ix, iy, radius)
+    wake++
+}
+
+/** 모양은 그대로 두고 목표만 옮긴다. */
+fun SoftBlobState.nudge(x: Float, y: Float) {
+    blob.target(x, y)
+    wake++
+}
+
+/** 임의 모양으로 바꾸고([SoftBlob.shape]) 적분을 깨운다. [animate]가 false면 그 모양으로 바로 놓는다. */
+fun SoftBlobState.shapeTo(x: Float, y: Float, xs: FloatArray, ys: FloatArray, animate: Boolean) {
+    if (!animate) blob.forget()
+    blob.shape(x, y, xs, ys)
+    frame++
+    wake++
 }
 
 /** 목표를 바꾸고 적분을 깨운다. 처음이면 그 자리에 놓는다. 크기가 달라졌으면 모양도 바꾼다. */
