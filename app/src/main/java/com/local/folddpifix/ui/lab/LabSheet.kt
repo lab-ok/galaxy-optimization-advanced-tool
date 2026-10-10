@@ -60,7 +60,7 @@ internal fun LabSheet() {
             .navigationBarsPadding()
             .padding(bottom = 28.dp),
     ) {
-        Text("실험실", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
+        Text("설정 변경 비교", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Text("개발자 확인용 기능입니다. 공개 버전에는 들어가지 않습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(14.dp))
         GlassCard(padding = 16.dp) {

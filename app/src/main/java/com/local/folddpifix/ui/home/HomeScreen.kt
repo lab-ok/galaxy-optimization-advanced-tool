@@ -39,7 +39,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -92,12 +92,17 @@ import com.local.folddpifix.ui.help.GrantGuideSheet
 import com.local.folddpifix.ui.help.HelpSheet
 import com.local.folddpifix.ui.liquid.GlassCard
 import com.local.folddpifix.ui.liquid.LiquidButton
-import com.local.folddpifix.ui.liquid.LiquidMenu
 import com.local.folddpifix.ui.liquid.LiquidSlider
 import com.local.folddpifix.ui.liquid.LiquidSwitch
 import com.local.folddpifix.ui.liquid.LiquidToast
 import com.local.folddpifix.ui.liquid.LocalLiquid
 import com.local.folddpifix.ui.text.Copy
+import com.local.folddpifix.ui.nav.SideDrawerContent
+import com.local.folddpifix.ui.nav.NavSection
+import com.local.folddpifix.ui.nav.NavItem
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.DrawerValue
 import com.local.folddpifix.BuildConfig
 import com.local.folddpifix.ui.lab.LabSheet
 import com.local.folddpifix.ui.art.LocalDeviceShape
@@ -127,7 +132,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
     var sheet by remember { mutableStateOf<Sheet?>(null) }
     // 줄 세기 화면(크기 테스트에서 연다). 닫으면 크기 테스트로 돌아간다.
     var counting by remember { mutableStateOf(false) }
-    var menu by remember { mutableStateOf(false) }
+    val drawer = rememberDrawerState(DrawerValue.Closed)
     var flying by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -193,62 +198,73 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         inner = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT,
     )
     CompositionLocalProvider(LocalDeviceShape provides deviceShape) {
-        Scaffold(
-            containerColor = c.bg,
-            topBar = {
-                TopAppBar(
-                    title = { Text(AppInfo.NAME, fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp) },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg),
-                    actions = {
-                        Box {
-                            IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, "메뉴") }
-                            LiquidMenu(
-                                expanded = menu,
-                                onDismiss = { menu = false },
-                                items = listOf(
-                                    Copy.MENU_HELP to { sheet = Sheet.HELP },
-                                    Copy.MENU_TEST to { sheet = Sheet.TEST },
-                                    Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED },
-                                    Copy.MENU_REPORT to report,
-                                    Copy.MENU_RESET to { sheet = Sheet.RESET },
-                                    Copy.MENU_ABOUT to { sheet = Sheet.ABOUT },
-                                ) + (if (BuildConfig.LAB) listOf("실험실" to { sheet = Sheet.LAB }) else emptyList()),
-                            )
-                        }
-                    },
-                )
-            },
-            snackbarHost = { SnackbarHost(toast) { LiquidToast(it.visuals.message) } },
-        ) { inner ->
-            LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = inner.calculateTopPadding() + 4.dp, bottom = inner.calculateBottomPadding() + 28.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                item { Box(Modifier.widthIn(max = MAX_WIDTH)) { StatusCard(state) } }
-                items(todosOf(state), key = { it.key }) { todo ->
-                    Box(Modifier.widthIn(max = MAX_WIDTH)) { TodoCard(todo) { action ->
-                        when (action) {
-                            TodoAction.SETUP -> sheet = Sheet.GUIDE
-                            TodoAction.RELEARN -> vm.resetLearned()
-                            TodoAction.APPLY -> vm.applyNow()
-                            TodoAction.AUTO -> vm.setAuto(true)
-                            TodoAction.REPORT -> report()
-                            TodoAction.ADOPT -> vm.resolveExternal(adopt = true)
-                            TodoAction.RESTORE -> vm.resolveExternal(adopt = false)
+        // 사이드바: 기본 기능과(lab 빌드에서만) 실험실 메뉴. 고르면 서랍이 닫히고 해당 화면이 열린다.
+        val sections = buildList {
+            add(NavSection(Copy.MENU_SECTION_BASIC, listOf(NavItem.HOME, NavItem.TEST, NavItem.HELP, NavItem.GUIDE, NavItem.ADVANCED, NavItem.REPORT, NavItem.RESET, NavItem.ABOUT)))
+            if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB)))
+        }
+        val navigate: (NavItem) -> Unit = { item ->
+            scope.launch { drawer.close() }
+            when (item) {
+                NavItem.HOME -> Unit
+                NavItem.TEST -> sheet = Sheet.TEST
+                NavItem.HELP -> sheet = Sheet.HELP
+                NavItem.GUIDE -> sheet = Sheet.GUIDE
+                NavItem.ADVANCED -> sheet = Sheet.ADVANCED
+                NavItem.REPORT -> report()
+                NavItem.RESET -> sheet = Sheet.RESET
+                NavItem.ABOUT -> sheet = Sheet.ABOUT
+                NavItem.LAB -> sheet = Sheet.LAB
+            }
+        }
+        ModalNavigationDrawer(
+            drawerState = drawer,
+            scrimColor = c.ink.copy(alpha = 0.32f),
+            drawerContent = { SideDrawerContent(sections, current = NavItem.HOME, onSelect = navigate) },
+        ) {
+            Scaffold(
+                containerColor = c.bg,
+                topBar = {
+                    TopAppBar(
+                        title = { Text(AppInfo.NAME, fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp) },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg),
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "메뉴 열기") }
+                        },
+                    )
+                },
+                snackbarHost = { SnackbarHost(toast) { LiquidToast(it.visuals.message) } },
+            ) { inner ->
+                LazyColumn(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = inner.calculateTopPadding() + 4.dp, bottom = inner.calculateBottomPadding() + 28.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    item { Box(Modifier.widthIn(max = MAX_WIDTH)) { StatusCard(state) } }
+                    items(todosOf(state), key = { it.key }) { todo ->
+                        Box(Modifier.widthIn(max = MAX_WIDTH)) { TodoCard(todo) { action ->
+                            when (action) {
+                                TodoAction.SETUP -> sheet = Sheet.GUIDE
+                                TodoAction.RELEARN -> vm.resetLearned()
+                                TodoAction.APPLY -> vm.applyNow()
+                                TodoAction.AUTO -> vm.setAuto(true)
+                                TodoAction.REPORT -> report()
+                                TodoAction.ADOPT -> vm.resolveExternal(adopt = true)
+                                TodoAction.RESTORE -> vm.resolveExternal(adopt = false)
+                            }
+                        } }
+                    }
+                    item { Box(Modifier.widthIn(max = MAX_WIDTH)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
+                    item { Box(Modifier.widthIn(max = MAX_WIDTH)) {
+                        AutoCard(state.auto) { on ->
+                            if (on && !ExternalChangeNotifier.canNotify(context)) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                            vm.setAuto(on)
                         }
                     } }
                 }
-                item { Box(Modifier.widthIn(max = MAX_WIDTH)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
-                item { Box(Modifier.widthIn(max = MAX_WIDTH)) {
-                    AutoCard(state.auto) { on ->
-                        if (on && !ExternalChangeNotifier.canNotify(context)) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                        vm.setAuto(on)
-                    }
-                } }
             }
         }
 

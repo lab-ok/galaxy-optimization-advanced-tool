@@ -54,7 +54,12 @@ object Copy {
     const val AUTO_BODY = "재부팅하거나 화면이 전환되면 설정한 DPI를 다시 적용합니다"
 
     // 메뉴
+    const val MENU_HOME = "표시 크기 맞추기"
     const val MENU_HELP = "사용 방법"
+    const val MENU_GUIDE = "권한 설정"
+    const val MENU_LAB = "설정 변경 비교"
+    const val MENU_SECTION_BASIC = "기본 기능"
+    const val MENU_SECTION_LAB = "실험실"
     const val MENU_ADVANCED = "고급 정보"
     const val MENU_REPORT = "문제 신고"
     const val MENU_TEST = "크기 테스트"
