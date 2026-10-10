@@ -1,5 +1,13 @@
 package com.local.folddpifix.ui.home
 
+import com.local.folddpifix.ui.liquid.liquidReveal
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
 import com.local.folddpifix.ui.liquid.LiquidDots
 import com.local.folddpifix.data.display.PermissionReset
 import androidx.compose.material3.TextButton
@@ -139,6 +147,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
     var menu by remember { mutableStateOf(false) }
     // 사이드바에서 고른 기능(화면). 기능 안의 세부 설정은 점 세 개 메뉴에 있다.
     var feature by rememberSaveable { mutableStateOf(NavItem.DPI_MATCH) }
+    // 화면에 보이는 기능. 사이드바에서 고르면 방울 이동을 보여 준 뒤 사이드바가 닫히면서 바뀐다(물방울 번짐 전환).
+    var shown by rememberSaveable { mutableStateOf(NavItem.DPI_MATCH) }
     var flying by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -210,7 +220,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.APP_SIZE)))
         }
         // 점 세 개 메뉴: 지금 기능의 세부 설정·도구.
-        val menuItems = when (feature) {
+        val menuItems = when (shown) {
             NavItem.DPI_MATCH -> listOf(
                 Copy.MENU_TEST to { sheet = Sheet.TEST },
                 Copy.MENU_HELP to { sheet = Sheet.HELP },
@@ -222,6 +232,41 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             )
             NavItem.APP_SIZE -> listOf(Copy.MENU_ABOUT to { sheet = Sheet.ABOUT })
         }
+        // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
+        val dpiMatchList: @Composable (PaddingValues) -> Unit = { inner ->
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = inner.calculateTopPadding() + 4.dp, bottom = inner.calculateBottomPadding() + 28.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                // 고정 카드에도 키를 둬, 위에 할 일 카드가 생기거나 없어져도 카드 상태(스위치·슬라이더 방울)가 유지되게 한다.
+                item(key = "card:status") { Box(Modifier.widthIn(max = MAX_WIDTH)) { StatusCard(state) } }
+                items(todosOf(state), key = { it.key }) { todo ->
+                    Box(Modifier.widthIn(max = MAX_WIDTH)) { TodoCard(todo) { action ->
+                        when (action) {
+                            TodoAction.SETUP -> sheet = Sheet.GUIDE
+                            TodoAction.RELEARN -> vm.resetLearned()
+                            TodoAction.APPLY -> vm.applyNow()
+                            TodoAction.AUTO -> vm.setAuto(true)
+                            TodoAction.REPORT -> report()
+                            TodoAction.ADOPT -> vm.resolveExternal(adopt = true)
+                            TodoAction.RESTORE -> vm.resolveExternal(adopt = false)
+                        }
+                    } }
+                }
+                item(key = "card:size") { Box(Modifier.widthIn(max = MAX_WIDTH)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
+                item(key = "card:auto") { Box(Modifier.widthIn(max = MAX_WIDTH)) {
+                    AutoCard(state.auto) { on ->
+                        if (on && !ExternalChangeNotifier.canNotify(context)) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        vm.setAuto(on)
+                    }
+                } }
+            }
+        }
+
         ModalNavigationDrawer(
             drawerState = drawer,
             scrimColor = c.ink.copy(alpha = 0.32f),
@@ -230,7 +275,10 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     // 방울이 고른 항목으로 옮겨 가는 것을 잠깐 보여 준 뒤 닫는다.
                     val moved = item != feature
                     feature = item
-                    scope.launch { if (moved) delay(520); drawer.close() }
+                    scope.launch {
+                        if (moved) { delay(440); shown = item }
+                        drawer.close()
+                    }
                 })
             },
         ) {
@@ -239,10 +287,19 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 topBar = {
                     TopAppBar(
                         title = {
-                            Text(
-                                if (feature == NavItem.DPI_MATCH) AppInfo.NAME else feature.label,
-                                fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp,
-                            )
+                            AnimatedContent(
+                                targetState = shown,
+                                transitionSpec = {
+                                    (fadeIn(tween(260, delayMillis = 120)) + slideInVertically(tween(320, delayMillis = 120)) { it / 2 }) togetherWith
+                                        (fadeOut(tween(140)) + slideOutVertically(tween(180)) { -it / 2 })
+                                },
+                                label = "title",
+                            ) { f ->
+                                Text(
+                                    if (f == NavItem.DPI_MATCH) AppInfo.NAME else f.label,
+                                    fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp,
+                                )
+                            }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg),
                         navigationIcon = {
@@ -258,40 +315,24 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 },
                 snackbarHost = { SnackbarHost(toast) { LiquidToast(it.visuals.message) } },
             ) { inner ->
-                if (feature == NavItem.APP_SIZE) {
-                    LabScreen(inner)
-                    return@Scaffold
-                }
-                LazyColumn(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = inner.calculateTopPadding() + 4.dp, bottom = inner.calculateBottomPadding() + 28.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    // 고정 카드에도 키를 둬, 위에 할 일 카드가 생기거나 없어져도 카드 상태(스위치·슬라이더 방울)가 유지되게 한다.
-                    item(key = "card:status") { Box(Modifier.widthIn(max = MAX_WIDTH)) { StatusCard(state) } }
-                    items(todosOf(state), key = { it.key }) { todo ->
-                        Box(Modifier.widthIn(max = MAX_WIDTH)) { TodoCard(todo) { action ->
-                            when (action) {
-                                TodoAction.SETUP -> sheet = Sheet.GUIDE
-                                TodoAction.RELEARN -> vm.resetLearned()
-                                TodoAction.APPLY -> vm.applyNow()
-                                TodoAction.AUTO -> vm.setAuto(true)
-                                TodoAction.REPORT -> report()
-                                TodoAction.ADOPT -> vm.resolveExternal(adopt = true)
-                                TodoAction.RESTORE -> vm.resolveExternal(adopt = false)
-                            }
-                        } }
+                // 기능을 바꾸면 새 화면이 왼쪽(사이드바 쪽)에서 물방울처럼 번지며 덮는다. 이전 화면은 다 덮인 뒤 사라진다.
+                AnimatedContent(
+                    targetState = shown,
+                    transitionSpec = {
+                        (EnterTransition.None togetherWith fadeOut(tween(1, delayMillis = 600))).apply { targetContentZIndex = 1f }
+                    },
+                    label = "feature",
+                ) { f ->
+                    // 처음 그릴 때가 들어오는 중(PreEnter)이면 번짐 전환, 앱을 처음 열 때(Visible)는 그대로 그린다
+                    val entering = remember { transition.currentState == EnterExitState.PreEnter }
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .liquidReveal(entering) { Offset(0f, it.height * 0.3f) }
+                            .background(c.bg),
+                    ) {
+                        if (f == NavItem.APP_SIZE) LabScreen(inner) else dpiMatchList(inner)
                     }
-                    item(key = "card:size") { Box(Modifier.widthIn(max = MAX_WIDTH)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
-                    item(key = "card:auto") { Box(Modifier.widthIn(max = MAX_WIDTH)) {
-                        AutoCard(state.auto) { on ->
-                            if (on && !ExternalChangeNotifier.canNotify(context)) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                            }
-                            vm.setAuto(on)
-                        }
-                    } }
                 }
             }
         }
