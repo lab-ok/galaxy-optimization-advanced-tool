@@ -1,6 +1,8 @@
 package com.local.folddpifix.ui.liquid
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
@@ -16,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,7 +31,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -61,28 +63,34 @@ fun LiquidMenu(
         val btn = 40.dp.toPx(); val right = menuW.toPx() + 8.dp.toPx(); val top = 4.dp.toPx()
         floatArrayOf(btn, right, top, menuW.toPx(), menuH.toPx(), radius.toPx())
     }
-    fun button(animate: Boolean) { val (btn, right, top) = geo; blob.moveTo(right - btn / 2, top + btn / 2, btn, btn, animate) }
-    fun panel(animate: Boolean, sw: Float = 1f, sh: Float = 1f) {
-        val right = geo[1]; val top = geo[2]; val w = geo[3] * sw; val h = geo[4] * sh
-        blob.moveTo(right - w / 2, top + h / 2, w, h, animate, corner = geo[5])
+    // 펼침 정도(가로 pw, 세로 ph, 0=버튼 원 → 1=메뉴판). 이 값으로 매 프레임 방울 크기를 바꾸는데,
+    // 바뀐 만큼의 85%는 모양째 옮기고 15%만 힘으로 따라오게 해 둥근 사각형이 유지된 채 가장자리만 살짝 늦는다.
+    // 한 번에 큰 모양으로 바꾸거나 힘만으로 따라가게 하면 가장자리가 뒤처져 찌그러진다.
+    val pw = remember { Animatable(0f) }
+    val ph = remember { Animatable(0f) }
+    fun shape(animate: Boolean) {
+        val (btn, right, top) = geo
+        val w = btn + (geo[3] - btn) * pw.value; val h = btn + (geo[4] - btn) * ph.value
+        blob.moveTo(right - w / 2, top + h / 2, w, h, animate, corner = geo[5], carry = 0.85f)
     }
     LaunchedEffect(Unit) {
-        // 메뉴판은 크게 부풀기 때문에 기본 계수로는 출렁임이 크다. 바짝 끌고 점성을 키워 차분하게 펼친다.
-        blob.blob.gain = 4f
+        blob.blob.gain = 6f
         blob.blob.damping = 3.5f
-        if (reduce) { panel(false); items0.snapTo(items.size.toFloat()); return@LaunchedEffect }
-        button(false)
-        panel(true)
-        items0.animateTo(items.size.toFloat(), tween(80 + 45 * items.size, delayMillis = 120))
+        if (reduce) { pw.snapTo(1f); ph.snapTo(1f); shape(false); items0.snapTo(items.size.toFloat()); return@LaunchedEffect }
+        shape(false)
+        launch { snapshotFlow { pw.value to ph.value }.collect { shape(true) } }
+        launch { pw.animateTo(1f, spring(dampingRatio = 1f, stiffness = 520f)) }
+        launch { ph.animateTo(1f, spring(dampingRatio = 1f, stiffness = 330f)) }
+        items0.animateTo(items.size.toFloat(), tween(80 + 45 * items.size, delayMillis = 110))
     }
     val close: (() -> Unit) -> Unit = { after ->
         scope.launch {
             if (!reduce) {
+                // 펼칠 때를 거꾸로: 세로가 먼저, 가로가 뒤따라 버튼 원으로 오므라들고, 끝 무렵에 흐려진다.
                 launch { items0.animateTo(0f, tween(90)) }
-                launch { fade.animateTo(0f, tween(170)) }
-                // 모양을 유지한 채 오른쪽 위로 오므라들며 흐려진다(원으로 바로 되돌리면 모서리가 뿔처럼 튄다).
-                panel(true, sw = 0.6f, sh = 0.4f)
-                delay(180)
+                launch { fade.animateTo(0f, tween(90, delayMillis = 150)) }
+                launch { ph.animateTo(0f, tween(220, easing = FastOutLinearInEasing)) }
+                pw.animateTo(0f, tween(240, easing = FastOutLinearInEasing))
             }
             onDismiss()
             after()

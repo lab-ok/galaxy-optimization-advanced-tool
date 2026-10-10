@@ -70,6 +70,25 @@ class SoftBlob(private val n: Int = N) {
         restShape(w, hh, corner)
     }
 
+    private val ox = FloatArray(n); private val oy = FloatArray(n)
+
+    /**
+     * 모양과 목표를 함께 바꾸되, 바뀐 만큼의 [carry] 비율은 점을 직접 옮겨 준다(나머지만 힘으로 따라온다).
+     * 메뉴판처럼 크기가 계속 커지는 방울은 힘만으로 따라가면 가장자리가 뒤처져 찌그러지므로,
+     * 대부분은 모양째 옮기고 남은 조금만 물처럼 늦게 따라오게 한다.
+     */
+    fun morph(x: Float, y: Float, w: Float, hh: Float, corner: Float, carry: Float) {
+        if (!ready) { reset(x, y, w, hh, corner); return }
+        rx.copyInto(ox); ry.copyInto(oy)
+        val otx = tx; val oty = ty
+        restShape(w, hh, corner)
+        tx = x; ty = y
+        for (i in 0 until n) {
+            px[i] += carry * ((x + rx[i]) - (otx + ox[i]))
+            py[i] += carry * ((y + ry[i]) - (oty + oy[i]))
+        }
+    }
+
     private fun restShape(w: Float, hh: Float, corner: Float) {
         h = minOf(w, hh)
         val pi = PI.toFloat()
@@ -222,8 +241,9 @@ fun rememberSoftBlob(): SoftBlobState {
 }
 
 /** 목표를 바꾸고 적분을 깨운다. 처음이면 그 자리에 놓는다. 크기가 달라졌으면 모양도 바꾼다. */
-fun SoftBlobState.moveTo(x: Float, y: Float, w: Float, h: Float, animate: Boolean, corner: Float = -1f) {
+fun SoftBlobState.moveTo(x: Float, y: Float, w: Float, h: Float, animate: Boolean, corner: Float = -1f, carry: Float = 0f) {
     if (!blob.ready || !animate) { blob.reset(x, y, w, h, corner); frame++; return }
+    if (carry > 0f) { blob.morph(x, y, w, h, corner, carry); frame++; wake++; return }
     blob.reshape(w, h, corner)
     blob.target(x, y)
     wake++
