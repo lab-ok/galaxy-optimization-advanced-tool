@@ -174,6 +174,10 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
             Appear("intro", 0, shown) {
                 GlassCard(padding = 16.dp) {
                     Text(Copy.APP_SIZE_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Spacer(Modifier.height(8.dp))
+                    // 왼쪽 앱만 배율이 바뀌고 오른쪽 앱은 기본 그대로: 기능을 한눈에
+                    AppScaleArt()
+                    Spacer(Modifier.height(6.dp))
                     Text(Copy.APP_SIZE_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -183,6 +187,8 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                 Appear("connect", 1, shown) {
                     GlassCard(padding = 16.dp) {
                         Text(Copy.APP_SIZE_CONNECT_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Spacer(Modifier.height(8.dp))
+                        ShizukuBridgeArt()
                         Text(Copy.APP_SIZE_CONNECT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(12.dp))
                         LiquidButton(Copy.APP_SIZE_CONNECT_ACTION, modifier = Modifier.fillMaxWidth(), onClick = onGuide)
@@ -215,6 +221,8 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                     }
                                 })
                             }
+                            // 켜기 전에는 알림창 조절이 어떻게 동작하는지 그림으로 보여 준다
+                            AnimatedVisibility(!notify) { Column { Spacer(Modifier.height(8.dp)); NotifyArt() } }
                             // 무선 디버깅 자동 끄기(Shizuku로 연결됐을 때만 의미가 있다)
                             if (shell == null) {
                                 Spacer(Modifier.height(14.dp))
