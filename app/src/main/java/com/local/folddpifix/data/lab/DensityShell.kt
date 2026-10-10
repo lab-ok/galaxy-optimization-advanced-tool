@@ -8,8 +8,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * 셸 도우미([DensityServer]) 클라이언트. 도우미가 [ShellBridgeProvider]로 바인더를 건네면 연결되고,
- * 도우미가 끝나면 자동으로 끊긴다. 모든 호출은 바인더 통신이라 IO 스레드에서 부른다.
+ * 앱별 화면 크기 호출 창구. 셸 권한 경로가 둘이다.
+ * - Shizuku([ShizukuAccess]): PC 없이 쓰는 기본 경로.
+ * - PC 셸 도우미([DensityServer]): 예비 경로. 도우미가 [ShellBridgeProvider]로 바인더를 건네면 연결되고, 끝나면 끊긴다.
+ * 도우미가 연결돼 있으면 도우미를, 아니면 Shizuku를 쓴다. 모든 호출은 바인더 통신이라 IO 스레드에서 부른다.
  */
 object DensityShell {
     private val binder = MutableStateFlow<IBinder?>(null)
@@ -38,14 +40,20 @@ object DensityShell {
         }
     }
 
-    /** 도우미가 이 기기에서 삼성 함수를 찾았는지. */
-    fun supported(): Boolean = tx(DensityServer.PING) { readInt(); readInt() == 1 }
+    private fun helper() = binder.value != null
+
+    /** 이 기기에서 삼성 함수를 찾았는지. */
+    fun supported(): Boolean =
+        if (helper()) tx(DensityServer.PING) { readInt(); readInt() == 1 } else ShizukuAccess.supported()
 
     /** 앱의 현재 화면 크기(dpi). 0이면 시스템 기본. */
-    fun get(pkg: String): Int = tx(DensityServer.GET, { writeString(pkg); writeInt(user()) }) { readInt() }
+    fun get(pkg: String): Int =
+        if (helper()) tx(DensityServer.GET, { writeString(pkg); writeInt(user()) }) { readInt() } else ShizukuAccess.get(pkg, user())
 
     /** 앱 화면 크기를 [DensityServer.STEPS] 중 하나로, 0이면 기본으로 되돌린다. 그 앱은 다시 시작된다. */
-    fun set(pkg: String, dpi: Int) = tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { }
+    fun set(pkg: String, dpi: Int) {
+        if (helper()) tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { } else ShizukuAccess.set(pkg, user(), dpi)
+    }
 
     fun stop() {
         runCatching { tx(DensityServer.EXIT) { } }

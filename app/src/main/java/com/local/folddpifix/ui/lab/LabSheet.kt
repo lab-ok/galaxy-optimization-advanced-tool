@@ -16,6 +16,8 @@ import androidx.compose.runtime.LaunchedEffect
 import com.local.folddpifix.data.lab.AppDensityProbe
 import com.local.folddpifix.data.lab.DensityServer
 import com.local.folddpifix.data.lab.DensityShell
+import com.local.folddpifix.data.lab.ShizukuAccess
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.local.folddpifix.ui.liquid.LiquidChips
 import androidx.compose.runtime.collectAsState
 import com.local.folddpifix.ui.components.CommandBox
@@ -275,8 +277,8 @@ private fun AppDensityCard() {
 }
 
 /**
- * 앱별 화면 크기: PC에서 셸 도우미([DensityServer])를 한 번 띄우면, 앱마다 삼성 6단계 중 하나를 고를 수 있다.
- * 바꾼 값은 시스템에 저장돼 재부팅해도 유지되므로, 도우미는 값을 바꿀 때만 켜 두면 된다.
+ * 앱별 화면 크기: 셸 권한이 있어야 하는 삼성 함수를 Shizuku(기본) 또는 PC 셸 도우미(예비)로 부른다.
+ * 앱마다 삼성 6단계 중 하나를 고르며, 바꾼 값은 시스템에 저장돼 재부팅해도 유지된다.
  */
 @Composable
 private fun ShellDensityCard() {
@@ -284,14 +286,22 @@ private fun ShellDensityCard() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val shell by DensityShell.connected.collectAsState()
+    val shizuku by ShizukuAccess.status.collectAsState()
+    val ready = shell != null || shizuku == ShizukuAccess.State.READY
     var apps by remember { mutableStateOf(emptyList<AppDensityProbe.App>()) }
     var values by remember { mutableStateOf(emptyMap<String, Int>()) }
     var supported by remember { mutableStateOf<Boolean?>(null) }
     var open by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf("") }
+    var showPc by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { AppDensityProbe.launcherApps(context) } }
-    LaunchedEffect(shell, apps) {
-        if (shell == null) { supported = null; values = emptyMap(); return@LaunchedEffect }
+    // Shizuku 앱에서 시작·허용하고 돌아오면 상태를 다시 읽는다
+    LifecycleResumeEffect(Unit) {
+        ShizukuAccess.watch(context)
+        onPauseOrDispose { }
+    }
+    LaunchedEffect(ready, shell, apps) {
+        if (!ready) { supported = null; values = emptyMap(); return@LaunchedEffect }
         withContext(Dispatchers.IO) {
             supported = runCatching { DensityShell.supported() }.getOrDefault(false)
             if (supported == true) values = apps.associate { it.pkg to runCatching { DensityShell.get(it.pkg) }.getOrDefault(-1) }
@@ -301,29 +311,52 @@ private fun ShellDensityCard() {
     GlassCard(padding = 16.dp) {
         Text("앱별 화면 크기", fontWeight = FontWeight.SemiBold, color = c.ink)
         when {
-            shell == null -> {
-                Text(
-                    "삼성 '앱 화면 크게/작게'를 FoldFit에서 바꿉니다. 이 기능은 adb 셸 권한이 필요해서, PC에서 아래 명령으로 " +
-                        "셸 도우미를 한 번 켜야 합니다. 켜지면 이 카드가 바로 바뀝니다.",
-                    color = c.muted, style = MaterialTheme.typography.bodySmall,
-                )
-                Spacer(Modifier.height(8.dp))
-                val cmd = remember { DensityServer.startCommand() }
-                CommandBox(cmd, onCopy = {
-                    context.getSystemService(android.content.ClipboardManager::class.java)
-                        .setPrimaryClip(android.content.ClipData.newPlainText("adb", cmd))
+            !ready -> {
+                val (body, button) = when (shizuku) {
+                    ShizukuAccess.State.NOT_INSTALLED ->
+                        "삼성 '앱 화면 크게/작게'를 FoldFit에서 바꾸려면 셸 권한이 필요합니다. 무료 앱 Shizuku를 설치하면 PC 없이 쓸 수 있습니다." to "Shizuku 설치하기"
+                    ShizukuAccess.State.NOT_RUNNING ->
+                        "Shizuku가 꺼져 있습니다. Shizuku를 열고 '무선 디버깅으로 시작'을 눌러 주세요(Wi-Fi 필요, 처음 한 번은 페어링). " +
+                            "Shizuku 설정에서 '부팅 시 시작'을 켜 두면 재부팅 뒤에도 스스로 켜집니다." to "Shizuku 열기"
+                    else -> "Shizuku가 켜져 있습니다. FoldFit이 Shizuku를 쓰도록 허용해 주세요." to "Shizuku 허용하기"
+                }
+                Text(body, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(10.dp))
+                LiquidButton(button, modifier = Modifier.fillMaxWidth(), onClick = {
+                    when (shizuku) {
+                        ShizukuAccess.State.NOT_INSTALLED -> openShizukuStore(context)
+                        ShizukuAccess.State.NOT_RUNNING ->
+                            context.packageManager.getLaunchIntentForPackage(ShizukuAccess.PACKAGE)?.let(context::startActivity)
+                        else -> ShizukuAccess.requestPermission()
+                    }
                 })
                 Text(
-                    "바꾼 값은 시스템에 저장돼 재부팅해도 유지됩니다. 도우미는 FoldFit을 닫거나 30분 동안 쓰지 않으면 스스로 꺼집니다.",
-                    color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 6.dp),
+                    if (showPc) "PC로 하기 접기" else "PC로 하기",
+                    color = c.muted, style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(top = 10.dp).clip(RoundedCornerShape(8.dp)).clickable { showPc = !showPc }.padding(4.dp),
                 )
+                if (showPc) {
+                    Text(
+                        "PC PowerShell(platform-tools 폴더)에서 아래 명령을 한 번 실행하면 셸 도우미가 켜집니다. " +
+                            "도우미는 FoldFit을 닫거나 30분 동안 쓰지 않으면 스스로 꺼집니다.",
+                        color = c.muted, style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    val cmd = remember { DensityServer.startCommand() }
+                    CommandBox(cmd, onCopy = {
+                        context.getSystemService(android.content.ClipboardManager::class.java)
+                            .setPrimaryClip(android.content.ClipData.newPlainText("adb", cmd))
+                    })
+                }
             }
             supported == false -> {
-                Text("셸 도우미는 켜졌지만 이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.", color = c.danger, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(10.dp))
-                LiquidButton("셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
-                    scope.launch(Dispatchers.IO) { DensityShell.stop() }
-                })
+                Text("셸 권한은 받았지만 이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.", color = c.danger, style = MaterialTheme.typography.bodySmall)
+                if (shell != null) {
+                    Spacer(Modifier.height(10.dp))
+                    LiquidButton("PC 셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                        scope.launch(Dispatchers.IO) { DensityShell.stop() }
+                    })
+                }
             }
             else -> {
                 Text(
@@ -369,11 +402,19 @@ private fun ShellDensityCard() {
                     }
                 }
                 if (message.isNotEmpty()) Text(message, color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
-                Spacer(Modifier.height(10.dp))
-                LiquidButton("셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
-                    scope.launch(Dispatchers.IO) { DensityShell.stop() }
-                })
+                if (shell != null) {
+                    Spacer(Modifier.height(10.dp))
+                    LiquidButton("PC 셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                        scope.launch(Dispatchers.IO) { DensityShell.stop() }
+                    })
+                }
             }
         }
     }
+}
+
+private fun openShizukuStore(context: Context) {
+    val market = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=${ShizukuAccess.PACKAGE}"))
+    val web = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://shizuku.rikka.app/download/"))
+    runCatching { context.startActivity(market) }.onFailure { runCatching { context.startActivity(web) } }
 }

@@ -87,6 +87,9 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     // IWindowManager 숨은 API 접근
     implementation(libs.hiddenapibypass)
+    // 실험실 앱별 화면 크기: Shizuku로 셸 권한 호출(제공자는 lab 매니페스트에만 등록)
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
