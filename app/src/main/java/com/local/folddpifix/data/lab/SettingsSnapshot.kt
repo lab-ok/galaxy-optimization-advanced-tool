@@ -48,8 +48,9 @@ object SettingsSnapshot {
             val a = before[t].orEmpty()
             val b = after[t].orEmpty()
             (a.keys + b.keys).sorted().forEach { k ->
-                val x = a[k]
-                val y = b[k]
+                // 파일에는 줄바꿈을 공백으로 적으므로, 여러 줄 값(JSON 등)은 같은 형태로 맞춰 비교한다.
+                val x = a[k]?.replace('\n', ' ')
+                val y = b[k]?.replace('\n', ' ')
                 when {
                     k !in a -> { appendLine("[$t] + $k = $y"); changes++ }
                     k !in b -> { appendLine("[$t] - $k (이전 $x)"); changes++ }

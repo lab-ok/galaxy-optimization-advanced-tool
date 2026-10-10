@@ -21,3 +21,12 @@ class SettingsSnapshotTest {
         assertTrue(SettingsSnapshot.diff(a, b).contains("[secure] * x : 1 → 2"))
     }
 }
+
+class SettingsSnapshotMultilineTest {
+    @Test
+    fun multilineValueIsNotReportedAsChangedAfterRoundTrip() {
+        val fresh = mapOf("secure" to mapOf("json" to "{\n  \"a\": 1\n}"), "global" to emptyMap<String, String?>(), "system" to emptyMap())
+        val saved = SettingsSnapshot.parse(SettingsSnapshot.serialize(fresh))
+        assertTrue(SettingsSnapshot.diff(saved, fresh).contains("바뀐 설정 키가 없습니다"))
+    }
+}
