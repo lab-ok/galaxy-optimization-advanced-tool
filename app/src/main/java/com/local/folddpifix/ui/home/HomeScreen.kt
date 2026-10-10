@@ -1,5 +1,11 @@
 package com.local.folddpifix.ui.home
 
+import androidx.compose.ui.graphics.Color
+import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeState
 import com.local.folddpifix.ui.liquid.liquidReveal
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.animation.core.tween
@@ -267,6 +273,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             }
         }
 
+        // 위쪽 제목 줄: 아래 내용이 비치는 반투명 블러(내용은 haze 원본, 제목 줄은 haze 자식)
+        val haze = remember { HazeState() }
         ModalNavigationDrawer(
             drawerState = drawer,
             scrimColor = c.ink.copy(alpha = 0.32f),
@@ -301,7 +309,11 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                                 )
                             }
                         },
-                        colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg),
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                        modifier = Modifier.hazeChild(
+                            haze,
+                            HazeStyle(backgroundColor = c.bg, tint = HazeTint(c.bg.copy(alpha = 0.7f)), blurRadius = 24.dp, noiseFactor = 0f),
+                        ),
                         navigationIcon = {
                             IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "기능 메뉴 열기") }
                         },
@@ -318,6 +330,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 // 기능을 바꾸면 새 화면이 왼쪽(사이드바 쪽)에서 물방울처럼 번지며 덮는다. 이전 화면은 다 덮인 뒤 사라진다.
                 AnimatedContent(
                     targetState = shown,
+                    modifier = Modifier.haze(haze),
                     transitionSpec = {
                         (EnterTransition.None togetherWith fadeOut(tween(1, delayMillis = 600))).apply { targetContentZIndex = 1f }
                     },

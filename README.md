@@ -211,4 +211,4 @@ Copyright (C) 2026 lala5bok
 
 GPL-3.0 조건(소스 공개)을 따르기 어려운 회사나 제품에는 별도 상용 라이선스를 제공합니다. 문의: lala5bok@gmail.com
 
-이 앱이 쓰는 라이브러리 중 AndroidX·Jetpack Compose·HiddenApiBypass는 Apache License 2.0, Shizuku-API는 MIT License이며 모두 GPL-3.0과 함께 쓸 수 있습니다.
+이 앱이 쓰는 라이브러리 중 AndroidX·Jetpack Compose·HiddenApiBypass·Haze는 Apache License 2.0, Shizuku-API는 MIT License이며 모두 GPL-3.0과 함께 쓸 수 있습니다.

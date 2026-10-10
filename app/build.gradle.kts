@@ -90,6 +90,8 @@ dependencies {
     // 실험실 앱별 화면 크기: Shizuku로 셸 권한 호출(제공자는 lab 매니페스트에만 등록)
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
+    // 위쪽 제목 줄 뒤 반투명 블러(Compose 1.7에 맞는 판)
+    implementation(libs.haze)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
