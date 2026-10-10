@@ -61,12 +61,8 @@ internal fun ShizukuGuide(
     val current = done.indexOfFirst { !it }.let { if (it < 0) done.size else it }
     var note by remember { mutableIntStateOf(0) }  // 1: 무선 디버깅을 직접 켜야 함
     var asked by remember { mutableStateOf(false) }
-    // 자동으로 할 수 있는 단계는 차례가 오면 바로 한다: 무선 디버깅 켜기, FoldFit 허용 창 띄우기
-    LaunchedEffect(current) {
-        if (current == 1) {
-            if (ShizukuAccess.enableWirelessDebug(context)) tick++ else note = 1
-        }
-    }
+    // 허용 창은 차례가 오면 바로 띄운다. 무선 디버깅은 기기 설정이라 사용자가 [켜기]를 눌렀을 때만 켠다
+    // (화면을 열 때마다 자동으로 켜면 사용자가 꺼도 다시 켜진다).
     LaunchedEffect(state) {
         if (state == ShizukuAccess.State.NEEDS_PERMISSION && !asked) { asked = true; ShizukuAccess.requestPermission() }
     }
@@ -102,8 +98,7 @@ internal fun ShizukuGuide(
     }
     Spacer(Modifier.height(4.dp))
     Text(
-        "무선 디버깅 켜기와 허용 창 띄우기는 차례가 오면 자동으로 합니다. 페어링만 직접 해 주세요. " +
-            "끝나면 재부팅 뒤에도 Shizuku가 Wi-Fi에서 스스로 다시 켜집니다.",
+        "[켜기]를 누르면 FoldFit이 무선 디버깅을 대신 켜고, Shizuku가 켜지면 허용 창을 바로 띄웁니다.",
         color = c.muted, style = MaterialTheme.typography.labelSmall,
     )
 }

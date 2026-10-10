@@ -1,5 +1,6 @@
 package com.local.folddpifix.ui.about
 
+import com.local.folddpifix.data.appsize.AppUsage
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -30,8 +31,12 @@ internal object AppPermissions {
         ),
         Item(
             Manifest.permission.POST_NOTIFICATIONS, "알림",
-            "외부에서 DPI가 바뀌었을 때 선택 알림과 접기/펼치기 감시 알림을 보여 줍니다.", How.USER,
+            "외부 DPI 변경 선택 알림, 접기/펼치기 감시 알림, 앱별 크기 조절 알림을 보여 줍니다.", How.USER,
             applies = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+        ),
+        Item(
+            Manifest.permission.PACKAGE_USAGE_STATS, "사용 기록 접근",
+            "앱별 크기 목록을 최근 사용 순으로 정렬합니다. Shizuku가 연결되면 FoldFit이 스스로 허용합니다.", How.USER,
         ),
         Item(
             Manifest.permission.RECEIVE_BOOT_COMPLETED, "부팅 완료 알림 받기",
@@ -39,11 +44,11 @@ internal object AppPermissions {
         ),
         Item(
             Manifest.permission.FOREGROUND_SERVICE, "포그라운드 서비스",
-            "접고 펼칠 때 화면 전환을 감지해 DPI를 다시 맞춥니다.", How.INSTALL,
+            "접고 펼칠 때 DPI를 다시 맞추고, 켜 두면 알림창 앱별 크기 조절을 띄워 둡니다.", How.INSTALL,
         ),
         Item(
             Manifest.permission.FOREGROUND_SERVICE_SPECIAL_USE, "포그라운드 서비스(특수 용도)",
-            "위 감시 서비스의 종류(화면 전환 시 DPI 재적용)를 시스템에 알립니다.", How.INSTALL,
+            "위 서비스의 종류(화면 전환 시 DPI 재적용, 알림창 크기 조절)를 시스템에 알립니다.", How.INSTALL,
         ),
         Item(
             Manifest.permission.WAKE_LOCK, "절전 모드 해제 방지",
@@ -51,6 +56,10 @@ internal object AppPermissions {
         ),
     )
 
-    fun granted(context: Context, item: Item): Boolean =
-        !item.applies || context.checkSelfPermission(item.permission) == PackageManager.PERMISSION_GRANTED
+    fun granted(context: Context, item: Item): Boolean = when {
+        !item.applies -> true
+        // 사용 기록 접근은 권한이 아니라 앱 작업(AppOps)으로 허용 여부가 정해진다
+        item.permission == Manifest.permission.PACKAGE_USAGE_STATS -> AppUsage.hasAccess(context)
+        else -> context.checkSelfPermission(item.permission) == PackageManager.PERMISSION_GRANTED
+    }
 }

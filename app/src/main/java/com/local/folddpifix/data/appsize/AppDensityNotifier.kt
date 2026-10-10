@@ -1,4 +1,4 @@
-package com.local.folddpifix.data.lab
+package com.local.folddpifix.data.appsize
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -9,14 +9,13 @@ import android.content.Intent
 import android.content.res.Resources
 import androidx.core.app.NotificationCompat
 import com.local.folddpifix.AppInfo
-import com.local.folddpifix.BuildConfig
 import com.local.folddpifix.R
 import com.local.folddpifix.background.ExternalChangeNotifier
 import com.local.folddpifix.ui.MainActivity
-import com.local.folddpifix.ui.lab.DensityStepActivity
+import com.local.folddpifix.ui.appsize.DensityStepActivity
 
 /**
- * 알림창 앱별 화면 크기 조절(lab 빌드 전용). [AppDensityService]가 이 알림을 띄워 둔 채로
+ * 알림창 앱별 화면 크기 조절. [AppDensityService]가 이 알림을 띄워 둔 채로
  * 맨 앞 앱이 바뀔 때마다([ForegroundWatcher]) 그 앱 이름과 지금 크기를 보여 준다.
  * [작게]·[기본]·[크게]를 누르면 [DensityStepActivity]가 그 앱의 크기를 한 단계 바꾼다.
  */
@@ -25,7 +24,7 @@ object AppDensityNotifier {
     const val NOTIFICATION_ID = 3
     private const val PREF = "lab_app_density_notify"
 
-    fun enabled(context: Context) = BuildConfig.LAB && prefs(context).getBoolean("on", false)
+    fun enabled(context: Context) = prefs(context).getBoolean("on", false)
 
     fun setEnabled(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("on", on).apply()

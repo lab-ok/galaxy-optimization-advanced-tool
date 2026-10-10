@@ -1,4 +1,4 @@
-package com.local.folddpifix.data.lab
+package com.local.folddpifix.data.appsize
 
 import android.content.ContentProvider
 import android.content.ContentValues
@@ -9,7 +9,7 @@ import android.os.Bundle
 import android.os.Process
 
 /**
- * 셸 도우미([DensityServer])가 바인더를 건네는 통로(lab 빌드 매니페스트에만 등록된다).
+ * 셸 도우미([DensityServer])가 바인더를 건네는 통로.
  * 셸(uid 2000)이나 root가 부른 "bind"만 받고, 그 밖의 호출과 데이터 접근은 모두 무시한다.
  */
 class ShellBridgeProvider : ContentProvider() {

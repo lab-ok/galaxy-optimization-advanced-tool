@@ -1,4 +1,4 @@
-package com.local.folddpifix.data.lab
+package com.local.folddpifix.data.appsize
 
 import android.app.Service
 import android.content.Intent
@@ -8,7 +8,7 @@ import com.local.folddpifix.data.shizuku.ShizukuAccess
 import rikka.shizuku.Shizuku
 
 /**
- * 알림창 앱별 화면 크기 조절을 띄워 두는 서비스(lab 빌드 전용).
+ * 알림창 앱별 화면 크기 조절을 띄워 두는 서비스.
  * 알림을 늘 보이게 하고, Shizuku가 준비되면 [ForegroundWatcher]로 맨 앞 앱이 바뀔 때만 알림 내용을 고친다.
  * Shizuku가 늦게 켜지면(부팅 직후 등) 바인더가 오는 순간 감시를 시작한다.
  */

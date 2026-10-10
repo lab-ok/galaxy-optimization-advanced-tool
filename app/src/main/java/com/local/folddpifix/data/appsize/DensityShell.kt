@@ -1,4 +1,4 @@
-package com.local.folddpifix.data.lab
+package com.local.folddpifix.data.appsize
 
 import com.local.folddpifix.data.shizuku.ShizukuAccess
 import android.content.Context
@@ -76,6 +76,14 @@ object DensityShell {
     }
 
     private fun prefs(context: Context) = context.getSharedPreferences("lab_app_density", Context.MODE_PRIVATE)
+
+    /** 사용자가 크기를 정해 둔 앱(홈 화면에 아이콘이 있는 앱 중). */
+    fun appliedApps(context: Context): List<String> =
+        AppList.launcherApps(context).map { it.pkg }.filter { runCatching { get(context, it) > 0 }.getOrDefault(false) }
+
+    /** 정해 둔 앱을 모두 기본 크기로 되돌린다. 되돌린 앱 수를 돌려준다. */
+    fun resetAll(context: Context): Int =
+        appliedApps(context).count { runCatching { set(context, it, 0) }.isSuccess }
 
     fun stop() {
         runCatching { tx(DensityServer.EXIT) { } }

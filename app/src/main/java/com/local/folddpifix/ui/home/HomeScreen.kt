@@ -1,5 +1,9 @@
 package com.local.folddpifix.ui.home
 
+import com.local.folddpifix.ui.appsize.AppSizeResetSheet
+import com.local.folddpifix.ui.appsize.AppSizeGuideSheet
+import com.local.folddpifix.ui.appsize.AppSizeHelpSheet
+import com.local.folddpifix.ui.appsize.AppSizeScreen
 import androidx.compose.ui.graphics.Color
 import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.haze
@@ -135,7 +139,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -220,23 +224,27 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         inner = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT,
     )
     CompositionLocalProvider(LocalDeviceShape provides deviceShape) {
-        // 사이드바는 기능 단위: 화면 크기 맞추기(기본), 앱별 화면 크기(실험실, lab 빌드에서만).
+        // 사이드바는 기능 단위. 두 기능 모두 화면 크기(DPI)를 다루므로 '화면 크기'로 묶는다. 조사 도구는 lab 빌드에서만.
         val sections = buildList {
-            add(NavSection(Copy.MENU_SECTION_FEATURES, listOf(NavItem.DPI_MATCH)))
-            if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.APP_SIZE)))
+            add(NavSection(Copy.MENU_SECTION_FEATURES, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
+            if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
         }
-        // 점 세 개 메뉴: 지금 기능의 세부 설정·도구.
+        // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
+        val common = { help: Sheet, guide: Sheet, reset: Sheet ->
+            listOf(
+                Copy.MENU_HELP to { sheet = help },
+                Copy.MENU_GUIDE to { sheet = guide },
+                Copy.MENU_REPORT to report,
+                Copy.MENU_RESET to { sheet = reset },
+            )
+        }
         val menuItems = when (shown) {
             NavItem.DPI_MATCH -> listOf(
                 Copy.MENU_TEST to { sheet = Sheet.TEST },
-                Copy.MENU_HELP to { sheet = Sheet.HELP },
-                Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
                 Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED },
-                Copy.MENU_REPORT to report,
-                Copy.MENU_RESET to { sheet = Sheet.RESET },
-                Copy.MENU_ABOUT to { sheet = Sheet.ABOUT },
-            )
-            NavItem.APP_SIZE -> listOf(Copy.MENU_ABOUT to { sheet = Sheet.ABOUT })
+            ) + common(Sheet.HELP, Sheet.GUIDE, Sheet.RESET)
+            NavItem.APP_SIZE -> common(Sheet.APP_HELP, Sheet.APP_GUIDE, Sheet.APP_RESET)
+            NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
         val dpiMatchList: @Composable (PaddingValues) -> Unit = { inner ->
@@ -279,7 +287,10 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             drawerState = drawer,
             scrimColor = c.ink.copy(alpha = 0.32f),
             drawerContent = {
-                SideDrawerContent(sections, current = feature, visible = drawer.targetValue == DrawerValue.Open, onSelect = { item ->
+                SideDrawerContent(sections, current = feature, visible = drawer.targetValue == DrawerValue.Open, onAbout = {
+                    scope.launch { drawer.close() }
+                    sheet = Sheet.ABOUT
+                }, onSelect = { item ->
                     // 방울이 고른 항목으로 옮겨 가는 것을 잠깐 보여 준 뒤 닫는다.
                     val moved = item != feature
                     feature = item
@@ -344,7 +355,11 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             .liquidReveal(entering) { Offset(0f, it.height * 0.3f) }
                             .background(c.bg),
                     ) {
-                        if (f == NavItem.APP_SIZE) LabScreen(inner) else dpiMatchList(inner)
+                        when (f) {
+                            NavItem.DPI_MATCH -> dpiMatchList(inner)
+                            NavItem.APP_SIZE -> AppSizeScreen(inner, onGuide = { sheet = Sheet.APP_GUIDE }, onReset = { sheet = Sheet.APP_RESET })
+                            NavItem.LAB_TOOLS -> LabScreen(inner)
+                        }
                     }
                 }
             }
@@ -379,7 +394,10 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             vm.say(Copy.TOAST_COPIED)
                         },
                     )
-                        Sheet.ABOUT -> AboutSheet(onMail = { ReportMail.inquiry(context) })
+                    Sheet.ABOUT -> AboutSheet(onMail = { ReportMail.inquiry(context) })
+                    Sheet.APP_HELP -> AppSizeHelpSheet(onConnect = { sheet = Sheet.APP_GUIDE })
+                    Sheet.APP_GUIDE -> AppSizeGuideSheet()
+                    Sheet.APP_RESET -> AppSizeResetSheet(onDone = { msg -> sheet = null; vm.say(msg) })
                 }
             }
         }
@@ -515,7 +533,7 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
         LiquidSlider(
             value = outer, range = SLIDER_RANGE,
             onValueChange = { outer = it },
-            onValueChangeFinished = { vm.commitOuter(outer) },
+            onValueChangeFinished = {},
             valueText = { "$it" },
             description = Copy.SIZE_OUTER,
             enabled = state.hasPermission,
@@ -529,12 +547,26 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
         LiquidSlider(
             value = adjust, range = -SettingsRepository.MAX_ADJUST..SettingsRepository.MAX_ADJUST,
             onValueChange = { adjust = it },
-            onValueChangeFinished = { vm.commitAdjust(adjust) },
+            onValueChangeFinished = {},
             valueText = { if (it > 0) "+$it" else "$it" },
             centered = true,
             description = Copy.SIZE_INNER_TUNE,
             enabled = state.hasPermission && innerPanel != null,
         )
+        // 조절바는 값만 바꾸고, [적용]을 눌러야 화면에 반영한다(끄는 도중 화면이 계속 바뀌지 않게).
+        val pending = state.target != null && (outer != state.target || adjust != state.adjust)
+        AnimatedVisibility(pending, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+            Column(Modifier.padding(top = 8.dp)) {
+                Text(Copy.SIZE_PENDING, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    LiquidButton(Copy.SIZE_REVERT, modifier = Modifier.weight(1f), primary = false, onClick = {
+                        outer = state.target ?: outer; adjust = state.adjust
+                    })
+                    LiquidButton(Copy.SIZE_APPLY, modifier = Modifier.weight(1f), onClick = { vm.commitSize(outer, adjust) })
+                }
+            }
+        }
         if (outerPanel != null && innerPanel != null && innerDpi != null) {
             Spacer(Modifier.height(6.dp))
             ScreensPreview(

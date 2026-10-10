@@ -1,4 +1,4 @@
-package com.local.folddpifix.data.lab
+package com.local.folddpifix.data.appsize
 
 import android.content.AttributionSource
 import android.os.Binder
@@ -14,7 +14,7 @@ import java.lang.reflect.Method
 import kotlin.system.exitProcess
 
 /**
- * 실험실 셸 도우미(lab 빌드 전용). PC에서 adb 셸로 한 번 띄우면 셸 권한(uid 2000)으로 돌면서
+ * 실험실 셸 도우미. PC에서 adb 셸로 한 번 띄우면 셸 권한(uid 2000)으로 돌면서
  * FoldFit에 바인더 하나를 건네고, 앱별 화면 크기 '읽기·바꾸기' 두 가지만 대신 해 준다.
  * 삼성 함수(IActivityTaskManager.getCustomDensity/setUserCustomDensity)가 앱에는 줄 수 없는
  * MANAGE_ACTIVITY_TASKS 권한을 요구하기 때문이다(adb 셸은 이 권한을 가지고 있다).

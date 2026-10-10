@@ -107,22 +107,17 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         _messages.value = text
     }
 
-    /** 외부 화면 크기를 정하고 바로 적용한다(슬라이더를 놓을 때). */
-    fun commitOuter(value: Int) {
-        if (!DpiPolicy.isValid(value)) return
-        if (settings.targetDpi != value) {
-            logRepo.add("외부 화면 크기: ${settings.targetDpi} → $value")
-            settings.targetDpi = value
+    /** 외부 화면 크기와 내부 화면 미세조정을 함께 저장하고 한 번에 적용한다([적용] 버튼). */
+    fun commitSize(outer: Int, adjust: Int) {
+        if (!DpiPolicy.isValid(outer)) return
+        val a = adjust.coerceIn(-SettingsRepository.MAX_ADJUST, SettingsRepository.MAX_ADJUST)
+        if (settings.targetDpi != outer) {
+            logRepo.add("외부 화면 크기: ${settings.targetDpi} → $outer")
+            settings.targetDpi = outer
         }
-        apply(quiet = false)
-    }
-
-    /** 내부 화면 미세조정을 저장하고 바로 적용한다. */
-    fun commitAdjust(value: Int) {
-        val v = value.coerceIn(-SettingsRepository.MAX_ADJUST, SettingsRepository.MAX_ADJUST)
-        if (settings.adjust != v) {
-            logRepo.add("내부 화면 미세조정: ${settings.adjust} → $v")
-            settings.adjust = v
+        if (settings.adjust != a) {
+            logRepo.add("내부 화면 미세조정: ${settings.adjust} → $a")
+            settings.adjust = a
         }
         apply(quiet = false)
     }

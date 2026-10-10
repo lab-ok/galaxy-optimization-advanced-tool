@@ -16,9 +16,18 @@
         android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />
 
-    <!-- Shizuku 설치 여부 확인(PC 없이 권한을 받는 방법) -->
+    <!-- 최근 사용 순 정렬과 '방금 쓰던 앱' 찾기(사용 기록 접근, Shizuku로 허용) -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- Shizuku 설치 여부 확인, 앱별 화면 크기에서 고를 앱 목록 -->
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
     </queries>
 
     <application
@@ -72,5 +81,28 @@
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+        <!-- 셸 도우미(DensityServer)가 셸 권한으로 바인더를 건네는 통로. 호출자 uid는 코드에서 다시 확인한다. -->
+        <provider
+            android:name="com.local.folddpifix.data.appsize.ShellBridgeProvider"
+            android:authorities="${applicationId}.shell"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+        <!-- 알림창 앱 화면 크기 조절: 알림을 띄워 두고 맨 앞 앱이 바뀔 때만 내용을 고친다 -->
+        <service
+            android:name="com.local.folddpifix.data.appsize.AppDensityService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Shows a notification to adjust the per-app display size of the app currently in front" />
+        </service>
+        <!-- 알림창 [작게]·[기본]·[크게]를 받아 방금 쓰던 앱의 크기를 바꾸는 투명 화면 -->
+        <activity
+            android:name="com.local.folddpifix.ui.appsize.DensityStepActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 </manifest>

@@ -71,11 +71,13 @@ import com.local.folddpifix.ui.text.Copy
 enum class NavItem(val label: String, val icon: NavIcon) {
     /** 접고 펼 때도 두 화면의 표시 크기(DPI)를 일관되게 맞추는 기본 기능. */
     DPI_MATCH(Copy.FEATURE_DPI, NavIcon.FOLD),
-    /** 실험실: 앱마다 화면 크기를 다르게 두는 기능(조사 단계, lab 빌드 전용). */
-    APP_SIZE(Copy.FEATURE_APP_SIZE, NavIcon.FLASK),
+    /** 앱마다 화면 크기를 따로 두는 기능(삼성 '앱 화면 크게/작게', Shizuku 필요). */
+    APP_SIZE(Copy.FEATURE_APP_SIZE, NavIcon.APPS),
+    /** 실험실: 기능을 만들 때 쓰는 조사 도구(lab 빌드 전용). */
+    LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { FOLD, FLASK }
+enum class NavIcon { FOLD, APPS, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -86,7 +88,13 @@ data class NavSection(val title: String, val items: List<NavItem>)
  * @param visible 사이드바가 열려 있는지. 열릴 때마다 등장 애니메이션을 다시 한다.
  */
 @Composable
-fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Boolean, onSelect: (NavItem) -> Unit) {
+fun SideDrawerContent(
+    sections: List<NavSection>,
+    current: NavItem?,
+    visible: Boolean,
+    onSelect: (NavItem) -> Unit,
+    onAbout: () -> Unit,
+) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val context = LocalContext.current
@@ -97,8 +105,8 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
     val enter = remember { Animatable(0f) }
     LaunchedEffect(visible) {
         if (!visible) { enter.snapTo(0f); return@LaunchedEffect }
-        if (reduce) { enter.snapTo(items.size + 2f); return@LaunchedEffect }
-        enter.animateTo(items.size + 2f, tween(120 + 55 * (items.size + 2), easing = LinearEasing))
+        if (reduce) { enter.snapTo(items.size + sections.size + 1f); return@LaunchedEffect }
+        enter.animateTo(items.size + sections.size + 1f, tween(120 + 55 * (items.size + 2), easing = LinearEasing))
     }
 
     // 고른 항목 방울: 각 항목의 위치를 재고, 머리·꼬리 스프링으로 옮긴다
@@ -165,6 +173,27 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
                     }
                 }
             }
+            // 맨 아래: 앱 정보(기능이 아니라 방울 선택 대상이 아니다)
+            Spacer(Modifier.height(18.dp))
+            Box(Modifier.fillMaxWidth().height(1.dp).padding(horizontal = 22.dp).background(c.line))
+            Spacer(Modifier.height(8.dp))
+            val aboutOrder = items.size + sections.size
+            val interaction = remember { MutableInteractionSource() }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .graphicsLayer { alpha = (enter.value - aboutOrder).coerceIn(0f, 1f) }
+                    .liquidPress(interaction, sx = 1.02f, sy = 0.95f)
+                    .clip(RoundedCornerShape(24.dp))
+                    .clickable(interaction, null, onClick = onAbout)
+                    .padding(start = 22.dp, end = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                NavGlyph(NavIcon.INFO, c.muted)
+                Spacer(Modifier.width(14.dp))
+                Text(Copy.MENU_ABOUT, color = c.muted, fontWeight = FontWeight.Medium)
+            }
         }
     }
 }
@@ -210,7 +239,9 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
         val s = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
         when (icon) {
             NavIcon.FOLD -> fold(color, s)
+            NavIcon.APPS -> apps(color, s)
             NavIcon.FLASK -> flask(color, s)
+            NavIcon.INFO -> info(color, s)
         }
     }
 }
@@ -222,6 +253,21 @@ private fun DrawScope.p(x: Float, y: Float) = Offset(u(x), u(y))
 private fun DrawScope.fold(c: Color, s: Stroke) {
     drawRoundRect(c, p(3f, 5.5f), Size(u(18f), u(13f)), CornerRadius(u(2f)), style = s)
     drawLine(c, p(12f, 7.5f), p(12f, 16.5f), s.width * 0.8f, StrokeCap.Round)
+}
+
+/** 앱 네 개: 둥근 네모 넷, 오른쪽 아래만 조금 크게(앱마다 크기가 다름). */
+private fun DrawScope.apps(c: Color, s: Stroke) {
+    drawRoundRect(c, p(4f, 4f), Size(u(6.5f), u(6.5f)), CornerRadius(u(1.8f)), style = s)
+    drawRoundRect(c, p(13.5f, 4f), Size(u(6.5f), u(6.5f)), CornerRadius(u(1.8f)), style = s)
+    drawRoundRect(c, p(4f, 13.5f), Size(u(6.5f), u(6.5f)), CornerRadius(u(1.8f)), style = s)
+    drawRoundRect(c, p(12.5f, 12.5f), Size(u(8.5f), u(8.5f)), CornerRadius(u(2.2f)), style = s)
+}
+
+/** 정보: 원 안의 i. */
+private fun DrawScope.info(c: Color, s: Stroke) {
+    drawCircle(c, u(8.5f), p(12f, 12f), style = s)
+    drawLine(c, p(12f, 11f), p(12f, 16.5f), s.width, StrokeCap.Round)
+    drawCircle(c, s.width * 0.75f, p(12f, 7.8f))
 }
 
 private fun DrawScope.flask(c: Color, s: Stroke) {

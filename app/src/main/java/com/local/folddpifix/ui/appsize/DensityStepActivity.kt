@@ -1,4 +1,4 @@
-package com.local.folddpifix.ui.lab
+package com.local.folddpifix.ui.appsize
 
 import android.app.Activity
 import android.content.res.Resources
@@ -6,16 +6,16 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import com.local.folddpifix.data.lab.AppDensityNotifier
-import com.local.folddpifix.data.lab.AppUsage
-import com.local.folddpifix.data.lab.DensityServer
-import com.local.folddpifix.data.lab.DensityShell
-import com.local.folddpifix.data.lab.ForegroundWatcher
+import com.local.folddpifix.data.appsize.AppDensityNotifier
+import com.local.folddpifix.data.appsize.AppUsage
+import com.local.folddpifix.data.appsize.DensityServer
+import com.local.folddpifix.data.appsize.DensityShell
+import com.local.folddpifix.data.appsize.ForegroundWatcher
 import com.local.folddpifix.data.shizuku.ShizukuAccess
 import rikka.shizuku.Shizuku
 
 /**
- * 알림 버튼을 받아 방금 쓰던 앱의 화면 크기를 한 단계 바꾸는 투명 화면(lab 빌드 전용).
+ * 알림 버튼을 받아 방금 쓰던 앱의 화면 크기를 한 단계 바꾸는 투명 화면.
  * 삼성은 크기를 바꾸면 그 앱을 닫으므로, 바꾼 뒤 그 앱을 다시 열어 준다. 알림에서 바로 앱을 여는 것은
  * Android 12부터 화면(Activity)으로만 할 수 있어 브로드캐스트 대신 이 화면을 쓴다.
  */

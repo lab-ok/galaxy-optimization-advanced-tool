@@ -1,4 +1,4 @@
-package com.local.folddpifix.data.lab
+package com.local.folddpifix.data.appsize
 
 import com.local.folddpifix.data.shizuku.ShizukuAccess
 import android.app.AppOpsManager
@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.Process
 
 /**
- * 사용 기록(UsageStats)으로 앱을 최근 사용 순으로 정렬하고, 지금 화면에 떠 있던 앱을 찾는다(lab 빌드 전용).
+ * 사용 기록(UsageStats)으로 앱을 최근 사용 순으로 정렬하고, 지금 화면에 떠 있던 앱을 찾는다.
  * 사용 기록 접근은 Shizuku가 켜져 있으면 FoldFit이 스스로 허용하고([ShizukuAccess.grantUsageAccess]),
  * 아니면 설정의 '사용 기록 접근' 화면에서 사용자가 켠다.
  */

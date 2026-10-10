@@ -1,4 +1,4 @@
-package com.local.folddpifix.data.lab
+package com.local.folddpifix.data.appsize
 
 import android.content.ComponentName
 import android.content.Context
@@ -11,7 +11,7 @@ import com.local.folddpifix.data.shizuku.ShizukuAccess
 import java.util.concurrent.Executors
 
 /**
- * 지금 화면 맨 앞의 앱을 시스템 이벤트로 따라간다(lab 빌드 전용).
+ * 지금 화면 맨 앞의 앱을 시스템 이벤트로 따라간다.
  * Shizuku의 셸 권한으로 IActivityTaskManager에 작업 스택 감시자(ITaskStackListener)를 등록하고,
  * 스택이 바뀔 때만 포커스된 작업의 맨 위 앱을 읽는다. 주기적으로 확인(폴링)하지 않아 배터리를 거의 쓰지 않는다.
  * 사용 기록(UsageStats)은 기기에 따라 늦게 반영돼 앱 전환을 놓칠 수 있어 예비로만 쓴다.

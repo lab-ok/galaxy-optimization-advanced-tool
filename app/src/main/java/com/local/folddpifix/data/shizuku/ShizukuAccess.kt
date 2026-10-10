@@ -6,8 +6,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.provider.Settings
 import android.content.pm.PackageManager
-import com.local.folddpifix.data.lab.AppUsage
-import com.local.folddpifix.data.lab.DensityServer
+import com.local.folddpifix.data.appsize.AppUsage
+import com.local.folddpifix.data.appsize.DensityServer
 import android.os.IBinder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

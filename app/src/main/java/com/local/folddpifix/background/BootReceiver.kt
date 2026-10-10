@@ -6,7 +6,7 @@ import com.local.folddpifix.domain.DpiFixer
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.local.folddpifix.data.lab.AppDensityNotifier
+import com.local.folddpifix.data.appsize.AppDensityNotifier
 import android.os.UserManager
 
 /**

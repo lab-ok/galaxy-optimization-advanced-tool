@@ -1,7 +1,6 @@
 package com.local.folddpifix.data.lab
 
 import android.content.Context
-import android.content.Intent
 import android.os.IBinder
 import android.os.Process
 import org.lsposed.hiddenapibypass.HiddenApiBypass
@@ -18,17 +17,6 @@ import java.lang.reflect.Method
  * 권한이 모자라면 SecurityException 문구에 필요한 권한이 나오므로 그것도 그대로 남긴다.
  */
 object AppDensityProbe {
-
-    data class App(val label: String, val pkg: String)
-
-    fun launcherApps(context: Context): List<App> {
-        val pm = context.packageManager
-        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        return pm.queryIntentActivities(intent, 0)
-            .map { App(it.loadLabel(pm).toString(), it.activityInfo.packageName) }
-            .distinctBy { it.pkg }
-            .sortedBy { it.label }
-    }
 
     private fun userId() = Process.myUid() / 100_000
 

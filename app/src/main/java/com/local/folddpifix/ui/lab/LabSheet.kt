@@ -1,5 +1,6 @@
 package com.local.folddpifix.ui.lab
 
+import com.local.folddpifix.data.appsize.AppList
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
@@ -14,8 +15,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.runtime.LaunchedEffect
 import com.local.folddpifix.data.lab.AppDensityProbe
-import com.local.folddpifix.data.lab.DensityServer
-import com.local.folddpifix.data.lab.DensityShell
+import com.local.folddpifix.data.appsize.DensityServer
+import com.local.folddpifix.data.appsize.DensityShell
 import com.local.folddpifix.data.shizuku.ShizukuAccess
 import com.local.folddpifix.ui.liquid.LiquidChips
 import androidx.compose.runtime.collectAsState
@@ -57,10 +58,10 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 실험실 기능 '앱별 화면 크기'(lab 빌드 전용). 접고 펼 때 DPI를 맞추는 기본 기능과는 다른 갈래로,
- * 앱마다 화면 크기를 다르게 두는 기능을 만들기 위한 조사 단계다.
- * 지금은 삼성 '앱 화면 크게/작게'가 어떤 시스템 설정 키에 저장되는지 찾는다:
- * 바꾸기 전 설정 전체를 저장 → 설정 앱에서 앱 하나의 크기를 바꿈 → 바꾼 뒤 비교해 차이를 파일로 저장·공유.
+ * 실험실 '조사 도구'(lab 빌드 전용). 기능을 만들 때 기기 설정과 시스템 함수를 살펴보는 시험 화면이다.
+ * - 설정 변경 비교: 바꾸기 전·뒤 설정 전체를 비교해 바뀐 키를 파일로 저장·공유한다.
+ * - 앱별 밀도 직접 시험: 삼성 앱별 화면 크기 함수를 앱 권한으로 직접 불러 본다(셸 권한이 필요함을 확인한 도구).
+ * - 시스템 함수 탐색: 화면 밀도·배율 관련 시스템 함수 목록을 파일로 만든다.
  */
 @Composable
 internal fun LabScreen(contentPadding: PaddingValues) {
@@ -81,23 +82,13 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             .padding(top = 4.dp, bottom = 28.dp),
     ) {
         GlassCard(padding = 16.dp) {
-            Text("앱마다 화면 크기를 다르게", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text("조사 도구", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
-                "삼성 '앱 화면 크게/작게'와 같은 설정을 FoldFit에서 바꿉니다. 바꾼 값은 재부팅해도 유지됩니다. 실험실 기능이라 공개 버전에는 들어가지 않습니다.",
+                "기능을 만들 때 기기의 설정·시스템 함수를 살펴보는 실험실 도구입니다. 결과는 파일로 저장해 보낼 수 있습니다. 공개 버전에는 들어가지 않습니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
         }
-        Spacer(Modifier.height(12.dp))
-        AppSizePanel()
-        Spacer(Modifier.height(20.dp))
-        // 조사 도구: 앱별 화면 크기를 만들 때 쓴 시험 기능. 평소에는 접어 둔다.
-        var tools by remember { mutableStateOf(false) }
-        Text(
-            if (tools) "조사 도구 접기" else "조사 도구 펼치기",
-            color = c.muted, style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { tools = !tools }.padding(horizontal = 6.dp, vertical = 8.dp),
-        )
-        if (tools) {
+        run {
             Spacer(Modifier.height(12.dp))
             GlassCard(padding = 16.dp) {
                 Text("설정 변경 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -185,12 +176,12 @@ private fun AppDensityCard() {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var apps by remember { mutableStateOf(emptyList<AppDensityProbe.App>()) }
+    var apps by remember { mutableStateOf(emptyList<AppList.App>()) }
     var pkg by remember { mutableStateOf("") }
     var dpi by remember { mutableStateOf("360") }
     var result by remember { mutableStateOf("") }
     var original by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { AppDensityProbe.launcherApps(context) } }
+    LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { AppList.launcherApps(context) } }
 
     GlassCard(padding = 16.dp) {
         Text("앱별 밀도 직접 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
