@@ -139,7 +139,7 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
             }
             Box {
                 // 방울 층(항목 뒤): 고른 항목을 따라다니는 잉크 알약
-                Canvas(Modifier.matchParentSize().goo(c.ink, 7.dp)) {
+                Canvas(Modifier.matchParentSize().goo(c.ink, 9.dp)) {
                     drawLiquidPill(pill, c.ink, size.width, rowH)
                 }
                 Column {

@@ -18,35 +18,35 @@ import kotlin.math.abs
  * 넓적한 물방울(사이드바 선택 표시). 폭을 [SEGMENTS]개의 세로 조각으로 나눠 조각마다 스프링을 따로 둔다.
  * 가운데 조각이 먼저 움직이고 가장자리는 조금 늦게 따라와(스프링이 약해서) 옮겨 가는 동안 물처럼 휘고,
  * 도착하면 가장자리가 살짝 넘쳤다 돌아오며 출렁인다. 조각들의 위치로 매끈한 외곽선 하나를 그려 들쭉날쭉하지 않다.
- * 뒤에는 점점 느린 꼬리 방울 [DROPS]개가 따라오며 goo로 몸통에 이어졌다 흡수된다.
+ * 표면장력: 꼬리는 따로 떨어진 방울을 만들지 않는다. 몸통 뒤에 짧고 굵은 목 하나가 늘어나되 몸통에서
+ * 행 높이의 [TAIL_REACH]배 이상은 멀어지지 못하게 묶여, 끌려가다가 탄성 있게 몸통으로 되돌아와 합쳐진다.
  */
 class LiquidPillState internal constructor() {
     internal val segments = List(SEGMENTS) { Animatable(-1f) }
-    internal val drops = List(DROPS) { Animatable(-1f) }
+    internal val tail = Animatable(-1f)
 
     /** 몸통 가운데 조각의 위치(글자 반전 계산용). 아직 자리를 못 잡았으면 -1. */
     val center: Float get() = segments[SEGMENTS / 2].value
 
     internal suspend fun moveTo(y: Float, reduce: Boolean) {
         if (center < 0f || reduce) {
-            segments.forEach { it.snapTo(y) }; drops.forEach { it.snapTo(y) }; return
+            segments.forEach { it.snapTo(y) }; tail.snapTo(y); return
         }
         coroutineScope {
             val mid = (SEGMENTS - 1) / 2f
             segments.forEachIndexed { i, a ->
                 // 가운데 1 → 가장자리 0
                 val k = 1f - abs(i - mid) / mid
-                launch { a.animateTo(y, spring(dampingRatio = 0.62f + 0.12f * k, stiffness = 230f + 330f * k)) }
+                launch { a.animateTo(y, spring(dampingRatio = 0.7f + 0.1f * k, stiffness = 260f + 300f * k)) }
             }
-            drops.forEachIndexed { i, a ->
-                launch { a.animateTo(y, spring(dampingRatio = 0.9f, stiffness = 170f - 40f * i)) }
-            }
+            launch { tail.animateTo(y, spring(dampingRatio = 0.8f, stiffness = 200f)) }
         }
     }
 
     companion object {
         const val SEGMENTS = 7
-        const val DROPS = 3
+        /** 꼬리가 몸통에서 벗어날 수 있는 최대 거리(행 높이 배수). 작을수록 표면장력이 세 보인다. */
+        const val TAIL_REACH = 0.75f
     }
 }
 
@@ -85,14 +85,14 @@ fun DrawScope.drawLiquidPill(state: LiquidPillState, color: Color, width: Float,
     }
     drawPath(path, color)
 
-    // 꼬리 방울: 몸통에서 멀수록 작아지고, 가까워지면 몸통에 녹아든다
+    // 꼬리(목): 몸통 가운데에서 이동 반대쪽으로 짧게 늘어난 굵은 방울. 몸통에 묶여 일정 거리 이상 떨어지지 않는다.
     val body = seg[n / 2]
-    state.drops.forEachIndexed { i, a ->
-        val gap = abs(a.value - body)
-        if (gap < 1f) return@forEachIndexed
-        val size = (rowH * (0.3f - 0.06f * i)) * (gap / (rowH * 1.2f)).coerceIn(0.25f, 1f)
-        // 꼬리는 가운데 한 줄로 이어 물줄기처럼 보이게 한다
-        val x = width / 2 + (i - 1) * rowH * 0.12f
-        drawCircle(color, size, Offset(x, a.value + r))
+    val pull = (state.tail.value - body).coerceIn(-rowH * LiquidPillState.TAIL_REACH, rowH * LiquidPillState.TAIL_REACH)
+    if (abs(pull) > 1f) {
+        val k = abs(pull) / (rowH * LiquidPillState.TAIL_REACH)
+        val rx = width * (0.16f - 0.05f * k)
+        val ry = r * (0.95f - 0.15f * k)
+        val cy = body + r + pull
+        drawOval(color, Offset(width / 2 - rx, cy - ry), androidx.compose.ui.geometry.Size(rx * 2, ry * 2))
     }
 }
