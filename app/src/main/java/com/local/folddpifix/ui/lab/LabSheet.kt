@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.local.folddpifix.data.lab.ApiProbe
 import com.local.folddpifix.data.lab.SettingsSnapshot
 import com.local.folddpifix.data.log.PublicLogFile
 import com.local.folddpifix.ui.liquid.GlassCard
@@ -113,6 +114,27 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                 Spacer(Modifier.height(8.dp))
                 Text(preview, color = c.ink, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp))
             }
+        }
+        Spacer(Modifier.height(12.dp))
+        GlassCard(padding = 16.dp) {
+            Text("시스템 함수 탐색", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(
+                "기기의 시스템 서비스를 모두 훑어 화면 밀도·확대·배율과 관련된 함수 목록을 파일로 만듭니다. 함수를 실행하지는 않습니다.",
+                color = c.muted, style = MaterialTheme.typography.bodySmall,
+            )
+            Spacer(Modifier.height(12.dp))
+            var probing by remember { mutableStateOf(false) }
+            LiquidButton(if (probing) "탐색 중…" else "탐색하고 파일로 보내기", modifier = Modifier.fillMaxWidth(), enabled = !probing, onClick = {
+                probing = true
+                scope.launch {
+                    val uri = withContext(Dispatchers.IO) {
+                        val name = "foldfit-lab-api-${SimpleDateFormat("yyMMdd-HHmmss", Locale.US).format(Date())}.txt"
+                        PublicLogFile.saveNew(context, name, ApiProbe.run(context))
+                    }
+                    probing = false
+                    uri?.let { share(context, it) }
+                }
+            })
         }
     }
 }
