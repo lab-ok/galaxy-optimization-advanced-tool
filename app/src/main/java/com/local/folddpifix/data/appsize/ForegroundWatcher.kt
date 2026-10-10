@@ -1,5 +1,6 @@
 package com.local.folddpifix.data.appsize
 
+import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.os.Binder
@@ -16,6 +17,7 @@ import java.util.concurrent.Executors
  * 스택이 바뀔 때만 포커스된 작업의 맨 위 앱을 읽는다. 주기적으로 확인(폴링)하지 않아 배터리를 거의 쓰지 않는다.
  * 사용 기록(UsageStats)은 기기에 따라 늦게 반영돼 앱 전환을 놓칠 수 있어 예비로만 쓴다.
  */
+@SuppressLint("PrivateApi", "SoonBlockedPrivateApi")
 object ForegroundWatcher {
     private const val DESCRIPTOR = "android.app.ITaskStackListener"
 
@@ -36,6 +38,7 @@ object ForegroundWatcher {
         if (proxy != null) return true
         if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return false
         return runCatching {
+            // 숨은 API(ITaskStackListener 번호 읽기)는 HiddenApiBypass로 허용한 뒤에 접근한다(ShizukuAccess.atm()이 허용).
             val atm = ShizukuAccess.atm()
             val code = Class.forName("$DESCRIPTOR\$Stub").getDeclaredField("TRANSACTION_onTaskStackChanged")
                 .apply { isAccessible = true }.getInt(null)

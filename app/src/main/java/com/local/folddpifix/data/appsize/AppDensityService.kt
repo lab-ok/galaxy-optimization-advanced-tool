@@ -3,6 +3,8 @@ package com.local.folddpifix.data.appsize
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.os.Build
+import androidx.core.app.ServiceCompat
 import android.os.IBinder
 import com.local.folddpifix.data.shizuku.ShizukuAccess
 import rikka.shizuku.Shizuku
@@ -18,10 +20,11 @@ class AppDensityService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        startForeground(
-            AppDensityNotifier.NOTIFICATION_ID,
-            AppDensityNotifier.build(this, AppDensityNotifier.describe(this, null)),
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+        // specialUse 종류는 Android 14부터 있다. 그 전에는 종류 없이 띄운다(FoldWatchService와 같은 방식).
+        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0
+        ServiceCompat.startForeground(
+            this, AppDensityNotifier.NOTIFICATION_ID,
+            AppDensityNotifier.build(this, AppDensityNotifier.describe(this, null)), type,
         )
         ShizukuAccess.watch(this)
         Shizuku.addBinderReceivedListenerSticky(binderReceived)

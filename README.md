@@ -4,7 +4,7 @@
 
 폴드는 외부 화면과 내부 화면의 픽셀 밀도(PPI)가 달라서, 같은 DPI(화면 크기 설정)를 써도 두 화면에서 글자와 아이콘의 실제 크기가 다르게 보입니다. 화면을 더 넓게 쓰려고 `adb shell wm density`로 DPI를 낮춰도, 재부팅하면 기본값으로 돌아가고 두 화면을 따로 맞추기도 번거롭습니다.
 
-FoldFit은 외부 화면 DPI 하나만 정하면 내부 화면 DPI를 두 화면의 해상도와 PPI로 계산해, 접어도 펴도 같은 실제 크기로 보이게 맞춥니다. 재부팅하거나 화면을 전환해도 자동으로 다시 적용합니다. ROOT나 Shizuku 없이, PC의 adb로 권한을 처음 한 번만 주면 됩니다.
+FoldFit은 외부 화면 DPI 하나만 정하면 내부 화면 DPI를 두 화면의 해상도와 PPI로 계산해, 접어도 펴도 같은 실제 크기로 보이게 맞춥니다. 재부팅하거나 화면을 전환해도 자동으로 다시 적용합니다. ROOT 없이, 무료 앱 Shizuku나 PC의 adb로 권한을 처음 한 번만 주면 됩니다. 앱마다 화면 크기를 따로 정하는 기능(삼성 One UI 9 이상, Shizuku 필요)도 있습니다.
 
 <p align="center">
   <img src="docs/screenshots/home.png" width="22%" alt="홈" />
@@ -23,7 +23,7 @@ FoldFit은 외부 화면 DPI 하나만 정하면 내부 화면 DPI를 두 화면
 | 디스플레이 번호 | 접고 펼 때 `-d 0`/`-d 1`이 가리키는 화면이 바뀌어 헷갈림 | 해상도로 외부·내부를 알아보고 각각 적용 |
 | 다른 설정에서 바뀌면 | 알 수 없음 | 감지해서 '이 값을 기준으로' 또는 '복원' 중 고르게 함 |
 | 맞았는지 확인 | 눈대중 | 크기 테스트(두 화면의 줄 수, 카드로 맞춘 자) |
-| 되돌리기 | `wm density reset` 명령을 기억해야 함 | 사이드바(왼쪽 위 ☰) → 초기화 → 기본 DPI로 복원 |
+| 되돌리기 | `wm density reset` 명령을 기억해야 함 | ⋮ 메뉴 → 초기화 → 기본 DPI로 복원 |
 | PC가 필요한 때 | 매번 | 없음(Shizuku) 또는 처음 권한을 줄 때 한 번 |
 
 ## 주요 기능
@@ -34,6 +34,7 @@ FoldFit은 외부 화면 DPI 하나만 정하면 내부 화면 DPI를 두 화면
 - **외부 DPI 변경 감지**: 시스템 설정의 화면 크기 등으로 DPI가 바뀌면 덮어쓰지 않고, 그 값을 기준으로 할지 이전 값으로 복원할지 알림과 홈 카드로 묻습니다.
 - **크기 테스트**: 두 화면은 실제 높이가 거의 같아서, 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다. 전체 화면에 번호 매긴 줄을 채워 접고 펴며 비교할 수 있고, 카드(짧은 변 54 mm)로 맞춘 자로 실제 길이도 잴 수 있습니다.
 - **권한 설정 안내**: 연결 방식(USB/무선)과 PC 운영체제(Windows/Mac/Linux)에 맞춘 단계별 안내, 명령 복사, 자주 나오는 오류 해결 방법을 앱 안에서 보여 줍니다. 안내문을 PC로 보내거나 메일로 보낼 수도 있습니다.
+- **앱마다 크기 따로**: 삼성 '앱 화면 크게/작게'와 같은 앱별 크기를 FoldFit에서 바꿉니다(One UI 9 이상, Shizuku 필요). 최근 사용 순 목록, 적용된 앱 모아 보기, 알림창의 [작게]·[기본]·[크게] 버튼, 한 번에 기본으로 되돌리기를 지원합니다.
 - **문제 신고**: 진단 파일과 오늘 로그를 첨부한 메일을 바로 작성합니다. 로그는 `다운로드/FoldFit/`에 날짜별로 저장됩니다.
 
 ## 호환 기기
@@ -52,7 +53,7 @@ Android 12(API 31) 이상의 Galaxy Z Fold 시리즈를 대상으로 합니다.
 | Galaxy Z Flip 시리즈 | 대상 아님 | 외부 화면이 보조 화면이라 맞출 필요가 거의 없음 |
 | Android 11 이하 | 지원 안 함 | minSdk 31 |
 
-기기가 알려 주는 PPI가 실제 패널과 다를 수 있어, 사양표에 있는 기종은 제조사 사양(해상도·대각선)으로 PPI를 다시 계산합니다. 확인된 기기가 늘면 이 표에 추가합니다. 다른 기기에서 써 보셨다면 앱의 사이드바(왼쪽 위 ☰) → 문제 신고로 진단 파일을 보내 주세요.
+기기가 알려 주는 PPI가 실제 패널과 다를 수 있어, 사양표에 있는 기종은 제조사 사양(해상도·대각선)으로 PPI를 다시 계산합니다. 확인된 기기가 늘면 이 표에 추가합니다. 다른 기기에서 써 보셨다면 앱의 ⋮ 메뉴 → 문제 신고로 진단 파일을 보내 주세요.
 
 ## 설치
 
@@ -85,6 +86,16 @@ adb shell pm grant com.local.folddpifix android.permission.WRITE_SECURE_SETTINGS
 3. **자동 적용** 스위치를 켜 두면 재부팅·화면 전환·외부 변경 때 알아서 다시 맞춥니다.
 4. 크기가 미세하게 다르게 느껴지면 **크기 테스트**로 확인하고 **내부 화면 보정**으로 다듬습니다.
 
+사이드바(왼쪽 위 ☰)의 **화면 크기** 아래에 두 기능이 있습니다. **접고 펴도 같은 크기**는 위 설명대로 기기 전체 크기를, **앱마다 크기 따로**는 앱별 크기를 다룹니다. 각 기능의 세부 도구(사용 방법·권한 설정·문제 신고·초기화)는 오른쪽 위 ⋮ 메뉴에 같은 순서로 있습니다. 조절바는 값만 바꾸고 [적용]을 눌러야 반영됩니다.
+
+### 앱마다 크기 따로
+
+- **필요한 것**: 삼성 One UI 9 이상과 Shizuku. 삼성은 앱별 크기를 바꾸는 시스템 함수(`IActivityTaskManager.setUserCustomDensity`)에 시스템 전용 권한을 걸어 두어, Shizuku가 빌려 주는 셸 권한으로 부릅니다. Shizuku가 없으면 PC에서 명령 한 번으로 FoldFit 셸 도우미를 켜서 쓸 수도 있습니다.
+- **Shizuku가 필요한 때**: 값을 바꿀 때만입니다. 정해 둔 크기는 시스템에 저장돼 Shizuku가 꺼져 있어도, 재부팅해도 유지됩니다.
+- **여섯 단계**: 시스템이 320·360·420·450·480·510만 받습니다. '기본'은 앱별 설정을 지웁니다.
+- **접고 펼 때**: 앱별 크기는 하나의 고정 DPI라 두 화면에 같은 숫자가 쓰여, 픽셀 밀도가 다른 두 화면에서 실제 크기가 다르게 보입니다.
+- **알림창 조절**: 켜 두면 알림에 지금 보고 있는 앱과 크기가 나옵니다. 앞 화면 앱은 Shizuku 셸 권한으로 등록한 작업 스택 감시(ITaskStackListener)로 알아내므로 주기적으로 확인하지 않습니다. 크기를 바꾸면 삼성 동작대로 그 앱이 다시 시작되고, FoldFit이 다시 열어 줍니다.
+
 ### 외부 DPI 변경 처리
 
 앱은 화면마다 마지막으로 적용한 DPI를 기억합니다. 시스템 설정의 화면 크기, 다른 앱, adb 등에서 값이 바뀌면 자동으로 덮어쓰지 않고, 홈 맨 위 카드와 알림에서 **이 값 기준으로 설정** 또는 **이전 값으로 복원**을 고르게 합니다. 감지는 WorkManager의 콘텐츠 URI 트리거(`Settings.Secure.display_density_forced`)라 상주 프로세스나 주기 확인이 없습니다. 부팅 직후 기기가 기본값으로 되돌린 경우는 외부 변경이 아니라 복원 대상입니다.
@@ -109,7 +120,7 @@ adb shell pm grant com.local.folddpifix android.permission.WRITE_SECURE_SETTINGS
 adb shell wm density reset
 ```
 
-ADB 없이 복구하려면 앱의 사이드바(왼쪽 위 ☰) → 초기화 → [기본 DPI로 복원]을 누르거나, 설정 → 디스플레이 → 화면 크게/작게를 쓰십시오.
+ADB 없이 복구하려면 앱의 ⋮ 메뉴 → 초기화 → [기본 DPI로 복원]을 누르거나, 설정 → 디스플레이 → 화면 크게/작게를 쓰십시오.
 
 ## 삭제
 
@@ -132,7 +143,7 @@ adb uninstall com.local.folddpifix
 
 ## 디스플레이 번호별 적용
 
-Samsung Galaxy Fold는 외부·내부 화면이 디스플레이 번호로 따로 있습니다(`wm density <dpi> -d 0`은 외부, `-d 1`은 내부로 알려져 있습니다). 앱은 `IWindowManager`에서 0~3번 디스플레이를 읽고, 해상도로 어느 화면인지 확인되는 디스플레이에 `setForcedDisplayDensityForUser(id, …)`로 보정 DPI를 바로 적용합니다. 그래서 접지 않아도 부팅 때 두 화면을 한꺼번에 맞출 수 있습니다. 어느 화면인지 확인할 수 없는 디스플레이는 건드리지 않습니다. 꺼진 화면은 현재 값을 읽을 수 없을 수 있어서, 이때는 "적용(확인 불가)"으로 기록하고 같은 값을 반복 적용하지 않습니다. 사이드바(왼쪽 위 ☰) → 고급 정보에서 번호별 해상도·PPI·기본·현재·설정 DPI를 확인할 수 있습니다.
+Samsung Galaxy Fold는 외부·내부 화면이 디스플레이 번호로 따로 있습니다(`wm density <dpi> -d 0`은 외부, `-d 1`은 내부로 알려져 있습니다). 앱은 `IWindowManager`에서 0~3번 디스플레이를 읽고, 해상도로 어느 화면인지 확인되는 디스플레이에 `setForcedDisplayDensityForUser(id, …)`로 보정 DPI를 바로 적용합니다. 그래서 접지 않아도 부팅 때 두 화면을 한꺼번에 맞출 수 있습니다. 어느 화면인지 확인할 수 없는 디스플레이는 건드리지 않습니다. 꺼진 화면은 현재 값을 읽을 수 없을 수 있어서, 이때는 "적용(확인 불가)"으로 기록하고 같은 값을 반복 적용하지 않습니다. ⋮ 메뉴 → 고급 정보에서 번호별 해상도·PPI·기본·현재·설정 DPI를 확인할 수 있습니다.
 
 ## 접기/펼치기
 
@@ -149,6 +160,9 @@ app/src/main/java/com/local/folddpifix/
 ├── App.kt · AppInfo.kt          Application(크래시 기록·숨은 API 허용), 제품 이름
 ├── data/                        데이터 계층
 │   ├── display/                 DpiController, DpiManager(IWindowManager, 디스플레이 ID별), PermissionReset(pm revoke 명령)
+│   ├── shizuku/                 ShizukuAccess(상태·셸 권한 호출·WRITE_SECURE_SETTINGS 받기)
+│   ├── appsize/                 앱별 크기: DensityShell(호출 창구), DensityServer(PC 셸 도우미), AppList·AppUsage,
+│   │                            ForegroundWatcher(앞 화면 앱), AppDensityService·Notifier(알림창 조절)
 │   ├── settings/                SettingsRepository(외부 DPI·보정·자동·학습 화면·꺼짐 PPI·적용 기록·외부 변경)
 │   └── log/                     LogRepository, PublicLogFile(Download/FoldFit), CrashRecorder, DiagnosticReport
 ├── domain/                      판단·계산(단위 테스트 대상)
@@ -167,6 +181,9 @@ app/src/main/java/com/local/folddpifix/
     ├── home/                    HomeScreen(상태·할 일·표시 크기·자동 적용·초기화), HomeViewModel, UiState
     ├── sizetest/                크기 테스트(세로 줄 수 비교, 줄 세기 화면, 기준 도형, mm 자)
     ├── help/                    사용 방법, 권한 설정 안내(GrantGuideSheet/Content)
+    ├── shizuku/                 Shizuku 연결 단계 안내(ShizukuGuide)
+    ├── appsize/                 앱마다 크기 따로(목록·사용 방법·권한 설정·초기화 시트, 알림 버튼 화면)
+    ├── nav/                     사이드바(물방울 선택·머리 물방울)
     ├── advanced/                고급 정보(디스플레이 ID·해상도·PPI·설정 DPI·적용 기록·로그)
     ├── about/                   앱 정보, 필요 권한(AppPermissions)
     └── components/              InfoRow, CommandBox
@@ -190,7 +207,7 @@ JDK 17과 Android SDK(compileSdk 35)가 있으면 Gradle로 빌드합니다.
 
 ### 테스트
 
-- 단위 테스트(56개): DPI 계산·PPI 결정·화면 학습·외부 변경 판정·반복 방지·화면 방향·문구 규칙 등. `./gradlew testDebugUnitTest`
+- 단위 테스트(59개): DPI 계산·PPI 결정·화면 학습·외부 변경 판정·반복 방지·화면 방향·문구 규칙 등. `./gradlew testDebugUnitTest`
 - 화면 캡처: `./screenshots.sh`가 Robolectric과 Roborazzi로 주요 화면을 PNG로 만듭니다(`app/build/outputs/roborazzi`).
 - 에뮬레이터 확인: 64비트 Android 컨테이너(redroid 등)에 설치해 `adb shell wm size`/`wm density`로 접기·펼치기와 외부 변경을 흉내 낼 수 있습니다.
 
