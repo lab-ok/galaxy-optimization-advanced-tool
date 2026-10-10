@@ -1,21 +1,17 @@
 package com.local.folddpifix.ui.help
 
+import com.local.folddpifix.ui.components.SheetColumn
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,13 +38,7 @@ internal fun HelpSheet(state: UiState, onOpenGuide: () -> Unit) {
         0f, 1f, infiniteRepeatable(tween(1600, delayMillis = 1100, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "t",
     )
     val anim = if (reduce) 1f else t
-    Column(
-        Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .navigationBarsPadding()
-            .padding(bottom = 28.dp),
-    ) {
+    SheetColumn {
         Text("사용 방법", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Spacer(Modifier.height(16.dp))
 

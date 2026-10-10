@@ -1,5 +1,7 @@
 package com.local.folddpifix.data.shizuku
 
+import com.local.folddpifix.data.HiddenApi
+import com.local.folddpifix.data.UserId
 import android.Manifest
 import android.app.AppOpsManager
 import android.content.ComponentName
@@ -8,11 +10,9 @@ import android.provider.Settings
 import android.content.pm.PackageManager
 import com.local.folddpifix.data.appsize.AppUsage
 import com.local.folddpifix.domain.AppDensityPolicy
-import android.os.IBinder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.lsposed.hiddenapibypass.HiddenApiBypass
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
@@ -21,7 +21,7 @@ import java.lang.reflect.InvocationTargetException
 /**
  * Shizuku 연동. Shizuku가 켜져 있고 FoldFit을 허용했으면 셸 권한이 필요한 일을 PC 없이 한다(ShizukuBinderWrapper).
  * - 기본 기능: FoldFit에 WRITE_SECURE_SETTINGS를 스스로 부여한다([grantSecureSettings]). 한 번 받으면 Shizuku 없이도 유지된다.
- * - 실험실: 삼성 앱별 화면 크기 함수를 셸 권한으로 부른다. PC 도우미([DensityServer])와 같은 일을 한다.
+ * - 앱마다 크기 따로: 삼성 앱별 화면 크기 함수를 셸 권한으로 부른다. PC 도우미([DensityServer])와 같은 일을 한다.
  * Shizuku 13.6+는 Android 13 이상에서 Wi-Fi에 연결돼 있으면 재부팅 뒤 스스로 다시 켜진다.
  */
 object ShizukuAccess {
@@ -32,14 +32,13 @@ object ShizukuAccess {
 
     private val state = MutableStateFlow(State.NOT_RUNNING)
     val status: StateFlow<State> = state.asStateFlow()
-    private var installed = false
-    private var started = false
+    @Volatile private var installed = false
+    private val started = java.util.concurrent.atomic.AtomicBoolean(false)
 
     /** 상태 감시를 시작한다. 여러 번 불러도 한 번만 등록한다. */
     fun watch(context: Context) {
         installed = runCatching { context.packageManager.getPackageInfo(PACKAGE, 0); true }.getOrDefault(false)
-        if (!started) {
-            started = true
+        if (started.compareAndSet(false, true)) {
             Shizuku.addBinderReceivedListenerSticky { refresh() }
             Shizuku.addBinderDeadListener { refresh() }
             Shizuku.addRequestPermissionResultListener { _, _ -> refresh() }
@@ -79,11 +78,9 @@ object ShizukuAccess {
      * IPermissionManager.grantRuntimePermission은 판본마다 인자가 달라(사용자 ID 앞에 기기 ID가 붙기도 함) 형으로 맞춘다.
      */
     fun grantSecureSettings(context: Context): Boolean = runCatching {
-        runCatching { HiddenApiBypass.addHiddenApiExemptions("L") }
-        val user = android.os.Process.myUid() / 100_000
+        val user = UserId.current()
         val perm = Manifest.permission.WRITE_SECURE_SETTINGS
-        val pm = Class.forName("android.permission.IPermissionManager\$Stub").getMethod("asInterface", IBinder::class.java)
-            .invoke(null, ShizukuBinderWrapper(SystemServiceHelper.getSystemService("permissionmgr")))!!
+        val pm = HiddenApi.asInterface("android.permission.IPermissionManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("permissionmgr")))
         val m = pm.javaClass.methods.first { it.name == "grantRuntimePermission" && it.parameterTypes.size >= 3 }
         val types = m.parameterTypes
         val args = arrayOfNulls<Any>(types.size)
@@ -114,10 +111,7 @@ object ShizukuAccess {
     }
 
     internal fun atm(): Any {
-        runCatching { HiddenApiBypass.addHiddenApiExemptions("L") }
-        val binder: IBinder = ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task"))
-        return Class.forName("android.app.IActivityTaskManager\$Stub")
-            .getMethod("asInterface", IBinder::class.java).invoke(null, binder)!!
+        return HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
     }
 
     private fun call(name: String, size: Int, vararg args: Any): Any? {
@@ -132,7 +126,9 @@ object ShizukuAccess {
     }
 
     fun supported(): Boolean = runCatching {
-        atm().javaClass.methods.any { it.name == "setUserCustomDensity" && it.parameterTypes.size == 4 }
+        val methods = atm().javaClass.methods
+        methods.any { it.name == "setUserCustomDensity" && it.parameterTypes.size == 4 } &&
+            methods.any { it.name == "getCustomDensity" && it.parameterTypes.size == 3 }
     }.getOrDefault(false)
 
     /** 사용자가 정한 값만 읽는다(true). false면 삼성이 앱별로 정해 둔 기본값까지 섞여 나온다. */
@@ -140,9 +136,7 @@ object ShizukuAccess {
 
     /** FoldFit에 사용 기록 접근(최근 사용 순 정렬·지금 앱 찾기용)을 셸 권한으로 허용한다. */
     fun grantUsageAccess(context: Context): Boolean = runCatching {
-        runCatching { HiddenApiBypass.addHiddenApiExemptions("L") }
-        val ops = Class.forName("com.android.internal.app.IAppOpsService\$Stub").getMethod("asInterface", IBinder::class.java)
-            .invoke(null, ShizukuBinderWrapper(SystemServiceHelper.getSystemService(Context.APP_OPS_SERVICE)))!!
+        val ops = HiddenApi.asInterface("com.android.internal.app.IAppOpsService", ShizukuBinderWrapper(SystemServiceHelper.getSystemService(Context.APP_OPS_SERVICE)))
         val code = runCatching {
             AppOpsManager::class.java.getMethod("strOpToOp", String::class.java).invoke(null, AppOpsManager.OPSTR_GET_USAGE_STATS) as Int
         }.getOrDefault(43)

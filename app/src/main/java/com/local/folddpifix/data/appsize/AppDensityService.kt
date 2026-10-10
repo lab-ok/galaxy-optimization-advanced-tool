@@ -32,7 +32,6 @@ class AppDensityService : Service() {
     }
 
     private fun watch() {
-        ShizukuAccess.refresh()
         ForegroundWatcher.start(this) { pkg -> AppDensityNotifier.show(this, AppDensityNotifier.describe(this, pkg)) }
     }
 
@@ -43,6 +42,7 @@ class AppDensityService : Service() {
 
     override fun onDestroy() {
         ForegroundWatcher.stop()
+        AppDensityNotifier.cancel(this)
         Shizuku.removeBinderReceivedListener(binderReceived)
         Shizuku.removeRequestPermissionResultListener(permission)
         super.onDestroy()

@@ -1,9 +1,9 @@
 package com.local.folddpifix.data.lab
 
+import com.local.folddpifix.data.HiddenApi
 import android.content.Context
 import android.os.Build
 import android.os.IBinder
-import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 /**
  * 실험실: 기기의 시스템 서비스를 모두 훑어 '앱별 화면 크기'와 관련 있어 보이는 함수를 찾는다.
@@ -26,8 +26,7 @@ object ApiProbe {
 
     fun run(context: Context): String = buildString {
         appendLine("기기: ${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT}) · ${Build.DISPLAY}")
-        runCatching { HiddenApiBypass.addHiddenApiExemptions("L") }
-            .onFailure { appendLine("숨은 API 허용 실패: ${it.message}") }
+        HiddenApi.exemptAll()
         val sm = runCatching { Class.forName("android.os.ServiceManager") }.getOrNull()
         val names = runCatching { sm?.getMethod("listServices")?.invoke(null) as? Array<*> }.getOrNull().orEmpty()
         appendLine("서비스 ${names.size}개")

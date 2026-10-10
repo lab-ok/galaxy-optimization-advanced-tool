@@ -1,5 +1,6 @@
 package com.local.folddpifix.ui.sizetest
 
+import com.local.folddpifix.ui.components.SheetColumn
 import androidx.compose.foundation.Canvas
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsCompat
@@ -18,7 +19,6 @@ import com.local.folddpifix.ui.liquid.LiquidButton
 import com.local.folddpifix.domain.ScreenGeometry
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,11 +33,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -81,13 +78,7 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
     val innerDpi = inner?.let { state.plan?.targetFor(it.screen)?.dpi }
     val current = panels.find { it.screen.key == state.activeScreen?.key }
 
-    Column(
-        Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .navigationBarsPadding()
-            .padding(bottom = 28.dp),
-    ) {
+    SheetColumn {
         Text("크기 테스트", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Text(
             "이 화면을 연 채로 기기를 접고 펼쳐 아래 기준 도형과 글자가 두 화면에서 같은 크기로 보이는지 확인합니다.",

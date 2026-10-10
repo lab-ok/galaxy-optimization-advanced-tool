@@ -8,7 +8,6 @@ import android.os.Process
 import com.local.folddpifix.AppInfo
 import com.local.folddpifix.data.display.DpiManager
 import com.local.folddpifix.data.settings.SettingsRepository
-import com.local.folddpifix.domain.PanelSpec
 import com.local.folddpifix.domain.plan
 import com.local.folddpifix.domain.resolvedPanels
 import java.util.Date

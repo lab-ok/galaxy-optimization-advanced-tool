@@ -1,12 +1,12 @@
 package com.local.folddpifix.data.display
 
+import com.local.folddpifix.data.UserId
 import android.annotation.SuppressLint
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.hardware.display.DisplayManager
-import android.os.Process
 import android.util.DisplayMetrics
 import android.view.Display
 import com.local.folddpifix.domain.DpiPolicy
@@ -205,7 +205,6 @@ class DpiManager(context: Context) : DpiController {
     companion object {
         const val METHOD_BINDER = "IWindowManager"
         private const val SHELL_TIMEOUT_SEC = 5L
-        private const val PER_USER_RANGE = 100_000
         /** Galaxy Fold는 0(외부)·1(내부). 여유 있게 0~3번을 본다. */
         private const val MAX_DISPLAY_ID = 4
 
@@ -234,7 +233,7 @@ class DpiManager(context: Context) : DpiController {
         @Volatile
         private var exempted = false
 
-        /** IWindowManager 계열 숨은 API만 접근 허용 목록에 넣는다. */
+        /** IWindowManager 계열 숨은 API를 접근 허용 목록에 넣는다(Shizuku·앱별 크기 쪽은 HiddenApi가 전체를 따로 허용한다). */
         fun exemptHiddenApis() {
             if (exempted) return
             // 실제 기기가 아닌 환경(JVM 테스트 등)에서는 실패할 수 있다. 실패하면 셸 경로로 넘어간다.
@@ -247,7 +246,7 @@ class DpiManager(context: Context) : DpiController {
             exempted = true
         }
 
-        private fun userId(): Int = Process.myUid() / PER_USER_RANGE
+        private fun userId(): Int = UserId.current()
 
         private fun describe(t: Throwable): String = "${t.javaClass.simpleName}: ${t.message}"
 

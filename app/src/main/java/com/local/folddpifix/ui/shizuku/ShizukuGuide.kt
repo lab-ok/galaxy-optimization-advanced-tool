@@ -1,8 +1,8 @@
 package com.local.folddpifix.ui.shizuku
 
+import com.local.folddpifix.ui.components.openDeveloperOptions
 import android.content.Context
 import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +43,7 @@ import com.local.folddpifix.ui.liquid.LocalLiquid
 @Composable
 internal fun ShizukuGuide(
     state: ShizukuAccess.State,
-    intro: String = "PC 없이 쓰려면 무료 앱 Shizuku가 필요합니다. 아래 순서대로 버튼만 누르면 됩니다. 처음 한 번만 하면 됩니다.",
+    intro: String,
 ) {
     val c = LocalLiquid.current
     val context = LocalContext.current
@@ -77,7 +77,7 @@ internal fun ShizukuGuide(
         Hint("Shizuku가 폰 안에서 권한을 얻는 통로입니다. Wi-Fi에 연결돼 있어야 하고, '이 네트워크에서 허용할까요?'가 뜨면 허용을 누르세요.")
         if (note == 1) Hint("개발자 옵션에서 '무선 디버깅'을 직접 켜고 돌아와 주세요.", warn = true)
         Action("켜기") {
-            if (ShizukuAccess.enableWirelessDebug(context)) { tick++ } else { note = 1; openDeveloper(context) }
+            if (ShizukuAccess.enableWirelessDebug(context)) { tick++ } else { note = 1; openDeveloperOptions(context) }
         }
     }
     Step(3, "Shizuku 페어링하고 시작", done[2], current == 2) {
@@ -89,7 +89,7 @@ internal fun ShizukuGuide(
         )
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             LiquidButton("Shizuku 열기", modifier = Modifier.weight(1f), onClick = { openShizuku(context) })
-            LiquidButton("무선 디버깅 화면", modifier = Modifier.weight(1f), primary = false, onClick = { openDeveloper(context) })
+            LiquidButton("무선 디버깅 화면", modifier = Modifier.weight(1f), primary = false, onClick = { openDeveloperOptions(context) })
         }
     }
     Step(4, "FoldFit 허용", done[3], current == 3) {
@@ -157,6 +157,3 @@ private fun openShizuku(context: Context) {
     context.packageManager.getLaunchIntentForPackage(ShizukuAccess.PACKAGE)?.let { runCatching { context.startActivity(it) } }
 }
 
-private fun openDeveloper(context: Context) {
-    runCatching { context.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)) }
-}

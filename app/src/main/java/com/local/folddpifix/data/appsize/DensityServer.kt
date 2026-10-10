@@ -1,6 +1,8 @@
 package com.local.folddpifix.data.appsize
 
+import com.local.folddpifix.data.HiddenApi
 import android.content.AttributionSource
+import com.local.folddpifix.BuildConfig
 import com.local.folddpifix.domain.AppDensityPolicy
 import android.os.Binder
 import android.os.Bundle
@@ -15,7 +17,7 @@ import java.lang.reflect.Method
 import kotlin.system.exitProcess
 
 /**
- * 실험실 셸 도우미. PC에서 adb 셸로 한 번 띄우면 셸 권한(uid 2000)으로 돌면서
+ * FoldFit 셸 도우미(Shizuku가 없을 때의 예비 경로). PC에서 adb 셸로 한 번 띄우면 셸 권한(uid 2000)으로 돌면서
  * FoldFit에 바인더 하나를 건네고, 앱별 화면 크기 '읽기·바꾸기' 두 가지만 대신 해 준다.
  * 삼성 함수(IActivityTaskManager.getCustomDensity/setUserCustomDensity)가 앱에는 줄 수 없는
  * MANAGE_ACTIVITY_TASKS 권한을 요구하기 때문이다(adb 셸은 이 권한을 가지고 있다).
@@ -28,7 +30,7 @@ import kotlin.system.exitProcess
  * 띄우는 명령은 [startCommand]가 만든다. 앱 쪽 연결은 [ShellBridgeProvider]·[DensityShell].
  */
 object DensityServer {
-    const val PKG = "com.local.folddpifix"
+    const val PKG = BuildConfig.APPLICATION_ID
     const val AUTHORITY = "$PKG.shell"
     const val DESCRIPTOR = "com.local.folddpifix.IDensityShell"
     const val VERSION = 1
@@ -37,7 +39,8 @@ object DensityServer {
     const val SET = PING + 2
     const val EXIT = PING + 3
 
-    private const val IDLE_MS = 30 * 60 * 1000L
+    const val IDLE_MINUTES = 30
+    private const val IDLE_MS = IDLE_MINUTES * 60 * 1000L
 
     /** PC PowerShell(platform-tools 폴더)에서 실행할 명령. 작은따옴표 안이라 $( )를 PowerShell이 건드리지 않는다. */
     fun startCommand(): String =
@@ -49,7 +52,7 @@ object DensityServer {
         log("시작 uid=${Process.myUid()} pid=${Process.myPid()}")
         Looper.prepareMainLooper()
         val handler = Handler(Looper.getMainLooper())
-        val appUid = runCatching { packageUid(PKG) }.getOrElse { quit("FoldFit을 찾지 못했습니다: ${describe(it)}") }
+        val appUid = runCatching { packageUid(PKG) }.getOrElse { quit("FoldFit을 찾지 못했습니다: ${HiddenApi.describe(it)}") }
         val atm = runCatching { asInterface("activity_task", "android.app.IActivityTaskManager") }.getOrNull()
         val getM = atm?.javaClass?.methods?.firstOrNull { it.name == "getCustomDensity" && it.parameterTypes.size == 3 }
         val setM = atm?.javaClass?.methods?.firstOrNull { it.name == "setUserCustomDensity" && it.parameterTypes.size == 4 }
@@ -89,17 +92,17 @@ object DensityServer {
                         else -> return false
                     }
                 } catch (e: Exception) {
-                    log("오류: ${describe(e)}")
-                    reply?.writeException(e as? RuntimeException ?: IllegalStateException(describe(e)))
+                    log("오류: ${HiddenApi.describe(e)}")
+                    reply?.writeException(e as? RuntimeException ?: IllegalStateException(HiddenApi.describe(e)))
                 }
                 return true
             }
         }
 
         // FoldFit의 ShellBridgeProvider를 셸 권한으로 열어 바인더를 건넨다. FoldFit이 꺼져 있으면 시스템이 띄운다.
-        val provider = runCatching { openProvider() }.getOrElse { quit("FoldFit(실험실 빌드)에 연결하지 못했습니다: ${describe(it)}") }
+        val provider = runCatching { openProvider() }.getOrElse { quit("FoldFit에 연결하지 못했습니다: ${HiddenApi.describe(it)}") }
         runCatching { callProvider(provider, Bundle().apply { putBinder("binder", binder) }) }
-            .onFailure { quit("바인더를 건네지 못했습니다: ${describe(it)}") }
+            .onFailure { quit("바인더를 건네지 못했습니다: ${HiddenApi.describe(it)}") }
         // FoldFit 프로세스가 끝나면 도우미도 함께 끝낸다.
         (provider as IInterface).asBinder().linkToDeath({ quit("FoldFit이 종료돼 함께 끝냅니다.") }, 0)
         handler.postDelayed(idle, IDLE_MS)
@@ -114,22 +117,14 @@ object DensityServer {
         exitProcess(0)
     }
 
-    private fun describe(t: Throwable): String {
-        val cause = (t as? InvocationTargetException)?.targetException ?: t
-        return "${cause.javaClass.simpleName}: ${cause.message}"
-    }
 
     private inline fun unwrap(block: () -> Any?): Any? = try {
         block()
     } catch (e: InvocationTargetException) {
-        throw (e.targetException as? RuntimeException ?: IllegalStateException(describe(e)))
+        throw (e.targetException as? RuntimeException ?: IllegalStateException(HiddenApi.describe(e)))
     }
 
-    private fun service(name: String): IBinder =
-        Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, name) as IBinder
-
-    private fun asInterface(service: String, iface: String): Any =
-        Class.forName("$iface\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, service(service))!!
+    private fun asInterface(service: String, iface: String): Any = HiddenApi.asInterface(iface, HiddenApi.service(service))
 
     /** IPackageManager.getPackageUid(String, long|int flags, int userId). 판본마다 flags 형이 달라 둘 다 받는다. */
     private fun packageUid(pkg: String): Int {
@@ -143,7 +138,7 @@ object DensityServer {
         val am = asInterface("activity", "android.app.IActivityManager")
         val m: Method = am.javaClass.methods.first { it.name == "getContentProviderExternal" && it.parameterTypes.size == 4 }
         val holder = m.invoke(am, AUTHORITY, 0, Binder(), "foldfit_shell")
-            ?: error("$AUTHORITY 제공자가 없습니다. 실험실 빌드가 설치돼 있는지 확인하세요.")
+            ?: error("$AUTHORITY 제공자가 없습니다. FoldFit이 설치돼 있는지 확인하세요.")
         return holder.javaClass.getField("provider").get(holder)!!
     }
 

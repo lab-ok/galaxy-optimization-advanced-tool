@@ -5,8 +5,6 @@ import androidx.compose.foundation.Canvas
 import com.local.folddpifix.ui.liquid.moveTo
 import com.local.folddpifix.ui.liquid.rememberSoftBlob
 import androidx.compose.ui.layout.onSizeChanged
-import kotlinx.coroutines.launch
-import com.local.folddpifix.ui.liquid.Springs
 import com.local.folddpifix.ui.liquid.LocalReduceMotion
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -19,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -55,11 +52,8 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.local.folddpifix.AppInfo
-import com.local.folddpifix.R
 import com.local.folddpifix.ui.liquid.LocalLiquid
 import com.local.folddpifix.ui.liquid.liquidPress
 import com.local.folddpifix.ui.text.Copy
@@ -73,7 +67,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     DPI_MATCH(Copy.FEATURE_DPI, NavIcon.FOLD),
     /** 앱마다 화면 크기를 따로 두는 기능(삼성 '앱 화면 크게/작게', Shizuku 필요). */
     APP_SIZE(Copy.FEATURE_APP_SIZE, NavIcon.APPS),
-    /** 실험실: 기능을 만들 때 쓰는 조사 도구(lab 빌드 전용). */
+    /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 

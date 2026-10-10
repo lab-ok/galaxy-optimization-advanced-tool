@@ -1,5 +1,10 @@
 package com.local.folddpifix.ui.home
 
+import com.local.folddpifix.ui.components.copyText
+import com.local.folddpifix.ui.components.DangerConfirmBox
+import com.local.folddpifix.ui.components.featurePadding
+import com.local.folddpifix.ui.components.ContentMaxWidth
+import com.local.folddpifix.ui.components.SheetColumn
 import com.local.folddpifix.ui.appsize.AppSizeResetSheet
 import com.local.folddpifix.ui.appsize.AppSizeGuideSheet
 import com.local.folddpifix.ui.appsize.AppSizeHelpSheet
@@ -20,19 +25,10 @@ import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import com.local.folddpifix.ui.liquid.LiquidDots
 import com.local.folddpifix.data.display.PermissionReset
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.animation.AnimatedContent
 import android.Manifest
 import android.os.Build
-import android.content.ClipData
-import android.content.Intent
 import android.hardware.display.DisplayManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -58,8 +54,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -96,8 +90,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.local.folddpifix.AppInfo
 import com.local.folddpifix.data.settings.SettingsRepository
-import com.local.folddpifix.domain.DensityPlan
-import com.local.folddpifix.domain.DpiPolicy
 import com.local.folddpifix.domain.PanelSpec
 import com.local.folddpifix.domain.ScreenPolicy
 import com.local.folddpifix.ui.about.AboutSheet
@@ -250,14 +242,14 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         val dpiMatchList: @Composable (PaddingValues) -> Unit = { inner ->
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = inner.calculateTopPadding() + 4.dp, bottom = inner.calculateBottomPadding() + 28.dp),
+                contentPadding = featurePadding(inner),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 // 고정 카드에도 키를 둬, 위에 할 일 카드가 생기거나 없어져도 카드 상태(스위치·슬라이더 방울)가 유지되게 한다.
-                item(key = "card:status") { Box(Modifier.widthIn(max = MAX_WIDTH)) { StatusCard(state) } }
+                item(key = "card:status") { Box(Modifier.widthIn(max = ContentMaxWidth)) { StatusCard(state) } }
                 items(todosOf(state), key = { it.key }) { todo ->
-                    Box(Modifier.widthIn(max = MAX_WIDTH)) { TodoCard(todo) { action ->
+                    Box(Modifier.widthIn(max = ContentMaxWidth)) { TodoCard(todo) { action ->
                         when (action) {
                             TodoAction.SETUP -> sheet = Sheet.GUIDE
                             TodoAction.RELEARN -> vm.resetLearned()
@@ -269,8 +261,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                         }
                     } }
                 }
-                item(key = "card:size") { Box(Modifier.widthIn(max = MAX_WIDTH)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
-                item(key = "card:auto") { Box(Modifier.widthIn(max = MAX_WIDTH)) {
+                item(key = "card:size") { Box(Modifier.widthIn(max = ContentMaxWidth)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
+                item(key = "card:auto") { Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     AutoCard(state.auto) { on ->
                         if (on && !ExternalChangeNotifier.canNotify(context)) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -388,11 +380,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                         onDefault = { sheet = null; vm.resetToDefault() },
                         onResetPermission = vm::resetPermissionState,
                         onPoll = { vm.refresh() },
-                        onCopy = { text ->
-                            context.getSystemService(android.content.ClipboardManager::class.java)
-                                .setPrimaryClip(ClipData.newPlainText("adb", text))
-                            vm.say(Copy.TOAST_COPIED)
-                        },
+                        onCopy = { text -> if (copyText(context, text, "adb")) vm.say(Copy.TOAST_COPIED) },
                     )
                     Sheet.ABOUT -> AboutSheet(onMail = { ReportMail.inquiry(context) })
                     Sheet.APP_HELP -> AppSizeHelpSheet(onConnect = { sheet = Sheet.APP_GUIDE })
@@ -583,8 +571,6 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
 
 private val SLIDER_RANGE = 280..520
 
-/** 넓은 내부 화면에서도 읽기 좋은 최대 폭. */
-private val MAX_WIDTH = 640.dp
 
 /** 세로 ÷ 가로(미리보기용). 내부 화면은 실제 방향(Fold8은 가로로 긴 화면)으로 계산한다. */
 private fun aspect(p: PanelSpec.Resolved, cover: PanelSpec.Resolved, isInner: Boolean): Float =
@@ -622,13 +608,7 @@ private fun ResetSheet(
     LaunchedEffect(step) {
         if (step == 3) while (true) { delay(2_000); onPoll() }
     }
-    Column(
-        Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
-            .navigationBarsPadding()
-            .padding(bottom = 32.dp),
-    ) {
+    SheetColumn {
         Text(Copy.RESET_TITLE, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Spacer(Modifier.height(16.dp))
         GlassCard(padding = 16.dp) {
@@ -668,24 +648,13 @@ private fun ResetSheet(
                             Text(Copy.RESET_PERMISSION_WAITING, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         }
                     }
-                    else -> Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .background(c.danger.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
-                            .border(1.dp, c.danger.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
-                            .padding(14.dp),
+                    else -> DangerConfirmBox(
+                        if (s == 1) Copy.RESET_PERMISSION_WARN else Copy.RESET_PERMISSION_CONFIRM,
+                        note = Copy.RESET_PERMISSION_KEEP,
                     ) {
-                        Text(
-                            if (s == 1) "⚠ ${Copy.RESET_PERMISSION_WARN}" else "⚠ ${Copy.RESET_PERMISSION_CONFIRM}",
-                            color = c.danger, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium,
-                        )
-                        Text(Copy.RESET_PERMISSION_KEEP, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                        Spacer(Modifier.height(12.dp))
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            LiquidButton(Copy.CANCEL, modifier = Modifier.weight(1f), onClick = { step = 0 }, primary = false)
-                            if (s == 1) LiquidButton(Copy.CONTINUE, modifier = Modifier.weight(1f), onClick = { step = 2 }, primary = false, danger = true)
-                            else LiquidButton(Copy.RESET_PERMISSION, modifier = Modifier.weight(1f), onClick = { onResetPermission(); step = 3 }, danger = true, burst = false)
-                        }
+                        LiquidButton(Copy.CANCEL, modifier = Modifier.weight(1f), onClick = { step = 0 }, primary = false)
+                        if (s == 1) LiquidButton(Copy.CONTINUE, modifier = Modifier.weight(1f), onClick = { step = 2 }, primary = false, danger = true)
+                        else LiquidButton(Copy.RESET_PERMISSION, modifier = Modifier.weight(1f), onClick = { onResetPermission(); step = 3 }, danger = true, burst = false)
                     }
                 }
             }

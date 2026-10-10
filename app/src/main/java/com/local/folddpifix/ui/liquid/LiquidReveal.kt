@@ -45,9 +45,10 @@ fun Modifier.liquidReveal(active: Boolean, origin: (Size) -> Offset): Modifier {
         blob.blob.gain = 4f
         blob.blob.damping = 3f
         blob.moveTo(o.x, o.y, start * 2, start * 2, animate = false)
-        launch { snapshotFlow { r.value }.collect { val d = 2 * (start + it); blob.moveTo(o.x, o.y, d, d, animate = true, carry = 0.85f) } }
+        val follow = launch { snapshotFlow { r.value }.collect { val d = 2 * (start + it); blob.moveTo(o.x, o.y, d, d, animate = true, carry = 0.85f) } }
         // 사이드바가 닫히며 물러나는 동안 그 뒤에서 번져 나오도록 천천히 키운다
         r.animateTo(far * 1.08f, tween(720, easing = FastOutSlowInEasing))
+        follow.cancel()
         done = true
     }
     return this

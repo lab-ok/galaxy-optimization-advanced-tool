@@ -1,14 +1,15 @@
 package com.local.folddpifix.data.appsize
 
+import com.local.folddpifix.data.UserId
 import com.local.folddpifix.data.shizuku.ShizukuAccess
 import android.content.Context
 import com.local.folddpifix.domain.AppDensityPolicy
 import android.os.IBinder
 import android.os.Parcel
-import android.os.Process
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * 앱별 화면 크기 호출 창구. 셸 권한 경로가 둘이다.
@@ -19,10 +20,15 @@ import kotlinx.coroutines.flow.asStateFlow
 object DensityShell {
     private val binder = MutableStateFlow<IBinder?>(null)
 
-    /** 값이 바뀔 때마다 1씩 오른다(알림창에서 바꿔도 실험실 화면이 바로 다시 읽도록). */
-    val changes = MutableStateFlow(0)
+    private val changeCount = MutableStateFlow(0)
 
-    /** 도우미에 연결돼 있으면 true. */
+    /** 화면 밖(알림창·초기화)에서 값이 바뀔 때마다 1씩 오른다. '앱마다 크기 따로' 화면이 보고 다시 읽는다. */
+    val changes: StateFlow<Int> = changeCount.asStateFlow()
+
+    /** 화면 밖에서 바꿨음을 알린다. */
+    fun notifyChanged() = changeCount.update { it + 1 }
+
+    /** 연결된 PC 셸 도우미의 바인더. 없으면 null. */
     val connected: StateFlow<IBinder?> = binder.asStateFlow()
 
     internal fun attach(b: IBinder) {
@@ -30,7 +36,7 @@ object DensityShell {
         binder.value = b
     }
 
-    private fun user() = Process.myUid() / 100_000
+    private fun user() = UserId.current()
 
     private fun <T> tx(code: Int, write: Parcel.() -> Unit = {}, read: Parcel.() -> T): T {
         val b = binder.value ?: throw IllegalStateException("셸 도우미가 연결돼 있지 않습니다.")
@@ -73,9 +79,9 @@ object DensityShell {
     fun set(context: Context, pkg: String, dpi: Int) {
         if (helper()) tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { } else ShizukuAccess.set(pkg, user(), dpi)
         prefs(context).edit().apply { if (dpi == 0) remove(pkg) else putInt(pkg, dpi) }.apply()
-        changes.value++
     }
 
+    // 이전 버전(실험실 시절)과 같은 이름을 유지한다(사용자 기록 보존)
     private fun prefs(context: Context) = context.getSharedPreferences("lab_app_density", Context.MODE_PRIVATE)
 
     /** 사용자가 크기를 정해 둔 앱(홈 화면에 아이콘이 있는 앱 중). */
@@ -84,7 +90,7 @@ object DensityShell {
 
     /** 정해 둔 앱을 모두 기본 크기로 되돌린다. 되돌린 앱 수를 돌려준다. */
     fun resetAll(context: Context): Int =
-        appliedApps(context).count { runCatching { set(context, it, 0) }.isSuccess }
+        appliedApps(context).count { runCatching { set(context, it, 0) }.isSuccess }.also { notifyChanged() }
 
     fun stop() {
         runCatching { tx(DensityServer.EXIT) { } }

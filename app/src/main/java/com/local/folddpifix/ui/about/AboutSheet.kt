@@ -1,5 +1,6 @@
 package com.local.folddpifix.ui.about
 
+import com.local.folddpifix.ui.components.SheetColumn
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Image
 import com.local.folddpifix.ui.liquid.LiquidShape
@@ -7,8 +8,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.border
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,15 +57,7 @@ internal fun AboutSheet(onMail: () -> Unit) {
         launch { sx.animateTo(1f, Springs.pop(reduce)) }
         launch { sy.animateTo(1f, Springs.water(reduce)) }
     }
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
-            .navigationBarsPadding()
-            .padding(bottom = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    SheetColumn(horizontalAlignment = Alignment.CenterHorizontally) {
         Image(
             painter = painterResource(R.drawable.ic_app_logo),
             contentDescription = null,

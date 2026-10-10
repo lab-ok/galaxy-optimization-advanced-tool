@@ -28,6 +28,11 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- 홈 화면 앱(지금 앱 찾기에서 홈 화면을 빼려고) -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
     </queries>
 
     <application
@@ -83,13 +88,13 @@
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
         <!-- 셸 도우미(DensityServer)가 셸 권한으로 바인더를 건네는 통로. 호출자 uid는 코드에서 다시 확인한다. -->
         <provider
-            android:name="com.local.folddpifix.data.appsize.ShellBridgeProvider"
+            android:name=".data.appsize.ShellBridgeProvider"
             android:authorities="${applicationId}.shell"
             android:exported="true"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
         <!-- 알림창 앱 화면 크기 조절: 알림을 띄워 두고 맨 앞 앱이 바뀔 때만 내용을 고친다 -->
         <service
-            android:name="com.local.folddpifix.data.appsize.AppDensityService"
+            android:name=".data.appsize.AppDensityService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
@@ -98,7 +103,7 @@
         </service>
         <!-- 알림창 [작게]·[기본]·[크게]를 받아 방금 쓰던 앱의 크기를 바꾸는 투명 화면 -->
         <activity
-            android:name="com.local.folddpifix.ui.appsize.DensityStepActivity"
+            android:name=".ui.appsize.DensityStepActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:noHistory="true"

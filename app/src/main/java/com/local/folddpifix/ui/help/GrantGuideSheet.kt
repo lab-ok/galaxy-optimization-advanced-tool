@@ -1,16 +1,18 @@
 package com.local.folddpifix.ui.help
 
+import com.local.folddpifix.ui.components.copyText
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.local.folddpifix.ui.components.SheetColumn
+import com.local.folddpifix.ui.components.openDeveloperOptions
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import com.local.folddpifix.ui.shizuku.ShizukuGuide
 import com.local.folddpifix.data.shizuku.ShizukuAccess
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -27,26 +29,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,9 +48,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -94,10 +82,9 @@ import com.local.folddpifix.ui.liquid.LocalLiquid
 @Composable
 internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
     val context = LocalContext.current
-    val clipboard = LocalClipboardManager.current
     // 권한 받는 방법: Shizuku(PC 없이, 기본) 또는 PC의 adb
     var viaShizuku by rememberSaveable { mutableStateOf(true) }
-    val shizuku by ShizukuAccess.status.collectAsState()
+    val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     var grantError by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     // Shizuku가 켜지고 FoldFit을 허용하면 바로 권한을 스스로 부여한다(화면은 주기 확인으로 완료를 알아차린다)
@@ -111,18 +98,10 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
     var index by rememberSaveable(connection, os) { mutableIntStateOf(0) }
     val steps = GrantGuideContent.steps(connection, os)
     val copy: (String) -> Unit = {
-        clipboard.setText(AnnotatedString(it))
-        onCopied()
+        if (copyText(context, it, "adb")) onCopied()
     }
 
-    Column(
-        Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
-            .navigationBarsPadding()
-            .padding(bottom = 24.dp)
-            .animateContentSize(),
-    ) {
+    SheetColumn(modifier = Modifier.animateContentSize()) {
         Text("권한 설정", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text(
             "한 번만 받으면 재부팅 후에도 유지됩니다.",
@@ -355,16 +334,3 @@ private fun openLink(context: Context, url: String) {
     }
 }
 
-internal fun openDeveloperOptions(context: Context) {
-    val devOn = Settings.Global.getInt(
-        context.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0
-    ) == 1
-    val intent = Intent(
-        if (devOn) Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS else Settings.ACTION_DEVICE_INFO_SETTINGS
-    )
-    try {
-        context.startActivity(intent)
-    } catch (e: ActivityNotFoundException) {
-        context.startActivity(Intent(Settings.ACTION_SETTINGS))
-    }
-}

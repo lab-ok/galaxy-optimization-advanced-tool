@@ -12,6 +12,7 @@ import com.local.folddpifix.AppInfo
 import com.local.folddpifix.R
 import com.local.folddpifix.background.ExternalChangeNotifier
 import com.local.folddpifix.ui.MainActivity
+import com.local.folddpifix.ui.text.Copy
 import com.local.folddpifix.ui.appsize.DensityStepActivity
 
 /**
@@ -22,13 +23,14 @@ import com.local.folddpifix.ui.appsize.DensityStepActivity
 object AppDensityNotifier {
     private const val CHANNEL_ID = "app_density"
     const val NOTIFICATION_ID = 3
+    // 이전 버전(실험실 시절)과 같은 이름을 유지한다(사용자 설정 보존)
     private const val PREF = "lab_app_density_notify"
 
     fun enabled(context: Context) = prefs(context).getBoolean("on", false)
 
     fun setEnabled(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("on", on).apply()
-        if (on) start(context) else context.stopService(Intent(context, AppDensityService::class.java))
+        if (on) start(context) else { context.stopService(Intent(context, AppDensityService::class.java)); cancel(context) }
     }
 
     /** 켜 두었으면 감시 서비스를 띄운다(부팅·업데이트 뒤에도). */
@@ -37,10 +39,12 @@ object AppDensityNotifier {
         runCatching { context.startForegroundService(Intent(context, AppDensityService::class.java)) }
     }
 
-    /** 알림 내용을 바꾼다. */
+    /** 알림 내용을 바꾼다(감시 서비스가 띄운 알림만 고친다. 서비스 없이 남는 알림을 만들지 않는다). */
     fun show(context: Context, status: String) {
         if (!enabled(context) || !ExternalChangeNotifier.canNotify(context)) return
-        context.getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, build(context, status))
+        val nm = context.getSystemService(NotificationManager::class.java)
+        if (nm.activeNotifications.none { it.id == NOTIFICATION_ID }) return
+        nm.notify(NOTIFICATION_ID, build(context, status))
     }
 
     /** "Discord · 기본(450)" / "Notion · 320 dpi"처럼 앱과 지금 크기를 적는다. 홈 화면이면 안내 문구. */
@@ -51,11 +55,13 @@ object AppDensityNotifier {
         val v = runCatching { DensityShell.get(context, pkg) }.getOrNull()
         val size = when {
             v == null -> "크기 확인 불가"
-            v == 0 -> "기본(${Resources.getSystem().configuration.densityDpi})"
+            v == 0 -> "${Copy.APP_SIZE_DEFAULT}(${Resources.getSystem().configuration.densityDpi})"
             else -> "$v dpi"
         }
         return "$label · $size"
     }
+
+    fun cancel(context: Context) = context.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
 
     fun build(context: Context, status: String? = null): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)

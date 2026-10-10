@@ -1,7 +1,9 @@
 package com.local.folddpifix.ui.appsize
 
+import com.local.folddpifix.ui.text.Copy
 import android.app.Activity
 import android.content.res.Resources
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -22,27 +24,31 @@ import rikka.shizuku.Shizuku
 class DensityStepActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 처리 중에 접거나 펴서 다시 만들어진 경우: 같은 단계를 두 번 적용하지 않게 바로 닫는다
+        if (savedInstanceState != null) { finish(); return }
         val step = intent.getIntExtra(EXTRA_STEP, 0)
         val main = Handler(Looper.getMainLooper())
-        // 방금 쓰던 앱: 작업 스택 감시가 돌고 있으면 그 값, 아니면 사용 기록(기기에 따라 늦을 수 있음)
-        val target = if (ForegroundWatcher.running) ForegroundWatcher.current else AppUsage.foregroundApp(this)
         Thread {
-            val msg = runCatching { change(target, step) }.getOrElse { "바꾸지 못했습니다: ${it.message}" }
+            // 방금 쓰던 앱: 작업 스택 감시가 돌고 있으면 그 값, 아니면 사용 기록(기기에 따라 늦을 수 있음). 사용 기록 읽기는 무거워 작업 스레드에서 한다.
+            val target = if (ForegroundWatcher.running) ForegroundWatcher.current else AppUsage.foregroundApp(this)
+            val msg = runCatching { change(target, step) }.getOrElse { "${Copy.APP_SIZE_FAILED}${it.message}" }
             main.post {
                 AppDensityNotifier.show(this, msg)
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
                 finish()
-                overridePendingTransition(0, 0)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+                else @Suppress("DEPRECATION") overridePendingTransition(0, 0)
             }
         }.start()
     }
 
     private fun change(target: String?, step: Int): String {
-        if (!ForegroundWatcher.running && !AppUsage.hasAccess(this)) return "지금 앱을 찾지 못했습니다. Shizuku를 켜거나 실험실에서 사용 기록 접근을 허용해 주세요."
+        if (!ForegroundWatcher.running && !AppUsage.hasAccess(this)) return "지금 앱을 찾지 못했습니다. Shizuku를 켜거나 '앱마다 크기 따로'에서 사용 기록 접근을 허용해 주세요."
         target ?: return "지금 열려 있는 앱이 없습니다."
         // 프로세스가 막 떠서 Shizuku 바인더가 아직 오지 않았을 수 있다: 잠깐 기다린다
         ShizukuAccess.watch(this)
-        repeat(20) { if (Shizuku.pingBinder()) return@repeat; Thread.sleep(75) }
+        var tries = 0
+        while (!Shizuku.pingBinder() && tries++ < 20) Thread.sleep(75)
         ShizukuAccess.refresh()
         if (DensityShell.connected.value == null && ShizukuAccess.status.value != ShizukuAccess.State.READY) return "Shizuku가 꺼져 있습니다."
         val label = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(target, 0)).toString() }.getOrDefault(target)
@@ -50,8 +56,9 @@ class DensityStepActivity : Activity() {
         val base = if (now > 0) now else Resources.getSystem().configuration.densityDpi
         val next = AppDensityPolicy.next(base, step)
             ?: return "$label: 이미 가장 ${if (step < 0) "작습니다" else "큽니다"}($base)."
-        if (next == now) return "$label: 이미 ${if (now == 0) "기본" else "$now"}입니다."
+        if (next == now) return "$label: 이미 ${if (now == 0) Copy.APP_SIZE_DEFAULT else "$now"}입니다."
         DensityShell.set(this, target, next)
+        DensityShell.notifyChanged()
         // 삼성이 그 앱을 닫는 것을 기다렸다가 다시 연다
         Thread.sleep(400)
         packageManager.getLaunchIntentForPackage(target)?.let { runCatching { startActivity(it) } }

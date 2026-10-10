@@ -121,4 +121,6 @@ object Copy {
     const val SIZE_PENDING = "바꾼 값은 [적용]을 눌러야 화면에 반영됩니다."
     const val SIZE_APPLY = "적용"
     const val SIZE_REVERT = "되돌리기"
+    const val APP_SIZE_DEFAULT = "기본"
+    const val APP_SIZE_FAILED = "바꾸지 못했습니다: "
 }

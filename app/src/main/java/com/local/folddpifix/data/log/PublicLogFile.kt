@@ -56,6 +56,10 @@ object PublicLogFile {
     }
 
     /** 진단 로그를 Download/FoldFit에 새 파일로 저장하고 Uri와 파일 이름을 돌려준다. */
+    /** "foldfit-<kind>-yyMMdd-HHmmss.txt"처럼 시각을 붙인 새 파일 이름. */
+    fun timestampedName(kind: String): String =
+        "foldfit-$kind-${java.text.SimpleDateFormat("yyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date())}.txt"
+
     fun saveNew(context: Context, name: String, text: String): Uri? = synchronized(lock) {
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)

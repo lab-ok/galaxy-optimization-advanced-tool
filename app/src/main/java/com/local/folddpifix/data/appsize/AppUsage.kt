@@ -19,6 +19,9 @@ object AppUsage {
         return ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName) == AppOpsManager.MODE_ALLOWED
     }
 
+    /** '지금 쓰는 앱'으로 치지 않는 앱: FoldFit 자신(알림 버튼 화면), 시스템 UI(알림창), Shizuku. */
+    fun notTargets(context: Context) = setOf(context.packageName, "com.android.systemui", ShizukuAccess.PACKAGE)
+
     /** 패키지별 마지막 사용 시각(최근 60일). 접근 권한이 없으면 빈 지도. */
     fun lastUsed(context: Context): Map<String, Long> {
         if (!hasAccess(context)) return emptyMap()
@@ -38,7 +41,7 @@ object AppUsage {
         val usm = context.getSystemService(UsageStatsManager::class.java)
         val home = context.packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
             ?.activityInfo?.packageName
-        val skip = setOf(context.packageName, "com.android.systemui", ShizukuAccess.PACKAGE)
+        val skip = notTargets(context)
         val now = System.currentTimeMillis()
         val events = usm.queryEvents(now - 6 * 3600 * 1000L, now)
         val e = UsageEvents.Event()

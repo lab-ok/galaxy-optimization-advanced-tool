@@ -15,10 +15,6 @@ import android.net.Uri
 import com.local.folddpifix.data.log.CrashRecorder
 import com.local.folddpifix.data.log.DiagnosticReport
 import com.local.folddpifix.data.log.PublicLogFile
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import com.local.folddpifix.domain.PanelSpec
 import com.local.folddpifix.domain.ScreenLearner
 import com.local.folddpifix.domain.plan
 import androidx.lifecycle.AndroidViewModel
@@ -221,7 +217,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun exportDiagnostics(): List<Uri> = withContext(Dispatchers.IO) {
         runCatching {
             val app = getApplication<Application>()
-            val name = "foldfit-diagnostic-${SimpleDateFormat("yyMMdd-HHmmss", Locale.US).format(Date())}.txt"
+            val name = PublicLogFile.timestampedName("diagnostic")
             val saved = PublicLogFile.saveNew(app, name, DiagnosticReport.build(app)) ?: error("파일 생성 실패")
             logRepo.add("진단 로그 저장: ${PublicLogFile.displayPath}$name")
             listOfNotNull(saved, PublicLogFile.todayUri(app))

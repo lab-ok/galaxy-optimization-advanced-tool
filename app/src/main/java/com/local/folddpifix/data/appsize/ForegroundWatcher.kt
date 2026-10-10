@@ -1,11 +1,11 @@
 package com.local.folddpifix.data.appsize
 
+import com.local.folddpifix.data.HiddenApi
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.os.Binder
 import android.os.Handler
-import android.os.IBinder
 import android.os.Looper
 import android.os.Parcel
 import com.local.folddpifix.data.shizuku.ShizukuAccess
@@ -27,22 +27,31 @@ object ForegroundWatcher {
 
     private val main = Handler(Looper.getMainLooper())
     private val io = Executors.newSingleThreadExecutor()
-    private var proxy: Any? = null
-    private var onChange: ((String?) -> Unit)? = null
+    @Volatile private var proxy: Any? = null
+    @Volatile private var onChange: ((String?) -> Unit)? = null
 
     val running get() = proxy != null
 
-    /** 감시를 시작한다. Shizuku가 준비되지 않았으면 false. [changed]는 맨 앞 앱이 바뀔 때마다 IO 스레드에서 불린다. */
-    fun start(context: Context, changed: (String?) -> Unit): Boolean {
+    /**
+     * 감시를 시작한다(등록은 작업 스레드에서 한다). Shizuku가 준비되지 않았으면 아무 일도 하지 않는다.
+     * [changed]는 맨 앞 앱이 바뀔 때마다 작업 스레드에서 불린다.
+     */
+    fun start(context: Context, changed: (String?) -> Unit) {
         onChange = changed
+        val ctx = context.applicationContext
+        io.execute { register(ctx) }
+    }
+
+    private fun register(ctx: Context): Boolean {
         if (proxy != null) return true
+        ShizukuAccess.refresh()
         if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return false
         return runCatching {
-            // 숨은 API(ITaskStackListener 번호 읽기)는 HiddenApiBypass로 허용한 뒤에 접근한다(ShizukuAccess.atm()이 허용).
+            // 숨은 API(ITaskStackListener 번호 읽기)는 HiddenApi로 허용한 뒤에 접근한다.
+            HiddenApi.exemptAll()
             val atm = ShizukuAccess.atm()
             val code = Class.forName("$DESCRIPTOR\$Stub").getDeclaredField("TRANSACTION_onTaskStackChanged")
                 .apply { isAccessible = true }.getInt(null)
-            val ctx = context.applicationContext
             val refresh = Runnable { io.execute { update(ctx) } }
             val binder = object : Binder() {
                 init { attachInterface(null, DESCRIPTOR) }
@@ -53,20 +62,24 @@ object ForegroundWatcher {
                     return true
                 }
             }
-            val p = Class.forName("$DESCRIPTOR\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, binder)!!
+            val p = HiddenApi.asInterface(DESCRIPTOR, binder)
             atm.javaClass.methods.first { it.name == "registerTaskStackListener" && it.parameterTypes.size == 1 }.invoke(atm, p)
             proxy = p
-            io.execute { update(ctx) }
+            update(ctx)
             true
         }.getOrDefault(false)
     }
 
+    /** 감시를 멈춘다(작업 스레드). 해제에 실패하면(Shizuku가 꺼짐) 감시자를 그대로 두어 다음 start에서 다시 쓴다. */
     fun stop() {
-        val p = proxy ?: return
-        proxy = null
-        runCatching {
-            val atm = ShizukuAccess.atm()
-            atm.javaClass.methods.first { it.name == "unregisterTaskStackListener" && it.parameterTypes.size == 1 }.invoke(atm, p)
+        onChange = null
+        io.execute {
+            val p = proxy ?: return@execute
+            val ok = runCatching {
+                val atm = ShizukuAccess.atm()
+                atm.javaClass.methods.first { it.name == "unregisterTaskStackListener" && it.parameterTypes.size == 1 }.invoke(atm, p)
+            }.isSuccess
+            if (ok) proxy = null
         }
     }
 
@@ -85,7 +98,7 @@ object ForegroundWatcher {
 
     private fun update(context: Context) {
         val pkg = top() ?: return
-        if (pkg == context.packageName || pkg == "com.android.systemui" || pkg == ShizukuAccess.PACKAGE) return
+        if (pkg in AppUsage.notTargets(context)) return
         val next = pkg.ifEmpty { null }
         if (next == current) return
         current = next

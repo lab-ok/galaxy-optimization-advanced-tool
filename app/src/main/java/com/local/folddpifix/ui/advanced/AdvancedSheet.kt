@@ -1,18 +1,12 @@
 package com.local.folddpifix.ui.advanced
 
+import com.local.folddpifix.ui.components.SheetColumn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import com.local.folddpifix.ui.liquid.liquidPress
 import com.local.folddpifix.ui.liquid.LiquidShape
@@ -25,12 +19,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,8 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.local.folddpifix.data.display.DisplayDensity
@@ -59,7 +48,6 @@ import com.local.folddpifix.ui.home.UiState
 import com.local.folddpifix.ui.liquid.GlassCard
 import com.local.folddpifix.ui.liquid.LiquidButton
 import com.local.folddpifix.ui.liquid.LocalLiquid
-import com.local.folddpifix.ui.liquid.LocalReduceMotion
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -68,13 +56,7 @@ import java.util.Locale
 @Composable
 internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
     val c = LocalLiquid.current
-    Column(
-        Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .navigationBarsPadding()
-            .padding(bottom = 28.dp),
-    ) {
+    SheetColumn {
         Text("고급 정보", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Text("디스플레이별 DPI·해상도·PPI와 적용 기록입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(14.dp))

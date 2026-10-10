@@ -1,25 +1,21 @@
 package com.local.folddpifix.ui.appsize
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.widget.Toast
+import com.local.folddpifix.ui.components.copyText
+import com.local.folddpifix.ui.components.DangerConfirmBox
+import com.local.folddpifix.ui.components.SheetColumn
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.local.folddpifix.data.appsize.DensityServer
 import com.local.folddpifix.data.appsize.DensityShell
 import com.local.folddpifix.data.shizuku.ShizukuAccess
+import com.local.folddpifix.domain.AppDensityPolicy
 import com.local.folddpifix.ui.components.CommandBox
 import com.local.folddpifix.ui.liquid.GlassCard
 import com.local.folddpifix.ui.liquid.LiquidButton
@@ -44,21 +41,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Composable
-private fun SheetColumn(title: String, content: @Composable () -> Unit) {
-    val c = LocalLiquid.current
-    Column(
-        Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .navigationBarsPadding()
-            .padding(bottom = 28.dp),
-    ) {
-        Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
-        Spacer(Modifier.height(16.dp))
-        content()
-    }
-}
 
 @Composable
 private fun Topic(title: String, body: String) {
@@ -96,7 +78,7 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
         )
         Topic(
             "4. 크기가 여섯 단계로 정해진 이유",
-            "삼성 시스템이 320·360·420·450·480·510 여섯 값만 받도록 만들어져 있습니다. 다른 값을 넣으면 시스템이 거절해, " +
+            "삼성 시스템이 ${AppDensityPolicy.STEPS.joinToString("·")} 여섯 값만 받도록 만들어져 있습니다. 다른 값을 넣으면 시스템이 거절해, " +
                 "1단위로 조절할 수는 없습니다. '기본'은 앱별 설정을 지우고 기기 전체 크기를 따르게 합니다.",
         )
         Topic(
@@ -124,8 +106,8 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
 internal fun AppSizeGuideSheet() {
     val c = LocalLiquid.current
     val context = LocalContext.current
-    val shizuku by ShizukuAccess.status.collectAsState()
-    val shell by DensityShell.connected.collectAsState()
+    val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
+    val shell by DensityShell.connected.collectAsStateWithLifecycle()
     var showPc by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     SheetColumn("권한 설정") {
@@ -133,7 +115,7 @@ internal fun AppSizeGuideSheet() {
             GlassCard(padding = 16.dp) {
                 Text("연결되어 있습니다", fontWeight = FontWeight.SemiBold, color = c.ink)
                 Text(
-                    if (shell != null) "PC 셸 도우미로 연결되어 있습니다. FoldFit을 닫거나 30분 동안 쓰지 않으면 꺼집니다."
+                    if (shell != null) "PC 셸 도우미로 연결되어 있습니다. FoldFit을 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다."
                     else "Shizuku로 연결되어 있습니다. 이 창을 닫고 앱을 고르면 됩니다.",
                     color = c.muted, style = MaterialTheme.typography.bodySmall,
                 )
@@ -155,14 +137,13 @@ internal fun AppSizeGuideSheet() {
         if (showPc) {
             Text(
                 "PC PowerShell(platform-tools 폴더)에서 아래 명령을 한 번 실행하면 FoldFit 셸 도우미가 켜집니다. " +
-                    "도우미는 FoldFit을 닫거나 30분 동안 쓰지 않으면 스스로 꺼집니다.",
+                    "도우미는 FoldFit을 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 스스로 꺼집니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(8.dp))
             val cmd = remember { DensityServer.startCommand() }
             CommandBox(cmd, onCopy = {
-                context.getSystemService(android.content.ClipboardManager::class.java)
-                    .setPrimaryClip(android.content.ClipData.newPlainText("adb", cmd))
+                if (copyText(context, cmd, "adb")) Toast.makeText(context, Copy.TOAST_COPIED, Toast.LENGTH_SHORT).show()
             })
         }
     }
@@ -174,8 +155,8 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val shizuku by ShizukuAccess.status.collectAsState()
-    val shell by DensityShell.connected.collectAsState()
+    val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
+    val shell by DensityShell.connected.collectAsStateWithLifecycle()
     val ready = shizuku == ShizukuAccess.State.READY || shell != null
     // 0 = 처음, 1 = 경고(재확인), 2 = 되돌리는 중
     var step by remember { mutableIntStateOf(0) }
@@ -198,25 +179,15 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                 when (s) {
                     0 -> LiquidButton(Copy.APP_SIZE_RESET_ACTION, modifier = Modifier.fillMaxWidth(), primary = false, danger = true,
                         enabled = ready && (count ?: 0) > 0, onClick = { step = 1 })
-                    1 -> Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .background(c.danger.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
-                            .border(1.dp, c.danger.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
-                            .padding(14.dp),
-                    ) {
-                        Text("⚠ ${Copy.APP_SIZE_RESET_WARN}", color = c.danger, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
-                        Spacer(Modifier.height(12.dp))
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            LiquidButton(Copy.CANCEL, modifier = Modifier.weight(1f), primary = false, onClick = { step = 0 })
-                            LiquidButton(Copy.APP_SIZE_RESET_ACTION, modifier = Modifier.weight(1f), danger = true, burst = false, onClick = {
-                                step = 2
-                                scope.launch {
-                                    val n = withContext(Dispatchers.IO) { DensityShell.resetAll(context) }
-                                    onDone("${n}개 앱을 기본 크기로 되돌렸습니다.")
-                                }
-                            })
-                        }
+                    1 -> DangerConfirmBox(Copy.APP_SIZE_RESET_WARN) {
+                        LiquidButton(Copy.CANCEL, modifier = Modifier.weight(1f), primary = false, onClick = { step = 0 })
+                        LiquidButton(Copy.APP_SIZE_RESET_ACTION, modifier = Modifier.weight(1f), danger = true, burst = false, onClick = {
+                            step = 2
+                            scope.launch {
+                                val n = withContext(Dispatchers.IO) { DensityShell.resetAll(context) }
+                                onDone("${n}개 앱을 기본 크기로 되돌렸습니다.")
+                            }
+                        })
                     }
                     else -> Text("되돌리는 중…", color = c.muted, style = MaterialTheme.typography.bodyMedium)
                 }
