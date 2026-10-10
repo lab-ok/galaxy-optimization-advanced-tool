@@ -24,6 +24,9 @@ internal object AppPermissions {
         val applies: Boolean = true,
     )
 
+    /** Shizuku API를 쓰는 권한(Shizuku 라이브러리가 매니페스트에 넣는다). Shizuku의 허용 창에서 받는다. */
+    private const val SHIZUKU_API = "moe.shizuku.manager.permission.API_V23"
+
     val all: List<Item> = listOf(
         Item(
             Manifest.permission.WRITE_SECURE_SETTINGS, "시스템 설정 변경",
@@ -33,6 +36,10 @@ internal object AppPermissions {
             Manifest.permission.POST_NOTIFICATIONS, "알림",
             "외부 DPI 변경 선택 알림, 접기/펼치기 감시 알림, 앱별 크기 조절 알림을 보여 줍니다.", How.USER,
             applies = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+        ),
+        Item(
+            SHIZUKU_API, "Shizuku 사용",
+            "PC 없이 시스템 설정 권한을 받고, 앱별 화면 배율을 바꿀 때 Shizuku에 셸 권한을 빌립니다. Shizuku 창에서 허용합니다.", How.USER,
         ),
         Item(
             Manifest.permission.PACKAGE_USAGE_STATS, "사용 기록 접근",
