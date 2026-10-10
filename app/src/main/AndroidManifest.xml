@@ -28,6 +28,11 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- 메일 앱(문제 신고를 메일 앱으로만 보내려고) -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
         <!-- 홈 화면 앱(지금 앱 찾기에서 홈 화면을 빼려고) -->
         <intent>
             <action android:name="android.intent.action.MAIN" />

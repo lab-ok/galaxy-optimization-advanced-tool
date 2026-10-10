@@ -1,5 +1,6 @@
 package com.local.folddpifix.data.appsize
 
+import com.local.folddpifix.data.log.LogRepository
 import com.local.folddpifix.data.UserId
 import com.local.folddpifix.data.shizuku.ShizukuAccess
 import android.content.Context
@@ -22,7 +23,7 @@ object DensityShell {
 
     private val changeCount = MutableStateFlow(0)
 
-    /** 화면 밖(알림창·초기화)에서 값이 바뀔 때마다 1씩 오른다. '앱마다 크기 따로' 화면이 보고 다시 읽는다. */
+    /** 화면 밖(알림창·초기화)에서 값이 바뀔 때마다 1씩 오른다. '앱별 화면 배율 설정' 화면이 보고 다시 읽는다. */
     val changes: StateFlow<Int> = changeCount.asStateFlow()
 
     /** 화면 밖에서 바꿨음을 알린다. */
@@ -77,7 +78,12 @@ object DensityShell {
 
     /** 앱 화면 크기를 [AppDensityPolicy.STEPS] 중 하나로, 0이면 기본으로 되돌린다. 그 앱은 다시 시작된다. */
     fun set(context: Context, pkg: String, dpi: Int) {
-        if (helper()) tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { } else ShizukuAccess.set(pkg, user(), dpi)
+        val via = if (helper()) "PC 도우미" else "Shizuku"
+        runCatching {
+            if (helper()) tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { } else ShizukuAccess.set(pkg, user(), dpi)
+        }.onFailure { LogRepository.from(context).add("앱별 화면 배율 실패: $pkg → ${if (dpi == 0) "기본" else dpi} ($via): ${it.javaClass.simpleName}: ${it.message}") }
+            .getOrThrow()
+        LogRepository.from(context).add("앱별 화면 배율: $pkg → ${if (dpi == 0) "기본" else "$dpi dpi"} ($via)")
         prefs(context).edit().apply { if (dpi == 0) remove(pkg) else putInt(pkg, dpi) }.apply()
     }
 
@@ -90,7 +96,10 @@ object DensityShell {
 
     /** 정해 둔 앱을 모두 기본 크기로 되돌린다. 되돌린 앱 수를 돌려준다. */
     fun resetAll(context: Context): Int =
-        appliedApps(context).count { runCatching { set(context, it, 0) }.isSuccess }.also { notifyChanged() }
+        appliedApps(context).count { runCatching { set(context, it, 0) }.isSuccess }.also {
+            LogRepository.from(context).add("앱별 화면 배율 초기화: ${it}개 앱을 기본으로")
+            notifyChanged()
+        }
 
     fun stop() {
         runCatching { tx(DensityServer.EXIT) { } }

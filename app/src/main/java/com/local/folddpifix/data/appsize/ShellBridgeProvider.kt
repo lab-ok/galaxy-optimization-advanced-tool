@@ -1,5 +1,6 @@
 package com.local.folddpifix.data.appsize
 
+import com.local.folddpifix.data.log.LogRepository
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
@@ -19,7 +20,10 @@ class ShellBridgeProvider : ContentProvider() {
         val uid = Binder.getCallingUid()
         if (uid != Process.SHELL_UID && uid != Process.ROOT_UID) return null
         if (method != "bind") return null
-        extras?.getBinder("binder")?.let(DensityShell::attach)
+        extras?.getBinder("binder")?.let {
+            DensityShell.attach(it)
+            context?.let { ctx -> LogRepository.from(ctx).add("PC 셸 도우미 연결됨") }
+        }
         return Bundle()
     }
 

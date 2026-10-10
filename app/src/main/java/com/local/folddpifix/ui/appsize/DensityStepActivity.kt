@@ -43,7 +43,7 @@ class DensityStepActivity : Activity() {
     }
 
     private fun change(target: String?, step: Int): String {
-        if (!ForegroundWatcher.running && !AppUsage.hasAccess(this)) return "지금 앱을 찾지 못했습니다. Shizuku를 켜거나 '앱마다 크기 따로'에서 사용 기록 접근을 허용해 주세요."
+        if (!ForegroundWatcher.running && !AppUsage.hasAccess(this)) return "지금 앱을 찾지 못했습니다. Shizuku를 켜거나 '앱별 화면 배율 설정'에서 사용 기록 접근을 허용해 주세요."
         target ?: return "지금 열려 있는 앱이 없습니다."
         // 프로세스가 막 떠서 Shizuku 바인더가 아직 오지 않았을 수 있다: 잠깐 기다린다
         ShizukuAccess.watch(this)

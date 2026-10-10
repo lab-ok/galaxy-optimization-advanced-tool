@@ -1,5 +1,6 @@
 package com.local.folddpifix.data.appsize
 
+import com.local.folddpifix.data.log.LogRepository
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -30,6 +31,7 @@ object AppDensityNotifier {
 
     fun setEnabled(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("on", on).apply()
+        LogRepository.from(context).add("알림창 앱 배율 조절 ${if (on) "켜짐" else "꺼짐"}")
         if (on) start(context) else { context.stopService(Intent(context, AppDensityService::class.java)); cancel(context) }
     }
 

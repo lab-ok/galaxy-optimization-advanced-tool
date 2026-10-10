@@ -1,5 +1,6 @@
 package com.local.folddpifix.ui.help
 
+import com.local.folddpifix.ui.art.ConnectionIllustration
 import com.local.folddpifix.ui.components.SheetColumn
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -71,6 +72,9 @@ internal fun HelpSheet(state: UiState, onOpenGuide: () -> Unit) {
 
         GlassCard {
             Text("3. 최초 1회 권한 설정", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Spacer(Modifier.height(8.dp))
+            // 권한을 받는 길(PC·폰 연결) 그림. 권한이 있으면 연결된 모습으로 보여 준다.
+            ConnectionIllustration(wireless = true, done = state.hasPermission)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (state.hasPermission) "권한이 설정되어 있습니다."

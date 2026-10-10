@@ -20,7 +20,7 @@ class BootReceiver : BroadcastReceiver() {
         val settings = SettingsRepository.from(context)
         val log = LogRepository.from(context)
         val isBoot = action == Intent.ACTION_BOOT_COMPLETED || action == Intent.ACTION_LOCKED_BOOT_COMPLETED
-        // 앱마다 크기 따로: 알림창 크기 조절을 켜 두었으면 부팅·업데이트 뒤 다시 띄운다
+        // 앱별 화면 배율 설정: 알림창 크기 조절을 켜 두었으면 부팅·업데이트 뒤 다시 띄운다
         if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) AppDensityNotifier.start(context)
 
         if (isBoot && !settings.applyOnBoot) {

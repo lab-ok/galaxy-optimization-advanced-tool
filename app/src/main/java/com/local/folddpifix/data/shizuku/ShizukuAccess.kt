@@ -1,5 +1,6 @@
 package com.local.folddpifix.data.shizuku
 
+import com.local.folddpifix.data.log.LogRepository
 import com.local.folddpifix.data.HiddenApi
 import com.local.folddpifix.data.UserId
 import android.Manifest
@@ -21,7 +22,7 @@ import java.lang.reflect.InvocationTargetException
 /**
  * Shizuku 연동. Shizuku가 켜져 있고 FoldFit을 허용했으면 셸 권한이 필요한 일을 PC 없이 한다(ShizukuBinderWrapper).
  * - 기본 기능: FoldFit에 WRITE_SECURE_SETTINGS를 스스로 부여한다([grantSecureSettings]). 한 번 받으면 Shizuku 없이도 유지된다.
- * - 앱마다 크기 따로: 삼성 앱별 화면 크기 함수를 셸 권한으로 부른다. PC 도우미([DensityServer])와 같은 일을 한다.
+ * - 앱별 화면 배율 설정: 삼성 앱별 화면 크기 함수를 셸 권한으로 부른다. PC 도우미([DensityServer])와 같은 일을 한다.
  * Shizuku 13.6+는 Android 13 이상에서 Wi-Fi에 연결돼 있으면 재부팅 뒤 스스로 다시 켜진다.
  */
 object ShizukuAccess {
@@ -70,7 +71,7 @@ object ShizukuAccess {
             Settings.Global.putInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 1)
             Settings.Global.putInt(cr, Settings.Global.ADB_ENABLED, 1)
             Settings.Global.putInt(cr, "adb_wifi_enabled", 1)
-        }.isSuccess
+        }.isSuccess.also { LogRepository.from(context).add("무선 디버깅 켜기(사용자 요청): ${if (it) "성공" else "실패"}") }
     }
 
     /**
@@ -94,7 +95,7 @@ object ShizukuAccess {
         }
         try { m.invoke(pm, *args) } catch (e: InvocationTargetException) { throw e.targetException }
         context.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED
-    }.getOrDefault(false)
+    }.getOrDefault(false).also { LogRepository.from(context).add("Shizuku로 WRITE_SECURE_SETTINGS 받기: ${if (it) "성공" else "실패"}") }
 
     /**
      * Shizuku의 '부팅 시 시작'이 켜져 있는지. Shizuku는 이 설정을 BootCompleteReceiver 컴포넌트를 켜고 끄는 것으로
@@ -143,7 +144,7 @@ object ShizukuAccess {
         val m = ops.javaClass.methods.first { it.name == "setMode" && it.parameterTypes.size == 4 }
         m.invoke(ops, code, android.os.Process.myUid(), context.packageName, AppOpsManager.MODE_ALLOWED)
         AppUsage.hasAccess(context)
-    }.getOrDefault(false)
+    }.getOrDefault(false).also { LogRepository.from(context).add("Shizuku로 사용 기록 접근 허용: ${if (it) "성공" else "실패"}") }
 
     /** 실기기 코드 기준 인자 순서: (패키지, 사용자, 밀도, 메모). 값은 [AppDensityPolicy.STEPS]와 0만. */
     fun set(pkg: String, user: Int, dpi: Int) {

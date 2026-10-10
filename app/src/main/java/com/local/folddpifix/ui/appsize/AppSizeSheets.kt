@@ -42,12 +42,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
+/** 사용 방법 한 항목: 제목, 움직이는 그림([art]), 설명. 초보자도 그림만 보고 알 수 있게 그림을 설명 위에 둔다. */
 @Composable
-private fun Topic(title: String, body: String) {
+private fun Topic(title: String, body: String, art: (@Composable () -> Unit)? = null) {
     val c = LocalLiquid.current
     GlassCard(padding = 16.dp) {
         Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
-        Spacer(Modifier.height(4.dp))
+        if (art != null) {
+            Spacer(Modifier.height(10.dp))
+            art()
+        }
+        Spacer(Modifier.height(8.dp))
         Text(body, color = c.muted, style = MaterialTheme.typography.bodyMedium)
     }
     Spacer(Modifier.height(12.dp))
@@ -61,6 +66,7 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
             "1. 무엇을 하나요",
             "앱마다 화면 크기를 따로 정합니다. 삼성 '설정 → 디스플레이 → 앱 화면 크게/작게'와 같은 설정이라, " +
                 "여기서 바꾸면 그 화면에도 그대로 보입니다. 바꾼 값은 재부팅해도 유지됩니다.",
+            art = { AppScaleArt() },
         )
         Topic(
             "2. Shizuku가 필요한 이유",
@@ -68,34 +74,40 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
                 "무료 앱 Shizuku는 폰의 무선 디버깅으로 그 권한을 빌려 줍니다. 처음 한 번 페어링하면 되고, " +
                 "Android 13 이상에서는 재부팅 뒤에도 Wi-Fi에 연결되면 스스로 다시 켜집니다. " +
                 "Shizuku가 없으면 PC에서 명령 한 번으로 FoldFit 셸 도우미를 켜서 쓸 수도 있습니다.",
+            art = { ShizukuBridgeArt() },
         )
         Topic(
             "3. Shizuku가 꺼져 있으면",
             "• 이미 정해 둔 앱 크기: Shizuku가 꺼져 있어도, 재부팅해도 그대로 유지됩니다.\n" +
                 "• 목록에서 크기 바꾸기, 알림창 [작게]·[기본]·[크게]: Shizuku가 실행 중일 때만 됩니다.\n" +
                 "• 알림에 지금 보고 있는 앱 표시: Shizuku가 실행 중일 때만 실시간으로 바뀝니다.\n" +
-                "• '접고 펴도 같은 크기'(기기 전체 크기): Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.",
+                "• '화면 배율 동기화'(기기 전체 크기): Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.",
+            art = { PersistArt() },
         )
         Topic(
             "4. 크기가 여섯 단계로 정해진 이유",
             "삼성 시스템이 ${AppDensityPolicy.STEPS.joinToString("·")} 여섯 값만 받도록 만들어져 있습니다. 다른 값을 넣으면 시스템이 거절해, " +
                 "1단위로 조절할 수는 없습니다. '기본'은 앱별 설정을 지우고 기기 전체 크기를 따르게 합니다.",
+            art = { StepsArt() },
         )
         Topic(
             "5. 접고 펼 때 크기가 달라 보이는 이유",
             "앱별 크기는 하나의 고정된 DPI라서 외부 화면과 내부 화면에 같은 숫자가 쓰입니다. 두 화면은 픽셀 밀도(PPI)가 달라 " +
-                "같은 숫자라도 실제 크기가 다르게 보입니다. 기기 전체 크기는 '접고 펴도 같은 크기'가 화면마다 맞춰 주지만, " +
+                "같은 숫자라도 실제 크기가 다르게 보입니다. 기기 전체 크기는 '화면 배율 동기화'가 화면마다 맞춰 주지만, " +
                 "앱별 크기는 시스템이 화면마다 다른 값을 둘 수 없게 되어 있습니다. 주로 쓰는 화면에 맞춰 고르세요.",
+            art = { FoldDiffArt() },
         )
         Topic(
             "6. 알림창에서 바로 바꾸기",
             "'알림창에서 바로 조절'을 켜면 알림에 지금 보고 있는 앱과 크기가 나오고, [작게]·[기본]·[크게]로 한 단계씩 바꿉니다. " +
                 "삼성 설정 특성상 크기를 바꾸면 그 앱이 다시 시작되며, FoldFit이 바로 다시 열어 줍니다.",
+            art = { NotifyArt() },
         )
         Topic(
             "7. 되돌리기",
             "앱을 눌러 '기본'을 고르면 그 앱만, ⋮ → 초기화에서는 모든 앱을 기본 크기로 되돌립니다. " +
                 "삼성 설정의 '앱 화면 크게/작게'에서 되돌려도 됩니다.",
+            art = { ResetArt() },
         )
         LiquidButton("Shizuku 연결 안내 열기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = onConnect)
     }

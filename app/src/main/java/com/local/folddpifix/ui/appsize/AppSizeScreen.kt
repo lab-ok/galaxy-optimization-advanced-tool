@@ -92,7 +92,7 @@ private class AppEntry(val label: String, val pkg: String, val icon: ImageBitmap
 
 
 /**
- * 앱마다 크기 따로: 삼성 '앱 화면 크게/작게'와 같은 설정을 FoldFit에서 바꾼다.
+ * 앱별 화면 배율 설정: 삼성 '앱 화면 크게/작게'와 같은 설정을 FoldFit에서 바꾼다.
  * - 셸 권한(Shizuku 또는 PC 도우미)이 없으면 연결 안내 카드만 보여 주고 [onGuide]로 연결 시트를 연다.
  * - 있으면: 알림창 조절, 검색, '적용된 앱', '최근 사용 순' 목록. 앱을 누르면 기본·320~510이 펼쳐진다.
  * 목록은 LazyColumn이라 앱이 '적용된 앱'과 '최근 사용 순' 사이를 오갈 때 자리 이동이 애니메이션된다.

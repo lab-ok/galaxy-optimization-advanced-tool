@@ -70,10 +70,12 @@ internal fun ShizukuGuide(
     Text(intro, color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(12.dp))
     Step(1, "Shizuku 설치", done[0], current == 0) {
+        StoreStepArt()
         Hint("무료 앱입니다. 설치가 끝나면 이 화면으로 돌아오세요.")
         Action("설치하기") { openStore(context) }
     }
     Step(2, "무선 디버깅 켜기", done[1], current == 1) {
+        WirelessStepArt()
         Hint("Shizuku가 폰 안에서 권한을 얻는 통로입니다. Wi-Fi에 연결돼 있어야 하고, '이 네트워크에서 허용할까요?'가 뜨면 허용을 누르세요.")
         if (note == 1) Hint("개발자 옵션에서 '무선 디버깅'을 직접 켜고 돌아와 주세요.", warn = true)
         Action("켜기") {
@@ -81,6 +83,7 @@ internal fun ShizukuGuide(
         }
     }
     Step(3, "Shizuku 페어링하고 시작", done[2], current == 2) {
+        PairingStepArt()
         Hint(
             "① [Shizuku 열기] → '무선 디버깅으로 시작'의 [페어링]을 누릅니다. 알림 허용을 물으면 허용합니다.\n" +
                 "② [무선 디버깅 화면] → '페어링 코드로 기기 페어링'을 누르면 6자리 숫자가 나옵니다.\n" +
@@ -93,6 +96,7 @@ internal fun ShizukuGuide(
         }
     }
     Step(4, "FoldFit 허용", done[3], current == 3) {
+        AllowStepArt()
         Hint("Shizuku가 묻는 창에서 '항상 허용'을 누르세요.")
         Action("허용하기") { ShizukuAccess.requestPermission() }
     }

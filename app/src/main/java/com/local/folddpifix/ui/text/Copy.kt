@@ -54,12 +54,12 @@ object Copy {
     const val AUTO_BODY = "재부팅하거나 화면이 전환되면 설정한 DPI를 다시 적용합니다"
 
     // 메뉴
-    const val FEATURE_DPI = "접고 펴도 같은 크기"
-    const val FEATURE_APP_SIZE = "앱마다 크기 따로"
+    const val FEATURE_DPI = "화면 배율 동기화"
+    const val FEATURE_APP_SIZE = "앱별 화면 배율 설정"
     const val FEATURE_LAB_TOOLS = "조사 도구"
     const val MENU_HELP = "사용 방법"
     const val MENU_GUIDE = "권한 설정"
-    const val MENU_SECTION_FEATURES = "화면 크기"
+    const val MENU_SECTION_FEATURES = "화면 배율"
     const val MENU_SECTION_LAB = "실험실"
     const val MENU_ADVANCED = "고급 정보"
     const val MENU_REPORT = "문제 신고"
@@ -100,8 +100,8 @@ object Copy {
     const val TOAST_REPORT_SAVED = "다운로드/FoldFit 폴더에 저장했습니다"
     const val TOAST_REPORT_FAILED = "진단 파일을 만들지 못했습니다"
 
-    // 앱마다 크기 따로
-    const val APP_SIZE_INTRO_TITLE = "앱마다 화면 크기를 따로"
+    // 앱별 화면 배율 설정
+    const val APP_SIZE_INTRO_TITLE = "앱마다 화면 배율을 따로"
     const val APP_SIZE_INTRO_BODY = "삼성 '앱 화면 크게/작게'와 같은 설정입니다. 바꾼 값은 재부팅해도 유지됩니다."
     const val APP_SIZE_CONNECT_TITLE = "Shizuku 연결이 필요합니다"
     const val APP_SIZE_CONNECT_BODY = "앱별 크기는 시스템 권한이 있어야 바꿀 수 있어, 무료 앱 Shizuku로 연결합니다."

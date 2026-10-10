@@ -11,8 +11,9 @@ import com.local.folddpifix.AppInfo
 /**
  * 개발자에게 보내는 메일.
  * - 문의([inquiry]): 첨부 없는 메일 작성 창.
- * - 문제 신고([send]): 받는 사람·제목·본문 양식을 채우고 진단 파일과 오늘 로그를 첨부해 공유 창으로 보낸다.
- *   (첨부가 있는 메일은 실기기에서 메일 앱으로 바로 열리지 않고 공유 창으로 넘어가므로, 처음부터 공유 창을 쓴다)
+ * - 문제 신고([send]): 받는 사람·제목·본문 양식을 채우고 진단 파일과 오늘 로그를 첨부한다.
+ *   첨부 메일(ACTION_SEND)에 mailto 선택자(selector)를 붙여 메일 앱만 고르게 한다. 공유 창에서 메신저 등을 고르면
+ *   받는 사람(개발자 주소)이 빠지므로 메일 앱으로만 보낸다. 메일 앱이 없으면 예전처럼 공유 창을 연다.
  */
 internal object ReportMail {
 
@@ -55,6 +56,10 @@ internal object ReportMail {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
         }
-        context.startActivity(Intent.createChooser(mail, kind.label))
+        // 메일 앱만: mailto를 처리하는 앱으로 좁힌다(첨부·받는 사람·제목은 그대로 전달된다)
+        val mailto = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+        val hasMailApp = context.packageManager.queryIntentActivities(mailto, 0).isNotEmpty()
+        val target = if (hasMailApp) Intent(mail).apply { selector = mailto } else mail
+        context.startActivity(Intent.createChooser(target, kind.label))
     }
 }
