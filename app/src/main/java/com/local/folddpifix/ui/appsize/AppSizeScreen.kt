@@ -116,6 +116,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
     var notify by remember { mutableStateOf(AppDensityNotifier.enabled(context)) }
     var resumed by remember { mutableIntStateOf(0) }
     var bootOn by remember { mutableStateOf(true) }
+    var autoOff by remember { mutableStateOf(ShizukuAccess.autoOffEnabled(context)) }
     // 처음 나타난 카드는 다시 등장 애니메이션을 하지 않는다(목록을 스크롤해 다시 보일 때)
     val shown = remember { mutableSetOf<String>() }
     val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -213,6 +214,18 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                         notify = on; AppDensityNotifier.setEnabled(context, on)
                                     }
                                 })
+                            }
+                            // 무선 디버깅 자동 끄기(Shizuku로 연결됐을 때만 의미가 있다)
+                            if (shell == null) {
+                                Spacer(Modifier.height(14.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(Copy.APP_SIZE_AUTO_OFF_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                                        Text(Copy.APP_SIZE_AUTO_OFF_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Spacer(Modifier.width(12.dp))
+                                    LiquidSwitch(autoOff, { on -> autoOff = on; ShizukuAccess.setAutoOff(context, on) })
+                                }
                             }
                             if (!usage) {
                                 Text(Copy.APP_SIZE_USAGE_NEEDED, color = c.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 10.dp))

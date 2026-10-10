@@ -123,4 +123,6 @@ object Copy {
     const val SIZE_REVERT = "되돌리기"
     const val APP_SIZE_DEFAULT = "기본"
     const val APP_SIZE_FAILED = "바꾸지 못했습니다: "
+    const val APP_SIZE_AUTO_OFF_TITLE = "Shizuku가 켜지면 무선 디버깅 끄기"
+    const val APP_SIZE_AUTO_OFF_BODY = "무선 디버깅은 Shizuku 시작에만 필요합니다. 끄면 Shizuku가 멈추는 기기도 있어 기본은 꺼짐입니다."
 }

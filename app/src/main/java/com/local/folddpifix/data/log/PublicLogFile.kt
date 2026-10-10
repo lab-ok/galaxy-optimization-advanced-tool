@@ -12,7 +12,9 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 로그를 사용자가 바로 열 수 있는 파일로 저장한다: 내장 저장소 `Download/FoldFit/foldfit-YYMMDD.log`.
+ * 로그를 사용자가 바로 열 수 있는 파일로 저장한다: 내장 저장소 `Download/FoldFit/foldfit-YYMMDD-log.txt`.
+ * 이름은 MIME(text/plain)과 같은 .txt로 끝나야 한다. `.log`로 저장하면 시스템이 `.txt`를 덧붙여 이름이 바뀌고,
+ * 다음 기록 때 같은 이름으로 찾지 못해 기록마다 '(1)', '(2)' 같은 새 파일이 생긴다.
  * MediaStore를 쓰므로 저장소 권한이 필요 없다. 잠금 해제 전(Direct Boot)에는 공용 저장소를 쓸 수 없어
  * 앱 내부 대기 파일에 모았다가 다음 기록 때 함께 옮긴다.
  */
@@ -52,14 +54,14 @@ object PublicLogFile {
 
     /** 오늘 로그 파일(있으면). 공유에 첨부한다. */
     fun todayUri(context: Context): Uri? = synchronized(lock) {
-        find(context.applicationContext, "foldfit-${dayFormat.format(Date())}.log")
+        find(context.applicationContext, todayName())
     }
 
-    /** 진단 로그를 Download/FoldFit에 새 파일로 저장하고 Uri와 파일 이름을 돌려준다. */
     /** "foldfit-<kind>-yyMMdd-HHmmss.txt"처럼 시각을 붙인 새 파일 이름. */
     fun timestampedName(kind: String): String =
         "foldfit-$kind-${java.text.SimpleDateFormat("yyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date())}.txt"
 
+    /** Download/FoldFit에 새 파일로 저장하고 Uri를 돌려준다. */
     fun saveNew(context: Context, name: String, text: String): Uri? = synchronized(lock) {
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
@@ -87,8 +89,10 @@ object PublicLogFile {
         return null
     }
 
+    private fun todayName() = "foldfit-${dayFormat.format(Date())}-log.txt"
+
     private fun uriForToday(context: Context): Uri? {
-        val name = "foldfit-${dayFormat.format(Date())}.log"
+        val name = todayName()
         val collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI
         val relative = "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/"
         context.contentResolver.query(

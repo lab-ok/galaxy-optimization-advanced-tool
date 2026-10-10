@@ -40,7 +40,8 @@ object ShizukuAccess {
     fun watch(context: Context) {
         installed = runCatching { context.packageManager.getPackageInfo(PACKAGE, 0); true }.getOrDefault(false)
         if (started.compareAndSet(false, true)) {
-            Shizuku.addBinderReceivedListenerSticky { refresh() }
+            val app = context.applicationContext
+            Shizuku.addBinderReceivedListenerSticky { refresh(); autoDisableWirelessDebug(app) }
             Shizuku.addBinderDeadListener { refresh() }
             Shizuku.addRequestPermissionResultListener { _, _ -> refresh() }
         }
@@ -59,6 +60,32 @@ object ShizukuAccess {
     /** 무선 디버깅이 켜져 있는지. */
     fun wirelessDebugOn(context: Context): Boolean =
         Settings.Global.getInt(context.contentResolver, "adb_wifi_enabled", 0) == 1
+
+    /** 'Shizuku가 켜지면 무선 디버깅 끄기' 옵션(기본 꺼짐). */
+    fun autoOffEnabled(context: Context) = prefs(context).getBoolean("wireless_auto_off", false)
+
+    fun setAutoOff(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("wireless_auto_off", on).apply()
+        LogRepository.from(context).add("Shizuku 시작 뒤 무선 디버깅 끄기 ${if (on) "켜짐" else "꺼짐"}")
+        if (on) autoDisableWirelessDebug(context)
+    }
+
+    /**
+     * 옵션이 켜져 있고 Shizuku가 켜져 있으면, 몇 초 뒤 무선 디버깅을 끈다(WRITE_SECURE_SETTINGS).
+     * 무선 디버깅은 Shizuku를 시작할 때만 필요하고, 켜 두면 같은 Wi-Fi의 기기가 페어링을 시도할 수 있다.
+     * 기기에 따라 무선 디버깅을 끄면 Shizuku도 멈출 수 있어 기본은 꺼 둔다.
+     */
+    fun autoDisableWirelessDebug(context: Context) {
+        if (!autoOffEnabled(context) || !Shizuku.pingBinder() || !wirelessDebugOn(context)) return
+        if (context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) != PackageManager.PERMISSION_GRANTED) return
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            if (!Shizuku.pingBinder()) return@postDelayed
+            val ok = runCatching { Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 0) }.isSuccess
+            LogRepository.from(context).add("Shizuku가 켜져 있어 무선 디버깅을 껐습니다: ${if (ok) "성공" else "실패"}")
+        }, 5_000)
+    }
+
+    private fun prefs(context: Context) = context.getSharedPreferences("shizuku", Context.MODE_PRIVATE)
 
     /**
      * 무선 디버깅을 켠다. FoldFit은 기본 기능 때문에 WRITE_SECURE_SETTINGS를 이미 받아 두었으므로

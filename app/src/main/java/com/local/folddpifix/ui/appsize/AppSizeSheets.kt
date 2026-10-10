@@ -81,7 +81,8 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
             "• 이미 정해 둔 앱 크기: Shizuku가 꺼져 있어도, 재부팅해도 그대로 유지됩니다.\n" +
                 "• 목록에서 크기 바꾸기, 알림창 [작게]·[기본]·[크게]: Shizuku가 실행 중일 때만 됩니다.\n" +
                 "• 알림에 지금 보고 있는 앱 표시: Shizuku가 실행 중일 때만 실시간으로 바뀝니다.\n" +
-                "• '화면 배율 동기화'(기기 전체 크기): Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.",
+                "• '화면 배율 동기화'(기기 전체 크기): Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.\n" +
+                "• 무선 디버깅은 Shizuku를 시작할 때만 필요합니다. '무선 디버깅 끄기'를 켜면 Shizuku가 켜진 직후 FoldFit이 끕니다. 끄면 Shizuku가 멈추는 기기에서는 이 옵션을 꺼 두세요.",
             art = { PersistArt() },
         )
         Topic(
