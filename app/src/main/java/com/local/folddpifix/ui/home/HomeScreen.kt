@@ -98,6 +98,8 @@ import com.local.folddpifix.ui.liquid.LiquidSwitch
 import com.local.folddpifix.ui.liquid.LiquidToast
 import com.local.folddpifix.ui.liquid.LocalLiquid
 import com.local.folddpifix.ui.text.Copy
+import com.local.folddpifix.BuildConfig
+import com.local.folddpifix.ui.lab.LabSheet
 import com.local.folddpifix.ui.art.LocalDeviceShape
 import com.local.folddpifix.ui.art.DeviceShape
 import androidx.compose.runtime.CompositionLocalProvider
@@ -111,7 +113,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, LAB }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -210,7 +212,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                                     Copy.MENU_REPORT to report,
                                     Copy.MENU_RESET to { sheet = Sheet.RESET },
                                     Copy.MENU_ABOUT to { sheet = Sheet.ABOUT },
-                                ),
+                                ) + (if (BuildConfig.LAB) listOf("실험실" to { sheet = Sheet.LAB }) else emptyList()),
                             )
                         }
                     },
@@ -279,6 +281,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             vm.say(Copy.TOAST_COPIED)
                         },
                     )
+                    Sheet.LAB -> LabSheet()
                     Sheet.ABOUT -> AboutSheet(onMail = { ReportMail.inquiry(context) })
                 }
             }

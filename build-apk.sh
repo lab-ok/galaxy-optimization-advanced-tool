@@ -7,7 +7,7 @@
 #   - aapt2: Google 배포본은 x86_64 전용이라 ARM64 정적 빌드(lzhiyong/android-sdk-tools)로 대체
 # --docker: x86_64 호스트(또는 amd64 에뮬레이션이 설정된 호스트)에서 Dockerfile.android-build로 빌드한다.
 #
-# 사용법: ./build-apk.sh [--release] [--docker] [--skip-tests]
+# 사용법: ./build-apk.sh [--release|--lab] [--docker] [--skip-tests]
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -18,6 +18,7 @@ RUN_TESTS=1
 for a in "$@"; do
   case "$a" in
     --release) VARIANT=release ;;
+    --lab) VARIANT=lab ;;
     --docker) MODE=docker ;;
     --skip-tests) RUN_TESTS=0 ;;
     -h|--help) sed -n '2,12p' "$0"; exit 0 ;;

@@ -15,6 +15,8 @@ android {
         targetSdk = 35
         versionCode = 27
         versionName = "1.0.1"
+        // 실험실 기능은 lab 빌드에만 켠다. 공개 release·debug에는 들어가지 않는다.
+        buildConfigField("boolean", "LAB", "false")
     }
 
     buildTypes {
@@ -22,6 +24,12 @@ android {
             // 숨은 API를 reflection으로 부르므로 축소·난독화를 켜지 않는다.
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("debug")
+        }
+        // 개발자 본인용 실험실 빌드: release와 같고 실험실 메뉴만 켠다(같은 서명이라 덮어 설치된다).
+        create("lab") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+            buildConfigField("boolean", "LAB", "true")
         }
     }
 
@@ -34,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     testOptions {
         unitTests {
