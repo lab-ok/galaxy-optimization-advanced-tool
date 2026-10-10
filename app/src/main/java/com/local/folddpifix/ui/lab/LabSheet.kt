@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.runtime.LaunchedEffect
 import com.local.folddpifix.data.lab.AppDensityProbe
+import com.local.folddpifix.ui.components.CommandBox
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -228,12 +229,33 @@ private fun AppDensityCard() {
         if (result.isNotEmpty()) {
             Spacer(Modifier.height(8.dp))
             Text(result, color = c.ink, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp))
+            if ("MANAGE_ACTIVITY_TASKS" in result) {
+                // 앱에는 줄 수 없는 시스템 권한이라, 같은 함수를 adb 셸로 부르는 명령을 보여 준다.
+                val cmds = remember(pkg, dpi) { AppDensityProbe.shellCommands(pkg, dpi.toIntOrNull() ?: 0) }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "이 함수는 시스템 권한(MANAGE_ACTIVITY_TASKS)이 필요해 앱에서는 부를 수 없습니다. PC의 adb 셸에는 이 권한이 있으니 아래 명령으로 시험해 보세요.",
+                    color = c.muted, style = MaterialTheme.typography.bodySmall,
+                )
+                cmds.lines().filter { it.contains("adb ") }.forEach { line ->
+                    val cmd = line.substringAfter(": ").trim().let { if (it.startsWith("adb")) it else line.trim() }
+                    Spacer(Modifier.height(6.dp))
+                    CommandBox(".\\" + cmd, onCopy = {
+                        context.getSystemService(android.content.ClipboardManager::class.java)
+                            .setPrimaryClip(android.content.ClipData.newPlainText("adb", ".\\" + cmd))
+                    })
+                }
+            }
             Spacer(Modifier.height(6.dp))
             LiquidButton("결과 파일로 보내기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
                 scope.launch {
                     val uri = withContext(Dispatchers.IO) {
                         val name = "foldfit-lab-density-${SimpleDateFormat("yyMMdd-HHmmss", Locale.US).format(Date())}.txt"
-                        PublicLogFile.saveNew(context, name, "패키지: $pkg\n\n== 처음 값 ==\n${original.orEmpty()}\n\n== 마지막 결과 ==\n$result")
+                        PublicLogFile.saveNew(
+                            context, name,
+                            "패키지: $pkg\n\n== 처음 값 ==\n${original.orEmpty()}\n\n== 마지막 결과 ==\n$result\n\n== PC 명령 ==\n" +
+                                AppDensityProbe.shellCommands(pkg, dpi.toIntOrNull() ?: 0),
+                        )
                     }
                     uri?.let { share(context, it) }
                 }

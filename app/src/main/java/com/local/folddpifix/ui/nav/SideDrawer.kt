@@ -104,15 +104,8 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
     // 고른 항목 방울: 각 항목의 위치를 재고, 머리·꼬리 스프링으로 옮긴다
     val tops = remember { mutableStateMapOf<NavItem, Float>() }
     var rowH by remember { mutableFloatStateOf(0f) }
-    val head = remember { Animatable(-1f) }
-    val tail = remember { Animatable(-1f) }
     val target = current?.let { tops[it] }
-    LaunchedEffect(target) {
-        val y = target ?: return@LaunchedEffect
-        if (head.value < 0f) { head.snapTo(y); tail.snapTo(y); return@LaunchedEffect }
-        launch { head.animateTo(y, Springs.calm(reduce)) }
-        tail.animateTo(y, Springs.lag(reduce))
-    }
+    val pill = rememberLiquidPill(target, reduce)
 
     Box(
         Modifier
@@ -147,20 +140,7 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
             Box {
                 // 방울 층(항목 뒤): 고른 항목을 따라다니는 잉크 알약
                 Canvas(Modifier.matchParentSize().goo(c.ink, 7.dp)) {
-                    if (head.value < 0f || rowH <= 0f) return@Canvas
-                    // 머리: 고른 항목 크기의 알약. 꼬리: 머리와 이전 자리 사이를 잇는 목(멀수록 가늘게).
-                    // 둘을 goo로 그려 한 덩어리 물방울이 늘어났다 합쳐지는 것처럼 보이게 한다.
-                    drawRoundRect(c.ink, Offset(0f, head.value), Size(size.width, rowH), CornerRadius(rowH / 2))
-                    val gap = kotlin.math.abs(head.value - tail.value)
-                    if (gap > 1f) {
-                        val top = minOf(head.value, tail.value) + rowH * 0.2f
-                        val bottom = maxOf(head.value, tail.value) + rowH * 0.8f
-                        val neck = (size.width * (0.55f - 0.25f * (gap / (rowH * 4f)).coerceIn(0f, 1f)))
-                        drawRoundRect(c.ink, Offset((size.width - neck) / 2, top), Size(neck, bottom - top), CornerRadius(neck / 2))
-                        // 꼬리 끝에 남는 방울(곧 빨려 든다)
-                        val r = rowH * 0.32f * (gap / (rowH * 2f)).coerceIn(0f, 1f)
-                        if (r > 1f) drawCircle(c.ink, r, Offset(size.width / 2, tail.value + rowH / 2))
-                    }
+                    drawLiquidPill(pill, c.ink, size.width, rowH)
                 }
                 Column {
                     var index = 0
@@ -177,8 +157,8 @@ fun SideDrawerContent(sections: List<NavSection>, current: NavItem?, visible: Bo
                                 item, item == current,
                                 cover = cover@{
                                     val top = tops[item] ?: return@cover if (item == current) 1f else 0f
-                                    if (head.value < 0f || rowH <= 0f) (if (item == current) 1f else 0f)
-                                    else (1f - kotlin.math.abs(head.value - top) / rowH).coerceIn(0f, 1f)
+                                    if (pill.center < 0f || rowH <= 0f) (if (item == current) 1f else 0f)
+                                    else (1f - kotlin.math.abs(pill.center - top) / rowH).coerceIn(0f, 1f)
                                 },
                                 appear = { (enter.value - order).coerceIn(0f, 1f) },
                                 modifier = Modifier.onGloballyPositioned {

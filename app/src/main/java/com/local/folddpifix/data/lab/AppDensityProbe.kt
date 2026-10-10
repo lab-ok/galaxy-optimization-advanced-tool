@@ -59,6 +59,24 @@ object AppDensityProbe {
         }
     }
 
+    /**
+     * PC용 명령. 이 함수들은 MANAGE_ACTIVITY_TASKS(signature|recents)를 요구해 앱에는 adb로도 줄 수 없지만,
+     * adb 셸(uid 2000)은 이 권한을 가지고 있다. 그래서 셸의 'service call'로 같은 함수를 번호로 부르는 명령을 만든다.
+     * 번호(TRANSACTION_*)는 기기 펌웨어마다 다르므로 이 기기에서 읽은 값을 쓴다.
+     */
+    fun shellCommands(pkg: String, dpi: Int): String = buildString {
+        runCatching { HiddenApiBypass.addHiddenApiExemptions("L") }
+        val stub = runCatching { Class.forName("android.app.IActivityTaskManager\$Stub") }.getOrNull()
+            ?: return "IActivityTaskManager를 찾지 못했습니다."
+        fun code(name: String) = runCatching { stub.getDeclaredField("TRANSACTION_$name").apply { isAccessible = true }.getInt(null) }.getOrNull()
+        val get = code("getCustomDensity")
+        val set = code("setUserCustomDensity")
+        if (get == null || set == null) return "함수 번호를 찾지 못했습니다(get=$get, set=$set)."
+        val user = userId()
+        appendLine("읽기:  adb shell service call activity_task $get s16 $pkg i32 $user i32 0")
+        appendLine("바꾸기: adb shell service call activity_task $set s16 $pkg i32 $dpi i32 $user s16 FoldFit")
+    }
+
     /** 값 바꾸기: setUserCustomDensity(패키지, 밀도, 사용자, 메모) 후 다시 읽기. */
     fun write(pkg: String, dpi: Int): String = buildString {
         val svc = runCatching { service() }.getOrElse { return "서비스 연결 실패: ${describe(it)}" }

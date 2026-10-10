@@ -230,7 +230,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     // 방울이 고른 항목으로 옮겨 가는 것을 잠깐 보여 준 뒤 닫는다.
                     val moved = item != feature
                     feature = item
-                    scope.launch { if (moved) delay(320); drawer.close() }
+                    scope.launch { if (moved) delay(520); drawer.close() }
                 })
             },
         ) {
