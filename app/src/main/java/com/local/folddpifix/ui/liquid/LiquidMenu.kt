@@ -67,6 +67,9 @@ fun LiquidMenu(
         blob.moveTo(right - w / 2, top + h / 2, w, h, animate, corner = geo[5])
     }
     LaunchedEffect(Unit) {
+        // 메뉴판은 크게 부풀기 때문에 기본 계수로는 출렁임이 크다. 바짝 끌고 점성을 키워 차분하게 펼친다.
+        blob.blob.gain = 4f
+        blob.blob.damping = 3.5f
         if (reduce) { panel(false); items0.snapTo(items.size.toFloat()); return@LaunchedEffect }
         button(false)
         panel(true)

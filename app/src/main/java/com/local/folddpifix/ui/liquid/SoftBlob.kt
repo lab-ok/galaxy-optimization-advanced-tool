@@ -40,6 +40,11 @@ class SoftBlob(private val n: Int = N) {
     private var tx = 0f; private var ty = 0f
     var ready = false; private set
 
+    /** 구동력·형태 복원 배수. 크면 목표를 바짝 따라간다(끄는 중인 손잡이). */
+    var gain = 1f
+    /** 속도 감쇠 배수. 크면 출렁임이 빨리 잦아든다(메뉴판처럼 큰 방울). */
+    var damping = 1f
+
     /** 질량 중심. */
     var cx = 0f; private set
     var cy = 0f; private set
@@ -130,11 +135,14 @@ class SoftBlob(private val n: Int = N) {
             val nl = sqrt(nx * nx + ny * ny) + 1e-6f; nx = nx / nl * sign; ny = ny / nl * sign
             val lead = max(0f, nx * ux + ny * uy)
             val w = (LEAD0 + (1 - LEAD0) * lead) * mid[i]
-            var fx = KD * w * (tx + rx[i] - px[i]); var fy = KD * w * (ty + ry[i] - py[i])
-            fx += KS * (mx + rx[i] - px[i]); fy += KS * (my + ry[i] - py[i])
+            val kd = KD * gain; val ks = KS * gain
+            var fx = kd * w * (tx + rx[i] - px[i]); var fy = kd * w * (ty + ry[i] - py[i])
+            fx += ks * (mx + rx[i] - px[i]); fy += ks * (my + ry[i] - py[i])
             fx += KT * ((px[p] + px[q] - 2 * px[i]) - lap0x[i]); fy += KT * ((py[p] + py[q] - 2 * py[i]) - lap0y[i])
             fx += pressure * nx; fy += pressure * ny
-            fx -= C * vx[i]; fy -= C * vy[i]
+            // 이웃 점성(CV)은 배수하지 않는다. 1/240초 적분에서 CV·dt가 0.5를 넘으면 가장자리가 지글거린다.
+            val c = C * damping
+            fx -= c * vx[i]; fy -= c * vy[i]
             fx += CV * (vx[p] + vx[q] - 2 * vx[i]); fy += CV * (vy[p] + vy[q] - 2 * vy[i])
             vx[i] += fx * dt; vy[i] += fy * dt
             energy += vx[i] * vx[i] + vy[i] * vy[i]

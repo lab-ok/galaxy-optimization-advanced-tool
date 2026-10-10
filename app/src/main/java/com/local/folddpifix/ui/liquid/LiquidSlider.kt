@@ -94,11 +94,16 @@ fun LiquidSlider(
         return (range.first + f * span).roundToInt()
     }
 
-    // 손잡이: 값 자리로 끌려가는 연체 물방울. 잡고 있는 동안은 납작하고 넓게(60×24dp), 놓으면 52×30dp로 돌아온다.
+    // 손잡이: 연체 물방울. 잡고 있는 동안은 손가락 위치를 바짝 따라가고(구동력 7배) 납작하고 넓게(60×24dp) 된다.
+    // 뒤쪽 면은 늦게 따라오므라 빨리 끌수록 길게 늘어난다. 놓으면 값 자리로 가서 52×30dp로 돌아온다.
+    var dragX by remember { mutableFloatStateOf(-1f) }
     val tw = with(density) { (if (active) 60 else 52).dp.toPx() }
     val tht = with(density) { (if (active) 24 else 30).dp.toPx() }
-    LaunchedEffect(value, width, active) {
-        if (width > 0f) blob.moveTo(xOf(value), trackY, tw, tht, animate = !reduce)
+    LaunchedEffect(value, width, active, dragX) {
+        if (width <= 0f) return@LaunchedEffect
+        blob.blob.gain = if (active) 7f else 1f
+        val x = if (active && dragX >= 0f) dragX.coerceIn(edge, width - edge) else xOf(value)
+        blob.moveTo(x, trackY, tw, tht, animate = !reduce)
     }
 
     Box(
@@ -117,10 +122,12 @@ fun LiquidSlider(
                 if (!enabled) return@pointerInput
                 awaitEachGesture {
                     val down = awaitFirstDown()
+                    dragX = down.position.x
                     active = true
                     var v = valueAt(down.position.x)
                     if (v != current) { change(v); haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
                     horizontalDrag(down.id) { e ->
+                        dragX = e.position.x
                         val nv = valueAt(e.position.x)
                         if (nv != v) {
                             v = nv
@@ -130,6 +137,7 @@ fun LiquidSlider(
                         e.consume()
                     }
                     active = false
+                    dragX = -1f
                     finish()
                 }
             }
