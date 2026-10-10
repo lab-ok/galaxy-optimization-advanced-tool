@@ -2,6 +2,7 @@ package com.local.folddpifix.ui.about
 
 import android.content.ActivityNotFoundException
 import android.content.ClipData
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -12,8 +13,8 @@ import com.local.folddpifix.AppInfo
  * 개발자에게 보내는 메일.
  * - 문의([inquiry]): 첨부 없는 메일 작성 창.
  * - 문제 신고([send]): 받는 사람·제목·본문 양식을 채우고 진단 파일과 오늘 로그를 첨부한다.
- *   첨부 메일(ACTION_SEND)에 mailto 선택자(selector)를 붙여 메일 앱만 고르게 한다. 공유 창에서 메신저 등을 고르면
- *   받는 사람(개발자 주소)이 빠지므로 메일 앱으로만 보낸다. 메일 앱이 없으면 예전처럼 공유 창을 연다.
+ *   메일 앱으로만 보내 받는 사람(개발자 주소)이 채워지게 한다(메신저 등으로 가면 주소가 빠진다).
+ *   메일 앱이 하나면 바로 열고, 여럿이면 고르게 하고, 없으면 예전처럼 공유 창을 연다.
  */
 internal object ReportMail {
 
@@ -57,9 +58,23 @@ internal object ReportMail {
             }
         }
         // 메일 앱만: mailto를 처리하는 앱으로 좁힌다(첨부·받는 사람·제목은 그대로 전달된다)
-        val mailto = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
-        val hasMailApp = context.packageManager.queryIntentActivities(mailto, 0).isNotEmpty()
-        val target = if (hasMailApp) Intent(mail).apply { selector = mailto } else mail
-        context.startActivity(Intent.createChooser(target, kind.label))
+        // 메일 앱으로만 보낸다: 첨부를 받는 앱(SEND) 중 mailto도 처리하는 앱만 고른다.
+        // 시스템 공유 창의 선택자·제외 기능은 기기마다 다르게 동작해(삼성: '작업을 수행할 수 있는 앱이 없습니다') 쓰지 않고,
+        // 하나면 바로 열고, 여럿이면 직접 고르게 한다. 메일 앱이 없으면 모든 앱이 보이는 공유 창을 연다.
+        val pm = context.packageManager
+        val mailApps = pm.queryIntentActivities(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")), 0)
+            .map { it.activityInfo.packageName }.toSet()
+        val targets = pm.queryIntentActivities(mail, 0)
+            .filter { it.activityInfo.packageName in mailApps }
+            .distinctBy { it.activityInfo.packageName }
+        fun open(i: Int) = context.startActivity(Intent(mail).setClassName(targets[i].activityInfo.packageName, targets[i].activityInfo.name))
+        when (targets.size) {
+            0 -> context.startActivity(Intent.createChooser(mail, kind.label))
+            1 -> open(0)
+            else -> AlertDialog.Builder(context)
+                .setTitle("메일 앱 고르기")
+                .setItems(targets.map { it.loadLabel(pm) }.toTypedArray()) { _, i -> open(i) }
+                .show()
+        }
     }
 }
