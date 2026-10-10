@@ -7,7 +7,7 @@ import android.content.Context
 import android.provider.Settings
 import android.content.pm.PackageManager
 import com.local.folddpifix.data.appsize.AppUsage
-import com.local.folddpifix.data.appsize.DensityServer
+import com.local.folddpifix.domain.AppDensityPolicy
 import android.os.IBinder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -151,9 +151,9 @@ object ShizukuAccess {
         AppUsage.hasAccess(context)
     }.getOrDefault(false)
 
-    /** 실기기 코드 기준 인자 순서: (패키지, 사용자, 밀도, 메모). 값은 [DensityServer.STEPS]와 0만. */
+    /** 실기기 코드 기준 인자 순서: (패키지, 사용자, 밀도, 메모). 값은 [AppDensityPolicy.STEPS]와 0만. */
     fun set(pkg: String, user: Int, dpi: Int) {
-        require(dpi == 0 || dpi in DensityServer.STEPS) { "허용되지 않는 값: $dpi" }
+        require(AppDensityPolicy.isAllowed(dpi)) { "허용되지 않는 값: $dpi" }
         call("setUserCustomDensity", 4, pkg, user, dpi, "FoldFit")
     }
 }

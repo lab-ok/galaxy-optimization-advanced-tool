@@ -1,6 +1,7 @@
 package com.local.folddpifix.data.appsize
 
 import android.content.AttributionSource
+import com.local.folddpifix.domain.AppDensityPolicy
 import android.os.Binder
 import android.os.Bundle
 import android.os.Handler
@@ -21,7 +22,7 @@ import kotlin.system.exitProcess
  *
  * 안전 장치
  * - 호출자 확인: FoldFit uid가 아닌 요청은 모두 거절한다.
- * - 기능 제한: 임의 명령 실행은 없다. 바꾸는 값도 삼성이 허용하는 단계([STEPS])와 0(기본)만 받는다.
+ * - 기능 제한: 임의 명령 실행은 없다. 바꾸는 값도 삼성이 허용하는 단계와 0(기본)만 받는다([AppDensityPolicy]).
  * - 수명: FoldFit 프로세스가 끝나거나 [IDLE_MS] 동안 요청이 없으면 스스로 끝난다.
  *
  * 띄우는 명령은 [startCommand]가 만든다. 앱 쪽 연결은 [ShellBridgeProvider]·[DensityShell].
@@ -36,8 +37,6 @@ object DensityServer {
     const val SET = PING + 2
     const val EXIT = PING + 3
 
-    /** 삼성 MultiTaskingAppCompatDensityOverrides.SUPPORTED_VALUES(One UI 9 실기기 코드에서 확인). 0은 '기본'. */
-    val STEPS = listOf(320, 360, 420, 450, 480, 510)
     private const val IDLE_MS = 30 * 60 * 1000L
 
     /** PC PowerShell(platform-tools 폴더)에서 실행할 명령. 작은따옴표 안이라 $( )를 PowerShell이 건드리지 않는다. */
@@ -80,7 +79,7 @@ object DensityServer {
                         SET -> {
                             val pkg = data.readString()!!; val user = data.readInt(); val dpi = data.readInt()
                             if (setM == null) throw UnsupportedOperationException("이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.")
-                            require(dpi == 0 || dpi in STEPS) { "허용되지 않는 값: $dpi" }
+                            require(AppDensityPolicy.isAllowed(dpi)) { "허용되지 않는 값: $dpi" }
                             // 실기기 코드 기준 인자 순서는 (패키지, 사용자, 밀도, 메모). 바뀌면 그 앱을 다시 띄워 바로 적용된다.
                             unwrap { setM.invoke(atm, pkg, user, dpi, "FoldFit") }
                             log("바꿈: $pkg → ${if (dpi == 0) "기본" else dpi}")

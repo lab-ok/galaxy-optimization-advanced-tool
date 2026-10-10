@@ -2,6 +2,7 @@ package com.local.folddpifix.data.appsize
 
 import com.local.folddpifix.data.shizuku.ShizukuAccess
 import android.content.Context
+import com.local.folddpifix.domain.AppDensityPolicy
 import android.os.IBinder
 import android.os.Parcel
 import android.os.Process
@@ -61,14 +62,14 @@ object DensityShell {
      */
     fun get(context: Context, pkg: String): Int {
         val v = raw(pkg)
-        val mine = prefs(context).getInt(pkg, -1)
-        return when {
-            v == 360 && mine == 320 -> 320
-            else -> { if (mine != -1 && mine != v) prefs(context).edit().remove(pkg).apply(); v }
-        }
+        val mine = prefs(context).getInt(pkg, -1).takeIf { it != -1 }
+        val shown = AppDensityPolicy.shown(v, mine)
+        // 다른 곳(삼성 설정 등)에서 바뀌었으면 FoldFit 기록을 지운다
+        if (mine != null && shown != mine) prefs(context).edit().remove(pkg).apply()
+        return shown
     }
 
-    /** 앱 화면 크기를 [DensityServer.STEPS] 중 하나로, 0이면 기본으로 되돌린다. 그 앱은 다시 시작된다. */
+    /** 앱 화면 크기를 [AppDensityPolicy.STEPS] 중 하나로, 0이면 기본으로 되돌린다. 그 앱은 다시 시작된다. */
     fun set(context: Context, pkg: String, dpi: Int) {
         if (helper()) tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { } else ShizukuAccess.set(pkg, user(), dpi)
         prefs(context).edit().apply { if (dpi == 0) remove(pkg) else putInt(pkg, dpi) }.apply()

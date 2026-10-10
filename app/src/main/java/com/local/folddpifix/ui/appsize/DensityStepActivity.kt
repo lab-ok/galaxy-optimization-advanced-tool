@@ -8,7 +8,7 @@ import android.os.Looper
 import android.widget.Toast
 import com.local.folddpifix.data.appsize.AppDensityNotifier
 import com.local.folddpifix.data.appsize.AppUsage
-import com.local.folddpifix.data.appsize.DensityServer
+import com.local.folddpifix.domain.AppDensityPolicy
 import com.local.folddpifix.data.appsize.DensityShell
 import com.local.folddpifix.data.appsize.ForegroundWatcher
 import com.local.folddpifix.data.shizuku.ShizukuAccess
@@ -48,11 +48,8 @@ class DensityStepActivity : Activity() {
         val label = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(target, 0)).toString() }.getOrDefault(target)
         val now = DensityShell.get(this, target)
         val base = if (now > 0) now else Resources.getSystem().configuration.densityDpi
-        val next = when {
-            step == 0 -> 0
-            step < 0 -> DensityServer.STEPS.lastOrNull { it < base } ?: return "$label: 이미 가장 작습니다($base)."
-            else -> DensityServer.STEPS.firstOrNull { it > base } ?: return "$label: 이미 가장 큽니다($base)."
-        }
+        val next = AppDensityPolicy.next(base, step)
+            ?: return "$label: 이미 가장 ${if (step < 0) "작습니다" else "큽니다"}($base)."
         if (next == now) return "$label: 이미 ${if (now == 0) "기본" else "$now"}입니다."
         DensityShell.set(this, target, next)
         // 삼성이 그 앱을 닫는 것을 기다렸다가 다시 연다

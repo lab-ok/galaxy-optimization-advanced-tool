@@ -1,5 +1,6 @@
 package com.local.folddpifix.ui.appsize
 
+import com.local.folddpifix.domain.AppDensityPolicy
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -337,8 +338,8 @@ private fun AppRow(app: AppEntry, value: Int?, expanded: Boolean, modifier: Modi
         AnimatedVisibility(expanded, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
             Column(Modifier.padding(start = 10.dp, end = 10.dp, bottom = 12.dp)) {
                 LiquidChips(
-                    options = listOf(0) + DensityServer.STEPS,
-                    selected = value?.takeIf { it == 0 || it in DensityServer.STEPS } ?: 0,
+                    options = listOf(0) + AppDensityPolicy.STEPS,
+                    selected = value?.takeIf { it == 0 || it in AppDensityPolicy.STEPS } ?: 0,
                     label = { if (it == 0) "기본" else "$it" },
                     onSelect = onSelect,
                     modifier = Modifier.fillMaxWidth(),
