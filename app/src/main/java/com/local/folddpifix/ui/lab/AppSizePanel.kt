@@ -102,8 +102,12 @@ internal fun AppSizePanel() {
     }
 
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
+    // 다른 곳(알림창·삼성 설정)에서 바꾸고 돌아와도 바로 보이도록, 돌아올 때와 값이 바뀔 때마다 다시 읽는다
+    var resumed by remember { mutableStateOf(0) }
+    val changed by DensityShell.changes.collectAsState()
     LifecycleResumeEffect(Unit) {
         usage = AppUsage.hasAccess(context)
+        resumed++
         onPauseOrDispose { }
     }
     LaunchedEffect(usage) { apps = withContext(Dispatchers.IO) { loadApps(context) } }
@@ -113,11 +117,12 @@ internal fun AppSizePanel() {
             usage = withContext(Dispatchers.IO) { ShizukuAccess.grantUsageAccess(context) }
         }
     }
-    LaunchedEffect(ready, shell, apps) {
+    LaunchedEffect(ready, shell, apps, changed, resumed) {
         val list = apps
         if (!ready || list == null) { supported = null; values = emptyMap(); return@LaunchedEffect }
         withContext(Dispatchers.IO) {
             supported = runCatching { DensityShell.supported() }.getOrDefault(false)
+            // 이전 값은 그대로 두고 새 값으로 한꺼번에 바꾼다(다시 읽는 동안 '…'로 깜빡이지 않게)
             if (supported == true) values = list.associate { it.pkg to runCatching { DensityShell.get(context, it.pkg) }.getOrDefault(-1) }
         }
     }

@@ -20,6 +20,16 @@
             android:authorities="${applicationId}.shell"
             android:exported="true"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+        <!-- 알림창 앱 화면 크기 조절: 알림을 띄워 두고 맨 앞 앱이 바뀔 때만 내용을 고친다 -->
+        <service
+            android:name="com.local.folddpifix.data.lab.AppDensityService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Shows a notification to adjust the per-app display size of the app currently in front" />
+        </service>
+
         <!-- 알림창 [작게]·[기본]·[크게]를 받아 방금 쓰던 앱의 크기를 바꾸는 투명 화면 -->
         <activity
             android:name="com.local.folddpifix.ui.lab.DensityStepActivity"

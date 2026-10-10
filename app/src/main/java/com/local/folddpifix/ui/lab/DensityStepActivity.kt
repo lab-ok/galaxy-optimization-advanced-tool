@@ -10,6 +10,7 @@ import com.local.folddpifix.data.lab.AppDensityNotifier
 import com.local.folddpifix.data.lab.AppUsage
 import com.local.folddpifix.data.lab.DensityServer
 import com.local.folddpifix.data.lab.DensityShell
+import com.local.folddpifix.data.lab.ForegroundWatcher
 import com.local.folddpifix.data.shizuku.ShizukuAccess
 import rikka.shizuku.Shizuku
 
@@ -23,8 +24,8 @@ class DensityStepActivity : Activity() {
         super.onCreate(savedInstanceState)
         val step = intent.getIntExtra(EXTRA_STEP, 0)
         val main = Handler(Looper.getMainLooper())
-        // 사용 기록에서 '방금 쓰던 앱'을 이 화면이 뜨기 전 기준으로 찾는다
-        val target = AppUsage.foregroundApp(this)
+        // 방금 쓰던 앱: 작업 스택 감시가 돌고 있으면 그 값, 아니면 사용 기록(기기에 따라 늦을 수 있음)
+        val target = if (ForegroundWatcher.running) ForegroundWatcher.current else AppUsage.foregroundApp(this)
         Thread {
             val msg = runCatching { change(target, step) }.getOrElse { "바꾸지 못했습니다: ${it.message}" }
             main.post {
@@ -37,7 +38,7 @@ class DensityStepActivity : Activity() {
     }
 
     private fun change(target: String?, step: Int): String {
-        if (!AppUsage.hasAccess(this)) return "사용 기록 접근이 꺼져 있어 지금 앱을 찾지 못했습니다. 실험실에서 켜 주세요."
+        if (!ForegroundWatcher.running && !AppUsage.hasAccess(this)) return "지금 앱을 찾지 못했습니다. Shizuku를 켜거나 실험실에서 사용 기록 접근을 허용해 주세요."
         target ?: return "지금 열려 있는 앱이 없습니다."
         // 프로세스가 막 떠서 Shizuku 바인더가 아직 오지 않았을 수 있다: 잠깐 기다린다
         ShizukuAccess.watch(this)
@@ -57,7 +58,7 @@ class DensityStepActivity : Activity() {
         // 삼성이 그 앱을 닫는 것을 기다렸다가 다시 연다
         Thread.sleep(400)
         packageManager.getLaunchIntentForPackage(target)?.let { runCatching { startActivity(it) } }
-        return "$label: ${if (next == 0) "기본" else "$next dpi"}"
+        return AppDensityNotifier.describe(this, target)
     }
 
     companion object {

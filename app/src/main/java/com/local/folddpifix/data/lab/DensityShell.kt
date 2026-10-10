@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.asStateFlow
 object DensityShell {
     private val binder = MutableStateFlow<IBinder?>(null)
 
+    /** 값이 바뀔 때마다 1씩 오른다(알림창에서 바꿔도 실험실 화면이 바로 다시 읽도록). */
+    val changes = MutableStateFlow(0)
+
     /** 도우미에 연결돼 있으면 true. */
     val connected: StateFlow<IBinder?> = binder.asStateFlow()
 
@@ -69,6 +72,7 @@ object DensityShell {
     fun set(context: Context, pkg: String, dpi: Int) {
         if (helper()) tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { } else ShizukuAccess.set(pkg, user(), dpi)
         prefs(context).edit().apply { if (dpi == 0) remove(pkg) else putInt(pkg, dpi) }.apply()
+        changes.value++
     }
 
     private fun prefs(context: Context) = context.getSharedPreferences("lab_app_density", Context.MODE_PRIVATE)

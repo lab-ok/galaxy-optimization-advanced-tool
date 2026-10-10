@@ -113,7 +113,7 @@ object ShizukuAccess {
         if (Shizuku.pingBinder()) Shizuku.requestPermission(REQUEST)
     }
 
-    private fun atm(): Any {
+    internal fun atm(): Any {
         runCatching { HiddenApiBypass.addHiddenApiExemptions("L") }
         val binder: IBinder = ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task"))
         return Class.forName("android.app.IActivityTaskManager\$Stub")
