@@ -18,7 +18,7 @@ object Copy {
 
     // 할 일
     const val TODO_SETUP_TITLE = "권한 설정 필요"
-    const val TODO_SETUP_BODY = "DPI 변경에는 WRITE_SECURE_SETTINGS 권한이 필요합니다. PC의 adb로 최초 1회만 부여합니다."
+    const val TODO_SETUP_BODY = "DPI를 바꾸려면 WRITE_SECURE_SETTINGS 권한이 필요합니다. Shizuku나 PC adb로 1회만 받습니다."
     const val TODO_SETUP_ACTION = "설정 방법"
     const val TODO_OTHER_TITLE = "화면 정보 수집 필요"
     const val TODO_OTHER_BODY = "기기를 한 번 접었다 펼치면 두 화면의 해상도를 읽어 내부 화면 DPI를 계산합니다."

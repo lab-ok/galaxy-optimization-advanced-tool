@@ -84,7 +84,7 @@ internal fun HelpSheet(state: UiState, onOpenGuide: () -> Unit) {
             Spacer(Modifier.height(4.dp))
             Text(
                 if (state.hasPermission) "권한이 설정되어 있습니다."
-                else "DPI는 시스템 설정이라 WRITE_SECURE_SETTINGS 권한이 필요합니다. PC의 adb로 한 번 부여하면 이후에는 앱이 자동으로 처리합니다.",
+                else "DPI는 시스템 설정이라 WRITE_SECURE_SETTINGS 권한이 필요합니다. Shizuku(PC 없이)나 PC의 adb로 한 번 받으면 이후에는 앱이 자동으로 처리합니다.",
                 color = c.muted, style = MaterialTheme.typography.bodyMedium,
             )
             if (!state.hasPermission) {

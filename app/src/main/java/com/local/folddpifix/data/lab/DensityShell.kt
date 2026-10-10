@@ -1,5 +1,7 @@
 package com.local.folddpifix.data.lab
 
+import com.local.folddpifix.data.shizuku.ShizukuAccess
+import android.content.Context
 import android.os.IBinder
 import android.os.Parcel
 import android.os.Process
@@ -46,14 +48,30 @@ object DensityShell {
     fun supported(): Boolean =
         if (helper()) tx(DensityServer.PING) { readInt(); readInt() == 1 } else ShizukuAccess.supported()
 
-    /** 앱의 현재 화면 크기(dpi). 0이면 시스템 기본. */
-    fun get(pkg: String): Int =
+    private fun raw(pkg: String): Int =
         if (helper()) tx(DensityServer.GET, { writeString(pkg); writeInt(user()) }) { readInt() } else ShizukuAccess.get(pkg, user())
 
-    /** 앱 화면 크기를 [DensityServer.STEPS] 중 하나로, 0이면 기본으로 되돌린다. 그 앱은 다시 시작된다. */
-    fun set(pkg: String, dpi: Int) {
-        if (helper()) tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { } else ShizukuAccess.set(pkg, user(), dpi)
+    /**
+     * 앱의 현재 화면 크기(dpi). 0이면 시스템 기본.
+     * 삼성 읽기 함수는 320을 360으로 돌려준다(실기기 코드: getCustomDensity(…, true)에서 320 → 360). 실제 적용은 320이므로,
+     * FoldFit이 320으로 바꾼 앱은 기록해 두었다가 360으로 읽히면 320으로 보여 준다.
+     */
+    fun get(context: Context, pkg: String): Int {
+        val v = raw(pkg)
+        val mine = prefs(context).getInt(pkg, -1)
+        return when {
+            v == 360 && mine == 320 -> 320
+            else -> { if (mine != -1 && mine != v) prefs(context).edit().remove(pkg).apply(); v }
+        }
     }
+
+    /** 앱 화면 크기를 [DensityServer.STEPS] 중 하나로, 0이면 기본으로 되돌린다. 그 앱은 다시 시작된다. */
+    fun set(context: Context, pkg: String, dpi: Int) {
+        if (helper()) tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { } else ShizukuAccess.set(pkg, user(), dpi)
+        prefs(context).edit().apply { if (dpi == 0) remove(pkg) else putInt(pkg, dpi) }.apply()
+    }
+
+    private fun prefs(context: Context) = context.getSharedPreferences("lab_app_density", Context.MODE_PRIVATE)
 
     fun stop() {
         runCatching { tx(DensityServer.EXIT) { } }

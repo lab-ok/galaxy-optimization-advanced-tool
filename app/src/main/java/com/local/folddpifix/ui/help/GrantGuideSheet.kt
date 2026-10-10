@@ -1,5 +1,11 @@
 package com.local.folddpifix.ui.help
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.local.folddpifix.ui.shizuku.ShizukuGuide
+import com.local.folddpifix.data.shizuku.ShizukuAccess
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -89,6 +95,17 @@ import com.local.folddpifix.ui.liquid.LocalLiquid
 internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
+    // 권한 받는 방법: Shizuku(PC 없이, 기본) 또는 PC의 adb
+    var viaShizuku by rememberSaveable { mutableStateOf(true) }
+    val shizuku by ShizukuAccess.status.collectAsState()
+    var grantError by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
+    // Shizuku가 켜지고 FoldFit을 허용하면 바로 권한을 스스로 부여한다(화면은 주기 확인으로 완료를 알아차린다)
+    LaunchedEffect(shizuku, hasPermission, viaShizuku) {
+        if (viaShizuku && !hasPermission && shizuku == ShizukuAccess.State.READY) {
+            grantError = !withContext(Dispatchers.IO) { ShizukuAccess.grantSecureSettings(context) }
+        }
+    }
     var connection by rememberSaveable { mutableStateOf(GrantGuideContent.Connection.WIRELESS) }
     var os by rememberSaveable { mutableStateOf(GrantGuideContent.PcOs.WINDOWS) }
     var index by rememberSaveable(connection, os) { mutableIntStateOf(0) }
@@ -108,7 +125,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
     ) {
         Text("권한 설정", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text(
-            "PC의 adb로 한 번만 부여하면 재부팅 후에도 유지됩니다.",
+            "한 번만 받으면 재부팅 후에도 유지됩니다.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -137,8 +154,38 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
 
         if (!hasPermission) {
             Spacer(Modifier.height(16.dp))
-            Label("연결 방식")
-            Choice(GrantGuideContent.Connection.entries, connection, { it.label }) { connection = it }
+            // 세 가지 방법을 한 줄에서 고른다: Shizuku(PC 없이) · PC 무선 디버깅 · PC USB 케이블
+            Label("연결 방법")
+            val method = if (viaShizuku) 0 else if (connection == GrantGuideContent.Connection.WIRELESS) 1 else 2
+            Choice(listOf(0, 1, 2), method, { listOf("Shizuku", "PC 무선", "PC 유선")[it] }) {
+                viaShizuku = it == 0
+                if (it == 1) connection = GrantGuideContent.Connection.WIRELESS
+                if (it == 2) connection = GrantGuideContent.Connection.USB
+            }
+            Text(
+                listOf(
+                    "PC 없이 폰만으로 합니다. 무료 앱 Shizuku와 Wi-Fi가 필요합니다.",
+                    "PC와 폰이 같은 Wi-Fi에 있으면 케이블 없이 합니다.",
+                    "USB 케이블로 PC에 연결해서 합니다. 가장 확실합니다.",
+                )[method],
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
+        if (!hasPermission && viaShizuku) {
+            Spacer(Modifier.height(14.dp))
+            ShizukuGuide(
+                shizuku,
+                intro = "무료 앱 Shizuku로 폰 안에서 권한을 받습니다. 아래 순서대로 버튼만 누르면 되고, 마지막 단계가 끝나면 FoldFit이 스스로 권한을 받습니다. " +
+                    "권한을 받은 뒤에는 Shizuku를 꺼도 됩니다.",
+            )
+            if (grantError) Text(
+                "Shizuku로 권한을 받지 못했습니다. PC 무선이나 PC 유선 방법으로 해 주세요.",
+                color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        if (!hasPermission && !viaShizuku) {
             Spacer(Modifier.height(10.dp))
             Label("PC 운영체제")
             Choice(GrantGuideContent.PcOs.entries, os, { it.label }) { os = it }

@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
-import androidx.compose.material3.OutlinedTextField
+import com.local.folddpifix.ui.liquid.LiquidTextField
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.clickable
@@ -16,7 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.local.folddpifix.data.lab.AppDensityProbe
 import com.local.folddpifix.data.lab.DensityServer
 import com.local.folddpifix.data.lab.DensityShell
-import com.local.folddpifix.data.lab.ShizukuAccess
+import com.local.folddpifix.data.shizuku.ShizukuAccess
 import com.local.folddpifix.ui.liquid.LiquidChips
 import androidx.compose.runtime.collectAsState
 import com.local.folddpifix.ui.components.CommandBox
@@ -83,77 +83,86 @@ internal fun LabScreen(contentPadding: PaddingValues) {
         GlassCard(padding = 16.dp) {
             Text("앱마다 화면 크기를 다르게", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
-                "기본 기능(화면 크기 맞추기)과는 별개로, 앱별로 화면 크기를 따로 두는 실험실입니다. " +
-                    "삼성 '앱 화면 크게/작게'와 같은 설정을 씁니다. 아래 조사 도구는 시험용이며, 공개 버전에는 들어가지 않습니다.",
+                "삼성 '앱 화면 크게/작게'와 같은 설정을 FoldFit에서 바꿉니다. 바꾼 값은 재부팅해도 유지됩니다. 실험실 기능이라 공개 버전에는 들어가지 않습니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
         }
         Spacer(Modifier.height(12.dp))
-        ShellDensityCard()
-        Spacer(Modifier.height(12.dp))
-        GlassCard(padding = 16.dp) {
-            Text("설정 변경 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(
-                "① [바꾸기 전 저장]을 누릅니다.\n② 설정 → 디스플레이 → 앱 화면 크게/작게에서 앱 하나의 값을 바꿉니다.\n③ 돌아와 [바꾼 뒤 비교]를 누르면 바뀐 설정 키를 파일로 저장하고 공유 창을 엽니다.",
-                color = c.muted, style = MaterialTheme.typography.bodySmall,
-            )
+        AppSizePanel()
+        Spacer(Modifier.height(20.dp))
+        // 조사 도구: 앱별 화면 크기를 만들 때 쓴 시험 기능. 평소에는 접어 둔다.
+        var tools by remember { mutableStateOf(false) }
+        Text(
+            if (tools) "조사 도구 접기" else "조사 도구 펼치기",
+            color = c.muted, style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { tools = !tools }.padding(horizontal = 6.dp, vertical = 8.dp),
+        )
+        if (tools) {
             Spacer(Modifier.height(12.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                LiquidButton("바꾸기 전 저장", modifier = Modifier.weight(1f), onClick = {
-                    scope.launch {
-                        val snap = withContext(Dispatchers.IO) { SettingsSnapshot.take(context).also { beforeFile.writeText(SettingsSnapshot.serialize(it)) } }
-                        hasBefore = true
-                        preview = ""
-                        status = "저장했습니다 · " + snap.entries.joinToString(" · ") { "${it.key} ${it.value.size}개" }
-                    }
-                })
-                LiquidButton("바꾼 뒤 비교", modifier = Modifier.weight(1f), primary = false, enabled = hasBefore, onClick = {
-                    scope.launch {
-                        val (diff, uri) = withContext(Dispatchers.IO) {
-                            val before = SettingsSnapshot.parse(beforeFile.readText())
-                            val after = SettingsSnapshot.take(context)
-                            val diff = SettingsSnapshot.diff(before, after)
-                            val name = "foldfit-lab-settings-${SimpleDateFormat("yyMMdd-HHmmss", Locale.US).format(Date())}.txt"
-                            val text = "== 차이 ==\n$diff\n== 바꾸기 전 ==\n${SettingsSnapshot.serialize(before)}\n== 바꾼 뒤 ==\n${SettingsSnapshot.serialize(after)}"
-                            diff to PublicLogFile.saveNew(context, name, text)
+            GlassCard(padding = 16.dp) {
+                Text("설정 변경 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(
+                    "① [바꾸기 전 저장]을 누릅니다.\n② 설정 → 디스플레이 → 앱 화면 크게/작게에서 앱 하나의 값을 바꿉니다.\n③ 돌아와 [바꾼 뒤 비교]를 누르면 바뀐 설정 키를 파일로 저장하고 공유 창을 엽니다.",
+                    color = c.muted, style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(12.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    LiquidButton("바꾸기 전 저장", modifier = Modifier.weight(1f), onClick = {
+                        scope.launch {
+                            val snap = withContext(Dispatchers.IO) { SettingsSnapshot.take(context).also { beforeFile.writeText(SettingsSnapshot.serialize(it)) } }
+                            hasBefore = true
+                            preview = ""
+                            status = "저장했습니다 · " + snap.entries.joinToString(" · ") { "${it.key} ${it.value.size}개" }
                         }
-                        preview = diff.lineSequence().take(30).joinToString("\n")
-                        status = if (uri != null) "다운로드/FoldFit에 저장했습니다." else "파일을 저장하지 못했습니다."
+                    })
+                    LiquidButton("바꾼 뒤 비교", modifier = Modifier.weight(1f), primary = false, enabled = hasBefore, onClick = {
+                        scope.launch {
+                            val (diff, uri) = withContext(Dispatchers.IO) {
+                                val before = SettingsSnapshot.parse(beforeFile.readText())
+                                val after = SettingsSnapshot.take(context)
+                                val diff = SettingsSnapshot.diff(before, after)
+                                val name = "foldfit-lab-settings-${SimpleDateFormat("yyMMdd-HHmmss", Locale.US).format(Date())}.txt"
+                                val text = "== 차이 ==\n$diff\n== 바꾸기 전 ==\n${SettingsSnapshot.serialize(before)}\n== 바꾼 뒤 ==\n${SettingsSnapshot.serialize(after)}"
+                                diff to PublicLogFile.saveNew(context, name, text)
+                            }
+                            preview = diff.lineSequence().take(30).joinToString("\n")
+                            status = if (uri != null) "다운로드/FoldFit에 저장했습니다." else "파일을 저장하지 못했습니다."
+                            uri?.let { share(context, it) }
+                        }
+                    })
+                }
+                if (status.isNotEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    Text(status, color = c.ink, style = MaterialTheme.typography.bodySmall)
+                }
+                if (preview.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(preview, color = c.ink, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp))
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            AppDensityCard()
+            Spacer(Modifier.height(12.dp))
+            GlassCard(padding = 16.dp) {
+                Text("시스템 함수 탐색", fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(
+                    "기기의 시스템 서비스를 모두 훑어 화면 밀도·확대·배율과 관련된 함수 목록을 파일로 만듭니다. 함수를 실행하지는 않습니다.",
+                    color = c.muted, style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(12.dp))
+                var probing by remember { mutableStateOf(false) }
+                LiquidButton(if (probing) "탐색 중…" else "탐색하고 파일로 보내기", modifier = Modifier.fillMaxWidth(), enabled = !probing, onClick = {
+                    probing = true
+                    scope.launch {
+                        val uri = withContext(Dispatchers.IO) {
+                            val name = "foldfit-lab-api-${SimpleDateFormat("yyMMdd-HHmmss", Locale.US).format(Date())}.txt"
+                            PublicLogFile.saveNew(context, name, ApiProbe.run(context))
+                        }
+                        probing = false
                         uri?.let { share(context, it) }
                     }
                 })
             }
-            if (status.isNotEmpty()) {
-                Spacer(Modifier.height(10.dp))
-                Text(status, color = c.ink, style = MaterialTheme.typography.bodySmall)
-            }
-            if (preview.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                Text(preview, color = c.ink, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp))
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        AppDensityCard()
-        Spacer(Modifier.height(12.dp))
-        GlassCard(padding = 16.dp) {
-            Text("시스템 함수 탐색", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(
-                "기기의 시스템 서비스를 모두 훑어 화면 밀도·확대·배율과 관련된 함수 목록을 파일로 만듭니다. 함수를 실행하지는 않습니다.",
-                color = c.muted, style = MaterialTheme.typography.bodySmall,
-            )
-            Spacer(Modifier.height(12.dp))
-            var probing by remember { mutableStateOf(false) }
-            LiquidButton(if (probing) "탐색 중…" else "탐색하고 파일로 보내기", modifier = Modifier.fillMaxWidth(), enabled = !probing, onClick = {
-                probing = true
-                scope.launch {
-                    val uri = withContext(Dispatchers.IO) {
-                        val name = "foldfit-lab-api-${SimpleDateFormat("yyMMdd-HHmmss", Locale.US).format(Date())}.txt"
-                        PublicLogFile.saveNew(context, name, ApiProbe.run(context))
-                    }
-                    probing = false
-                    uri?.let { share(context, it) }
-                }
-            })
         }
     }
 }
@@ -213,10 +222,9 @@ private fun AppDensityCard() {
             }
         }
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = dpi, onValueChange = { dpi = it.filter(Char::isDigit).take(3) },
-            label = { Text("바꿀 밀도(dpi)") }, singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+        LiquidTextField(
+            dpi, { dpi = it.filter(Char::isDigit).take(3) }, "바꿀 밀도(dpi)",
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
         )
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -272,125 +280,5 @@ private fun AppDensityCard() {
             "되돌리려면 설정 → 앱 화면 크게/작게에서 그 앱을 '시스템 설정'으로 바꾸면 됩니다.",
             color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 6.dp),
         )
-    }
-}
-
-/**
- * 앱별 화면 크기: 셸 권한이 있어야 하는 삼성 함수를 Shizuku(기본) 또는 PC 셸 도우미(예비)로 부른다.
- * 앱마다 삼성 6단계 중 하나를 고르며, 바꾼 값은 시스템에 저장돼 재부팅해도 유지된다.
- */
-@Composable
-private fun ShellDensityCard() {
-    val c = LocalLiquid.current
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val shell by DensityShell.connected.collectAsState()
-    val shizuku by ShizukuAccess.status.collectAsState()
-    val ready = shell != null || shizuku == ShizukuAccess.State.READY
-    var apps by remember { mutableStateOf(emptyList<AppDensityProbe.App>()) }
-    var values by remember { mutableStateOf(emptyMap<String, Int>()) }
-    var supported by remember { mutableStateOf<Boolean?>(null) }
-    var open by remember { mutableStateOf<String?>(null) }
-    var message by remember { mutableStateOf("") }
-    var showPc by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { AppDensityProbe.launcherApps(context) } }
-    LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
-    LaunchedEffect(ready, shell, apps) {
-        if (!ready) { supported = null; values = emptyMap(); return@LaunchedEffect }
-        withContext(Dispatchers.IO) {
-            supported = runCatching { DensityShell.supported() }.getOrDefault(false)
-            if (supported == true) values = apps.associate { it.pkg to runCatching { DensityShell.get(it.pkg) }.getOrDefault(-1) }
-        }
-    }
-
-    GlassCard(padding = 16.dp) {
-        Text("앱별 화면 크기", fontWeight = FontWeight.SemiBold, color = c.ink)
-        when {
-            !ready -> {
-                ShizukuGuide(shizuku)
-                Text(
-                    if (showPc) "PC로 하기 접기" else "PC로 하기",
-                    color = c.muted, style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(top = 10.dp).clip(RoundedCornerShape(8.dp)).clickable { showPc = !showPc }.padding(4.dp),
-                )
-                if (showPc) {
-                    Text(
-                        "PC PowerShell(platform-tools 폴더)에서 아래 명령을 한 번 실행하면 셸 도우미가 켜집니다. " +
-                            "도우미는 FoldFit을 닫거나 30분 동안 쓰지 않으면 스스로 꺼집니다.",
-                        color = c.muted, style = MaterialTheme.typography.bodySmall,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    val cmd = remember { DensityServer.startCommand() }
-                    CommandBox(cmd, onCopy = {
-                        context.getSystemService(android.content.ClipboardManager::class.java)
-                            .setPrimaryClip(android.content.ClipData.newPlainText("adb", cmd))
-                    })
-                }
-            }
-            supported == false -> {
-                Text("셸 권한은 받았지만 이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.", color = c.danger, style = MaterialTheme.typography.bodySmall)
-                if (shell != null) {
-                    Spacer(Modifier.height(10.dp))
-                    LiquidButton("PC 셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
-                        scope.launch(Dispatchers.IO) { DensityShell.stop() }
-                    })
-                }
-            }
-            else -> {
-                if (shell == null && !ShizukuAccess.bootStartOn(context)) Text(
-                    "Shizuku의 '부팅 시 시작'이 꺼져 있어 재부팅하면 다시 켜야 합니다. Shizuku → 설정에서 켜 두세요.",
-                    color = c.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 6.dp),
-                )
-                Text(
-                    "앱을 누르고 크기를 고르세요. 숫자가 작을수록 작게 보입니다. 바꾸면 그 앱이 다시 시작되며 바로 적용됩니다.",
-                    color = c.muted, style = MaterialTheme.typography.bodySmall,
-                )
-                Spacer(Modifier.height(8.dp))
-                Column(Modifier.fillMaxWidth().heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
-                    apps.forEach { app ->
-                        val v = values[app.pkg]
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable { open = if (open == app.pkg) null else app.pkg }
-                                .padding(horizontal = 8.dp, vertical = 10.dp),
-                        ) {
-                            Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                            Text(
-                                when (v) { null -> "…"; -1 -> "?"; 0 -> "기본"; else -> "$v" },
-                                color = if (v != null && v > 0) c.ink else c.muted,
-                                fontWeight = if (v != null && v > 0) FontWeight.SemiBold else FontWeight.Normal,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                        if (open == app.pkg) {
-                            LiquidChips(
-                                options = listOf(0) + DensityServer.STEPS,
-                                selected = v?.takeIf { it == 0 || it in DensityServer.STEPS } ?: 0,
-                                label = { if (it == 0) "기본" else "$it" },
-                                onSelect = { dpi ->
-                                    scope.launch {
-                                        val now = withContext(Dispatchers.IO) {
-                                            runCatching { DensityShell.set(app.pkg, dpi); DensityShell.get(app.pkg) }
-                                        }
-                                        now.onSuccess { values = values + (app.pkg to it); message = "${app.label}: ${if (it == 0) "기본" else "$it dpi"}" }
-                                            .onFailure { message = "바꾸지 못했습니다: ${it.message}" }
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                            )
-                        }
-                    }
-                }
-                if (message.isNotEmpty()) Text(message, color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
-                if (shell != null) {
-                    Spacer(Modifier.height(10.dp))
-                    LiquidButton("PC 셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
-                        scope.launch(Dispatchers.IO) { DensityShell.stop() }
-                    })
-                }
-            }
-        }
     }
 }

@@ -16,6 +16,11 @@
         android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />
 
+    <!-- Shizuku 설치 여부 확인(PC 없이 권한을 받는 방법) -->
+    <queries>
+        <package android:name="moe.shizuku.privileged.api" />
+    </queries>
+
     <application
         android:name=".App"
         android:allowBackup="false"
@@ -59,5 +64,13 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Re-applies the user's display density when the foldable switches screens" />
         </service>
+        <!-- Shizuku가 FoldFit에 셸 권한 바인더를 건네는 통로(PC 없이 WRITE_SECURE_SETTINGS 받기) -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
     </application>
 </manifest>

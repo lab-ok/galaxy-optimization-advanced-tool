@@ -6,6 +6,7 @@ import com.local.folddpifix.domain.DpiFixer
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.local.folddpifix.data.lab.AppDensityNotifier
 import android.os.UserManager
 
 /**
@@ -19,6 +20,8 @@ class BootReceiver : BroadcastReceiver() {
         val settings = SettingsRepository.from(context)
         val log = LogRepository.from(context)
         val isBoot = action == Intent.ACTION_BOOT_COMPLETED || action == Intent.ACTION_LOCKED_BOOT_COMPLETED
+        // 실험실: 알림창 앱 화면 크기 조절을 켜 두었으면 부팅·업데이트 뒤 다시 띄운다
+        if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) AppDensityNotifier.show(context)
 
         if (isBoot && !settings.applyOnBoot) {
             log.add("부팅 감지($action), 부팅 시 자동 적용 꺼짐")
