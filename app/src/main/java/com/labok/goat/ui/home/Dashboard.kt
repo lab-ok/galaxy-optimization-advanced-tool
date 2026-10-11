@@ -17,6 +17,8 @@ import com.labok.goat.data.tweaks.Bloat
 import com.labok.goat.data.tweaks.ChargeLimit
 import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.data.tweaks.Gos
+import com.labok.goat.data.tweaks.Resolution
+import com.labok.goat.data.display.ResolutionState
 import com.labok.goat.data.tweaks.PrivateDns
 import com.labok.goat.data.tweaks.RefreshRate
 import com.labok.goat.data.tweaks.StatusIcons
@@ -143,6 +145,11 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                 false -> Copy.DARK_DASH_OFF
                 null -> Copy.DARK_DASH_UNKNOWN
             }
+            NavItem.RESOLUTION -> when {
+                !Resolution.supported(context) -> Copy.RES_DASH_FOLD
+                ResolutionState.base(context) == null -> Copy.RES_DASH_ORIGINAL
+                else -> Resolution.current(context).first.let { Copy.resDash(it, it * 100 / Resolution.base(context).first) }
+            }
             NavItem.STATUS_ICONS -> Copy.iconsHidden(StatusIcons.hidden(context).size)
             NavItem.REFRESH -> if (!RefreshRate.supported(context)) Copy.REFRESH_UNSUPPORTED_SHORT else RefreshRate.read(context).let {
                 if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
@@ -164,6 +171,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))
             NavItem.CHARGE -> (charge as? ChargeLimit.Lookup.Present)?.found?.mode?.let { it != 0 } == true
             NavItem.DARK -> dark.forced == true
+            NavItem.RESOLUTION -> ResolutionState.base(context) != null
             NavItem.STATUS_ICONS -> StatusIcons.hidden(context).isNotEmpty()
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             else -> false

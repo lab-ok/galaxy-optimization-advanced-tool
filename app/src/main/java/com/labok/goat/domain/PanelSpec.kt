@@ -2,6 +2,7 @@ package com.labok.goat.domain
 
 import com.labok.goat.data.settings.SettingsRepository
 import kotlin.math.hypot
+import kotlin.math.roundToInt
 
 /**
  * 패널의 물리 PPI.
@@ -96,10 +97,19 @@ data class DensityPlan(
 ) {
     val screens: List<ScreenInfo> get() = panels.map { it.screen }
 
-    /** [seen]과 해상도가 같은 학습된 화면의 물리 값으로 목표를 계산한다. 보고 PPI는 쓰지 않는다. */
+    /**
+     * [seen]과 해상도가 같은 학습된 화면의 물리 값으로 목표를 계산한다. 보고 PPI는 쓰지 않는다.
+     * 해상도를 낮춘 화면([ScreenInfo.scale] < 1)은 같은 크기로 보이도록 목표 DPI도 같은 비율로 줄인다
+     * (부팅·접기 감시·외부 변경 확인·화면 표시가 모두 이 값을 쓰므로 서로 덮어쓰지 않는다).
+     */
     fun targetFor(seen: ScreenInfo?): ScreenPolicy.Target {
         val active = seen?.let { s -> screens.find { it.key == s.key } ?: s }
-        return ScreenPolicy.effectiveTarget(referenceDpi, reference, screens, active, adjust)
+        val t = ScreenPolicy.effectiveTarget(referenceDpi, reference, screens, active, adjust)
+        val scale = seen?.scale ?: 1f
+        if (scale == 1f) return t
+        val dpi = (t.dpi * scale).roundToInt()
+        val note = "해상도 ${(scale * 100).roundToInt()}%에 맞춰 ${t.dpi} → $dpi dpi"
+        return t.copy(dpi = dpi, note = listOfNotNull(t.note, note).joinToString(" · "))
     }
 
     data class Row(val role: ScreenPolicy.Role, val panel: PanelSpec.Resolved, val dpi: Int, val blocked: String?)

@@ -36,7 +36,7 @@ class DpiFixer(
         val blocked = effective?.blocked
         // 사용자가 직접 적용하면(슬라이더·지금 적용·복원) 기다리던 외부 변경은 끝난다.
         if (!automatic && settings.externalChange != null) settings.externalChange = null
-        val external = if (automatic && hasPermission && screen != null) holdExternal(reason, screen.key, effective, state, physicalIsReset, now) else null
+        val external = if (automatic && hasPermission && screen != null) holdExternal(reason, screen, effective, state, physicalIsReset, now) else null
         if (external != null) return@synchronized DpiPolicy.Decision.EXTERNAL_CHANGE
         val decision = if (blocked != null && (automatic.not() || settings.autoRecover) && hasPermission) {
             DpiPolicy.Decision.BLOCKED
@@ -100,8 +100,9 @@ class DpiFixer(
             val seen = d.screen ?: continue
             if (d.id == DEFAULT_DISPLAY_ID || seen.key == active?.key) continue
             // 해상도로 어느 화면인지 확인하고, 목표는 학습한 화면 정보(DensityPlan)로 계산한다.
+            // 살아 있는 화면 정보(seen)를 넘겨 해상도를 낮춘 비율도 함께 반영한다.
             val screen = settings.screens.find { it.key == seen.key } ?: continue
-            val t = plan.targetFor(screen)
+            val t = plan.targetFor(seen)
             val role = t.role ?: continue
             val label = "[$reason] -d ${d.id} ${role.label}"
             if (settings.externalChange?.key == screen.key) {
@@ -139,12 +140,13 @@ class DpiFixer(
      */
     private fun holdExternal(
         reason: String,
-        key: String,
+        screen: ScreenInfo,
         effective: ScreenPolicy.Target?,
         state: com.labok.goat.data.display.DpiState?,
         physicalIsReset: Boolean,
         now: Long,
     ): ExternalChange? {
+        val key = screen.key
         val current = state?.current
         settings.externalChange?.let { pending ->
             if (pending.key != key) return null
@@ -156,6 +158,7 @@ class DpiFixer(
             key, effective?.role, current, state?.physical, effective?.dpi,
             settings.appliedDpi[key], physicalIsReset, now,
             otherApplied = settings.appliedDpi.filterKeys { it != key }.values,
+            scale = screen.scale,
         ) ?: return null
         settings.externalChange = found
         log("[$reason] 외부 DPI 변경 감지: ${found.role.label} ${found.from} → ${found.to}. 사용자 선택을 기다림")
@@ -186,12 +189,15 @@ class DpiFixer(
         ensure(reason, automatic = false)
     }
 
+    /** DPI 적용과 겹치지 않게 [block]을 같은 잠금 안에서 실행한다(해상도 낮추기가 크기와 밀도를 함께 바꿀 때). */
+    fun <T> exclusive(block: () -> T): T = synchronized(lock) { block() }
+
     /** 자동 적용 없이 외부 변경만 확인한다(앱 화면을 열 때). */
     fun checkExternal(reason: String): ExternalChange? = synchronized(lock) {
         if (!controller.hasPermission()) return null
         val screen = controller.currentScreen() ?: return null
         val effective = settings.plan()?.targetFor(screen)
-        holdExternal(reason, screen.key, effective, controller.read(), physicalIsReset = false, now = clock())
+        holdExternal(reason, screen, effective, controller.read(), physicalIsReset = false, now = clock())
     }
 
     /** 로그용 한 줄 요약: 켜진 화면과 디스플레이 ID별 해상도·현재 밀도. */

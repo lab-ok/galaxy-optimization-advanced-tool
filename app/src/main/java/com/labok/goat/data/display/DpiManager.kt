@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.hardware.display.DisplayManager
+import android.graphics.Point
 import android.util.DisplayMetrics
 import android.view.Display
 import com.labok.goat.domain.DpiPolicy
@@ -97,7 +98,7 @@ class DpiManager(context: Context) : DpiController {
         val display = appContext.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)
         val m = DisplayMetrics()
         display.getRealMetrics(m)
-        toScreen(m)
+        toScreen(m, ResolutionState.base(appContext))
     } catch (t: Throwable) {
         null
     }
@@ -143,11 +144,54 @@ class DpiManager(context: Context) : DpiController {
         display?.let {
             val m = DisplayMetrics()
             it.getRealMetrics(m)
-            toScreen(m)
+            // 해상도 낮추기는 기본 화면(0)에만 건다
+            toScreen(m, if (displayId == Display.DEFAULT_DISPLAY) ResolutionState.base(appContext) else null)
         }
     } catch (t: Throwable) {
         null
     }
+
+    /**
+     * 디스플레이의 물리 해상도(강제 해상도 wm size와 상관없는 패널 값). 못 읽으면 null.
+     * 화면을 해상도로 구분하므로, 해상도를 낮춰도 같은 화면으로 보려고 물리 값을 쓴다.
+     */
+    private fun initialSize(displayId: Int): Point? = try {
+        val p = Point()
+        val m = methods.getOrPut("getInitialDisplaySize") {
+            iWindowManagerClass.getMethod("getInitialDisplaySize", Int::class.javaPrimitiveType, Point::class.java)
+        }
+        m.invoke(windowManagerService, displayId, p)
+        p.takeIf { it.x > 0 && it.y > 0 }
+    } catch (t: Throwable) {
+        null
+    }
+
+    /** 강제 해상도를 정한다(wm size와 같은 호출). 성공하면 true. */
+    fun setForcedSize(displayId: Int, width: Int, height: Int): Boolean = try {
+        val m = methods.getOrPut("setForcedDisplaySize") {
+            iWindowManagerClass.getMethod("setForcedDisplaySize", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+        }
+        m.invoke(windowManagerService, displayId, width, height)
+        true
+    } catch (t: Throwable) {
+        false
+    }
+
+    /** 강제 해상도를 지운다(wm size reset). 성공하면 true. */
+    fun clearForcedSize(displayId: Int): Boolean = try {
+        invoke("clearForcedDisplaySize", displayId)
+        true
+    } catch (t: Throwable) {
+        false
+    }
+
+    /** 물리 해상도(짧은 변, 긴 변). 못 읽으면 null. */
+    fun physicalSize(displayId: Int = Display.DEFAULT_DISPLAY): Pair<Int, Int>? =
+        initialSize(displayId)?.let { minOf(it.x, it.y) to maxOf(it.x, it.y) }
+
+    /** 물리 해상도를 기기의 자연 방향 그대로(가로, 세로). 강제 해상도도 이 방향으로 건다. 못 읽으면 null. */
+    fun physicalSizeNatural(displayId: Int = Display.DEFAULT_DISPLAY): Pair<Int, Int>? =
+        initialSize(displayId)?.let { it.x to it.y }
 
     private fun readViaWindowManager(): DpiState? = try {
         val physical = invoke("getInitialDisplayDensity", Display.DEFAULT_DISPLAY) as Int
@@ -208,12 +252,21 @@ class DpiManager(context: Context) : DpiController {
         /** Galaxy Fold는 0(외부)·1(내부). 여유 있게 0~3번을 본다. */
         private const val MAX_DISPLAY_ID = 4
 
-        private fun toScreen(m: DisplayMetrics): ScreenInfo {
-            val w = minOf(m.widthPixels, m.heightPixels)
-            val h = maxOf(m.widthPixels, m.heightPixels)
+        /**
+         * 화면 정보: 키·대각선은 지금 논리 해상도로 만든다. GOAT가 해상도를 낮춰 둔 동안([base], [ResolutionState])만
+         * 그 직전 크기를 키로 쓰고 지금 크기와의 비율을 [ScreenInfo.scale]에 둔다(같은 화면으로 보고 목표 DPI를 같은 비율로 줄이게).
+         * 삼성 공식 해상도 설정(FHD+ 등)처럼 GOAT 밖에서 줄인 크기는 지금처럼 그대로 키가 된다. PPI는 패널 값이라 그대로다.
+         */
+        internal fun toScreen(m: DisplayMetrics, base: Pair<Int, Int>?): ScreenInfo {
+            val logicalShort = minOf(m.widthPixels, m.heightPixels)
+            val w = base?.first ?: logicalShort
+            val h = base?.second ?: maxOf(m.widthPixels, m.heightPixels)
             val ppi = (m.xdpi + m.ydpi) / 2f
-            val diag = Math.hypot(m.widthPixels / m.xdpi.toDouble(), m.heightPixels / m.ydpi.toDouble()).toFloat()
-            return ScreenInfo("${w}x$h", ppi, diag)
+            // 대각선은 지금 픽셀로 잰다(학습한 값과 같게): 비율이 걸린 동안은 기준 크기로 환산한다
+            val diag = Math.hypot(w / m.xdpi.toDouble(), h / m.ydpi.toDouble()).toFloat()
+            val scale = if (w > 0) logicalShort.toFloat() / w else 1f
+            // 1% 안쪽 차이(반올림)는 해상도를 바꾸지 않은 것으로 본다
+            return ScreenInfo("${w}x$h", ppi, diag, if (kotlin.math.abs(scale - 1f) < 0.01f) 1f else scale)
         }
 
         private val methods = mutableMapOf<String, Method>()

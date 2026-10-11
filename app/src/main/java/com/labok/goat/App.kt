@@ -3,6 +3,7 @@ package com.labok.goat
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.data.tweaks.Gos
+import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.rotate.ShakeRotate
@@ -28,6 +29,8 @@ class App : Application() {
         Gos.watch(this)
         // 앱 다크 모드 강제: 재부팅으로 꺼지는 시스템 속성이라 부팅마다 한 번 Shizuku가 연결될 때 다시 켠다
         ForceDark.watch(this)
+        // 해상도 낮추기: 확인을 기다리던 중 앱이 다시 시작됐으면 남은 시간으로 이어 가거나 되돌린다
+        Resolution.resume(this)
         // 대각선 직접 입력 기능을 없앴다(사용자 요청). 이전 버전 입력값이 남아 있으면 계산에서 빼기 위해 지운다.
         if (SettingsRepository.from(this).clearLegacyDiagonalInput()) {
             LogRepository.from(this).add("이전 버전의 대각선 입력값을 지웠습니다(기능 제거)")

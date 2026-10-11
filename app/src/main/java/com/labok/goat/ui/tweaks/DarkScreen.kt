@@ -122,7 +122,8 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     Text(Copy.DARK_NIGHT_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(if (state.night) Copy.DARK_NIGHT_ON else Copy.DARK_NIGHT_OFF, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.DARK_NIGHT_OPEN, primary = !state.night, modifier = Modifier.fillMaxWidth(), onClick = {
+                    // 강제 다크를 켰는데 다크 모드가 꺼져 있을 때만 강조한다(다크 모드를 원하지 않는 사람에게 권하지 않게)
+                    LiquidButton(Copy.DARK_NIGHT_OPEN, primary = state.forced == true && !state.night, modifier = Modifier.fillMaxWidth(), onClick = {
                         runCatching { context.startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
                             .onFailure { Toast.makeText(context, Copy.DARK_TOAST_NO_SETTINGS, Toast.LENGTH_SHORT).show() }
                     })
@@ -155,8 +156,8 @@ internal fun DarkHelpSheet() {
                 "'디스플레이 설정 열기'로 다크 모드(예약 포함)를 켤 수 있습니다. 켠 뒤에는 이미 열려 있던 앱을 닫았다가 다시 열어야 바뀝니다.",
         )
         HelpTopic(
-            "3. 모든 앱에 적용됩니다",
-            "앱마다 따로 고르는 공식 방법이 없어 다크 모드가 없는 모든 앱에 적용됩니다. 앱이 스스로 강제 다크를 막아 둔 경우나 " +
+            "3. 다크 모드가 없는 앱 전체에 적용됩니다",
+            "앱마다 따로 고르는 공식 방법이 없어 다크 모드가 없는 앱 전체에 적용됩니다. 앱이 스스로 강제 다크를 막아 둔 경우나 " +
                 "이미 다크 모드가 있는 앱은 그대로입니다. 일부 앱은 색이 어색하게 보일 수 있으니 그럴 때는 끄세요.",
         )
         HelpTopic(

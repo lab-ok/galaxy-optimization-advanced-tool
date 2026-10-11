@@ -6,6 +6,7 @@ import com.labok.goat.domain.DpiFixer
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.data.tweaks.StatusIcons
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.rotate.ShakeRotate
@@ -28,6 +29,8 @@ class BootReceiver : BroadcastReceiver() {
         if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) ShakeRotate.start(context)
         // 상태 표시줄 아이콘: 재부팅으로 숨김 목록이 비워지는 기기가 있어 다시 숨긴다(시스템 설정 권한, 잠금 해제 뒤)
         if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) StatusIcons.reapply(context, "부팅 감지($action)")
+        // 해상도 낮추기: 확인하지 않은 채 재부팅됐으면 잠금을 풀기 전에도 원래 해상도로 되돌린다(기록은 기기 보호 저장소)
+        Resolution.revertIfPending(context, "확인 전 재부팅", force = true)
 
         if (isBoot && !settings.applyOnBoot) {
             log.add("부팅 감지($action), 부팅 시 자동 적용 꺼짐")

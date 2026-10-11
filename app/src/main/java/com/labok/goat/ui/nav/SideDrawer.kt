@@ -85,6 +85,8 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     GOS(Copy.FEATURE_GOS, NavIcon.GAME),
     /** 삼성 배터리 보호(충전 상한)를 바꾼다(Shizuku, 이 기기에 설정이 있을 때만). */
     CHARGE(Copy.FEATURE_CHARGE, NavIcon.BATTERY),
+    /** 해상도를 낮추고 밀도도 같은 비율로 줄인다(시스템 설정 권한, 폴드 제외). */
+    RESOLUTION(Copy.FEATURE_RESOLUTION, NavIcon.PIXELS),
     /** 다크 모드 없는 앱도 시스템이 어둡게 그리게 한다(Shizuku setprop). */
     DARK(Copy.FEATURE_DARK, NavIcon.MOON),
     /** 상태 표시줄의 늘 켜 둔 아이콘을 숨긴다(시스템 설정 권한). */
@@ -95,7 +97,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, STATUSBAR, GAME, BATTERY, MOON, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, STATUSBAR, GAME, BATTERY, MOON, PIXELS, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -266,6 +268,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.GAME -> game(color, s)
             NavIcon.BATTERY -> battery(color, s)
             NavIcon.MOON -> moon(color, s)
+            NavIcon.PIXELS -> pixels(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
@@ -444,6 +447,17 @@ private fun DrawScope.moon(c: Color, s: Stroke) {
     drawPath(crescent, c, style = s)
     drawCircle(c, u(1.1f), p(18.6f, 7f))
     drawCircle(c, u(0.8f), p(20.4f, 11.6f))
+}
+
+/** 해상도 낮추기: 화면 틀 안의 굵은 픽셀 네 칸(점이 줄어 굵어짐)과 옆의 작은 픽셀 두 칸. */
+private fun DrawScope.pixels(c: Color, s: Stroke) {
+    drawRoundRect(c, p(3f, 3f), Size(u(18f), u(18f)), CornerRadius(u(2.6f)), style = s)
+    val r = CornerRadius(u(0.8f))
+    drawRoundRect(c, p(6.5f, 6.5f), Size(u(4.5f), u(4.5f)), r)
+    drawRoundRect(c, p(6.5f, 12.5f), Size(u(4.5f), u(4.5f)), r)
+    drawRoundRect(c, p(12.5f, 12.5f), Size(u(4.5f), u(4.5f)), r)
+    drawRoundRect(c.copy(alpha = 0.5f), p(13f, 7f), Size(u(1.8f), u(1.8f)), r)
+    drawRoundRect(c.copy(alpha = 0.5f), p(15.4f, 9.4f), Size(u(1.8f), u(1.8f)), r)
 }
 
 /** 정보: 원 안의 i. */

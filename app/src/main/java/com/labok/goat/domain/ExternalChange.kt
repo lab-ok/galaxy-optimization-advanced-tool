@@ -16,15 +16,21 @@ data class ExternalChange(
     /** 바뀐 지금 값. */
     val to: Int,
     val timeMs: Long,
+    /** 그때 화면의 강제 해상도 비율([ScreenInfo.scale]). 값들은 이 비율이 걸린 밀도라, 기준으로 삼을 때 이 비율로 되돌린다. */
+    val scale: Float = 1f,
 ) {
-    fun serialize() = "$key|${role.name}|$from|$to|$timeMs"
+    fun serialize() = "$key|${role.name}|$from|$to|$timeMs|$scale"
 
     companion object {
         fun parse(raw: String?): ExternalChange? {
             val p = raw?.split('|') ?: return null
-            if (p.size != 5) return null
+            // 이전 판은 비율 없이 다섯 칸이다
+            if (p.size != 5 && p.size != 6) return null
             val role = ScreenPolicy.Role.entries.find { it.name == p[1] } ?: return null
-            return ExternalChange(p[0], role, p[2].toIntOrNull() ?: return null, p[3].toIntOrNull() ?: return null, p[4].toLongOrNull() ?: return null)
+            return ExternalChange(
+                p[0], role, p[2].toIntOrNull() ?: return null, p[3].toIntOrNull() ?: return null, p[4].toLongOrNull() ?: return null,
+                p.getOrNull(5)?.toFloatOrNull()?.takeIf { it > 0f } ?: 1f,
+            )
         }
 
         /**
@@ -42,11 +48,13 @@ data class ExternalChange(
             now: Long,
             /** 앱이 다른 화면에 적용한 값들. 화면이 바뀐 직후 다른 화면 값이 잠시 보이는 것은 외부 변경이 아니다. */
             otherApplied: Collection<Int> = emptyList(),
+            /** 지금 화면의 강제 해상도 비율. [target]은 이미 이 비율이 걸린 값이다. */
+            scale: Float = 1f,
         ): ExternalChange? {
             if (role == null || current == null || applied == null || target == null) return null
             if (current == applied || current == target || current in otherApplied) return null
             if (physicalIsReset && current == physical) return null
-            return ExternalChange(key, role, applied, current, now)
+            return ExternalChange(key, role, applied, current, now, scale)
         }
 
         /**
@@ -55,14 +63,16 @@ data class ExternalChange(
          * 반올림으로 생기는 1~2 dpi 차이는 보정값으로 메워 내부 화면이 정확히 바뀐 값이 되게 한다.
          */
         fun adopt(change: ExternalChange, plan: DensityPlan): Pair<Int, Int>? {
-            if (change.role == plan.reference) return change.to to plan.adjust
+            // 해상도를 낮춘 화면에서 바뀐 값은 그 비율이 걸린 밀도라, 원래 해상도 기준 값으로 되돌려 계산한다
+            val to = if (change.scale == 1f) change.to else (change.to / change.scale).roundToInt()
+            if (change.role == plan.reference) return to to plan.adjust
             val screens = plan.panels.map { it.screen }
             val ref = ScreenPolicy.screenFor(screens, plan.reference) ?: return null
             val active = screens.find { it.key == change.key } ?: return null
-            val reference = ((change.to - plan.adjust) * ref.ppi / active.ppi).roundToInt()
+            val reference = ((to - plan.adjust) * ref.ppi / active.ppi).roundToInt()
             if (!DpiPolicy.isValid(reference)) return null
             val computed = plan.copy(referenceDpi = reference).targetFor(active).dpi
-            return reference to plan.adjust + (change.to - computed)
+            return reference to plan.adjust + (to - computed)
         }
     }
 }
