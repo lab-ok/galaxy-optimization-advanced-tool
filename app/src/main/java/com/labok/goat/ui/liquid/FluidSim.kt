@@ -48,15 +48,18 @@ class FluidSim(val n: Int, val h: Float) {
 
     /**
      * 한 걸음([dt] 프레임 단위). (ax, ay)는 모든 입자에 걸리는 가속도(중력·관성), [swirl]은 잔 중심을 도는 힘(자이로 z, 양수면 시계 방향).
-     * [pull]은 잔 가운데로 끄는 약한 힘(폰을 바닥에 눕혀 기울기가 없을 때 방울로 모여 있게).
+     * [pull]은 잔 가운데로 끄는 약한 힘(가만히 두면 가운데로 돌아오게), [cohesion]은 방울 자신의 무게 중심으로 모으는 힘
+     * (표면장력: 흩어진 물이 다시 한 방울로 둥글게 맺힌다. 방울 전체는 자유롭게 움직이고 모양만 둥글게 되돌린다).
      */
-    fun step(dt: Float, ax: Float, ay: Float, swirl: Float, pull: Float) {
+    fun step(dt: Float, ax: Float, ay: Float, swirl: Float, pull: Float, cohesion: Float = 0f) {
         if (!ready) return
+        val (mx0, my0) = center()
         // 1) 힘 → 속도
         for (i in 0 until n) {
             val rx = x[i] - cx; val ry = y[i] - cy
-            vx[i] = (vx[i] + (ax - ry * swirl - rx * pull) * dt) * damping
-            vy[i] = (vy[i] + (ay + rx * swirl - ry * pull) * dt) * damping
+            val ox = x[i] - mx0; val oy = y[i] - my0
+            vx[i] = (vx[i] + (ax - ry * swirl - rx * pull - ox * cohesion) * dt) * damping
+            vy[i] = (vy[i] + (ay + rx * swirl - ry * pull - oy * cohesion) * dt) * damping
         }
         // 2) 점성: 다가오는 이웃끼리 속도를 나눈다(출렁임이 부드럽게 가라앉는다)
         val h2 = h * h

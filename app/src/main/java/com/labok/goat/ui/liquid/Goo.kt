@@ -40,3 +40,26 @@ fun Modifier.goo(color: Color, blur: Dp = 6.dp): Modifier {
         clip = false
     }
 }
+
+/**
+ * 색을 지우지 않는 goo: 알파만 임계로 세우고 색은 흐린 그대로 둔다. 방울마다 밝기를 달리 그리면 흐림이 섞어 한 덩어리 안의
+ * 부드러운 명암(빛 받는 쪽 광택)이 된다. 자동 맞추기 액체가 쓴다.
+ */
+@Composable
+fun Modifier.gooShaded(blur: Dp): Modifier {
+    val px = with(LocalDensity.current) { blur.toPx() }
+    return this.graphicsLayer {
+        val matrix = ColorMatrix(
+            floatArrayOf(
+                1f, 0f, 0f, 0f, 0f,
+                0f, 1f, 0f, 0f, 0f,
+                0f, 0f, 1f, 0f, 0f,
+                0f, 0f, 0f, 22f, -9f * 255f,
+            )
+        )
+        val blurFx = RenderEffect.createBlurEffect(px, px, Shader.TileMode.DECAL)
+        val threshold = RenderEffect.createColorFilterEffect(ColorMatrixColorFilter(matrix))
+        renderEffect = RenderEffect.createChainEffect(threshold, blurFx).asComposeRenderEffect()
+        clip = false
+    }
+}

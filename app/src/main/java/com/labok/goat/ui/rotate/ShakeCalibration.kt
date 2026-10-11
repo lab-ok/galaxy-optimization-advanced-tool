@@ -1,7 +1,7 @@
 package com.labok.goat.ui.rotate
 
 import com.labok.goat.ui.liquid.FluidSim
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.graphics.Color
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.data.log.LogRepository
 import android.hardware.Sensor
@@ -61,7 +61,9 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
-import com.labok.goat.ui.liquid.goo
+import com.labok.goat.ui.liquid.gooShaded
+import com.labok.goat.ui.liquid.LiquidLook
+import androidx.compose.ui.graphics.lerp
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.nudge
 import com.labok.goat.ui.liquid.poke
@@ -140,10 +142,10 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
 }
 
 /**
- * 유리잔 속 액체(입자 [PARTICLES]개, [FluidSim]). 센서를 그대로 액체에 건다:
- * - 가속도 원값 = 중력 + 기기를 움직인 관성. 기울이면 액체가 아래로 흘러내리고, 흔들면 반대쪽으로 쏠렸다 출렁이며, 세게 흔들면 튀어 오른다.
- * - 자이로 z(화면을 돌리는 회전) = 잔 속 소용돌이.
- * - 기기를 바닥에 눕혀 기울기가 없으면 가운데로 살짝 모여 방울이 된다.
+ * 유리잔 속 점도 높은 물 한 방울([FluidSim], 모양·물성은 [LiquidLook.default]). 달처럼 중력이 약한 곳에 있는 듯 움직인다:
+ * - 가속도 원값을 저역 통과해 중력을 따로 떼어 내고, 중력은 [LiquidLook.gravity]배(약 1/6)만 건다. 기울이면 느릿하게 그쪽으로 가라앉는다.
+ * - 나머지(기기를 움직인 관성)는 그대로 건다. 흔들면 반대쪽으로 쏠렸다 출렁이고, 세게 치면 벽에 늘어 붙었다가 표면장력으로 다시 둥글게 맺힌다.
+ * - 왼쪽 위에서 빛을 받는 것처럼 가장자리를 밝게 그려 광택을 낸다.
  * [recording]이 켜지면 [round]마다 새로 [CALIBRATE_SECONDS]초 동안 휘두름을 모아 [onDone]에 단계를 넘긴다(못 맞추면 null).
  * 둘레의 호는 남은 시간, 아래 점은 잡힌 휘두름 수다. 이 시트가 열려 있는 동안 흔들어도 화면은 돌지 않는다.
  */
@@ -161,13 +163,14 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
     val time = remember { Animatable(1f) }
     var frame by remember { mutableLongStateOf(0L) }
     val haptics = rememberLiquidHaptics()
-    val h = with(density) { 22.dp.toPx() }
-    val glass = with(density) { 112.dp.toPx() }
+    val look = LiquidLook.default
+    val h = with(density) { look.hDp.dp.toPx() }
+    val glass = with(density) { look.glassDp.dp.toPx() }
     val dp = density.density
-    val sim = remember { FluidSim(PARTICLES, h) }
-    // 센서 최신값(화면 좌표로 바꾼 힘, 자이로 z)
+    val sim = remember { FluidSim(look.particles, h).apply { look.apply(this) } }
+    // 센서 최신값(화면 좌표로 바꾼 힘)과 저역 통과로 떼어 낸 중력(기기 좌표)
     val force = remember { FloatArray(2) }
-    var spin by remember { mutableFloatStateOf(0f) }
+    val gravity = remember { FloatArray(2) }
     var record by remember { mutableStateOf(ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN)) }
 
     LaunchedEffect(box) {
@@ -205,13 +208,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
             last = now
             if (!sim.ready) continue
             val sub = 2
-            repeat(sub) {
-                val ax = force[0]; val ay = force[1]
-                // 기울기가 거의 없으면(바닥에 눕힘) 가운데로 모으는 힘을 조금 준다
-                val tilt = kotlin.math.hypot(ax, ay) / (G_TO_PX * 9.8f * dp)
-                val pull = 0.0009f * (1f - tilt).coerceIn(0f, 1f)
-                sim.step(f / sub, ax, ay, spin, pull)
-            }
+            repeat(sub) { sim.step(f / sub, force[0], force[1], 0f, look.pull, look.cohesion) }
             frame++
         }
     }
@@ -224,14 +221,16 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
             override fun onSensorChanged(e: SensorEvent) {
                 val ms = e.timestamp / 1_000_000
                 if (e.sensor.type == Sensor.TYPE_GYROSCOPE) {
-                    // 화면을 시계 방향으로 돌리면(z가 음수) 잔 속 액체는 반대로 처진다: 회전 속도에 비례한 소용돌이
-                    spin = (-e.values[2] * SWIRL).coerceIn(-0.02f, 0.02f)
                     if (rec) record.feedGyro(e.values[0], e.values[1], e.values[2], ms)
                     return
                 }
-                // 가속도 원값(중력 + 관성) → 화면 좌표 힘: 기기 x는 화면 오른쪽, 기기 y는 화면 위쪽(반대로)
-                force[0] = -e.values[0] * G_TO_PX * dp
-                force[1] = e.values[1] * G_TO_PX * dp
+                // 가속도 원값 = 중력 + 관성. 중력은 천천히 따라가는 저역 통과로 떼어 내 약하게(달 중력)만 걸고, 관성은 그대로 건다.
+                // 화면 좌표: 기기 x는 화면 오른쪽, 기기 y는 화면 위쪽(반대로)
+                val ax = e.values[0]; val ay = e.values[1]
+                gravity[0] += (ax - gravity[0]) * GRAVITY_LP; gravity[1] += (ay - gravity[1]) * GRAVITY_LP
+                val g = look.gToPx * dp
+                force[0] = -((ax - gravity[0]) + gravity[0] * look.gravity) * g
+                force[1] = ((ay - gravity[1]) + gravity[1] * look.gravity) * g
                 if (rec) {
                     record.feed(e.values[0], e.values[1], e.values[2], ms)
                     if (record.peaks.size > count) haptics.tick()
@@ -261,12 +260,14 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
                     style = Stroke(3.dp.toPx(), cap = StrokeCap.Round),
                 )
             }
-            // 액체(goo 층: 입자들이 표면장력처럼 한 덩어리로 보이고, 튀어 나간 방울은 목처럼 이어졌다 떨어진다)
-            Canvas(Modifier.fillMaxWidth().height(280.dp).goo(c.ink, 12.dp)) {
+            // 액체(색을 지우지 않는 goo 층: 입자가 매끈한 한 덩어리 표면이 되고, 입자마다 다른 밝기가 섞여 광택이 된다)
+            Canvas(Modifier.fillMaxWidth().height(280.dp).gooShaded(look.blurDp.dp)) {
                 frame
                 if (!sim.ready) return@Canvas
-                val r = h * 0.62f
-                for (i in 0 until sim.n) drawCircle(c.ink, r, Offset(sim.x[i], sim.y[i]))
+                val r = look.radiusDp.dp.toPx()
+                val (mx, my) = sim.center()
+                val spread = look.spread(sim, mx, my)
+                for (i in 0 until sim.n) drawCircle(lerp(c.ink, Color.White, look.shine(sim, i, mx, my, spread)), r, Offset(sim.x[i], sim.y[i]))
             }
             if (recording) Text(
                 "$left", color = c.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineMedium,
@@ -286,12 +287,8 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
     }
 }
 
-/** 액체 입자 수. */
-private const val PARTICLES = 90
-/** 가속도(m/s²) → 화면 힘(dp/프레임²) 배수. 9.8이면 약 0.34dp/프레임². */
-private const val G_TO_PX = 0.035f
-/** 자이로 z(rad/s) → 소용돌이 세기. */
-private const val SWIRL = 0.004f
+/** 중력 저역 통과 계수(센서 값 하나마다, 50Hz면 약 0.4초에 따라간다). */
+private const val GRAVITY_LP = 0.05f
 
 /** 흔들림 점 하나: 차면 통통 튀며 커졌다가 자리 잡는다. */
 @Composable
