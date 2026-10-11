@@ -26,7 +26,7 @@ out = {
     'ic_goat.xml': (svg(scale(body, 1.0, 0)), 72),
     # 누를 때 표정: 찡그림 / 많이 누르면 울음 / 더 누르면 화남(볼이 빨개짐)
     'ic_goat_squint.xml': (svg(scale(goat(eye='squint', mouth='frown'), 1.0, 0)), 72),
-    'ic_goat_cry.xml': (svg(scale(goat(eye='cry', mouth='wobble'), 1.0, 0)), 72),
+    'ic_goat_cry.xml': (svg(scale(goat(eye='cry', mouth='wobble', blush='#FF8FA3', blush_op=0.75), 1.0, 0)), 72),
     'ic_goat_angry.xml': (svg(scale(goat(eye='angry', mouth='frown', blush='#FF4D4D', blush_op=0.85), 1.0, 0)), 72),
 }
 

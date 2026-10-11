@@ -68,7 +68,7 @@ object Copy {
     const val APP_SIZE_HOME_HINT = "숫자가 작을수록 작아집니다. 바꾸면 홈 화면이 잠깐 다시 시작됩니다."
     const val FEATURE_ANIMATION = "애니메이션 속도"
     const val FEATURE_APP_CLEANUP = "기본 앱 정리"
-    const val MENU_SECTION_SCREEN = "화면"
+    const val MENU_SECTION_SCREEN = "화면 배율"
     const val MENU_SECTION_SYSTEM = "시스템"
 
     // 홈

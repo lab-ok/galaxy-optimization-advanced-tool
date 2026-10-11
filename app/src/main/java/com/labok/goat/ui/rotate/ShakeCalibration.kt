@@ -1,5 +1,7 @@
 package com.labok.goat.ui.rotate
 
+import com.labok.goat.ui.liquid.FluidSim
+import androidx.compose.runtime.mutableFloatStateOf
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.data.log.LogRepository
 import android.hardware.Sensor
@@ -137,12 +139,11 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
     }
 }
 
-/** 갈라져 나간 작은 물방울 하나. 본체 쪽으로 끌려 돌아와 합쳐진다. */
-private class Drop(var x: Float, var y: Float, var vx: Float, var vy: Float, val r: Float, var age: Float = 0f)
-
 /**
- * 폰 움직임을 따라 노는 물방울. 늘 센서를 듣고 큰 물방울이 폰 안의 물처럼 반대쪽으로 출렁이며, 휘두를 때마다 그 세기만큼 통 튄다.
- * 세게 휘두르면 작은 방울이 떨어져 나갔다가 본체로 끌려와 다시 합쳐진다(goo 층이라 떨어지고 붙는 순간 목처럼 이어진다).
+ * 유리잔 속 액체(입자 [PARTICLES]개, [FluidSim]). 센서를 그대로 액체에 건다:
+ * - 가속도 원값 = 중력 + 기기를 움직인 관성. 기울이면 액체가 아래로 흘러내리고, 흔들면 반대쪽으로 쏠렸다 출렁이며, 세게 흔들면 튀어 오른다.
+ * - 자이로 z(화면을 돌리는 회전) = 잔 속 소용돌이.
+ * - 기기를 바닥에 눕혀 기울기가 없으면 가운데로 살짝 모여 방울이 된다.
  * [recording]이 켜지면 [round]마다 새로 [CALIBRATE_SECONDS]초 동안 휘두름을 모아 [onDone]에 단계를 넘긴다(못 맞추면 null).
  * 둘레의 호는 남은 시간, 아래 점은 잡힌 휘두름 수다. 이 시트가 열려 있는 동안 흔들어도 화면은 돌지 않는다.
  */
@@ -154,31 +155,26 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
     val density = LocalDensity.current
     val done by rememberUpdatedState(onDone)
     val rec by rememberUpdatedState(recording)
-    val blob = rememberSoftBlob()
     var box by remember { mutableStateOf(IntSize.Zero) }
     var count by remember { mutableIntStateOf(0) }
     var left by remember { mutableIntStateOf(CALIBRATE_SECONDS) }
     val time = remember { Animatable(1f) }
-    val path = remember { Path() }
-    val drops = remember { mutableListOf<Drop>() }
-    var tick by remember { mutableLongStateOf(0L) }
-    val radius = with(density) { 60.dp.toPx() }
-    val reach = with(density) { 72.dp.toPx() }
-    // 화면용(늘 듣는다)과 기록용(시작한 회차만)
-    val visual = remember { ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN) }
+    var frame by remember { mutableLongStateOf(0L) }
     val haptics = rememberLiquidHaptics()
+    val h = with(density) { 22.dp.toPx() }
+    val glass = with(density) { 112.dp.toPx() }
+    val dp = density.density
+    val sim = remember { FluidSim(PARTICLES, h) }
+    // 센서 최신값(화면 좌표로 바꾼 힘, 자이로 z)
+    val force = remember { FloatArray(2) }
+    var spin by remember { mutableFloatStateOf(0f) }
     var record by remember { mutableStateOf(ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN)) }
-    var seen by remember { mutableIntStateOf(0) }
-
-    fun center() = Offset(box.width / 2f, box.height / 2f)
 
     LaunchedEffect(box) {
         if (box == IntSize.Zero) return@LaunchedEffect
-        blob.blob.gain = 0.35f     // 목표를 느슨하게 따라가 물처럼 크게 출렁인다
-        blob.blob.damping = 0.6f
-        blob.moveTo(center().x, center().y, radius * 2, radius * 2, animate = false)
+        if (!sim.ready) sim.reset(box.width / 2f, box.height / 2f, glass) else sim.container(box.width / 2f, box.height / 2f, glass)
     }
-    // 시작한 회차: 기록을 새로 하고, 남은 시간 호를 줄이며, 끝나면 단계를 정한다
+    // 시작한 회차: 기록을 새로 하고, 남은 시간 호를 줄이며, 끝나면 세기·빠르기·손목 회전을 맞춘다
     LaunchedEffect(round, recording) {
         if (!recording) { time.snapTo(1f); return@LaunchedEffect }
         record = ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN)
@@ -199,23 +195,24 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
         }
         done(level)
     }
-    // 떨어져 나간 방울: 본체 쪽으로 용수철처럼 끌려와, 가까워지면 합쳐져 사라진다
-    LaunchedEffect(Unit) {
+    // 시뮬레이션: 실제 시간만큼(1 = 1/60초) 두 번에 나눠 적분한다
+    LaunchedEffect(reduce) {
+        if (reduce) return@LaunchedEffect
         var last = 0L
         while (true) {
             val now = withFrameNanos { it }
-            val dt = if (last == 0L) 1f / 60 else ((now - last) / 1e9f).coerceAtMost(1f / 20)
+            val f = if (last == 0L) 1f else ((now - last) / 16_666_667f).coerceIn(0.25f, 3f)
             last = now
-            if (drops.isEmpty() || !blob.blob.ready) continue
-            val cx = blob.blob.cx; val cy = blob.blob.cy
-            drops.removeAll { d ->
-                d.age += dt
-                d.vx += (cx - d.x) * 26f * dt; d.vy += (cy - d.y) * 26f * dt
-                d.vx *= 1f - 2.8f * dt; d.vy *= 1f - 2.8f * dt
-                d.x += d.vx * dt; d.y += d.vy * dt
-                d.age > 0.3f && hypot(d.x - cx, d.y - cy) < radius * 0.6f
+            if (!sim.ready) continue
+            val sub = 2
+            repeat(sub) {
+                val ax = force[0]; val ay = force[1]
+                // 기울기가 거의 없으면(바닥에 눕힘) 가운데로 모으는 힘을 조금 준다
+                val tilt = kotlin.math.hypot(ax, ay) / (G_TO_PX * 9.8f * dp)
+                val pull = 0.0009f * (1f - tilt).coerceIn(0f, 1f)
+                sim.step(f / sub, ax, ay, spin, pull)
             }
-            tick++
+            frame++
         }
     }
 
@@ -227,41 +224,18 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
             override fun onSensorChanged(e: SensorEvent) {
                 val ms = e.timestamp / 1_000_000
                 if (e.sensor.type == Sensor.TYPE_GYROSCOPE) {
-                    visual.feedGyro(e.values[0], e.values[1], e.values[2], ms)
+                    // 화면을 시계 방향으로 돌리면(z가 음수) 잔 속 액체는 반대로 처진다: 회전 속도에 비례한 소용돌이
+                    spin = (-e.values[2] * SWIRL).coerceIn(-0.02f, 0.02f)
                     if (rec) record.feedGyro(e.values[0], e.values[1], e.values[2], ms)
                     return
                 }
-                visual.feed(e.values[0], e.values[1], e.values[2], ms)
+                // 가속도 원값(중력 + 관성) → 화면 좌표 힘: 기기 x는 화면 오른쪽, 기기 y는 화면 위쪽(반대로)
+                force[0] = -e.values[0] * G_TO_PX * dp
+                force[1] = e.values[1] * G_TO_PX * dp
                 if (rec) {
                     record.feed(e.values[0], e.values[1], e.values[2], ms)
                     if (record.peaks.size > count) haptics.tick()
                     count = record.peaks.size
-                }
-                if (box == IntSize.Zero || !blob.blob.ready || reduce) return
-                val o = center()
-                // 폰 안의 물: 폰이 움직이는 반대쪽으로 쏠린다(화면 x는 기기 x, 화면 y는 기기 y의 반대). 작은 움직임도 크게 보이게.
-                val k = reach / 3f
-                val mx = (-visual.linearX * k).coerceIn(-reach, reach)
-                val my = (visual.linearY * k).coerceIn(-reach, reach)
-                blob.nudge(o.x + mx, o.y + my)
-                if (visual.peaks.size != seen) {
-                    seen = visual.peaks.size
-                    val p = visual.peaks.last()
-                    val l = hypot(p.x, p.y).coerceAtLeast(0.01f)
-                    val dir = Offset(-p.x / l, p.y / l)
-                    // 휘두름 세기만큼 바깥으로 통 튄다(약한 휘두름도 보이게 최소 속도를 둔다)
-                    val speed = (900f + p.force * 220f).coerceAtMost(6000f)
-                    blob.poke(o.x - dir.x * radius, o.y - dir.y * radius, dir.x * speed, dir.y * speed, radius * 1.3f)
-                    // 세게 휘두르면 방울이 갈라져 나간다(세기에 따라 1~4개)
-                    val n = if (p.force > SPLIT_FORCE) 1 + ((p.force - SPLIT_FORCE) / 4f).toInt().coerceIn(0, 3) else 0
-                    repeat(n) { i ->
-                        val a = kotlin.math.atan2(dir.y, dir.x) + (i - (n - 1) / 2f) * 0.45f
-                        val sp = speed * (0.55f + 0.1f * i)
-                        drops += Drop(
-                            blob.blob.cx + cos(a) * radius * 0.8f, blob.blob.cy + sin(a) * radius * 0.8f,
-                            cos(a) * sp, sin(a) * sp, radius * (0.32f - 0.05f * i),
-                        )
-                    }
                 }
             }
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
@@ -276,10 +250,10 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
 
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.fillMaxWidth().height(280.dp).onSizeChanged { box = it }) {
-            // 남은 시간 호(물방울보다 뒤, goo 없음). 기록 중에만 줄어든다.
+            // 유리잔 테두리와 남은 시간 호(액체보다 뒤, goo 없음)
             Canvas(Modifier.fillMaxWidth().height(280.dp)) {
                 val o = Offset(size.width / 2, size.height / 2)
-                val ring = radius + 44.dp.toPx()
+                val ring = glass + 6.dp.toPx()
                 drawCircle(c.line, ring, o, style = Stroke(3.dp.toPx()))
                 if (recording) drawArc(
                     c.ink, -90f, 360f * time.value, false,
@@ -287,17 +261,21 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
                     style = Stroke(3.dp.toPx(), cap = StrokeCap.Round),
                 )
             }
-            // 물방울과 갈라진 방울(goo 층: 떨어지고 붙는 순간 목처럼 이어진다)
-            Canvas(Modifier.fillMaxWidth().height(280.dp).goo(c.ink, 10.dp)) {
-                blob.frame; tick
-                if (blob.blob.ready) drawPath(blob.blob.path(path), c.ink)
-                drops.forEach { drawCircle(c.ink, it.r, Offset(it.x, it.y)) }
+            // 액체(goo 층: 입자들이 표면장력처럼 한 덩어리로 보이고, 튀어 나간 방울은 목처럼 이어졌다 떨어진다)
+            Canvas(Modifier.fillMaxWidth().height(280.dp).goo(c.ink, 12.dp)) {
+                frame
+                if (!sim.ready) return@Canvas
+                val r = h * 0.62f
+                for (i in 0 until sim.n) drawCircle(c.ink, r, Offset(sim.x[i], sim.y[i]))
             }
             if (recording) Text(
                 "$left", color = c.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.align(Alignment.Center).graphicsLayer {
-                    blob.frame
-                    if (blob.blob.ready) { translationX = blob.blob.cx - box.width / 2f; translationY = blob.blob.cy - box.height / 2f }
+                    frame
+                    if (sim.ready) {
+                        val (mx, my) = sim.center()
+                        translationX = mx - box.width / 2f; translationY = my - box.height / 2f
+                    }
                 },
             )
         }
@@ -308,8 +286,12 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
     }
 }
 
-/** 이 세기(m/s²)를 넘는 휘두름이면 작은 방울이 갈라져 나간다. */
-private const val SPLIT_FORCE = 6f
+/** 액체 입자 수. */
+private const val PARTICLES = 90
+/** 가속도(m/s²) → 화면 힘(dp/프레임²) 배수. 9.8이면 약 0.34dp/프레임². */
+private const val G_TO_PX = 0.035f
+/** 자이로 z(rad/s) → 소용돌이 세기. */
+private const val SWIRL = 0.004f
 
 /** 흔들림 점 하나: 차면 통통 튀며 커졌다가 자리 잡는다. */
 @Composable

@@ -48,7 +48,7 @@ def goat(fur='#FFF6E9', shade='#F1DFC6', muzzle='#FFFFFF', horn_c='#C79A6B', rid
     g.append('<path d="M243 316 Q256 308 269 316 Q264 330 256 332 Q248 330 243 316 Z" fill="#F08A9A"/>')
     if mouth=='smile': g.append('<path d="M240 344 Q248 354 256 346 Q264 354 272 344" stroke="%s" stroke-width="5" fill="none" stroke-linecap="round"/>'%eye_c)
     if mouth=='frown': g.append('<path d="M238 352 Q256 336 274 352" stroke="%s" stroke-width="6" fill="none" stroke-linecap="round"/>'%eye_c)
-    if mouth=='wobble': g.append('<path d="M236 350 Q244 340 252 350 Q260 360 268 350 Q272 346 276 350" stroke="%s" stroke-width="5" fill="none" stroke-linecap="round"/>'%eye_c)
+    if mouth=='wobble': g.append('<path d="M244 352 Q250 344 256 350 Q262 344 268 352" stroke="%s" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'%eye_c)
     if mouth=='tongue': g.append('<path d="M240 344 Q256 360 272 344" stroke="%s" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M250 352 Q256 368 262 352 Z" fill="#FF6F86"/>'%eye_c)
     for cx in (212,300):
         if eye=='round':
@@ -62,10 +62,11 @@ def goat(fur='#FFF6E9', shade='#F1DFC6', muzzle='#FFFFFF', horn_c='#C79A6B', rid
         elif eye=='squint':  # 찡그림: 왼쪽 눈 >, 오른쪽 눈 <
             d = 1 if cx==212 else -1
             g.append(f'<path d="M{cx-14*d} 268 L{cx+12*d} 282 L{cx-14*d} 296" stroke="{eye_c}" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>')
-        elif eye=='cry':  # 울음: 꼭 감은 눈(∩) + 눈물 방울
-            g.append(f'<path d="M{cx-18} 286 Q{cx} 270 {cx+18} 286" stroke="{eye_c}" stroke-width="7" fill="none" stroke-linecap="round"/>'
-                     f'<path d="M{cx} 294 Q{cx-10} 314 {cx} 322 Q{cx+10} 314 {cx} 294 Z" fill="#7EC8FF"/>'
-                     f'<path d="M{cx+(14 if cx==300 else -14)} 300 Q{cx+(6 if cx==300 else -6)} 316 {cx+(14 if cx==300 else -14)} 324 Q{cx+(22 if cx==300 else -22)} 316 {cx+(14 if cx==300 else -14)} 300 Z" fill="#7EC8FF" opacity="0.8"/>')
+        elif eye=='cry':  # 울먹: 눈물이 그렁그렁 고인 큰 눈(반짝임 둘) + 아래 눈꺼풀에 고인 눈물 + 흘러내리는 눈물 방울
+            g.append(f'<circle cx="{cx}" cy="284" r="26" fill="{eye_c}"/>'
+                     f'<path d="M{cx-24} 292 Q{cx} 316 {cx+24} 292 Q{cx} 302 {cx-24} 292 Z" fill="#8FD3FF" opacity="0.9"/>'
+                     f'<circle cx="{cx-9}" cy="273" r="10" fill="#fff"/><circle cx="{cx+10}" cy="290" r="5" fill="#fff"/><circle cx="{cx+3}" cy="268" r="3" fill="#fff"/>'
+                     f'<path d="M{cx+(16 if cx==300 else -16)} 302 Q{cx+(8 if cx==300 else -8)} 322 {cx+(16 if cx==300 else -16)} 332 Q{cx+(24 if cx==300 else -24)} 322 {cx+(16 if cx==300 else -16)} 302 Z" fill="#8FD3FF"/>')
         elif eye=='angry':  # 화남: 작은 눈 + 안쪽으로 내려간 눈썹
             d = 1 if cx==212 else -1
             g.append(f'<circle cx="{cx}" cy="286" r="17" fill="{eye_c}"/><circle cx="{cx-5}" cy="280" r="5" fill="#fff"/>'
