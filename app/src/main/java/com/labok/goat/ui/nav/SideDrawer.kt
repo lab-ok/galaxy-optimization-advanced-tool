@@ -85,6 +85,8 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     GOS(Copy.FEATURE_GOS, NavIcon.GAME),
     /** 삼성 배터리 보호(충전 상한)를 바꾼다(Shizuku, 이 기기에 설정이 있을 때만). */
     CHARGE(Copy.FEATURE_CHARGE, NavIcon.BATTERY),
+    /** 다크 모드 없는 앱도 시스템이 어둡게 그리게 한다(Shizuku setprop). */
+    DARK(Copy.FEATURE_DARK, NavIcon.MOON),
     /** 상태 표시줄의 늘 켜 둔 아이콘을 숨긴다(시스템 설정 권한). */
     STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.STATUSBAR),
     /** 광고를 막는 DNS 서버로 바꾼다(시스템 설정 권한). */
@@ -93,7 +95,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, STATUSBAR, GAME, BATTERY, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, STATUSBAR, GAME, BATTERY, MOON, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -263,6 +265,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.STATUSBAR -> statusBar(color, s)
             NavIcon.GAME -> game(color, s)
             NavIcon.BATTERY -> battery(color, s)
+            NavIcon.MOON -> moon(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
@@ -428,6 +431,19 @@ private fun DrawScope.battery(c: Color, s: Stroke) {
     drawRoundRect(c, p(20.4f, 10f), Size(u(1.8f), u(4f)), CornerRadius(u(0.9f)))
     drawRoundRect(c, p(5f, 9.5f), Size(u(9f), u(5f)), CornerRadius(u(1f)))
     drawLine(c, p(16.2f, 5f), p(16.2f, 19f), s.width * 0.8f, StrokeCap.Round)
+}
+
+/** 앱 다크 모드 강제: 초승달과 그 옆 작은 별 둘. */
+private fun DrawScope.moon(c: Color, s: Stroke) {
+    val crescent = Path().apply {
+        moveTo(u(14.5f), u(3.6f))
+        cubicTo(u(8.2f), u(3.4f), u(4.2f), u(8.6f), u(5.4f), u(14f))
+        cubicTo(u(6.6f), u(19.4f), u(13.4f), u(22f), u(18.4f), u(18.2f))
+        cubicTo(u(12.4f), u(18.4f), u(9.4f), u(10.6f), u(14.5f), u(3.6f)); close()
+    }
+    drawPath(crescent, c, style = s)
+    drawCircle(c, u(1.1f), p(18.6f, 7f))
+    drawCircle(c, u(0.8f), p(20.4f, 11.6f))
 }
 
 /** 정보: 원 안의 i. */

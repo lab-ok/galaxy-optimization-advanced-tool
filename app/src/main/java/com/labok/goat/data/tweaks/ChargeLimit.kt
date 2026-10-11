@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * 충전 상한(배터리 보호): 삼성 설정 > 배터리 > 배터리 보호와 같은 숨은 설정을 바꾼다.
  * - [MODE]: 0 끔(100%까지), 1 최대(상한 [LIMIT]%에서 멈춤), 3 기본(100%까지 충전한 뒤 95% 근처로 유지).
- *   2는 디바이스 케어가 오래 충전할 때 스스로 거는 최대 보호라 GOAT가 고르지 않는다.
- * - [LIMIT]: 80·85·90·95(One UI 6.1 이후). 그 전 One UI는 85% 하나뿐이라 [LIMIT]가 없다.
+ *   2는 디바이스 케어 자동 보호이거나 One UI 6.1의 '적응형'일 수 있어(단정할 근거 없음) 알 수 없는 값으로 둔다.
+ * - [LIMIT]: 80·85·90·95(One UI 6.1 이후). 그 전 One UI는 85% 하나(0·1만)라 [LIMIT]가 없고 '기본'(3)도 고르지 않는다.
  *
  * 삼성이 공개하지 않은 키라(오픈소스 앱 amply의 역공학이 유일한 근거, docs/research/galaxy-adb-tweaks.md) 기기마다
  * 어느 표(global·system·secure)에 있는지 확인하고, **이 기기에 키가 이미 있을 때만** 그 표에 쓴다. 키가 없는 기기에서는
@@ -66,19 +66,24 @@ object ChargeLimit {
         return Lookup.Missing
     }
 
-    /** 지금 방식(2 자동 최대도 최대로 본다). 0~3 밖의 값은 확인되지 않은 기기라 null로 단정하지 않는다. */
+    /** 지금 방식. 0·1·3만 안다. 2(자동 보호 또는 적응형으로 추정)와 그 밖의 값은 단정하지 않고 null. */
     fun choiceOf(mode: Int): Choice? = when (mode) {
         0 -> Choice.OFF
+        1 -> Choice.MAXIMUM
         3 -> Choice.BASIC
-        1, 2 -> Choice.MAXIMUM
         else -> null
     }
+
+    /** 이 기기에서 고를 수 있는 방식: 상한 키가 없는 이전 One UI는 끔·최대(85%)만. */
+    fun choicesFor(found: Found): List<Choice> = if (found.limit == null) listOf(Choice.OFF, Choice.MAXIMUM) else Choice.entries
 
     /**
      * 바꿀 셸 명령(시험할 수 있게 떼어 둔 판단). 상한은 최대일 때만, 이 기기에 상한 키가 있을 때만 쓴다.
      * [limit]은 [LIMITS] 안의 값으로 맞춘다.
      */
     internal fun plan(found: Found, choice: Choice, limit: Int): List<String> {
+        // 이 기기에 없는 방식(이전 One UI의 '기본')은 쓰지 않는다
+        if (choice !in choicesFor(found)) return emptyList()
         val cmds = mutableListOf("settings put ${found.table} $MODE ${choice.value}")
         if (choice == Choice.MAXIMUM && found.limit != null) {
             cmds += "settings put ${found.table} $LIMIT ${nearest(limit)}"
@@ -97,7 +102,12 @@ object ChargeLimit {
             log.add("충전 상한($how): 이 기기에서 배터리 보호 설정을 찾지 못해 바꾸지 않음(Shizuku 연결·키 확인)")
             return false
         }
-        val r = ShizukuAccess.shell(plan(found, choice, limit).joinToString(" && "))
+        val cmds = plan(found, choice, limit)
+        if (cmds.isEmpty()) {
+            log.add("충전 상한($how): 이 기기에는 '${choice.label}' 방식이 없어 바꾸지 않음")
+            return false
+        }
+        val r = ShizukuAccess.shell(cmds.joinToString(" && "))
         val after = (find() as? Lookup.Present)?.found
         val ok = r?.ok == true && after != null && choiceOf(after.mode) == choice &&
             (choice != Choice.MAXIMUM || found.limit == null || after.limit == nearest(limit))
@@ -109,7 +119,7 @@ object ChargeLimit {
     }
 
     /** 로그·홈 카드용 이름(알 수 없는 값은 숫자 그대로). */
-    fun label(f: Found): String = (choiceOf(f.mode)?.label ?: "값 ${f.mode}") + if (choiceOf(f.mode) == Choice.MAXIMUM && f.limit != null) " ${f.limit}%" else ""
+    fun label(f: Found): String = Copy.chargeLabel(choiceOf(f.mode)?.label, f.mode, f.limit.takeIf { choiceOf(f.mode) == Choice.MAXIMUM })
 
     /**
      * 지금 배터리(권한 없이 읽는 마지막 방송). [held]는 충전기에 연결됐는데 충전하지 않는 상태로,

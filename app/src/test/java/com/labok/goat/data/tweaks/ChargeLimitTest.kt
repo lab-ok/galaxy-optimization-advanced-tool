@@ -24,10 +24,19 @@ class ChargeLimitTest {
     }
 
     @Test
-    fun deviceCareAutoMaximumCountsAsMaximum() {
-        assertEquals(Choice.MAXIMUM, ChargeLimit.choiceOf(2))
+    fun onlyKnownValuesAreNamed() {
+        assertEquals("2는 자동 보호·적응형 중 무엇인지 몰라 단정하지 않는다", null, ChargeLimit.choiceOf(2))
+        assertEquals(Choice.MAXIMUM, ChargeLimit.choiceOf(1))
         assertEquals(Choice.BASIC, ChargeLimit.choiceOf(3))
         assertEquals(Choice.OFF, ChargeLimit.choiceOf(0))
         assertEquals("모르는 값은 단정하지 않는다", null, ChargeLimit.choiceOf(7))
+    }
+
+    @Test
+    fun oldOneUiWithoutLimitKeyHasNoBasicMode() {
+        val old = Found("global", 0, null)
+        assertEquals(listOf(Choice.OFF, Choice.MAXIMUM), ChargeLimit.choicesFor(old))
+        assertEquals("이전 One UI에는 '기본'(3)을 쓰지 않는다", emptyList<String>(), ChargeLimit.plan(old, Choice.BASIC, 85))
+        assertEquals(Choice.entries.toList(), ChargeLimit.choicesFor(Found("global", 0, 85)))
     }
 }

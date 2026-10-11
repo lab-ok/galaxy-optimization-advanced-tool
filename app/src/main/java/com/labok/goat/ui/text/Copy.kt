@@ -355,14 +355,17 @@ object Copy {
 
     // 충전 상한
     const val FEATURE_CHARGE = "충전 상한"
-    const val CHARGE_INTRO_TITLE = "배터리를 오래 쓰기"
-    const val CHARGE_INTRO_BODY = "정한 수준에서 충전을 멈춰 배터리가 가득 찬 채 머무는 시간을 줄이고 배터리 부담을 덜어 줍니다."
+    const val CHARGE_INTRO_TITLE = "배터리 부담 줄이기"
+    const val CHARGE_INTRO_BODY = "정한 수준에서 충전을 멈춰 배터리가 가득 찬 채 머무는 시간을 줄이고 배터리 부담을 덜 수 있습니다."
     const val CHARGE_NO_BATTERY = "배터리 정보를 읽지 못했습니다."
     /** 지금 배터리 한 줄. */
     fun chargeBattery(level: Int, state: String?, tempC: Float?) =
         "지금 배터리 $level%" + (state?.let { " · $it" } ?: "") + (tempC?.let { " · %.1f℃".format(it) } ?: "")
     const val CHARGE_STATE_CHARGING = "충전 중"
-    const val CHARGE_STATE_HELD = "연결됐지만 충전 멈춤(상한)"
+    const val CHARGE_STATE_HELD = "연결됐지만 충전하지 않음"
+    const val CHARGE_STATE_AT_LIMIT = "연결됐지만 충전하지 않음(상한에서 멈춤으로 보임)"
+    /** 홈 카드·로그용 방식 이름. 모르는 값은 숫자 그대로. */
+    fun chargeLabel(choice: String?, mode: Int, limit: Int?) = (choice ?: "알 수 없는 값 $mode") + (limit?.let { " · $it%" } ?: "")
     /** 알 수 없는 값일 때(확인되지 않은 기기). */
     fun chargeUnknown(mode: Int) = "이 기기의 값($mode)은 GOAT가 아는 방식이 아닙니다. 삼성 설정에서 확인해 주세요."
     const val CHARGE_NEED_SHIZUKU_TITLE = "Shizuku 연결이 필요합니다"
@@ -386,5 +389,34 @@ object Copy {
     const val CHARGE_TOAST_FAILED = "바꾸지 못했습니다. Shizuku 연결을 확인해 주세요"
     const val CHARGE_TOAST_NO_SETTINGS = "배터리 설정을 열지 못했습니다"
     const val CHARGE_DASH_MISSING = "설정에서 확인"
-    const val CHARGE_DASH_SHIZUKU = "Shizuku로 바꿉니다"
+    const val CHARGE_DASH_SHIZUKU = "Shizuku 연결 필요"
+
+    // 앱 다크 모드 강제
+    const val FEATURE_DARK = "앱 다크 모드 강제"
+    const val DARK_INTRO_TITLE = "모든 앱을 어둡게"
+    const val DARK_INTRO_BODY = "다크 모드를 지원하지 않는 앱도 시스템이 색을 바꿔 어둡게 그립니다. 사진 색은 그대로입니다."
+    const val DARK_NEED_SHIZUKU_TITLE = "Shizuku 연결이 필요합니다"
+    const val DARK_NEED_SHIZUKU = "강제 다크는 시스템 속성이라 Shizuku 셸 권한으로만 켜고 끌 수 있습니다."
+    const val DARK_CONNECT = "Shizuku 연결하기"
+    const val DARK_NIGHT_TITLE = "시스템 다크 모드"
+    const val DARK_NIGHT_ON = "켜져 있습니다. 강제 다크가 적용될 수 있습니다."
+    const val DARK_NIGHT_OFF = "꺼져 있습니다. 강제 다크는 다크 모드가 켜져야 적용됩니다."
+    const val DARK_FORCE_TITLE = "다크 모드 없는 앱도 어둡게"
+    const val DARK_FORCE_ON = "켜져 있습니다. 앱을 다시 열면 어둡게 바뀝니다."
+    const val DARK_FORCE_WAITING = "켜져 있지만 시스템 다크 모드가 꺼져 있어 아직 적용되지 않습니다."
+    const val DARK_FORCE_OFF = "꺼져 있습니다."
+    const val DARK_FORCE_UNKNOWN = "Shizuku가 연결되면 지금 상태를 읽습니다."
+    const val DARK_KEEP_TITLE = "재부팅 뒤 다시 켜기"
+    const val DARK_KEEP_BODY = "재부팅하면 꺼지는 설정이라, 부팅마다 한 번 Shizuku가 연결될 때 다시 켭니다."
+    const val DARK_CAUTION_TITLE = "알아 두세요"
+    const val DARK_CAUTION_BODY = "앱마다 고를 수는 없고 모든 앱에 적용됩니다. 색이 어색한 앱이 있으면 끄세요."
+    const val DARK_TOAST_FAILED = "바꾸지 못했습니다. Shizuku 연결을 확인해 주세요"
+    const val DARK_TOAST_NIGHT_ON = "시스템 다크 모드를 켰습니다"
+    const val DARK_TOAST_NIGHT_OFF = "시스템 다크 모드를 껐습니다"
+    const val DARK_TOAST_FORCE_ON = "강제 다크를 켰습니다. 앱을 다시 열면 적용됩니다"
+    const val DARK_TOAST_FORCE_OFF = "강제 다크를 껐습니다"
+    const val DARK_DASH_ON = "모든 앱 어둡게"
+    const val DARK_DASH_WAITING = "다크 모드 꺼져 대기"
+    const val DARK_DASH_OFF = "꺼짐"
+    const val DARK_DASH_UNKNOWN = "Shizuku 연결 필요"
 }

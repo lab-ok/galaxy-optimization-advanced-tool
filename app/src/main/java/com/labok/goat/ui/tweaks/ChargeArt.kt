@@ -21,20 +21,21 @@ private fun ease(x: Float) = x * x * (3 - 2 * x)
 /**
  * 충전 상한 그림: 눕힌 배터리에 번개 표시가 켜지고 물이 20%에서 차오른다.
  * - 끔: 100%까지 찬다. - 최대: [limit]% 점선에서 멈추고 번개가 꺼진다. - 기본: 100%까지 찬 뒤 95%로 살짝 내려가 머문다.
- * 물 표면은 천천히 출렁이고, 아래 알약에 결과를 적는다.
+ * 물 표면은 천천히 출렁이고, 아래 알약에 결과를 적는다. [choice]가 null(설정이 없거나 값을 모름)이면
+ * 20%에서 100%까지 차는 일반 충전만 옅게 그리고 알약을 강조하지 않는다.
  */
 @Composable
-internal fun ChargeArt(choice: Choice, limit: Int) {
+internal fun ChargeArt(choice: Choice?, limit: Int) {
     val t = artLoop(3400)
     ArtCanvas(118.dp) { c, tm ->
         val w = 190.dp.toPx(); val h = 64.dp.toPx()
         val left = size.width / 2 - w / 2 - 4.dp.toPx(); val top = 10.dp.toPx()
-        val target = when (choice) { Choice.OFF -> 100; Choice.MAXIMUM -> limit; Choice.BASIC -> 100 } / 100f
+        val target = when (choice) { Choice.MAXIMUM -> limit; else -> 100 } / 100f
         val rise = ease(seg(t, 0.08f, 0.6f))
         var level = 0.2f + (target - 0.2f) * rise
         // 기본: 100%를 찍은 뒤 95%로 내려와 유지
         if (choice == Choice.BASIC) level -= 0.05f * ease(seg(t, 0.68f, 0.85f))
-        val charging = when (choice) { Choice.MAXIMUM -> rise < 1f; Choice.BASIC -> t < 0.66f; Choice.OFF -> rise < 1f }
+        val charging = if (choice == Choice.BASIC) t < 0.66f else rise < 1f
         val pad = 5.dp.toPx()
         val r = CornerRadius(12.dp.toPx())
         // 몸체·단자
@@ -75,6 +76,6 @@ internal fun ChargeArt(choice: Choice, limit: Int) {
             choice == Choice.BASIC && t > 0.7f -> "95% 근처로 유지"
             else -> "${(level * 100).toInt()}%"
         }
-        artPill(tm, c, text, Offset(size.width / 2, top + h + 22.dp.toPx()), filled = true)
+        artPill(tm, c, text, Offset(size.width / 2, top + h + 22.dp.toPx()), filled = choice != null)
     }
 }

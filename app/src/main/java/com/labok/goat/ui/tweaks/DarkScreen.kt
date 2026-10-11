@@ -1,0 +1,175 @@
+package com.labok.goat.ui.tweaks
+
+import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.data.tweaks.ForceDark
+import com.labok.goat.ui.components.ContentMaxWidth
+import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.HelpTopic
+import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.featurePadding
+import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidSwitch
+import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.text.Copy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/**
+ * 앱 다크 모드 강제: 시스템 다크 모드(강제 다크의 전제), 다크 모드 없는 앱도 어둡게, 재부팅 뒤 다시 켜기, 주의.
+ * 둘 다 Shizuku 셸로 바꾸고, 돌아올 때마다 다시 읽는다.
+ * @param onConnect Shizuku 연결 안내를 연다.
+ */
+@Composable
+internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
+    val state by ForceDark.status.collectAsStateWithLifecycle()
+    val ready = shizuku == ShizukuAccess.State.READY
+    var keep by remember { mutableStateOf(ForceDark.keep(context)) }
+    var busy by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
+    LifecycleResumeEffect(ready) {
+        scope.launch(Dispatchers.IO) { ForceDark.read(context) }
+        onPauseOrDispose { }
+    }
+
+    fun change(block: () -> Boolean, okText: String) {
+        busy = true
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) { block() }
+            busy = false
+            Toast.makeText(context, if (ok) okText else Copy.DARK_TOAST_FAILED, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LazyColumn(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        contentPadding = featurePadding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(Gap.Card),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        item(key = "intro") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.DARK_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.DARK_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    DarkArt(on = state.forced == true)
+                }
+            }
+        }
+        if (!ready) item(key = "connect") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.DARK_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.DARK_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidButton(Copy.DARK_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                }
+            }
+        }
+        item(key = "switches") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    SwitchLine(Copy.DARK_NIGHT_TITLE, if (state.night) Copy.DARK_NIGHT_ON else Copy.DARK_NIGHT_OFF, state.night, ready && !busy) { on ->
+                        change({ ForceDark.setNight(context, on, "스위치") }, if (on) Copy.DARK_TOAST_NIGHT_ON else Copy.DARK_TOAST_NIGHT_OFF)
+                    }
+                    Spacer(Modifier.height(Gap.Section))
+                    SwitchLine(
+                        Copy.DARK_FORCE_TITLE,
+                        when {
+                            state.forced == null -> Copy.DARK_FORCE_UNKNOWN
+                            state.forced == true && !state.night -> Copy.DARK_FORCE_WAITING
+                            state.forced == true -> Copy.DARK_FORCE_ON
+                            else -> Copy.DARK_FORCE_OFF
+                        },
+                        state.forced == true, ready && !busy && state.forced != null,
+                    ) { on -> change({ ForceDark.setForced(context, on, "스위치") }, if (on) Copy.DARK_TOAST_FORCE_ON else Copy.DARK_TOAST_FORCE_OFF) }
+                    Spacer(Modifier.height(Gap.Section))
+                    SwitchLine(Copy.DARK_KEEP_TITLE, Copy.DARK_KEEP_BODY, keep, true) { on -> keep = on; ForceDark.setKeep(context, on) }
+                }
+            }
+        }
+        item(key = "caution") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.DARK_CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.DARK_CAUTION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+    }
+}
+
+/** 제목·설명과 오른쪽 스위치 한 줄. */
+@Composable
+private fun SwitchLine(title: String, desc: String, checked: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
+    val c = LocalLiquid.current
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(desc, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        }
+        Spacer(Modifier.width(12.dp))
+        LiquidSwitch(checked, onChange, enabled = enabled)
+    }
+}
+
+/** 사용 방법. */
+@Composable
+internal fun DarkHelpSheet() {
+    SheetColumn("사용 방법") {
+        HelpTopic(
+            "1. 무엇을 하나요",
+            "다크 모드를 지원하지 않아 밤에도 하얗게 빛나는 앱을, 시스템이 색을 바꿔 어둡게 그리게 합니다. " +
+                "개발자 옵션의 '강제 다크 모드 재정의'와 같은 기능이며, 사진과 동영상 색은 바꾸지 않습니다.",
+        ) { DarkArt(on = true) }
+        HelpTopic(
+            "2. 시스템 다크 모드가 먼저 켜져 있어야 합니다",
+            "안드로이드는 시스템 다크 모드가 켜져 있을 때만 강제 다크를 적용합니다. 그래서 이 화면에서 시스템 다크 모드도 함께 켤 수 있게 했습니다. " +
+                "켠 뒤에는 이미 열려 있던 앱을 닫았다가 다시 열어야 바뀝니다.",
+        )
+        HelpTopic(
+            "3. 모든 앱에 적용됩니다",
+            "앱마다 따로 고르는 공식 방법이 없어 다크 모드가 없는 모든 앱에 적용됩니다. 앱이 스스로 강제 다크를 막아 둔 경우나 " +
+                "이미 다크 모드가 있는 앱은 그대로입니다. 일부 앱은 색이 어색하게 보일 수 있으니 그럴 때는 끄세요.",
+        )
+        HelpTopic(
+            "4. 재부팅 뒤",
+            "이 설정은 재부팅하면 꺼집니다. '재부팅 뒤 다시 켜기'를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 다시 켭니다. " +
+                "같은 부팅 안에서 개발자 옵션으로 끈 것은 그대로 둡니다. Shizuku 셸 권한으로 바꿉니다.",
+        )
+    }
+}

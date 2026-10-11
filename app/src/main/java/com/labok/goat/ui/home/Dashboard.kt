@@ -15,6 +15,7 @@ import com.labok.goat.ui.liquid.Springs
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.data.tweaks.Bloat
 import com.labok.goat.data.tweaks.ChargeLimit
+import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.data.tweaks.Gos
 import com.labok.goat.data.tweaks.PrivateDns
 import com.labok.goat.data.tweaks.RefreshRate
@@ -98,6 +99,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     val camera by CameraMute.status.collectAsStateWithLifecycle()
     val gos by Gos.status.collectAsStateWithLifecycle()
     val charge by ChargeLimit.status.collectAsStateWithLifecycle()
+    val dark by ForceDark.status.collectAsStateWithLifecycle()
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     LifecycleResumeEffect(Unit) { tick++; onPauseOrDispose { } }
@@ -105,7 +107,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     // 기본 앱 정리: 꺼 둔 목록 앱 수(Shizuku로 읽음, 못 읽으면 null)
     var cleaned by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(tick, shizuku) {
-        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); ChargeLimit.find(); Bloat.scan()?.count { it.value } }
+        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); ChargeLimit.find(); ForceDark.read(context); Bloat.scan()?.count { it.value } }
     }
     // 기능마다 지금 상태 한 줄(돌아올 때마다 다시 읽는다)
     val status: (NavItem) -> String = { item ->
@@ -136,6 +138,11 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                 ChargeLimit.Lookup.Missing -> Copy.CHARGE_DASH_MISSING
                 else -> Copy.CHARGE_DASH_SHIZUKU
             }
+            NavItem.DARK -> when (dark.forced) {
+                true -> if (dark.night) Copy.DARK_DASH_ON else Copy.DARK_DASH_WAITING
+                false -> Copy.DARK_DASH_OFF
+                null -> if (ForceDark.wanted(context)) Copy.DARK_DASH_ON else Copy.DARK_DASH_UNKNOWN
+            }
             NavItem.STATUS_ICONS -> Copy.iconsHidden(StatusIcons.hidden(context).size)
             NavItem.REFRESH -> if (!RefreshRate.supported(context)) Copy.REFRESH_UNSUPPORTED_SHORT else RefreshRate.read(context).let {
                 if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
@@ -156,6 +163,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.PRIVATE_DNS -> PrivateDns.inUse(context)
             NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))
             NavItem.CHARGE -> (charge as? ChargeLimit.Lookup.Present)?.found?.mode?.let { it != 0 } == true
+            NavItem.DARK -> dark.forced == true || (dark.forced == null && ForceDark.wanted(context))
             NavItem.STATUS_ICONS -> StatusIcons.hidden(context).isNotEmpty()
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             else -> false

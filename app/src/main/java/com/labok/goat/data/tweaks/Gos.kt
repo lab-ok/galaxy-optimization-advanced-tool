@@ -131,8 +131,8 @@ object Gos {
         if (reapplyAction(wanted(context), keep(context), boot, checked, State.OFF) == Action.SKIP) return
         when (reapplyAction(wanted(context), keep(context), boot, checked, read())) {
             Action.DISABLE -> {
-                set(context, off = true, how = "재부팅 뒤 다시 켜져서 자동으로 끄기")
-                boot?.let { p.edit().putInt("checkedBoot", it).apply() }
+                // 끄는 데 성공했을 때만 이번 부팅을 확인한 것으로 남긴다(실패하면 다음 연결 때 다시 시도)
+                if (set(context, off = true, how = "재부팅 뒤 다시 켜져서 자동으로 끄기")) boot?.let { p.edit().putInt("checkedBoot", it).apply() }
             }
             Action.MARK -> boot?.let { p.edit().putInt("checkedBoot", it).apply() }
             else -> Unit

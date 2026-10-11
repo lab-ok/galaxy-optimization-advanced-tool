@@ -1,5 +1,9 @@
 package com.labok.goat.ui.tweaks
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +19,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -69,6 +74,14 @@ internal fun ChargeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) 
     var busy by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     LifecycleResumeEffect(Unit) { version++; battery = ChargeLimit.battery(context); onPauseOrDispose { } }
+    // 화면을 보는 동안 충전기를 꽂고 빼거나 잔량이 바뀌면 바로 다시 읽는다
+    DisposableEffect(Unit) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context, intent: Intent) { battery = ChargeLimit.battery(context) }
+        }
+        context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        onDispose { runCatching { context.unregisterReceiver(receiver) } }
+    }
     LaunchedEffect(version, ready) { lookup = if (ready) withContext(Dispatchers.IO) { ChargeLimit.find() } else ChargeLimit.Lookup.NoShizuku }
 
     val simulated = BuildConfig.LAB && lookup == ChargeLimit.Lookup.Missing
@@ -102,12 +115,19 @@ internal fun ChargeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) 
                     Text(Copy.CHARGE_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.CHARGE_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    ChargeArt(choice ?: Choice.MAXIMUM, limit)
+                    // 설정이 없거나 값을 모르면 어느 방식도 강조하지 않는 그림
+                    ChargeArt(choice, limit)
                     Spacer(Modifier.height(Gap.Tight))
                     Text(
                         if (battery.present) Copy.chargeBattery(
                             battery.level,
-                            when { battery.charging -> Copy.CHARGE_STATE_CHARGING; battery.held -> Copy.CHARGE_STATE_HELD; else -> null },
+                            when {
+                                battery.charging -> Copy.CHARGE_STATE_CHARGING
+                                // 충전하지 않는 까닭은 온도 보호·약한 충전기 등도 있어, 잔량이 상한 근처일 때만 상한으로 보인다고 쓴다
+                                battery.held && choice == Choice.MAXIMUM && kotlin.math.abs(battery.level - limit) <= 1 -> Copy.CHARGE_STATE_AT_LIMIT
+                                battery.held -> Copy.CHARGE_STATE_HELD
+                                else -> null
+                            },
                             battery.tempC,
                         ) else Copy.CHARGE_NO_BATTERY,
                         color = c.ink, style = MaterialTheme.typography.labelMedium,
@@ -149,7 +169,7 @@ internal fun ChargeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) 
                     )
                     Spacer(Modifier.height(Gap.Tight))
                     Column(Modifier.selectableGroup()) {
-                        Choice.entries.forEach { ch ->
+                        ChargeLimit.choicesFor(found).forEach { ch ->
                             LiquidRadioRow(ch.label, ch.desc, choice == ch, enabled = !busy) { if (ch != choice) apply(ch, limit) }
                         }
                     }
@@ -191,12 +211,13 @@ internal fun ChargeHelpSheet() {
         HelpTopic(
             "1. 왜 충전을 멈추나요",
             "리튬 배터리는 100%로 가득 찬 채 오래 있거나 뜨거울 때 부담이 큽니다. 80~95%에서 충전을 멈추면 하루에 쓸 양은 조금 줄지만 " +
-                "배터리 부담을 덜 수 있습니다. 충전기에 꽂힌 채 상한에 닿으면 '연결됐지만 충전 멈춤'으로 보여 실제로 멈췄는지 확인할 수 있습니다.",
+                "배터리 부담을 덜 수 있습니다. 충전기에 꽂힌 채 잔량이 상한 근처에서 '충전하지 않음'으로 바뀌면 상한에서 멈춘 것으로 볼 수 있습니다. " +
+                "충전하지 않는 까닭은 온도 보호나 약한 충전기일 수도 있습니다.",
         ) { ChargeArt(Choice.MAXIMUM, 85) }
         HelpTopic(
             "2. 세 가지 방식",
             "'끔'은 100%까지 충전합니다. '기본'은 100%까지 채운 뒤 95% 근처로 내려왔다가 다시 채워 가득 찬 채 머무는 시간을 줄입니다. " +
-                "'최대'는 정한 상한(80·85·90·95%)에서 충전을 멈춥니다. 이전 One UI는 85% 하나만 있습니다.",
+                "'최대'는 정한 상한(80·85·90·95%)에서 충전을 멈춥니다. 이전 One UI는 '끔'과 '최대'(85%)만 있습니다.",
         )
         HelpTopic(
             "3. 이 기기에서만 바꾸는 이유",
