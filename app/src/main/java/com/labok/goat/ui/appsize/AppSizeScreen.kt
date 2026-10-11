@@ -1,5 +1,6 @@
 package com.labok.goat.ui.appsize
 
+import android.content.pm.PackageManager
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.featurePadding
@@ -154,6 +155,16 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
         if (ok) values = read
     }
 
+    // 홈 화면 앱(One UI 홈 등, 기본 홈): 앱 목록에 아이콘이 없어 따로 다룬다. 이 앱에만 배율을 걸면 홈 화면 아이콘·글자만 작아진다.
+    val home = remember {
+        context.packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY)
+            ?.activityInfo?.packageName?.takeIf { it != "android" }
+    }
+    var homeValue by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(ready, supported, changed, resumed) {
+        if (ready && supported == true && home != null) homeValue = withContext(Dispatchers.IO) { runCatching { DensityShell.get(context, home) }.getOrNull() }
+    }
+
     fun applyDensity(app: AppEntry, dpi: Int) {
         scope.launch {
             val now = withContext(Dispatchers.IO) { runCatching { DensityShell.set(context, app.pkg, dpi); DensityShell.get(context, app.pkg) } }
@@ -255,6 +266,29 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                     scope.launch(Dispatchers.IO) { DensityShell.stop() }
                                 })
                             }
+                        }
+                    }
+                }
+                if (home != null) item(key = "home") {
+                    Appear("home", 2, shown) {
+                        GlassCard {
+                            Text(Copy.APP_SIZE_HOME_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                            Text(Copy.APP_SIZE_HOME_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            Spacer(Modifier.height(Gap.Item))
+                            LiquidChips(
+                                options = listOf(0) + AppDensityPolicy.STEPS,
+                                selected = homeValue?.takeIf { it == 0 || it in AppDensityPolicy.STEPS } ?: 0,
+                                label = { if (it == 0) Copy.APP_SIZE_DEFAULT else "$it" },
+                                onSelect = { dpi ->
+                                    scope.launch {
+                                        val now = withContext(Dispatchers.IO) { runCatching { DensityShell.set(context, home, dpi); DensityShell.get(context, home) } }
+                                        now.onSuccess { homeValue = it; message = "${Copy.APP_SIZE_HOME_TITLE}: ${if (it == 0) Copy.APP_SIZE_DEFAULT else "$it dpi"}" }
+                                            .onFailure { message = "${Copy.APP_SIZE_FAILED}${it.message}" }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Text(Copy.APP_SIZE_HOME_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }

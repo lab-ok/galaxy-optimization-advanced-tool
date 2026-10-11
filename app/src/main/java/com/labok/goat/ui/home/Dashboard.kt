@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import com.labok.goat.ui.about.AboutHeader
@@ -191,7 +192,7 @@ private fun Badge(label: String, on: Boolean) {
 private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onClick: (Offset) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
-    val haptic = LocalHapticFeedback.current
+    val haptics = rememberLiquidHaptics()
     val d = LocalDensity.current
     val body = rememberSoftBlob()
     val pill = rememberSoftBlob()
@@ -218,9 +219,9 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
             body.moveTo(w / 2, h / 2, w * 0.3f, w * 0.3f, animate = false)
             kotlinx.coroutines.delay(60L * order)
         }
-        // 큰 카드라 출렁임이 커 보인다: 목표를 바짝 따라가고(구동력) 빨리 잦아들게(감쇠) 해 정갈하게 맺힌다
-        body.blob.gain = 2.2f
-        body.blob.damping = 2.4f
+        // 큰 카드라 출렁임이 커 보인다: 처음 값(1.4·1.0, 너무 낭창)과 단단한 값(2.2·2.4) 사이로 살짝만 출렁이게 한다
+        body.blob.gain = 1.7f
+        body.blob.damping = 1.6f
         pill.blob.gain = 1.6f
         pill.blob.damping = 1.8f
         body.moveTo(w / 2, h / 2, w, h, animate = !reduce, corner = corner)
@@ -243,11 +244,11 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
             .pointerInput(reduce) {
                 detectTapGestures(onPress = { pos ->
                     if (!reduce && body.blob.ready) {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        haptics.press()
                         // 누른 자리를 안쪽으로 밀어 움푹 들어가게 한다
                         val cx = box.width / 2f; val cy = box.height / 2f
                         val dx = cx - pos.x; val dy = cy - pos.y; val l = hypot(dx, dy).coerceAtLeast(1f)
-                        body.poke(pos.x, pos.y, dx / l * 520f, dy / l * 520f, box.height * 0.4f)
+                        body.poke(pos.x, pos.y, dx / l * 720f, dy / l * 720f, box.height * 0.42f)
                     }
                     if (tryAwaitRelease()) onClick(origin + pos)
                 })

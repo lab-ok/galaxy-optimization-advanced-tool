@@ -70,7 +70,7 @@ fun LiquidButton(
 ) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
-    val haptic = LocalHapticFeedback.current
+    val haptics = rememberLiquidHaptics()
     val scope = rememberCoroutineScope()
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -105,7 +105,7 @@ fun LiquidButton(
             .semantics { if (!enabled) disabled() }
             .clickable(interaction, null, role = Role.Button) {
                 if (!enabled) {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    haptics.press()
                     if (!reduce) scope.launch {
                         shake.snapTo(0f)
                         shake.animateTo(0f, keyframes {
@@ -119,7 +119,7 @@ fun LiquidButton(
                 if (burst && primary && !reduce && t < 0f) scope.launch {
                     drops = List(N) { i -> Drop.random(i) }
                     val start = withFrameNanos { it } - 14_000_000L      // 다음 프레임에 이미 절반 넘게 튀어 있도록
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    haptics.press()
                     while (true) {
                         val now = withFrameNanos { it }
                         val s = (now - start) / 1e9f

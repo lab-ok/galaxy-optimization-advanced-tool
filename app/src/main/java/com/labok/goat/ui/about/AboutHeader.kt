@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -59,7 +60,7 @@ import kotlin.math.tanh
 internal fun AboutHeader(title: String, subtitle: String) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
-    val haptic = LocalHapticFeedback.current
+    val haptics = rememberLiquidHaptics()
     val d = LocalDensity.current
     val logoS = with(d) { 84.dp.toPx() }
     val logoR = with(d) { 24.dp.toPx() }
@@ -98,7 +99,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
                     val down = awaitFirstDown()
                     val p = down.position
                     if (hypot(p.x - cx(), p.y - cy()) > logoS * 0.75f) return@awaitEachGesture
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    haptics.press()
                     // 누른 자리를 안쪽으로 밀어 움푹 들어가게 하고, 염소 방울은 반대로 튕긴다
                     val dx = cx() - p.x; val dy = cy() - p.y; val l = hypot(dx, dy).coerceAtLeast(1f)
                     logo.poke(p.x, p.y, dx / l * 1600f, dy / l * 1600f, logoS * 0.5f)

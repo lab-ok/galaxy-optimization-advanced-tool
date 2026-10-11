@@ -1,5 +1,6 @@
 package com.labok.goat.ui.nav
 
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.R
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -66,7 +67,7 @@ import kotlin.math.tanh
 internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier = Modifier) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
-    val haptic = LocalHapticFeedback.current
+    val haptics = rememberLiquidHaptics()
     val d = LocalDensity.current
     val headH = with(d) { 64.dp.toPx() }
     val headR = with(d) { 22.dp.toPx() }
@@ -112,7 +113,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
                 if (reduce) return@pointerInput
                 awaitEachGesture {
                     val down = awaitFirstDown()
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    haptics.press()
                     val p = down.position
                     // 누른 자리를 안쪽으로 밀어 움푹 들어가게 한다
                     fun inward(cx: Float, cy: Float, speed: Float): Offset {

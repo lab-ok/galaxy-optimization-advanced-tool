@@ -26,11 +26,11 @@ fun Modifier.liquidPress(
 ): Modifier {
     val pressed by interaction.collectIsPressedAsState()
     val reduce = LocalReduceMotion.current
-    val haptic = LocalHapticFeedback.current
+    val haptics = rememberLiquidHaptics()
     val ax = remember { Animatable(1f) }
     val ay = remember { Animatable(1f) }
     LaunchedEffect(pressed) {
-        if (pressed) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        if (pressed) haptics.press()
         val tx = if (pressed) sx else 1f
         val ty = if (pressed) sy else 1f
         coroutineScope {
