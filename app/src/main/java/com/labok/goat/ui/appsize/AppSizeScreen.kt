@@ -1,5 +1,6 @@
 package com.labok.goat.ui.appsize
 
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.domain.AppDensityPolicy
@@ -167,17 +168,17 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = featurePadding(contentPadding),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(Gap.Card),
         modifier = Modifier.fillMaxWidth(),
     ) {
         item(key = "intro") {
             Appear("intro", 0, shown) {
-                GlassCard(padding = 16.dp) {
+                GlassCard {
                     Text(Copy.APP_SIZE_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(Gap.Item))
                     // 왼쪽 앱만 배율이 바뀌고 오른쪽 앱은 기본 그대로: 기능을 한눈에
                     AppScaleArt()
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(Gap.Tight))
                     Text(Copy.APP_SIZE_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -185,19 +186,19 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
         when {
             !ready -> item(key = "connect") {
                 Appear("connect", 1, shown) {
-                    GlassCard(padding = 16.dp) {
+                    GlassCard {
                         Text(Copy.APP_SIZE_CONNECT_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(Gap.Item))
                         ShizukuBridgeArt()
                         Text(Copy.APP_SIZE_CONNECT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(Gap.Card))
                         LiquidButton(Copy.APP_SIZE_CONNECT_ACTION, modifier = Modifier.fillMaxWidth(), onClick = onGuide)
                     }
                 }
             }
             supported == false -> item(key = "unsupported") {
                 Appear("unsupported", 1, shown) {
-                    GlassCard(padding = 16.dp) {
+                    GlassCard {
                         Text("이 기기에서는 쓸 수 없습니다", fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.APP_SIZE_UNSUPPORTED, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
@@ -206,7 +207,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
             else -> {
                 item(key = "notify") {
                     Appear("notify", 1, shown) {
-                        GlassCard(padding = 16.dp) {
+                        GlassCard {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Text(Copy.APP_SIZE_NOTIFY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -222,10 +223,10 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                 })
                             }
                             // 켜기 전에는 알림창 조절이 어떻게 동작하는지 그림으로 보여 준다
-                            AnimatedVisibility(!notify) { Column { Spacer(Modifier.height(8.dp)); NotifyArt() } }
+                            AnimatedVisibility(!notify) { Column { Spacer(Modifier.height(Gap.Item)); NotifyArt() } }
                             // 무선 디버깅 자동 끄기(Shizuku로 연결됐을 때만 의미가 있다)
                             if (shell == null) {
-                                Spacer(Modifier.height(14.dp))
+                                Spacer(Modifier.height(Gap.Section))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Column(Modifier.weight(1f)) {
                                         Text(Copy.APP_SIZE_AUTO_OFF_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -313,7 +314,8 @@ private fun Appear(key: String, order: Int, shown: MutableSet<String>, content: 
 @Composable
 private fun Section(title: String, modifier: Modifier = Modifier, action: (@Composable () -> Unit)? = null) {
     val c = LocalLiquid.current
-    Row(modifier.widthIn(max = ContentMaxWidth).fillMaxWidth().padding(start = 8.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+    // 섹션 제목은 카드 안 글자와 같은 선에서 시작한다
+    Row(modifier.widthIn(max = ContentMaxWidth).fillMaxWidth().padding(start = Gap.CardPadding, top = Gap.Tight), verticalAlignment = Alignment.CenterVertically) {
         Text(title, fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
         action?.invoke()
     }

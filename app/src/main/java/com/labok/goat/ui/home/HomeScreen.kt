@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.rotate.ShakeRotateHelpSheet
 import com.labok.goat.ui.rotate.ShakeRotateScreen
 import com.labok.goat.ui.components.copyText
@@ -251,7 +252,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = featurePadding(inner),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(Gap.Card),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 // 고정 카드에도 키를 둬, 위에 할 일 카드가 생기거나 없어져도 카드 상태(스위치·슬라이더 방울)가 유지되게 한다.
@@ -418,7 +419,7 @@ private fun StatusCard(state: UiState) {
         state.status == UiState.Status.OK -> Copy.STATUS_OK
         else -> Copy.STATUS_FIXING
     }
-    GlassCard(padding = 20.dp) {
+    GlassCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             FoldDeviceArt(
                 unfolded = unfolded, height = 118.dp,
@@ -489,7 +490,7 @@ private fun TodoCard(todo: Todo, onAction: (TodoAction) -> Unit) {
             if (todo.second != null) {
                 Text(todo.title, fontWeight = FontWeight.SemiBold, color = c.ink)
                 todo.body?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Gap.Card))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     if (todo.action != null && todo.actionLabel != null) LiquidButton(todo.actionLabel, modifier = Modifier.weight(1f), onClick = { onAction(todo.action) })
                     LiquidButton(todo.secondLabel ?: "", modifier = Modifier.weight(1f), onClick = { onAction(todo.second) }, primary = false)
@@ -520,9 +521,9 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
     val previewPlan = state.plan?.copy(referenceDpi = outer, adjust = adjust)
     val innerDpi = innerPanel?.let { previewPlan?.targetFor(it.screen)?.dpi }
 
-    GlassCard(padding = 18.dp) {
+    GlassCard {
         Text(Copy.SIZE_TITLE, fontWeight = FontWeight.Bold, color = c.ink, style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(Gap.Item))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(Copy.SIZE_OUTER, color = c.ink, modifier = Modifier.weight(1f))
             Text("$outer dpi", color = c.ink, fontWeight = FontWeight.SemiBold)
@@ -536,7 +537,7 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
             description = Copy.SIZE_OUTER,
             enabled = state.hasPermission,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(Gap.Tight))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(Copy.SIZE_INNER_TUNE, color = c.ink, modifier = Modifier.weight(1f))
             Text(innerDpi?.let { "$it dpi" } ?: "—", color = c.ink, fontWeight = FontWeight.SemiBold)
@@ -557,7 +558,7 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
         AnimatedVisibility(pending, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
             Column(Modifier.padding(top = 8.dp)) {
                 Text(Copy.SIZE_PENDING, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Gap.Item))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     if (state.target != null) LiquidButton(Copy.SIZE_REVERT, modifier = Modifier.weight(1f), primary = false, onClick = {
                         outer = state.target; adjust = state.adjust
@@ -567,14 +568,14 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
             }
         }
         if (outerPanel != null && innerPanel != null && innerDpi != null) {
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Gap.Tight))
             ScreensPreview(
                 outerInch = outerPanel.screen.diagonalInch, outerAspect = aspect(outerPanel, outerPanel, false), outerPpi = outerPanel.screen.ppi, outerDpi = outer,
                 innerInch = innerPanel.screen.diagonalInch, innerAspect = aspect(innerPanel, outerPanel, true), innerPpi = innerPanel.screen.ppi, innerDpi = innerDpi,
                 outerLabel = "${Copy.SIZE_PREVIEW_OUTER} $outer", innerLabel = "${Copy.SIZE_PREVIEW_INNER} $innerDpi",
                 innerActive = state.effective?.role?.let { it == ScreenPolicy.Role.INNER },
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             LiquidButton(Copy.SIZE_TEST, modifier = Modifier.fillMaxWidth(), onClick = onTest, primary = false)
         }
     }
@@ -590,7 +591,7 @@ private fun aspect(p: PanelSpec.Resolved, cover: PanelSpec.Resolved, isInner: Bo
 @Composable
 private fun AutoCard(on: Boolean, onChange: (Boolean) -> Unit) {
     val c = LocalLiquid.current
-    GlassCard(padding = 18.dp) {
+    GlassCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(Copy.AUTO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -621,35 +622,35 @@ private fun ResetSheet(
     }
     SheetColumn {
         Text(Copy.RESET_TITLE, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
-        Spacer(Modifier.height(16.dp))
-        GlassCard(padding = 16.dp) {
+        Spacer(Modifier.height(Gap.Section))
+        GlassCard {
             Text(Copy.RESET_RELEARN, fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(Copy.RESET_RELEARN_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             LiquidButton(Copy.RESET_RELEARN, modifier = Modifier.fillMaxWidth(), onClick = onRelearn)
         }
-        Spacer(Modifier.height(12.dp))
-        GlassCard(padding = 16.dp) {
+        Spacer(Modifier.height(Gap.Card))
+        GlassCard {
             Text(Copy.RESET_DEFAULT, fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(Copy.RESET_DEFAULT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             LiquidButton(Copy.RESET_DEFAULT, modifier = Modifier.fillMaxWidth(), onClick = onDefault, primary = false, enabled = canReset)
         }
-        Spacer(Modifier.height(12.dp))
-        GlassCard(padding = 16.dp, accent = if (step > 0) c.danger else null) {
+        Spacer(Modifier.height(Gap.Card))
+        GlassCard(accent = if (step > 0) c.danger else null) {
             Text(Copy.RESET_PERMISSION, fontWeight = FontWeight.SemiBold, color = c.danger)
             Text(Copy.RESET_PERMISSION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
             Text(Copy.RESET_PERMISSION_LIMIT, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             AnimatedContent(step, label = "revoke") { s ->
                 when (s) {
                     0 -> LiquidButton(Copy.RESET_PERMISSION, modifier = Modifier.fillMaxWidth(), onClick = { step = 1 }, primary = false, enabled = canReset, danger = true)
                     3 -> Column(Modifier.fillMaxWidth()) {
                         Text(Copy.RESET_PERMISSION_STEP, color = c.ink, style = MaterialTheme.typography.bodyMedium)
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(Gap.Item))
                         val cmd = PermissionReset.command(context.packageName)
                         CommandBox(cmd, onCopy = { onCopy(cmd) })
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(Gap.Item))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // 대기 표시: 방울이 세 칸을 차례로 흘러 다닌다.
                             var dot by remember { mutableIntStateOf(0) }

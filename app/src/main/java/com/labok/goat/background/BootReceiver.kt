@@ -23,7 +23,7 @@ class BootReceiver : BroadcastReceiver() {
         val isBoot = action == Intent.ACTION_BOOT_COMPLETED || action == Intent.ACTION_LOCKED_BOOT_COMPLETED
         // 앱별 화면 배율 설정: 알림창 크기 조절을 켜 두었으면 부팅·업데이트 뒤 다시 띄운다
         if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) AppDensityNotifier.start(context)
-        // 흔들어 화면 회전: 켜 두었으면 다시 띄운다
+        // 흔들어서 화면 회전: 켜 두었으면 다시 띄운다
         if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) ShakeRotate.start(context)
 
         if (isBoot && !settings.applyOnBoot) {

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.nav
 
+import com.labok.goat.ui.components.Gap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.foundation.Canvas
 import com.labok.goat.ui.liquid.moveTo
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -142,7 +144,7 @@ fun SideDrawerContent(
                 Column {
                     var index = 0
                     sections.forEach { section ->
-                        Spacer(Modifier.height(18.dp))
+                        Spacer(Modifier.height(Gap.Section))
                         val titleOrder = index
                         Text(
                             section.title, color = c.muted, style = MaterialTheme.typography.labelMedium,
@@ -170,9 +172,9 @@ fun SideDrawerContent(
                 }
             }
             // 맨 아래: 앱 정보(기능이 아니라 방울 선택 대상이 아니다)
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(Gap.Section))
             Box(Modifier.fillMaxWidth().height(1.dp).padding(horizontal = 22.dp).background(c.line))
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Gap.Item))
             val aboutOrder = items.size + sections.size
             val interaction = remember { MutableInteractionSource() }
             Row(
@@ -246,47 +248,77 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
 private fun DrawScope.u(v: Float) = v * size.minDimension / 24f
 private fun DrawScope.p(x: Float, y: Float) = Offset(u(x), u(y))
 
-/** 펼친 폴드: 가로로 긴 기기와 가운데 접는 선. */
+/*
+ * 메뉴 아이콘: 24 격자, 선 굵기 1.8dp, 둥근 끝·둥근 이음. 바깥 여백 2~2.5를 지켜 다섯 아이콘의 크기감을 맞춘다.
+ */
+
+/** 화면 배율 동기화: 펼친 폴드(가운데 접는 선) 양쪽 화면에 같은 길이의 글줄 두 개(두 화면 글자 크기가 같다). */
 private fun DrawScope.fold(c: Color, s: Stroke) {
-    drawRoundRect(c, p(3f, 5.5f), Size(u(18f), u(13f)), CornerRadius(u(2f)), style = s)
-    drawLine(c, p(12f, 7.5f), p(12f, 16.5f), s.width * 0.8f, StrokeCap.Round)
+    drawRoundRect(c, p(2.5f, 5f), Size(u(19f), u(14f)), CornerRadius(u(2.4f)), style = s)
+    drawLine(c, p(12f, 5f), p(12f, 19f), s.width * 0.75f, StrokeCap.Round)
+    for (x in listOf(5.5f, 15f)) {
+        drawLine(c, p(x, 10f), p(x + 3.5f, 10f), s.width, StrokeCap.Round)
+        drawLine(c, p(x, 14f), p(x + 2.2f, 14f), s.width, StrokeCap.Round)
+    }
 }
 
-/** 앱 네 개: 둥근 네모 넷, 오른쪽 아래만 조금 크게(앱마다 크기가 다름). */
+/** 앱별 화면 배율: 앱 네 개 중 오른쪽 아래 하나가 커지는 중(바깥으로 뻗는 화살표). */
 private fun DrawScope.apps(c: Color, s: Stroke) {
-    drawRoundRect(c, p(4f, 4f), Size(u(6.5f), u(6.5f)), CornerRadius(u(1.8f)), style = s)
-    drawRoundRect(c, p(13.5f, 4f), Size(u(6.5f), u(6.5f)), CornerRadius(u(1.8f)), style = s)
-    drawRoundRect(c, p(4f, 13.5f), Size(u(6.5f), u(6.5f)), CornerRadius(u(1.8f)), style = s)
-    drawRoundRect(c, p(12.5f, 12.5f), Size(u(8.5f), u(8.5f)), CornerRadius(u(2.2f)), style = s)
+    val r = CornerRadius(u(2f))
+    drawRoundRect(c, p(3f, 3f), Size(u(7f), u(7f)), r, style = s)
+    drawRoundRect(c, p(14f, 3f), Size(u(7f), u(7f)), r, style = s)
+    drawRoundRect(c, p(3f, 14f), Size(u(7f), u(7f)), r, style = s)
+    drawRoundRect(c, p(14f, 14f), Size(u(7f), u(7f)), r, style = s)
+    // 커지는 앱: 안쪽 대각선 화살표
+    drawLine(c, p(16.2f, 18.8f), p(18.8f, 16.2f), s.width * 0.85f, StrokeCap.Round)
+    drawLine(c, p(18.8f, 16.2f), p(16.6f, 16.2f), s.width * 0.85f, StrokeCap.Round)
+    drawLine(c, p(18.8f, 16.2f), p(18.8f, 18.4f), s.width * 0.85f, StrokeCap.Round)
 }
 
-/** 흔들어 회전: 가운데 폰과 그 둘레를 도는 화살표 하나. */
+/**
+ * 흔들어서 화면 회전: 비스듬히 든 폰과 그 둘레를 도는 두 호(화살촉은 호 끝의 진행 방향으로), 양옆에 흔들림 표시.
+ */
 private fun DrawScope.rotate(c: Color, s: Stroke) {
-    drawRoundRect(c, p(8.5f, 6.5f), Size(u(7f), u(11f)), CornerRadius(u(1.6f)), style = s)
-    drawArc(c, 200f, 120f, false, p(2.5f, 2.5f), Size(u(19f), u(19f)), style = s)
-    drawArc(c, 20f, 120f, false, p(2.5f, 2.5f), Size(u(19f), u(19f)), style = s)
-    // 화살촉(위쪽 호의 끝, 오른쪽 위)
-    drawLine(c, p(17.6f, 4.6f), p(17.9f, 7.6f), s.width, StrokeCap.Round)
-    drawLine(c, p(17.6f, 4.6f), p(14.8f, 5.4f), s.width, StrokeCap.Round)
-    // 화살촉(아래쪽 호의 끝, 왼쪽 아래)
-    drawLine(c, p(6.4f, 19.4f), p(6.1f, 16.4f), s.width, StrokeCap.Round)
-    drawLine(c, p(6.4f, 19.4f), p(9.2f, 18.6f), s.width, StrokeCap.Round)
+    val center = p(12f, 12f)
+    // 폰: 7×12, -30도 기울임, 위쪽에 스피커 점
+    withTransform({ rotate(-30f, center) }) {
+        drawRoundRect(c, p(8.5f, 6f), Size(u(7f), u(12f)), CornerRadius(u(1.8f)), style = s)
+        drawLine(c, p(11f, 8f), p(13f, 8f), s.width * 0.8f, StrokeCap.Round)
+    }
+    // 두 호: 반지름 9.5, 오른쪽 위와 왼쪽 아래(시계 방향으로 돈다)
+    val rad = u(9.5f)
+    fun arcWithHead(start: Float, sweep: Float) {
+        drawArc(c, start, sweep, false, Offset(center.x - rad, center.y - rad), Size(rad * 2, rad * 2), style = s)
+        val e = Math.toRadians((start + sweep).toDouble())
+        val tip = Offset(center.x + rad * kotlin.math.cos(e).toFloat(), center.y + rad * kotlin.math.sin(e).toFloat())
+        // 시계 방향 진행 방향 = (-sin, cos). 화살촉은 진행 방향 뒤로 ±40도
+        val dir = Math.atan2(kotlin.math.cos(e), -kotlin.math.sin(e))
+        val len = u(2.8f)
+        for (a in listOf(dir + Math.PI - 0.7, dir + Math.PI + 0.7)) {
+            drawLine(c, tip, Offset(tip.x + len * kotlin.math.cos(a).toFloat(), tip.y + len * kotlin.math.sin(a).toFloat()), s.width, StrokeCap.Round)
+        }
+    }
+    arcWithHead(-75f, 55f)
+    arcWithHead(105f, 55f)
 }
 
 /** 정보: 원 안의 i. */
 private fun DrawScope.info(c: Color, s: Stroke) {
-    drawCircle(c, u(8.5f), p(12f, 12f), style = s)
+    drawCircle(c, u(9f), p(12f, 12f), style = s)
     drawLine(c, p(12f, 11f), p(12f, 16.5f), s.width, StrokeCap.Round)
     drawCircle(c, s.width * 0.75f, p(12f, 7.8f))
 }
 
+/** 조사 도구: 플라스크, 안에 액체 선과 기포 둘. */
 private fun DrawScope.flask(c: Color, s: Stroke) {
     val path = Path().apply {
-        moveTo(u(9.5f), u(3.5f)); lineTo(u(9.5f), u(9.5f)); lineTo(u(4.5f), u(18.5f))
-        quadraticBezierTo(u(4f), u(20.5f), u(6.2f), u(20.5f)); lineTo(u(17.8f), u(20.5f))
-        quadraticBezierTo(u(20f), u(20.5f), u(19.5f), u(18.5f)); lineTo(u(14.5f), u(9.5f)); lineTo(u(14.5f), u(3.5f))
+        moveTo(u(9.5f), u(3.5f)); lineTo(u(9.5f), u(9.2f)); lineTo(u(4.6f), u(17.8f))
+        quadraticBezierTo(u(3.9f), u(20.5f), u(6.6f), u(20.5f)); lineTo(u(17.4f), u(20.5f))
+        quadraticBezierTo(u(20.1f), u(20.5f), u(19.4f), u(17.8f)); lineTo(u(14.5f), u(9.2f)); lineTo(u(14.5f), u(3.5f))
     }
     drawPath(path, c, style = s)
     drawLine(c, p(8f, 3.5f), p(16f, 3.5f), s.width, StrokeCap.Round)
-    drawLine(c, p(7f, 15f), p(17f, 15f), s.width * 0.8f, StrokeCap.Round)
+    drawLine(c, p(6.8f, 14.5f), p(17.2f, 14.5f), s.width * 0.8f, StrokeCap.Round)
+    drawCircle(c, u(0.9f), p(10.5f, 17.4f))
+    drawCircle(c, u(0.65f), p(13.8f, 16.8f))
 }

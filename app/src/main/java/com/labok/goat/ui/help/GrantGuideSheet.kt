@@ -1,5 +1,6 @@
 package com.labok.goat.ui.help
 
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.copyText
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.ui.components.SheetColumn
@@ -108,7 +109,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(Gap.Card))
         ConnectionIllustration(wireless = connection == GrantGuideContent.Connection.WIRELESS, done = hasPermission)
 
         AnimatedVisibility(visible = hasPermission, enter = fadeIn() + scaleIn(initialScale = 0.9f)) {
@@ -132,7 +133,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
         }
 
         if (!hasPermission) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Gap.Section))
             // 세 가지 방법을 한 줄에서 고른다: Shizuku(PC 없이) · PC 무선 디버깅 · PC USB 케이블
             Label("연결 방법")
             val method = if (viaShizuku) 0 else if (connection == GrantGuideContent.Connection.WIRELESS) 1 else 2
@@ -153,7 +154,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             )
         }
         if (!hasPermission && viaShizuku) {
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(Gap.Section))
             ShizukuGuide(
                 shizuku,
                 intro = "무료 앱 Shizuku로 폰 안에서 권한을 받습니다. 아래 순서대로 버튼만 누르면 되고, 마지막 단계가 끝나면 GOAT가 스스로 권한을 받습니다. " +
@@ -165,16 +166,16 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             )
         }
         if (!hasPermission && !viaShizuku) {
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             Label("PC 운영체제")
             Choice(GrantGuideContent.PcOs.entries, os, { it.label }) { os = it }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(Gap.Section))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 LiquidButton("PC로 보내기", modifier = Modifier.weight(1f), onClick = { shareGuide(context, connection, os) }, primary = false)
                 LiquidButton("메일로 보내기", modifier = Modifier.weight(1f), onClick = { emailGuide(context, connection, os) }, primary = false)
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Gap.Section))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "${index + 1} / ${steps.size} 단계",
@@ -183,7 +184,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                 )
                 LiquidDots(count = steps.size, index = index.coerceIn(0, steps.lastIndex))
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Gap.Card))
 
             AnimatedContent(
                 targetState = index.coerceIn(0, steps.lastIndex),
@@ -197,7 +198,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                 StepCard(steps[i], onCopy = copy, onOpenDev = { openDeveloperOptions(context) }, onOpenLink = { openLink(context, it) })
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Gap.Card))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(onClick = { index-- }, enabled = index > 0) { Text("이전") }
                 if (index < steps.lastIndex) {
@@ -212,7 +213,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Gap.Section))
             TroubleCard(GrantGuideContent.troubles(connection, os), onCopy = copy)
         }
     }
@@ -223,11 +224,11 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
 private fun TroubleCard(items: List<GrantGuideContent.Trouble>, onCopy: (String) -> Unit) {
     val c = LocalLiquid.current
     var open by remember { mutableStateOf<String?>(null) }
-    GlassCard(padding = 16.dp) {
+    GlassCard {
         Text("안 될 때", fontWeight = FontWeight.SemiBold, color = c.ink)
         Text("PC에 나온 오류 문구와 같은 항목을 눌러 보세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         items.forEachIndexed { i, tr ->
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Gap.Item))
             if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(c.line.copy(alpha = 0.6f)))
             val expanded = open == tr.title
             val rot by animateFloatAsState(if (expanded) 180f else 0f, label = "chev")
@@ -251,7 +252,7 @@ private fun TroubleCard(items: List<GrantGuideContent.Trouble>, onCopy: (String)
                 Column(Modifier.padding(bottom = 6.dp)) {
                     Text(tr.body, color = c.ink, style = MaterialTheme.typography.bodySmall)
                     tr.commands.forEach { cmd ->
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(Gap.Item))
                         CommandBox(cmd, onCopy = { onCopy(cmd) })
                     }
                 }
@@ -267,25 +268,25 @@ private fun StepCard(
     onOpenDev: () -> Unit,
     onOpenLink: (String) -> Unit,
 ) {
-    GlassCard(padding = 16.dp) {
+    GlassCard {
         Column {
             // 단계를 넘기면 장면이 부드럽게 바뀐다.
             Crossfade(step.scene, label = "scene") { GuideSceneArt(it) }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Gap.Item))
             Text(step.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Gap.Tight))
             Text(step.body, style = MaterialTheme.typography.bodyMedium)
             step.links.forEach { (name, url) ->
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(Gap.Item))
                 Text(name, style = MaterialTheme.typography.labelLarge)
                 CommandBox(url, onCopy = { onCopy(url) }, extra = { TextButton(onClick = { onOpenLink(url) }) { Text("열기") } })
             }
             step.commands.forEach { cmd ->
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(Gap.Item))
                 CommandBox(cmd, onCopy = { onCopy(cmd) })
             }
             if (step.openDevOptions) {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(Gap.Item))
                 LiquidButton("개발자 옵션 열기", modifier = Modifier.fillMaxWidth(), onClick = onOpenDev, primary = false)
             }
         }
@@ -301,7 +302,7 @@ private fun Label(text: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> Choice(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
-    Spacer(Modifier.height(6.dp))
+    Spacer(Modifier.height(Gap.Tight))
     LiquidChips(options, selected, label, onSelect)
 }
 

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.lab
 
+import com.labok.goat.ui.components.Gap
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -64,21 +65,21 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             .padding(horizontal = 16.dp)
             .padding(top = 4.dp, bottom = 28.dp),
     ) {
-        GlassCard(padding = 16.dp) {
+        GlassCard {
             Text("조사 도구", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "기능을 만들 때 기기의 설정·시스템 함수를 살펴보는 실험실 도구입니다. 결과는 파일로 저장해 보낼 수 있습니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
         }
-        Spacer(Modifier.height(12.dp))
-        GlassCard(padding = 16.dp) {
+        Spacer(Modifier.height(Gap.Card))
+        GlassCard {
             Text("설정 변경 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "① [바꾸기 전 저장]을 누릅니다.\n② 설정 → 디스플레이 → 앱 화면 크게/작게에서 앱 하나의 값을 바꿉니다.\n③ 돌아와 [바꾼 뒤 비교]를 누르면 바뀐 설정 키를 파일로 저장하고 공유 창을 엽니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Gap.Card))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 LiquidButton("바꾸기 전 저장", modifier = Modifier.weight(1f), onClick = {
                     scope.launch {
@@ -104,22 +105,22 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                 })
             }
             if (status.isNotEmpty()) {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(Gap.Item))
                 Text(status, color = c.ink, style = MaterialTheme.typography.bodySmall)
             }
             if (preview.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Gap.Item))
                 Text(preview, color = c.ink, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp))
             }
         }
-        Spacer(Modifier.height(12.dp))
-        GlassCard(padding = 16.dp) {
+        Spacer(Modifier.height(Gap.Card))
+        GlassCard {
             Text("시스템 함수 탐색", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "기기의 시스템 서비스를 모두 훑어 화면 밀도·확대·배율과 관련된 함수 목록을 파일로 만듭니다. 함수를 실행하지는 않습니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Gap.Card))
             LiquidButton(if (probing) "탐색 중…" else "탐색하고 파일로 보내기", modifier = Modifier.fillMaxWidth(), enabled = !probing, onClick = {
                 probing = true
                 scope.launch {

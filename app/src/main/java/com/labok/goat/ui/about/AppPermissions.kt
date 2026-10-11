@@ -30,11 +30,11 @@ internal object AppPermissions {
     val all: List<Item> = listOf(
         Item(
             Manifest.permission.WRITE_SECURE_SETTINGS, "시스템 설정 변경",
-            "외부·내부 화면의 DPI를 바꾸고, 흔들어 화면 회전에서 회전 잠금 방향을 바꾸는 데 필요합니다. 일반 권한 창으로는 받을 수 없어 Shizuku나 PC의 adb로 받습니다.", How.ADB,
+            "외부·내부 화면의 DPI를 바꾸고, 흔들어서 화면 회전에서 회전 잠금 방향을 바꾸는 데 필요합니다. 일반 권한 창으로는 받을 수 없어 Shizuku나 PC의 adb로 받습니다.", How.ADB,
         ),
         Item(
             Manifest.permission.POST_NOTIFICATIONS, "알림",
-            "외부 DPI 변경 선택 알림, 접기/펼치기 감시 알림, 앱별 크기 조절 알림, 흔들어 화면 회전 알림을 보여 줍니다.", How.USER,
+            "외부 DPI 변경 선택 알림, 접기/펼치기 감시 알림, 앱별 크기 조절 알림, 흔들어서 화면 회전 알림을 보여 줍니다.", How.USER,
             applies = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
         ),
         Item(
@@ -59,7 +59,7 @@ internal object AppPermissions {
         ),
         Item(
             Manifest.permission.VIBRATE, "진동",
-            "흔들어 화면 회전에서 화면을 돌렸을 때 짧게 진동으로 알려 줍니다.", How.INSTALL,
+            "흔들어서 화면 회전에서 화면을 돌렸을 때 짧게 진동으로 알려 줍니다.", How.INSTALL,
         ),
         Item(
             Manifest.permission.WAKE_LOCK, "절전 모드 해제 방지",

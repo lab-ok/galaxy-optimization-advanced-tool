@@ -61,8 +61,8 @@ fun LiquidTextField(
     LaunchedEffect(box, focused) {
         if (box == IntSize.Zero) return@LaunchedEffect
         val g = if (focused) grow else 0f
-        // 칸 테두리 안쪽에 방울을 두고, 포커스 때 부풀 여유(grow)를 남긴다
-        blob.moveTo(box.width / 2f, box.height / 2f, box.width - 2 * grow + 2 * g, box.height - 2 * grow + 2 * g, animate = !reduce, corner = corner)
+        // 평소에는 칸을 꽉 채워 카드 가장자리와 같은 선에 두고, 포커스 때만 바깥으로 살짝 부푼다
+        blob.moveTo(box.width / 2f, box.height / 2f, box.width + 2 * g, box.height + 2 * g, animate = !reduce, corner = corner)
     }
     LaunchedEffect(value) {
         if (reduce || box == IntSize.Zero || value == last) { last = value; return@LaunchedEffect }

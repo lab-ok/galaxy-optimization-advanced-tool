@@ -1,5 +1,6 @@
 package com.labok.goat.ui.advanced
 
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.animation.AnimatedVisibility
@@ -59,32 +60,32 @@ internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
     SheetColumn {
         Text("고급 정보", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Text("디스플레이별 DPI·해상도·PPI와 적용 기록입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(Gap.Section))
 
         if (state.displays.isEmpty()) {
             GlassCard { Text(if (state.hasPermission) "읽을 수 있는 디스플레이가 없습니다." else "권한을 설정하면 표시됩니다.", color = c.muted) }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
         }
         state.displays.forEach { d ->
             DisplayItem(d, state)
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
         }
 
         GlassCard {
             Text("적용 기록", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Gap.Tight))
             state.lastApply?.let {
                 InfoRow("마지막 적용", "${if (it.success) "성공" else "실패"} · ${SimpleDateFormat("MM-dd HH:mm:ss", Locale.US).format(Date(it.timeMs))}")
                 InfoRow("내용", it.text)
             } ?: Text("기록 없음", color = c.muted)
             InfoRow("내부 화면 보정", "${if (state.adjust > 0) "+" else ""}${state.adjust}")
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(Gap.Item))
         GlassCard {
             Text("로그", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Gap.Tight))
             Text("내장 저장소 ${PublicLogFile.displayPath}에 날짜별로 자동 저장됩니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             LiquidButton("앱 내부 로그 삭제", modifier = Modifier.fillMaxWidth(), onClick = onClearLogs, primary = false)
         }
     }

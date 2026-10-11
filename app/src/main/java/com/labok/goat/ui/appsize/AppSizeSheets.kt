@@ -1,5 +1,6 @@
 package com.labok.goat.ui.appsize
 
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.widget.Toast
@@ -111,7 +112,7 @@ internal fun AppSizeGuideSheet() {
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     SheetColumn("권한 설정") {
         if (shizuku == ShizukuAccess.State.READY || shell != null) {
-            GlassCard(padding = 16.dp) {
+            GlassCard {
                 Text("연결되어 있습니다", fontWeight = FontWeight.SemiBold, color = c.ink)
                 Text(
                     if (shell != null) "PC 셸 도우미로 연결되어 있습니다. GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다."
@@ -121,13 +122,13 @@ internal fun AppSizeGuideSheet() {
             }
             return@SheetColumn
         }
-        GlassCard(padding = 16.dp) {
+        GlassCard {
             ShizukuGuide(
                 shizuku,
                 intro = "앱별 크기를 바꾸려면 무료 앱 Shizuku로 시스템 권한을 빌려야 합니다. 아래 순서대로 버튼만 누르면 되고, 처음 한 번만 하면 됩니다.",
             )
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(Gap.Card))
         Text(
             if (showPc) "PC로 하기 접기" else "Shizuku 대신 PC로 하기",
             color = c.muted, style = MaterialTheme.typography.labelLarge,
@@ -139,7 +140,7 @@ internal fun AppSizeGuideSheet() {
                     "도우미는 GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 스스로 꺼집니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Gap.Item))
             val cmd = remember { DensityServer.startCommand() }
             CommandBox(cmd, onCopy = {
                 if (copyText(context, cmd, "adb")) Toast.makeText(context, Copy.TOAST_COPIED, Toast.LENGTH_SHORT).show()
@@ -162,7 +163,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
     var count by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(ready) { if (ready) count = withContext(Dispatchers.IO) { runCatching { DensityShell.appliedApps(context).size }.getOrNull() } }
     SheetColumn(Copy.APP_SIZE_RESET_TITLE) {
-        GlassCard(padding = 16.dp, accent = if (step > 0) c.danger else null) {
+        GlassCard(accent = if (step > 0) c.danger else null) {
             Text(Copy.APP_SIZE_RESET_ACTION, fontWeight = FontWeight.SemiBold, color = c.danger)
             Text(Copy.APP_SIZE_RESET_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
             Text(
@@ -173,7 +174,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                 },
                 color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             AnimatedContent(step, label = "reset") { s ->
                 when (s) {
                     0 -> LiquidButton(Copy.APP_SIZE_RESET_ACTION, modifier = Modifier.fillMaxWidth(), primary = false, danger = true,

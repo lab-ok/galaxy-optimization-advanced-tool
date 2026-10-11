@@ -58,7 +58,7 @@ internal fun SheetColumn(
     ) {
         if (title != null) {
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = LocalLiquid.current.ink)
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Gap.Title))
         }
         content()
     }
@@ -78,7 +78,7 @@ internal fun DangerConfirmBox(message: String, note: String? = null, actions: @C
     ) {
         Text("⚠ $message", color = c.danger, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
         if (note != null) Text(note, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(Gap.Card))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), content = actions)
     }
 }
@@ -106,14 +106,14 @@ internal fun openDeveloperOptions(context: Context) {
 @Composable
 internal fun HelpTopic(title: String, body: String, art: (@Composable () -> Unit)? = null) {
     val c = LocalLiquid.current
-    com.labok.goat.ui.liquid.GlassCard(padding = 16.dp) {
+    com.labok.goat.ui.liquid.GlassCard {
         Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
         if (art != null) {
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             art()
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Gap.Item))
         Text(body, color = c.muted, style = MaterialTheme.typography.bodyMedium)
     }
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(Gap.Card))
 }

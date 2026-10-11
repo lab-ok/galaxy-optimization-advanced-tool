@@ -1,5 +1,6 @@
 package com.labok.goat.ui.sizetest
 
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
 import androidx.compose.foundation.Canvas
 import androidx.core.view.WindowInsetsControllerCompat
@@ -84,15 +85,15 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             "이 화면을 연 채로 기기를 접고 펼쳐 아래 기준 도형과 글자가 두 화면에서 같은 크기로 보이는지 확인합니다.",
             color = c.muted, style = MaterialTheme.typography.bodySmall,
         )
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(Gap.Section))
 
-        GlassCard(padding = 16.dp, accent = c.ink) {
+        GlassCard(accent = c.ink) {
             Text("세로 줄 수 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "두 화면은 실제 높이가 거의 같아서, 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다. 가장 구분하기 쉬운 방법입니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             val cover = outer?.screen?.key
             val outerRows = if (outer != null && outerDpi != null) ScreenGeometry.orientedSize(outer.screen.key, cover, false)?.let { ScreenGeometry.rowsFor(it.second, outerDpi) } else null
             val innerRows = if (inner != null && innerDpi != null) ScreenGeometry.orientedSize(inner.screen.key, cover, true)?.let { ScreenGeometry.rowsFor(it.second, innerDpi) } else null
@@ -102,26 +103,26 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             }
             if (outerRows != null && innerRows != null) {
                 val diff = (innerRows - outerRows) / outerRows * 100f
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(Gap.Tight))
                 Text(
                     "차이 %+.1f%% · %s".format(diff, if (abs(diff) < 2f) "일치" else if (diff > 0) "내부 화면이 더 작게 표시됨(보정 + 방향)" else "내부 화면이 더 크게 표시됨(보정 − 방향)"),
                     color = if (abs(diff) < 2f) c.ink else c.danger, fontWeight = FontWeight.SemiBold,
                     style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Gap.Card))
             LiquidButton("전체 화면으로 줄 수 보기", modifier = Modifier.fillMaxWidth(), onClick = onCount)
             Text(
                 "전체 화면에 번호 매긴 줄을 채웁니다. 이 상태로 접고 펼쳐서 두 화면의 마지막 번호를 비교해 보세요.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
             )
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(Gap.Item))
 
-        GlassCard(padding = 16.dp) {
+        GlassCard {
             Text("기준 도형", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text("한 변 ${REF_DP}dp(앱 아이콘 크기)", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Gap.Card))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 repeat(4) { i ->
                     Canvas(Modifier.size(REF_DP.dp)) {
@@ -130,17 +131,17 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                     }
                 }
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(Gap.Section))
             listOf(14, 18, 24).forEach { sp ->
                 Text("가나다 Aa 123 · ${sp}sp", fontSize = sp.sp, color = c.ink)
             }
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(Gap.Item))
 
-        GlassCard(padding = 16.dp) {
+        GlassCard {
             Text("예상 실측 크기", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text("${REF_DP}dp 기준 도형이 각 화면에서 차지하는 실제 길이입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Gap.Item))
             val outerMm = if (outer != null && outerDpi != null) ScreenGeometry.dpToMm(REF_DP, outerDpi, state.rulerPpi[outer.screen.key] ?: outer.screen.ppi) else null
             val innerMm = if (inner != null && innerDpi != null) ScreenGeometry.dpToMm(REF_DP, innerDpi, state.rulerPpi[inner.screen.key] ?: inner.screen.ppi) else null
             InfoRow("외부 화면", outerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, outerDpi, outer!!.screen.ppi) } ?: "정보 없음")
@@ -158,7 +159,7 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                 Text("기기를 한 번 접었다 펼치면 두 화면을 비교할 수 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(Gap.Item))
 
         RulerCard(state, current, onCalibrate)
     }
@@ -171,7 +172,7 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
 @Composable
 private fun RulerCard(state: UiState, current: com.labok.goat.domain.PanelSpec.Resolved?, onCalibrate: (String, Float?) -> Unit) {
     val c = LocalLiquid.current
-    GlassCard(padding = 16.dp) {
+    GlassCard {
         Text("실제 길이 확인", fontWeight = FontWeight.SemiBold, color = c.ink)
         if (current == null) {
             Text("현재 화면 정보를 아직 수집하지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
@@ -186,7 +187,7 @@ private fun RulerCard(state: UiState, current: com.labok.goat.domain.PanelSpec.R
             "신용카드나 신분증의 짧은 변(54 mm)을 아래 칸에 대고, 칸의 양 끝이 카드 모서리와 꼭 맞도록 조절하세요. 맞추면 아래 mm 눈금이 실제 길이와 같아집니다.",
             color = c.muted, style = MaterialTheme.typography.bodySmall,
         )
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(Gap.Item))
         CardEdge(ppi)
         LiquidSlider(
             value = pct, range = -25..25,
@@ -198,18 +199,18 @@ private fun RulerCard(state: UiState, current: com.labok.goat.domain.PanelSpec.R
             "기준 PPI %.0f · %s".format(ppi, if (saved != null && pct == 0) "카드로 맞춘 값" else if (pct == 0) "기기가 알려 준 값" else "조절 중"),
             color = c.muted, style = MaterialTheme.typography.labelMedium,
         )
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(Gap.Item))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             LiquidButton("이 폭으로 저장", modifier = Modifier.weight(1f), enabled = pct != 0, onClick = { onCalibrate(key, ppi) })
             LiquidButton("기기 값으로", modifier = Modifier.weight(1f), primary = false, enabled = saved != null, onClick = { onCalibrate(key, null) })
         }
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(Gap.Section))
         val px = with(LocalDensity.current) { REF_DP.dp.toPx() }
         Text(
             "아래 상자는 ${REF_DP}dp로, 이 화면에서 약 %.1f mm입니다.".format(px / ppi * 25.4f),
             color = c.muted, style = MaterialTheme.typography.bodySmall,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Gap.Item))
         Ruler(ppi = ppi, boxPx = px)
     }
 }

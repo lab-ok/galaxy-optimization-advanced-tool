@@ -1,5 +1,6 @@
 package com.labok.goat.ui.shizuku
 
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.openDeveloperOptions
 import android.content.Context
 import android.content.Intent
@@ -68,7 +69,7 @@ internal fun ShizukuGuide(
     }
 
     Text(intro, color = c.muted, style = MaterialTheme.typography.bodySmall)
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(Gap.Card))
     Step(1, "Shizuku 설치", done[0], current == 0) {
         StoreStepArt()
         Hint("무료 앱입니다. 설치가 끝나면 이 화면으로 돌아오세요.")
@@ -100,7 +101,7 @@ internal fun ShizukuGuide(
         Hint("Shizuku가 묻는 창에서 '항상 허용'을 누르세요.")
         Action("허용하기") { ShizukuAccess.requestPermission() }
     }
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(Gap.Tight))
     Text(
         "[켜기]를 누르면 GOAT가 무선 디버깅을 대신 켜고, Shizuku가 켜지면 허용 창을 바로 띄웁니다.",
         color = c.muted, style = MaterialTheme.typography.labelSmall,
@@ -133,7 +134,7 @@ private fun Step(no: Int, title: String, done: Boolean, active: Boolean, body: @
                 style = MaterialTheme.typography.bodyMedium,
             )
             if (active) {
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(Gap.Tight))
                 body()
             }
         }

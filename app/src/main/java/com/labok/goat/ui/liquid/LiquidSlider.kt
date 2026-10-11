@@ -1,5 +1,7 @@
 package com.labok.goat.ui.liquid
 
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -84,7 +86,8 @@ fun LiquidSlider(
     }
 
     val span = (range.last - range.first).coerceAtLeast(1)
-    val trackY = with(density) { 46.dp.toPx() }
+    // 잡으면 값 방울이 트랙 위로 떠오르므로 위쪽에 그만큼(26dp) 자리를 둔다. 방울 중심은 예전과 같은 높이(12dp)에 온다.
+    val trackY = with(density) { 38.dp.toPx() }
     val edge = with(density) { 30.dp.toPx() }
     fun xOf(v: Int) = edge + (v - range.first).toFloat() / span * (width - 2 * edge)
     fun valueAt(x: Float): Int {
@@ -107,7 +110,7 @@ fun LiquidSlider(
     Box(
         modifier
             .fillMaxWidth()
-            .height(66.dp)
+            .height(HEIGHT.dp)
             .onSizeChanged { width = it.width.toFloat() }
             .semantics {
                 contentDescription = description
@@ -154,14 +157,17 @@ fun LiquidSlider(
             val r = maxOf(from, cx)
             drawRoundRect(c.ink.copy(alpha = 0.85f), Offset(l, trackY - th / 2), Size(r - l, th), CornerRadius(th / 2))
         }
-        // 손잡이 + 값 방울(goo 층: 떨어지는 순간 목처럼 이어진다)
-        Canvas(Modifier.matchParentSize().goo(c.ink, 7.dp)) {
+        // 손잡이 + 값 방울(goo 층: 떨어지는 순간 목처럼 이어진다). goo 층은 자기 크기 밖을 잘라 내므로,
+        // 떠오른 방울이 잘리지 않게 이 층만 위아래로 OVERFLOW만큼 크게 두고 그만큼 내려 그린다.
+        Canvas(Modifier.fillMaxWidth().requiredHeight((HEIGHT + 2 * OVERFLOW).dp).goo(c.ink, 7.dp)) {
             blob.frame
-            val cx = blob.blob.cx
-            drawPath(blob.blob.path(path), c.ink)
-            val bs = bubbleSize.value.dp.toPx()
-            val by = trackY - bubbleLift.value * 34.dp.toPx()
-            drawOval(c.ink, Offset(cx - bs / 2, by - bs / 2), Size(bs, bs))
+            translate(top = OVERFLOW.dp.toPx()) {
+                val cx = blob.blob.cx
+                drawPath(blob.blob.path(path), c.ink)
+                val bs = bubbleSize.value.dp.toPx()
+                val by = trackY - bubbleLift.value * LIFT.dp.toPx()
+                drawOval(c.ink, Offset(cx - bs / 2, by - bs / 2), Size(bs, bs))
+            }
         }
         // 값 글자(방울 위에서 반전). 글자 크기를 재서 손잡이·방울의 정확한 가운데에 놓는다.
         Canvas(Modifier.matchParentSize()) {
@@ -169,7 +175,7 @@ fun LiquidSlider(
             blob.frame
             val lift = bubbleLift.value
             val cx = blob.blob.cx
-            val cy = trackY - lift * 34.dp.toPx()
+            val cy = trackY - lift * LIFT.dp.toPx()
             val layout = measurer.measure(
                 valueText(value),
                 TextStyle(color = c.onInk, fontSize = (12 + 5 * lift).sp, fontWeight = FontWeight.Bold),
@@ -178,3 +184,10 @@ fun LiquidSlider(
         }
     }
 }
+
+/** 잡았을 때 값 방울이 트랙 위로 떠오르는 높이(dp). */
+private const val LIFT = 26
+/** 조절바 높이(dp). */
+private const val HEIGHT = 56
+/** goo 층을 조절바 위아래로 더 키우는 양(dp). */
+private const val OVERFLOW = 30

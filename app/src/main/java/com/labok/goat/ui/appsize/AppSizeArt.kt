@@ -208,7 +208,7 @@ internal fun FoldDiffArt() {
 @Composable
 internal fun NotifyArt() {
     val t = artLoop(3200)
-    ArtCanvas(150.dp) { c, tm ->
+    ArtCanvas(134.dp) { c, tm ->
         val pressed = t > 0.45f
         val cardW = size.width * 0.86f; val cardH = 78.dp.toPx()
         val tl = Offset((size.width - cardW) / 2, 8.dp.toPx())

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.liquid
 
+import com.labok.goat.ui.components.Gap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    padding: Dp = 18.dp,
+    padding: Dp = Gap.CardPadding,
     accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Image
@@ -44,47 +45,31 @@ import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Springs
 import kotlinx.coroutines.launch
 
-/** 앱 정보: 로고가 방울처럼 출렁이며 나타나고, 버전과 문의 메일을 보여 준다. */
+/** 앱 정보: 사이드바처럼 리퀴드로 반응하는 로고·제목([AboutHeader]), 버전과 문의 메일, 필요 권한. */
 @Composable
 internal fun AboutSheet(onMail: () -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val context = LocalContext.current
     val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
-    val sx = remember { Animatable(0.3f) }
-    val sy = remember { Animatable(0.3f) }
-    LaunchedEffect(Unit) {
-        launch { sx.animateTo(1f, Springs.pop(reduce)) }
-        launch { sy.animateTo(1f, Springs.water(reduce)) }
-    }
     SheetColumn(horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(
-            painter = painterResource(R.drawable.ic_app_logo),
-            contentDescription = null,
-            modifier = Modifier
-                .size(84.dp)
-                .graphicsLayer { scaleX = sx.value; scaleY = sy.value }
-                .clip(RoundedCornerShape(24.dp)),
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(DeveloperProfile.PRODUCT, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
-        Text(DeveloperProfile.TAGLINE, color = c.muted, style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.height(14.dp))
+        AboutHeader(DeveloperProfile.PRODUCT, DeveloperProfile.TAGLINE)
+        Spacer(Modifier.height(Gap.Section))
         Text(DeveloperProfile.DESCRIPTION, color = c.ink, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(18.dp))
-        GlassCard(padding = 16.dp) {
+        Spacer(Modifier.height(Gap.Section))
+        GlassCard {
             InfoRow("버전", pkg.versionName ?: "-")
             InfoRow("라이선스", DeveloperProfile.LICENSE)
             InfoRow("문의", DeveloperProfile.CONTACT_EMAIL)
             Text(DeveloperProfile.LICENSE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(Gap.Item))
             Row(Modifier.fillMaxWidth()) {
                 LiquidButton("메일 보내기", modifier = Modifier.fillMaxWidth(), onClick = onMail, primary = false)
             }
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(Gap.Card))
         PermissionsCard()
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Gap.Section))
         Text(DeveloperProfile.COPYRIGHT, color = c.muted, style = MaterialTheme.typography.bodySmall)
     }
 }
@@ -94,14 +79,14 @@ internal fun AboutSheet(onMail: () -> Unit) {
 private fun PermissionsCard() {
     val c = LocalLiquid.current
     val context = LocalContext.current
-    GlassCard(padding = 16.dp) {
+    GlassCard {
         Text("필요 권한", fontWeight = FontWeight.SemiBold, color = c.ink)
         Text("이 앱이 쓰는 권한 전체입니다. 네트워크·저장소·위치 권한은 쓰지 않습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         AppPermissions.all.forEachIndexed { i, item ->
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Gap.Card))
             if (i > 0) {
                 Box(Modifier.fillMaxWidth().height(1.dp).background(c.line.copy(alpha = 0.6f)))
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Gap.Card))
             }
             PermissionRow(item, AppPermissions.granted(context, item), index = i)
         }
@@ -152,9 +137,9 @@ private fun PermissionRow(item: AppPermissions.Item, granted: Boolean, index: In
                 color = c.muted,
                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(Gap.Tight))
             Text(item.why, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Gap.Tight))
             Pill(item.how.label, strong = false, outlined = true)
         }
     }
