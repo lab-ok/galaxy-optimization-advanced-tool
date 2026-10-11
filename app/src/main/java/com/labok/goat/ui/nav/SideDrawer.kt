@@ -71,11 +71,13 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     APP_SIZE(Copy.FEATURE_APP_SIZE, NavIcon.APPS),
     /** 평소에는 회전을 잠가 두고, 흔들면 폰이 놓인 방향으로 한 번 돌린다. */
     SHAKE_ROTATE(Copy.FEATURE_SHAKE_ROTATE, NavIcon.ROTATE),
+    /** 국내 모델의 강제 촬영음을 끈다(Shizuku 셸로 숨은 시스템 설정을 바꾼다). */
+    CAMERA_MUTE(Copy.FEATURE_CAMERA_MUTE, NavIcon.CAMERA),
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { FOLD, APPS, ROTATE, FLASK, INFO }
+enum class NavIcon { FOLD, APPS, ROTATE, CAMERA, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -239,6 +241,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
+            NavIcon.CAMERA -> camera(color, s)
             NavIcon.FLASK -> flask(color, s)
             NavIcon.INFO -> info(color, s)
         }
@@ -300,6 +303,19 @@ private fun DrawScope.rotate(c: Color, s: Stroke) {
     }
     arcWithHead(-75f, 55f)
     arcWithHead(105f, 55f)
+}
+
+/** 카메라 촬영음 끄기: 카메라와 오른쪽 위로 그은 사선(소리 끔). */
+private fun DrawScope.camera(c: Color, s: Stroke) {
+    val body = Path().apply {
+        moveTo(u(4.5f), u(8f)); lineTo(u(8f), u(8f)); lineTo(u(9.5f), u(5.5f)); lineTo(u(14.5f), u(5.5f)); lineTo(u(16f), u(8f))
+        lineTo(u(19.5f), u(8f)); quadraticBezierTo(u(21f), u(8f), u(21f), u(9.5f)); lineTo(u(21f), u(17.5f))
+        quadraticBezierTo(u(21f), u(19f), u(19.5f), u(19f)); lineTo(u(4.5f), u(19f))
+        quadraticBezierTo(u(3f), u(19f), u(3f), u(17.5f)); lineTo(u(3f), u(9.5f)); quadraticBezierTo(u(3f), u(8f), u(4.5f), u(8f)); close()
+    }
+    drawPath(body, c, style = s)
+    drawCircle(c, u(3.4f), p(12f, 13.2f), style = s)
+    drawLine(c, p(3f, 21.5f), p(21f, 3.5f), s.width, StrokeCap.Round)
 }
 
 /** 정보: 원 안의 i. */

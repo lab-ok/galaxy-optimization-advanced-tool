@@ -1,5 +1,7 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.camera.CameraMuteHelpSheet
+import com.labok.goat.ui.camera.CameraMuteScreen
 import com.labok.goat.ui.rotate.ShakeCalibrationSheet
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.rotate.ShakeRotateHelpSheet
@@ -134,7 +136,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -222,7 +224,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         // 사이드바는 기능 단위. DPI를 다루는 두 기능은 '화면 배율'로, 그 밖의 유틸은 '편의 기능'으로 묶는다. 조사 도구는 lab 빌드에서만.
         val sections = buildList {
             add(NavSection(Copy.MENU_SECTION_FEATURES, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
-            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE)))
+            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE)))
             if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
@@ -244,6 +246,12 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             NavItem.SHAKE_ROTATE -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.SHAKE_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
+                Copy.MENU_REPORT to report,
+            )
+            // Shizuku 연결 안내는 앱별 화면 배율 설정과 같은 시트를 쓴다
+            NavItem.CAMERA_MUTE -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.CAMERA_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report,
             )
             NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
@@ -361,6 +369,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.DPI_MATCH -> dpiMatchList(inner)
                             NavItem.APP_SIZE -> AppSizeScreen(inner, onGuide = { sheet = Sheet.APP_GUIDE }, onReset = { sheet = Sheet.APP_RESET })
                             NavItem.SHAKE_ROTATE -> ShakeRotateScreen(inner, onGuide = { sheet = Sheet.GUIDE }, onCalibrate = { sheet = Sheet.SHAKE_CALIBRATE })
+                            NavItem.CAMERA_MUTE -> CameraMuteScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                         }
                     }
@@ -399,6 +408,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.APP_RESET -> AppSizeResetSheet(onDone = { msg -> sheet = null; vm.say(msg) })
                     Sheet.SHAKE_HELP -> ShakeRotateHelpSheet()
                     Sheet.SHAKE_CALIBRATE -> ShakeCalibrationSheet(onClose = { sheet = null })
+                    Sheet.CAMERA_HELP -> CameraMuteHelpSheet()
                 }
             }
         }

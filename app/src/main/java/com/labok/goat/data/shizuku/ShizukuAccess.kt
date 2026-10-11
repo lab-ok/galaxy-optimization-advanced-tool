@@ -178,11 +178,30 @@ object ShizukuAccess {
      * (setsid로 세션을 떼어 두어 sh가 끝나도, Shizuku가 이 프로세스를 정리해도 남는다). Shizuku API에 공개 함수가 없어 리플렉션으로 부른다.
      */
     fun runLater(delaySec: Int, command: String): Boolean = runCatching {
+        newProcess("setsid sh -c 'sleep $delaySec; $command' </dev/null >/dev/null 2>&1 &").waitFor() == 0
+    }.getOrDefault(false)
+
+    /** 셸 명령 결과. [ok]는 종료 코드 0, [out]은 표준 출력(앞뒤 공백 제거). */
+    data class ShellResult(val ok: Boolean, val out: String, val err: String)
+
+    /**
+     * Shizuku 셸 권한으로 [command]를 실행하고 끝날 때까지 기다린다(작업 스레드에서 부른다). Shizuku가 준비되지 않았거나
+     * 실행하지 못하면 null. 일반 앱이 바꿀 수 없는 숨은 시스템 설정(settings put system …) 등에 쓴다.
+     */
+    fun shell(command: String): ShellResult? = runCatching {
+        if (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return null
+        val p = newProcess(command)
+        val out = p.inputStream.bufferedReader().readText().trim()
+        val err = p.errorStream.bufferedReader().readText().trim()
+        ShellResult(p.waitFor() == 0, out, err)
+    }.getOrNull()
+
+    /** Shizuku API에 공개 함수가 없어 리플렉션으로 부른다. */
+    private fun newProcess(command: String): Process {
         val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
         m.isAccessible = true
-        val p = m.invoke(null, arrayOf("sh", "-c", "setsid sh -c 'sleep $delaySec; $command' </dev/null >/dev/null 2>&1 &"), null, null) as Process
-        p.waitFor() == 0
-    }.getOrDefault(false)
+        return m.invoke(null, arrayOf("sh", "-c", command), null, null) as Process
+    }
 
     /** 실기기 코드 기준 인자 순서: (패키지, 사용자, 밀도, 메모). 값은 [AppDensityPolicy.STEPS]와 0만. */
     fun set(pkg: String, user: Int, dpi: Int) {

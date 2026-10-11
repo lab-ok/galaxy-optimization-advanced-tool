@@ -58,6 +58,27 @@ object Copy {
     const val FEATURE_APP_SIZE = "앱별 화면 배율 설정"
     const val FEATURE_LAB_TOOLS = "조사 도구"
     const val FEATURE_SHAKE_ROTATE = "흔들어서 화면 회전"
+    const val FEATURE_CAMERA_MUTE = "카메라 촬영음 끄기"
+
+    // 카메라 촬영음 끄기
+    const val CAMERA_INTRO_TITLE = "무음 모드에서는 조용히 찍기"
+    const val CAMERA_INTRO_BODY = "국내 갤럭시의 강제 촬영음을 끄고, 촬영음이 기기 소리 설정을 따르게 합니다."
+    const val CAMERA_NEED_SHIZUKU_TITLE = "Shizuku 연결이 필요합니다"
+    const val CAMERA_NEED_SHIZUKU_BODY = "촬영음 강제는 숨은 시스템 설정이라 Shizuku 셸 권한으로만 바꿀 수 있습니다."
+    const val CAMERA_CONNECT = "Shizuku 연결하기"
+    const val CAMERA_PC_TITLE = "PC로 한 번에 끄기"
+    const val CAMERA_PC_BODY = "Shizuku 없이 PC의 adb로 아래 명령을 한 번 실행해도 됩니다."
+    const val CAMERA_STATE_MUTED = "꺼져 있습니다. 무음·진동 모드에서는 소리 없이 찍힙니다."
+    const val CAMERA_STATE_FORCED = "켜져 있습니다. 무음 모드여도 촬영음이 납니다."
+    const val CAMERA_STATE_NONE = "이 기기에는 촬영음 강제 설정이 없습니다(이미 소리 설정을 따름)."
+    const val CAMERA_STATE_UNKNOWN = "Shizuku가 연결되면 지금 상태를 읽습니다."
+    const val CAMERA_KEEP_TITLE = "다시 켜지면 자동으로 끄기"
+    const val CAMERA_KEEP_BODY = "업데이트·재부팅 뒤 다시 켜지면 Shizuku가 연결될 때 다시 끕니다."
+    const val CAMERA_TOAST_MUTED = "촬영음 강제를 껐습니다"
+    const val CAMERA_TOAST_RESTORED = "촬영음 강제를 되돌렸습니다"
+    const val CAMERA_TOAST_FAILED = "바꾸지 못했습니다. Shizuku 연결을 확인해 주세요"
+    const val CAMERA_ETIQUETTE_TITLE = "꼭 지켜 주세요"
+    const val CAMERA_ETIQUETTE_BODY = "다른 사람을 동의 없이·몰래 찍는 것은 처벌받습니다. 예절을 지키는 데만 쓰세요."
 
     // 흔들어서 화면 회전
     const val SHAKE_INTRO_TITLE = "평소에는 잠그고, 흔들 때만 돌리기"
