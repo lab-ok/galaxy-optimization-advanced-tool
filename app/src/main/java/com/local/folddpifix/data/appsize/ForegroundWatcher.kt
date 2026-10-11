@@ -21,7 +21,7 @@ import java.util.concurrent.Executors
 object ForegroundWatcher {
     private const val DESCRIPTOR = "android.app.ITaskStackListener"
 
-    /** FoldFit·시스템 UI·홈 화면을 뺀, 마지막으로 맨 앞에 있던 앱. 홈 화면이면 null. */
+    /** GOAT·시스템 UI·홈 화면을 뺀, 마지막으로 맨 앞에 있던 앱. 홈 화면이면 null. */
     @Volatile var current: String? = null
         private set
 

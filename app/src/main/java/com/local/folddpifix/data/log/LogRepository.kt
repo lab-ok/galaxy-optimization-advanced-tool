@@ -10,7 +10,7 @@ import java.util.Locale
 
 /**
  * 앱 로그. 진단 로그용으로 앱 내부 파일에 최근 [MAX_LINES]줄을 두고,
- * [publicSink]가 있으면 같은 줄을 사용자가 열 수 있는 공용 파일(Download/FoldFit)에도 계속 덧붙인다.
+ * [publicSink]가 있으면 같은 줄을 사용자가 열 수 있는 공용 파일(Download/GOAT)에도 계속 덧붙인다.
  */
 class LogRepository(private val file: File, private val publicSink: ((String) -> Unit)? = null) {
 

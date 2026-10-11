@@ -3,7 +3,7 @@ package com.local.folddpifix.domain
 /**
  * 앱별 화면 크기(삼성 앱 화면 크게/작게) 규칙. 실기기(One UI 9) services.jar에서 확인한 동작을 그대로 옮긴다.
  * - 받는 값: [STEPS]와 0(기본, 앱별 설정 지움). 그 밖의 값은 시스템이 거절한다.
- * - 읽기 함수는 320을 360으로 돌려준다. 실제 적용은 320이므로 FoldFit이 정한 값으로 바로잡아 보여 준다.
+ * - 읽기 함수는 320을 360으로 돌려준다. 실제 적용은 320이므로 GOAT가 정한 값으로 바로잡아 보여 준다.
  */
 object AppDensityPolicy {
     /** MultiTaskingAppCompatDensityOverrides.SUPPORTED_VALUES */
@@ -21,6 +21,6 @@ object AppDensityPolicy {
         else -> STEPS.firstOrNull { it > base }
     }
 
-    /** 읽은 값([reported])을 보여 줄 값으로. FoldFit이 320으로 정해 두었는데 360으로 읽히면 320. */
+    /** 읽은 값([reported])을 보여 줄 값으로. GOAT가 320으로 정해 두었는데 360으로 읽히면 320. */
     fun shown(reported: Int, mine: Int?): Int = if (reported == 360 && mine == 320) 320 else reported
 }

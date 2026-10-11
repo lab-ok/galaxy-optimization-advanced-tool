@@ -98,7 +98,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                             diff to PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-settings"), text)
                         }
                         preview = diff.lineSequence().take(30).joinToString("\n")
-                        status = if (uri != null) "다운로드/FoldFit에 저장했습니다." else "파일을 저장하지 못했습니다."
+                        status = if (uri != null) "다운로드/GOAT에 저장했습니다." else "파일을 저장하지 못했습니다."
                         uri?.let { share(context, it) }
                     }
                 })

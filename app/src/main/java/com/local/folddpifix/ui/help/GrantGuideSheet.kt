@@ -87,7 +87,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     var grantError by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
-    // Shizuku가 켜지고 FoldFit을 허용하면 바로 권한을 스스로 부여한다(화면은 주기 확인으로 완료를 알아차린다)
+    // Shizuku가 켜지고 GOAT를 허용하면 바로 권한을 스스로 부여한다(화면은 주기 확인으로 완료를 알아차린다)
     LaunchedEffect(shizuku, hasPermission, viaShizuku) {
         if (viaShizuku && !hasPermission && shizuku == ShizukuAccess.State.READY) {
             grantError = !withContext(Dispatchers.IO) { ShizukuAccess.grantSecureSettings(context) }
@@ -156,7 +156,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             Spacer(Modifier.height(14.dp))
             ShizukuGuide(
                 shizuku,
-                intro = "무료 앱 Shizuku로 폰 안에서 권한을 받습니다. 아래 순서대로 버튼만 누르면 되고, 마지막 단계가 끝나면 FoldFit이 스스로 권한을 받습니다. " +
+                intro = "무료 앱 Shizuku로 폰 안에서 권한을 받습니다. 아래 순서대로 버튼만 누르면 되고, 마지막 단계가 끝나면 GOAT가 스스로 권한을 받습니다. " +
                     "권한을 받은 뒤에는 Shizuku를 꺼도 됩니다.",
             )
             if (grantError) Text(

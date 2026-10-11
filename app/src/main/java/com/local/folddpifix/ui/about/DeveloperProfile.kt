@@ -5,8 +5,8 @@ import com.local.folddpifix.AppInfo
 /** 정보 화면에 표시하는 제품·개발자 정보. 표시 문구는 이 파일 한곳에서 고친다. */
 object DeveloperProfile {
     const val PRODUCT = AppInfo.NAME
-    const val TAGLINE = "외부·내부 화면 표시 크기 일치"
-    const val DESCRIPTION = "외부 화면 DPI를 기준으로 내부 화면 DPI를 계산해 두 화면의 표시 크기를 맞추고, 재부팅 후에도 자동으로 다시 적용합니다."
+    const val TAGLINE = AppInfo.FULL_NAME
+    const val DESCRIPTION = "폴드의 외부·내부 화면 배율을 맞추고, 앱마다 화면 배율을 따로 정하는 갤럭시 화면 배율 도구입니다. 바꾼 값은 재부팅 후에도 유지됩니다."
     const val CONTACT_EMAIL = "lala5bok@gmail.com"
     const val COPYRIGHT = "© 2026 lala5bok · GPL-3.0"
     const val LICENSE = "GPL-3.0 (오픈소스)"

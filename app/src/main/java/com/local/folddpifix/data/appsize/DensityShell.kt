@@ -65,13 +65,13 @@ object DensityShell {
     /**
      * 앱의 현재 화면 크기(dpi). 0이면 시스템 기본.
      * 삼성 읽기 함수는 320을 360으로 돌려준다(실기기 코드: getCustomDensity(…, true)에서 320 → 360). 실제 적용은 320이므로,
-     * FoldFit이 320으로 바꾼 앱은 기록해 두었다가 360으로 읽히면 320으로 보여 준다.
+     * GOAT가 320으로 바꾼 앱은 기록해 두었다가 360으로 읽히면 320으로 보여 준다.
      */
     fun get(context: Context, pkg: String): Int {
         val v = raw(pkg)
         val mine = prefs(context).getInt(pkg, -1).takeIf { it != -1 }
         val shown = AppDensityPolicy.shown(v, mine)
-        // 다른 곳(삼성 설정 등)에서 바뀌었으면 FoldFit 기록을 지운다
+        // 다른 곳(삼성 설정 등)에서 바뀌었으면 GOAT 기록을 지운다
         if (mine != null && shown != mine) prefs(context).edit().remove(pkg).apply()
         return shown
     }

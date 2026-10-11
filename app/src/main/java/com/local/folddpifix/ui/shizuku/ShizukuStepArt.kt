@@ -118,7 +118,7 @@ internal fun AllowStepArt() {
         val tl = Offset((size.width - w) / 2, size.height * 0.06f)
         drawRoundRect(c.surface, tl, Size(w, h), CornerRadius(18.dp.toPx()))
         drawRoundRect(c.line, tl, Size(w, h), CornerRadius(18.dp.toPx()), style = Stroke(1.dp.toPx()))
-        artLabel(tm, "FoldFit이 Shizuku를 쓰도록 허용할까요?", Offset(size.width / 2, tl.y + h * 0.22f), c.ink, 11, bold = true)
+        artLabel(tm, "GOAT가 Shizuku를 쓰도록 허용할까요?", Offset(size.width / 2, tl.y + h * 0.22f), c.ink, 11, bold = true)
         val pressed = t in 0.45f..0.75f
         val b1 = Offset(tl.x + w * 0.1f, tl.y + h * 0.42f)
         drawRoundRect(if (pressed) c.ink else c.line.copy(alpha = 0.6f), b1, Size(w * 0.8f, h * 0.22f), CornerRadius(h * 0.11f))

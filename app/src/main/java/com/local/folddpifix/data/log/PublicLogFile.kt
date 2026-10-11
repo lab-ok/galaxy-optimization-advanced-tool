@@ -12,7 +12,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 로그를 사용자가 바로 열 수 있는 파일로 저장한다: 내장 저장소 `Download/FoldFit/foldfit-YYMMDD-log.txt`.
+ * 로그를 사용자가 바로 열 수 있는 파일로 저장한다: 내장 저장소 `Download/GOAT/goat-YYMMDD-log.txt`.
  * 이름은 MIME(text/plain)과 같은 .txt로 끝나야 한다. `.log`로 저장하면 시스템이 `.txt`를 덧붙여 이름이 바뀌고,
  * 다음 기록 때 같은 이름으로 찾지 못해 기록마다 '(1)', '(2)' 같은 새 파일이 생긴다.
  * MediaStore를 쓰므로 저장소 권한이 필요 없다. 잠금 해제 전(Direct Boot)에는 공용 저장소를 쓸 수 없어
@@ -20,7 +20,7 @@ import java.util.Locale
  */
 object PublicLogFile {
 
-    const val FOLDER = "FoldFit"
+    const val FOLDER = "GOAT"
     private val lock = Any()
     private val dayFormat = SimpleDateFormat("yyMMdd", Locale.US)
 
@@ -57,11 +57,11 @@ object PublicLogFile {
         find(context.applicationContext, todayName())
     }
 
-    /** "foldfit-<kind>-yyMMdd-HHmmss.txt"처럼 시각을 붙인 새 파일 이름. */
+    /** "goat-<kind>-yyMMdd-HHmmss.txt"처럼 시각을 붙인 새 파일 이름. */
     fun timestampedName(kind: String): String =
-        "foldfit-$kind-${java.text.SimpleDateFormat("yyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date())}.txt"
+        "goat-$kind-${java.text.SimpleDateFormat("yyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date())}.txt"
 
-    /** Download/FoldFit에 새 파일로 저장하고 Uri를 돌려준다. */
+    /** Download/GOAT에 새 파일로 저장하고 Uri를 돌려준다. */
     fun saveNew(context: Context, name: String, text: String): Uri? = synchronized(lock) {
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
@@ -89,7 +89,7 @@ object PublicLogFile {
         return null
     }
 
-    private fun todayName() = "foldfit-${dayFormat.format(Date())}-log.txt"
+    private fun todayName() = "goat-${dayFormat.format(Date())}-log.txt"
 
     private fun uriForToday(context: Context): Uri? {
         val name = todayName()

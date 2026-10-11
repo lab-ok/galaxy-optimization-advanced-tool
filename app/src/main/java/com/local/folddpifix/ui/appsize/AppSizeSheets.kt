@@ -73,7 +73,7 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
             "삼성은 이 설정을 바꾸는 기능에 시스템 전용 권한을 걸어 두어, 일반 앱은 직접 바꿀 수 없습니다. " +
                 "무료 앱 Shizuku는 폰의 무선 디버깅으로 그 권한을 빌려 줍니다. 처음 한 번 페어링하면 되고, " +
                 "Android 13 이상에서는 재부팅 뒤에도 Wi-Fi에 연결되면 스스로 다시 켜집니다. " +
-                "Shizuku가 없으면 PC에서 명령 한 번으로 FoldFit 셸 도우미를 켜서 쓸 수도 있습니다.",
+                "Shizuku가 없으면 PC에서 명령 한 번으로 GOAT 셸 도우미를 켜서 쓸 수도 있습니다.",
             art = { ShizukuBridgeArt() },
         )
         Topic(
@@ -82,7 +82,7 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
                 "• 목록에서 크기 바꾸기, 알림창 [작게]·[기본]·[크게]: Shizuku가 실행 중일 때만 됩니다.\n" +
                 "• 알림에 지금 보고 있는 앱 표시: Shizuku가 실행 중일 때만 실시간으로 바뀝니다.\n" +
                 "• '화면 배율 동기화'(기기 전체 크기): Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.\n" +
-                "• 무선 디버깅은 Shizuku를 시작할 때만 필요합니다. '무선 디버깅 끄기'를 켜면 Shizuku가 켜진 직후 FoldFit이 끕니다. 끄면 Shizuku가 멈추는 기기에서는 이 옵션을 꺼 두세요.",
+                "• 무선 디버깅은 Shizuku를 시작할 때만 필요합니다. '무선 디버깅 끄기'를 켜면 Shizuku가 켜진 직후 GOAT가 끕니다. 끄면 Shizuku가 멈추는 기기에서는 이 옵션을 꺼 두세요.",
             art = { PersistArt() },
         )
         Topic(
@@ -101,7 +101,7 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
         Topic(
             "6. 알림창에서 바로 바꾸기",
             "'알림창에서 바로 조절'을 켜면 알림에 지금 보고 있는 앱과 크기가 나오고, [작게]·[기본]·[크게]로 한 단계씩 바꿉니다. " +
-                "삼성 설정 특성상 크기를 바꾸면 그 앱이 다시 시작되며, FoldFit이 바로 다시 열어 줍니다.",
+                "삼성 설정 특성상 크기를 바꾸면 그 앱이 다시 시작되며, GOAT가 바로 다시 열어 줍니다.",
             art = { NotifyArt() },
         )
         Topic(
@@ -128,7 +128,7 @@ internal fun AppSizeGuideSheet() {
             GlassCard(padding = 16.dp) {
                 Text("연결되어 있습니다", fontWeight = FontWeight.SemiBold, color = c.ink)
                 Text(
-                    if (shell != null) "PC 셸 도우미로 연결되어 있습니다. FoldFit을 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다."
+                    if (shell != null) "PC 셸 도우미로 연결되어 있습니다. GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다."
                     else "Shizuku로 연결되어 있습니다. 이 창을 닫고 앱을 고르면 됩니다.",
                     color = c.muted, style = MaterialTheme.typography.bodySmall,
                 )
@@ -149,8 +149,8 @@ internal fun AppSizeGuideSheet() {
         )
         if (showPc) {
             Text(
-                "PC PowerShell(platform-tools 폴더)에서 아래 명령을 한 번 실행하면 FoldFit 셸 도우미가 켜집니다. " +
-                    "도우미는 FoldFit을 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 스스로 꺼집니다.",
+                "PC PowerShell(platform-tools 폴더)에서 아래 명령을 한 번 실행하면 GOAT 셸 도우미가 켜집니다. " +
+                    "도우미는 GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 스스로 꺼집니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(8.dp))

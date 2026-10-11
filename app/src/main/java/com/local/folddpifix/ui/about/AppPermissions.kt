@@ -43,7 +43,7 @@ internal object AppPermissions {
         ),
         Item(
             Manifest.permission.PACKAGE_USAGE_STATS, "사용 기록 접근",
-            "앱별 크기 목록을 최근 사용 순으로 정렬합니다. Shizuku가 연결되면 FoldFit이 스스로 허용합니다.", How.USER,
+            "앱별 크기 목록을 최근 사용 순으로 정렬합니다. Shizuku가 연결되면 GOAT가 스스로 허용합니다.", How.USER,
         ),
         Item(
             Manifest.permission.RECEIVE_BOOT_COMPLETED, "부팅 완료 알림 받기",

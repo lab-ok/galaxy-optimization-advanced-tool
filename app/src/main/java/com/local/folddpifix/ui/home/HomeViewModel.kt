@@ -211,7 +211,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * 진단 로그를 Download/FoldFit에 파일로 저장한다. 공유용으로 진단 파일과 오늘 로그 파일의 Uri를 돌려준다.
+     * 진단 로그를 Download/GOAT에 파일로 저장한다. 공유용으로 진단 파일과 오늘 로그 파일의 Uri를 돌려준다.
      * 저장에 실패하면 빈 목록.
      */
     suspend fun exportDiagnostics(): List<Uri> = withContext(Dispatchers.IO) {

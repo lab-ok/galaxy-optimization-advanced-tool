@@ -20,8 +20,8 @@ import rikka.shizuku.SystemServiceHelper
 import java.lang.reflect.InvocationTargetException
 
 /**
- * Shizuku 연동. Shizuku가 켜져 있고 FoldFit을 허용했으면 셸 권한이 필요한 일을 PC 없이 한다(ShizukuBinderWrapper).
- * - 기본 기능: FoldFit에 WRITE_SECURE_SETTINGS를 스스로 부여한다([grantSecureSettings]). 한 번 받으면 Shizuku 없이도 유지된다.
+ * Shizuku 연동. Shizuku가 켜져 있고 GOAT를 허용했으면 셸 권한이 필요한 일을 PC 없이 한다(ShizukuBinderWrapper).
+ * - 기본 기능: GOAT에 WRITE_SECURE_SETTINGS를 스스로 부여한다([grantSecureSettings]). 한 번 받으면 Shizuku 없이도 유지된다.
  * - 앱별 화면 배율 설정: 삼성 앱별 화면 크기 함수를 셸 권한으로 부른다. PC 도우미([DensityServer])와 같은 일을 한다.
  * Shizuku 13.6+는 Android 13 이상에서 Wi-Fi에 연결돼 있으면 재부팅 뒤 스스로 다시 켜진다.
  */
@@ -88,7 +88,7 @@ object ShizukuAccess {
     private fun prefs(context: Context) = context.getSharedPreferences("shizuku", Context.MODE_PRIVATE)
 
     /**
-     * 무선 디버깅을 켠다. FoldFit은 기본 기능 때문에 WRITE_SECURE_SETTINGS를 이미 받아 두었으므로
+     * 무선 디버깅을 켠다. GOAT는 기본 기능 때문에 WRITE_SECURE_SETTINGS를 이미 받아 두었으므로
      * 개발자 옵션 화면에 가지 않고 바로 켤 수 있다. 권한이 없으면 false(개발자 옵션 화면으로 안내).
      */
     fun enableWirelessDebug(context: Context): Boolean {
@@ -102,7 +102,7 @@ object ShizukuAccess {
     }
 
     /**
-     * FoldFit에 WRITE_SECURE_SETTINGS를 셸 권한으로 부여한다(adb의 `pm grant`와 같은 일).
+     * GOAT에 WRITE_SECURE_SETTINGS를 셸 권한으로 부여한다(adb의 `pm grant`와 같은 일).
      * IPermissionManager.grantRuntimePermission은 판본마다 인자가 달라(사용자 ID 앞에 기기 ID가 붙기도 함) 형으로 맞춘다.
      */
     fun grantSecureSettings(context: Context): Boolean = runCatching {
@@ -162,7 +162,7 @@ object ShizukuAccess {
     /** 사용자가 정한 값만 읽는다(true). false면 삼성이 앱별로 정해 둔 기본값까지 섞여 나온다. */
     fun get(pkg: String, user: Int): Int = call("getCustomDensity", 3, pkg, user, true) as Int
 
-    /** FoldFit에 사용 기록 접근(최근 사용 순 정렬·지금 앱 찾기용)을 셸 권한으로 허용한다. */
+    /** GOAT에 사용 기록 접근(최근 사용 순 정렬·지금 앱 찾기용)을 셸 권한으로 허용한다. */
     fun grantUsageAccess(context: Context): Boolean = runCatching {
         val ops = HiddenApi.asInterface("com.android.internal.app.IAppOpsService", ShizukuBinderWrapper(SystemServiceHelper.getSystemService(Context.APP_OPS_SERVICE)))
         val code = runCatching {
@@ -176,6 +176,6 @@ object ShizukuAccess {
     /** 실기기 코드 기준 인자 순서: (패키지, 사용자, 밀도, 메모). 값은 [AppDensityPolicy.STEPS]와 0만. */
     fun set(pkg: String, user: Int, dpi: Int) {
         require(AppDensityPolicy.isAllowed(dpi)) { "허용되지 않는 값: $dpi" }
-        call("setUserCustomDensity", 4, pkg, user, dpi, "FoldFit")
+        call("setUserCustomDensity", 4, pkg, user, dpi, "GOAT")
     }
 }

@@ -10,7 +10,7 @@ import android.os.Process
 
 /**
  * 사용 기록(UsageStats)으로 앱을 최근 사용 순으로 정렬하고, 지금 화면에 떠 있던 앱을 찾는다.
- * 사용 기록 접근은 Shizuku가 켜져 있으면 FoldFit이 스스로 허용하고([ShizukuAccess.grantUsageAccess]),
+ * 사용 기록 접근은 Shizuku가 켜져 있으면 GOAT가 스스로 허용하고([ShizukuAccess.grantUsageAccess]),
  * 아니면 설정의 '사용 기록 접근' 화면에서 사용자가 켠다.
  */
 object AppUsage {
@@ -19,7 +19,7 @@ object AppUsage {
         return ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName) == AppOpsManager.MODE_ALLOWED
     }
 
-    /** '지금 쓰는 앱'으로 치지 않는 앱: FoldFit 자신(알림 버튼 화면), 시스템 UI(알림창), Shizuku. */
+    /** '지금 쓰는 앱'으로 치지 않는 앱: GOAT 자신(알림 버튼 화면), 시스템 UI(알림창), Shizuku. */
     fun notTargets(context: Context) = setOf(context.packageName, "com.android.systemui", ShizukuAccess.PACKAGE)
 
     /** 패키지별 마지막 사용 시각(최근 60일). 접근 권한이 없으면 빈 지도. */
@@ -33,7 +33,7 @@ object AppUsage {
     }
 
     /**
-     * 지금 쓰던 앱: 최근 6시간 사용 기록에서 마지막으로 화면에 올라온 앱(FoldFit·시스템 UI 제외).
+     * 지금 쓰던 앱: 최근 6시간 사용 기록에서 마지막으로 화면에 올라온 앱(GOAT·시스템 UI 제외).
      * 마지막이 홈 화면이면 null(열려 있는 앱이 없음).
      */
     fun foregroundApp(context: Context): String? {

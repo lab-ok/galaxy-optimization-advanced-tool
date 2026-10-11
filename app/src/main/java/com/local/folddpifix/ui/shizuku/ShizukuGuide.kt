@@ -37,7 +37,7 @@ import com.local.folddpifix.ui.liquid.LocalLiquid
 
 /**
  * Shizuku 설정 안내: 단계마다 버튼 하나로 진행하고, 끝난 단계는 돌아올 때마다 자동으로 확인해 체크한다.
- * ① 설치 → ② 무선 디버깅 켜기(FoldFit이 가진 WRITE_SECURE_SETTINGS로 바로 켬) → ③ Shizuku 페어링·시작 → ④ FoldFit 허용.
+ * ① 설치 → ② 무선 디버깅 켜기(GOAT가 가진 WRITE_SECURE_SETTINGS로 바로 켬) → ③ Shizuku 페어링·시작 → ④ GOAT 허용.
  * 마지막에 재부팅 뒤 자동 시작(Shizuku 설정 '부팅 시 시작')을 알려 준다.
  */
 @Composable
@@ -95,14 +95,14 @@ internal fun ShizukuGuide(
             LiquidButton("무선 디버깅 화면", modifier = Modifier.weight(1f), primary = false, onClick = { openDeveloperOptions(context) })
         }
     }
-    Step(4, "FoldFit 허용", done[3], current == 3) {
+    Step(4, "GOAT 허용", done[3], current == 3) {
         AllowStepArt()
         Hint("Shizuku가 묻는 창에서 '항상 허용'을 누르세요.")
         Action("허용하기") { ShizukuAccess.requestPermission() }
     }
     Spacer(Modifier.height(4.dp))
     Text(
-        "[켜기]를 누르면 FoldFit이 무선 디버깅을 대신 켜고, Shizuku가 켜지면 허용 창을 바로 띄웁니다.",
+        "[켜기]를 누르면 GOAT가 무선 디버깅을 대신 켜고, Shizuku가 켜지면 허용 창을 바로 띄웁니다.",
         color = c.muted, style = MaterialTheme.typography.labelSmall,
     )
 }

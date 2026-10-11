@@ -97,7 +97,7 @@ object Copy {
     const val TOAST_PERMISSION_RESET = "앱 설정을 초기화했습니다. PC에서 권한을 회수하세요"
     const val TOAST_PERMISSION_REMOVED = "권한이 제거되었습니다"
     const val TOAST_COPIED = "복사했습니다"
-    const val TOAST_REPORT_SAVED = "다운로드/FoldFit 폴더에 저장했습니다"
+    const val TOAST_REPORT_SAVED = "다운로드/GOAT 폴더에 저장했습니다"
     const val TOAST_REPORT_FAILED = "진단 파일을 만들지 못했습니다"
 
     // 앱별 화면 배율 설정

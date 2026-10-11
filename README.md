@@ -1,10 +1,12 @@
-# FoldFit
+# GOAT
+
+**Galaxy Optimization Advanced Tool** — 갤럭시 화면 배율 도구 (이전 이름: FoldFit)
 
 **Galaxy Z Fold의 외부·내부 화면에서 글자와 아이콘이 같은 크기로 보이게 맞춰 주는 앱**
 
 폴드는 외부 화면과 내부 화면의 픽셀 밀도(PPI)가 달라서, 같은 DPI(화면 크기 설정)를 써도 두 화면에서 글자와 아이콘의 실제 크기가 다르게 보입니다. 화면을 더 넓게 쓰려고 `adb shell wm density`로 DPI를 낮춰도, 재부팅하면 기본값으로 돌아가고 두 화면을 따로 맞추기도 번거롭습니다.
 
-FoldFit은 외부 화면 DPI 하나만 정하면 내부 화면 DPI를 두 화면의 해상도와 PPI로 계산해, 접어도 펴도 같은 실제 크기로 보이게 맞춥니다. 재부팅하거나 화면을 전환해도 자동으로 다시 적용합니다. ROOT 없이, 무료 앱 Shizuku나 PC의 adb로 권한을 처음 한 번만 주면 됩니다. 앱마다 화면 크기를 따로 정하는 기능(삼성 One UI 9 이상, Shizuku 필요)도 있습니다.
+GOAT는 외부 화면 DPI 하나만 정하면 내부 화면 DPI를 두 화면의 해상도와 PPI로 계산해, 접어도 펴도 같은 실제 크기로 보이게 맞춥니다. 재부팅하거나 화면을 전환해도 자동으로 다시 적용합니다. ROOT 없이, 무료 앱 Shizuku나 PC의 adb로 권한을 처음 한 번만 주면 됩니다. 앱마다 화면 크기를 따로 정하는 기능(삼성 One UI 9 이상, Shizuku 필요)도 있습니다.
 
 <p align="center">
   <img src="docs/screenshots/home.png" width="22%" alt="홈" />
@@ -15,7 +17,7 @@ FoldFit은 외부 화면 DPI 하나만 정하면 내부 화면 DPI를 두 화면
 
 ## adb 명령만 쓸 때와 비교
 
-| | `adb shell wm density`만 쓸 때 | FoldFit |
+| | `adb shell wm density`만 쓸 때 | GOAT |
 |---|---|---|
 | 바꿀 때마다 | PC를 연결하고 명령을 다시 입력 | 폰에서 슬라이더로 바로 조절 |
 | 재부팅 후 | 기기 기본값으로 돌아가 다시 입력해야 함 | 부팅 뒤 자동으로 다시 적용 |
@@ -34,8 +36,8 @@ FoldFit은 외부 화면 DPI 하나만 정하면 내부 화면 DPI를 두 화면
 - **외부 DPI 변경 감지**: 시스템 설정의 화면 크기 등으로 DPI가 바뀌면 덮어쓰지 않고, 그 값을 기준으로 할지 이전 값으로 복원할지 알림과 홈 카드로 묻습니다.
 - **크기 테스트**: 두 화면은 실제 높이가 거의 같아서, 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다. 전체 화면에 번호 매긴 줄을 채워 접고 펴며 비교할 수 있고, 카드(짧은 변 54 mm)로 맞춘 자로 실제 길이도 잴 수 있습니다.
 - **권한 설정 안내**: 연결 방식(USB/무선)과 PC 운영체제(Windows/Mac/Linux)에 맞춘 단계별 안내, 명령 복사, 자주 나오는 오류 해결 방법을 앱 안에서 보여 줍니다. 안내문을 PC로 보내거나 메일로 보낼 수도 있습니다.
-- **앱별 화면 배율 설정**: 삼성 '앱 화면 크게/작게'와 같은 앱별 크기를 FoldFit에서 바꿉니다(One UI 9 이상, Shizuku 필요). 최근 사용 순 목록, 적용된 앱 모아 보기, 알림창의 [작게]·[기본]·[크게] 버튼, 한 번에 기본으로 되돌리기를 지원합니다.
-- **문제 신고**: 진단 파일과 오늘 로그를 첨부한 메일을 바로 작성합니다. 로그는 `다운로드/FoldFit/`에 날짜별로 저장됩니다.
+- **앱별 화면 배율 설정**: 삼성 '앱 화면 크게/작게'와 같은 앱별 크기를 GOAT에서 바꿉니다(One UI 9 이상, Shizuku 필요). 최근 사용 순 목록, 적용된 앱 모아 보기, 알림창의 [작게]·[기본]·[크게] 버튼, 한 번에 기본으로 되돌리기를 지원합니다.
+- **문제 신고**: 진단 파일과 오늘 로그를 첨부한 메일을 바로 작성합니다. 로그는 `다운로드/GOAT/`에 날짜별로 저장됩니다.
 
 ## 호환 기기
 
@@ -59,7 +61,7 @@ Android 12(API 31) 이상의 Galaxy Z Fold 시리즈를 대상으로 합니다.
 
 1. [Releases](../../releases/latest)에서 최신 APK를 내려받아 설치합니다(출처를 알 수 없는 앱 설치 허용 필요).
 2. 앱을 열면 **권한 설정 필요** 카드가 보입니다. [설정 방법]을 누르고 연결 방법을 고릅니다.
-   - **Shizuku**(PC 없이): 무료 앱 [Shizuku](https://shizuku.rikka.app/)를 설치하고, 안내에 따라 무선 디버깅으로 페어링·시작한 뒤 FoldFit을 허용하면 FoldFit이 스스로 권한을 받습니다. Wi-Fi가 필요하며, 권한을 받은 뒤에는 Shizuku를 꺼도 됩니다.
+   - **Shizuku**(PC 없이): 무료 앱 [Shizuku](https://shizuku.rikka.app/)를 설치하고, 안내에 따라 무선 디버깅으로 페어링·시작한 뒤 GOAT를 허용하면 GOAT가 스스로 권한을 받습니다. Wi-Fi가 필요하며, 권한을 받은 뒤에는 Shizuku를 꺼도 됩니다.
    - **PC 무선** / **PC 유선**: PC 운영체제에 맞춘 안내대로 PC에서 아래 명령을 한 번 실행합니다.
 
 ```bash
@@ -90,11 +92,11 @@ adb shell pm grant com.local.folddpifix android.permission.WRITE_SECURE_SETTINGS
 
 ### 앱별 화면 배율 설정
 
-- **필요한 것**: 삼성 One UI 9 이상과 Shizuku. 삼성은 앱별 크기를 바꾸는 시스템 함수(`IActivityTaskManager.setUserCustomDensity`)에 시스템 전용 권한을 걸어 두어, Shizuku가 빌려 주는 셸 권한으로 부릅니다. Shizuku가 없으면 PC에서 명령 한 번으로 FoldFit 셸 도우미를 켜서 쓸 수도 있습니다.
+- **필요한 것**: 삼성 One UI 9 이상과 Shizuku. 삼성은 앱별 크기를 바꾸는 시스템 함수(`IActivityTaskManager.setUserCustomDensity`)에 시스템 전용 권한을 걸어 두어, Shizuku가 빌려 주는 셸 권한으로 부릅니다. Shizuku가 없으면 PC에서 명령 한 번으로 GOAT 셸 도우미를 켜서 쓸 수도 있습니다.
 - **Shizuku가 필요한 때**: 값을 바꿀 때만입니다. 정해 둔 크기는 시스템에 저장돼 Shizuku가 꺼져 있어도, 재부팅해도 유지됩니다.
 - **여섯 단계**: 시스템이 320·360·420·450·480·510만 받습니다. '기본'은 앱별 설정을 지웁니다.
 - **접고 펼 때**: 앱별 크기는 하나의 고정 DPI라 두 화면에 같은 숫자가 쓰여, 픽셀 밀도가 다른 두 화면에서 실제 크기가 다르게 보입니다.
-- **알림창 조절**: 켜 두면 알림에 지금 보고 있는 앱과 크기가 나옵니다. 앞 화면 앱은 Shizuku 셸 권한으로 등록한 작업 스택 감시(ITaskStackListener)로 알아내므로 주기적으로 확인하지 않습니다. 크기를 바꾸면 삼성 동작대로 그 앱이 다시 시작되고, FoldFit이 다시 열어 줍니다.
+- **알림창 조절**: 켜 두면 알림에 지금 보고 있는 앱과 크기가 나옵니다. 앞 화면 앱은 Shizuku 셸 권한으로 등록한 작업 스택 감시(ITaskStackListener)로 알아내므로 주기적으로 확인하지 않습니다. 크기를 바꾸면 삼성 동작대로 그 앱이 다시 시작되고, GOAT가 다시 열어 줍니다.
 
 ### 외부 DPI 변경 처리
 
@@ -110,7 +112,7 @@ adb shell pm grant com.local.folddpifix android.permission.WRITE_SECURE_SETTINGS
 
 ### 개인정보와 권한
 
-네트워크·저장소·위치 권한을 쓰지 않으며, 어떤 데이터도 외부로 보내지 않습니다. Shizuku는 권한을 받을 때만 쓰고, 설치돼 있는지 확인하는 것 말고는 다른 앱 정보를 읽지 않습니다. 로그와 진단 파일은 기기 안(`다운로드/FoldFit/`)에만 저장되고, 사용자가 문제 신고로 직접 보낼 때만 메일에 첨부됩니다. 쓰는 권한 전체와 이유는 앱 정보 화면에 있습니다.
+네트워크·저장소·위치 권한을 쓰지 않으며, 어떤 데이터도 외부로 보내지 않습니다. Shizuku는 권한을 받을 때만 쓰고, 설치돼 있는지 확인하는 것 말고는 다른 앱 정보를 읽지 않습니다. 로그와 진단 파일은 기기 안(`다운로드/GOAT/`)에만 저장되고, 사용자가 문제 신고로 직접 보낼 때만 메일에 첨부됩니다. 쓰는 권한 전체와 이유는 앱 정보 화면에 있습니다.
 
 ## DPI 복구
 
@@ -164,7 +166,7 @@ app/src/main/java/com/local/folddpifix/
 │   ├── appsize/                 앱별 크기: DensityShell(호출 창구), DensityServer(PC 셸 도우미), AppList·AppUsage,
 │   │                            ForegroundWatcher(앞 화면 앱), AppDensityService·Notifier(알림창 조절)
 │   ├── settings/                SettingsRepository(외부 DPI·보정·자동·학습 화면·꺼짐 PPI·적용 기록·외부 변경)
-│   └── log/                     LogRepository, PublicLogFile(Download/FoldFit), CrashRecorder, DiagnosticReport
+│   └── log/                     LogRepository, PublicLogFile(Download/GOAT), CrashRecorder, DiagnosticReport
 ├── domain/                      판단·계산(단위 테스트 대상)
 │   ├── DpiPolicy · ScreenPolicy  검증·반복 방지(자동만) / 외부·내부 판정(픽셀 수)·PPI 비율·적용 보류
 │   ├── PanelSpec(DensityPlan)    PPI 결정(사양표 → 꺼짐 보고값 → 보고값), 목표 계산 일원화

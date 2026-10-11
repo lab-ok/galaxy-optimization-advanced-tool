@@ -17,15 +17,15 @@ import java.lang.reflect.Method
 import kotlin.system.exitProcess
 
 /**
- * FoldFit 셸 도우미(Shizuku가 없을 때의 예비 경로). PC에서 adb 셸로 한 번 띄우면 셸 권한(uid 2000)으로 돌면서
- * FoldFit에 바인더 하나를 건네고, 앱별 화면 크기 '읽기·바꾸기' 두 가지만 대신 해 준다.
+ * GOAT 셸 도우미(Shizuku가 없을 때의 예비 경로). PC에서 adb 셸로 한 번 띄우면 셸 권한(uid 2000)으로 돌면서
+ * GOAT에 바인더 하나를 건네고, 앱별 화면 크기 '읽기·바꾸기' 두 가지만 대신 해 준다.
  * 삼성 함수(IActivityTaskManager.getCustomDensity/setUserCustomDensity)가 앱에는 줄 수 없는
  * MANAGE_ACTIVITY_TASKS 권한을 요구하기 때문이다(adb 셸은 이 권한을 가지고 있다).
  *
  * 안전 장치
- * - 호출자 확인: FoldFit uid가 아닌 요청은 모두 거절한다.
+ * - 호출자 확인: GOAT uid가 아닌 요청은 모두 거절한다.
  * - 기능 제한: 임의 명령 실행은 없다. 바꾸는 값도 삼성이 허용하는 단계와 0(기본)만 받는다([AppDensityPolicy]).
- * - 수명: FoldFit 프로세스가 끝나거나 [IDLE_MS] 동안 요청이 없으면 스스로 끝난다.
+ * - 수명: GOAT 프로세스가 끝나거나 [IDLE_MS] 동안 요청이 없으면 스스로 끝난다.
  *
  * 띄우는 명령은 [startCommand]가 만든다. 앱 쪽 연결은 [ShellBridgeProvider]·[DensityShell].
  */
@@ -44,19 +44,19 @@ object DensityServer {
 
     /** PC PowerShell(platform-tools 폴더)에서 실행할 명령. 작은따옴표 안이라 $( )를 PowerShell이 건드리지 않는다. */
     fun startCommand(): String =
-        ".\\adb shell 'CLASSPATH=\$(pm path $PKG | cut -d: -f2) setsid app_process /system/bin --nice-name=foldfit_shell " +
-            "${DensityServer::class.java.name} > /data/local/tmp/foldfit-shell.log 2>&1 &'"
+        ".\\adb shell 'CLASSPATH=\$(pm path $PKG | cut -d: -f2) setsid app_process /system/bin --nice-name=goat_shell " +
+            "${DensityServer::class.java.name} > /data/local/tmp/goat-shell.log 2>&1 &'"
 
     @JvmStatic
     fun main(args: Array<String>) {
         log("시작 uid=${Process.myUid()} pid=${Process.myPid()}")
         Looper.prepareMainLooper()
         val handler = Handler(Looper.getMainLooper())
-        val appUid = runCatching { packageUid(PKG) }.getOrElse { quit("FoldFit을 찾지 못했습니다: ${HiddenApi.describe(it)}") }
+        val appUid = runCatching { packageUid(PKG) }.getOrElse { quit("GOAT를 찾지 못했습니다: ${HiddenApi.describe(it)}") }
         val atm = runCatching { asInterface("activity_task", "android.app.IActivityTaskManager") }.getOrNull()
         val getM = atm?.javaClass?.methods?.firstOrNull { it.name == "getCustomDensity" && it.parameterTypes.size == 3 }
         val setM = atm?.javaClass?.methods?.firstOrNull { it.name == "setUserCustomDensity" && it.parameterTypes.size == 4 }
-        log("FoldFit uid=$appUid · 삼성 함수 ${if (getM != null && setM != null) "있음" else "없음"}")
+        log("GOAT uid=$appUid · 삼성 함수 ${if (getM != null && setM != null) "있음" else "없음"}")
 
         val idle = Runnable { quit("${IDLE_MS / 60000}분 동안 요청이 없어 끝냅니다.") }
         val binder = object : Binder() {
@@ -84,11 +84,11 @@ object DensityServer {
                             if (setM == null) throw UnsupportedOperationException("이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.")
                             require(AppDensityPolicy.isAllowed(dpi)) { "허용되지 않는 값: $dpi" }
                             // 실기기 코드 기준 인자 순서는 (패키지, 사용자, 밀도, 메모). 바뀌면 그 앱을 다시 띄워 바로 적용된다.
-                            unwrap { setM.invoke(atm, pkg, user, dpi, "FoldFit") }
+                            unwrap { setM.invoke(atm, pkg, user, dpi, "GOAT") }
                             log("바꿈: $pkg → ${if (dpi == 0) "기본" else dpi}")
                             reply?.writeNoException()
                         }
-                        EXIT -> { reply?.writeNoException(); handler.post { quit("FoldFit이 끝내기를 요청했습니다.") } }
+                        EXIT -> { reply?.writeNoException(); handler.post { quit("GOAT가 끝내기를 요청했습니다.") } }
                         else -> return false
                     }
                 } catch (e: Exception) {
@@ -99,12 +99,12 @@ object DensityServer {
             }
         }
 
-        // FoldFit의 ShellBridgeProvider를 셸 권한으로 열어 바인더를 건넨다. FoldFit이 꺼져 있으면 시스템이 띄운다.
-        val provider = runCatching { openProvider() }.getOrElse { quit("FoldFit에 연결하지 못했습니다: ${HiddenApi.describe(it)}") }
+        // GOAT의 ShellBridgeProvider를 셸 권한으로 열어 바인더를 건넨다. GOAT가 꺼져 있으면 시스템이 띄운다.
+        val provider = runCatching { openProvider() }.getOrElse { quit("GOAT에 연결하지 못했습니다: ${HiddenApi.describe(it)}") }
         runCatching { callProvider(provider, Bundle().apply { putBinder("binder", binder) }) }
             .onFailure { quit("바인더를 건네지 못했습니다: ${HiddenApi.describe(it)}") }
-        // FoldFit 프로세스가 끝나면 도우미도 함께 끝낸다.
-        (provider as IInterface).asBinder().linkToDeath({ quit("FoldFit이 종료돼 함께 끝냅니다.") }, 0)
+        // GOAT 프로세스가 끝나면 도우미도 함께 끝낸다.
+        (provider as IInterface).asBinder().linkToDeath({ quit("GOAT가 종료돼 함께 끝냅니다.") }, 0)
         handler.postDelayed(idle, IDLE_MS)
         log("연결됨")
         Looper.loop()
@@ -138,7 +138,7 @@ object DensityServer {
         val am = asInterface("activity", "android.app.IActivityManager")
         val m: Method = am.javaClass.methods.first { it.name == "getContentProviderExternal" && it.parameterTypes.size == 4 }
         val holder = m.invoke(am, AUTHORITY, 0, Binder(), "foldfit_shell")
-            ?: error("$AUTHORITY 제공자가 없습니다. FoldFit이 설치돼 있는지 확인하세요.")
+            ?: error("$AUTHORITY 제공자가 없습니다. GOAT가 설치돼 있는지 확인하세요.")
         return holder.javaClass.getField("provider").get(holder)!!
     }
 

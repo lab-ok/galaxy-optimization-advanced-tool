@@ -86,7 +86,7 @@ internal fun DangerConfirmBox(message: String, note: String? = null, actions: @C
 /**
  * 글자를 클립보드에 복사한다. Android 13부터는 시스템이 복사 확인을 띄우므로, 앱이 따로 알려야 하면(12 이하) true.
  */
-internal fun copyText(context: Context, text: String, label: String = "FoldFit"): Boolean {
+internal fun copyText(context: Context, text: String, label: String = "GOAT"): Boolean {
     context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(label, text))
     return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
 }

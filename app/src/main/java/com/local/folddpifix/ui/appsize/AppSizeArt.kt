@@ -92,7 +92,7 @@ internal fun AppScaleArt() {
     }
 }
 
-/** 2. Shizuku 다리: FoldFit → Shizuku → 시스템. 점이 화살표를 따라 흘러간다. */
+/** 2. Shizuku 다리: GOAT → Shizuku → 시스템. 점이 화살표를 따라 흘러간다. */
 @Composable
 internal fun ShizukuBridgeArt() {
     val t = artLoop(2200)
@@ -100,7 +100,7 @@ internal fun ShizukuBridgeArt() {
         val y = size.height * 0.42f
         val xs = listOf(size.width * 0.17f, size.width * 0.5f, size.width * 0.83f)
         val box = size.height * 0.42f
-        val names = listOf("FoldFit", "Shizuku", "시스템")
+        val names = listOf("GOAT", "Shizuku", "시스템")
         val subs = listOf("크기 바꾸기 요청", "셸 권한 빌려줌", "앱 크기 저장")
         // 화살표
         for (i in 0..1) {
@@ -215,7 +215,7 @@ internal fun NotifyArt() {
         drawRoundRect(c.surface, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()))
         drawRoundRect(c.line, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()), style = Stroke(1.5.dp.toPx()))
         val textLeft = tl.x + 16.dp.toPx()
-        val tTitle = tm.measure("FoldFit · 앱 화면 크기", TextStyle(color = c.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold))
+        val tTitle = tm.measure("GOAT · 앱 화면 크기", TextStyle(color = c.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold))
         drawText(tTitle, topLeft = Offset(textLeft, tl.y + 10.dp.toPx()))
         val tBody = tm.measure(if (pressed) "Discord · 480 dpi" else "Discord · 기본(450)", TextStyle(color = c.muted, fontSize = 10.sp))
         drawText(tBody, topLeft = Offset(textLeft, tl.y + 26.dp.toPx()))
