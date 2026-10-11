@@ -37,8 +37,12 @@ object ShakeRotate {
     fun level(context: Context): Int =
         prefs(context).getInt("level", ShakeRotatePolicy.DEFAULT_LEVEL).coerceIn(ShakeRotatePolicy.MIN_LEVEL, ShakeRotatePolicy.MAX_LEVEL)
 
+    /** 지금 민감도 단계(화면이 바로 따라 바뀌게, 자동 맞추기 시트에서 바꿔도). */
+    val levelNow = kotlinx.coroutines.flow.MutableStateFlow(ShakeRotatePolicy.DEFAULT_LEVEL)
+
     fun setLevel(context: Context, level: Int, how: String) {
         prefs(context).edit().putInt("level", level).apply()
+        levelNow.value = level
         LogRepository.from(context).add("흔들어서 화면 회전 민감도: $level($how)")
         if (enabled(context)) start(context)  // 서비스가 새 민감도를 읽게 한다
     }

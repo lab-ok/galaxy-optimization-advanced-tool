@@ -85,19 +85,34 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent) {
         val v = event.values
-        val now = SystemClock.elapsedRealtime()
+        // 센서 값이 실제로 잰 시각(ms). 전달이 몰려 와도 휘두름 간격을 정확히 잰다.
+        val now = event.timestamp / 1_000_000
         when (event.sensor.type) {
             Sensor.TYPE_GYROSCOPE -> detector.feedGyro(v[0], v[1], v[2], now)
-            Sensor.TYPE_PROXIMITY -> covered = v[0] < event.sensor.maximumRange
+            // 근접 센서는 기기마다 '멀다'를 최대 거리나 5cm 등으로 알린다: 최대 거리의 절반보다 가까울 때만 가려진 것으로 본다
+            Sensor.TYPE_PROXIMITY -> covered = v[0] < event.sensor.maximumRange * 0.5f
             Sensor.TYPE_ACCELEROMETER -> {
-                if (!detector.feed(v[0], v[1], v[2], now)) return
-                if (ShakeRotate.calibrating || turning || covered) return
+                val shook = detector.feed(v[0], v[1], v[2], now)
+                detector.lastMiss?.let { missed(it) }
+                if (!shook) return
+                if (covered) { missed("근접 센서 가려짐(주머니 속)"); return }
+                if (ShakeRotate.calibrating || turning) return
                 beginTurn()
             }
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
+
+    private var lastMissLog = 0L
+
+    /** 흔들었는데 돌리지 않은 이유를 로그에 남긴다(문제 신고로 원인을 볼 수 있게, 5초에 한 번만). */
+    private fun missed(why: String) {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastMissLog < 5000) return
+        lastMissLog = now
+        LogRepository.from(context).add("흔들어서 화면 회전: 흔들림은 잡혔지만 돌리지 않음 - $why")
+    }
 
     // --- 흔든 순간만 자동 회전 ---
 

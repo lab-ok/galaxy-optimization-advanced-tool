@@ -7,8 +7,42 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
+/**
+ * 흔들기 판정 시험. 실제 센서처럼 50Hz(20ms 간격)로 값을 넣는다.
+ * 손목 흔들기는 3~5Hz 사인파(세로로 든 폰의 x축), 걷기는 2Hz 위아래 흔들림, 탭은 한 샘플짜리 충격으로 흉내 낸다.
+ */
 class ShakeRotatePolicyTest {
+    private val dt = 20L
+
+    /** 세로로 든 채 [restMs] 동안 가만히. */
+    private fun Detector.rest(from: Long, restMs: Long): Long {
+        var t = from
+        while (t < from + restMs) { feed(0f, 9.8f, 0f, t); t += dt }
+        return t
+    }
+
+    /**
+     * 손목으로 x축을 따라 [hz]로 [amp] 세기만큼 [ms] 동안 흔든다. [gyro]가 있으면 같은 리듬으로 손목 회전(rad/s)도 넣는다.
+     * 판정된 순간이 있으면 true.
+     */
+    private fun Detector.shake(amp: Float, hz: Float = 4f, ms: Long = 700, gyro: Float? = null, from: Long = rest(0, 1000)): Boolean {
+        var t = from
+        var shook = false
+        while (t < from + ms) {
+            val ph = 2 * PI * hz * (t - from) / 1000.0
+            gyro?.let { feedGyro(0f, 0f, (it * cos(ph)).toFloat(), t) }
+            shook = feed((amp * sin(ph)).toFloat(), 9.8f, 0f, t) || shook
+            t += dt
+        }
+        return shook
+    }
+
+    private fun detector(level: Int) = Detector(ShakeRotatePolicy.thresholdOf(level), ShakeRotatePolicy.gyroMinOf(level))
+
     @Test
     fun levelsMapBothWays() {
         assertTrue("단계가 높을수록 예민(기준이 낮다)", ShakeRotatePolicy.thresholdOf(20) < ShakeRotatePolicy.thresholdOf(1))
@@ -17,104 +51,94 @@ class ShakeRotatePolicyTest {
         }
     }
 
-    /** 세로로 든 채 가만히 있다가, 기기 x축으로 [amp]만큼 [count]번 휙휙(좌우 번갈아) 흔든다. 판정되면 true. */
-    private fun Detector.flicks(amp: Float, count: Int, gapMs: Long = 150, startMs: Long = 1000): Boolean {
-        repeat(30) { feed(0f, 9.8f, 0f, it * 20L) }
-        var t = startMs
-        var shook = false
-        repeat(count) { i ->
-            val dir = if (i % 2 == 0) 1 else -1
-            shook = feed(amp * dir, 9.8f, 0f, t) || shook
-            shook = feed(0f, 9.8f, 0f, t + 40) || shook  // 흔들림 하나가 끝남
-            t += gapMs
-        }
-        return shook
-    }
-
     @Test
-    fun swingsAgainstGravityCountToo() {
-        // 중력 반대(아래→위로 -y)로 흔든 것도 센다: 예전처럼 크기에서 중력을 빼면 거의 0이 되던 경우
-        val d = Detector(ShakeRotatePolicy.thresholdOf(ShakeRotatePolicy.DEFAULT_LEVEL))
-        repeat(30) { d.feed(0f, 9.8f, 0f, it * 20L) }
-        var shook = false
-        var t = 1000L
-        repeat(3) { i ->
-            // 아래로 빠르게(중력 쪽 크기가 줄어듦) ↔ 위로
-            shook = d.feed(0f, if (i % 2 == 0) 9.8f - 14f else 9.8f + 14f, 0f, t) || shook
-            shook = d.feed(0f, 9.8f, 0f, t + 40) || shook
-            t += 150
-        }
-        assertTrue(shook)
-    }
-
-    @Test
-    fun tapsInOneDirectionAreNotShakes() {
-        // 뒷면을 같은 쪽으로 톡톡톡: 세기는 충분해도 왕복이 아니라 아니다
-        val d = Detector(ShakeRotatePolicy.thresholdOf(ShakeRotatePolicy.DEFAULT_LEVEL))
-        repeat(30) { d.feed(0f, 9.8f, 0f, it * 20L) }
-        var t = 1000L
-        repeat(4) {
-            assertFalse(d.feed(0f, 9.8f, 20f, t))
-            assertFalse(d.feed(0f, 9.8f, 0f, t + 40))
-            t += 150
+    fun continuousShakeIsCountedAtEverySensitivity() {
+        // 예전 판정은 계속 흔들면 흔들림이 끝나지 않아(세기가 기준 절반 아래로 안 떨어짐) 높은 민감도에서 오히려 못 잡았다
+        for (level in listOf(1, 8, 14, 20)) {
+            val amp = ShakeRotatePolicy.thresholdOf(level) * 1.6f
+            assertTrue("민감도 $level: 기준보다 센 연속 흔들기", detector(level).shake(amp, gyro = 4f))
         }
     }
 
     @Test
-    fun gyroMustShowRotationWhenAvailable() {
-        val level = ShakeRotatePolicy.DEFAULT_LEVEL
-        val still = Detector(ShakeRotatePolicy.thresholdOf(level), ShakeRotatePolicy.gyroMinOf(level))
-        still.feedGyro(0f, 0f, 0.1f, 900)
-        assertFalse("회전 없는 왕복 충격은 아니다", still.flicks(15f, 3))
-        val wrist = Detector(ShakeRotatePolicy.thresholdOf(level), ShakeRotatePolicy.gyroMinOf(level))
-        wrist.feedGyro(0f, 0f, 0.1f, 900)
-        wrist.feedGyro(0f, 0f, 3f, 1100)
-        assertTrue("손목이 돌면 흔들기", wrist.flicks(15f, 3))
+    fun maxSensitivityCatchesGentleShake() {
+        assertTrue("민감도 20이면 가볍게(5m/s²) 흔들어도 된다", detector(20).shake(5f, gyro = 2f))
     }
 
     @Test
-    fun lightFlicksShakeAtDefault() {
-        val d = Detector(ShakeRotatePolicy.thresholdOf(ShakeRotatePolicy.DEFAULT_LEVEL))
-        assertTrue("기본 단계에서는 가볍게 휙휙 흔들어도 돌아간다", d.flicks(13f, 3))
+    fun lowSensitivityNeedsStrongShake() {
+        assertFalse(detector(1).shake(12f, gyro = 4f))
+        assertTrue(detector(1).shake(30f, gyro = 4f))
+    }
+
+    @Test
+    fun detectsQuicklyWithinAboutHalfASecond() {
+        // 4Hz면 125ms마다 방향이 바뀐다: 세 번째 휘두름은 시작 뒤 0.5초 안에 잡혀야 한다
+        val d = detector(14)
+        val from = d.rest(0, 1000)
+        var t = from
+        var at = -1L
+        while (t < from + 1000 && at < 0) {
+            val ph = 2 * PI * 4 * (t - from) / 1000.0
+            d.feedGyro(0f, 0f, (4 * cos(ph)).toFloat(), t)
+            if (d.feed((15 * sin(ph)).toFloat(), 9.8f, 0f, t)) at = t - from
+            t += dt
+        }
+        assertTrue("판정 시각 ${at}ms", at in 1..500)
         assertEquals(3, d.lastPattern.size)
     }
 
     @Test
     fun walkingAndSlowTiltAreNotShakes() {
-        val d = Detector(ShakeRotatePolicy.thresholdOf(ShakeRotatePolicy.DEFAULT_LEVEL))
-        var t = 0L
-        repeat(300) { i ->
-            assertFalse("걷는 정도의 흔들림", d.feed(0f, 9.8f + if (i % 25 < 3) 3.5f else 0f, 0f, t))
-            t += 20
+        val d = detector(14)
+        var t = d.rest(0, 1000)
+        // 걷기: 2Hz 위아래 3m/s², 5초
+        repeat(250) {
+            val ph = 2 * PI * 2 * it * dt / 1000.0
+            d.feedGyro(0.3f, 0f, 0f, t)
+            assertFalse("걷기", d.feed(0f, 9.8f + (3 * sin(ph)).toFloat(), 0f, t))
+            t += dt
         }
-        // 천천히 가로로 눕히기(2초에 걸쳐)
+        // 2초에 걸쳐 천천히 가로로 눕히기
         repeat(100) { i ->
             val a = Math.toRadians(90.0 * i / 99)
-            assertFalse("천천히 돌리기", d.feed((9.8 * Math.sin(a)).toFloat(), (9.8 * Math.cos(a)).toFloat(), 0f, t))
-            t += 20
+            assertFalse("천천히 돌리기", d.feed((9.8 * sin(a)).toFloat(), (9.8 * cos(a)).toFloat(), 0f, t))
+            t += dt
         }
     }
 
     @Test
-    fun twoFlicksOrSlowFlicksAreNotEnough() {
-        assertFalse(Detector(ShakeRotatePolicy.thresholdOf(14)).flicks(20f, 2))
-        assertFalse("너무 띄엄띄엄", Detector(ShakeRotatePolicy.thresholdOf(14)).flicks(20f, 3, gapMs = 600))
+    fun tapsInOneDirectionAreNotShakes() {
+        // 뒷면을 같은 쪽으로 톡톡톡톡: 세기는 충분해도 방향이 바뀌지 않아 한 번으로 남는다
+        val d = detector(14)
+        var t = d.rest(0, 1000)
+        repeat(4) {
+            assertFalse(d.feed(0f, 9.8f, 25f, t)); t += dt
+            t = d.rest(t, 140)
+        }
     }
 
     @Test
-    fun levelChangesWhatCounts() {
-        assertFalse(Detector(ShakeRotatePolicy.thresholdOf(1)).flicks(13f, 3))
-        assertTrue(Detector(ShakeRotatePolicy.thresholdOf(20)).flicks(7f, 3))
+    fun shakeWithoutWristRotationIsRejectedWhenGyroExists() {
+        assertFalse("회전 없는 왕복 진동(차량 등)", detector(14).shake(15f, gyro = 0.1f))
+        assertTrue("손목이 돌면 흔들기", detector(14).shake(15f, gyro = 4f))
+    }
+
+    @Test
+    fun slowSwayIsNotAShake() {
+        // 1Hz로 천천히 좌우: 휘두름 사이가 너무 길다
+        assertFalse(detector(20).shake(12f, hz = 1f, ms = 1500, gyro = 3f))
     }
 
     @Test
     fun calibrateUsesTypicalStrongSwing() {
         assertNull("한 번만 흔들면 다시", ShakeRotatePolicy.calibrate(listOf(20f)))
-        assertNull("너무 약하면 다시", ShakeRotatePolicy.calibrate(listOf(2f, 3f, 1f)))
-        val level = ShakeRotatePolicy.calibrate(listOf(18f, 20f, 22f, 5f))!!
-        // 가운데(20)의 60% = 12 근처 기준
-        assertEquals(ShakeRotatePolicy.levelOf(12f), level)
-        assertTrue("그 세기로 흔들면 돌아간다", Detector(ShakeRotatePolicy.thresholdOf(level)).flicks(18f, 3))
+        assertNull("너무 약하면 다시", ShakeRotatePolicy.calibrate(listOf(1f, 1.5f, 1f)))
+        val d = Detector(ShakeRotatePolicy.CALIBRATE_MIN)
+        d.shake(16f, gyro = 4f, ms = 1500)
+        val level = ShakeRotatePolicy.calibrate(d.peaks.map { it.force })!!
+        assertTrue("맞춘 세기로 흔들면 돌아간다(단계 $level)", detector(level).shake(16f, gyro = 4f))
+        assertTrue("조금 약하게 흔들어도 돌아간다", detector(level).shake(12f, gyro = 4f))
     }
 
     @Test

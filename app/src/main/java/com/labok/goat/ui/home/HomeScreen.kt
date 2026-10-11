@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.rotate.ShakeCalibrationSheet
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.rotate.ShakeRotateHelpSheet
 import com.labok.goat.ui.rotate.ShakeRotateScreen
@@ -133,7 +134,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -359,7 +360,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                         when (f) {
                             NavItem.DPI_MATCH -> dpiMatchList(inner)
                             NavItem.APP_SIZE -> AppSizeScreen(inner, onGuide = { sheet = Sheet.APP_GUIDE }, onReset = { sheet = Sheet.APP_RESET })
-                            NavItem.SHAKE_ROTATE -> ShakeRotateScreen(inner, onGuide = { sheet = Sheet.GUIDE })
+                            NavItem.SHAKE_ROTATE -> ShakeRotateScreen(inner, onGuide = { sheet = Sheet.GUIDE }, onCalibrate = { sheet = Sheet.SHAKE_CALIBRATE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                         }
                     }
@@ -397,6 +398,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.APP_GUIDE -> AppSizeGuideSheet()
                     Sheet.APP_RESET -> AppSizeResetSheet(onDone = { msg -> sheet = null; vm.say(msg) })
                     Sheet.SHAKE_HELP -> ShakeRotateHelpSheet()
+                    Sheet.SHAKE_CALIBRATE -> ShakeCalibrationSheet(onClose = { sheet = null })
                 }
             }
         }

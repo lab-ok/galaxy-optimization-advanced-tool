@@ -1,5 +1,7 @@
 package com.labok.goat.ui.rotate
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
 import android.Manifest
@@ -66,16 +68,17 @@ import com.labok.goat.ui.text.Copy
  * @param onGuide 권한이 없을 때 권한 설정 방법을 연다.
  */
 @Composable
-internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Unit) {
+internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Unit, onCalibrate: () -> Unit) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     var permitted by remember { mutableStateOf(ShakeRotate.canWrite(context)) }
     var on by remember { mutableStateOf(ShakeRotate.enabled(context)) }
-    var level by remember { mutableIntStateOf(ShakeRotate.level(context)) }
+    // 자동 맞추기 시트에서 바꾼 값도 바로 보이도록 공용 상태를 따른다
+    LaunchedEffect(Unit) { ShakeRotate.levelNow.value = ShakeRotate.level(context) }
+    val savedLevel by ShakeRotate.levelNow.collectAsStateWithLifecycle()
+    var level by remember(savedLevel) { mutableIntStateOf(savedLevel) }
     var message by remember { mutableStateOf("") }
     var autoOn by remember { mutableStateOf(ShakeRotate.autoRotateOn(context)) }
-    var calibrating by remember { mutableStateOf(false) }
-    var calibrateNote by remember { mutableStateOf("") }
 
     // 빠른 설정에서 자동 회전을 켜고 끄는 것을 바로 반영한다
     DisposableEffect(Unit) {
@@ -175,32 +178,9 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                         onValueChangeFinished = { ShakeRotate.setLevel(context, level, "조절바") },
                         valueText = { "$it" },
                         description = Copy.SHAKE_SENSITIVITY_LABEL,
-                        enabled = !calibrating,
                     )
                     Spacer(Modifier.height(Gap.Item))
-                    AnimatedContent(calibrating, label = "calibrate") { now ->
-                        if (now) {
-                            ShakeCalibration(onDone = { result ->
-                                calibrating = false
-                                ShakeRotate.calibrating = false
-                                calibrateNote = if (result == null) Copy.SHAKE_CALIBRATE_FAIL
-                                else {
-                                    level = result
-                                    ShakeRotate.setLevel(context, result, "자동 맞추기")
-                                    "방금 흔든 세기로 맞췄습니다(민감도 $result). 다음부터 이 정도로 흔들면 돌아갑니다."
-                                }
-                            })
-                        } else {
-                            Column {
-                                LiquidButton(Copy.SHAKE_CALIBRATE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
-                                    calibrateNote = ""; calibrating = true; ShakeRotate.calibrating = true
-                                })
-                                if (calibrateNote.isNotEmpty()) {
-                                    Text(calibrateNote, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
-                                }
-                            }
-                        }
-                    }
+                    LiquidButton(Copy.SHAKE_CALIBRATE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = onCalibrate)
                 }
             }
         }
