@@ -13,7 +13,6 @@ import android.hardware.display.DisplayManager
 import android.provider.Settings
 import android.view.Display
 import androidx.core.app.NotificationCompat
-import com.labok.goat.AppInfo
 import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.ShakeRotatePolicy
@@ -174,8 +173,8 @@ object ShakeRotate {
         val open = PendingIntent.getActivity(context, 20, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
-            .setContentTitle("${AppInfo.NAME} · 흔들어서 화면 회전")
-            .setContentText("회전을 잠가 두었습니다. 폰을 흔들면 지금 든 방향으로 돌립니다.")
+            .setContentTitle("흔들어서 화면 회전")
+            .setContentText("흔들면 든 방향으로 돌립니다")
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.data.log.LogRepository
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.app.AlertDialog
@@ -68,6 +69,7 @@ internal object ReportMail {
             .filter { it.activityInfo.packageName in mailApps }
             .distinctBy { it.activityInfo.packageName }
         fun open(i: Int) = context.startActivity(Intent(mail).setClassName(targets[i].activityInfo.packageName, targets[i].activityInfo.name))
+        LogRepository.from(context).add("${kind.label}: 메일 작성 (메일 앱 ${targets.size}개${if (targets.size == 1) " · " + targets[0].activityInfo.packageName else ""})")
         when (targets.size) {
             0 -> context.startActivity(Intent.createChooser(mail, kind.label))
             1 -> open(0)

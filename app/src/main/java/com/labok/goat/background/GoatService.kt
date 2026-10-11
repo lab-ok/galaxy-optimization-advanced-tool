@@ -1,5 +1,6 @@
 package com.labok.goat.background
 
+import com.labok.goat.data.log.LogRepository
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -26,6 +27,7 @@ class GoatService : Service() {
     private val permission = Shizuku.OnRequestPermissionResultListener { _, _ -> watchApps() }
     private var shake: ShakeEngine? = null
     private var shizukuHooked = false
+    private var lastRunning: String? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -36,6 +38,8 @@ class GoatService : Service() {
         val apps = AppDensityNotifier.enabled(this)
         val rotate = ShakeRotate.enabled(this) && ShakeRotate.canWrite(this)
         if (!apps && !rotate) { stopSelf(); return START_NOT_STICKY }
+        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }).joinToString("·")
+        if (running != lastRunning) { LogRepository.from(this).add("GOAT 상주 서비스: $running"); lastRunning = running }
         // 켜진 기능에 맞는 알림으로 바꾼다(같은 번호라 알림은 하나로 남는다)
         startForegroundNow()
 
@@ -76,6 +80,7 @@ class GoatService : Service() {
     }
 
     override fun onDestroy() {
+        LogRepository.from(this).add("GOAT 상주 서비스 멈춤")
         ForegroundWatcher.stop()
         shake?.stop(); shake = null
         unhookShizuku()

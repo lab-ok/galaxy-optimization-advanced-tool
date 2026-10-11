@@ -74,15 +74,21 @@ object PublicLogFile {
         uri
     }
 
+    /**
+     * GOAT가 만든 오늘 로그 파일을 찾는다. 같은 이름의 파일을 다른 앱(예: 앱 ID를 바꾸기 전 GOAT)이 이미 만들어 두었으면
+     * 시스템이 새 파일 이름에 '(1)'을 붙이고, 그 파일은 이 앱에 보이지 않는다. 그래서 정확한 이름이 아니라
+     * "goat-YYMMDD-log"로 시작하는 이 앱의 파일을 찾는다(보이는 것은 이 앱이 만든 파일뿐). 여럿이면 가장 최근 것.
+     */
     private fun find(context: Context, name: String): Uri? {
         val collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI
         val relative = "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/"
+        val stem = name.removeSuffix(".txt")
         context.contentResolver.query(
             collection,
             arrayOf(MediaStore.MediaColumns._ID),
-            "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?",
-            arrayOf(name, relative),
-            null,
+            "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?",
+            arrayOf("$stem%.txt", relative),
+            "${MediaStore.MediaColumns._ID} DESC",
         )?.use { c ->
             if (c.moveToFirst()) return Uri.withAppendedPath(collection, c.getLong(0).toString())
         }
@@ -93,22 +99,12 @@ object PublicLogFile {
 
     private fun uriForToday(context: Context): Uri? {
         val name = todayName()
-        val collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI
-        val relative = "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/"
-        context.contentResolver.query(
-            collection,
-            arrayOf(MediaStore.MediaColumns._ID),
-            "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?",
-            arrayOf(name, relative),
-            null,
-        )?.use { c ->
-            if (c.moveToFirst()) return Uri.withAppendedPath(collection, c.getLong(0).toString())
-        }
+        find(context, name)?.let { return it }
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, relative)
+            put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/")
         }
-        return context.contentResolver.insert(collection, values)
+        return context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
     }
 }

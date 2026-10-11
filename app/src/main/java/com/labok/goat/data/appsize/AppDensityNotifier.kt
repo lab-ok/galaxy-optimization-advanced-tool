@@ -11,7 +11,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import androidx.core.app.NotificationCompat
-import com.labok.goat.AppInfo
 import com.labok.goat.R
 import com.labok.goat.background.ExternalChangeNotifier
 import com.labok.goat.ui.MainActivity
@@ -52,12 +51,12 @@ object AppDensityNotifier {
 
     /** "Discord · 기본(450)" / "Notion · 320 dpi"처럼 앱과 지금 크기를 적는다. 홈 화면이면 안내 문구. */
     fun describe(context: Context, pkg: String?): String {
-        pkg ?: return "앱을 열면 그 앱의 화면 크기를 여기서 바꿀 수 있습니다."
+        pkg ?: return "앱을 열면 여기서 배율을 바꿉니다"
         val pm = context.packageManager
         val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
         val v = runCatching { DensityShell.get(context, pkg) }.getOrNull()
         val size = when {
-            v == null -> "크기 확인 불가"
+            v == null -> "배율 확인 불가"
             v == 0 -> "${Copy.APP_SIZE_DEFAULT}(${Resources.getSystem().configuration.densityDpi})"
             else -> "$v dpi"
         }
@@ -67,7 +66,7 @@ object AppDensityNotifier {
     fun cancel(context: Context) = context.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
 
     /** 흔들어서 화면 회전도 켜져 있으면 같은 알림에 한 줄로 알린다(알림을 따로 띄우지 않는다). */
-    fun shakeNote(context: Context) = if (ShakeRotate.enabled(context)) "흔들어서 화면 회전 켜짐" else null
+    fun shakeNote(context: Context) = if (ShakeRotate.enabled(context)) "흔들기 회전 켜짐" else null
 
     fun build(context: Context, status: String? = null, extra: String? = null): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
@@ -83,8 +82,8 @@ object AppDensityNotifier {
         val open = PendingIntent.getActivity(context, 10, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
-            .setContentTitle("${AppInfo.NAME} · 앱 화면 크기")
-            .setContentText(status ?: "지금 쓰는 앱의 화면 크기를 한 단계씩 바꿉니다.")
+            .setContentTitle("앱별 화면 배율")
+            .setContentText(status ?: "앱을 열면 여기서 배율을 바꿉니다")
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)

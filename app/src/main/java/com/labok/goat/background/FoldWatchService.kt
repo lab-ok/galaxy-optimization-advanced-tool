@@ -1,6 +1,5 @@
 package com.labok.goat.background
 
-import com.labok.goat.AppInfo
 import com.labok.goat.domain.ScreenLearner
 
 import android.app.Notification
@@ -118,8 +117,8 @@ class FoldWatchService : Service() {
         )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
-            .setContentTitle(AppInfo.NAME)
-            .setContentText("디스플레이 전환 시 밀도를 확인하는 중")
+            .setContentTitle("화면 배율 동기화")
+            .setContentText("접고 펼 때 배율을 확인하는 중")
             .setContentIntent(open)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_MIN)

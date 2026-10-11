@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.labok.goat.AppInfo
 import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.DpiFixer
@@ -37,7 +36,7 @@ object ExternalChangeNotifier {
         val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val n = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
-            .setContentTitle("${AppInfo.NAME} · 외부 DPI 변경 감지")
+            .setContentTitle("화면 배율이 다른 곳에서 바뀌었습니다")
             .setContentText(text(change))
             .setStyle(NotificationCompat.BigTextStyle().bigText(text(change) + " 이 값을 기준으로 할지, 앱 설정으로 복원할지 선택하세요."))
             .setContentIntent(open)

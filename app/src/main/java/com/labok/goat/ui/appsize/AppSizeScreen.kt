@@ -1,5 +1,6 @@
 package com.labok.goat.ui.appsize
 
+import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -121,6 +122,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
     // 처음 나타난 카드는 다시 등장 애니메이션을 하지 않는다(목록을 스크롤해 다시 보일 때)
     val shown = remember { mutableSetOf<String>() }
     val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        LogRepository.from(context).add("알림 권한 요청(알림창 앱 배율): ${if (granted) "허용" else "거부"}")
         if (granted) { notify = true; AppDensityNotifier.setEnabled(context, true) }
     }
 

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.appsize
 
+import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.text.Copy
 import android.app.Activity
 import android.content.res.Resources
@@ -32,6 +33,7 @@ class DensityStepActivity : Activity() {
             // 방금 쓰던 앱: 작업 스택 감시가 돌고 있으면 그 값, 아니면 사용 기록(기기에 따라 늦을 수 있음). 사용 기록 읽기는 무거워 작업 스레드에서 한다.
             val target = if (ForegroundWatcher.running) ForegroundWatcher.current else AppUsage.foregroundApp(this)
             val msg = runCatching { change(target, step) }.getOrElse { "${Copy.APP_SIZE_FAILED}${it.message}" }
+            LogRepository.from(this).add("알림창 배율 ${if (step < 0) "작게" else if (step > 0) "크게" else "기본"}: ${target ?: "앱 없음"} → $msg")
             main.post {
                 AppDensityNotifier.show(this, msg)
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
