@@ -3,13 +3,10 @@ package com.labok.goat.ui.tweaks
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.labok.goat.data.tweaks.StatusIcons
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -34,7 +30,7 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
-import com.labok.goat.ui.liquid.LiquidSwitch
+import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.text.Copy
 
@@ -93,7 +89,7 @@ internal fun StatusIconsScreen(contentPadding: PaddingValues, permitted: Boolean
                             Text(texts.second, color = c.muted, style = MaterialTheme.typography.bodySmall)
                             StatusIcons.Icon.entries.filter { it.careful == careful }.forEach { icon ->
                                 Spacer(Modifier.height(Gap.Item))
-                                SwitchRow(icon.label, icon.desc, icon in hidden, permitted) { toggle(icon, it) }
+                                LiquidSwitchRow(icon.label, icon.desc, icon in hidden, permitted) { toggle(icon, it) }
                             }
                         }
                     }
@@ -102,7 +98,7 @@ internal fun StatusIconsScreen(contentPadding: PaddingValues, permitted: Boolean
         item(key = "keep") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    SwitchRow(Copy.ICONS_KEEP_TITLE, Copy.ICONS_KEEP_BODY, keep, enabled = true) { on -> keep = on; StatusIcons.setKeep(context, on) }
+                    LiquidSwitchRow(Copy.ICONS_KEEP_TITLE, Copy.ICONS_KEEP_BODY, keep, enabled = true) { on -> keep = on; StatusIcons.setKeep(context, on) }
                     if (hidden.isNotEmpty()) {
                         Spacer(Modifier.height(Gap.Section))
                         LiquidButton(Copy.ICONS_RESTORE, primary = false, enabled = permitted, modifier = Modifier.fillMaxWidth(), onClick = {
@@ -114,20 +110,6 @@ internal fun StatusIconsScreen(contentPadding: PaddingValues, permitted: Boolean
                 }
             }
         }
-    }
-}
-
-/** 제목·설명과 오른쪽 스위치 한 줄. */
-@Composable
-private fun SwitchRow(title: String, desc: String, checked: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
-    val c = LocalLiquid.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(desc, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        }
-        Spacer(Modifier.width(12.dp))
-        LiquidSwitch(checked, onChange, enabled = enabled)
     }
 }
 

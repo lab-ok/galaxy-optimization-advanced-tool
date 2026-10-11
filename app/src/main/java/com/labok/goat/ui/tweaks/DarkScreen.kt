@@ -1,15 +1,14 @@
 package com.labok.goat.ui.tweaks
 
+import android.content.Intent
+import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.data.shizuku.ShizukuAccess
@@ -37,7 +35,7 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
-import com.labok.goat.ui.liquid.LiquidSwitch
+import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
@@ -45,8 +43,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * 앱 다크 모드 강제: 시스템 다크 모드(강제 다크의 전제), 다크 모드 없는 앱도 어둡게, 재부팅 뒤 다시 켜기, 주의.
- * 둘 다 Shizuku 셸로 바꾸고, 돌아올 때마다 다시 읽는다.
+ * 앱 다크 모드 강제: 다크 모드 없는 앱도 어둡게, 재부팅 뒤 다시 켜기, 시스템 다크 모드 상태(강제 다크의 전제)와
+ * 디스플레이 설정 바로 가기, 주의. 강제 다크는 Shizuku 셸로 바꾸고, 돌아올 때마다 다시 읽는다.
  * @param onConnect Shizuku 연결 안내를 연다.
  */
 @Composable
@@ -103,11 +101,7 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
         item(key = "switches") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    SwitchLine(Copy.DARK_NIGHT_TITLE, if (state.night) Copy.DARK_NIGHT_ON else Copy.DARK_NIGHT_OFF, state.night, ready && !busy) { on ->
-                        change({ ForceDark.setNight(context, on, "스위치") }, if (on) Copy.DARK_TOAST_NIGHT_ON else Copy.DARK_TOAST_NIGHT_OFF)
-                    }
-                    Spacer(Modifier.height(Gap.Section))
-                    SwitchLine(
+                    LiquidSwitchRow(
                         Copy.DARK_FORCE_TITLE,
                         when {
                             state.forced == null -> Copy.DARK_FORCE_UNKNOWN
@@ -118,7 +112,20 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                         state.forced == true, ready && !busy && state.forced != null,
                     ) { on -> change({ ForceDark.setForced(context, on, "스위치") }, if (on) Copy.DARK_TOAST_FORCE_ON else Copy.DARK_TOAST_FORCE_OFF) }
                     Spacer(Modifier.height(Gap.Section))
-                    SwitchLine(Copy.DARK_KEEP_TITLE, Copy.DARK_KEEP_BODY, keep, true) { on -> keep = on; ForceDark.setKeep(context, on) }
+                    LiquidSwitchRow(Copy.DARK_KEEP_TITLE, Copy.DARK_KEEP_BODY, keep, true) { on -> keep = on; ForceDark.setKeep(context, on) }
+                }
+            }
+        }
+        item(key = "night") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.DARK_NIGHT_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(if (state.night) Copy.DARK_NIGHT_ON else Copy.DARK_NIGHT_OFF, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidButton(Copy.DARK_NIGHT_OPEN, primary = !state.night, modifier = Modifier.fillMaxWidth(), onClick = {
+                        runCatching { context.startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                            .onFailure { Toast.makeText(context, Copy.DARK_TOAST_NO_SETTINGS, Toast.LENGTH_SHORT).show() }
+                    })
                 }
             }
         }
@@ -133,20 +140,6 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     }
 }
 
-/** 제목·설명과 오른쪽 스위치 한 줄. */
-@Composable
-private fun SwitchLine(title: String, desc: String, checked: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
-    val c = LocalLiquid.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(desc, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        }
-        Spacer(Modifier.width(12.dp))
-        LiquidSwitch(checked, onChange, enabled = enabled)
-    }
-}
-
 /** 사용 방법. */
 @Composable
 internal fun DarkHelpSheet() {
@@ -158,8 +151,8 @@ internal fun DarkHelpSheet() {
         ) { DarkArt(on = true) }
         HelpTopic(
             "2. 시스템 다크 모드가 먼저 켜져 있어야 합니다",
-            "안드로이드는 시스템 다크 모드가 켜져 있을 때만 강제 다크를 적용합니다. 그래서 이 화면에서 시스템 다크 모드도 함께 켤 수 있게 했습니다. " +
-                "켠 뒤에는 이미 열려 있던 앱을 닫았다가 다시 열어야 바뀝니다.",
+            "안드로이드는 시스템 다크 모드가 켜져 있을 때만 강제 다크를 적용합니다. 이 화면에서 지금 상태를 보여 주고, " +
+                "'디스플레이 설정 열기'로 다크 모드(예약 포함)를 켤 수 있습니다. 켠 뒤에는 이미 열려 있던 앱을 닫았다가 다시 열어야 바뀝니다.",
         )
         HelpTopic(
             "3. 모든 앱에 적용됩니다",

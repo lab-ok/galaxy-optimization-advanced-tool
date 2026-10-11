@@ -13,7 +13,8 @@ import rikka.shizuku.Shizuku
  * 앱 다크 모드 강제: 다크 모드를 지원하지 않는 앱도 시스템이 색을 바꿔 어둡게 그리게 한다.
  * 개발자 옵션 'Override force-dark'와 같은 시스템 속성 [PROP]를 Shizuku 셸 `setprop`으로 켠다.
  * 안드로이드는 **시스템 다크 모드가 켜져 있을 때만** 이 속성을 보고(ViewRootImpl.updateForceDarkMode), 화면이 다시 그려질 때
- * (앱을 다시 열거나 화면 설정이 바뀔 때) 적용한다. 그래서 시스템 다크 모드도 함께 보여 주고 켤 수 있게 한다(`cmd uimode night`).
+ * (앱을 다시 열거나 화면 설정이 바뀔 때) 적용한다. 시스템 다크 모드는 상태만 보여 주고, 켜고 끄는 것은 디스플레이 설정에
+ * 맡긴다(`cmd uimode night`는 자동·예약 설정을 항상 켬·끔으로 덮어써 되돌릴 수 없기 때문).
  *
  * 시스템 속성은 재부팅하면 지워진다. [keep]이 켜져 있으면 부팅마다 한 번, Shizuku가 연결될 때 다시 켠다
  * (같은 부팅 안에서 개발자 옵션으로 끈 것은 덮어쓰지 않는다). 앱별로 고르는 공식 경로는 없어 모든 앱에 적용된다.
@@ -53,19 +54,12 @@ object ForceDark {
         val r = ShizukuAccess.shell("setprop $PROP ${if (on) "true" else "false"}")
         val after = read(context).forced
         val ok = r?.ok == true && after == on
-        if (ok) prefs(context).edit().putBoolean("wanted", on).apply()
+        // 바꾼 부팅을 확인한 것으로 남긴다: 같은 부팅 안에서 사용자가 개발자 옵션으로 되돌려도 다시 켜지 않는다
+        if (ok) prefs(context).edit().putBoolean("wanted", on).apply { bootCount(context)?.let { putInt("checkedBoot", it) } }.apply()
         LogRepository.from(context).add(
             "앱 다크 모드 강제($how): ${if (on) "켜기" else "끄기"} " +
                 if (ok) "성공" else "실패(${r?.err?.ifBlank { null } ?: if (r == null) "Shizuku 없음" else "결과 다름"})",
         )
-        return ok
-    }
-
-    /** 시스템 다크 모드를 켜거나 끈다(Shizuku `cmd uimode night`, 작업 스레드). */
-    fun setNight(context: Context, on: Boolean, how: String): Boolean {
-        val r = ShizukuAccess.shell("cmd uimode night ${if (on) "yes" else "no"}")
-        val ok = r?.ok == true && read(context).night == on
-        LogRepository.from(context).add("앱 다크 모드 강제($how): 시스템 다크 모드 ${if (on) "켜기" else "끄기"} ${if (ok) "성공" else "실패"}")
         return ok
     }
 
@@ -90,7 +84,7 @@ object ForceDark {
     /** 부팅마다 한 번, Shizuku가 연결될 때 다시 켠다(작업 스레드). */
     fun reapply(context: Context) {
         val p = prefs(context)
-        val boot = runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
+        val boot = bootCount(context)
         val checked = p.getInt("checkedBoot", -1).takeIf { it >= 0 }
         if (shouldReapply(wanted(context), keep(context), boot, checked, false) == false) return
         when (shouldReapply(wanted(context), keep(context), boot, checked, forced())) {
@@ -99,6 +93,10 @@ object ForceDark {
             null -> Unit
         }
     }
+
+    /** 부팅 횟수(Settings.Global.BOOT_COUNT). 없는 기기면 null. */
+    private fun bootCount(context: Context): Int? =
+        runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
 
     private val binder = Shizuku.OnBinderReceivedListener { reapplyAsync?.invoke() }
     @Volatile private var reapplyAsync: (() -> Unit)? = null

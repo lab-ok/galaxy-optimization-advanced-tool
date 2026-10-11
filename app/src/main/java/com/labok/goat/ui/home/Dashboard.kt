@@ -141,7 +141,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.DARK -> when (dark.forced) {
                 true -> if (dark.night) Copy.DARK_DASH_ON else Copy.DARK_DASH_WAITING
                 false -> Copy.DARK_DASH_OFF
-                null -> if (ForceDark.wanted(context)) Copy.DARK_DASH_ON else Copy.DARK_DASH_UNKNOWN
+                null -> Copy.DARK_DASH_UNKNOWN
             }
             NavItem.STATUS_ICONS -> Copy.iconsHidden(StatusIcons.hidden(context).size)
             NavItem.REFRESH -> if (!RefreshRate.supported(context)) Copy.REFRESH_UNSUPPORTED_SHORT else RefreshRate.read(context).let {
@@ -163,7 +163,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.PRIVATE_DNS -> PrivateDns.inUse(context)
             NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))
             NavItem.CHARGE -> (charge as? ChargeLimit.Lookup.Present)?.found?.mode?.let { it != 0 } == true
-            NavItem.DARK -> dark.forced == true || (dark.forced == null && ForceDark.wanted(context))
+            NavItem.DARK -> dark.forced == true
             NavItem.STATUS_ICONS -> StatusIcons.hidden(context).isNotEmpty()
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             else -> false

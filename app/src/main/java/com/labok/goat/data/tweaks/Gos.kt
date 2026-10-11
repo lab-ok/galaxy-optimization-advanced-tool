@@ -78,6 +78,11 @@ object Gos {
         return ok
     }
 
+    /** 바꾼 부팅을 확인한 것으로 남긴다: 같은 부팅 안에서 사용자가 앱 밖에서 되돌려도 다시 끄지 않는다. */
+    private fun markBoot(context: Context) {
+        bootCount(context)?.let { prefs(context).edit().putInt("checkedBoot", it).apply() }
+    }
+
     /** 기본 앱 정리 목록의 GOS 항목(없는 이전 패키지는 같은 설명으로 만든다). */
     private fun appOf(pkg: String): Bloat.App =
         Bloat.CATALOG.firstOrNull { it.pkg == pkg } ?: Bloat.CATALOG.first { it.pkg == PACKAGES.first() }.copy(pkg = pkg)
@@ -86,6 +91,7 @@ object Gos {
     fun noteChange(context: Context, pkg: String, off: Boolean) {
         if (pkg !in PACKAGES) return
         prefs(context).edit().putBoolean("wanted", off).apply()
+        markBoot(context)
     }
 
     fun wanted(context: Context) = prefs(context).getBoolean("wanted", false)
