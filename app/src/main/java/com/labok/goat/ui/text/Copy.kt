@@ -59,6 +59,32 @@ object Copy {
     const val FEATURE_LAB_TOOLS = "조사 도구"
     const val FEATURE_SHAKE_ROTATE = "흔들어서 화면 회전"
     const val FEATURE_CAMERA_MUTE = "카메라 촬영음 끄기"
+    const val FEATURE_HOME = "홈"
+    const val FEATURE_ANIMATION = "애니메이션 속도"
+    const val FEATURE_APP_CLEANUP = "기본 앱 정리"
+    const val MENU_SECTION_SCREEN = "화면"
+    const val MENU_SECTION_SYSTEM = "시스템"
+
+    // 홈
+    const val HOME_TITLE = "갤럭시를 더 편하게"
+    const val HOME_SUBTITLE = "쓰고 싶은 기능을 눌러 바로 들어가세요."
+    const val HOME_PERMISSION = "시스템 설정 권한"
+    const val HOME_SHIZUKU = "Shizuku 연결"
+
+    // 기본 앱 정리
+    const val BLOAT_INTRO_TITLE = "쓰지 않는 기본 앱 끄기"
+    const val BLOAT_INTRO_BODY = "지우지 않고 멈추기만 해서 언제든 다시 켤 수 있습니다. 꺼도 기본 기능은 그대로입니다."
+    const val BLOAT_NEED_SHIZUKU = "앱을 끄는 명령은 셸 권한이 있어야 해서 Shizuku로 실행합니다."
+    const val BLOAT_FAILED = "바꾸지 못했습니다. Shizuku 연결을 확인해 주세요"
+    const val BLOAT_RESTORE_ALL = "꺼 둔 앱 모두 다시 켜기"
+
+    // 애니메이션 속도
+    const val ANIM_INTRO_TITLE = "움직임을 빠르게"
+    const val ANIM_INTRO_BODY = "앱을 열고 닫을 때의 움직임 속도를 바꿉니다. 0.5배면 폰이 더 빠르게 느껴집니다."
+    const val ANIM_NEED_PERMISSION = "애니메이션 속도는 시스템 설정 권한으로 바꿉니다. Shizuku나 PC로 한 번만 받으면 됩니다."
+    const val ANIM_PRESET_TITLE = "속도 고르기"
+    const val ANIM_DETAIL_TITLE = "하나씩 맞추기"
+    const val ANIM_DETAIL_BODY = "창·화면 전환·앱 안 움직임을 0~2배로 따로 맞춥니다."
 
     // 카메라 촬영음 끄기
     const val CAMERA_INTRO_TITLE = "무음 모드에서는 조용히 찍기"

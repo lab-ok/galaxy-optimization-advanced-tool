@@ -65,19 +65,25 @@ import com.labok.goat.ui.text.Copy
  * [icon]은 앱 그림과 같은 선 굵기로 직접 그린다.
  */
 enum class NavItem(val label: String, val icon: NavIcon) {
+    /** 메인 화면: 모든 기능의 지금 상태를 한눈에 보고 바로 들어간다. */
+    HOME(Copy.FEATURE_HOME, NavIcon.HOME),
     /** 접고 펼 때도 두 화면의 표시 크기(DPI)를 일관되게 맞추는 기본 기능. */
     DPI_MATCH(Copy.FEATURE_DPI, NavIcon.FOLD),
     /** 앱마다 화면 크기를 따로 두는 기능(삼성 '앱 화면 크게/작게', Shizuku 필요). */
     APP_SIZE(Copy.FEATURE_APP_SIZE, NavIcon.APPS),
+    /** 창·전환·애니메이터 배율(전역 설정). */
+    ANIMATION(Copy.FEATURE_ANIMATION, NavIcon.SPEED),
     /** 평소에는 회전을 잠가 두고, 흔들면 폰이 놓인 방향으로 한 번 돌린다. */
     SHAKE_ROTATE(Copy.FEATURE_SHAKE_ROTATE, NavIcon.ROTATE),
     /** 국내 모델의 강제 촬영음을 끈다(Shizuku 셸로 숨은 시스템 설정을 바꾼다). */
     CAMERA_MUTE(Copy.FEATURE_CAMERA_MUTE, NavIcon.CAMERA),
+    /** 쓰지 않는 기본 앱 끄기(Shizuku, 되돌릴 수 있음). */
+    APP_CLEANUP(Copy.FEATURE_APP_CLEANUP, NavIcon.CLEAN),
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { FOLD, APPS, ROTATE, CAMERA, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -148,7 +154,8 @@ fun SideDrawerContent(
                     sections.forEach { section ->
                         Spacer(Modifier.height(Gap.Section))
                         val titleOrder = index
-                        Text(
+                        // 제목 없는 묶음(맨 위 홈)은 제목 줄을 그리지 않는다
+                        if (section.title.isNotEmpty()) Text(
                             section.title, color = c.muted, style = MaterialTheme.typography.labelMedium,
                             modifier = Modifier.padding(start = 22.dp, bottom = 6.dp).graphicsLayer { alpha = (enter.value - titleOrder).coerceIn(0f, 1f) },
                         )
@@ -238,6 +245,9 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier.size(24.dp)) {
         val s = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
         when (icon) {
+            NavIcon.HOME -> home(color, s)
+            NavIcon.SPEED -> speed(color, s)
+            NavIcon.CLEAN -> clean(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
@@ -316,6 +326,34 @@ private fun DrawScope.camera(c: Color, s: Stroke) {
     drawPath(body, c, style = s)
     drawCircle(c, u(3.4f), p(12f, 13.2f), style = s)
     drawLine(c, p(3f, 21.5f), p(21f, 3.5f), s.width, StrokeCap.Round)
+}
+
+/** 홈: 지붕과 문이 있는 집. */
+private fun DrawScope.home(c: Color, s: Stroke) {
+    val path = Path().apply {
+        moveTo(u(3.5f), u(11f)); lineTo(u(12f), u(4f)); lineTo(u(20.5f), u(11f))
+        moveTo(u(5.5f), u(9.5f)); lineTo(u(5.5f), u(18.5f)); quadraticBezierTo(u(5.5f), u(20f), u(7f), u(20f)); lineTo(u(17f), u(20f))
+        quadraticBezierTo(u(18.5f), u(20f), u(18.5f), u(18.5f)); lineTo(u(18.5f), u(9.5f))
+    }
+    drawPath(path, c, style = s)
+    drawLine(c, p(10f, 20f), p(10f, 15f), s.width, StrokeCap.Round)
+    drawLine(c, p(10f, 15f), p(14f, 15f), s.width, StrokeCap.Round)
+    drawLine(c, p(14f, 15f), p(14f, 20f), s.width, StrokeCap.Round)
+}
+
+/** 애니메이션 속도: 계기판 반원과 오른쪽으로 기운 바늘. */
+private fun DrawScope.speed(c: Color, s: Stroke) {
+    drawArc(c, 180f, 180f, false, p(3f, 6f), Size(u(18f), u(18f)), style = s)
+    drawLine(c, p(12f, 15f), p(16.8f, 9.6f), s.width, StrokeCap.Round)
+    drawCircle(c, s.width * 0.9f, p(12f, 15f))
+    drawLine(c, p(3f, 19f), p(21f, 19f), s.width * 0.8f, StrokeCap.Round)
+}
+
+/** 기본 앱 정리: 앱 칸 하나와 그 위에 겹친 빼기 동그라미. */
+private fun DrawScope.clean(c: Color, s: Stroke) {
+    drawRoundRect(c, p(3.5f, 3.5f), Size(u(11f), u(11f)), CornerRadius(u(2.6f)), style = s)
+    drawCircle(c, u(5.2f), p(16f, 16f), style = s)
+    drawLine(c, p(13.6f, 16f), p(18.4f, 16f), s.width, StrokeCap.Round)
 }
 
 /** 정보: 원 안의 i. */

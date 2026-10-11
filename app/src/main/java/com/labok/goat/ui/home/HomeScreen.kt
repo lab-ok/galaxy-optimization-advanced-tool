@@ -1,5 +1,10 @@
 package com.labok.goat.ui.home
 
+import androidx.activity.compose.BackHandler
+import com.labok.goat.ui.tweaks.AnimationHelpSheet
+import com.labok.goat.ui.tweaks.AnimationScreen
+import com.labok.goat.ui.tweaks.BloatHelpSheet
+import com.labok.goat.ui.tweaks.BloatScreen
 import com.labok.goat.ui.camera.CameraMuteHelpSheet
 import com.labok.goat.ui.camera.CameraMuteScreen
 import com.labok.goat.ui.rotate.ShakeCalibrationSheet
@@ -136,7 +141,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP }
+/** 이 너비(dp) 이상이면 사이드바를 늘 펼쳐 둔다(폴드 내부 화면·태블릿). */
+private const val WIDE_DP = 600
+
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -153,9 +161,9 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
     val drawer = rememberDrawerState(DrawerValue.Closed)
     var menu by remember { mutableStateOf(false) }
     // 사이드바에서 고른 기능(화면). 기능 안의 세부 설정은 점 세 개 메뉴에 있다.
-    var feature by rememberSaveable { mutableStateOf(NavItem.DPI_MATCH) }
+    var feature by rememberSaveable { mutableStateOf(NavItem.HOME) }
     // 화면에 보이는 기능. 사이드바에서 고르면 방울 이동을 보여 준 뒤 사이드바가 닫히면서 바뀐다(물방울 번짐 전환).
-    var shown by rememberSaveable { mutableStateOf(NavItem.DPI_MATCH) }
+    var shown by rememberSaveable { mutableStateOf(NavItem.HOME) }
     var flying by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -223,8 +231,10 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
     CompositionLocalProvider(LocalDeviceShape provides deviceShape) {
         // 사이드바는 기능 단위. DPI를 다루는 두 기능은 '화면 배율'로, 그 밖의 유틸은 '편의 기능'으로 묶는다. 조사 도구는 lab 빌드에서만.
         val sections = buildList {
-            add(NavSection(Copy.MENU_SECTION_FEATURES, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
+            add(NavSection("", listOf(NavItem.HOME)))
+            add(NavSection(Copy.MENU_SECTION_SCREEN, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE, NavItem.ANIMATION)))
             add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE)))
+            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP)))
             if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
@@ -254,6 +264,17 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report,
             )
+            NavItem.ANIMATION -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.ANIM_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
+                Copy.MENU_REPORT to report,
+            )
+            NavItem.APP_CLEANUP -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.BLOAT_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
+                Copy.MENU_REPORT to report,
+            )
+            NavItem.HOME -> listOf(Copy.MENU_REPORT to report)
             NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -293,11 +314,15 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
 
         // 위쪽 제목 줄: 아래 내용이 비치는 반투명 블러(내용은 haze 원본, 제목 줄은 haze 자식)
         val haze = remember { HazeState() }
-        ModalNavigationDrawer(
-            drawerState = drawer,
-            scrimColor = c.ink.copy(alpha = 0.32f),
-            drawerContent = {
-                SideDrawerContent(sections, current = feature, visible = drawer.targetValue == DrawerValue.Open, onAbout = {
+        // 넓은 화면(폴드 내부 화면·태블릿)에서는 사이드바를 왼쪽에 늘 펼쳐 두고, 좁은 화면에서는 ☰로 여닫는다.
+        val wide = LocalConfiguration.current.screenWidthDp >= WIDE_DP
+        // 뒤로 가기: 열린 사이드바를 먼저 닫고, 다른 기능 화면이면 홈으로 돌아간다. 홈에서만 앱을 닫는다.
+        BackHandler(enabled = drawer.isOpen || shown != NavItem.HOME) {
+            if (drawer.isOpen) scope.launch { drawer.close() }
+            else { feature = NavItem.HOME; shown = NavItem.HOME }
+        }
+        val drawerItems: @Composable () -> Unit = {
+                SideDrawerContent(sections, current = feature, visible = wide || drawer.targetValue == DrawerValue.Open, onAbout = {
                     scope.launch { drawer.close() }
                     sheet = Sheet.ABOUT
                 }, onSelect = { item ->
@@ -309,8 +334,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                         drawer.close()
                     }
                 })
-            },
-        ) {
+        }
+        val main: @Composable () -> Unit = {
             Scaffold(
                 containerColor = c.bg,
                 topBar = {
@@ -336,7 +361,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             HazeStyle(backgroundColor = c.bg, tint = HazeTint(c.bg.copy(alpha = 0.7f)), blurRadius = 24.dp, noiseFactor = 0f),
                         ),
                         navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "기능 메뉴 열기") }
+                            if (!wide) IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "기능 메뉴 열기") }
                         },
                         actions = {
                             Box {
@@ -370,11 +395,26 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.APP_SIZE -> AppSizeScreen(inner, onGuide = { sheet = Sheet.APP_GUIDE }, onReset = { sheet = Sheet.APP_RESET })
                             NavItem.SHAKE_ROTATE -> ShakeRotateScreen(inner, onGuide = { sheet = Sheet.GUIDE }, onCalibrate = { sheet = Sheet.SHAKE_CALIBRATE })
                             NavItem.CAMERA_MUTE -> CameraMuteScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
+                            NavItem.HOME -> Dashboard(inner, state, sections, onOpen = { item -> feature = item; shown = item })
+                            NavItem.ANIMATION -> AnimationScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
+                            NavItem.APP_CLEANUP -> BloatScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                         }
                     }
                 }
             }
+        }
+        if (wide) {
+            Row(Modifier.fillMaxSize().background(c.bg)) {
+                drawerItems()
+                Box(Modifier.weight(1f)) { main() }
+            }
+        } else {
+            ModalNavigationDrawer(
+                drawerState = drawer,
+                scrimColor = c.ink.copy(alpha = 0.32f),
+                drawerContent = drawerItems,
+            ) { main() }
         }
 
         if (counting) RowCountOverlay(onClose = { counting = false; sheet = Sheet.TEST })
@@ -409,6 +449,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.SHAKE_HELP -> ShakeRotateHelpSheet()
                     Sheet.SHAKE_CALIBRATE -> ShakeCalibrationSheet(onClose = { sheet = null })
                     Sheet.CAMERA_HELP -> CameraMuteHelpSheet()
+                    Sheet.ANIM_HELP -> AnimationHelpSheet()
+                    Sheet.BLOAT_HELP -> BloatHelpSheet()
                 }
             }
         }

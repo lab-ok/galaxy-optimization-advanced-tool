@@ -88,6 +88,9 @@ object DensityShell {
     }
 
     // 이전 버전(실험실 시절)과 같은 이름을 유지한다(사용자 기록 보존)
+    /** GOAT로 배율을 바꿔 둔 앱 수(홈 화면 표시용). */
+    fun savedCount(context: Context): Int = prefs(context).all.size
+
     private fun prefs(context: Context) = context.getSharedPreferences("lab_app_density", Context.MODE_PRIVATE)
 
     /** 사용자가 크기를 정해 둔 앱(홈 화면에 아이콘이 있는 앱 중). */

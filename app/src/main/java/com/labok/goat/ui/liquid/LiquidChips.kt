@@ -50,6 +50,8 @@ fun <T> LiquidChips(
     val reduce = LocalReduceMotion.current
     val lefts = remember(options) { mutableStateListOf<Float>().apply { repeat(options.size) { add(0f) } } }
     val widths = remember(options) { mutableStateListOf<Float>().apply { repeat(options.size) { add(0f) } } }
+    // 고른 값이 목록에 없으면(예: 직접 맞춘 값) 방울을 그리지 않는다
+    val none = selected !in options
     val index = options.indexOf(selected).coerceAtLeast(0)
     val measured = widths.getOrNull(index)?.let { it > 0f } == true
     val blob = rememberSoftBlob()
@@ -76,14 +78,14 @@ fun <T> LiquidChips(
         val path = remember { Path() }
         Canvas(Modifier.matchParentSize().onSizeChanged { trackH = it.height.toFloat() }) {
             blob.frame // 프레임마다 다시 그리기
-            if (blob.blob.ready) drawPath(blob.blob.path(path), c.ink)
+            if (blob.blob.ready && !none) drawPath(blob.blob.path(path), c.ink)
         }
         Row(Modifier.matchParentSize()) {
             options.forEachIndexed { i, option ->
                 val isSel = i == index
                 // 방울이 이 칩을 덮은 정도(0~1)만큼 글자를 배경색으로 바꾼다.
                 blob.frame
-                val cover = if (!blob.blob.ready || widths[i] <= 0f) (if (isSel) 1f else 0f)
+                val cover = if (none) 0f else if (!blob.blob.ready || widths[i] <= 0f) (if (isSel) 1f else 0f)
                 else (1f - kotlin.math.abs(blob.blob.cx - (lefts[i] + widths[i] / 2)) / widths[i]).coerceIn(0f, 1f)
                 val textColor = lerp(c.ink, c.onInk, cover)
                 val interaction = remember { MutableInteractionSource() }
