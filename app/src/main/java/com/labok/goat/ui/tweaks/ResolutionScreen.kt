@@ -72,7 +72,11 @@ internal fun ResolutionScreen(contentPadding: PaddingValues, permitted: Boolean,
     val selected = options.minByOrNull { kotlin.math.abs(it.short - now.first) }
     var busy by remember { mutableStateOf(false) }
     var ask by remember { mutableStateOf<Resolution.Option?>(null) }
-    LifecycleResumeEffect(Unit) { version++; onPauseOrDispose { } }
+    LifecycleResumeEffect(Unit) {
+        // 다른 곳에서 해상도를 키웠으면 낡은 기록을 지운 뒤 다시 읽는다(부수 효과는 작업 스레드에서)
+        scope.launch { withContext(Dispatchers.IO) { Resolution.dropStale(context) }; version++ }
+        onPauseOrDispose { }
+    }
 
     fun apply(o: Resolution.Option) {
         busy = true

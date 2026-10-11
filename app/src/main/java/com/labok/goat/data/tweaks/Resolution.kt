@@ -70,19 +70,22 @@ object Resolution {
         return minOf(m.widthPixels, m.heightPixels) to maxOf(m.widthPixels, m.heightPixels)
     }
 
-    /**
-     * 기준(되돌아갈) 해상도: GOAT가 바꿔 둔 동안은 그 직전 크기, 아니면 지금 크기.
-     * GOAT로 낮춰 둔 사이에 삼성 설정 등에서 더 크게 바꿨으면 기록이 낡은 것이라 버리고 지금 크기를 쓴다.
-     */
+    /** 기준(되돌아갈) 해상도: GOAT가 바꿔 둔 동안은 그 직전 크기, 아니면 지금 크기. 낡은 기록이면 지금 크기(정리는 [dropStale]). */
     fun base(context: Context): Pair<Int, Int> {
         val now = current(context)
         val saved = ResolutionState.base(context) ?: return now
-        if (now.first > saved.first) {
-            ResolutionState.clear(context)
-            LogRepository.from(context).add("해상도 낮추기: 다른 곳에서 해상도를 ${now.first}x${now.second}로 바꿔 GOAT 기록을 지움")
-            return now
-        }
-        return saved
+        return if (now.first > saved.first) now else saved
+    }
+
+    /**
+     * GOAT로 낮춰 둔 사이에 삼성 설정 등에서 더 크게 바꿨으면 기록이 낡은 것이라 지운다(작업 스레드, 화면을 열 때·앱 시작 때).
+     */
+    fun dropStale(context: Context) {
+        val saved = ResolutionState.base(context) ?: return
+        val now = current(context)
+        if (now.first <= saved.first) return
+        ResolutionState.clear(context)
+        LogRepository.from(context).add("해상도 낮추기: 다른 곳에서 해상도를 ${now.first}x${now.second}로 바꿔 GOAT 기록을 지움")
     }
 
     /** 기준 크기보다 작은 선택지(시험할 수 있게 계산은 [optionsFor]). */
@@ -172,7 +175,13 @@ object Resolution {
      */
     fun revert(context: Context, how: String, onlyIfPending: Boolean = false): Boolean {
         val app = context.applicationContext
-        if (onlyIfPending && DpiFixer.from(app).exclusive { ResolutionState.deadline(app) == 0L }) return false
+        // 마감 확인과 되돌리기를 한 잠금 안에서 한다(그 사이에 '유지'가 끼어들 틈이 없게, 잠금은 다시 들어갈 수 있다)
+        return DpiFixer.from(app).exclusive {
+            if (onlyIfPending && ResolutionState.deadline(app) == 0L) false else revertLocked(app, how)
+        }
+    }
+
+    private fun revertLocked(app: Context, how: String): Boolean {
         countdown?.cancel()
         runCatching { WorkManager.getInstance(app).cancelUniqueWork(WORK) }
         pendingState.value = 0
@@ -212,6 +221,7 @@ object Resolution {
 
     /** 앱 시작 때: 확인 대기 중이었으면 남은 시간으로 카운트다운을 이어 간다(지났으면 되돌린다). */
     fun resume(context: Context) {
+        scope.launch { dropStale(context) }
         val at = ResolutionState.deadline(context)
         if (at == 0L) return
         scope.launch { revertIfPending(context, "앱 시작 때 확인 시간이 지남") }
