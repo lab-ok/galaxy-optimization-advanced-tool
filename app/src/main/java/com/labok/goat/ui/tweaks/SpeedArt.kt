@@ -41,7 +41,12 @@ internal fun SpeedArt(scale: Float) {
                 else -> ease(((t - 0.15f) / (0.36f * s)).coerceIn(0f, 1f))
             }
             // 다 열린 모습을 잠깐 보여 준 뒤 닫혀(사라져) 다음 반복을 준비한다
-            val close = ((t - 0.78f) / 0.14f).coerceIn(0f, 1f)
+            // 닫힐 때도 같은 배율로: 0.7부터 1배면 0.2(약 160ms 그림 시간)에 걸쳐, 0이면 바로 닫힌다
+            val close = when {
+                t < 0.7f -> 0f
+                s <= 0f -> 1f
+                else -> ease(((t - 0.7f) / (0.2f * s)).coerceIn(0f, 1f))
+            }
             if (t >= 0.12f && close < 1f) window(c, screen, open * (1 - close))
             val ms = (300 * s).toInt()
             artPill(tm, c, if (s <= 0f) "바로" else "${ms}ms", Offset(screen.center.x, top + h + 16.dp.toPx()), filled = i == 1)
