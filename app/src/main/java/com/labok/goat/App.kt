@@ -1,7 +1,7 @@
 package com.labok.goat
 
 import com.labok.goat.data.camera.CameraMute
-import com.labok.goat.data.tweaks.RefreshRate
+import com.labok.goat.data.tweaks.StatusIcons
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.rotate.ShakeRotate
@@ -23,8 +23,8 @@ class App : Application() {
         ShakeRotate.start(this)
         // 카메라 촬영음 끄기: 재부팅·업데이트로 돌아오면 Shizuku가 연결될 때 다시 끈다
         CameraMute.watch(this)
-        // 주사율 고정: 삼성 설정·다른 앱이 값을 바꿔 놓았으면 Shizuku가 연결될 때 고른 방식으로 다시 맞춘다
-        RefreshRate.watch(this)
+        // 상태 표시줄 아이콘: 숨긴 아이콘이 다시 보이면(재부팅으로 목록이 비워짐 등) 다시 숨긴다
+        Thread { StatusIcons.reapply(this, "앱 시작") }.start()
         // 대각선 직접 입력 기능을 없앴다(사용자 요청). 이전 버전 입력값이 남아 있으면 계산에서 빼기 위해 지운다.
         if (SettingsRepository.from(this).clearLegacyDiagonalInput()) {
             LogRepository.from(this).add("이전 버전의 대각선 입력값을 지웠습니다(기능 제거)")

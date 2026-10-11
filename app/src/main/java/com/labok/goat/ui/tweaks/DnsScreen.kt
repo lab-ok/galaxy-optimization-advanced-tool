@@ -22,6 +22,7 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -175,7 +176,7 @@ internal fun DnsScreen(contentPadding: PaddingValues, permitted: Boolean, onGuid
                     Text(Copy.DNS_PICK_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.DNS_PICK_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Tight))
-                    PrivateDns.Provider.entries.forEach { p ->
+                    Column(Modifier.selectableGroup()) { PrivateDns.Provider.entries.forEach { p ->
                         val selected = current.provider == p
                         LiquidRadioRow(p.label, p.desc, selected, enabled = permitted && !busy) {
                             haptics.segment()
@@ -208,7 +209,7 @@ internal fun DnsScreen(contentPadding: PaddingValues, permitted: Boolean, onGuid
                                 Spacer(Modifier.height(Gap.Tight))
                             }
                         }
-                    }
+                    } }
                 }
             }
         }

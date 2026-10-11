@@ -6,6 +6,7 @@ import com.labok.goat.domain.DpiFixer
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.labok.goat.data.tweaks.StatusIcons
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.rotate.ShakeRotate
 import android.os.UserManager
@@ -25,6 +26,8 @@ class BootReceiver : BroadcastReceiver() {
         if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) AppDensityNotifier.start(context)
         // 흔들어서 화면 회전: 켜 두었으면 다시 띄운다
         if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) ShakeRotate.start(context)
+        // 상태 표시줄 아이콘: 재부팅으로 숨김 목록이 비워지는 기기가 있어 다시 숨긴다(시스템 설정 권한, 잠금 해제 뒤)
+        if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) StatusIcons.reapply(context, "부팅 감지($action)")
 
         if (isBoot && !settings.applyOnBoot) {
             log.add("부팅 감지($action), 부팅 시 자동 적용 꺼짐")

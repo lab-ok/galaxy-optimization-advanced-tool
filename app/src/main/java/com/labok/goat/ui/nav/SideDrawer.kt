@@ -79,15 +79,17 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     CAMERA_MUTE(Copy.FEATURE_CAMERA_MUTE, NavIcon.CAMERA),
     /** 쓰지 않는 기본 앱 끄기(Shizuku, 되돌릴 수 있음). */
     APP_CLEANUP(Copy.FEATURE_APP_CLEANUP, NavIcon.CLEAN),
-    /** 화면 주사율의 위·아래 한계를 고정한다(시스템 설정 권한 또는 Shizuku). */
+    /** 화면 주사율의 위·아래 한계를 고정한다(Shizuku 셸). */
     REFRESH(Copy.FEATURE_REFRESH, NavIcon.REFRESH),
+    /** 상태 표시줄의 늘 켜 둔 아이콘을 숨긴다(시스템 설정 권한). */
+    STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.STATUSBAR),
     /** 광고를 막는 DNS 서버로 바꾼다(시스템 설정 권한). */
     PRIVATE_DNS(Copy.FEATURE_PRIVATE_DNS, NavIcon.SHIELD),
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, STATUSBAR, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -254,6 +256,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.CLEAN -> clean(color, s)
             NavIcon.SHIELD -> shield(color, s)
             NavIcon.REFRESH -> refresh(color, s)
+            NavIcon.STATUSBAR -> statusBar(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
@@ -382,6 +385,19 @@ private fun DrawScope.refresh(c: Color, s: Stroke) {
         val h = 1.6f + i * 0.9f
         drawLine(c.copy(alpha = 0.45f + i * 0.2f), p(x, 12f - h), p(x, 12f + h), s.width * 0.8f, StrokeCap.Round)
     }
+}
+
+/** 상태 표시줄 아이콘 숨기기: 폰 윗부분의 상태 표시줄 칸, 그 안에 남은 점 둘과 비워진(점선) 자리 하나. */
+private fun DrawScope.statusBar(c: Color, s: Stroke) {
+    val body = Path().apply {
+        moveTo(u(4f), u(21f)); lineTo(u(4f), u(6f)); quadraticBezierTo(u(4f), u(3f), u(7f), u(3f)); lineTo(u(17f), u(3f))
+        quadraticBezierTo(u(20f), u(3f), u(20f), u(6f)); lineTo(u(20f), u(21f))
+    }
+    drawPath(body, c, style = s)
+    drawLine(c, p(4f, 10f), p(20f, 10f), s.width * 0.75f, StrokeCap.Round)
+    drawCircle(c, u(1.3f), p(16.6f, 6.5f))
+    drawCircle(c, u(1.3f), p(13f, 6.5f))
+    drawCircle(c.copy(alpha = 0.35f), u(1.3f), p(9.4f, 6.5f))
 }
 
 /** 정보: 원 안의 i. */

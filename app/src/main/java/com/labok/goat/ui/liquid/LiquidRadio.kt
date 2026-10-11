@@ -4,7 +4,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 /**
  * 여럿 중 하나를 고르는 한 줄(라디오): 왼쪽 동그라미는 고르면 잉크 방울이 통 차오르며 살짝 넘쳤다 자리 잡고,
  * 오른쪽에 이름과 설명을 둔다. 줄 전체를 누를 수 있다. 진동은 부르는 쪽이 [LiquidHaptics.segment]로 낸다.
+ * 여러 줄을 묶는 Column에는 `Modifier.selectableGroup()`을 달아 화면 읽기에서 한 묶음으로 읽히게 한다.
  */
 @Composable
 fun LiquidRadioRow(label: String, desc: String?, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
@@ -42,7 +43,8 @@ fun LiquidRadioRow(label: String, desc: String?, selected: Boolean, enabled: Boo
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable(enabled = enabled, role = Role.RadioButton, onClick = onClick)
+            // 라디오 의미(선택됨·안 됨)를 접근성 서비스가 읽도록 selectable로 둔다. 부르는 쪽은 묶음에 selectableGroup()을 단다.
+            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

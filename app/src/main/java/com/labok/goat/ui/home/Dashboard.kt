@@ -16,6 +16,7 @@ import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.data.tweaks.Bloat
 import com.labok.goat.data.tweaks.PrivateDns
 import com.labok.goat.data.tweaks.RefreshRate
+import com.labok.goat.data.tweaks.StatusIcons
 import com.labok.goat.data.appsize.AppDensityNotifier
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -120,8 +121,9 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             }
             NavItem.APP_CLEANUP -> cleaned?.let { if (it == 0) "꺼 둔 앱 없음" else "꺼 둔 앱 ${it}개" } ?: "쓰지 않는 기본 앱 끄기"
             NavItem.PRIVATE_DNS -> PrivateDns.read(context).label
-            NavItem.REFRESH -> if (!RefreshRate.supported(context)) "60Hz 화면" else RefreshRate.read(context).let {
-                if (it == RefreshRate.Choice.SMOOTH) "항상 ${RefreshRate.max(context)}Hz" else it.label
+            NavItem.STATUS_ICONS -> StatusIcons.hidden(context).size.let { if (it == 0) "숨긴 아이콘 없음" else "숨긴 아이콘 ${it}개" }
+            NavItem.REFRESH -> if (!RefreshRate.supported(context)) Copy.REFRESH_UNSUPPORTED_SHORT else RefreshRate.read(context).let {
+                if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
             }
             else -> ""
         }
@@ -137,6 +139,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.CAMERA_MUTE -> camera == CameraMute.State.MUTED || (camera == CameraMute.State.UNKNOWN && CameraMute.wanted(context))
             NavItem.APP_CLEANUP -> (cleaned ?: 0) > 0
             NavItem.PRIVATE_DNS -> PrivateDns.inUse(context)
+            NavItem.STATUS_ICONS -> StatusIcons.hidden(context).isNotEmpty()
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             else -> false
         }

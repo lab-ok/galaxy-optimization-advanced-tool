@@ -7,12 +7,14 @@ import android.view.Display
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.BuildConfig
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.tweaks.RefreshRate
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -63,8 +66,9 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
     val canWrite = shizuku == ShizukuAccess.State.READY
     var version by remember { mutableIntStateOf(0) }
     val choice = remember(version) { RefreshRate.read(context) }
-    val rates = remember { RefreshRate.rates(context) }
-    val top = rates.maxOrNull() ?: 60
+    // lab 빌드는 에뮬레이터(최고 60Hz 이하)에서도 고르기 화면을 볼 수 있게 120Hz로 흉내 낸다(화면만, 실제 쓰기는 실제 최고값을 따른다)
+    val real = remember { RefreshRate.max(context) }
+    val top = if (BuildConfig.LAB && real <= 60) 120 else real
     val supported = top > 60
     var nowHz by remember { mutableIntStateOf(RefreshRate.now(context)) }
     var busy by remember { mutableStateOf(false) }
@@ -95,7 +99,15 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
                     Text(Copy.REFRESH_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     val high = if (supported) top else 120
-                    RefreshArt(low = 60, high = high, selected = if (choice == RefreshRate.Choice.SAVER) 60 else high)
+                    // 시스템 기본은 어느 한 줄을 강조하지 않는다. 바꿀 수 없는 기기는 지금 화면(60Hz 이하) 쪽을 둔다.
+                    RefreshArt(
+                        low = 60, high = high,
+                        selected = when {
+                            !supported || choice == RefreshRate.Choice.SAVER -> 60
+                            choice == RefreshRate.Choice.SMOOTH -> high
+                            else -> 0
+                        },
+                    )
                 }
             }
         }
@@ -103,16 +115,16 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
                     Text(Copy.REFRESH_UNSUPPORTED_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.REFRESH_UNSUPPORTED_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(Copy.refreshUnsupported(real), color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         } else if (!canWrite) item(key = "permission") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    Text(Copy.CAMERA_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.REFRESH_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.REFRESH_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.CAMERA_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                    LiquidButton(Copy.REFRESH_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
@@ -120,10 +132,10 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
                     Text(Copy.REFRESH_PICK_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text("지금 화면 ${nowHz}Hz · 이 기기 최고 ${top}Hz", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(Copy.refreshNow(nowHz, top), color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Tight))
-                    RefreshRate.Choice.entries.forEach { ch ->
-                        val label = if (ch == RefreshRate.Choice.SMOOTH) "항상 ${top}Hz" else ch.label
+                    Column(Modifier.selectableGroup()) { RefreshRate.Choice.entries.forEach { ch ->
+                        val label = if (ch == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(top) else ch.label
                         LiquidRadioRow(label, ch.desc, choice == ch, enabled = canWrite && !busy) {
                             if (ch == choice) return@LiquidRadioRow
                             haptics.segment()
@@ -136,11 +148,11 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
                                 if (ok) haptics.snap() else { haptics.reject(); Toast.makeText(context, Copy.REFRESH_TOAST_FAILED, Toast.LENGTH_SHORT).show() }
                             }
                         }
-                    }
+                    } }
                 }
             }
         }
-        item(key = "caution") {
+        if (supported) item(key = "caution") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
                     Text(Copy.REFRESH_CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -158,7 +170,7 @@ internal fun RefreshHelpSheet() {
         HelpTopic(
             "1. 주사율이 무엇인가요",
             "화면이 1초에 몇 장을 새로 그리는지입니다. 120Hz는 1초에 120장을 그려 60Hz보다 스크롤과 움직임이 두 배 촘촘하고 매끄럽습니다. " +
-                "대신 장수만큼 전기를 더 씁니다.",
+                "대신 화면이 더 자주 그리는 만큼 배터리를 조금 더 씁니다.",
         ) { RefreshArt(low = 60, high = 120, selected = 120) }
         HelpTopic(
             "2. 세 가지 방식",
@@ -168,12 +180,12 @@ internal fun RefreshHelpSheet() {
         HelpTopic(
             "3. 잠시 내려가는 경우",
             "절전 모드, 화면 밝기가 아주 낮을 때, 일부 게임·동영상 앱은 시스템이 잠시 주사율을 내립니다. 그 상황이 끝나면 고른 방식으로 돌아옵니다. " +
-                "삼성 설정이나 다른 앱이 값을 바꿔 놓으면 Shizuku가 연결될 때 다시 맞춥니다.",
+                "주사율 고정 자체는 재부팅해도 유지됩니다.",
         )
         HelpTopic(
             "4. 권한과 되돌리기",
             "주사율의 최고·최저는 숨은 시스템 설정이라 Shizuku 셸 권한으로 바꿉니다. '시스템 기본'을 고르면 처음 값으로 돌아갑니다. " +
-                "설정 > 디스플레이 > 화면 움직임 부드럽게에서도 되돌릴 수 있습니다.",
+                "설정 > 디스플레이 > 화면 움직임 부드럽게에서 바꿔도 되며, GOAT는 앱 밖에서 바꾼 값을 다시 덮어쓰지 않습니다.",
         )
     }
 }
