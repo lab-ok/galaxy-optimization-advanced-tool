@@ -67,11 +67,13 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     DPI_MATCH(Copy.FEATURE_DPI, NavIcon.FOLD),
     /** 앱마다 화면 크기를 따로 두는 기능(삼성 '앱 화면 크게/작게', Shizuku 필요). */
     APP_SIZE(Copy.FEATURE_APP_SIZE, NavIcon.APPS),
+    /** 평소에는 회전을 잠가 두고, 흔들면 폰이 놓인 방향으로 한 번 돌린다. */
+    SHAKE_ROTATE(Copy.FEATURE_SHAKE_ROTATE, NavIcon.ROTATE),
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { FOLD, APPS, FLASK, INFO }
+enum class NavIcon { FOLD, APPS, ROTATE, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -234,6 +236,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
         when (icon) {
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
+            NavIcon.ROTATE -> rotate(color, s)
             NavIcon.FLASK -> flask(color, s)
             NavIcon.INFO -> info(color, s)
         }
@@ -255,6 +258,19 @@ private fun DrawScope.apps(c: Color, s: Stroke) {
     drawRoundRect(c, p(13.5f, 4f), Size(u(6.5f), u(6.5f)), CornerRadius(u(1.8f)), style = s)
     drawRoundRect(c, p(4f, 13.5f), Size(u(6.5f), u(6.5f)), CornerRadius(u(1.8f)), style = s)
     drawRoundRect(c, p(12.5f, 12.5f), Size(u(8.5f), u(8.5f)), CornerRadius(u(2.2f)), style = s)
+}
+
+/** 흔들어 회전: 가운데 폰과 그 둘레를 도는 화살표 하나. */
+private fun DrawScope.rotate(c: Color, s: Stroke) {
+    drawRoundRect(c, p(8.5f, 6.5f), Size(u(7f), u(11f)), CornerRadius(u(1.6f)), style = s)
+    drawArc(c, 200f, 120f, false, p(2.5f, 2.5f), Size(u(19f), u(19f)), style = s)
+    drawArc(c, 20f, 120f, false, p(2.5f, 2.5f), Size(u(19f), u(19f)), style = s)
+    // 화살촉(위쪽 호의 끝, 오른쪽 위)
+    drawLine(c, p(17.6f, 4.6f), p(17.9f, 7.6f), s.width, StrokeCap.Round)
+    drawLine(c, p(17.6f, 4.6f), p(14.8f, 5.4f), s.width, StrokeCap.Round)
+    // 화살촉(아래쪽 호의 끝, 왼쪽 아래)
+    drawLine(c, p(6.4f, 19.4f), p(6.1f, 16.4f), s.width, StrokeCap.Round)
+    drawLine(c, p(6.4f, 19.4f), p(9.2f, 18.6f), s.width, StrokeCap.Round)
 }
 
 /** 정보: 원 안의 i. */

@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 흔들어 화면 회전: 돌렸을 때 짧게 진동으로 알린다 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- WorkManager가 네트워크 조건용으로 넣는 권한. 이 앱은 네트워크를 쓰지 않으므로 뺀다. -->
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE"
@@ -113,6 +115,15 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Shows a notification to adjust the per-app display size of the app currently in front" />
+        </service>
+        <!-- 흔들어 화면 회전: 화면이 켜져 있을 때 가속도 센서로 흔들기를 감지해 회전 잠금 방향을 바꾼다 -->
+        <service
+            android:name=".data.rotate.ShakeRotateService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps screen rotation locked and rotates the screen once when the user shakes the phone" />
         </service>
         <!-- 알림창 [작게]·[기본]·[크게]를 받아 방금 쓰던 앱의 크기를 바꾸는 투명 화면 -->
         <activity

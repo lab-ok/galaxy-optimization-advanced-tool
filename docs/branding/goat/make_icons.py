@@ -34,7 +34,7 @@ mono = (f'<path d="{horn}" fill="#fff"/><g {mir}><path d="{horn}" fill="#fff"/><
         '<path d="M240 366 Q248 382 252 404 Q256 412 260 404 Q264 382 272 366 Z" fill="#fff"/>'
         f'<path d="{HEAD} {circ(212, 282, 25)} {circ(300, 282, 25)} M243 316 Q256 308 269 316 Q264 330 256 332 Q248 330 243 316 Z" fill="#fff" fill-rule="evenodd"/>')
 out['ic_launcher_mono.xml'] = (svg(scale(mono, 0.84, -4)), 108)
-out['ic_stat_goat.xml'] = (svg(scale(mono, 1.3, -8)), 24)
+out['ic_stat_goat.xml'] = (svg(scale(mono, 1.45, -9)), 24)
 
 for name, (s, dp) in out.items():
     with open(os.path.join(res, name), 'w', encoding='utf-8') as f:

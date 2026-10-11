@@ -1,5 +1,7 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.rotate.ShakeRotateHelpSheet
+import com.labok.goat.ui.rotate.ShakeRotateScreen
 import com.labok.goat.ui.components.copyText
 import com.labok.goat.ui.components.DangerConfirmBox
 import com.labok.goat.ui.components.featurePadding
@@ -130,7 +132,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -215,9 +217,10 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         inner = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT,
     )
     CompositionLocalProvider(LocalDeviceShape provides deviceShape) {
-        // 사이드바는 기능 단위. 두 기능 모두 화면 크기(DPI)를 다루므로 '화면 크기'로 묶는다. 조사 도구는 lab 빌드에서만.
+        // 사이드바는 기능 단위. DPI를 다루는 두 기능은 '화면 배율'로, 그 밖의 유틸은 '편의 기능'으로 묶는다. 조사 도구는 lab 빌드에서만.
         val sections = buildList {
             add(NavSection(Copy.MENU_SECTION_FEATURES, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
+            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE)))
             if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
@@ -235,6 +238,12 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED },
             ) + common(Sheet.HELP, Sheet.GUIDE, Sheet.RESET)
             NavItem.APP_SIZE -> common(Sheet.APP_HELP, Sheet.APP_GUIDE, Sheet.APP_RESET)
+            // 권한은 화면 배율 동기화와 같은 시스템 설정 권한이라 같은 권한 설정 안내를 연다. 초기화할 것은 없다.
+            NavItem.SHAKE_ROTATE -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.SHAKE_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
+                Copy.MENU_REPORT to report,
+            )
             NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -349,6 +358,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                         when (f) {
                             NavItem.DPI_MATCH -> dpiMatchList(inner)
                             NavItem.APP_SIZE -> AppSizeScreen(inner, onGuide = { sheet = Sheet.APP_GUIDE }, onReset = { sheet = Sheet.APP_RESET })
+                            NavItem.SHAKE_ROTATE -> ShakeRotateScreen(inner, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                         }
                     }
@@ -385,6 +395,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.APP_HELP -> AppSizeHelpSheet(onConnect = { sheet = Sheet.APP_GUIDE })
                     Sheet.APP_GUIDE -> AppSizeGuideSheet()
                     Sheet.APP_RESET -> AppSizeResetSheet(onDone = { msg -> sheet = null; vm.say(msg) })
+                    Sheet.SHAKE_HELP -> ShakeRotateHelpSheet()
                 }
             }
         }

@@ -101,3 +101,19 @@ internal fun openDeveloperOptions(context: Context) {
         context.startActivity(Intent(Settings.ACTION_SETTINGS))
     }
 }
+
+/** 사용 방법 한 항목: 제목, 움직이는 그림([art]), 설명. 초보자도 그림만 보고 알 수 있게 그림을 설명 위에 둔다. */
+@Composable
+internal fun HelpTopic(title: String, body: String, art: (@Composable () -> Unit)? = null) {
+    val c = LocalLiquid.current
+    com.labok.goat.ui.liquid.GlassCard(padding = 16.dp) {
+        Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
+        if (art != null) {
+            Spacer(Modifier.height(10.dp))
+            art()
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(body, color = c.muted, style = MaterialTheme.typography.bodyMedium)
+    }
+    Spacer(Modifier.height(12.dp))
+}
