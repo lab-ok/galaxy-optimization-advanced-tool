@@ -1,5 +1,10 @@
 package com.labok.goat.ui.art
 
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -45,6 +50,23 @@ internal fun artLoop(periodMs: Int, reverse: Boolean = false): Float {
         label = "t",
     )
     return if (reduce) 1f else t
+}
+
+/**
+ * 0→1을 [periodMs]마다 반복하는 진행값(실제 시간). [artLoop]과 달리 시스템 애니메이션 배율(개발자 옵션·애니메이션 속도)을
+ * 따르지 않는다. 애니메이션 속도 그림처럼 그 배율 자체를 보여 주는 그림에 쓴다(배율이 두 번 걸리지 않게).
+ */
+@Composable
+internal fun realTimeLoop(periodMs: Int): Float {
+    var t by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(periodMs) {
+        val start = withFrameNanos { it }
+        while (true) {
+            val now = withFrameNanos { it }
+            t = (((now - start) / 1_000_000L) % periodMs).toFloat() / periodMs
+        }
+    }
+    return t
 }
 
 @Composable

@@ -11,7 +11,7 @@ import com.labok.goat.data.tweaks.AnimationSpeed
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.LocalDeviceShape
 import com.labok.goat.ui.art.artLabel
-import com.labok.goat.ui.art.artLoop
+import com.labok.goat.ui.art.realTimeLoop
 import com.labok.goat.ui.art.artPill
 import com.labok.goat.ui.art.deviceFrame
 import com.labok.goat.ui.liquid.LiquidColors
@@ -24,7 +24,8 @@ private fun ease(x: Float) = x * x * (3 - 2 * x)
  */
 @Composable
 internal fun SpeedArt(scale: Float) {
-    val t = artLoop(2600)
+    // 시스템 애니메이션 배율이 이 그림에도 걸리면 고른 배율이 두 번 적용돼 보이므로 실제 시간으로 움직인다
+    val t = realTimeLoop(2600)
     val aspect = LocalDeviceShape.current.cover
     ArtCanvas(170.dp) { c, tm ->
         val h = 112.dp.toPx(); val w = h * aspect
