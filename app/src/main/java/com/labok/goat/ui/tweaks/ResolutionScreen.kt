@@ -26,6 +26,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -63,8 +64,10 @@ internal fun ResolutionScreen(contentPadding: PaddingValues, permitted: Boolean,
     val pending by Resolution.pending.collectAsStateWithLifecycle()
     var version by remember { mutableIntStateOf(0) }
     val supported = remember { Resolution.supported(context) }
-    val base = remember(version, pending) { Resolution.base(context) }
-    val now = remember(version, pending) { Resolution.current(context) }
+    // 해상도가 바뀌면 화면 설정(Configuration)이 바뀌므로 그것을 키로 다시 읽는다(반영 전 크기를 붙들지 않게)
+    val config = LocalConfiguration.current
+    val base = remember(version, pending, config) { Resolution.base(context) }
+    val now = remember(version, pending, config) { Resolution.current(context) }
     val options = remember(base) { Resolution.optionsFor(base) }
     val selected = options.minByOrNull { kotlin.math.abs(it.short - now.first) }
     var busy by remember { mutableStateOf(false) }
@@ -200,7 +203,7 @@ internal fun ResolutionHelpSheet() {
         HelpTopic(
             "2. 바꾼 뒤 확인",
             "바꾸면 화면이 잠깐 깜빡이고 ${Resolution.CONFIRM_MS / 1000}초 동안 '이 해상도를 유지할까요?'를 묻습니다. '유지'를 누르지 않으면 " +
-                "원래대로 되돌립니다. 확인하기 전에 재부팅해도 잠금을 풀기 전에 원래대로 돌아갑니다.",
+                "원래대로 되돌립니다. 확인하기 전에 재부팅하면 다음 부팅 때 원래대로 되돌리도록 해 두었습니다.",
         )
         HelpTopic(
             "3. 함께 바뀌는 것",

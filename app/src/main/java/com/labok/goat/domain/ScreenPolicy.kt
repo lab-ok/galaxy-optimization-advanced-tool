@@ -14,8 +14,8 @@ data class ScreenInfo(
     /** 대각선 길이(인치). 외부·내부 구분에 쓴다. */
     val diagonalInch: Float,
     /**
-     * 강제 해상도(wm size) 비율 = 지금 논리 짧은 변 / 물리 짧은 변. 해상도를 낮추지 않았으면 1.
-     * [key]·[diagonalInch]는 늘 물리 크기 기준이라 해상도를 바꿔도 같은 화면으로 본다. 저장하지 않는다(읽을 때마다 잰다).
+     * GOAT 해상도 낮추기 비율 = 지금 논리 짧은 변 / GOAT가 바꾸기 직전 논리 짧은 변. GOAT가 해상도를 바꾸지 않았으면 1.
+     * GOAT가 바꿔 둔 동안 [key]·[diagonalInch]는 그 직전 크기 기준이라 같은 화면으로 본다. 저장하지 않는다(읽을 때마다 잰다).
      */
     val scale: Float = 1f,
 )

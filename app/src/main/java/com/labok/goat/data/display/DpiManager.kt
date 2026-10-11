@@ -257,13 +257,18 @@ class DpiManager(context: Context) : DpiController {
          * 그 직전 크기를 키로 쓰고 지금 크기와의 비율을 [ScreenInfo.scale]에 둔다(같은 화면으로 보고 목표 DPI를 같은 비율로 줄이게).
          * 삼성 공식 해상도 설정(FHD+ 등)처럼 GOAT 밖에서 줄인 크기는 지금처럼 그대로 키가 된다. PPI는 패널 값이라 그대로다.
          */
-        internal fun toScreen(m: DisplayMetrics, base: Pair<Int, Int>?): ScreenInfo {
-            val logicalShort = minOf(m.widthPixels, m.heightPixels)
-            val w = base?.first ?: logicalShort
-            val h = base?.second ?: maxOf(m.widthPixels, m.heightPixels)
-            val ppi = (m.xdpi + m.ydpi) / 2f
-            // 대각선은 지금 픽셀로 잰다(학습한 값과 같게): 비율이 걸린 동안은 기준 크기로 환산한다
-            val diag = Math.hypot(w / m.xdpi.toDouble(), h / m.ydpi.toDouble()).toFloat()
+        internal fun toScreen(m: DisplayMetrics, base: Pair<Int, Int>?): ScreenInfo =
+            screenOf(m.widthPixels, m.heightPixels, m.xdpi, m.ydpi, base)
+
+        /** [toScreen]의 계산(시험할 수 있게 DisplayMetrics와 뗐다). */
+        internal fun screenOf(widthPx: Int, heightPx: Int, xdpi: Float, ydpi: Float, base: Pair<Int, Int>?): ScreenInfo {
+            val logicalShort = minOf(widthPx, heightPx)
+            // GOAT 밖에서 해상도를 더 크게 바꿨으면(비율 > 1) 기록이 낡은 것이라 쓰지 않는다
+            val b = base?.takeIf { logicalShort <= it.first }
+            val w = b?.first ?: logicalShort
+            val h = b?.second ?: maxOf(widthPx, heightPx)
+            val ppi = (xdpi + ydpi) / 2f
+            val diag = Math.hypot(w / xdpi.toDouble(), h / ydpi.toDouble()).toFloat()
             val scale = if (w > 0) logicalShort.toFloat() / w else 1f
             // 1% 안쪽 차이(반올림)는 해상도를 바꾸지 않은 것으로 본다
             return ScreenInfo("${w}x$h", ppi, diag, if (kotlin.math.abs(scale - 1f) < 0.01f) 1f else scale)

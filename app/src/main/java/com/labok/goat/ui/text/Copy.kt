@@ -440,10 +440,13 @@ object Copy {
     const val RES_DASH_ORIGINAL = "원래 해상도"
     const val RES_DASH_FOLD = "폴드는 지원 안 함"
     fun resNow(w: Int, h: Int, bw: Int, bh: Int) = if (w == bw && h == bh) "지금 ${w} × ${h}" else "지금 ${w} × ${h} · 원래 ${bw} × ${bh}"
+    /** 해상도 선택지 이름. [percent]는 변 비율이고, 화면에는 그리는 점(넓이) 비율로 적는다. */
     fun resOption(name: String?, w: Int, h: Int, percent: Int) =
-        if (percent >= 100) "원래대로 ${w} × ${h}" else listOfNotNull(name, "${w} × ${h}").joinToString(" ") + " · $percent%"
-    fun resOptionDesc(percent: Int) = "그리는 점이 약 ${100 - percent * percent / 100}% 줄어듭니다."
+        if (percent >= 100) "원래대로 ${w} × ${h}" else listOfNotNull(name, "${w} × ${h}").joinToString(" ") + " · 점 ${resPoints(percent)}%"
+    fun resOptionDesc(percent: Int) = "그리는 점이 약 ${100 - resPoints(percent)}% 줄어듭니다."
+    /** 변 비율 [percent]%일 때 그리는 점 수 비율(%). */
+    fun resPoints(percent: Int) = percent * percent / 100
     fun resAppsBody(n: Int) = "앱 ${n}개는 정해진 단계로만 배율을 바꿀 수 있어, 해상도를 낮추는 동안 그 앱들이 조금 커 보입니다."
     fun resConfirmBody(left: Int) = "${left}초 안에 '유지'를 누르지 않으면 원래 해상도로 되돌립니다."
-    fun resDash(w: Int, percent: Int) = "$w · $percent%"
+    fun resDash(w: Int, percent: Int) = "$w · 점 ${resPoints(percent)}%"
 }

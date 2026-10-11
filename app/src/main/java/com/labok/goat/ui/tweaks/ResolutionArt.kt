@@ -16,7 +16,7 @@ private fun ease(x: Float) = x * x * (3 - 2 * x)
 
 /**
  * 해상도 그림: 같은 크기의 동그라미를 두 돋보기 칸에 픽셀로 그린다. 왼쪽(원래)은 픽셀이 촘촘해 가장자리가 매끈하고,
- * 오른쪽([percent]%)은 픽셀이 굵어 계단이 보이는 대신 그리는 점 수가 줄어든다(아래 알약에 점 수 비율).
+ * 오른쪽(변 [percent]%)은 픽셀이 굵어 계단이 보이는 대신 그리는 점 수가 줄어든다(알약에 점 수 비율, 선택지 이름과 같은 기준).
  * 동그라미가 천천히 숨 쉬듯 커졌다 작아져 계단이 움직이는 것이 보인다.
  */
 @Composable
@@ -43,9 +43,8 @@ internal fun ResolutionArt(percent: Int) {
                 }
             }
             drawRoundRect(if (on) c.ink else c.line, Offset(left, top), Size(box, box), CornerRadius(12.dp.toPx()), style = Stroke(1.5f.dp.toPx()))
-            val pixels = (scale * scale * 100).toInt()
-            artPill(tm, c, if (i == 0) "점 100%" else "점 $pixels%", Offset(left + box / 2, top + box + 16.dp.toPx()), filled = on)
-            artLabel(tm, if (i == 0) "원래 해상도" else "$percent%", Offset(left + box / 2, top + box + 36.dp.toPx()), if (on) c.ink else c.muted, bold = on)
+            artPill(tm, c, if (i == 0) "점 100%" else "점 ${com.labok.goat.ui.text.Copy.resPoints(percent)}%", Offset(left + box / 2, top + box + 16.dp.toPx()), filled = on)
+            artLabel(tm, if (i == 0) "원래 해상도" else "낮춘 해상도", Offset(left + box / 2, top + box + 36.dp.toPx()), if (on) c.ink else c.muted, bold = on)
         }
     }
 }

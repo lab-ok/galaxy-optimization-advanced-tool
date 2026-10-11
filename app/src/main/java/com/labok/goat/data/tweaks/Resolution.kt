@@ -70,8 +70,20 @@ object Resolution {
         return minOf(m.widthPixels, m.heightPixels) to maxOf(m.widthPixels, m.heightPixels)
     }
 
-    /** 기준(되돌아갈) 해상도: GOAT가 바꿔 둔 동안은 그 직전 크기, 아니면 지금 크기. */
-    fun base(context: Context): Pair<Int, Int> = ResolutionState.base(context) ?: current(context)
+    /**
+     * 기준(되돌아갈) 해상도: GOAT가 바꿔 둔 동안은 그 직전 크기, 아니면 지금 크기.
+     * GOAT로 낮춰 둔 사이에 삼성 설정 등에서 더 크게 바꿨으면 기록이 낡은 것이라 버리고 지금 크기를 쓴다.
+     */
+    fun base(context: Context): Pair<Int, Int> {
+        val now = current(context)
+        val saved = ResolutionState.base(context) ?: return now
+        if (now.first > saved.first) {
+            ResolutionState.clear(context)
+            LogRepository.from(context).add("해상도 낮추기: 다른 곳에서 해상도를 ${now.first}x${now.second}로 바꿔 GOAT 기록을 지움")
+            return now
+        }
+        return saved
+    }
 
     /** 기준 크기보다 작은 선택지(시험할 수 있게 계산은 [optionsFor]). */
     fun options(context: Context): List<Option> = optionsFor(base(context))
@@ -144,16 +156,23 @@ object Resolution {
     /** 확인: 자동 되돌림을 멈추고 지금 해상도를 유지한다. */
     fun keep(context: Context) {
         val app = context.applicationContext
-        countdown?.cancel()
-        runCatching { WorkManager.getInstance(app).cancelUniqueWork(WORK) }
-        ResolutionState.setDeadline(app, 0)
-        pendingState.value = 0
+        // 자동 되돌림과 겹치지 않게 같은 잠금에서 마감을 지운다(되돌림은 잠금 안에서 마감을 다시 확인한다)
+        DpiFixer.from(app).exclusive {
+            countdown?.cancel()
+            runCatching { WorkManager.getInstance(app).cancelUniqueWork(WORK) }
+            ResolutionState.setDeadline(app, 0)
+            pendingState.value = 0
+        }
         LogRepository.from(app).add("해상도 낮추기: 지금 해상도 유지(확인)")
     }
 
-    /** 원래 해상도·밀도로 되돌린다(작업 스레드). */
-    fun revert(context: Context, how: String): Boolean {
+    /**
+     * 원래 해상도·밀도로 되돌린다(작업 스레드). [onlyIfPending]이면(자동 되돌림) 잠금 안에서 확인 대기 중인지 다시 보고,
+     * 그 사이 '유지'를 눌렀으면 되돌리지 않는다.
+     */
+    fun revert(context: Context, how: String, onlyIfPending: Boolean = false): Boolean {
         val app = context.applicationContext
+        if (onlyIfPending && DpiFixer.from(app).exclusive { ResolutionState.deadline(app) == 0L }) return false
         countdown?.cancel()
         runCatching { WorkManager.getInstance(app).cancelUniqueWork(WORK) }
         pendingState.value = 0
@@ -188,7 +207,7 @@ object Resolution {
     fun revertIfPending(context: Context, how: String, force: Boolean = false) {
         val at = ResolutionState.deadline(context)
         if (at == 0L) return
-        if (force || System.currentTimeMillis() >= at) revert(context, how) else resumeCountdown(context.applicationContext, at)
+        if (force || System.currentTimeMillis() >= at) revert(context, how, onlyIfPending = true) else resumeCountdown(context.applicationContext, at)
     }
 
     /** 앱 시작 때: 확인 대기 중이었으면 남은 시간으로 카운트다운을 이어 간다(지났으면 되돌린다). */
@@ -213,7 +232,7 @@ object Resolution {
         countdown?.cancel()
         countdown = scope.launch {
             delay((at - System.currentTimeMillis()).coerceAtLeast(0))
-            if (ResolutionState.deadline(context) == at) revert(context, "확인하지 않아 자동 되돌림")
+            if (ResolutionState.deadline(context) == at) revert(context, "확인하지 않아 자동 되돌림", onlyIfPending = true)
         }
     }
 
