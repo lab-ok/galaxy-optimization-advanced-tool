@@ -1,5 +1,6 @@
 package com.labok.goat.data.appsize
 
+import com.labok.goat.ui.appsize.DensityStepActivity
 import com.labok.goat.data.shizuku.ShizukuAccess
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
@@ -19,8 +20,11 @@ object AppUsage {
         return ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName) == AppOpsManager.MODE_ALLOWED
     }
 
-    /** '지금 쓰는 앱'으로 치지 않는 앱: GOAT 자신(알림 버튼 화면), 시스템 UI(알림창), Shizuku. */
-    fun notTargets(context: Context) = setOf(context.packageName, "com.android.systemui", ShizukuAccess.PACKAGE)
+    /** '지금 쓰는 앱'으로 치지 않는 앱: 시스템 UI(알림창), Shizuku. GOAT 자신은 조절 대상이다. */
+    fun notTargets(context: Context) = setOf("com.android.systemui", ShizukuAccess.PACKAGE)
+
+    /** 알림 버튼을 받는 GOAT의 투명 화면. 이 화면이 앞에 와도 '지금 쓰는 앱'을 바꾸지 않는다. */
+    val STEP_ACTIVITY: String = DensityStepActivity::class.java.name
 
     /** 패키지별 마지막 사용 시각(최근 60일). 접근 권한이 없으면 빈 지도. */
     fun lastUsed(context: Context): Map<String, Long> {
@@ -33,7 +37,7 @@ object AppUsage {
     }
 
     /**
-     * 지금 쓰던 앱: 최근 6시간 사용 기록에서 마지막으로 화면에 올라온 앱(GOAT·시스템 UI 제외).
+     * 지금 쓰던 앱: 최근 6시간 사용 기록에서 마지막으로 화면에 올라온 앱(시스템 UI·알림 버튼 화면 제외).
      * 마지막이 홈 화면이면 null(열려 있는 앱이 없음).
      */
     fun foregroundApp(context: Context): String? {
@@ -48,7 +52,7 @@ object AppUsage {
         var last: String? = null
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
-            if (e.eventType == UsageEvents.Event.ACTIVITY_RESUMED && e.packageName !in skip) last = e.packageName
+            if (e.eventType == UsageEvents.Event.ACTIVITY_RESUMED && e.packageName !in skip && e.className != STEP_ACTIVITY) last = e.packageName
         }
         return last?.takeIf { it != home }
     }

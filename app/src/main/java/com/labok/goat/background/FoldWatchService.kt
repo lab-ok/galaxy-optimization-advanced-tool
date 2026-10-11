@@ -117,7 +117,7 @@ class FoldWatchService : Service() {
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
         )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_dpi)
+            .setSmallIcon(R.drawable.ic_stat_goat)
             .setContentTitle(AppInfo.NAME)
             .setContentText("디스플레이 전환 시 밀도를 확인하는 중")
             .setContentIntent(open)

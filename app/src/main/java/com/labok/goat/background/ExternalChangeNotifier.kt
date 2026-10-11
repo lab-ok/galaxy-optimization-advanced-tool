@@ -36,7 +36,7 @@ object ExternalChangeNotifier {
         )
         val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val n = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_dpi)
+            .setSmallIcon(R.drawable.ic_stat_goat)
             .setContentTitle("${AppInfo.NAME} · 외부 DPI 변경 감지")
             .setContentText(text(change))
             .setStyle(NotificationCompat.BigTextStyle().bigText(text(change) + " 이 값을 기준으로 할지, 앱 설정으로 복원할지 선택하세요."))

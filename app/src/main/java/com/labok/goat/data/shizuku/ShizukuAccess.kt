@@ -173,6 +173,17 @@ object ShizukuAccess {
         AppUsage.hasAccess(context)
     }.getOrDefault(false).also { LogRepository.from(context).add("Shizuku로 사용 기록 접근 허용: ${if (it) "성공" else "실패"}") }
 
+    /**
+     * 셸 권한으로 [delaySec]초 뒤에 [command]를 실행해 둔다. GOAT가 그 사이에 닫혀도 실행된다
+     * (setsid로 세션을 떼어 두어 sh가 끝나도, Shizuku가 이 프로세스를 정리해도 남는다). Shizuku API에 공개 함수가 없어 리플렉션으로 부른다.
+     */
+    fun runLater(delaySec: Int, command: String): Boolean = runCatching {
+        val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)
+        m.isAccessible = true
+        val p = m.invoke(null, arrayOf("sh", "-c", "setsid sh -c 'sleep $delaySec; $command' </dev/null >/dev/null 2>&1 &"), null, null) as Process
+        p.waitFor() == 0
+    }.getOrDefault(false)
+
     /** 실기기 코드 기준 인자 순서: (패키지, 사용자, 밀도, 메모). 값은 [AppDensityPolicy.STEPS]와 0만. */
     fun set(pkg: String, user: Int, dpi: Int) {
         require(AppDensityPolicy.isAllowed(dpi)) { "허용되지 않는 값: $dpi" }

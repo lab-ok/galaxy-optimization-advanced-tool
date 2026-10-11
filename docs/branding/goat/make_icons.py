@@ -5,6 +5,7 @@ generate.py의 염소 모양을 그대로 쓰고, svg2vd.py로 Android VectorDra
 - ic_launcher_mono: 테마 아이콘(단색, 눈·코는 구멍)
 - ic_app_logo: 앱 안 로고(검은 둥근 타일 + 염소)
 - ic_goat: 염소 얼굴만(사이드바 머리)
+- ic_stat_goat: 알림 작은 아이콘(단색 염소, 24dp를 거의 채운다)
 """
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +34,7 @@ mono = (f'<path d="{horn}" fill="#fff"/><g {mir}><path d="{horn}" fill="#fff"/><
         '<path d="M240 366 Q248 382 252 404 Q256 412 260 404 Q264 382 272 366 Z" fill="#fff"/>'
         f'<path d="{HEAD} {circ(212, 282, 25)} {circ(300, 282, 25)} M243 316 Q256 308 269 316 Q264 330 256 332 Q248 330 243 316 Z" fill="#fff" fill-rule="evenodd"/>')
 out['ic_launcher_mono.xml'] = (svg(scale(mono, 0.84, -4)), 108)
+out['ic_stat_goat.xml'] = (svg(scale(mono, 1.3, -8)), 24)
 
 for name, (s, dp) in out.items():
     with open(os.path.join(res, name), 'w', encoding='utf-8') as f:

@@ -78,7 +78,7 @@ object AppDensityNotifier {
         )
         val open = PendingIntent.getActivity(context, 10, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_dpi)
+            .setSmallIcon(R.drawable.ic_stat_goat)
             .setContentTitle("${AppInfo.NAME} · 앱 화면 크기")
             .setContentText(status ?: "지금 쓰는 앱의 화면 크기를 한 단계씩 바꿉니다.")
             .setOngoing(true)

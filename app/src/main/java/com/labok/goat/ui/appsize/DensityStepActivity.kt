@@ -57,11 +57,14 @@ class DensityStepActivity : Activity() {
         val next = AppDensityPolicy.next(base, step)
             ?: return "$label: 이미 가장 ${if (step < 0) "작습니다" else "큽니다"}($base)."
         if (next == now) return "$label: 이미 ${if (now == 0) Copy.APP_SIZE_DEFAULT else "$now"}입니다."
+        // GOAT 자신이면 삼성이 GOAT를 닫아 아래에서 다시 열 수 없다. 셸에 다시 열기를 먼저 맡겨 둔다.
+        val self = target == packageName
+        if (self) ShizukuAccess.runLater(2, "am start -n $packageName/.ui.MainActivity")
         DensityShell.set(this, target, next)
         DensityShell.notifyChanged()
         // 삼성이 그 앱을 닫는 것을 기다렸다가 다시 연다
         Thread.sleep(400)
-        packageManager.getLaunchIntentForPackage(target)?.let { runCatching { startActivity(it) } }
+        if (!self) packageManager.getLaunchIntentForPackage(target)?.let { runCatching { startActivity(it) } }
         return AppDensityNotifier.describe(this, target)
     }
 

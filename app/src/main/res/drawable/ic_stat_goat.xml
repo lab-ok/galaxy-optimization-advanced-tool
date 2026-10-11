@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- docs/branding/goat에서 만든 SVG를 변환한 것(svg2vd). 손으로 고치지 말고 SVG를 고친 뒤 다시 변환한다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="24dp" android:height="24dp" android:viewportWidth="512" android:viewportHeight="512">
+    <group android:translateX="-76.80000000000001" android:translateY="-84.80000000000001" android:scaleX="1.3" android:scaleY="1.3">
+        <path android:pathData="M216 194 C204 152 182 122 152 112 C146 110 142 116 146 121 C162 138 170 160 176 184 C180 198 188 206 200 210 Z" android:fillColor="#FFFFFFFF"/>
+        <group android:scaleX="-1" android:pivotX="256.0">
+            <path android:pathData="M216 194 C204 152 182 122 152 112 C146 110 142 116 146 121 C162 138 170 160 176 184 C180 198 188 206 200 210 Z" android:fillColor="#FFFFFFFF"/>
+        </group>
+        <path android:pathData="M168 250 C138 232 104 236 82 258 C80 262 82 266 86 268 C112 288 146 290 174 276 Z" android:fillColor="#FFFFFFFF"/>
+        <group android:scaleX="-1" android:pivotX="256.0">
+            <path android:pathData="M168 250 C138 232 104 236 82 258 C80 262 82 266 86 268 C112 288 146 290 174 276 Z" android:fillColor="#FFFFFFFF"/>
+        </group>
+        <path android:pathData="M240 366 Q248 382 252 404 Q256 412 260 404 Q264 382 272 366 Z" android:fillColor="#FFFFFFFF"/>
+        <path android:pathData="M256 170 C320 170 362 212 360 270 C358 330 316 374 256 376 C196 374 154 330 152 270 C150 212 192 170 256 170 Z M187,282a25,25 0 1,0 50,0a25,25 0 1,0 -50,0Z M275,282a25,25 0 1,0 50,0a25,25 0 1,0 -50,0Z M243 316 Q256 308 269 316 Q264 330 256 332 Q248 330 243 316 Z" android:fillColor="#FFFFFFFF" android:fillType="evenOdd"/>
+    </group>
+</vector>

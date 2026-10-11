@@ -84,7 +84,7 @@ object ForegroundWatcher {
     }
 
     /**
-     * 포커스된 작업의 맨 위 앱(셸 권한). 홈 화면·최근 앱 화면이면 ""(앱 없음), 읽지 못하면 null.
+     * 포커스된 작업의 맨 위 앱(셸 권한). 홈 화면·최근 앱 화면이면 ""(앱 없음), 읽지 못했거나 알림 버튼 화면이면 null(그대로 둔다).
      * 홈 화면은 패키지 이름이 아니라 작업 종류(topActivityType: 2=홈, 3=최근 앱)로 가린다.
      */
     private fun top(): String? = runCatching {
@@ -93,7 +93,8 @@ object ForegroundWatcher {
             ?: return null
         val type = runCatching { info.javaClass.getField("topActivityType").getInt(info) }.getOrDefault(1)
         if (type == 2 || type == 3) return ""
-        (info.javaClass.getField("topActivity").get(info) as ComponentName?)?.packageName
+        val top = info.javaClass.getField("topActivity").get(info) as ComponentName? ?: return null
+        if (top.className == AppUsage.STEP_ACTIVITY) null else top.packageName
     }.getOrNull()
 
     private fun update(context: Context) {
