@@ -77,7 +77,7 @@ import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.text.Copy
 
 /**
- * 흔들어서 화면 회전: 켜기 스위치, 민감도, 그림 설명. 회전 잠금은 화면 배율 동기화와 같은 시스템 설정 권한을 쓴다.
+ * 흔들어서 화면 회전: 켜기 스위치, 민감도, 그림 설명. 회전 잠금은 고급 화면 배율 설정과 같은 시스템 설정 권한을 쓴다.
  * @param onGuide 권한이 없을 때 권한 설정 방법을 연다.
  */
 @Composable

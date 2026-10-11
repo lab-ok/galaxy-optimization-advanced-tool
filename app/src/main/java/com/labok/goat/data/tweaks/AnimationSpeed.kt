@@ -6,7 +6,7 @@ import com.labok.goat.data.log.LogRepository
 
 /**
  * 애니메이션 속도: 개발자 옵션의 창·전환·애니메이터 배율(전역 설정)을 바꾼다. 값이 작을수록 빠르고(0이면 끔), 1이 기본이다.
- * 전역 설정이라 화면 배율 동기화와 같은 시스템 설정 권한(WRITE_SECURE_SETTINGS)으로 바꾼다. 재부팅해도 유지된다.
+ * 전역 설정이라 고급 화면 배율 설정과 같은 시스템 설정 권한(WRITE_SECURE_SETTINGS)으로 바꾼다. 재부팅해도 유지된다.
  */
 object AnimationSpeed {
     /** 바꾸는 세 설정과 화면 이름. */

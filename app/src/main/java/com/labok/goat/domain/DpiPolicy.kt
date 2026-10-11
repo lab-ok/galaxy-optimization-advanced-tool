@@ -2,9 +2,21 @@ package com.labok.goat.domain
 
 /** DPI 값 검증과 "지금 무엇을 해야 하는가" 판단. Android 의존성이 없어 단위 테스트로 검증한다. */
 object DpiPolicy {
-    /** 이보다 작으면 글자가 지나치게 커지고, 크면 터치가 어려울 만큼 작아진다. */
-    const val MIN_DPI = 240
+    /**
+     * 받는 DPI 범위. 최소는 안드로이드 표준 밀도 중 가장 낮은 ldpi(120)로, 태블릿처럼 큰 화면을 아주 넓게 쓰는 경우까지 받는다.
+     * 실제 조절바의 최대는 기기마다 [maxForShortSide]로 더 낮춘다(앱이 깨지지 않는 범위).
+     */
+    const val MIN_DPI = 120
     const val MAX_DPI = 640
+
+    /**
+     * 이 기기에서 쓸 수 있는 가장 큰 DPI: 화면의 짧은 변이 320dp 이상이어야 한다(Android 호환성 정의, smallest width ≥ 320dp).
+     * 짧은 변 [shortSidePx] 픽셀 × 160 ÷ 320. 예) 폴드8 외부 화면 1248px → 624, 1600px 태블릿 → 640(상한).
+     */
+    fun maxForShortSide(shortSidePx: Int): Int = (shortSidePx * 160 / MIN_SMALLEST_WIDTH_DP).coerceIn(MIN_DPI, MAX_DPI)
+
+    /** 앱이 깨지지 않는 가장 좁은 화면 너비(dp). */
+    const val MIN_SMALLEST_WIDTH_DP = 320
 
     /** 같은 창(window) 안에서 허용하는 최대 적용 횟수. Samsung과 서로 덮어쓰는 무한 반복을 막는다. */
     const val MAX_APPLIES_PER_WINDOW = 5

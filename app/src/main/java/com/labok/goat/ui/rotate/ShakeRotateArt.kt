@@ -113,7 +113,7 @@ private fun DrawScope.phone(
     locked: Boolean,
     open: Boolean = false,
 ) {
-    // 기기 모양은 화면 배율 동기화 그림과 같은 틀([deviceFrame])과 외부 화면 비율([aspect])을 쓴다
+    // 기기 모양은 고급 화면 배율 설정 그림과 같은 틀([deviceFrame])과 외부 화면 비율([aspect])을 쓴다
     val h = 92.dp.toPx(); val w = h * aspect
     rotate(angle, center) {
         val screen = deviceFrame(c, Offset(center.x - w / 2, center.y - h / 2), Size(w, h))

@@ -1,5 +1,8 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.domain.DpiPolicy
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.activity.compose.BackHandler
 import com.labok.goat.ui.tweaks.AnimationHelpSheet
 import com.labok.goat.ui.tweaks.AnimationScreen
@@ -165,6 +168,10 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
     // 화면에 보이는 기능. 사이드바에서 고르면 방울 이동을 보여 준 뒤 사이드바가 닫히면서 바뀐다(물방울 번짐 전환).
     var shown by rememberSaveable { mutableStateOf(NavItem.HOME) }
     var flying by remember { mutableStateOf<(() -> Unit)?>(null) }
+    // 다음 화면이 번지기 시작할 자리(홈 카드를 누른 곳, 화면 기준). 사이드바에서 고르면 null.
+    var revealFrom by remember { mutableStateOf<Offset?>(null) }
+    // 기능 화면 영역의 화면 위치(넓은 화면에서는 사이드바만큼 오른쪽). 번짐 시작점을 이 영역 기준으로 바꾼다.
+    var contentOrigin by remember { mutableStateOf(Offset.Zero) }
 
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     // 문의·문제 신고 공통: 진단 파일을 저장하고, 방울이 날아가는 장면 뒤 개발자에게 보내는 메일을 연다(로그 첨부).
@@ -224,8 +231,9 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
     }
 
     // 그림이 이 기기의 실제 화면비를 따르도록, 학습한 두 화면 비율을 모든 그림(시트 포함)에 내려 준다.
+    val screenAspect = LocalConfiguration.current.let { cfg -> minOf(cfg.screenWidthDp, cfg.screenHeightDp).toFloat() / maxOf(cfg.screenWidthDp, cfg.screenHeightDp).coerceAtLeast(1) }
     val deviceShape = DeviceShape(
-        cover = state.aspectOf(ScreenPolicy.Role.OUTER) ?: FoldGeometry.COVER_ASPECT,
+        cover = state.aspectOf(ScreenPolicy.Role.OUTER) ?: if (state.foldable) FoldGeometry.COVER_ASPECT else screenAspect,
         inner = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT,
     )
     CompositionLocalProvider(LocalDeviceShape provides deviceShape) {
@@ -247,12 +255,13 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             )
         }
         val menuItems = when (shown) {
-            NavItem.DPI_MATCH -> listOf(
-                Copy.MENU_TEST to { sheet = Sheet.TEST },
+            NavItem.DPI_MATCH -> listOfNotNull(
+                // 크기 테스트는 두 화면을 비교하는 도구라 폴드에서만
+                (Copy.MENU_TEST to { sheet = Sheet.TEST }).takeIf { state.foldable },
                 Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED },
             ) + common(Sheet.HELP, Sheet.GUIDE, Sheet.RESET)
             NavItem.APP_SIZE -> common(Sheet.APP_HELP, Sheet.APP_GUIDE, Sheet.APP_RESET)
-            // 권한은 화면 배율 동기화와 같은 시스템 설정 권한이라 같은 권한 설정 안내를 연다. 초기화할 것은 없다.
+            // 권한은 고급 화면 배율 설정과 같은 시스템 설정 권한이라 같은 권한 설정 안내를 연다. 초기화할 것은 없다.
             NavItem.SHAKE_ROTATE -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.SHAKE_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
@@ -319,7 +328,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         // 뒤로 가기: 열린 사이드바를 먼저 닫고, 다른 기능 화면이면 홈으로 돌아간다. 홈에서만 앱을 닫는다.
         BackHandler(enabled = drawer.isOpen || shown != NavItem.HOME) {
             if (drawer.isOpen) scope.launch { drawer.close() }
-            else { feature = NavItem.HOME; shown = NavItem.HOME }
+            else { revealFrom = null; feature = NavItem.HOME; shown = NavItem.HOME }
         }
         val drawerItems: @Composable () -> Unit = {
                 SideDrawerContent(sections, current = feature, visible = wide || drawer.targetValue == DrawerValue.Open, onAbout = {
@@ -328,6 +337,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 }, onSelect = { item ->
                     // 방울이 고른 항목으로 옮겨 가는 것을 잠깐 보여 준 뒤 닫는다.
                     val moved = item != feature
+                    revealFrom = null
                     feature = item
                     scope.launch {
                         if (moved) { delay(440); shown = item }
@@ -376,7 +386,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 // 기능을 바꾸면 새 화면이 왼쪽(사이드바 쪽)에서 물방울처럼 번지며 덮는다. 이전 화면은 다 덮인 뒤 사라진다.
                 AnimatedContent(
                     targetState = shown,
-                    modifier = Modifier.haze(haze),
+                    modifier = Modifier.haze(haze).onGloballyPositioned { contentOrigin = it.positionInRoot() },
                     transitionSpec = {
                         (EnterTransition.None togetherWith fadeOut(tween(1, delayMillis = 600))).apply { targetContentZIndex = 1f }
                     },
@@ -387,7 +397,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .liquidReveal(entering) { Offset(0f, it.height * 0.3f) }
+                            // 홈 카드를 눌러 왔으면 누른 자리에서, 사이드바에서 왔으면 왼쪽(사이드바 쪽)에서 번진다
+                            .liquidReveal(entering) { size -> revealFrom?.minus(contentOrigin) ?: Offset(0f, size.height * 0.3f) }
                             .background(c.bg),
                     ) {
                         when (f) {
@@ -395,7 +406,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.APP_SIZE -> AppSizeScreen(inner, onGuide = { sheet = Sheet.APP_GUIDE }, onReset = { sheet = Sheet.APP_RESET })
                             NavItem.SHAKE_ROTATE -> ShakeRotateScreen(inner, onGuide = { sheet = Sheet.GUIDE }, onCalibrate = { sheet = Sheet.SHAKE_CALIBRATE })
                             NavItem.CAMERA_MUTE -> CameraMuteScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
-                            NavItem.HOME -> Dashboard(inner, state, sections, onOpen = { item -> feature = item; shown = item })
+                            NavItem.HOME -> Dashboard(inner, state, sections, onOpen = { item, at -> revealFrom = at; feature = item; shown = item })
                             NavItem.ANIMATION -> AnimationScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.APP_CLEANUP -> BloatScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
@@ -436,6 +447,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.ADVANCED -> AdvancedSheet(state, onClearLogs = vm::clearDiagnostics)
                     Sheet.RESET -> ResetSheet(
                         canReset = state.hasPermission,
+                        foldable = state.foldable,
                         onRelearn = { sheet = null; vm.resetLearned() },
                         onDefault = { sheet = null; vm.resetToDefault() },
                         onResetPermission = vm::resetPermissionState,
@@ -443,7 +455,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                         onCopy = { text -> if (copyText(context, text, "adb")) vm.say(Copy.TOAST_COPIED) },
                     )
                     Sheet.ABOUT -> AboutSheet(onMail = { ReportMail.inquiry(context) })
-                    Sheet.APP_HELP -> AppSizeHelpSheet(onConnect = { sheet = Sheet.APP_GUIDE })
+                    Sheet.APP_HELP -> AppSizeHelpSheet(foldable = state.foldable, onConnect = { sheet = Sheet.APP_GUIDE })
                     Sheet.APP_GUIDE -> AppSizeGuideSheet()
                     Sheet.APP_RESET -> AppSizeResetSheet(onDone = { msg -> sheet = null; vm.say(msg) })
                     Sheet.SHAKE_HELP -> ShakeRotateHelpSheet()
@@ -466,11 +478,11 @@ private fun StatusCard(state: UiState) {
     val line = when {
         state.loading -> ""
         !state.hasPermission -> Copy.STATUS_NEED_SETUP
-        state.target == null -> Copy.STATUS_NO_TARGET
+        state.target == null -> if (state.foldable) Copy.STATUS_NO_TARGET else Copy.STATUS_NO_TARGET_SINGLE
         state.external != null -> Copy.STATUS_EXTERNAL
         state.status == UiState.Status.BLOCKED -> Copy.STATUS_HOLD
-        state.rows.size < 2 -> Copy.STATUS_NEED_OTHER
-        state.status == UiState.Status.OK -> Copy.STATUS_OK
+        state.foldable && state.rows.size < 2 -> Copy.STATUS_NEED_OTHER
+        state.status == UiState.Status.OK -> if (state.foldable) Copy.STATUS_OK else Copy.STATUS_OK_SINGLE
         else -> Copy.STATUS_FIXING
     }
     GlassCard {
@@ -481,7 +493,9 @@ private fun StatusCard(state: UiState) {
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    when (role) { ScreenPolicy.Role.INNER -> Copy.INNER; ScreenPolicy.Role.OUTER -> Copy.OUTER; null -> Copy.CURRENT },
+                    // 폴드가 아니면 화면이 하나라 외부·내부를 말하지 않는다
+                    if (!state.foldable) Copy.CURRENT
+                    else when (role) { ScreenPolicy.Role.INNER -> Copy.INNER; ScreenPolicy.Role.OUTER -> Copy.OUTER; null -> Copy.CURRENT },
                     color = c.muted, style = MaterialTheme.typography.labelLarge,
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -514,7 +528,7 @@ private fun todosOf(state: UiState): List<Todo> = buildList {
     state.external?.let { e ->
         add(Todo(
             "external", Copy.EXTERNAL_TITLE,
-            "다른 설정에서 ${e.role.label} 화면 DPI가 ${e.from} → ${e.to}(으)로 변경되었습니다. ${Copy.EXTERNAL_BODY}",
+            "다른 설정에서 ${if (state.foldable) "${e.role.label} 화면 " else ""}DPI가 ${e.from} → ${e.to}(으)로 변경되었습니다. ${Copy.EXTERNAL_BODY}",
             TodoAction.ADOPT, "${e.to} 기준으로 설정", blocking = true,
             second = TodoAction.RESTORE, secondLabel = "${e.from}(으)로 복원",
         ))
@@ -522,7 +536,7 @@ private fun todosOf(state: UiState): List<Todo> = buildList {
     if (state.hasPermission && state.status == UiState.Status.BLOCKED) {
         add(Todo("hold", Copy.TODO_HOLD_TITLE, Copy.TODO_HOLD_BODY, TodoAction.RELEARN, Copy.TODO_HOLD_ACTION))
     }
-    if (state.target != null && state.rows.size < 2) add(Todo("other", Copy.TODO_OTHER_TITLE, Copy.TODO_OTHER_BODY, null, null))
+    if (state.foldable && state.target != null && state.rows.size < 2) add(Todo("other", Copy.TODO_OTHER_TITLE, Copy.TODO_OTHER_BODY, null, null))
     if (state.hasPermission && state.status == UiState.Status.NEEDS_FIX && state.external == null) {
         add(Todo("apply", Copy.TODO_APPLY_TITLE, null, TodoAction.APPLY, Copy.TODO_APPLY_ACTION))
     }
@@ -567,6 +581,12 @@ private fun TodoCard(todo: Todo, onAction: (TodoAction) -> Unit) {
 @Composable
 private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
     val c = LocalLiquid.current
+    // 조절 범위: 최소 120(ldpi) ~ 이 기기 화면의 짧은 변으로 정한 최대(앱이 깨지지 않는 범위). 폴드는 외부 화면 기준.
+    val shortSide = remember(state.plan, state.activeScreen) {
+        val key = state.plan?.panels?.let { ps -> ScreenPolicy.screenFor(ps.map { it.screen }, ScreenPolicy.Role.OUTER)?.key } ?: state.activeScreen?.key
+        key?.split('x')?.mapNotNull { it.toIntOrNull() }?.minOrNull()
+    }
+    val sliderRange = DpiPolicy.MIN_DPI..(shortSide?.let { DpiPolicy.maxForShortSide(it) } ?: DpiPolicy.MAX_DPI)
     var outer by remember(state.target) { mutableIntStateOf(state.target ?: 360) }
     var adjust by remember(state.adjust) { mutableIntStateOf(state.adjust) }
     val outerPanel = state.plan?.panels?.let { ps -> ScreenPolicy.screenFor(ps.map { it.screen }, ScreenPolicy.Role.OUTER)?.let { s -> ps.first { it.screen.key == s.key } } }
@@ -579,33 +599,36 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
         Text(Copy.SIZE_TITLE, fontWeight = FontWeight.Bold, color = c.ink, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(Gap.Item))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(Copy.SIZE_OUTER, color = c.ink, modifier = Modifier.weight(1f))
+            Text(if (state.foldable) Copy.SIZE_OUTER else Copy.SIZE_SINGLE, color = c.ink, modifier = Modifier.weight(1f))
             Text("$outer dpi", color = c.ink, fontWeight = FontWeight.SemiBold)
         }
         Text(Copy.SIZE_OUTER_HINT, color = c.muted, style = MaterialTheme.typography.bodySmall)
         LiquidSlider(
-            value = outer, range = SLIDER_RANGE,
+            value = outer, range = sliderRange,
             onValueChange = { outer = it },
             onValueChangeFinished = {},
             valueText = { "$it" },
-            description = Copy.SIZE_OUTER,
+            description = if (state.foldable) Copy.SIZE_OUTER else Copy.SIZE_SINGLE,
             enabled = state.hasPermission,
         )
-        Spacer(Modifier.height(Gap.Tight))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(Copy.SIZE_INNER_TUNE, color = c.ink, modifier = Modifier.weight(1f))
-            Text(innerDpi?.let { "$it dpi" } ?: "—", color = c.ink, fontWeight = FontWeight.SemiBold)
+        // 내부 화면 보정은 폴드에서만(화면이 하나면 맞출 다른 화면이 없다)
+        if (state.foldable) {
+            Spacer(Modifier.height(Gap.Tight))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(Copy.SIZE_INNER_TUNE, color = c.ink, modifier = Modifier.weight(1f))
+                Text(innerDpi?.let { "$it dpi" } ?: "—", color = c.ink, fontWeight = FontWeight.SemiBold)
+            }
+            Text(Copy.SIZE_INNER_TUNE_HINT, color = c.muted, style = MaterialTheme.typography.bodySmall)
+            LiquidSlider(
+                value = adjust, range = -SettingsRepository.MAX_ADJUST..SettingsRepository.MAX_ADJUST,
+                onValueChange = { adjust = it },
+                onValueChangeFinished = {},
+                valueText = { if (it > 0) "+$it" else "$it" },
+                centered = true,
+                description = Copy.SIZE_INNER_TUNE,
+                enabled = state.hasPermission && innerPanel != null,
+            )
         }
-        Text(Copy.SIZE_INNER_TUNE_HINT, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        LiquidSlider(
-            value = adjust, range = -SettingsRepository.MAX_ADJUST..SettingsRepository.MAX_ADJUST,
-            onValueChange = { adjust = it },
-            onValueChangeFinished = {},
-            valueText = { if (it > 0) "+$it" else "$it" },
-            centered = true,
-            description = Copy.SIZE_INNER_TUNE,
-            enabled = state.hasPermission && innerPanel != null,
-        )
         // 조절바는 값만 바꾸고, [적용]을 눌러야 화면에 반영한다(끄는 도중 화면이 계속 바뀌지 않게).
         // 처음 설치해 저장된 값이 없을 때도 지금 값을 바로 적용할 수 있게 버튼을 보인다.
         val pending = state.hasPermission && (state.target == null || outer != state.target || adjust != state.adjust)
@@ -621,7 +644,7 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
                 }
             }
         }
-        if (outerPanel != null && innerPanel != null && innerDpi != null) {
+        if (state.foldable && outerPanel != null && innerPanel != null && innerDpi != null) {
             Spacer(Modifier.height(Gap.Tight))
             ScreensPreview(
                 outerInch = outerPanel.screen.diagonalInch, outerAspect = aspect(outerPanel, outerPanel, false), outerPpi = outerPanel.screen.ppi, outerDpi = outer,
@@ -635,7 +658,6 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
     }
 }
 
-private val SLIDER_RANGE = 280..520
 
 
 /** 세로 ÷ 가로(미리보기용). 내부 화면은 실제 방향(Fold8은 가로로 긴 화면)으로 계산한다. */
@@ -660,6 +682,7 @@ private fun AutoCard(on: Boolean, onChange: (Boolean) -> Unit) {
 @Composable
 private fun ResetSheet(
     canReset: Boolean,
+    foldable: Boolean = true,
     onRelearn: () -> Unit,
     onDefault: () -> Unit,
     onResetPermission: () -> Unit,
@@ -677,13 +700,16 @@ private fun ResetSheet(
     SheetColumn {
         Text(Copy.RESET_TITLE, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Spacer(Modifier.height(Gap.Section))
-        GlassCard {
-            Text(Copy.RESET_RELEARN, fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(Copy.RESET_RELEARN_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton(Copy.RESET_RELEARN, modifier = Modifier.fillMaxWidth(), onClick = onRelearn)
+        // 화면 학습 초기화는 두 화면을 배우는 폴드에서만
+        if (foldable) {
+            GlassCard {
+                Text(Copy.RESET_RELEARN, fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(Copy.RESET_RELEARN_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(Gap.Item))
+                LiquidButton(Copy.RESET_RELEARN, modifier = Modifier.fillMaxWidth(), onClick = onRelearn)
+            }
+            Spacer(Modifier.height(Gap.Card))
         }
-        Spacer(Modifier.height(Gap.Card))
         GlassCard {
             Text(Copy.RESET_DEFAULT, fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(Copy.RESET_DEFAULT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)

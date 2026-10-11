@@ -20,7 +20,7 @@ import com.labok.goat.ui.MainActivity
 
 /**
  * 흔들어서 화면 회전의 설정과 회전 잠금 쓰기.
- * 회전 잠금은 시스템 설정(accelerometer_rotation·user_rotation)이라, 화면 배율 동기화와 같은 WRITE_SECURE_SETTINGS로 바꾼다.
+ * 회전 잠금은 시스템 설정(accelerometer_rotation·user_rotation)이라, 고급 화면 배율 설정과 같은 WRITE_SECURE_SETTINGS로 바꾼다.
  */
 object ShakeRotate {
     private const val PREF = "shake_rotate"

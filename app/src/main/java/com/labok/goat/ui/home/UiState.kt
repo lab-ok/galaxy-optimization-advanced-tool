@@ -28,6 +28,8 @@ data class UiState(
     val lastApply: LastApply? = null,
     val displays: List<DisplayDensity> = emptyList(),
     val hasCrash: Boolean = false,
+    /** 접는 폰인지. 아니면 화면 하나의 DPI만 다루고 두 화면 맞추기 기능은 숨긴다. */
+    val foldable: Boolean = true,
     val inactivePpi: Map<String, Float> = emptyMap(),
     /** 사용자 선택을 기다리는 외부 DPI 변경. */
     val external: ExternalChange? = null,

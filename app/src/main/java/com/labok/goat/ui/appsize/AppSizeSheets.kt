@@ -47,7 +47,7 @@ import kotlinx.coroutines.withContext
 
 /** 사용 방법: 무엇을 하는지, Shizuku가 왜 필요한지, 왜 단계가 정해져 있는지, 접고 펼 때 달라지는 이유. */
 @Composable
-internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
+internal fun AppSizeHelpSheet(foldable: Boolean = true, onConnect: () -> Unit) {
     SheetColumn("사용 방법") {
         HelpTopic(
             "1. 무엇을 하나요",
@@ -68,7 +68,7 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
             "• 이미 정해 둔 앱 크기: Shizuku가 꺼져 있어도, 재부팅해도 그대로 유지됩니다.\n" +
                 "• 목록에서 크기 바꾸기, 알림창 [작게]·[기본]·[크게]: Shizuku가 실행 중일 때만 됩니다.\n" +
                 "• 알림에 지금 보고 있는 앱 표시: Shizuku가 실행 중일 때만 실시간으로 바뀝니다.\n" +
-                "• '화면 배율 동기화'(기기 전체 크기): Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.\n" +
+                "• '고급 화면 배율 설정'(기기 전체 크기): Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.\n" +
                 "• 무선 디버깅은 Shizuku를 시작할 때만 필요합니다. '무선 디버깅 끄기'를 켜면 Shizuku가 켜진 직후 GOAT가 끕니다. 끄면 Shizuku가 멈추는 기기에서는 이 옵션을 꺼 두세요.",
             art = { PersistArt() },
         )
@@ -78,21 +78,22 @@ internal fun AppSizeHelpSheet(onConnect: () -> Unit) {
                 "1단위로 조절할 수는 없습니다. '기본'은 앱별 설정을 지우고 기기 전체 크기를 따르게 합니다.",
             art = { StepsArt() },
         )
-        HelpTopic(
+        // 접고 펼 때 이야기는 폴드에서만
+        if (foldable) HelpTopic(
             "5. 접고 펼 때 크기가 달라 보이는 이유",
             "앱별 크기는 하나의 고정된 DPI라서 외부 화면과 내부 화면에 같은 숫자가 쓰입니다. 두 화면은 픽셀 밀도(PPI)가 달라 " +
-                "같은 숫자라도 실제 크기가 다르게 보입니다. 기기 전체 크기는 '화면 배율 동기화'가 화면마다 맞춰 주지만, " +
+                "같은 숫자라도 실제 크기가 다르게 보입니다. 기기 전체 크기는 '고급 화면 배율 설정'이 화면마다 맞춰 주지만, " +
                 "앱별 크기는 시스템이 화면마다 다른 값을 둘 수 없게 되어 있습니다. 주로 쓰는 화면에 맞춰 고르세요.",
             art = { FoldDiffArt() },
         )
         HelpTopic(
-            "6. 알림창에서 바로 바꾸기",
+            "${if (foldable) 6 else 5}. 알림창에서 바로 바꾸기",
             "'알림창에서 바로 조절'을 켜면 알림에 지금 보고 있는 앱과 크기가 나오고, [작게]·[기본]·[크게]로 한 단계씩 바꿉니다. " +
                 "삼성 설정 특성상 크기를 바꾸면 그 앱이 다시 시작되며, GOAT가 바로 다시 열어 줍니다.",
             art = { NotifyArt() },
         )
         HelpTopic(
-            "7. 되돌리기",
+            "${if (foldable) 7 else 6}. 되돌리기",
             "앱을 눌러 '기본'을 고르면 그 앱만, ⋮ → 초기화에서는 모든 앱을 기본 크기로 되돌립니다. " +
                 "삼성 설정의 '앱 화면 크게/작게'에서 되돌려도 됩니다.",
             art = { ResetArt() },

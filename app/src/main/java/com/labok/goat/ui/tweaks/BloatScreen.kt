@@ -120,6 +120,8 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 GlassCard {
                     Text(Copy.BLOAT_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.BLOAT_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    CleanupArt()
                     if (found != null) {
                         Spacer(Modifier.height(Gap.Tight))
                         Text("이 기기에서 정리할 수 있는 앱 ${apps.size}개 · 꺼 둔 앱 ${offCount}개", color = c.ink, style = MaterialTheme.typography.labelMedium)
@@ -207,7 +209,7 @@ internal fun BloatHelpSheet() {
             "1. 무엇을 하나요",
             "쓰지 않는 삼성·제휴 기본 앱을 꺼서, 앱 목록·알림·백그라운드 동작에서 빼냅니다. 커뮤니티에서 많이 끄는 앱 가운데 " +
                 "꺼도 전화·문자·설정·카메라 같은 기본 기능이 멈추지 않는 것만 골라 두었습니다.",
-        )
+        ) { CleanupArt() }
         HelpTopic(
             "2. 지우지 않고 끕니다",
             "앱을 지우지 않고 '사용 안 함'으로 멈춥니다(pm disable-user). 저장 공간은 그대로지만, 스위치 하나로 언제든 다시 켤 수 있고 " +

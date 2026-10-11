@@ -107,8 +107,9 @@ class PanelSpecTest {
     fun outOfRangeResultIsBlockedNotClamped() {
         val a = ScreenInfo("1000x2000", 420f, 5.3f)
         val b = ScreenInfo("1800x2200", 330f, 8.6f)
-        val t = ScreenPolicy.effectiveTarget(300, Role.OUTER, listOf(a, b), b)
-        assertEquals("보정 결과는 범위 밖", 236, ScreenPolicy.scale(300, 420f, 330f))
+        // 최소 DPI(120) 아래로 떨어지는 보정: 150 × 330/420 = 118
+        val t = ScreenPolicy.effectiveTarget(150, Role.OUTER, listOf(a, b), b)
+        assertEquals("보정 결과는 범위 밖", 118, ScreenPolicy.scale(150, 420f, 330f))
         assertNotNull(t.blocked)
     }
 

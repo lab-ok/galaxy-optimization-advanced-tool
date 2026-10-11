@@ -265,7 +265,7 @@ private fun DrawScope.p(x: Float, y: Float) = Offset(u(x), u(y))
  * 메뉴 아이콘: 24 격자, 선 굵기 1.8dp, 둥근 끝·둥근 이음. 바깥 여백 2~2.5를 지켜 다섯 아이콘의 크기감을 맞춘다.
  */
 
-/** 화면 배율 동기화: 펼친 폴드(가운데 접는 선) 양쪽 화면에 같은 길이의 글줄 두 개(두 화면 글자 크기가 같다). */
+/** 고급 화면 배율 설정: 펼친 폴드(가운데 접는 선) 양쪽 화면에 같은 길이의 글줄 두 개(두 화면 글자 크기가 같다). */
 private fun DrawScope.fold(c: Color, s: Stroke) {
     drawRoundRect(c, p(2.5f, 5f), Size(u(19f), u(14f)), CornerRadius(u(2.4f)), style = s)
     drawLine(c, p(12f, 5f), p(12f, 19f), s.width * 0.75f, StrokeCap.Round)

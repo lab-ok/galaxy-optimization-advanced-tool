@@ -10,6 +10,7 @@ class DpiPolicyTest {
 
     @Test
     fun validateAcceptsRangeBoundaries() {
+        assertEquals(DpiPolicy.Validation.Ok(120), DpiPolicy.validate("120"))
         assertEquals(DpiPolicy.Validation.Ok(240), DpiPolicy.validate("240"))
         assertEquals(DpiPolicy.Validation.Ok(640), DpiPolicy.validate(" 640 "))
         assertEquals(DpiPolicy.Validation.Ok(420), DpiPolicy.validate("420"))
@@ -17,7 +18,7 @@ class DpiPolicyTest {
 
     @Test
     fun validateRejectsInvalidInput() {
-        listOf(null, "", "  ", "abc", "4.2", "-420", "239", "641", "99999").forEach {
+        listOf(null, "", "  ", "abc", "4.2", "-420", "119", "641", "99999").forEach {
             assertTrue("입력 '$it'", DpiPolicy.validate(it) is DpiPolicy.Validation.Error)
         }
     }
@@ -68,5 +69,13 @@ class DpiPolicyTest {
         val noOverride = DpiManager.parseWmDensity("Physical density: 420")!!
         assertEquals(null, noOverride.override)
         assertEquals(420, noOverride.current)
+    }
+
+    @Test
+    fun maxDependsOnShortSide() {
+        assertEquals("폴드8 외부 화면", 624, DpiPolicy.maxForShortSide(1248))
+        assertEquals("FHD 폰", 540, DpiPolicy.maxForShortSide(1080))
+        assertEquals("태블릿은 상한", 640, DpiPolicy.maxForShortSide(1600))
+        assertEquals("아주 작은 화면도 최소 이상", DpiPolicy.MIN_DPI, DpiPolicy.maxForShortSide(100))
     }
 }

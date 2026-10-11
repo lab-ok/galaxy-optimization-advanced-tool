@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.background.FoldWatchService
 import com.labok.goat.background.DensityWatchWorker
 import com.labok.goat.background.ExternalChangeNotifier
@@ -260,6 +261,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             lastApply = settings.lastApply,
             displays = displays,
             hasCrash = CrashRecorder.read(getApplication()).isNotBlank(),
+            foldable = DeviceKind.isFoldable(getApplication()),
             inactivePpi = settings.inactivePpi,
         )
     }

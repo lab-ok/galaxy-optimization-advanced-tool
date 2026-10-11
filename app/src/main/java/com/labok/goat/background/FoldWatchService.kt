@@ -1,5 +1,6 @@
 package com.labok.goat.background
 
+import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.domain.ScreenLearner
 
 import android.app.Notification
@@ -117,7 +118,7 @@ class FoldWatchService : Service() {
         )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
-            .setContentTitle("화면 배율 동기화")
+            .setContentTitle("고급 화면 배율 설정")
             .setContentText("접고 펼 때 배율을 확인하는 중")
             .setContentIntent(open)
             .setOngoing(true)
@@ -140,7 +141,8 @@ class FoldWatchService : Service() {
         fun syncWithSettings(context: Context) {
             val s = SettingsRepository.from(context)
             val intent = Intent(context, FoldWatchService::class.java)
-            if (s.watchFold && s.autoRecover) {
+            // 접기·펼치기 감시는 폴드에서만(화면이 하나면 바뀔 일이 없다)
+            if (s.watchFold && s.autoRecover && DeviceKind.isFoldable(context)) {
                 try {
                     context.startForegroundService(intent)
                 } catch (t: Throwable) {

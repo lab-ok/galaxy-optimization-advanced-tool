@@ -10,9 +10,11 @@ object Copy {
     const val INNER = "내부 화면"
     const val CURRENT = "현재 화면"
     const val STATUS_OK = "두 화면 표시 크기 일치"
+    const val STATUS_OK_SINGLE = "설정한 DPI로 표시 중"
     const val STATUS_FIXING = "DPI 적용 중"
     const val STATUS_NEED_SETUP = "권한 설정 필요"
     const val STATUS_NO_TARGET = "외부 화면 DPI 설정 필요"
+    const val STATUS_NO_TARGET_SINGLE = "DPI 설정 필요"
     const val STATUS_HOLD = "자동 적용 보류"
     const val STATUS_NEED_OTHER = "외부 화면만 적용됨"
 
@@ -43,6 +45,7 @@ object Copy {
     const val SIZE_TEST = "크기 테스트"
     const val SIZE_TITLE = "표시 크기"
     const val SIZE_OUTER = "외부 화면 DPI"
+    const val SIZE_SINGLE = "화면 DPI"
     const val SIZE_OUTER_HINT = "값이 작을수록 글자와 아이콘이 작게 표시됩니다"
     const val SIZE_INNER_TUNE = "내부 화면 보정"
     const val SIZE_INNER_TUNE_HINT = "내부 화면이 크게 보이면 −, 작게 보이면 + 방향으로 조정합니다"
@@ -54,7 +57,7 @@ object Copy {
     const val AUTO_BODY = "재부팅하거나 화면이 전환되면 설정한 DPI를 다시 적용합니다"
 
     // 메뉴
-    const val FEATURE_DPI = "화면 배율 동기화"
+    const val FEATURE_DPI = "고급 화면 배율 설정"
     const val FEATURE_APP_SIZE = "앱별 화면 배율 설정"
     const val FEATURE_LAB_TOOLS = "조사 도구"
     const val FEATURE_SHAKE_ROTATE = "흔들어서 화면 회전"

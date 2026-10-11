@@ -215,7 +215,7 @@ internal fun NotifyArt() {
         drawRoundRect(c.surface, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()))
         drawRoundRect(c.line, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()), style = Stroke(1.5.dp.toPx()))
         val textLeft = tl.x + 16.dp.toPx()
-        val tTitle = tm.measure("GOAT · 앱 화면 크기", TextStyle(color = c.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold))
+        val tTitle = tm.measure("앱별 화면 배율", TextStyle(color = c.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold))
         drawText(tTitle, topLeft = Offset(textLeft, tl.y + 10.dp.toPx()))
         val tBody = tm.measure(if (pressed) "Discord · 480 dpi" else "Discord · 기본(450)", TextStyle(color = c.muted, fontSize = 10.sp))
         drawText(tBody, topLeft = Offset(textLeft, tl.y + 26.dp.toPx()))

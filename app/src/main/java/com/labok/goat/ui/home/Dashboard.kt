@@ -1,5 +1,7 @@
 package com.labok.goat.ui.home
 
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import com.labok.goat.ui.about.AboutHeader
 import com.labok.goat.AppInfo
 import kotlinx.coroutines.withContext
@@ -83,7 +85,7 @@ import com.labok.goat.ui.text.Copy
  * 카드는 사이드바와 같은 묶음 순서로 놓고, 넓은 화면에서는 한 줄에 더 많이 놓는다.
  */
 @Composable
-internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: List<NavSection>, onOpen: (NavItem) -> Unit) {
+internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: List<NavSection>, onOpen: (NavItem, Offset) -> Unit) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
@@ -101,7 +103,8 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     val status: (NavItem) -> String = { item ->
         tick
         when (item) {
-            NavItem.DPI_MATCH -> state.target?.let { "외부 화면 $it dpi" + if (state.auto) " · 자동 적용" else "" } ?: "외부 화면 DPI를 정해 주세요"
+            NavItem.DPI_MATCH -> state.target?.let { (if (state.foldable) "외부 화면 $it dpi" else "$it dpi") + if (state.auto) " · 자동 적용" else "" }
+                ?: if (state.foldable) "외부 화면 DPI를 정해 주세요" else "DPI를 정해 주세요"
             NavItem.APP_SIZE -> DensityShell.savedCount(context).let { if (it == 0) "바꾼 앱 없음" else "바꾼 앱 ${it}개" } +
                 if (AppDensityNotifier.enabled(context)) " · 알림창 조절" else ""
             NavItem.ANIMATION -> AnimationSpeed.label(AnimationSpeed.read(context, AnimationSpeed.Kind.WINDOW))
@@ -159,7 +162,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             }
         }
         itemsIndexed(features, key = { _, it -> it.name }) { i, item ->
-            BlobCard(item, status(item), active(item), order = i + 1) { onOpen(item) }
+            BlobCard(item, status(item), active(item), order = i + 1) { at -> onOpen(item, at) }
         }
     }
 }
@@ -185,7 +188,7 @@ private fun Badge(label: String, on: Boolean) {
  * 표면장력으로 돌아온다. 켜진 기능은 몸체가 잉크로 차오르고(글자는 반전), 오른쪽 위 상태 알약이 점에서 '켜짐' 알약으로 출렁이며 늘어난다.
  */
 @Composable
-private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onClick: () -> Unit) {
+private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onClick: (Offset) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val haptic = LocalHapticFeedback.current
@@ -195,6 +198,8 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
     val bodyPath = remember { Path() }
     val pillPath = remember { Path() }
     var box by remember { mutableStateOf(IntSize.Zero) }
+    // 카드의 화면 위치(누른 자리를 화면 기준으로 바꿔 다음 화면이 거기서 번지게)
+    var origin by remember { mutableStateOf(Offset.Zero) }
     val fill by animateFloatAsState(if (on) 1f else 0f, Springs.calm(reduce), label = "fill")
     val text = remember { Animatable(if (reduce) 1f else 0f) }
     val corner = with(d) { LiquidShape.card.toPx() }
@@ -213,7 +218,11 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
             body.moveTo(w / 2, h / 2, w * 0.3f, w * 0.3f, animate = false)
             kotlinx.coroutines.delay(60L * order)
         }
-        body.blob.gain = 1.4f
+        // 큰 카드라 출렁임이 커 보인다: 목표를 바짝 따라가고(구동력) 빨리 잦아들게(감쇠) 해 정갈하게 맺힌다
+        body.blob.gain = 2.2f
+        body.blob.damping = 2.4f
+        pill.blob.gain = 1.6f
+        pill.blob.damping = 1.8f
         body.moveTo(w / 2, h / 2, w, h, animate = !reduce, corner = corner)
         text.animateTo(1f, Springs.calm(reduce))
     }
@@ -230,6 +239,7 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
             .fillMaxWidth()
             .heightIn(min = 132.dp)
             .onSizeChanged { box = it }
+            .onGloballyPositioned { origin = it.positionInRoot() }
             .pointerInput(reduce) {
                 detectTapGestures(onPress = { pos ->
                     if (!reduce && body.blob.ready) {
@@ -237,9 +247,9 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
                         // 누른 자리를 안쪽으로 밀어 움푹 들어가게 한다
                         val cx = box.width / 2f; val cy = box.height / 2f
                         val dx = cx - pos.x; val dy = cy - pos.y; val l = hypot(dx, dy).coerceAtLeast(1f)
-                        body.poke(pos.x, pos.y, dx / l * 900f, dy / l * 900f, box.height * 0.45f)
+                        body.poke(pos.x, pos.y, dx / l * 520f, dy / l * 520f, box.height * 0.4f)
                     }
-                    if (tryAwaitRelease()) onClick()
+                    if (tryAwaitRelease()) onClick(origin + pos)
                 })
             },
     ) {
