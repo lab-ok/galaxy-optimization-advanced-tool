@@ -26,6 +26,37 @@
     <!-- Shizuku 설치 여부 확인, 앱별 화면 크기에서 고를 앱 목록 -->
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
+        <!-- 기본 앱 정리: 목록 앱의 이름·아이콘을 읽으려고(Bloat.CATALOG와 같게 둔다) -->
+        <package android:name="com.samsung.android.app.spage" />
+        <package android:name="com.samsung.android.bixby.agent" />
+        <package android:name="com.samsung.android.bixby.wakeup" />
+        <package android:name="com.samsung.android.bixbyvision.framework" />
+        <package android:name="com.samsung.android.visionintelligence" />
+        <package android:name="com.samsung.android.game.gamehome" />
+        <package android:name="com.samsung.android.game.gos" />
+        <package android:name="com.samsung.android.arzone" />
+        <package android:name="com.samsung.android.aremoji" />
+        <package android:name="com.samsung.android.aremojieditor" />
+        <package android:name="com.samsung.android.stickercenter" />
+        <package android:name="com.samsung.android.app.tips" />
+        <package android:name="com.samsung.android.voc" />
+        <package android:name="com.samsung.android.service.peoplestripe" />
+        <package android:name="com.samsung.android.dynamiclock" />
+        <package android:name="com.samsung.android.kidsinstaller" />
+        <package android:name="com.sec.android.app.kidshome" />
+        <package android:name="com.samsung.android.da.daagent" />
+        <package android:name="com.sec.android.easyMover" />
+        <package android:name="com.samsung.android.app.watchmanagerstub" />
+        <package android:name="com.sec.android.app.sbrowser" />
+        <package android:name="com.samsung.android.email.provider" />
+        <package android:name="com.samsung.android.spay" />
+        <package android:name="com.samsung.android.scloud" />
+        <package android:name="com.facebook.appmanager" />
+        <package android:name="com.facebook.services" />
+        <package android:name="com.facebook.system" />
+        <package android:name="com.microsoft.skydrive" />
+        <package android:name="com.linkedin.android" />
+        <package android:name="com.netflix.partner.activation" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />

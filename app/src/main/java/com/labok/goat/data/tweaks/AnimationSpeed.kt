@@ -16,8 +16,6 @@ object AnimationSpeed {
         ANIMATOR(Settings.Global.ANIMATOR_DURATION_SCALE, "앱 안 움직임 길이"),
     }
 
-    /** 한 번에 고르는 값. 0.5배가 커뮤니티에서 가장 많이 쓰는 값이다. */
-    val PRESETS = listOf(0f, 0.5f, 0.75f, 1f, 1.5f)
 
     fun read(context: Context, kind: Kind): Float =
         runCatching { Settings.Global.getFloat(context.contentResolver, kind.key, 1f) }.getOrDefault(1f)

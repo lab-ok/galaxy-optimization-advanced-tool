@@ -44,7 +44,6 @@ import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
-import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.text.Copy
@@ -99,14 +98,14 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
                         else "지금: ${AnimationSpeed.label(same)}",
                         color = c.muted, style = MaterialTheme.typography.bodySmall,
                     )
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidChips(
-                        options = AnimationSpeed.PRESETS,
-                        selected = same ?: -1f,
-                        label = { AnimationSpeed.label(it) },
-                        onSelect = { v -> if (permitted) { AnimationSpeed.setAll(context, v, "고르기"); version++ } },
-                        modifier = Modifier.fillMaxWidth(),
+                    // 셋을 함께 0~2배(0.05 단위)로. 셋이 다르면 창 애니메이션 값에서 시작한다.
+                    var all by remember(version) { mutableIntStateOf(Math.round((same ?: values.getValue(AnimationSpeed.Kind.WINDOW)) * 20)) }
+                    LiquidSlider(
+                        value = all, range = 0..40, onValueChange = { all = it },
+                        onValueChangeFinished = { if (permitted) { AnimationSpeed.setAll(context, all / 20f, "조절바"); version++ } },
+                        valueText = { AnimationSpeed.label(it / 20f) }, description = Copy.ANIM_PRESET_TITLE, enabled = permitted,
                     )
+                    Text(Copy.ANIM_SLIDER_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall)
                     Spacer(Modifier.height(Gap.Section))
                     Row(
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { detail = !detail },

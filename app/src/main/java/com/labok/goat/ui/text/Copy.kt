@@ -66,7 +66,6 @@ object Copy {
     const val MENU_SECTION_SYSTEM = "시스템"
 
     // 홈
-    const val HOME_TITLE = "갤럭시를 더 편하게"
     const val HOME_SUBTITLE = "쓰고 싶은 기능을 눌러 바로 들어가세요."
     const val HOME_PERMISSION = "시스템 설정 권한"
     const val HOME_SHIZUKU = "Shizuku 연결"
@@ -83,6 +82,7 @@ object Copy {
     const val ANIM_INTRO_BODY = "앱을 열고 닫을 때의 움직임 속도를 바꿉니다. 0.5배면 폰이 더 빠르게 느껴집니다."
     const val ANIM_NEED_PERMISSION = "애니메이션 속도는 시스템 설정 권한으로 바꿉니다. Shizuku나 PC로 한 번만 받으면 됩니다."
     const val ANIM_PRESET_TITLE = "속도 고르기"
+    const val ANIM_SLIDER_HINT = "왼쪽 끝은 끔, 가운데가 기본(1배)입니다. 0.5배를 가장 많이 씁니다."
     const val ANIM_DETAIL_TITLE = "하나씩 맞추기"
     const val ANIM_DETAIL_BODY = "창·화면 전환·앱 안 움직임을 0~2배로 따로 맞춥니다."
 

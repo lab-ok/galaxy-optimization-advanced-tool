@@ -232,8 +232,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         // 사이드바는 기능 단위. DPI를 다루는 두 기능은 '화면 배율'로, 그 밖의 유틸은 '편의 기능'으로 묶는다. 조사 도구는 lab 빌드에서만.
         val sections = buildList {
             add(NavSection("", listOf(NavItem.HOME)))
-            add(NavSection(Copy.MENU_SECTION_SCREEN, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE, NavItem.ANIMATION)))
-            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE)))
+            add(NavSection(Copy.MENU_SECTION_SCREEN, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
+            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE, NavItem.ANIMATION)))
             add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP)))
             if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
         }

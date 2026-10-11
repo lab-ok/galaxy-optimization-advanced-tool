@@ -1,5 +1,15 @@
 package com.labok.goat.ui.tweaks
 
+import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.Image
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -82,6 +92,21 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     }
 
     val apps = Bloat.CATALOG.filter { found?.containsKey(it.pkg) == true }
+    // 앱 아이콘(꺼 둔 앱도 읽는다). 매니페스트 queries에 목록 패키지를 적어 두어 보인다.
+    var icons by remember { mutableStateOf<Map<String, ImageBitmap>>(emptyMap()) }
+    val iconPx = with(LocalDensity.current) { 40.dp.roundToPx() }
+    LaunchedEffect(found) {
+        val pkgs = found?.keys ?: return@LaunchedEffect
+        icons = withContext(Dispatchers.IO) {
+            val pm = context.packageManager
+            pkgs.mapNotNull { p ->
+                runCatching {
+                    val info = pm.getApplicationInfo(p, PackageManager.MATCH_DISABLED_COMPONENTS or PackageManager.MATCH_UNINSTALLED_PACKAGES)
+                    p to pm.getApplicationIcon(info).toBitmap(iconPx, iconPx).asImageBitmap()
+                }.getOrNull()
+            }.toMap()
+        }
+    }
     val offCount = found?.count { it.value } ?: 0
 
     LazyColumn(
@@ -124,6 +149,14 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            icons[app.pkg]?.let { bmp ->
+                                Image(
+                                    bmp, null,
+                                    modifier = Modifier.size(40.dp).graphicsLayer { alpha = if (off) 0.4f else 1f },
+                                    colorFilter = if (off) ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }) else null,
+                                )
+                                Spacer(Modifier.width(12.dp))
+                            }
                             Column(Modifier.weight(1f)) {
                                 Text(
                                     app.name + if (app.risk == Bloat.Risk.CARE) " · 주의" else "",
