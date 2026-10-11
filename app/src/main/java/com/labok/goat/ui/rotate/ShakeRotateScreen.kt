@@ -1,5 +1,18 @@
 package com.labok.goat.ui.rotate
 
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
+import com.labok.goat.data.rotate.ShakeHaptics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.LaunchedEffect
 import com.labok.goat.ui.components.Gap
@@ -74,10 +87,15 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
     var permitted by remember { mutableStateOf(ShakeRotate.canWrite(context)) }
     var on by remember { mutableStateOf(ShakeRotate.enabled(context)) }
     // 자동 맞추기 시트에서 바꾼 값도 바로 보이도록 공용 상태를 따른다
-    LaunchedEffect(Unit) { ShakeRotate.levelNow.value = ShakeRotate.level(context) }
-    val savedLevel by ShakeRotate.levelNow.collectAsStateWithLifecycle()
-    var level by remember(savedLevel) { mutableIntStateOf(savedLevel) }
+    val version by ShakeRotate.changed.collectAsStateWithLifecycle()
+    var level by remember(version) { mutableIntStateOf(ShakeRotate.level(context)) }
+    var pace by remember(version) { mutableIntStateOf(ShakeRotate.pace(context)) }
+    var turn by remember(version) { mutableIntStateOf(ShakeRotate.turn(context)) }
+    var swings by remember(version) { mutableIntStateOf(ShakeRotate.swings(context)) }
+    var taps by remember(version) { mutableStateOf(ShakeRotate.rejectTaps(context)) }
+    var advanced by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
+    var vibration by remember { mutableIntStateOf(ShakeRotate.vibration(context)) }
     var autoOn by remember { mutableStateOf(ShakeRotate.autoRotateOn(context)) }
 
     // 빠른 설정에서 자동 회전을 켜고 끄는 것을 바로 반영한다
@@ -181,6 +199,74 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                     )
                     Spacer(Modifier.height(Gap.Item))
                     LiquidButton(Copy.SHAKE_CALIBRATE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = onCalibrate)
+                    Spacer(Modifier.height(Gap.Section))
+                    // 고급 설정(접었다 펴기): 자동 맞추기가 이 항목들도 함께 맞춘다
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { advanced = !advanced },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(Copy.SHAKE_ADVANCED_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                            Text(Copy.SHAKE_ADVANCED_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        }
+                        val turnArrow by animateFloatAsState(if (advanced) 180f else 0f, label = "chevron")
+                        Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turnArrow })
+                    }
+                    AnimatedVisibility(advanced, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                        Column {
+                            Spacer(Modifier.height(Gap.Section))
+                            Text(Copy.SHAKE_SWINGS_TITLE, color = c.ink)
+                            Text(Copy.SHAKE_SWINGS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            LiquidSlider(
+                                value = swings, range = 2..4, onValueChange = { swings = it },
+                                onValueChangeFinished = { ShakeRotate.setAdvanced(context, swings = swings, how = "조절바") },
+                                valueText = { "${it}번" }, description = Copy.SHAKE_SWINGS_TITLE,
+                            )
+                            Text(Copy.SHAKE_PACE_TITLE, color = c.ink)
+                            Text(Copy.SHAKE_PACE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            LiquidSlider(
+                                value = pace, range = 1..ShakeRotatePolicy.MAX_PACE, onValueChange = { pace = it },
+                                onValueChangeFinished = { ShakeRotate.setAdvanced(context, pace = pace, how = "조절바") },
+                                valueText = { "$it" }, description = Copy.SHAKE_PACE_TITLE,
+                            )
+                            Text(Copy.SHAKE_TURN_TITLE, color = c.ink)
+                            Text(Copy.SHAKE_TURN_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            LiquidSlider(
+                                value = turn, range = 0..ShakeRotatePolicy.MAX_TURN, onValueChange = { turn = it },
+                                onValueChangeFinished = { ShakeRotate.setAdvanced(context, turn = turn, how = "조절바") },
+                                valueText = { if (it == 0) "끔" else "$it" }, description = Copy.SHAKE_TURN_TITLE,
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(Copy.SHAKE_TAPS_TITLE, color = c.ink)
+                                    Text(Copy.SHAKE_TAPS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                LiquidSwitch(taps, { on -> taps = on; ShakeRotate.setAdvanced(context, rejectTaps = on, how = "스위치") })
+                            }
+                            Spacer(Modifier.height(Gap.Item))
+                            LiquidButton(Copy.SHAKE_ADVANCED_RESET, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { ShakeRotate.resetAdvanced(context) })
+                        }
+                    }
+                }
+            }
+        }
+        item(key = "vibration") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.SHAKE_VIBRATION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.SHAKE_VIBRATION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Tight))
+                    // 값이 바뀔 때마다 그 세기로 예시(휙 … 휘힉)를 울린다
+                    LiquidSlider(
+                        value = vibration, range = 0..ShakeHaptics.MAX_STRENGTH,
+                        onValueChange = { v ->
+                            if (v != vibration) { vibration = v; ShakeHaptics.play(context, ShakeHaptics.SAMPLE, v) }
+                        },
+                        onValueChangeFinished = { ShakeRotate.setVibration(context, vibration) },
+                        valueText = { if (it == 0) "끔" else "$it" },
+                        description = Copy.SHAKE_VIBRATION_TITLE,
+                    )
                 }
             }
         }

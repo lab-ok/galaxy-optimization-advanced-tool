@@ -33,16 +33,63 @@ object ShakeRotate {
 
     fun enabled(context: Context) = prefs(context).getBoolean("on", false)
 
+    /** 민감도 저장 이름. 1~20 단계(예전 판정)에서 1~30 단계로 바뀌어 예전 값은 뜻이 달라 새 이름을 쓴다. */
+    private const val LEVEL_KEY = "level30"
+
     /** 흔들기 민감도 단계([ShakeRotatePolicy.MIN_LEVEL]~[ShakeRotatePolicy.MAX_LEVEL], 클수록 예민). */
     fun level(context: Context): Int =
-        prefs(context).getInt("level", ShakeRotatePolicy.DEFAULT_LEVEL).coerceIn(ShakeRotatePolicy.MIN_LEVEL, ShakeRotatePolicy.MAX_LEVEL)
+        prefs(context).getInt(LEVEL_KEY, ShakeRotatePolicy.DEFAULT_LEVEL).coerceIn(ShakeRotatePolicy.MIN_LEVEL, ShakeRotatePolicy.MAX_LEVEL)
 
-    /** 지금 민감도 단계(화면이 바로 따라 바뀌게, 자동 맞추기 시트에서 바꿔도). */
-    val levelNow = kotlinx.coroutines.flow.MutableStateFlow(ShakeRotatePolicy.DEFAULT_LEVEL)
+    /** 흔드는 빠르기(1=천천히 ~ [ShakeRotatePolicy.MAX_PACE]=빠르게). 자동 맞추기가 그 사람의 리듬으로 정한다. */
+    fun pace(context: Context): Int = prefs(context).getInt("pace", 1).coerceIn(1, ShakeRotatePolicy.MAX_PACE)
+
+    /** 손목 회전 기준(0=보지 않음 ~ [ShakeRotatePolicy.MAX_TURN]). */
+    fun turn(context: Context): Int = prefs(context).getInt("turn", DEFAULT_TURN).coerceIn(0, ShakeRotatePolicy.MAX_TURN)
+
+    /** 흔든 것으로 칠 휘두름 수(2~4). */
+    fun swings(context: Context): Int = prefs(context).getInt("swings", ShakeRotatePolicy.Detector.PEAKS).coerceIn(2, 4)
+
+    /** 한 번 톡 친 것·부딪힌 것을 거른다. */
+    fun rejectTaps(context: Context): Boolean = prefs(context).getBoolean("taps", true)
+
+    /** 고급 설정 하나를 바꾼다. 화면이 바로 따라 바뀌고, 돌고 있는 감지에도 바로 반영된다. */
+    fun setAdvanced(context: Context, pace: Int? = null, turn: Int? = null, swings: Int? = null, rejectTaps: Boolean? = null, how: String) {
+        prefs(context).edit().apply {
+            pace?.let { putInt("pace", it) }
+            turn?.let { putInt("turn", it) }
+            swings?.let { putInt("swings", it) }
+            rejectTaps?.let { putBoolean("taps", it) }
+        }.apply()
+        LogRepository.from(context).add(
+            "흔들어서 화면 회전 고급 설정($how): " + listOfNotNull(
+                pace?.let { "빠르기 $it" }, turn?.let { "손목 회전 $it" }, swings?.let { "횟수 $it" }, rejectTaps?.let { "탭 거르기 $it" },
+            ).joinToString(", "),
+        )
+        changed.value++
+        if (enabled(context)) start(context)
+    }
+
+    /** 고급 설정을 처음 값으로. */
+    fun resetAdvanced(context: Context) =
+        setAdvanced(context, pace = 1, turn = DEFAULT_TURN, swings = ShakeRotatePolicy.Detector.PEAKS, rejectTaps = true, how = "기본값")
+
+    private const val DEFAULT_TURN = 4
+
+    /** 설정이 바뀔 때마다 늘어난다(자동 맞추기 시트에서 바꿔도 화면이 바로 따라 바뀌게). */
+    val changed = kotlinx.coroutines.flow.MutableStateFlow(0)
+
+    /** 돌릴 때 진동 세기(0=끔, 1~[ShakeHaptics.MAX_STRENGTH]). */
+    fun vibration(context: Context): Int =
+        prefs(context).getInt("vibration", ShakeHaptics.DEFAULT_STRENGTH).coerceIn(0, ShakeHaptics.MAX_STRENGTH)
+
+    fun setVibration(context: Context, strength: Int) {
+        prefs(context).edit().putInt("vibration", strength).apply()
+        LogRepository.from(context).add("흔들어서 화면 회전 진동 세기: $strength")
+    }
 
     fun setLevel(context: Context, level: Int, how: String) {
-        prefs(context).edit().putInt("level", level).apply()
-        levelNow.value = level
+        prefs(context).edit().putInt(LEVEL_KEY, level).apply()
+        changed.value++
         LogRepository.from(context).add("흔들어서 화면 회전 민감도: $level($how)")
         if (enabled(context)) start(context)  // 서비스가 새 민감도를 읽게 한다
     }

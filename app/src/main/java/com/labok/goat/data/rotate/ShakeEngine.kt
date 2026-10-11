@@ -13,8 +13,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.provider.Settings
 import android.view.Display
 import com.labok.goat.data.log.LogRepository
@@ -63,7 +61,10 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
     private fun applyLevel(d: ShakeRotatePolicy.Detector) {
         val level = ShakeRotate.level(context)
         d.threshold = ShakeRotatePolicy.thresholdOf(level)
-        d.gyroMin = ShakeRotatePolicy.gyroMinOf(level)
+        d.gyroMin = ShakeRotatePolicy.gyroOfTurn(ShakeRotate.turn(context))
+        d.maxGap = ShakeRotatePolicy.gapOfPace(ShakeRotate.pace(context))
+        d.needed = ShakeRotate.swings(context)
+        d.rejectTaps = ShakeRotate.rejectTaps(context)
     }
 
     /** 가속도(판정), 자이로(손목 회전 확인), 근접(주머니 속 무시)을 듣는다. 자이로·근접 센서가 없는 기기면 가속도만. */
@@ -153,33 +154,14 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
         val log = LogRepository.from(context)
         if (now != before) {
             // 알림 없이, 방금 흔든 리듬 그대로 진동으로만 알린다(휙 휘힉 → 톡 토독)
-            buzz(ShakeRotatePolicy.vibrationOf(detector.lastPattern))
+            ShakeHaptics.play(context, detector.lastPattern, ShakeRotate.vibration(context))
             log.add("흔들어서 화면 회전: ${ShakeRotate.label(before)}($before) → ${ShakeRotate.label(now)}($now)")
         } else {
             log.add("흔들어서 화면 회전: 흔들었지만 든 방향이 그대로라 ${ShakeRotate.label(now)} 유지")
         }
     }
 
-    /** (간격 ms, 세기) 목록대로 톡톡 진동한다. 기기가 틱 효과를 내면 틱을 세기대로, 아니면 짧은 진동을 세기(진폭)대로 낸다. */
-    private fun buzz(beats: List<Pair<Int, Float>>) = runCatching {
-        if (beats.isEmpty()) return@runCatching
-        val v = context.getSystemService(Vibrator::class.java) ?: return@runCatching
-        val tick = VibrationEffect.Composition.PRIMITIVE_TICK
-        val effect = if (v.areAllPrimitivesSupported(tick)) {
-            VibrationEffect.startComposition().apply { beats.forEach { (gap, scale) -> addPrimitive(tick, scale, gap) } }.compose()
-        } else {
-            val timings = mutableListOf<Long>(); val amps = mutableListOf<Int>()
-            beats.forEachIndexed { i, (gap, scale) ->
-                timings += (if (i == 0) 0L else (gap - PULSE_MS).coerceAtLeast(10).toLong()); amps += 0
-                timings += PULSE_MS.toLong(); amps += if (v.hasAmplitudeControl()) (scale * 255).toInt().coerceIn(1, 255) else 255
-            }
-            VibrationEffect.createWaveform(timings.toLongArray(), amps.toIntArray(), -1)
-        }
-        v.vibrate(effect)
-    }
-
     private companion object {
-        const val PULSE_MS = 18
         /** 자동 회전을 켜 둔 채 시스템이 돌리기를 기다리는 최대 시간. */
         const val WAIT_MS = 1600L
         /** 돌아간 뒤 잠그기 전에 기다리는 시간. */
