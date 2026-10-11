@@ -26,6 +26,51 @@ class FluidSim(val n: Int, val h: Float) {
     /** 속도 감쇠(프레임당). 1에 가까울수록 오래 출렁인다. */
     var damping = 0.995f
 
+    /** 튀는 중(1 → 0): 충격 직후 표면장력을 잠깐 풀어 튄 물방울이 떨어져 날아갔다가 천천히 돌아오게 한다. */
+    private var loose = 0f
+
+    /**
+     * 충격: (dirX, dirY, 화면 좌표) 쪽 가장자리 입자들을 그쪽으로 [power]만큼 튀긴다. 덩어리는 충격에 반대쪽으로 쏠리므로
+     * 호출하는 쪽은 액체가 쏠리는 반대 방향(빈 쪽)을 준다: 덩어리 뒤꽁무니에서 물방울이 떨어져 나가 빈 곳으로 날아간다.
+     * 입자마다 세기·옆 방향을 달리해 크고 작은 물방울 여러 개로 갈라져 날아가고, 표면장력이 잠깐 풀렸다가 다시 모은다.
+     */
+    fun splash(dirX: Float, dirY: Float, power: Float) {
+        if (!ready) return
+        val l = sqrt(dirX * dirX + dirY * dirY).coerceAtLeast(1e-4f)
+        val ux = dirX / l; val uy = dirY / l
+        val (mx, my) = center()
+        var front = 1f
+        for (i in 0 until n) front = maxOf(front, (x[i] - mx) * ux + (y[i] - my) * uy)
+        for (i in 0 until n) {
+            val ahead = (((x[i] - mx) * ux + (y[i] - my) * uy) / front - 0.55f) / 0.45f
+            if (ahead <= 0f) continue
+            val h1 = ((i * 2654435761L) ushr 16 and 0xFF) / 255f
+            val h2 = ((i * 40503L + 12345L) ushr 4 and 0xFF) / 255f - 0.5f
+            val k = power * ahead * (0.3f + 1.4f * h1 * h1)   // 몇 개만 멀리, 나머지는 조금
+            vx[i] += (ux - uy * h2) * k
+            vy[i] += (uy + ux * h2) * k
+        }
+        loose = 1f
+    }
+
+    /** 흔들기 판정: 가장자리 전체가 사방으로 톡 터지듯 튄다([power] dp/프레임). */
+    fun burst(power: Float) {
+        if (!ready) return
+        val (mx, my) = center()
+        var far = 1f
+        for (i in 0 until n) far = maxOf(far, sqrt((x[i] - mx) * (x[i] - mx) + (y[i] - my) * (y[i] - my)))
+        for (i in 0 until n) {
+            val ox = x[i] - mx; val oy = y[i] - my
+            val d = sqrt(ox * ox + oy * oy).coerceAtLeast(1e-4f)
+            val edge = ((d / far - 0.75f) / 0.25f).coerceIn(0f, 1f)
+            if (edge <= 0f) continue
+            val h1 = ((i * 2654435761L) ushr 16 and 0xFF) / 255f
+            val k = power * edge * (0.3f + 1.4f * h1 * h1)
+            vx[i] += ox / d * k; vy[i] += oy / d * k
+        }
+        loose = 1f
+    }
+
     /** 잔 가운데에 둥글게 채운다(해바라기 배치라 처음부터 고르게). */
     fun reset(cx: Float, cy: Float, radius: Float) {
         this.cx = cx; this.cy = cy; this.radius = radius
@@ -54,12 +99,16 @@ class FluidSim(val n: Int, val h: Float) {
     fun step(dt: Float, ax: Float, ay: Float, swirl: Float, pull: Float, cohesion: Float = 0f) {
         if (!ready) return
         val (mx0, my0) = center()
+        // 튄 직후에는 표면장력을 잠깐 약하게(튄 방울이 떨어져 나간다), 0.5초쯤 지나면 다시 모은다
+        val glue = cohesion * (1f - 0.9f * loose)
+        val visc = 1f - 0.85f * loose
+        loose = (loose - 0.03f * dt).coerceAtLeast(0f)
         // 1) 힘 → 속도
         for (i in 0 until n) {
             val rx = x[i] - cx; val ry = y[i] - cy
             val ox = x[i] - mx0; val oy = y[i] - my0
-            vx[i] = (vx[i] + (ax - ry * swirl - rx * pull - ox * cohesion) * dt) * damping
-            vy[i] = (vy[i] + (ay + rx * swirl - ry * pull - oy * cohesion) * dt) * damping
+            vx[i] = (vx[i] + (ax - ry * swirl - rx * pull - ox * glue) * dt) * damping
+            vy[i] = (vy[i] + (ay + rx * swirl - ry * pull - oy * glue) * dt) * damping
         }
         // 2) 점성: 다가오는 이웃끼리 속도를 나눈다(출렁임이 부드럽게 가라앉는다)
         val h2 = h * h
@@ -71,7 +120,7 @@ class FluidSim(val n: Int, val h: Float) {
             val ux = dx / r; val uy = dy / r
             val u = (vx[i] - vx[j]) * ux + (vy[i] - vy[j]) * uy
             if (u > 0f) {
-                val imp = dt * (1 - q) * (sigma * u + beta * u * u) * 0.5f
+                val imp = dt * (1 - q) * (sigma * u + beta * u * u) * 0.5f * visc
                 vx[i] -= imp * ux; vy[i] -= imp * uy
                 vx[j] += imp * ux; vy[j] += imp * uy
             }
@@ -89,7 +138,8 @@ class FluidSim(val n: Int, val h: Float) {
                 val q = 1 - sqrt(r2) / h
                 rho += q * q; rhoNear += q * q * q
             }
-            val p = k * (rho - rest); val pNear = kNear * rhoNear
+            // 이웃이 적은 가장자리는 서로 끌어당긴다(표면장력). 튄 직후에는 이 끌림도 잠깐 풀어 방울이 떨어져 나가게 한다.
+            val p = k * (rho - rest) * (if (rho < rest) visc else 1f); val pNear = kNear * rhoNear
             var mx = 0f; var my = 0f
             for (j in 0 until n) {
                 if (j == i) continue
@@ -111,6 +161,8 @@ class FluidSim(val n: Int, val h: Float) {
             val r = sqrt(dx * dx + dy * dy)
             if (r > wall) { x[i] = cx + dx / r * wall; y[i] = cy + dy / r * wall }
         }
+        // 혹시 수치가 터지면(NaN) 처음 모양으로 되돌린다
+        if (x[0].isNaN() || y[0].isNaN()) { reset(cx, cy, radius); return }
         // 6) 속도 = 실제로 움직인 거리
         for (i in 0 until n) {
             vx[i] = ((x[i] - px[i]) / dt).coerceIn(-MAX_V, MAX_V)

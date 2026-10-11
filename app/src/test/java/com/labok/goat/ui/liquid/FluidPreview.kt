@@ -42,7 +42,13 @@ class FluidPreview {
         run(150, { 0f to 0f }, snapAt = listOf(149))                                                         // 가만히
         run(40, { i -> (-g * 24f * sin(2 * PI * 4 * i / 60.0).toFloat()) to 0f }, snapAt = listOf(4, 8, 13, 20)) // 좌우 흔들기 4Hz ±18
         run(80, { 0f to 0f }, snapAt = listOf(10, 30, 79))                                                   // 다시 뭉침
-        run(40, { i -> if (i < 3) (g * 50f) to (-g * 35f) else 0f to 0f }, snapAt = listOf(3, 7, 14, 39))    // 세게 한 번 침
+        // 세게 한 번 침: 앱에서는 검출기가 충격을 잡으면(기준의 최대 3배) 반대쪽으로 물방울을 튀긴다
+        val hitX = 50f; val hitY = -35f
+        sim.splash(-hitX, -hitY, 3f * cfg.splash * dp)
+        run(50, { i -> if (i < 3) (g * hitX) to (g * hitY) else 0f to 0f }, snapAt = listOf(2, 6, 12, 22, 49))
+        // 흔들기 판정: 사방으로 톡 터진다
+        sim.burst(cfg.splash * dp)
+        run(50, { 0f to 0f }, snapAt = listOf(3, 8, 16, 49))
         val cols = 4
         val rows = (frames.size + cols - 1) / cols
         val w = size * cols; val h = size * rows
@@ -57,19 +63,15 @@ class FluidPreview {
 
     /** 앱과 같은 그리기: 입자 원(알파) → 가우시안 흐림 → 알파 임계(22a − 9) → 잉크. 잔 테두리도 그린다. 밝기(0~1)를 돌려준다. */
     private fun draw(sim: FluidSim, glass: Float, cfg: LiquidLook): FloatArray {
-        val a = FloatArray(size * size); val col = FloatArray(size * size)
+        val a = FloatArray(size * size)
         val r = cfg.radiusDp * dp
-        val (mx, my) = sim.center()
-        val spread = cfg.spread(sim, mx, my)
-        val ink = 0.09f
-        for (i in 0 until sim.n) stamp(a, col, sim.x[i], sim.y[i], r, ink + (1f - ink) * cfg.shine(sim, i, mx, my, spread))
-        val b = blur(a, cfg.blurDp * dp); val bc = blur(col, cfg.blurDp * dp)
+        for (i in 0 until sim.n) stamp(a, sim.x[i], sim.y[i], r)
+        val b = blur(a, cfg.blurDp * dp)
         val img = FloatArray(size * size)
         val ring = glass + 6 * dp
         for (p in 0 until size * size) {
             val al = (b[p] * 22f - 9f).coerceIn(0f, 1f)
-            val shade = if (b[p] > 1e-4f) bc[p] / b[p] else ink
-            var v = 0.93f * (1 - al) + shade * al
+            var v = 0.93f * (1 - al) + 0.09f * al
             val dx = p % size - size / 2f; val dy = p / size - size / 2f
             if (kotlin.math.abs(kotlin.math.sqrt(dx * dx + dy * dy) - ring) < 1.2f) v = minOf(v, 0.8f)
             img[p] = v
@@ -77,12 +79,12 @@ class FluidPreview {
         return img
     }
 
-    private fun stamp(a: FloatArray, col: FloatArray, cx: Float, cy: Float, r: Float, v: Float) {
+    private fun stamp(a: FloatArray, cx: Float, cy: Float, r: Float) {
         val x0 = (cx - r).toInt().coerceAtLeast(0); val x1 = (cx + r).toInt().coerceAtMost(size - 1)
         val y0 = (cy - r).toInt().coerceAtLeast(0); val y1 = (cy + r).toInt().coerceAtMost(size - 1)
         for (y in y0..y1) for (x in x0..x1) {
             val dx = x - cx; val dy = y - cy
-            if (dx * dx + dy * dy <= r * r) { a[y * size + x] = 1f; col[y * size + x] = v }
+            if (dx * dx + dy * dy <= r * r) a[y * size + x] = 1f
         }
     }
 

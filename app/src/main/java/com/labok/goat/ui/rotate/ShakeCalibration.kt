@@ -61,9 +61,8 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
-import com.labok.goat.ui.liquid.gooShaded
+import com.labok.goat.ui.liquid.goo
 import com.labok.goat.ui.liquid.LiquidLook
-import androidx.compose.ui.graphics.lerp
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.nudge
 import com.labok.goat.ui.liquid.poke
@@ -142,10 +141,11 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
 }
 
 /**
- * 유리잔 속 점도 높은 물 한 방울([FluidSim], 모양·물성은 [LiquidLook.default]). 달처럼 중력이 약한 곳에 있는 듯 움직인다:
- * - 가속도 원값을 저역 통과해 중력을 따로 떼어 내고, 중력은 [LiquidLook.gravity]배(약 1/6)만 건다. 기울이면 느릿하게 그쪽으로 가라앉는다.
+ * 유리잔 속 점도 높은 물 한 방울([FluidSim], 모양·물성은 [LiquidLook.default]). 중력이 1/20뿐인 곳에 있는 듯 움직인다:
+ * - 가속도 원값을 저역 통과해 중력을 따로 떼어 내고, 중력은 [LiquidLook.gravity]배(1/20)만 건다. 기울이면 느릿하게 그쪽으로 가라앉는다.
  * - 나머지(기기를 움직인 관성)는 그대로 건다. 흔들면 반대쪽으로 쏠렸다 출렁이고, 세게 치면 벽에 늘어 붙었다가 표면장력으로 다시 둥글게 맺힌다.
- * - 왼쪽 위에서 빛을 받는 것처럼 가장자리를 밝게 그려 광택을 낸다.
+ * - 이 화면의 주된 목적은 흔들림·충격이 잡히는 것을 눈으로 보여 주는 것이다. 지금 설정(민감도·고급 설정)대로 판정하는 검출기를
+ *   늘 돌려, 휘두름이나 탭·충격이 하나 잡힐 때마다 그 반대쪽(빈 곳)으로 물방울이 튀고, 흔들기로 판정되면 사방으로 톡 터진다.
  * [recording]이 켜지면 [round]마다 새로 [CALIBRATE_SECONDS]초 동안 휘두름을 모아 [onDone]에 단계를 넘긴다(못 맞추면 null).
  * 둘레의 호는 남은 시간, 아래 점은 잡힌 휘두름 수다. 이 시트가 열려 있는 동안 흔들어도 화면은 돌지 않는다.
  */
@@ -171,6 +171,16 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
     // 센서 최신값(화면 좌표로 바꾼 힘)과 저역 통과로 떼어 낸 중력(기기 좌표)
     val force = remember { FloatArray(2) }
     val gravity = remember { FloatArray(2) }
+    // 지금 설정 그대로 판정하는 검출기(시작 전에도 돈다): 잡히는 것을 물방울로 보여 준다
+    val live = remember {
+        ShakeRotatePolicy.Detector(
+            threshold = ShakeRotatePolicy.thresholdOf(ShakeRotate.level(context)),
+            gyroMin = ShakeRotatePolicy.gyroOfTurn(ShakeRotate.turn(context)),
+            maxGap = ShakeRotatePolicy.gapOfPace(ShakeRotate.pace(context)),
+            needed = ShakeRotate.swings(context),
+            rejectTaps = ShakeRotate.rejectTaps(context),
+        )
+    }
     var record by remember { mutableStateOf(ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN)) }
 
     LaunchedEffect(box) {
@@ -198,7 +208,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
         }
         done(level)
     }
-    // 시뮬레이션: 실제 시간만큼(1 = 1/60초) 두 번에 나눠 적분한다
+    // 시뮬레이션: 실제 시간만큼(1 = 1/60초) 적분한다
     LaunchedEffect(reduce) {
         if (reduce) return@LaunchedEffect
         var last = 0L
@@ -207,8 +217,11 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
             val f = if (last == 0L) 1f else ((now - last) / 16_666_667f).coerceIn(0.25f, 3f)
             last = now
             if (!sim.ready) continue
-            val sub = 2
-            repeat(sub) { sim.step(f / sub, force[0], force[1], 0f, look.pull, look.cohesion) }
+            // 한 걸음은 반 프레임 이하로 나눈다: 프레임이 밀려 한 번에 크게 적분하면 점성·표면장력이 강한 액체가 터진다.
+            // 너무 밀리면(4걸음 넘게) 그만큼 느리게 움직이게 둔다.
+            val sub = kotlin.math.ceil(f / MAX_STEP).toInt().coerceIn(1, 4)
+            val dt = (f / sub).coerceAtMost(MAX_STEP)
+            repeat(sub) { sim.step(dt, force[0], force[1], 0f, look.pull, look.cohesion) }
             frame++
         }
     }
@@ -221,6 +234,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
             override fun onSensorChanged(e: SensorEvent) {
                 val ms = e.timestamp / 1_000_000
                 if (e.sensor.type == Sensor.TYPE_GYROSCOPE) {
+                    live.feedGyro(e.values[0], e.values[1], e.values[2], ms)
                     if (rec) record.feedGyro(e.values[0], e.values[1], e.values[2], ms)
                     return
                 }
@@ -229,8 +243,19 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
                 val ax = e.values[0]; val ay = e.values[1]
                 gravity[0] += (ax - gravity[0]) * GRAVITY_LP; gravity[1] += (ay - gravity[1]) * GRAVITY_LP
                 val g = look.gToPx * dp
-                force[0] = -((ax - gravity[0]) + gravity[0] * look.gravity) * g
-                force[1] = ((ay - gravity[1]) + gravity[1] * look.gravity) * g
+                val lx = ax - gravity[0]; val ly = ay - gravity[1]
+                force[0] = -(lx + gravity[0] * look.gravity) * g
+                force[1] = (ly + gravity[1] * look.gravity) * g
+                // 잡힌 것을 보여 준다: 휘두름·탭·충격 하나 → 덩어리는 한쪽으로 쏠리고 반대쪽(빈 곳)으로 물방울이 튄다.
+                // 흔들기 판정 → 사방으로 톡 터진다. 세기는 판정 기준의 몇 배였는지(최대 3배)에 비례한다.
+                val before = live.peaks.lastOrNull()?.at
+                val shook = live.feed(ax, ay, e.values[2], ms)
+                val p = live.peaks.lastOrNull()
+                if (p != null && p.at != before) {
+                    val k = (p.force / live.threshold).coerceIn(1f, 3f)
+                    sim.splash(p.x, -p.y, k * look.splash * dp)
+                }
+                if (shook) sim.burst(look.splash * dp)
                 if (rec) {
                     record.feed(e.values[0], e.values[1], e.values[2], ms)
                     if (record.peaks.size > count) haptics.tick()
@@ -260,14 +285,12 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
                     style = Stroke(3.dp.toPx(), cap = StrokeCap.Round),
                 )
             }
-            // 액체(색을 지우지 않는 goo 층: 입자가 매끈한 한 덩어리 표면이 되고, 입자마다 다른 밝기가 섞여 광택이 된다)
-            Canvas(Modifier.fillMaxWidth().height(280.dp).gooShaded(look.blurDp.dp)) {
+            // 액체(goo 층: 입자가 매끈한 한 덩어리 표면이 되고, 튄 물방울은 목처럼 이어졌다 떨어진다)
+            Canvas(Modifier.fillMaxWidth().height(280.dp).goo(c.ink, look.blurDp.dp)) {
                 frame
                 if (!sim.ready) return@Canvas
                 val r = look.radiusDp.dp.toPx()
-                val (mx, my) = sim.center()
-                val spread = look.spread(sim, mx, my)
-                for (i in 0 until sim.n) drawCircle(lerp(c.ink, Color.White, look.shine(sim, i, mx, my, spread)), r, Offset(sim.x[i], sim.y[i]))
+                for (i in 0 until sim.n) drawCircle(c.ink, r, Offset(sim.x[i], sim.y[i]))
             }
             if (recording) Text(
                 "$left", color = c.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineMedium,
@@ -287,6 +310,8 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
     }
 }
 
+/** 시뮬레이션 한 걸음의 최대 길이(프레임). */
+private const val MAX_STEP = 0.5f
 /** 중력 저역 통과 계수(센서 값 하나마다, 50Hz면 약 0.4초에 따라간다). */
 private const val GRAVITY_LP = 0.05f
 
