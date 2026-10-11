@@ -17,5 +17,5 @@ JAVA_X86="${JAVA_X86:-$TOOLS/x86/jdk/bin/java}"
 export JAVA_HOME="$TOOLS/jdk17" ANDROID_HOME="$TOOLS/sdk"
 cd "$ROOT"
 ./gradlew --no-daemon -Pandroid.aapt2FromMavenOverride="$TOOLS/arm64-tools/build-tools/aapt2" \
-  -Pscreenshot="$JAVA_X86" testDebugUnitTest --tests "com.local.folddpifix.screenshot.*" "$@"
+  -Pscreenshot="$JAVA_X86" testDebugUnitTest --tests "com.labok.goat.screenshot.*" "$@"
 ls -1 app/build/outputs/roborazzi

@@ -1,3 +1,3 @@
 <resources>
-    <style name="Theme.FoldDpiFix" parent="android:Theme.Material.NoActionBar" />
+    <style name="Theme.Goat" parent="android:Theme.Material.NoActionBar" />
 </resources>

@@ -65,7 +65,7 @@ Android 12(API 31) 이상의 Galaxy Z Fold 시리즈를 대상으로 합니다.
    - **PC 무선** / **PC 유선**: PC 운영체제에 맞춘 안내대로 PC에서 아래 명령을 한 번 실행합니다.
 
 ```bash
-adb shell pm grant com.local.folddpifix android.permission.WRITE_SECURE_SETTINGS
+adb shell pm grant com.labok.goat android.permission.WRITE_SECURE_SETTINGS
 ```
 
 이 권한은 일반 권한 창으로는 받을 수 없어 셸 권한(Shizuku 또는 adb)이 필요합니다. 재부팅해도 유지되며, 권한을 준 뒤에는 USB/무선 디버깅을 꺼도 됩니다. 앱을 삭제하면 권한도 사라지므로, 업데이트는 삭제하지 말고 덮어 설치(`adb install -r` 또는 APK 실행)하세요.
@@ -127,7 +127,7 @@ ADB 없이 복구하려면 앱의 ⋮ 메뉴 → 초기화 → [기본 DPI로 �
 ## 삭제
 
 ```bash
-adb uninstall com.local.folddpifix
+adb uninstall com.labok.goat
 ```
 
 단말의 설정 → 애플리케이션에서 삭제해도 됩니다. 삭제한 뒤에도 마지막으로 적용한 강제 DPI는 남아 있습니다. 기본값으로 돌리려면 삭제 전에 [기본 DPI로 복원]을 누르거나 `adb shell wm density reset`을 실행하십시오.
@@ -158,7 +158,7 @@ Galaxy Fold는 접고 펼칠 때 기본 display(0) 뒤의 물리 화면이 바�
 [Android 앱 아키텍처 가이드](https://developer.android.com/topic/architecture)의 계층 구분(UI · domain · data)을 따릅니다. 의존 방향은 `ui`·`background` → `domain` → `data`입니다. 계산은 모두 domain의 순수 함수에 두고 UI는 그리기만 합니다.
 
 ```
-app/src/main/java/com/local/folddpifix/
+app/src/main/java/com/labok/goat/
 ├── App.kt · AppInfo.kt          Application(크래시 기록·숨은 API 허용), 제품 이름
 ├── data/                        데이터 계층
 │   ├── display/                 DpiController, DpiManager(IWindowManager, 디스플레이 ID별), PermissionReset(pm revoke 명령)

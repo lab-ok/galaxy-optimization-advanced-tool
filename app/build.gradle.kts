@@ -5,16 +5,16 @@ plugins {
 }
 
 android {
-    namespace = "com.local.folddpifix"
+    namespace = "com.labok.goat"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.local.folddpifix"
+        applicationId = "com.labok.goat"
         // Android 12 이상(방울 효과에 RenderEffect 필요). Android 11은 지원하지 않는다(사용자 결정).
         minSdk = 31
         targetSdk = 35
-        versionCode = 28
-        versionName = "1.1"
+        versionCode = 1
+        versionName = "1.0"
         // 실험실 기능은 lab 빌드에만 켠다. 공개 release·debug에는 들어가지 않는다.
         buildConfigField("boolean", "LAB", "false")
     }
@@ -53,7 +53,7 @@ android {
                 val x86 = project.findProperty("screenshot") as String?
                 if (x86 != null) {
                     test.executable = x86
-                    test.filter.includeTestsMatching("com.local.folddpifix.screenshot.*")
+                    test.filter.includeTestsMatching("com.labok.goat.screenshot.*")
                     test.systemProperty("roborazzi.test.record", "true")
                     // qemu 안의 JVM은 DNS가 불안정하다. Robolectric 런타임 jar는 미리 받아 둔 것을 쓴다.
                     test.systemProperty("robolectric.offline", "true")

@@ -7,7 +7,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-PKG=com.local.folddpifix
+PKG=com.labok.goat
 PERM=android.permission.WRITE_SECURE_SETTINGS
 APK="${1:-$ROOT/app/build/outputs/apk/debug/app-debug.apk}"
 

@@ -74,11 +74,11 @@ build_docker() {
   command -v docker >/dev/null || die "docker가 없습니다"
   docker run --rm --platform linux/amd64 alpine true >/dev/null 2>&1 \
     || die "이 호스트에서 linux/amd64 컨테이너를 실행할 수 없습니다(exec format error). ARM64에서는 기본(native) 모드를 쓰십시오."
-  docker build --platform linux/amd64 -f "$ROOT/Dockerfile.android-build" -t folddpifix-build "$ROOT"
+  docker build --platform linux/amd64 -f "$ROOT/Dockerfile.android-build" -t goat-build "$ROOT"
   local tasks="$TASK"
   [ "$RUN_TESTS" = 1 ] && tasks="testDebugUnitTest $TASK"
   docker run --rm --platform linux/amd64 -u "$(id -u):$(id -g)" -e HOME=/tmp \
-    -v "$ROOT:/work" -w /work folddpifix-build bash -c "./gradlew --no-daemon $tasks"
+    -v "$ROOT:/work" -w /work goat-build bash -c "./gradlew --no-daemon $tasks"
 }
 
 if [ "$MODE" = docker ]; then build_docker; else build_native; fi

@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "FoldDpiFix"
+rootProject.name = "GOAT"
 include(":app")
