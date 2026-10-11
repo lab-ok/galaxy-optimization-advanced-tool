@@ -9,14 +9,10 @@ import com.labok.goat.ui.tweaks.AnimationHelpSheet
 import com.labok.goat.ui.tweaks.AnimationScreen
 import com.labok.goat.ui.tweaks.BloatHelpSheet
 import com.labok.goat.ui.tweaks.BloatScreen
-import com.labok.goat.ui.tweaks.DnsHelpSheet
-import com.labok.goat.ui.tweaks.DnsScreen
 import com.labok.goat.ui.tweaks.ResolutionHelpSheet
 import com.labok.goat.ui.tweaks.ResolutionScreen
 import com.labok.goat.ui.tweaks.DarkHelpSheet
 import com.labok.goat.ui.tweaks.DarkScreen
-import com.labok.goat.ui.tweaks.ChargeHelpSheet
-import com.labok.goat.ui.tweaks.ChargeScreen
 import com.labok.goat.ui.tweaks.GosHelpSheet
 import com.labok.goat.ui.tweaks.GosScreen
 import com.labok.goat.ui.tweaks.RefreshHelpSheet
@@ -162,7 +158,7 @@ import kotlinx.coroutines.launch
 /** 이 너비(dp) 이상이면 사이드바를 늘 펼쳐 둔다(폴드 내부 화면·태블릿). */
 private const val WIDE_DP = 600
 
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, DNS_HELP, REFRESH_HELP, ICONS_HELP, GOS_HELP, CHARGE_HELP, DARK_HELP, RES_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, ICONS_HELP, GOS_HELP, DARK_HELP, RES_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -258,7 +254,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             add(NavSection(Copy.MENU_SECTION_SCREEN, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
             add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.REFRESH, NavItem.RESOLUTION, NavItem.DARK, NavItem.STATUS_ICONS)))
             add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE, NavItem.ANIMATION)))
-            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.CHARGE, NavItem.PRIVATE_DNS)))
+            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS)))
             if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
@@ -309,11 +305,6 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report,
             )
-            NavItem.CHARGE -> listOf(
-                Copy.MENU_HELP to { sheet = Sheet.CHARGE_HELP },
-                Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
-                Copy.MENU_REPORT to report,
-            )
             NavItem.RESOLUTION -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.RES_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
@@ -326,11 +317,6 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             )
             NavItem.STATUS_ICONS -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.ICONS_HELP },
-                Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
-                Copy.MENU_REPORT to report,
-            )
-            NavItem.PRIVATE_DNS -> listOf(
-                Copy.MENU_HELP to { sheet = Sheet.DNS_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
                 Copy.MENU_REPORT to report,
             )
@@ -471,11 +457,9 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.APP_CLEANUP -> BloatScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.REFRESH -> RefreshScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.GOS -> GosScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
-                            NavItem.CHARGE -> ChargeScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.STATUS_ICONS -> StatusIconsScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
-                            NavItem.PRIVATE_DNS -> DnsScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                         }
                     }
@@ -530,11 +514,9 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.CAMERA_HELP -> CameraMuteHelpSheet()
                     Sheet.ANIM_HELP -> AnimationHelpSheet()
                     Sheet.BLOAT_HELP -> BloatHelpSheet()
-                    Sheet.DNS_HELP -> DnsHelpSheet()
                     Sheet.REFRESH_HELP -> RefreshHelpSheet()
                     Sheet.ICONS_HELP -> StatusIconsHelpSheet()
                     Sheet.GOS_HELP -> GosHelpSheet()
-                    Sheet.CHARGE_HELP -> ChargeHelpSheet()
                     Sheet.DARK_HELP -> DarkHelpSheet()
                     Sheet.RES_HELP -> ResolutionHelpSheet()
                 }

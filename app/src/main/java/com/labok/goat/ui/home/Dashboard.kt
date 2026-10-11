@@ -14,12 +14,10 @@ import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.Springs
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.data.tweaks.Bloat
-import com.labok.goat.data.tweaks.ChargeLimit
 import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.data.tweaks.Gos
 import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.data.display.ResolutionState
-import com.labok.goat.data.tweaks.PrivateDns
 import com.labok.goat.data.tweaks.RefreshRate
 import com.labok.goat.data.tweaks.StatusIcons
 import com.labok.goat.data.appsize.AppDensityNotifier
@@ -100,7 +98,6 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     val camera by CameraMute.status.collectAsStateWithLifecycle()
     val gos by Gos.status.collectAsStateWithLifecycle()
-    val charge by ChargeLimit.status.collectAsStateWithLifecycle()
     val dark by ForceDark.status.collectAsStateWithLifecycle()
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
@@ -109,7 +106,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     // 기본 앱 정리: 꺼 둔 목록 앱 수(Shizuku로 읽음, 못 읽으면 null)
     var cleaned by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(tick, shizuku) {
-        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); ChargeLimit.find(); ForceDark.read(context); Bloat.scan()?.count { it.value } }
+        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); ForceDark.read(context); Bloat.scan()?.count { it.value } }
     }
     // 기능마다 지금 상태 한 줄(돌아올 때마다 다시 읽는다)
     val status: (NavItem) -> String = { item ->
@@ -128,17 +125,11 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                 CameraMute.State.UNKNOWN -> if (CameraMute.wanted(context)) "꺼 두기로 함" else "Shizuku로 끕니다"
             }
             NavItem.APP_CLEANUP -> cleaned?.let { if (it == 0) "꺼 둔 앱 없음" else "꺼 둔 앱 ${it}개" } ?: "쓰지 않는 기본 앱 끄기"
-            NavItem.PRIVATE_DNS -> PrivateDns.read(context).label
             NavItem.GOS -> when (gos) {
                 Gos.State.OFF -> Copy.GOS_DASH_OFF
                 Gos.State.ON -> Copy.GOS_DASH_ON
                 Gos.State.NONE -> Copy.GOS_DASH_NONE
                 Gos.State.UNKNOWN -> if (Gos.wanted(context)) Copy.GOS_DASH_WANTED else Copy.GOS_DASH_UNKNOWN
-            }
-            NavItem.CHARGE -> when (val l = charge) {
-                is ChargeLimit.Lookup.Present -> ChargeLimit.label(l.found)
-                ChargeLimit.Lookup.Missing -> Copy.CHARGE_DASH_MISSING
-                else -> Copy.CHARGE_DASH_SHIZUKU
             }
             NavItem.DARK -> when (dark.forced) {
                 true -> if (dark.night) Copy.DARK_DASH_ON else Copy.DARK_DASH_WAITING
@@ -167,9 +158,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.SHAKE_ROTATE -> ShakeRotate.enabled(context)
             NavItem.CAMERA_MUTE -> camera == CameraMute.State.MUTED || (camera == CameraMute.State.UNKNOWN && CameraMute.wanted(context))
             NavItem.APP_CLEANUP -> (cleaned ?: 0) > 0
-            NavItem.PRIVATE_DNS -> PrivateDns.inUse(context)
             NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))
-            NavItem.CHARGE -> (charge as? ChargeLimit.Lookup.Present)?.found?.mode?.let { it != 0 } == true
             NavItem.DARK -> dark.forced == true
             NavItem.RESOLUTION -> ResolutionState.base(context) != null
             NavItem.STATUS_ICONS -> StatusIcons.hidden(context).isNotEmpty()

@@ -62,10 +62,6 @@ internal object AppPermissions {
             "흔들어서 화면 회전에서 화면을 돌렸을 때 짧게 진동으로 알려 줍니다.", How.INSTALL,
         ),
         Item(
-            Manifest.permission.ACCESS_NETWORK_STATE, "네트워크 상태 보기",
-            "개인 DNS를 바꾼 뒤 고른 서버에 실제로 연결됐는지 시스템에 묻습니다. GOAT는 인터넷 권한이 없어 직접 통신하지 않습니다.", How.INSTALL,
-        ),
-        Item(
             Manifest.permission.WAKE_LOCK, "절전 모드 해제 방지",
             "백그라운드 작업(WorkManager)이 DPI 확인을 끝낼 때까지 잠깐 깨어 있게 합니다.", How.INSTALL,
         ),
