@@ -46,6 +46,7 @@ fun <T> LiquidChips(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptics = rememberLiquidHaptics()
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val lefts = remember(options) { mutableStateListOf<Float>().apply { repeat(options.size) { add(0f) } } }
@@ -97,8 +98,8 @@ fun <T> LiquidChips(
                             lefts[i] = it.positionInParent().x
                             widths[i] = it.size.width.toFloat()
                         }
-                        .liquidPress(interaction)
-                        .clickable(interaction, indication = null) { onSelect(option) }
+                        .liquidPress(interaction, releaseHaptic = false)
+                        .clickable(interaction, indication = null) { if (option != selected) haptics.segment(); onSelect(option) }
                         .semantics { this.selected = isSel },
                     contentAlignment = Alignment.Center,
                 ) {

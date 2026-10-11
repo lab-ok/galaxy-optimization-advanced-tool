@@ -75,7 +75,7 @@ fun LiquidSlider(
     val blob = rememberSoftBlob()
     val path = remember { Path() }
     val bubbleSize = remember { Animatable(10f) }
-    // 세밀 조절: 촘촘한 조절바를 붙들고 가만히 있으면 손잡이에서 확대 패널이 퍼져 나와 앞뒤 [FINE_HALF]칸을 조절바 전체 폭으로 보여 준다
+    // 세밀 조절(모든 조절바): 붙들고 가만히 있으면 손잡이에서 확대 패널이 퍼져 나와 앞뒤 [FINE_HALF]칸을 조절바 전체 폭으로 보여 준다
     var fineBase by remember { mutableStateOf<Int?>(null) }
     val fineK = remember { Animatable(0f) }
     LaunchedEffect(fineBase != null) { fineK.animateTo(if (fineBase != null) 1f else 0f, Springs.water(reduce)) }
@@ -98,7 +98,9 @@ fun LiquidSlider(
     val edge = with(density) { maxOf(30.dp.toPx(), (widest + 32.dp.toPx()) / 2 + 2.dp.toPx()) }
     fun xOf(v: Int) = edge + (v - range.first).toFloat() / span * (width - 2 * edge)
     /** 세밀 조절 중 값 [v]의 x(확대 눈금 위치). */
-    fun xFine(base: Int, v: Int) = edge + (v - (base - FINE_HALF)).toFloat() / (2 * FINE_HALF) * (width - 2 * edge)
+    // 확대 칸 수: 앞뒤 FINE_HALF칸, 범위가 좁으면 그 절반(최소 1)
+    val fineHalf = minOf(FINE_HALF, maxOf(1, span / 2))
+    fun xFine(base: Int, v: Int) = edge + (v - (base - fineHalf)).toFloat() / (2 * fineHalf) * (width - 2 * edge)
     fun valueAt(x: Float): Int {
         val f = ((x - edge) / (width - 2 * edge)).coerceIn(0f, 1f)
         return (range.first + f * span).roundToInt()
@@ -133,8 +135,6 @@ fun LiquidSlider(
             .pointerInput(enabled, range) {
                 if (!enabled) return@pointerInput
                 val slop = 5.dp.toPx()
-                // 한 칸이 이만큼(px)보다 좁으면 촘촘한 조절바로 보고 세밀 조절을 연다
-                val dense = (width - 2 * edge) / span < 6.dp.toPx()
                 awaitEachGesture {
                     val down = awaitFirstDown()
                     dragX = down.position.x
@@ -156,7 +156,7 @@ fun LiquidSlider(
                         changedAt = at; v = nv; change(nv); haptics.tick()
                     }
                     fun openFine(x: Float) {
-                        if (!dense || fineBase != null) return
+                        if (fineBase != null) return
                         fineBase = v; anchorX = x; haptics.snap()
                     }
                     while (true) {
@@ -175,9 +175,9 @@ fun LiquidSlider(
                             set(valueAt(x), ch.uptimeMillis)
                         } else {
                             // 세밀 조절: 조절바 전체 폭이 앞뒤 FINE_HALF칸. 같은 손 움직임으로 훨씬 조금씩 바뀐다.
-                            val perPx = (2f * FINE_HALF) / (width - 2 * edge)
-                            // 패널이 보여 주는 앞뒤 FINE_HALF칸 안에서만 움직인다(더 가려면 떼고 다시 붙든다)
-                            val nv = (base + ((x - anchorX) * perPx).roundToInt()).coerceIn(base - FINE_HALF, base + FINE_HALF).coerceIn(range)
+                            val perPx = (2f * fineHalf) / (width - 2 * edge)
+                            // 패널이 보여 주는 앞뒤 fineHalf칸 안에서만 움직인다(더 가려면 떼고 다시 붙든다)
+                            val nv = (base + ((x - anchorX) * perPx).roundToInt()).coerceIn(base - fineHalf, base + fineHalf).coerceIn(range)
                             set(nv, ch.uptimeMillis)
                             dragX = xFine(base, v)
                         }
@@ -234,11 +234,11 @@ fun LiquidSlider(
         if (base != null || fineK.value > 0.01f) Canvas(Modifier.matchParentSize()) {
             val b = base ?: value
             val k = fineK.value
-            for (i in -FINE_HALF..FINE_HALF) {
+            for (i in -fineHalf..fineHalf) {
                 val vv = b + i
                 if (vv !in range) continue
                 val x = xFine(b, vv)
-                val long = vv % 5 == 0
+                val long = vv % 5 == 0 || fineHalf < 5
                 val h = (if (long) 10 else 5).dp.toPx() * k
                 drawLine(c.onInk.copy(alpha = 0.75f * k), Offset(x, trackY - h / 2), Offset(x, trackY + h / 2), 1.5.dp.toPx())
             }

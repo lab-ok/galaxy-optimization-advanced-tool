@@ -5,6 +5,7 @@ generate.py의 염소 모양을 그대로 쓰고, svg2vd.py로 Android VectorDra
 - ic_launcher_mono: 테마 아이콘(단색, 눈·코는 구멍)
 - ic_app_logo: 앱 안 로고(검은 둥근 타일 + 염소)
 - ic_goat: 염소 얼굴만(사이드바 머리)
+- ic_goat_squint·ic_goat_cry·ic_goat_angry: 누를 때 표정(찡그림·울음·화남)
 - ic_stat_goat: 알림 작은 아이콘(단색 염소, 24dp를 거의 채운다)
 """
 import os, sys
@@ -23,6 +24,10 @@ out = {
     'ic_launcher_fg.xml': (svg(scale(body, 0.84, -4)), 108),
     'ic_app_logo.xml': (svg(tile('#111111'), scale(body, 1.04, -2)), 72),
     'ic_goat.xml': (svg(scale(body, 1.0, 0)), 72),
+    # 누를 때 표정: 찡그림 / 많이 누르면 울음 / 더 누르면 화남(볼이 빨개짐)
+    'ic_goat_squint.xml': (svg(scale(goat(eye='squint', mouth='frown'), 1.0, 0)), 72),
+    'ic_goat_cry.xml': (svg(scale(goat(eye='cry', mouth='wobble'), 1.0, 0)), 72),
+    'ic_goat_angry.xml': (svg(scale(goat(eye='angry', mouth='frown', blush='#FF4D4D', blush_op=0.85), 1.0, 0)), 72),
 }
 
 def circ(cx, cy, r): return f'M{cx-r},{cy}a{r},{r} 0 1,0 {2*r},0a{r},{r} 0 1,0 {-2*r},0Z'

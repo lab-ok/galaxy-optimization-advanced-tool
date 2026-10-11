@@ -250,7 +250,9 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
                         val dx = cx - pos.x; val dy = cy - pos.y; val l = hypot(dx, dy).coerceAtLeast(1f)
                         body.poke(pos.x, pos.y, dx / l * 720f, dy / l * 720f, box.height * 0.42f)
                     }
-                    if (tryAwaitRelease()) onClick(origin + pos)
+                    val released = tryAwaitRelease()
+                    if (!reduce) haptics.release()
+                    if (released) onClick(origin + pos)
                 })
             },
     ) {

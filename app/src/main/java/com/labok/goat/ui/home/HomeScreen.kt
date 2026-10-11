@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.domain.DpiPolicy
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -325,6 +326,14 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         val haze = remember { HazeState() }
         // 넓은 화면(폴드 내부 화면·태블릿)에서는 사이드바를 왼쪽에 늘 펼쳐 두고, 좁은 화면에서는 ☰로 여닫는다.
         val wide = LocalConfiguration.current.screenWidthDp >= WIDE_DP
+        val haptics = rememberLiquidHaptics()
+        // 사이드바가 열리고 닫힐 때(넓은 화면은 늘 펼쳐 있어 울리지 않는다)
+        var drawerWasOpen by remember { mutableStateOf(false) }
+        LaunchedEffect(drawer.targetValue) {
+            val open = drawer.targetValue == DrawerValue.Open
+            if (!wide && open != drawerWasOpen) { if (open) haptics.open() else haptics.close() }
+            drawerWasOpen = open
+        }
         // 뒤로 가기: 열린 사이드바를 먼저 닫고, 다른 기능 화면이면 홈으로 돌아간다. 홈에서만 앱을 닫는다.
         BackHandler(enabled = drawer.isOpen || shown != NavItem.HOME) {
             if (drawer.isOpen) scope.launch { drawer.close() }
@@ -337,6 +346,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 }, onSelect = { item ->
                     // 방울이 고른 항목으로 옮겨 가는 것을 잠깐 보여 준 뒤 닫는다.
                     val moved = item != feature
+                    if (moved) haptics.segment()
                     revealFrom = null
                     feature = item
                     scope.launch {

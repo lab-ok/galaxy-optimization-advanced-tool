@@ -53,7 +53,7 @@ internal fun ShakeTurnArt(toLandscape: Boolean = true) {
         phone(c, aspect, center, body, content, locked = true, open = open)
         val status = when {
             t < 0.14f -> "잠김"
-            t < 0.36f -> "폰을 돌려 듦"
+            t < 0.36f -> "기기 회전"
             t < 0.6f -> "흔들기"
             t < 0.78f -> "자동 회전"
             else -> "다시 잠김"

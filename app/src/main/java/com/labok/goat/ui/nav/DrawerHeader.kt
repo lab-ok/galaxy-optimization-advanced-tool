@@ -81,7 +81,9 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
     val head = rememberSoftBlob()
     val logo = rememberSoftBlob()
     val drop = rememberSoftBlob()
-    val goat = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat))
+    // 염소 표정: 누르면 찡그리고, 많이 누르면 울고, 더 누르면 화낸다
+    val mood = rememberGoatMood()
+    val goat = goatPainter(mood.mood)
     val text = remember { Animatable(0f) }
     val paths = remember { Path() to Path() }
 
@@ -122,8 +124,10 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
                     }
                     inward(headX(), cy(), 1800f).let { head.poke(p.x, p.y, it.x, it.y, headH * 0.6f) }
                     if (hypot(p.x - logoX, p.y - cy()) < logoS * 0.7f) {
-                        inward(logoX, cy(), 1400f).let { logo.poke(p.x, p.y, it.x, it.y, logoS * 0.5f) }
-                        drop.poke(logoX, cy(), (p.x - logoX) * -14f, (p.y - cy()) * -14f, logoS)
+                        if (mood.press()) haptics.reject() else if (mood.startedCrying) haptics.snap()
+                        val k = mood.impulse
+                        inward(logoX, cy(), 1400f * k).let { logo.poke(p.x, p.y, it.x, it.y, logoS * 0.5f) }
+                        drop.poke(logoX, cy(), (p.x - logoX) * -14f * k, (p.y - cy()) * -14f * k, logoS)
                     }
                     var total = Offset.Zero
                     drag(down.id) { change ->

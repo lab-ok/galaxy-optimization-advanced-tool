@@ -1,5 +1,6 @@
 package com.labok.goat.ui.rotate
 
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.data.log.LogRepository
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -94,9 +95,9 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
             Text(
                 when {
                     running -> Copy.SHAKE_CALIBRATE_NOW
-                    result != null -> "민감도 $result 로 맞췄습니다"
-                    failed -> "흔들림이 잘 잡히지 않았습니다"
-                    else -> "폰을 움직여 보세요. 물방울이 따라 출렁입니다."
+                    result != null -> "민감도를 ${result}(으)로 맞췄습니다"
+                    failed -> "흔들림을 인식하지 못했습니다"
+                    else -> "기기를 움직이면 물방울이 함께 움직입니다."
                 },
                 color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center,
             )
@@ -112,7 +113,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                         run -> LiquidButton("흔드는 중…", modifier = Modifier.fillMaxWidth(), enabled = false, onClick = {})
                         level != null -> {
                             Text(
-                                "다음부터는 방금 정도로, 또는 조금 약하게 흔들어도 돌아갑니다.",
+                                "이후에는 방금과 같거나 조금 약하게 흔들어도 화면이 회전합니다.",
                                 color = c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
                             )
                             Spacer(Modifier.height(Gap.Item))
@@ -123,7 +124,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                         }
                         else -> {
                             Text(
-                                if (fail) Copy.SHAKE_CALIBRATE_FAIL else "[시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 화면을 돌릴 때처럼 휙휙 흔드세요.",
+                                if (fail) Copy.SHAKE_CALIBRATE_FAIL else "[시작]을 누른 뒤 ${CALIBRATE_SECONDS}초 동안 평소처럼 기기를 흔들어 주세요.",
                                 color = c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
                             )
                             Spacer(Modifier.height(Gap.Item))
@@ -165,6 +166,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
     val reach = with(density) { 72.dp.toPx() }
     // 화면용(늘 듣는다)과 기록용(시작한 회차만)
     val visual = remember { ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN) }
+    val haptics = rememberLiquidHaptics()
     var record by remember { mutableStateOf(ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN)) }
     var seen by remember { mutableIntStateOf(0) }
 
@@ -230,7 +232,11 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
                     return
                 }
                 visual.feed(e.values[0], e.values[1], e.values[2], ms)
-                if (rec) { record.feed(e.values[0], e.values[1], e.values[2], ms); count = record.peaks.size }
+                if (rec) {
+                    record.feed(e.values[0], e.values[1], e.values[2], ms)
+                    if (record.peaks.size > count) haptics.tick()
+                    count = record.peaks.size
+                }
                 if (box == IntSize.Zero || !blob.blob.ready || reduce) return
                 val o = center()
                 // 폰 안의 물: 폰이 움직이는 반대쪽으로 쏠린다(화면 x는 기기 x, 화면 y는 기기 y의 반대). 작은 움직임도 크게 보이게.

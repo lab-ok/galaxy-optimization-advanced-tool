@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun LiquidSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    val haptics = rememberLiquidHaptics()
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val inset = with(LocalDensity.current) { 4.dp.toPx() }
@@ -46,8 +47,8 @@ fun LiquidSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier:
         modifier
             .size(56.dp, 32.dp)
             .onSizeChanged { box = it }
-            .liquidPress(interaction)
-            .toggleable(checked, interaction, null, enabled, Role.Switch, onCheckedChange),
+            .liquidPress(interaction, releaseHaptic = false)
+            .toggleable(checked, interaction, null, enabled, Role.Switch) { on -> haptics.toggle(on); onCheckedChange(on) },
     ) {
         blob.frame
         val h = size.height

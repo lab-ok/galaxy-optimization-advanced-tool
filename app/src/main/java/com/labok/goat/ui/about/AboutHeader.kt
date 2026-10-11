@@ -1,5 +1,7 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.ui.nav.rememberGoatMood
+import com.labok.goat.ui.nav.goatPainter
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -71,7 +73,9 @@ internal fun AboutHeader(title: String, subtitle: String) {
     var box by remember { mutableStateOf(IntSize.Zero) }
     val logo = rememberSoftBlob()
     val drop = rememberSoftBlob()
-    val goat = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat))
+    // 염소 표정: 누르면 찡그리고, 많이 누르면 울고, 더 누르면 화낸다
+    val mood = rememberGoatMood()
+    val goat = goatPainter(mood.mood)
     val text = remember { Animatable(0f) }
     val path = remember { Path() }
 
@@ -100,10 +104,12 @@ internal fun AboutHeader(title: String, subtitle: String) {
                     val p = down.position
                     if (hypot(p.x - cx(), p.y - cy()) > logoS * 0.75f) return@awaitEachGesture
                     haptics.press()
+                    if (mood.press()) haptics.reject() else if (mood.startedCrying) haptics.snap()
+                    val k = mood.impulse
                     // 누른 자리를 안쪽으로 밀어 움푹 들어가게 하고, 염소 방울은 반대로 튕긴다
                     val dx = cx() - p.x; val dy = cy() - p.y; val l = hypot(dx, dy).coerceAtLeast(1f)
-                    logo.poke(p.x, p.y, dx / l * 1600f, dy / l * 1600f, logoS * 0.5f)
-                    drop.poke(cx(), cy(), (p.x - cx()) * -14f, (p.y - cy()) * -14f, logoS)
+                    logo.poke(p.x, p.y, dx / l * 1600f * k, dy / l * 1600f * k, logoS * 0.5f)
+                    drop.poke(cx(), cy(), (p.x - cx()) * -14f * k, (p.y - cy()) * -14f * k, logoS)
                     var total = Offset.Zero
                     drag(down.id) { change ->
                         total += change.positionChange()

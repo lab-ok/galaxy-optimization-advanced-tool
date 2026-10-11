@@ -174,7 +174,7 @@ object ShakeRotate {
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setContentTitle("흔들어서 화면 회전")
-            .setContentText("흔들면 든 방향으로 돌립니다")
+            .setContentText("기기를 흔들면 현재 방향으로 화면이 회전합니다")
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)

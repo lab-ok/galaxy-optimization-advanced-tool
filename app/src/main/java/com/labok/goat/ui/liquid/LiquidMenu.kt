@@ -73,7 +73,9 @@ fun LiquidMenu(
         val w = btn + (geo[3] - btn) * pw.value; val h = btn + (geo[4] - btn) * ph.value
         blob.moveTo(right - w / 2, top + h / 2, w, h, animate, corner = geo[5], carry = 0.85f)
     }
+    val haptics = rememberLiquidHaptics()
     LaunchedEffect(Unit) {
+        haptics.open()
         blob.blob.gain = 6f
         blob.blob.damping = 3.5f
         if (reduce) { pw.snapTo(1f); ph.snapTo(1f); shape(false); items0.snapTo(items.size.toFloat()); return@LaunchedEffect }
@@ -84,6 +86,7 @@ fun LiquidMenu(
         items0.animateTo(items.size.toFloat(), tween(80 + 45 * items.size, delayMillis = 110))
     }
     val close: (() -> Unit) -> Unit = { after ->
+        haptics.close()
         scope.launch {
             if (!reduce) {
                 // 펼칠 때를 거꾸로: 세로가 먼저, 가로가 뒤따라 버튼 원으로 오므라들고, 끝 무렵에 흐려진다.
