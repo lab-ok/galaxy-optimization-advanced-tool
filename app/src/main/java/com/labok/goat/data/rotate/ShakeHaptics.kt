@@ -13,7 +13,7 @@ import com.labok.goat.domain.ShakeRotatePolicy.Peak
  * Android 햅틱 지침과 조사를 따른다:
  * - 짧은 펄스만 쓴다(윙윙거리는 긴 진동 없음). 기기가 진동 프리미티브를 내면 틱·클릭을 쓰고, 못 내면 짧은 펄스로 대신한다.
  * - 프리미티브는 하나라도 지원하지 않으면 전체가 재생되지 않으므로 쓸 것을 모두 확인하고 고른다.
- * - 세기가 높을수록 모든 진동을 또렷한 클릭으로 바꾸고 펄스를 길고 세게 한다(가장 높은 단계는 클릭을 두 번 겹쳐 더 단단하게).
+ * - 세기가 높을수록 모든 진동을 또렷한 클릭으로 바꾸고(7·8, 8은 클릭을 겹침), 9·10은 프리미티브 대신 모터 최대 진폭의 긴 펄스로 가장 세게 친다.
  */
 object ShakeHaptics {
     const val MAX_STRENGTH = 10
@@ -37,7 +37,9 @@ object ShakeHaptics {
         // 세기 1~10 → 프리미티브 배율 0.35~1.0. 7 이상이면 모두 클릭, 10이면 클릭을 겹쳐 친다.
         val gain = 0.35f + 0.65f * (s - 1) / (MAX_STRENGTH - 1)
         val allClick = s >= 7
-        val double = s >= MAX_STRENGTH
+        val double = s >= MAX_POWER_FROM - 1
+        // 9·10은 프리미티브(클릭 최대 약 12ms)보다 센 모터 최대 출력 펄스로 친다: 9는 30ms, 10은 45ms, 진폭 최대
+        if (s >= MAX_POWER_FROM) return powerPulses(v, beats, if (s >= MAX_STRENGTH) 45L else 30L)
         return if (v.areAllPrimitivesSupported(tick, click)) {
             VibrationEffect.startComposition().apply {
                 beats.forEach { b ->
@@ -58,4 +60,18 @@ object ShakeHaptics {
             VibrationEffect.createWaveform(timings.toLongArray(), amps.toIntArray(), -1)
         }
     }
+
+    /** 모터를 최대 진폭으로 [pulse]ms씩 흔든 리듬대로 친다(가장 센 진동). 약한 휘두름도 조금만 약하게(세 단계 중 최소 80%). */
+    private fun powerPulses(v: Vibrator, beats: List<Beat>, pulse: Long): VibrationEffect {
+        val timings = mutableListOf<Long>(); val amps = mutableListOf<Int>()
+        beats.forEachIndexed { i, b ->
+            timings += if (i == 0) 0L else (b.gap - pulse).coerceAtLeast(30L); amps += 0
+            timings += pulse
+            amps += if (v.hasAmplitudeControl()) (255 * (0.8f + 0.2f * b.scale)).toInt().coerceAtMost(255) else 255
+        }
+        return VibrationEffect.createWaveform(timings.toLongArray(), amps.toIntArray(), -1)
+    }
+
+    /** 이 단계부터 모터 최대 출력 펄스를 쓴다. */
+    private const val MAX_POWER_FROM = 9
 }
