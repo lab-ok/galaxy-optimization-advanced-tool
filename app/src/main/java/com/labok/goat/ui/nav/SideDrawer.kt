@@ -83,6 +83,8 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     REFRESH(Copy.FEATURE_REFRESH, NavIcon.REFRESH),
     /** 게임 중 성능을 낮추는 GOS를 끈다(Shizuku, 기본 앱 정리와 같은 끄기). */
     GOS(Copy.FEATURE_GOS, NavIcon.GAME),
+    /** 삼성 배터리 보호(충전 상한)를 바꾼다(Shizuku, 이 기기에 설정이 있을 때만). */
+    CHARGE(Copy.FEATURE_CHARGE, NavIcon.BATTERY),
     /** 상태 표시줄의 늘 켜 둔 아이콘을 숨긴다(시스템 설정 권한). */
     STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.STATUSBAR),
     /** 광고를 막는 DNS 서버로 바꾼다(시스템 설정 권한). */
@@ -91,7 +93,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, STATUSBAR, GAME, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, STATUSBAR, GAME, BATTERY, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -260,6 +262,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.REFRESH -> refresh(color, s)
             NavIcon.STATUSBAR -> statusBar(color, s)
             NavIcon.GAME -> game(color, s)
+            NavIcon.BATTERY -> battery(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
@@ -417,6 +420,14 @@ private fun DrawScope.game(c: Color, s: Stroke) {
     drawLine(c, p(7.4f, 10f), p(7.4f, 14f), s.width, StrokeCap.Round)
     drawCircle(c, u(1.1f), p(16f, 12.8f))
     drawCircle(c, u(1.1f), p(18.6f, 10.6f))
+}
+
+/** 충전 상한: 눕힌 배터리, 안쪽은 80%쯤까지만 차 있고 그 끝에 세로 선(상한). */
+private fun DrawScope.battery(c: Color, s: Stroke) {
+    drawRoundRect(c, p(2.5f, 7f), Size(u(17f), u(10f)), CornerRadius(u(2.4f)), style = s)
+    drawRoundRect(c, p(20.4f, 10f), Size(u(1.8f), u(4f)), CornerRadius(u(0.9f)))
+    drawRoundRect(c, p(5f, 9.5f), Size(u(9f), u(5f)), CornerRadius(u(1f)))
+    drawLine(c, p(16.2f, 5f), p(16.2f, 19f), s.width * 0.8f, StrokeCap.Round)
 }
 
 /** 정보: 원 안의 i. */

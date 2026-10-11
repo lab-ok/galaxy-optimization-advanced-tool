@@ -36,28 +36,27 @@ object Gos {
     private val state = MutableStateFlow(State.UNKNOWN)
     val status: StateFlow<State> = state.asStateFlow()
 
-    /** 이 기기에 깔린 GOS 패키지와 꺼져 있는지(작업 스레드). Shizuku가 없으면 null. */
+    /** 이 기기에 깔린 GOS 패키지와 꺼져 있는지(작업 스레드). Shizuku가 없거나 목록을 읽지 못하면 null. */
     private fun scan(): Map<String, Boolean>? {
         val all = ShizukuAccess.shell("pm list packages --user 0") ?: return null
         if (!all.ok) return null
-        val off = ShizukuAccess.shell("pm list packages -d --user 0")?.out.orEmpty()
+        val off = ShizukuAccess.shell("pm list packages -d --user 0") ?: return null
+        if (!off.ok) return null
         fun names(text: String) = text.lineSequence().map { it.removePrefix("package:").trim() }.filter { it.isNotEmpty() }.toSet()
         val installed = names(all.out)
-        val disabled = names(off)
+        val disabled = names(off.out)
         return PACKAGES.filter { it in installed }.associateWith { it in disabled }
     }
 
-    /** 지금 상태를 읽는다(작업 스레드). 깔린 GOS가 하나라도 켜져 있으면 ON. */
-    fun read(): State {
-        val found = scan()
-        val s = when {
-            found == null -> State.UNKNOWN
-            found.isEmpty() -> State.NONE
-            found.values.all { it } -> State.OFF
-            else -> State.ON
-        }
-        state.value = s
-        return s
+    /** 지금 상태를 읽는다(작업 스레드). */
+    fun read(): State = classify(scan()).also { state.value = it }
+
+    /** [read]의 판정: 못 읽었으면 UNKNOWN, 깔린 GOS가 없으면 NONE, 모두 꺼졌으면 OFF, 하나라도 켜져 있으면 ON. */
+    internal fun classify(found: Map<String, Boolean>?): State = when {
+        found == null -> State.UNKNOWN
+        found.isEmpty() -> State.NONE
+        found.values.all { it } -> State.OFF
+        else -> State.ON
     }
 
     /** 끄거나(off) 다시 켠다(작업 스레드). 깔린 GOS 패키지를 모두 같은 상태로 맞추고 다시 읽어 확인한다. */
@@ -71,9 +70,12 @@ object Gos {
             LogRepository.from(context).add("GOS($how): 이 기기에는 게임 최적화 서비스가 없음")
             return false
         }
+        // 바꿀 패키지만 Bloat.set으로 바꾼다(성공하면 Bloat.set이 noteChange로 뜻을 남긴다)
         found.filter { it.value != off }.keys.forEach { pkg -> Bloat.set(context, appOf(pkg), off, how) }
-        noteChange(context, PACKAGES.first(), off)
-        return read() == if (off) State.OFF else State.ON
+        val ok = read() == if (off) State.OFF else State.ON
+        // 이미 원하는 상태였으면 Bloat.set을 부르지 않으므로 여기서 뜻을 맞춘다
+        if (ok) noteChange(context, PACKAGES.first(), off)
+        return ok
     }
 
     /** 기본 앱 정리 목록의 GOS 항목(없는 이전 패키지는 같은 설명으로 만든다). */
@@ -96,16 +98,45 @@ object Gos {
         LogRepository.from(context).add("GOS 끄기: 다시 켜지면 자동으로 끄기 ${if (on) "켜짐" else "꺼짐"}")
     }
 
+    /** 다시 끄기에서 할 일. */
+    internal enum class Action {
+        /** 아무것도 하지 않는다(원하지 않음·keep 꺼짐·이번 부팅에 이미 확인함). */
+        SKIP,
+        /** 상태를 못 읽었다: 확인 기록을 남기지 않고 다음 Shizuku 연결 때 다시 확인한다. */
+        RETRY_LATER,
+        /** 이미 꺼져 있다(또는 GOS가 없다): 이번 부팅은 확인한 것으로 남긴다. */
+        MARK,
+        /** 다시 켜져 있다: 끄고 확인한 것으로 남긴다. */
+        DISABLE,
+    }
+
+    /**
+     * [reapply]의 판단(시험할 수 있게 뗐다). [boot]는 지금 부팅 횟수(없는 기기면 null: 그때는 연결될 때마다 확인),
+     * [checkedBoot]는 마지막으로 확인한 부팅 횟수, [now]는 지금 상태(읽기 전이면 null).
+     */
+    internal fun reapplyAction(wanted: Boolean, keep: Boolean, boot: Int?, checkedBoot: Int?, now: State?): Action = when {
+        !wanted || !keep -> Action.SKIP
+        boot != null && checkedBoot == boot -> Action.SKIP
+        now == null || now == State.UNKNOWN -> Action.RETRY_LATER
+        now == State.ON -> Action.DISABLE
+        else -> Action.MARK
+    }
+
     /** 끄기를 원하는데 다시 켜져 있으면 끈다(Shizuku 연결 때, 작업 스레드). 부팅마다 한 번만 확인한다. */
     fun reapply(context: Context) {
-        if (!wanted(context) || !keep(context)) return
-        val boot = bootCount(context)
         val p = prefs(context)
-        if (boot != null && p.getInt("checkedBoot", -1) == boot) return
-        val now = read()
-        if (now == State.UNKNOWN) return  // Shizuku가 아직 응답하지 않으면 다음 연결 때 다시 확인한다
-        if (boot != null) p.edit().putInt("checkedBoot", boot).apply()
-        if (now == State.ON) set(context, off = true, how = "재부팅 뒤 다시 켜져서 자동으로 끄기")
+        val boot = bootCount(context)
+        val checked = p.getInt("checkedBoot", -1).takeIf { it >= 0 }
+        // 이미 확인한 부팅이면 셸을 부르기 전에 끝낸다
+        if (reapplyAction(wanted(context), keep(context), boot, checked, State.OFF) == Action.SKIP) return
+        when (reapplyAction(wanted(context), keep(context), boot, checked, read())) {
+            Action.DISABLE -> {
+                set(context, off = true, how = "재부팅 뒤 다시 켜져서 자동으로 끄기")
+                boot?.let { p.edit().putInt("checkedBoot", it).apply() }
+            }
+            Action.MARK -> boot?.let { p.edit().putInt("checkedBoot", it).apply() }
+            else -> Unit
+        }
     }
 
     /** 부팅 횟수(Settings.Global.BOOT_COUNT). 없는 기기면 null(그때는 연결될 때마다 확인한다). */

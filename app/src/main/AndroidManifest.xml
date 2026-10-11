@@ -24,6 +24,8 @@
     <!-- Shizuku 설치 여부 확인, 앱별 화면 크기에서 고를 앱 목록 -->
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
+        <!-- 충전 상한: 삼성 디바이스 케어의 배터리 화면을 열 수 있는지 확인하려고 -->
+        <package android:name="com.samsung.android.lool" />
         <!-- 기본 앱 정리: 목록 앱의 이름·아이콘을 읽으려고(Bloat.CATALOG와 같게 둔다) -->
         <package android:name="com.samsung.android.app.spage" />
         <package android:name="com.samsung.android.bixby.agent" />

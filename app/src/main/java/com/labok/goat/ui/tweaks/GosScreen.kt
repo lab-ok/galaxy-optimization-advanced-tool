@@ -89,7 +89,7 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     Text(Copy.GOS_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.GOS_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    GosArt(off = state == Gos.State.OFF)
+                    GosArt(off = state == Gos.State.OFF, none = state == Gos.State.NONE)
                 }
             }
         }
@@ -140,7 +140,7 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 }
             }
         }
-        item(key = "caution") {
+        if (state != Gos.State.NONE) item(key = "caution") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
                     Text(Copy.GOS_CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -166,12 +166,12 @@ internal fun GosHelpSheet() {
         HelpTopic(
             "1. GOS가 무엇인가요",
             "게임 최적화 서비스(GOS)는 게임을 하는 동안 해상도·프레임·처리 성능을 낮춰 발열과 배터리 소모를 줄이는 삼성 서비스입니다. " +
-                "끄면 이 제한이 풀려 같은 게임이 더 높은 성능으로 돌아가는 경우가 많습니다.",
+                "끄면 GOS의 조절이 멈춰 같은 게임에서 더 높은 성능을 낼 수 있습니다. 실제 차이는 기기와 게임마다 다릅니다.",
         ) { GosArt(off = true) }
         HelpTopic(
             "2. 얻는 것과 잃는 것",
-            "성능 제한이 풀리는 대신 오래 하면 폰이 더 뜨거워지고 배터리가 빨리 닳을 수 있습니다. 기기가 너무 뜨거워지면 " +
-                "안드로이드 자체의 보호 기능이 성능을 낮추므로 기기가 상하지는 않습니다. 게임 런처와 게임 부스터는 그대로 둡니다.",
+            "성능 조절이 멈추는 대신 오래 하면 폰이 더 뜨거워지고 배터리가 빨리 닳을 수 있습니다. 너무 뜨거워지면 " +
+                "시스템이 스스로 성능을 낮춥니다. 게임 런처와 게임 부스터는 그대로 둡니다.",
         )
         HelpTopic(
             "3. 다시 켜지는 경우",

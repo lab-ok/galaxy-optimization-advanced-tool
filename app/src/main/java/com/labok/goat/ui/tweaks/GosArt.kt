@@ -20,10 +20,11 @@ private fun ease(x: Float) = x * x * (3 - 2 * x)
 /**
  * GOS 그림: 같은 게임을 켠 두 화면의 프레임 그래프가 왼쪽에서 오른쪽으로 그려진다.
  * 왼쪽(GOS 켜짐)은 조금 지나면 GOS가 성능을 묶어 그래프가 아래(제한선)로 내려가고 온도계는 조금만 오른다.
- * 오른쪽(GOS 꺼짐)은 그래프가 끝까지 높게 유지되는 대신 온도계가 더 높이 오른다. [off]면 오른쪽을 진하게 표시한다.
+ * 오른쪽(GOS 꺼짐)은 그래프가 끝까지 높게 유지되는 대신 온도계가 더 높이 오른다. [off]면 오른쪽을, 아니면 왼쪽을 진하게
+ * 표시하고, [none](GOS가 없는 기기)이면 어느 쪽도 강조하지 않는다.
  */
 @Composable
-internal fun GosArt(off: Boolean) {
+internal fun GosArt(off: Boolean, none: Boolean = false) {
     val t = artLoop(3600)
     ArtCanvas(150.dp) { c, tm ->
         val w = size.width / 2 - 24.dp.toPx()
@@ -31,7 +32,7 @@ internal fun GosArt(off: Boolean) {
         val top = 16.dp.toPx()
         listOf(false, true).forEachIndexed { i, gosOff ->
             val left = 12.dp.toPx() + i * (size.width / 2)
-            val on = gosOff == off
+            val on = !none && gosOff == off
             val ink = if (on) c.ink else c.muted
             val graphW = w - 22.dp.toPx()
             drawRoundRect(c.line.copy(alpha = 0.5f), Offset(left, top), Size(graphW, h), CornerRadius(8.dp.toPx()))
