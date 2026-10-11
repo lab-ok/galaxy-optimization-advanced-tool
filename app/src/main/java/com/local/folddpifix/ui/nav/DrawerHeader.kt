@@ -1,5 +1,11 @@
 package com.local.folddpifix.ui.nav
 
+import com.local.folddpifix.R
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -21,16 +27,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -48,17 +50,16 @@ import com.local.folddpifix.ui.liquid.moveTo
 import com.local.folddpifix.ui.liquid.nudge
 import com.local.folddpifix.ui.liquid.poke
 import com.local.folddpifix.ui.liquid.rememberSoftBlob
-import com.local.folddpifix.ui.liquid.shapeTo
 import kotlin.math.hypot
 import kotlin.math.tanh
 
 /**
- * 사이드바 머리: 유리 방울(머리판) 위에 앱 아이콘 방울과 그 안의 땅콩 모양 물방울, 앱 이름이 놓인다.
+ * 사이드바 머리: 유리 방울(머리판) 위에 앱 아이콘 방울과 염소 얼굴, 앱 이름이 놓인다.
  * 셋 다 연체 물리([SoftBlob])라서
  * - 사이드바가 열리면 머리판은 아이콘 자리에서 오른쪽으로 번지고, 아이콘은 동그란 방울이 네모로 부풀며,
- *   가운데 물방울은 작은 점이 땅콩 모양으로 맺힌다.
+ *   염소는 아이콘 안쪽에서 관성으로 흔들린다.
  * - 누르면 닿은 자리가 움푹 들어갔다 출렁이고, 끌면 손가락 쪽으로 늘어나며(고무줄처럼 갈수록 덜 늘어남)
- *   안쪽 물방울은 관성으로 늦게 따라와 출렁인다. 놓으면 표면장력으로 제자리에 모인다.
+ *   염소는 관성으로 늦게 따라오며 고개를 갸웃한다. 놓으면 표면장력으로 제자리에 모인다.
  * 아이콘 색과 모양은 앱 아이콘(ic_app_logo)과 같다.
  */
 @Composable
@@ -79,9 +80,9 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
     val head = rememberSoftBlob()
     val logo = rememberSoftBlob()
     val drop = rememberSoftBlob()
-    val peanut = remember(unit) { peanutOutline(SoftBlob.N, unit) }
+    val goat = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat))
     val text = remember { Animatable(0f) }
-    val paths = remember { Triple(Path(), Path(), Path()) }
+    val paths = remember { Path() to Path() }
 
     fun cy() = box.height / 2f
     fun headX() = box.width / 2f
@@ -98,7 +99,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
         }
         head.moveTo(headX(), cy(), box.width.toFloat(), headH, animate, corner = headR)
         logo.moveTo(logoX, cy(), logoS, logoS, animate, corner = logoR)
-        drop.shapeTo(logoX, cy(), peanut.first, peanut.second, animate)
+        drop.moveTo(logoX, cy(), 4f * unit, 4f * unit, animate)
         if (animate) text.animateTo(1f, tween(260, delayMillis = 120)) else text.snapTo(1f)
     }
 
@@ -140,7 +141,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
         Canvas(Modifier.matchParentSize()) {
             head.frame; logo.frame; drop.frame
             if (!head.blob.ready || !logo.blob.ready || !drop.blob.ready) return@Canvas
-            val (hp, lp, dp) = paths
+            val (hp, lp) = paths
             // 머리판(유리)
             head.blob.path(hp)
             drawPath(hp, c.surface)
@@ -148,18 +149,12 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
             // 아이콘 바탕
             logo.blob.path(lp)
             drawPath(lp, Color(0xFF111111))
-            // 화면 테두리·안쪽·접는 선은 아이콘 방울 중심을 따라 움직인다(벡터 좌표 54,54가 중심)
-            val ox = logo.blob.cx; val oy = logo.blob.cy
-            fun vx(x: Float) = ox + (x - 54f) * unit
-            fun vy(y: Float) = oy + (y - 54f) * unit
-            drawRoundRect(Color.White, Offset(vx(28.5f), vy(34.75f)), Size(51f * unit, 38.5f * unit), CornerRadius(2.4f * unit))
-            val inner = Path().apply {
-                addRoundRect(androidx.compose.ui.geometry.RoundRect(vx(30.9f), vy(37.15f), vx(77.1f), vy(70.85f), CornerRadius(1.2f * unit)))
+            // 염소 얼굴: 안쪽 방울(drop)의 중심을 따라가므로, 아이콘을 끌면 염소가 관성으로 늦게 따라오며 고개를 갸웃한다
+            val gs = logoS * 0.98f
+            val tilt = ((drop.blob.cx - logo.blob.cx) / logoS * 40f).coerceIn(-14f, 14f)
+            rotate(tilt, Offset(drop.blob.cx, drop.blob.cy)) {
+                translate(drop.blob.cx - gs / 2, drop.blob.cy - gs / 2) { with(goat) { draw(Size(gs, gs)) } }
             }
-            drawPath(inner, Color(0xFF1C1C1C))
-            drawLine(Color.White.copy(alpha = 0.45f), Offset(vx(54f), vy(37.15f)), Offset(vx(54f), vy(70.85f)), 1.2f * unit)
-            // 가운데 물방울(땅콩): 화면 안쪽을 벗어나지 않게 자른다
-            clipPath(inner) { drawPath(drop.blob.path(dp), Color.White) }
         }
         Column(
             Modifier
@@ -180,29 +175,4 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
             Text("버전 $version", color = c.muted, style = MaterialTheme.typography.labelMedium)
         }
     }
-}
-
-/**
- * 앱 아이콘 가운데 땅콩 모양(ic_app_logo의 마지막 path)을 점 [n]개로 고르게 나눈다.
- * 중심(벡터 54,54) 기준 px 좌표이고, 윗변 가운데(목)에서 시계 방향으로 시작한다.
- */
-private fun peanutOutline(n: Int, unit: Float): Pair<FloatArray, FloatArray> {
-    val path = PathParser().parsePathString(
-        "M44.8,49C49,49 50.7,51.9 54,51.9C57.3,51.9 59,49 63.2,49A5,5 0 1 1 63.2,59C59,59 57.3,56.1 54,56.1C50.7,56.1 49,59 44.8,59A5,5 0 1 1 44.8,49Z",
-    ).toPath()
-    val m = PathMeasure().apply { setPath(path, false) }
-    val len = m.length
-    val xs = FloatArray(n); val ys = FloatArray(n)
-    // 시작점을 윗변 가운데(54, 51.9)로 맞춘다: 그 점까지의 길이를 찾는다
-    var start = 0f; var best = Float.MAX_VALUE
-    for (k in 0 until 400) {
-        val p = m.getPosition(len * k / 400f)
-        val dd = hypot(p.x - 54f, p.y - 51.9f)
-        if (dd < best) { best = dd; start = len * k / 400f }
-    }
-    for (i in 0 until n) {
-        val p = m.getPosition((start + len * i / n) % len)
-        xs[i] = (p.x - 54f) * unit; ys[i] = (p.y - 54f) * unit
-    }
-    return xs to ys
 }

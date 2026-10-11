@@ -1,9 +1,17 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp" android:height="108dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-    <group>
-        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M30.9,34.75h46.2a2.4,2.4 0 0 1 2.4,2.4v33.7a2.4,2.4 0 0 1 -2.4,2.4h-46.2a2.4,2.4 0 0 1 -2.4,-2.4v-33.7a2.4,2.4 0 0 1 2.4,-2.4zM32.1,37.15h43.8a1.2,1.2 0 0 1 1.2,1.2v31.3a1.2,1.2 0 0 1 -1.2,1.2h-43.8a1.2,1.2 0 0 1 -1.2,-1.2v-31.3a1.2,1.2 0 0 1 1.2,-1.2z" />
-        <path android:fillColor="#FFFFFFFF" android:pathData="M53.4,37.15h1.2v33.7h-1.2z" />
-        <path android:fillColor="#FFFFFFFF" android:pathData="M44.8,49C49,49 50.7,51.9 54,51.9C57.3,51.9 59,49 63.2,49A5,5 0 1 1 63.2,59C59,59 57.3,56.1 54,56.1C50.7,56.1 49,59 44.8,59A5,5 0 1 1 44.8,49Z" />
+<?xml version="1.0" encoding="utf-8"?>
+<!-- docs/branding/goat에서 만든 SVG를 변환한 것(svg2vd). 손으로 고치지 말고 SVG를 고친 뒤 다시 변환한다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp" android:viewportWidth="512" android:viewportHeight="512">
+    <group android:translateX="40.96000000000001" android:translateY="36.96000000000001" android:scaleX="0.84" android:scaleY="0.84">
+        <path android:pathData="M216 194 C204 152 182 122 152 112 C146 110 142 116 146 121 C162 138 170 160 176 184 C180 198 188 206 200 210 Z" android:fillColor="#FFFFFFFF"/>
+        <group android:scaleX="-1" android:pivotX="256.0">
+            <path android:pathData="M216 194 C204 152 182 122 152 112 C146 110 142 116 146 121 C162 138 170 160 176 184 C180 198 188 206 200 210 Z" android:fillColor="#FFFFFFFF"/>
+        </group>
+        <path android:pathData="M168 250 C138 232 104 236 82 258 C80 262 82 266 86 268 C112 288 146 290 174 276 Z" android:fillColor="#FFFFFFFF"/>
+        <group android:scaleX="-1" android:pivotX="256.0">
+            <path android:pathData="M168 250 C138 232 104 236 82 258 C80 262 82 266 86 268 C112 288 146 290 174 276 Z" android:fillColor="#FFFFFFFF"/>
+        </group>
+        <path android:pathData="M240 366 Q248 382 252 404 Q256 412 260 404 Q264 382 272 366 Z" android:fillColor="#FFFFFFFF"/>
+        <path android:pathData="M256 170 C320 170 362 212 360 270 C358 330 316 374 256 376 C196 374 154 330 152 270 C150 212 192 170 256 170 Z M187,282a25,25 0 1,0 50,0a25,25 0 1,0 -50,0Z M275,282a25,25 0 1,0 50,0a25,25 0 1,0 -50,0Z M243 316 Q256 308 269 316 Q264 330 256 332 Q248 330 243 316 Z" android:fillColor="#FFFFFFFF" android:fillType="evenOdd"/>
     </group>
 </vector>
