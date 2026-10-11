@@ -21,7 +21,7 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.ShakeRotatePolicy
 
 /**
- * 흔들어서 화면 회전의 실제 동작. 알림 서비스([ShakeRotateService])나 접근성 서비스([ShakeAccessibilityService]) 안에서 돈다.
+ * 흔들어서 화면 회전의 실제 동작. GOAT 상주 서비스([com.labok.goat.background.GoatService]) 안에서 돈다.
  *
  * 화면이 켜져 있을 때만 가속도 센서를 듣는다. 흔들면 그 순간만 시스템 자동 회전을 켜서, 시스템이 폰을 든 방향대로
  * 화면을 돌리게 둔 뒤 그 방향에 다시 잠근다(세로로 든 채 흔들면 세로 그대로). 돌아갔으면 흔든 리듬대로 진동한다.

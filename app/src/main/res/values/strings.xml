@@ -1,5 +1,3 @@
 <resources>
     <string name="app_name">GOAT</string>
-    <string name="shake_accessibility_label">GOAT 흔들어서 화면 회전</string>
-    <string name="shake_accessibility_description">폰을 흔들면 그 순간만 자동 회전을 켜 든 방향대로 화면을 돌리고 다시 잠급니다. 화면 내용은 읽지 않고 가속도 센서로 흔들기만 감지합니다. GOAT의 흔들어서 화면 회전에서 알림 없이 실행을 고르면 GOAT가 직접 켜고 끕니다.</string>
 </resources>

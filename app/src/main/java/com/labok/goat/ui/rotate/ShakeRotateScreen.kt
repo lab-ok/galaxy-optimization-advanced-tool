@@ -76,7 +76,6 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
     var autoOn by remember { mutableStateOf(ShakeRotate.autoRotateOn(context)) }
     var calibrating by remember { mutableStateOf(false) }
     var calibrateNote by remember { mutableStateOf("") }
-    var withNotification by remember { mutableStateOf(ShakeRotate.useNotification(context)) }
 
     // 빠른 설정에서 자동 회전을 켜고 끄는 것을 바로 반영한다
     DisposableEffect(Unit) {
@@ -92,7 +91,6 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
         on = ShakeRotate.setEnabled(context, true)
         message = if (on) "" else "회전을 잠그지 못했습니다. 권한 설정을 확인해 주세요."
     }
-    val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { turnOn() }
 
     // 권한 설정에서 돌아오거나 빠른 설정에서 자동 회전을 켜고 돌아와도 바로 보이게 한다
     LifecycleResumeEffect(Unit) {
@@ -153,8 +151,6 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                         LiquidSwitch(on, { want ->
                             when {
                                 !want -> { ShakeRotate.setEnabled(context, false); on = false }
-                                withNotification && !ExternalChangeNotifier.canNotify(context) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
-                                    notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                                 else -> turnOn()
                             }
                         }, enabled = permitted)
@@ -162,24 +158,8 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                     AnimatedVisibility(message.isNotEmpty()) {
                         Text(message, color = c.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
                     }
-                    Spacer(Modifier.height(Gap.Section))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(Copy.SHAKE_NOTIFY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                            Text(
-                                if (withNotification) Copy.SHAKE_NOTIFY_ON else Copy.SHAKE_NOTIFY_OFF,
-                                color = c.muted, style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        LiquidSwitch(withNotification, { want ->
-                            withNotification = want
-                            ShakeRotate.setUseNotification(context, want)
-                            if (want && on && !ExternalChangeNotifier.canNotify(context) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                            }
-                        }, enabled = permitted)
-                    }
+                    Spacer(Modifier.height(Gap.Tight))
+                    Text(Copy.SHAKE_NOTIFY_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -261,8 +241,8 @@ internal fun ShakeRotateHelpSheet() {
         HelpTopic(
             "6. 배터리와 알림",
             "흔들기는 가속도 센서로만 감지하고, 화면이 꺼져 있을 때는 센서를 쓰지 않아 배터리를 거의 쓰지 않습니다. " +
-                "처음에는 알림 없이 접근성 서비스로 돕니다(화면 내용은 읽지 않습니다). 접근성 서비스가 꺼지는 기기라면 " +
-                "'알림 띄워 두기'를 켜세요. 그러면 알림을 하나 띄워 둔 채 돕니다.",
+                "안드로이드는 알림이 없는 앱의 센서를 멈추므로 GOAT 알림 하나가 떠 있어야 합니다. 알림창 앱별 배율 조절을 켜 두었다면 " +
+                "그 알림 하나를 같이 쓰고 따로 띄우지 않습니다. 흔들기만 켰을 때는 소리·진동 없는 조용한 알림 하나만 둡니다.",
         )
         HelpTopic(
             "7. 동영상처럼 앱이 방향을 정할 때",

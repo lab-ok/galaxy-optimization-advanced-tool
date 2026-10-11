@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 흔들어서 화면 회전(알림 없이). 화면 내용은 읽지 않는다: 받는 이벤트를 알림 소리 하나로 좁히고 창 내용 읽기를 끈다. -->
-<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeAnnouncement"
-    android:accessibilityFeedbackType="feedbackGeneric"
-    android:canRetrieveWindowContent="false"
-    android:description="@string/shake_accessibility_description"
-    android:notificationTimeout="1000" />

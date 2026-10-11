@@ -107,36 +107,14 @@
             android:authorities="${applicationId}.shell"
             android:exported="true"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
-        <!-- 알림창 앱 화면 크기 조절: 알림을 띄워 두고 맨 앞 앱이 바뀔 때만 내용을 고친다 -->
+        <!-- GOAT 상주 서비스 하나: 알림창 앱 화면 크기 조절과 흔들어서 화면 회전을 한 알림에 모은다 -->
         <service
-            android:name=".data.appsize.AppDensityService"
+            android:name=".background.GoatService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Shows a notification to adjust the per-app display size of the app currently in front" />
-        </service>
-        <!-- 흔들어서 화면 회전: 화면이 켜져 있을 때 가속도 센서로 흔들기를 감지해 회전 잠금 방향을 바꾼다 -->
-        <service
-            android:name=".data.rotate.ShakeRotateService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Keeps screen rotation locked and rotates the screen once when the user shakes the phone" />
-        </service>
-        <!-- 흔들어서 화면 회전(알림 없이): 접근성 서비스로 돌린다. 화면 내용은 읽지 않는다. -->
-        <service
-            android:name=".data.rotate.ShakeAccessibilityService"
-            android:exported="true"
-            android:label="@string/shake_accessibility_label"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/shake_accessibility" />
+                android:value="One notification that adjusts the per-app display size of the front app and rotates the screen once when the user shakes the phone" />
         </service>
         <!-- 알림창 [작게]·[기본]·[크게]를 받아 방금 쓰던 앱의 크기를 바꾸는 투명 화면 -->
         <activity

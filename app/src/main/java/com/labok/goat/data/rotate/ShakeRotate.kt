@@ -1,5 +1,6 @@
 package com.labok.goat.data.rotate
 
+import com.labok.goat.background.GoatService
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -24,8 +25,8 @@ import com.labok.goat.ui.MainActivity
  */
 object ShakeRotate {
     private const val PREF = "shake_rotate"
-    private const val CHANNEL_ID = "shake_rotate"
-    const val NOTIFICATION_ID = 4
+    // 1.1의 'shake_rotate'(중요도 낮음)와 다른 채널. 채널 중요도는 만든 뒤 바꿀 수 없어 새 이름을 쓴다.
+    private const val CHANNEL_ID = "shake_rotate_quiet"
 
     fun canWrite(context: Context) =
         context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
@@ -45,18 +46,6 @@ object ShakeRotate {
     /** 흔든 순간 자동 회전을 잠깐 켜 둔 동안 true(화면의 '자동 회전이 켜져 있습니다' 안내를 띄우지 않는다). */
     @Volatile
     var turning = false
-
-    /**
-     * 알림을 띄워 두는 방식(true)인지, 알림 없이 접근성 서비스로 도는 방식(false)인지. 처음에는 알림 없이.
-     * 접근성 서비스는 시스템이 직접 띄워 두므로 알림이 없어도 화면이 켜져 있는 동안 센서를 쓸 수 있다.
-     */
-    fun useNotification(context: Context) = prefs(context).getBoolean("notification", false)
-
-    fun setUseNotification(context: Context, on: Boolean) {
-        prefs(context).edit().putBoolean("notification", on).apply()
-        LogRepository.from(context).add("흔들어서 화면 회전: ${if (on) "알림으로 실행" else "알림 없이 실행"}")
-        if (enabled(context)) { stopRunners(context); start(context) }
-    }
 
     /** 자동 맞추기 중이면 true. 그동안 서비스는 흔들어도 돌리지 않는다(같은 프로세스 안에서만 본다). */
     @Volatile
@@ -86,7 +75,7 @@ object ShakeRotate {
         } else {
             val auto = prefs(context).getInt("auto_before", 1)
             prefs(context).edit().putBoolean("on", false).apply()
-            stopRunners(context)
+            GoatService.sync(context)
             runCatching { Settings.System.putInt(cr, Settings.System.ACCELEROMETER_ROTATION, auto) }
             log.add("흔들어서 화면 회전 꺼짐(자동 회전 ${if (auto == 1) "켜기" else "끄기"}로 되돌림)")
         }
@@ -94,39 +83,11 @@ object ShakeRotate {
     }
 
     /**
-     * 켜 두었으면 감시를 띄운다(부팅·업데이트·앱 재시작 뒤에도). 알림 없이 쓰기로 했으면 접근성 서비스를 켜고,
-     * 켜지지 않으면 알림 서비스로 대신한다. 이미 돌고 있으면 민감도만 다시 읽힌다.
+     * 켜 두었으면 GOAT 상주 서비스에서 흔들기 감지를 돌린다(부팅·업데이트·앱 재시작 뒤에도). 이미 돌고 있으면 민감도만 다시 읽힌다.
+     * 알림창 앱별 배율 조절과 같은 서비스·알림 하나를 쓴다([GoatService]).
      */
     fun start(context: Context) {
-        if (!enabled(context) || !canWrite(context)) return
-        if (!useNotification(context) && setAccessibility(context, true)) {
-            ShakeAccessibilityService.running?.refresh()
-            return
-        }
-        runCatching { context.startForegroundService(Intent(context, ShakeRotateService::class.java)) }
-    }
-
-    private fun stopRunners(context: Context) {
-        context.stopService(Intent(context, ShakeRotateService::class.java))
-        setAccessibility(context, false)
-    }
-
-    /**
-     * 접근성 서비스 목록에 GOAT 흔들기 감지를 넣거나 뺀다(시스템 설정 권한으로 직접 쓴다). 다른 앱의 접근성 서비스는 그대로 둔다.
-     * 넣었으면 true.
-     */
-    private fun setAccessibility(context: Context, on: Boolean): Boolean = runCatching {
-        val cr = context.contentResolver
-        val me = android.content.ComponentName(context, ShakeAccessibilityService::class.java).flattenToString()
-        val list = Settings.Secure.getString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
-            .split(':').filter { it.isNotBlank() && !it.equals(me, ignoreCase = true) }
-        val next = if (on) list + me else list
-        Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, next.joinToString(":"))
-        if (on) Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1)
-        on
-    }.getOrElse {
-        LogRepository.from(context).add("접근성 서비스 ${if (on) "켜기" else "끄기"} 실패: ${it.message}")
-        false
+        if (enabled(context) && canWrite(context)) GoatService.sync(context)
     }
 
     /** 지금 화면 방향(기본 디스플레이 기준). 서비스처럼 화면이 없는 곳에서도 읽힌다. */
@@ -150,10 +111,14 @@ object ShakeRotate {
         else -> "가로"
     }
 
+    /**
+     * 흔들기만 켜져 있을 때의 알림. 감지를 멈추지 않게 하려고만 띄우므로 가장 조용하게 둔다(채널은 최소로 만들지만,
+     * 포그라운드 서비스 알림은 시스템이 '낮음'으로 올린다: 소리·진동 없이 알림창에만 있다).
+     */
     fun buildNotification(context: Context): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "흔들어서 화면 회전", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) },
+            NotificationChannel(CHANNEL_ID, "흔들어서 화면 회전", NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) },
         )
         val open = PendingIntent.getActivity(context, 20, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
