@@ -91,7 +91,7 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Re-applies the user's display density when the foldable switches screens" />
         </service>
-        <!-- Shizuku가 FoldFit에 셸 권한 바인더를 건네는 통로(PC 없이 WRITE_SECURE_SETTINGS 받기) -->
+        <!-- Shizuku가 GOAT에 셸 권한 바인더를 건네는 통로(PC 없이 WRITE_SECURE_SETTINGS 받기) -->
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"

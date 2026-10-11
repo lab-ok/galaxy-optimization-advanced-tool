@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fold DPI Fix APK 빌드.
+# GOAT APK 빌드.
 #
 # 기본(native): ARM64 Linux에서 바로 빌드한다. sudo 없이 $TOOLS 아래에만 도구를 설치한다.
 #   - JDK 17 (Temurin aarch64)
@@ -11,7 +11,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-TOOLS="${FOLDDPI_TOOLS:-$HOME/tools/android}"
+TOOLS="${GOAT_TOOLS:-$HOME/tools/android}"
 VARIANT=debug
 MODE=native
 RUN_TESTS=1

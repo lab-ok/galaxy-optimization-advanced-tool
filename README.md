@@ -1,6 +1,6 @@
 # GOAT
 
-**Galaxy Optimization Advanced Tool** — 갤럭시 화면 배율 도구 (이전 이름: FoldFit)
+**Galaxy Optimization Advanced Tool** — 갤럭시 화면 배율 도구
 
 **Galaxy Z Fold의 외부·내부 화면에서 글자와 아이콘이 같은 크기로 보이게 맞춰 주는 앱**
 
@@ -199,7 +199,7 @@ JDK 17과 Android SDK(compileSdk 35)가 있으면 Gradle로 빌드합니다.
 ./gradlew assembleRelease testDebugUnitTest
 ```
 
-`build-apk.sh`는 Android Studio 없이 CLI로 빌드하는 스크립트입니다. 필요한 JDK·SDK를 사용자 폴더(`$HOME/tools/android`, `FOLDDPI_TOOLS`로 변경 가능)에 받아 쓰며, ARM64 Linux에서는 ARM64용 aapt2를 자동으로 씁니다. x86_64 호스트에서는 `./build-apk.sh --docker`로 컨테이너 빌드도 할 수 있습니다.
+`build-apk.sh`는 Android Studio 없이 CLI로 빌드하는 스크립트입니다. 필요한 JDK·SDK를 사용자 폴더(`$HOME/tools/android`, `GOAT_TOOLS`로 변경 가능)에 받아 쓰며, ARM64 Linux에서는 ARM64용 aapt2를 자동으로 씁니다. x86_64 호스트에서는 `./build-apk.sh --docker`로 컨테이너 빌드도 할 수 있습니다.
 
 ```bash
 ./build-apk.sh             # debug APK + 단위 테스트

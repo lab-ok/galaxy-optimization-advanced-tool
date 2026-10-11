@@ -12,7 +12,7 @@
 # x86_64 호스트면 JAVA_X86 을 일반 JDK의 java 로 지정하면 된다.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-TOOLS="${FOLDDPI_TOOLS:-$HOME/tools/android}"
+TOOLS="${GOAT_TOOLS:-$HOME/tools/android}"
 JAVA_X86="${JAVA_X86:-$TOOLS/x86/jdk/bin/java}"
 export JAVA_HOME="$TOOLS/jdk17" ANDROID_HOME="$TOOLS/sdk"
 cd "$ROOT"
