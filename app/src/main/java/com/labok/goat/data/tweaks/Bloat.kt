@@ -68,6 +68,8 @@ object Bloat {
         val cmd = if (off) "pm disable-user --user 0 ${app.pkg}" else "pm enable --user 0 ${app.pkg}"
         val r = ShizukuAccess.shell(cmd)
         val ok = r?.ok == true && (r.out.contains("disabled") || r.out.contains("enabled") || r.out.isEmpty())
+        // GOS는 전용 화면(GOS 끄기)과 상태를 함께 쓴다: 어느 화면에서 바꿔도 다시 끄기의 기준을 맞춘다
+        if (ok) Gos.noteChange(context, app.pkg, off)
         LogRepository.from(context).add(
             "기본 앱 정리($how): ${app.name}(${app.pkg}) ${if (off) "끄기" else "켜기"} " +
                 if (ok) "성공" else "실패(${r?.err?.ifBlank { null } ?: r?.out ?: "Shizuku 없음"})",

@@ -14,6 +14,7 @@ import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.Springs
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.data.tweaks.Bloat
+import com.labok.goat.data.tweaks.Gos
 import com.labok.goat.data.tweaks.PrivateDns
 import com.labok.goat.data.tweaks.RefreshRate
 import com.labok.goat.data.tweaks.StatusIcons
@@ -94,6 +95,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     val context = LocalContext.current
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     val camera by CameraMute.status.collectAsStateWithLifecycle()
+    val gos by Gos.status.collectAsStateWithLifecycle()
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     LifecycleResumeEffect(Unit) { tick++; onPauseOrDispose { } }
@@ -101,7 +103,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     // 기본 앱 정리: 꺼 둔 목록 앱 수(Shizuku로 읽음, 못 읽으면 null)
     var cleaned by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(tick, shizuku) {
-        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Bloat.scan()?.count { it.value } }
+        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); Bloat.scan()?.count { it.value } }
     }
     // 기능마다 지금 상태 한 줄(돌아올 때마다 다시 읽는다)
     val status: (NavItem) -> String = { item ->
@@ -121,7 +123,13 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             }
             NavItem.APP_CLEANUP -> cleaned?.let { if (it == 0) "꺼 둔 앱 없음" else "꺼 둔 앱 ${it}개" } ?: "쓰지 않는 기본 앱 끄기"
             NavItem.PRIVATE_DNS -> PrivateDns.read(context).label
-            NavItem.STATUS_ICONS -> StatusIcons.hidden(context).size.let { if (it == 0) "숨긴 아이콘 없음" else "숨긴 아이콘 ${it}개" }
+            NavItem.GOS -> when (gos) {
+                Gos.State.OFF -> Copy.GOS_DASH_OFF
+                Gos.State.ON -> Copy.GOS_DASH_ON
+                Gos.State.NONE -> Copy.GOS_DASH_NONE
+                Gos.State.UNKNOWN -> if (Gos.wanted(context)) Copy.GOS_DASH_WANTED else Copy.GOS_DASH_UNKNOWN
+            }
+            NavItem.STATUS_ICONS -> Copy.iconsHidden(StatusIcons.hidden(context).size)
             NavItem.REFRESH -> if (!RefreshRate.supported(context)) Copy.REFRESH_UNSUPPORTED_SHORT else RefreshRate.read(context).let {
                 if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
             }
@@ -139,6 +147,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.CAMERA_MUTE -> camera == CameraMute.State.MUTED || (camera == CameraMute.State.UNKNOWN && CameraMute.wanted(context))
             NavItem.APP_CLEANUP -> (cleaned ?: 0) > 0
             NavItem.PRIVATE_DNS -> PrivateDns.inUse(context)
+            NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))
             NavItem.STATUS_ICONS -> StatusIcons.hidden(context).isNotEmpty()
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             else -> false

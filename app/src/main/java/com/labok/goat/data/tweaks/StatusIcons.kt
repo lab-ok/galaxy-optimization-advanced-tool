@@ -11,8 +11,9 @@ import com.labok.goat.ui.text.Copy
  * 시스템 설정 권한(WRITE_SECURE_SETTINGS)으로 바꾼다.
  *
  * - 목록에는 GOAT가 모르는 이름(다른 앱이 넣은 것)이 있을 수 있어, 바꿀 때 그대로 둔다.
- * - 삼성은 재부팅하면 목록이 비워지는 기기가 있다. [keep]이 켜져 있으면 부팅·앱 시작 때 [reapply]가 다시 숨긴다.
- * - 처음 바꾸기 전 값을 [restore]용으로 한 번만 남긴다.
+ * - 삼성은 재부팅하면 목록이 비워지는 기기가 있다. [keep]이 켜져 있으면 부팅 직후에만, 목록에 GOAT가 아는 이름이 하나도
+ *   없을 때(비워졌다는 신호) [reapply]가 다시 숨긴다. 그 밖에 앱 밖(Good Lock·시스템 UI 튜너)에서 바꾼 값은 덮어쓰지 않는다.
+ * - 처음 바꾸기 전 값(키가 있었는지까지)을 [restore]용으로 한 번만 남긴다.
  */
 object StatusIcons {
     const val KEY = "icon_blacklist"
@@ -22,7 +23,6 @@ object StatusIcons {
     enum class Icon(val label: String, val desc: String, val slots: List<String>, val careful: Boolean = false) {
         NFC(Copy.ICON_NFC, Copy.ICON_NFC_DESC, listOf("nfc", "nfc_on")),
         ALARM(Copy.ICON_ALARM, Copy.ICON_ALARM_DESC, listOf("alarm_clock")),
-        ROTATE(Copy.ICON_ROTATE, Copy.ICON_ROTATE_DESC, listOf("rotate")),
         VOLUME(Copy.ICON_VOLUME, Copy.ICON_VOLUME_DESC, listOf("volume", "mute")),
         BLUETOOTH(Copy.ICON_BLUETOOTH, Copy.ICON_BLUETOOTH_DESC, listOf("bluetooth")),
         HEADSET(Copy.ICON_HEADSET, Copy.ICON_HEADSET_DESC, listOf("headset")),
@@ -63,18 +63,31 @@ object StatusIcons {
         return ok
     }
 
-    /** 처음 바꾸기 전 목록으로 되돌린다(남긴 값이 없으면 GOAT가 아는 이름만 모두 뺀다). */
+    /**
+     * 모두 보이기: GOAT가 아는 이름은 처음 상태로 돌리고(처음부터 숨겨져 있던 것만 남김), 그 밖의 이름(다른 앱이 넣은 것)은
+     * 지금 그대로 둔다. 처음에 키가 없었고 결과도 비면 키를 비운다(null).
+     */
     fun restore(context: Context, how: String): Boolean {
         val p = prefs(context)
         val before = hidden(context)
-        val target = if (p.getBoolean("saved", false)) parse(p.getString("original", null))
-        else list(context).filterNot { name -> Icon.entries.any { name in it.slots } }
-        val ok = write(context, target)
-        if (ok) p.edit().clear().apply()
+        val original = if (p.getBoolean("saved", false)) parse(p.getString("original", null)) else emptyList()
+        val target = restoreTarget(list(context), original)
+        val hadKey = p.getBoolean("had", true)
+        val ok = runCatching {
+            Settings.Secure.putString(context.contentResolver, KEY, if (target.isEmpty() && !hadKey) null else target.joinToString(","))
+        }.getOrDefault(false)
+        // 처음 값·숨기기로 한 것만 잊는다(사용자가 정한 '재부팅 뒤 다시 숨기기'는 그대로)
+        if (ok) p.edit().remove("saved").remove("original").remove("had").remove("wanted").apply()
         LogRepository.from(context).add(
             "상태 표시줄 아이콘 모두 보이기($how): 숨김 ${before.size}개 → ${hidden(context).size}개${if (ok) "" else " 실패"}",
         )
         return ok
+    }
+
+    /** [restore]의 목표 목록: 지금 목록 − GOAT가 아는 이름 전체 + (처음 목록 ∩ GOAT가 아는 이름). 순서는 지금 목록을 따른다. */
+    internal fun restoreTarget(current: List<String>, original: List<String>): List<String> {
+        val known = Icon.entries.flatMap { it.slots }.toSet()
+        return (current.filterNot { it in known } + original.filter { it in known }).distinct()
     }
 
     /** 사용자가 숨기기로 한 아이콘(다시 숨기기의 기준). */
@@ -89,23 +102,28 @@ object StatusIcons {
         LogRepository.from(context).add("상태 표시줄 아이콘: 재부팅 뒤 다시 숨기기 ${if (on) "켜짐" else "꺼짐"}")
     }
 
-    /** 숨기기로 한 아이콘이 다시 보이면(재부팅으로 목록이 비워짐 등) 다시 숨긴다. 부팅·앱 시작 때 부른다. */
+    /**
+     * 부팅 직후 부른다(BootReceiver): 숨기기로 한 아이콘이 있는데 목록에 GOAT가 아는 이름이 하나도 없으면(재부팅으로 비워짐)
+     * 다시 숨긴다. 일부만 빠진 경우는 사용자가 앱 밖에서 다시 보이게 한 것으로 보고 건드리지 않는다.
+     */
     fun reapply(context: Context, how: String) {
         if (!keep(context)) return
         val want = wanted(context)
-        if (want.isEmpty()) return
         val now = list(context)
-        val missing = want.filter { it !in hiddenIn(now) }
-        if (missing.isEmpty()) return
-        val next = missing.fold(now) { acc, icon -> toggled(acc, icon, true) }
+        if (!needsReapply(want, now)) return
+        val next = want.fold(now) { acc, icon -> toggled(acc, icon, true) }
         val ok = write(context, next)
-        LogRepository.from(context).add("상태 표시줄 아이콘 다시 숨기기($how): ${missing.joinToString { it.label }}${if (ok) "" else " 실패(시스템 설정 권한 없음)"}")
+        LogRepository.from(context).add("상태 표시줄 아이콘 다시 숨기기($how): ${want.joinToString { it.label }}${if (ok) "" else " 실패(시스템 설정 권한 없음)"}")
     }
+
+    /** [reapply] 조건: 숨기기로 한 것이 있고, 지금 목록에 GOAT가 아는 이름이 하나도 없다. */
+    internal fun needsReapply(want: Set<Icon>, now: List<String>): Boolean = want.isNotEmpty() && hiddenIn(now).isEmpty()
 
     private fun remember(context: Context, current: List<String>) {
         val p = prefs(context)
         if (p.getBoolean("saved", false)) return
-        p.edit().putBoolean("saved", true).putString("original", current.joinToString(",")).apply()
+        val had = runCatching { Settings.Secure.getString(context.contentResolver, KEY) }.getOrNull() != null
+        p.edit().putBoolean("saved", true).putBoolean("had", had).putString("original", current.joinToString(",")).apply()
     }
 
     /** 목록을 쓴다. 비면 키에 빈 값을 둔다(시스템 기본 = 아무것도 숨기지 않음). */

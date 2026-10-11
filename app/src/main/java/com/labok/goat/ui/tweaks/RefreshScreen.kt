@@ -139,6 +139,11 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
                         LiquidRadioRow(label, ch.desc, choice == ch, enabled = canWrite && !busy) {
                             if (ch == choice) return@LiquidRadioRow
                             haptics.segment()
+                            // 앱 밖에서 고정한 값은 GOAT가 처음 값을 모르므로 되돌리지 않고 알린다
+                            if (ch == RefreshRate.Choice.SYSTEM && !RefreshRate.canRestore(context)) {
+                                Toast.makeText(context, Copy.REFRESH_TOAST_EXTERNAL, Toast.LENGTH_LONG).show()
+                                return@LiquidRadioRow
+                            }
                             busy = true
                             scope.launch {
                                 val ok = withContext(Dispatchers.IO) { RefreshRate.set(context, ch, "고르기") }

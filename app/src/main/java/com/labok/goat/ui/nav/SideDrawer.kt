@@ -81,6 +81,8 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     APP_CLEANUP(Copy.FEATURE_APP_CLEANUP, NavIcon.CLEAN),
     /** 화면 주사율의 위·아래 한계를 고정한다(Shizuku 셸). */
     REFRESH(Copy.FEATURE_REFRESH, NavIcon.REFRESH),
+    /** 게임 중 성능을 낮추는 GOS를 끈다(Shizuku, 기본 앱 정리와 같은 끄기). */
+    GOS(Copy.FEATURE_GOS, NavIcon.GAME),
     /** 상태 표시줄의 늘 켜 둔 아이콘을 숨긴다(시스템 설정 권한). */
     STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.STATUSBAR),
     /** 광고를 막는 DNS 서버로 바꾼다(시스템 설정 권한). */
@@ -89,7 +91,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, STATUSBAR, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, STATUSBAR, GAME, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -257,6 +259,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.SHIELD -> shield(color, s)
             NavIcon.REFRESH -> refresh(color, s)
             NavIcon.STATUSBAR -> statusBar(color, s)
+            NavIcon.GAME -> game(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
@@ -398,6 +401,22 @@ private fun DrawScope.statusBar(c: Color, s: Stroke) {
     drawCircle(c, u(1.3f), p(16.6f, 6.5f))
     drawCircle(c, u(1.3f), p(13f, 6.5f))
     drawCircle(c.copy(alpha = 0.35f), u(1.3f), p(9.4f, 6.5f))
+}
+
+/** GOS 끄기: 게임 패드(왼쪽 십자 키, 오른쪽 버튼 둘). */
+private fun DrawScope.game(c: Color, s: Stroke) {
+    val pad = Path().apply {
+        moveTo(u(7f), u(7f)); lineTo(u(17f), u(7f))
+        cubicTo(u(20.5f), u(7f), u(22f), u(10f), u(22f), u(14f)); cubicTo(u(22f), u(17.5f), u(20f), u(19f), u(18.4f), u(19f))
+        cubicTo(u(16.6f), u(19f), u(15.6f), u(16.5f), u(14.5f), u(16.5f)); lineTo(u(9.5f), u(16.5f))
+        cubicTo(u(8.4f), u(16.5f), u(7.4f), u(19f), u(5.6f), u(19f)); cubicTo(u(4f), u(19f), u(2f), u(17.5f), u(2f), u(14f))
+        cubicTo(u(2f), u(10f), u(3.5f), u(7f), u(7f), u(7f)); close()
+    }
+    drawPath(pad, c, style = s)
+    drawLine(c, p(5.4f, 12f), p(9.4f, 12f), s.width, StrokeCap.Round)
+    drawLine(c, p(7.4f, 10f), p(7.4f, 14f), s.width, StrokeCap.Round)
+    drawCircle(c, u(1.1f), p(16f, 12.8f))
+    drawCircle(c, u(1.1f), p(18.6f, 10.6f))
 }
 
 /** 정보: 원 안의 i. */

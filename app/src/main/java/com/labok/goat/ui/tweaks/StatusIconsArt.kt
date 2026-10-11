@@ -15,6 +15,7 @@ import com.labok.goat.data.tweaks.StatusIcons.Icon
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
+import com.labok.goat.ui.text.Copy
 
 private fun seg(t: Float, from: Float, to: Float) = ((t - from) / (to - from)).coerceIn(0f, 1f)
 private fun ease(x: Float) = x * x * (3 - 2 * x)
@@ -25,15 +26,17 @@ private val SHOWN = listOf(Icon.NFC, Icon.ALARM, Icon.BLUETOOTH, Icon.VOLUME, Ic
 /**
  * 상태 표시줄 그림: 위 줄은 지금 상태 표시줄(시계, 아이콘 다섯, 와이파이, 배터리). 0.35~0.6에 [hidden] 아이콘이
  * 톡 오그라들어 사라지고, 남은 아이콘이 오른쪽으로 모여 빈자리를 메운다. 끝에서 다시 나타나 반복한다.
- * 숨길 아이콘을 아직 고르지 않았으면 NFC·알람으로 보여 준다.
+ * 그림에 있는 아이콘을 하나도 숨기지 않았으면 NFC·알람으로 예를 들고, 아래 글에 '예시'를 붙인다.
  */
 @Composable
 internal fun StatusIconsArt(hidden: Set<Icon>) {
     val t = artLoop(3000)
-    val gone = SHOWN.filter { it in hidden }.ifEmpty { listOf(Icon.NFC, Icon.ALARM) }.toSet()
-    ArtCanvas(112.dp) { c, tm ->
+    val mine = SHOWN.filter { it in hidden }.toSet()
+    val example = mine.isEmpty()
+    val gone = mine.ifEmpty { setOf(Icon.NFC, Icon.ALARM) }
+    ArtCanvas(74.dp) { c, tm ->
         val barH = 34.dp.toPx()
-        val top = 18.dp.toPx()
+        val top = 6.dp.toPx()
         val left = 12.dp.toPx(); val right = size.width - 12.dp.toPx()
         // 상태 표시줄 바탕(폰 화면 윗부분)
         drawRoundRect(c.ink, Offset(left, top), Size(right - left, barH + 26.dp.toPx()), CornerRadius(18.dp.toPx()))
@@ -52,7 +55,8 @@ internal fun StatusIconsArt(hidden: Set<Icon>) {
             if (k > 0.01f) scale(k, Offset(x, cy)) { glyph(icon, c.surface, Offset(x, cy)) }
             x -= cell * k
         }
-        artLabel(tm, if (out > 0.5f) "숨긴 뒤" else "숨기기 전", Offset(size.width / 2, top + barH + 13.dp.toPx()), c.muted, sizeSp = 10)
+        val caption = if (out > 0.5f) "숨긴 뒤" else "숨기기 전"
+        artLabel(tm, if (example) "${Copy.ICONS_ART_EXAMPLE} · $caption" else caption, Offset(size.width / 2, top + barH + 13.dp.toPx()), c.muted, sizeSp = 10)
     }
 }
 

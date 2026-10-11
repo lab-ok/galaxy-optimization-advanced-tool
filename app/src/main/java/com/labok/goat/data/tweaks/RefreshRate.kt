@@ -104,9 +104,11 @@ object RefreshRate {
             return true
         }
         // 셋을 한 번에 쓴다: 중간에 실패하면 &&로 멈추고, 결과는 아래에서 다시 읽어 판단한다
+        val original = saved(context)
         val r = ShizukuAccess.shell(cmds.joinToString(" && "))
         val after = read(context)
-        val ok = r?.ok == true && after == choice
+        // 시스템 기본은 처음 값 그대로 돌아갔는지로 본다(처음부터 60Hz로 묶여 있던 기기도 정확히 되돌리면 성공)
+        val ok = r?.ok == true && if (choice == Choice.SYSTEM) values(context) == original else after == choice
         // 시스템 기본으로 돌아갔으면 처음 값 기억을 지운다(다음 고정 때 그때 값을 새로 남긴다)
         if (choice == Choice.SYSTEM && ok) prefs(context).edit().clear().apply()
         log.add("주사율 고정($how): ${before.label} → ${after.label}" + when {
@@ -116,6 +118,9 @@ object RefreshRate {
         })
         return ok
     }
+
+    /** '시스템 기본'으로 되돌릴 수 있는지: GOAT로 바꾼 적이 있거나(처음 값이 있음) 이미 시스템 기본이다. 앱 밖에서 고정한 값은 되돌리지 않는다. */
+    fun canRestore(context: Context) = saved(context) != null || read(context) == Choice.SYSTEM
 
     /** GOAT로 처음 바꾸기 전 값(없으면 null). 키가 없었으면 그 칸이 null이다. */
     internal fun saved(context: Context): Values? {
