@@ -79,11 +79,13 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     CAMERA_MUTE(Copy.FEATURE_CAMERA_MUTE, NavIcon.CAMERA),
     /** 쓰지 않는 기본 앱 끄기(Shizuku, 되돌릴 수 있음). */
     APP_CLEANUP(Copy.FEATURE_APP_CLEANUP, NavIcon.CLEAN),
+    /** 광고를 막는 DNS 서버로 바꾼다(시스템 설정 권한). */
+    PRIVATE_DNS(Copy.FEATURE_PRIVATE_DNS, NavIcon.SHIELD),
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -248,6 +250,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.HOME -> home(color, s)
             NavIcon.SPEED -> speed(color, s)
             NavIcon.CLEAN -> clean(color, s)
+            NavIcon.SHIELD -> shield(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
@@ -354,6 +357,18 @@ private fun DrawScope.clean(c: Color, s: Stroke) {
     drawRoundRect(c, p(3.5f, 3.5f), Size(u(11f), u(11f)), CornerRadius(u(2.6f)), style = s)
     drawCircle(c, u(5.2f), p(16f, 16f), style = s)
     drawLine(c, p(13.6f, 16f), p(18.4f, 16f), s.width, StrokeCap.Round)
+}
+
+/** 개인 DNS(광고 차단): 방패와 그 안의 체크 표시. */
+private fun DrawScope.shield(c: Color, s: Stroke) {
+    val path = Path().apply {
+        moveTo(u(12f), u(2.8f)); lineTo(u(19.5f), u(5.6f)); lineTo(u(19.5f), u(11f))
+        quadraticBezierTo(u(19.5f), u(17.6f), u(12f), u(21.2f))
+        quadraticBezierTo(u(4.5f), u(17.6f), u(4.5f), u(11f)); lineTo(u(4.5f), u(5.6f)); close()
+    }
+    drawPath(path, c, style = s)
+    drawLine(c, p(8.6f, 11.8f), p(11f, 14.2f), s.width, StrokeCap.Round)
+    drawLine(c, p(11f, 14.2f), p(15.6f, 9.4f), s.width, StrokeCap.Round)
 }
 
 /** 정보: 원 안의 i. */

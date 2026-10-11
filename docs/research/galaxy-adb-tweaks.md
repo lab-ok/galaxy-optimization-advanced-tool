@@ -196,3 +196,17 @@ adb shell settings delete system csc_pref_camera_forced_shuttersound_key  # 키 
 - XDA "Definitive OneUI Guide" 원문은 403으로 직접 열람하지 못해 검색 스니펫만 반영(항목 17, 18은 교차검증 1회만 수행).
 - Reddit(r/GalaxyFold, r/samsung 등) 직접 게시물 URL/투표수는 WebSearch 결과에 노출되지 않아(삼성 공식 커뮤니티·XDA·dcinside·클리앙으로 결과가 쏠림) 조사자가 직접 집계하지 못함 — TOP 10 순위는 확보 가능한 조회수/추천수 기준으로 산정.
 - Part A의 "카메라 앱 재시작 필요 여부"와 "One UI 6/7/8/9 키 이름 변경 여부"는 명시적 1차 확인을 하지 못해 추정으로 남김.
+
+---
+
+## Part C — 구현 전 재조사(2026-10-12, GOAT 4~10번 기능용)
+
+출처는 AOSP 소스·오픈소스 앱 README·XDA·클리앙·뽐뿌. **[V]** 검증, **[I]** 추정.
+
+- 주사율: `system peak_refresh_rate`/`min_refresh_rate`는 AOSP DisplayModeDirector가 상·하한 투표로 쓴다 [V]. One UI '화면 움직임 부드럽게'는 `secure refresh_rate_mode`(0 표준·1 적응형·2 고주사율 고정)를 읽는다는 보고가 다수 [I, Adaptive-Hz·XDA]. 절전 모드에서는 60Hz로 내려가는 기종이 있다 [I, GalaxyMaxHz].
+- 충전 상한: 공개 키 없음. amply PR #125 역공학으로 `protect_battery`(0 끔·1 최대·2 자동 최대·3 기본) + `battery_protection_threshold`(80/85/90/95) [I, 단일 출처]. 기기 실측 필요.
+- 다크 모드 강제: `setprop debug.hwui.force_dark true`는 셸에서 동작하고 재부팅 때 사라진다 [V/I]. 앱별 강제의 공개 adb 키는 확인 못 함.
+- 상태 표시줄 아이콘: `secure icon_blacklist` 동작 [V]. 삼성은 재부팅 뒤 풀린다는 보고가 있다 [I, 클리앙]. 확인된 슬롯 이름: rotate, bluetooth, nfc, alarm_clock, volume, wifi, mobile, location, hotspot, data_saver, ims_volte, headset, cast, vpn, zen, managed_profile, sensors_off, sync_active, mute, ethernet, microphone, dnd, clock.
+- GOS: com.samsung.android.game.gos(코어)·gametools(Game Booster)·gamehome(Game Launcher) [V]. disable-user가 재부팅에 살아남는지는 보고가 엇갈림 [I].
+- 해상도: `wm size`는 WRITE_SECURE_SETTINGS로 동작(Settings.Secure display_size_forced) [V]. density는 해상도 비율대로 함께 낮춰야 화면 크기가 유지된다 [I, 관행].
+- 개인 DNS: `global private_dns_mode`(off·opportunistic·hostname) + `private_dns_specifier` [V]. SKT 망 + AdGuard 야간 불안정 보고 1건 [I].

@@ -13,10 +13,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- 흔들어서 화면 회전: 돌렸을 때 짧게 진동으로 알린다 -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- WorkManager가 네트워크 조건용으로 넣는 권한. 이 앱은 네트워크를 쓰지 않으므로 뺀다. -->
-    <uses-permission
-        android:name="android.permission.ACCESS_NETWORK_STATE"
-        tools:node="remove" />
+    <!-- 개인 DNS: 고른 서버에 실제로 연결됐는지 시스템에 묻는다(연결 상태 읽기만, 이 앱은 인터넷 권한이 없다) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- 최근 사용 순 정렬과 '방금 쓰던 앱' 찾기(사용 기록 접근, Shizuku로 허용) -->
     <uses-permission
