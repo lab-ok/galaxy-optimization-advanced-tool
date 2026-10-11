@@ -2,21 +2,15 @@ package com.labok.goat.ui.tweaks
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,11 +20,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,12 +35,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -64,9 +52,9 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidRadioRow
 import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
-import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
@@ -168,8 +156,10 @@ internal fun DnsScreen(contentPadding: PaddingValues, permitted: Boolean, onGuid
                     if (PrivateDns.saved(context) != null) {
                         Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.DNS_RESTORE, primary = false, enabled = permitted && !busy, modifier = Modifier.fillMaxWidth(), onClick = {
+                            busy = true
                             scope.launch {
                                 val ok = withContext(Dispatchers.IO) { PrivateDns.restore(context, "원래대로 버튼") }
+                                busy = false
                                 version++
                                 PrivateDns.refresh(context)
                                 Toast.makeText(context, if (ok) Copy.DNS_TOAST_RESTORED else Copy.DNS_TOAST_FAILED, Toast.LENGTH_SHORT).show()
@@ -187,7 +177,7 @@ internal fun DnsScreen(contentPadding: PaddingValues, permitted: Boolean, onGuid
                     Spacer(Modifier.height(Gap.Tight))
                     PrivateDns.Provider.entries.forEach { p ->
                         val selected = current.provider == p
-                        ProviderRow(p, selected, enabled = permitted && !busy) {
+                        LiquidRadioRow(p.label, p.desc, selected, enabled = permitted && !busy) {
                             haptics.segment()
                             if (p == PrivateDns.Provider.CUSTOM) customOpen = !customOpen else { customOpen = false; choose(p) }
                         }
@@ -233,37 +223,6 @@ internal fun DnsScreen(contentPadding: PaddingValues, permitted: Boolean, onGuid
     }
 }
 
-/** 서버 한 줄: 왼쪽 동그라미(고르면 잉크 방울이 통 차오른다), 이름, 설명. */
-@Composable
-private fun ProviderRow(p: PrivateDns.Provider, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
-    val c = LocalLiquid.current
-    val reduce = LocalReduceMotion.current
-    val fill by animateFloatAsState(
-        if (selected) 1f else 0f,
-        if (reduce) spring(stiffness = Spring.StiffnessHigh) else spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMediumLow),
-        label = "pick",
-    )
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(enabled = enabled, role = Role.RadioButton, onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Canvas(Modifier.size(24.dp)) {
-            val r = size.minDimension / 2
-            drawCircle(if (selected) c.ink else c.line, r - 1.dp.toPx(), style = Stroke(2.dp.toPx()))
-            if (fill > 0.01f) drawCircle(c.ink, (r - 5.dp.toPx()) * fill.coerceAtMost(1.15f))
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(p.label, color = if (enabled || selected) c.ink else c.muted, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-            Text(p.desc, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        }
-    }
-}
-
 /** 사용 방법. */
 @Composable
 internal fun DnsHelpSheet() {
@@ -271,7 +230,7 @@ internal fun DnsHelpSheet() {
         HelpTopic(
             "1. 무엇을 하나요",
             "인터넷 주소를 찾아 주는 DNS 서버를 광고 차단 서버로 바꿉니다. 앱과 웹이 광고·추적 주소를 찾으면 서버가 알려 주지 않아 " +
-                "광고가 빈칸으로 사라집니다. 앱을 따로 설치하거나 VPN을 켤 필요가 없고, 배터리도 거의 쓰지 않습니다.",
+                "광고가 빈칸으로 사라집니다. 앱을 따로 설치하거나 VPN을 켤 필요가 없고, 따로 실행되는 앱이 없어 배터리 부담이 적습니다.",
         ) { DnsArt(blocking = true, label = PrivateDns.Provider.ADGUARD.label) }
         HelpTopic(
             "2. 어떤 서버를 고르나요",
@@ -281,7 +240,8 @@ internal fun DnsHelpSheet() {
         HelpTopic(
             "3. 연결 확인과 자동 되돌림",
             "서버를 바꾸면 시스템이 그 서버에 암호화 연결(DNS over TLS)이 되는지 바로 확인합니다. 회사·학교·공공 와이파이처럼 " +
-                "이 연결을 막는 곳에서는 인터넷이 끊길 수 있어, 12초 안에 연결되지 않으면 바꾸기 전 서버로 저절로 되돌립니다.",
+                "이 연결을 막는 곳에서는 인터넷이 끊길 수 있어, ${PrivateDns.CHECK_MS / 1000}초 안에 연결되지 않으면 바꾸기 전 서버로 저절로 되돌립니다. " +
+                "인터넷이 아예 없을 때는 되돌리지 않습니다. 연결된 뒤 '지금 서버'에서 연결 상태를 확인할 수 있습니다.",
         )
         HelpTopic(
             "4. 막지 못하는 광고와 되돌리기",

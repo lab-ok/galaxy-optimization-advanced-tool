@@ -15,6 +15,7 @@ import com.labok.goat.ui.liquid.Springs
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.data.tweaks.Bloat
 import com.labok.goat.data.tweaks.PrivateDns
+import com.labok.goat.data.tweaks.RefreshRate
 import com.labok.goat.data.appsize.AppDensityNotifier
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -119,6 +120,9 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             }
             NavItem.APP_CLEANUP -> cleaned?.let { if (it == 0) "꺼 둔 앱 없음" else "꺼 둔 앱 ${it}개" } ?: "쓰지 않는 기본 앱 끄기"
             NavItem.PRIVATE_DNS -> PrivateDns.read(context).label
+            NavItem.REFRESH -> if (!RefreshRate.supported(context)) "60Hz 화면" else RefreshRate.read(context).let {
+                if (it == RefreshRate.Choice.SMOOTH) "항상 ${RefreshRate.max(context)}Hz" else it.label
+            }
             else -> ""
         }
     }
@@ -133,6 +137,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.CAMERA_MUTE -> camera == CameraMute.State.MUTED || (camera == CameraMute.State.UNKNOWN && CameraMute.wanted(context))
             NavItem.APP_CLEANUP -> (cleaned ?: 0) > 0
             NavItem.PRIVATE_DNS -> PrivateDns.inUse(context)
+            NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             else -> false
         }
     }

@@ -79,13 +79,15 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     CAMERA_MUTE(Copy.FEATURE_CAMERA_MUTE, NavIcon.CAMERA),
     /** 쓰지 않는 기본 앱 끄기(Shizuku, 되돌릴 수 있음). */
     APP_CLEANUP(Copy.FEATURE_APP_CLEANUP, NavIcon.CLEAN),
+    /** 화면 주사율의 위·아래 한계를 고정한다(시스템 설정 권한 또는 Shizuku). */
+    REFRESH(Copy.FEATURE_REFRESH, NavIcon.REFRESH),
     /** 광고를 막는 DNS 서버로 바꾼다(시스템 설정 권한). */
     PRIVATE_DNS(Copy.FEATURE_PRIVATE_DNS, NavIcon.SHIELD),
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, SHIELD, REFRESH, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -251,6 +253,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.SPEED -> speed(color, s)
             NavIcon.CLEAN -> clean(color, s)
             NavIcon.SHIELD -> shield(color, s)
+            NavIcon.REFRESH -> refresh(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
@@ -369,6 +372,16 @@ private fun DrawScope.shield(c: Color, s: Stroke) {
     drawPath(path, c, style = s)
     drawLine(c, p(8.6f, 11.8f), p(11f, 14.2f), s.width, StrokeCap.Round)
     drawLine(c, p(11f, 14.2f), p(15.6f, 9.4f), s.width, StrokeCap.Round)
+}
+
+/** 주사율 고정: 화면 틀 안에서 오른쪽으로 달리는 공과 그 뒤의 촘촘한 잔상 세 줄(빠르게 새로 그림). */
+private fun DrawScope.refresh(c: Color, s: Stroke) {
+    drawRoundRect(c, p(2.5f, 4.5f), Size(u(19f), u(15f)), CornerRadius(u(2.4f)), style = s)
+    drawCircle(c, u(2.4f), p(15.5f, 12f))
+    for ((i, x) in listOf(7f, 9.6f, 12.2f).withIndex()) {
+        val h = 1.6f + i * 0.9f
+        drawLine(c.copy(alpha = 0.45f + i * 0.2f), p(x, 12f - h), p(x, 12f + h), s.width * 0.8f, StrokeCap.Round)
+    }
 }
 
 /** 정보: 원 안의 i. */

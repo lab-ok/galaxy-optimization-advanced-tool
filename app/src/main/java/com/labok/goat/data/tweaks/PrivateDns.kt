@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.provider.Settings
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,14 +39,14 @@ object PrivateDns {
 
     /** 고를 수 있는 서버. [host]가 null이면 서버 없이 끔·자동. */
     enum class Provider(val label: String, val host: String?, val desc: String) {
-        AUTOMATIC("자동(기본)", null, "통신사·와이파이의 DNS를 쓰고, 지원하면 암호화합니다."),
-        ADGUARD("AdGuard 광고 차단", "dns.adguard-dns.com", "광고·추적·악성 사이트를 막습니다. 가장 많이 쓰는 설정입니다."),
-        ADGUARD_FAMILY("AdGuard 가족 보호", "family.adguard-dns.com", "광고 차단에 더해 성인 사이트를 막고 안전 검색을 켭니다."),
-        CLOUDFLARE("Cloudflare", "one.one.one.one", "광고는 막지 않고, 빠르고 기록을 남기지 않는 DNS입니다."),
-        CLOUDFLARE_SECURITY("Cloudflare 악성 차단", "security.cloudflare-dns.com", "피싱·악성 코드 사이트만 막습니다."),
-        QUAD9("Quad9", "dns.quad9.net", "비영리 단체가 운영하며 악성 사이트를 막습니다."),
-        CUSTOM("직접 입력", null, "NextDNS 등 다른 서버 주소를 적습니다."),
-        DISABLED("끄기", null, "개인 DNS를 쓰지 않습니다."),
+        AUTOMATIC(Copy.DNS_P_AUTO, null, Copy.DNS_P_AUTO_DESC),
+        ADGUARD(Copy.DNS_P_ADGUARD, "dns.adguard-dns.com", Copy.DNS_P_ADGUARD_DESC),
+        ADGUARD_FAMILY(Copy.DNS_P_FAMILY, "family.adguard-dns.com", Copy.DNS_P_FAMILY_DESC),
+        CLOUDFLARE(Copy.DNS_P_CLOUDFLARE, "one.one.one.one", Copy.DNS_P_CLOUDFLARE_DESC),
+        CLOUDFLARE_SECURITY(Copy.DNS_P_CF_SECURITY, "security.cloudflare-dns.com", Copy.DNS_P_CF_SECURITY_DESC),
+        QUAD9(Copy.DNS_P_QUAD9, "dns.quad9.net", Copy.DNS_P_QUAD9_DESC),
+        CUSTOM(Copy.DNS_P_CUSTOM, null, Copy.DNS_P_CUSTOM_DESC),
+        DISABLED(Copy.DNS_P_OFF, null, Copy.DNS_P_OFF_DESC),
         ;
 
         /** 광고를 막는 서버인지(그림에서 광고 칸이 사라지는지). 직접 입력은 대개 NextDNS 같은 차단 서버라 막는 것으로 본다. */
@@ -77,14 +78,22 @@ object PrivateDns {
     /** 서버를 골라 쓰는 중인지(홈 카드 '켜짐'). 자동·끄기는 쓰지 않는 것으로 본다. */
     fun inUse(context: Context) = read(context).provider.let { it != Provider.AUTOMATIC && it != Provider.DISABLED }
 
-    /** 서버 주소로 쓸 수 있는 꼴인지(점이 있는 도메인, 글자·숫자·하이픈). */
+    /** 서버 주소로 쓸 수 있는 꼴인지(점이 있는 도메인, 영문 소문자·숫자·하이픈만. 대문자는 [set]이 소문자로 바꾼다). */
     fun validHost(host: String): Boolean =
-        host.length in 4..253 && '.' in host && host.split('.').all { it.isNotEmpty() && it.length <= 63 && it.all { ch -> ch.isLetterOrDigit() || ch == '-' } && !it.startsWith('-') && !it.endsWith('-') }
+        host.length in 4..253 && '.' in host && host.split('.').all { part ->
+            part.isNotEmpty() && part.length <= 63 && part.all { it in 'a'..'z' || it in '0'..'9' || it == '-' } && !part.startsWith('-') && !part.endsWith('-')
+        }
 
     /**
      * [provider]로 바꾼다([custom]은 직접 입력 주소). 처음 바꿀 때 원래 값을 남긴다. 성공하면 true.
      */
     fun set(context: Context, provider: Provider, custom: String? = null, how: String): Boolean {
+        // 사용자가 새로 고르면 앞 선택의 연결 확인은 그만둔다(끝난 뒤 앞 선택으로 되돌리지 않게)
+        checking?.cancel()
+        return change(context, provider, custom, how)
+    }
+
+    private fun change(context: Context, provider: Provider, custom: String?, how: String): Boolean {
         val before = read(context)
         remember(context, before)
         val host = if (provider == Provider.CUSTOM) custom?.trim()?.lowercase() else provider.host
@@ -109,7 +118,8 @@ object PrivateDns {
 
     /** 처음 바꾸기 전 값으로 되돌리고 기억을 지운다. */
     fun restore(context: Context, how: String): Boolean {
-        val s = saved(context) ?: return set(context, Provider.AUTOMATIC, how = how)
+        checking?.cancel()
+        val s = saved(context) ?: return change(context, Provider.AUTOMATIC, null, how)
         val before = read(context)
         val ok = write(context, s.mode, s.host) && read(context).mode == s.mode
         if (ok) prefs(context).edit().clear().apply()
@@ -178,45 +188,71 @@ object PrivateDns {
     }
 
     /**
-     * 바꾼 직후 연결을 1초마다 확인한다. 바꾼 직후 시스템은 이전 서버의 '확인됨'을 잠깐 그대로 두므로 연결됨이 [STABLE]번
-     * 잇달아 나와야 성공으로 보고, 실패가 [FAILS]번 잇달아 나오거나 [CHECK_MS] 안에 확정되지 않으면 [previous]로 되돌린다.
+     * 바꾼 직후 연결을 1초마다 [Judge]에 넣어 판정한다. 실패로 판정되면 [previous]로 되돌린다.
+     * 인터넷이 없으면(NONE) 실패로 세지 않고 '인터넷에 연결되면 확인' 상태로 끝낸다. 사용자가 그 사이 다른 것을 고르면
+     * [set]이 이 확인을 취소하고, 혹시 설정이 확인 대상과 달라져 있으면 되돌리지 않고 끝낸다.
      */
     fun verify(context: Context, previous: Current) {
         val app = context.applicationContext
+        val target = read(app)
         checking?.cancel()
         linkState.value = Link.CHECKING
         checking = scope.launch {
-            val start = System.currentTimeMillis()
-            var streak = 0
-            var fails = 0
+            val judge = Judge()
             var result: Link
             while (true) {
                 delay(1000)
-                val now = connection(app)
-                streak = if (now == Link.CONNECTED) streak + 1 else 0
-                fails = if (now == Link.FAILED) fails + 1 else 0
-                // 다시 확인하는 동안 잠깐 '확인 안 됨'이 될 수 있어 실패도 [FAILS]번 잇달아 나와야 실패로 본다
-                result = when {
-                    now == Link.CONNECTED && streak < STABLE -> Link.CHECKING
-                    now == Link.FAILED && fails < FAILS -> Link.CHECKING
-                    else -> now
-                }
-                if (result == Link.CONNECTED || result == Link.FAILED) break
-                if (System.currentTimeMillis() - start > CHECK_MS) { result = Link.FAILED; break }
+                if (read(app) != target) { linkState.value = connection(app); return@launch }
+                result = judge.feed(connection(app)) ?: continue
+                break
             }
-            val revert = result == Link.FAILED
-            if (revert) set(app, previous.provider, previous.host, "연결되지 않아 자동 되돌림")
+            val log = LogRepository.from(app)
+            when (result) {
+                Link.FAILED -> {
+                    log.add("개인 DNS 연결 확인: ${target.label}에 연결되지 않음 → 이전 설정으로 되돌림")
+                    change(app, previous.provider, previous.host, "연결되지 않아 자동 되돌림")
+                }
+                Link.CONNECTED -> log.add("개인 DNS 연결 확인: ${target.label} 암호화 연결됨")
+                else -> log.add("개인 DNS 연결 확인: 인터넷 연결이 없어 확인을 미룸(되돌리지 않음)")
+            }
             linkState.value = connection(app)
-            results.tryEmit(revert)
+            results.tryEmit(result == Link.FAILED)
+        }
+    }
+
+    /**
+     * 1초마다 읽은 연결 상태로 확인 결과를 정한다(시험할 수 있게 시간·시스템과 떼어 둔다).
+     * - 바꾼 직후 시스템은 이전 서버의 '확인됨'을 잠깐 그대로 두므로 연결됨이 [STABLE]번 잇달아 나와야 성공.
+     * - 다시 확인하는 동안 잠깐 '확인 안 됨'이 될 수 있어 실패도 [FAILS]번 잇달아 나와야 실패.
+     * - [LIMIT]번(=[CHECK_MS]) 안에 확정되지 않으면: 인터넷이 없던(NONE) 상태면 NONE(되돌리지 않음), 아니면 실패.
+     * 확정되기 전에는 null.
+     */
+    internal class Judge {
+        private var ok = 0
+        private var bad = 0
+        private var count = 0
+
+        fun feed(now: Link): Link? {
+            count++
+            ok = if (now == Link.CONNECTED) ok + 1 else 0
+            bad = if (now == Link.FAILED) bad + 1 else 0
+            return when {
+                ok >= STABLE -> Link.CONNECTED
+                bad >= FAILS -> Link.FAILED
+                count >= LIMIT -> if (now == Link.NONE) Link.NONE else Link.FAILED
+                else -> null
+            }
         }
     }
 
     /** 바꾼 뒤 연결을 기다리는 최대 시간. 이 안에 연결되지 않으면 되돌린다. */
     const val CHECK_MS = 12_000L
+    /** [CHECK_MS] 동안 1초마다 읽는 횟수. */
+    private const val LIMIT = (CHECK_MS / 1000).toInt()
     /** 연결됨이 이만큼 잇달아(1초 간격) 나와야 성공으로 본다. */
-    private const val STABLE = 4
+    internal const val STABLE = 4
     /** 실패가 이만큼 잇달아 나와야 실패로 본다. */
-    private const val FAILS = 3
+    internal const val FAILS = 3
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 }

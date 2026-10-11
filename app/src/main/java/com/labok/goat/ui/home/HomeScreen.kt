@@ -11,6 +11,8 @@ import com.labok.goat.ui.tweaks.BloatHelpSheet
 import com.labok.goat.ui.tweaks.BloatScreen
 import com.labok.goat.ui.tweaks.DnsHelpSheet
 import com.labok.goat.ui.tweaks.DnsScreen
+import com.labok.goat.ui.tweaks.RefreshHelpSheet
+import com.labok.goat.ui.tweaks.RefreshScreen
 import com.labok.goat.ui.camera.CameraMuteHelpSheet
 import com.labok.goat.ui.camera.CameraMuteScreen
 import com.labok.goat.ui.rotate.ShakeCalibrationSheet
@@ -150,7 +152,7 @@ import kotlinx.coroutines.launch
 /** 이 너비(dp) 이상이면 사이드바를 늘 펼쳐 둔다(폴드 내부 화면·태블릿). */
 private const val WIDE_DP = 600
 
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, DNS_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, DNS_HELP, REFRESH_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -244,6 +246,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         val sections = buildList {
             add(NavSection("", listOf(NavItem.HOME)))
             add(NavSection(Copy.MENU_SECTION_SCREEN, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
+            add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.REFRESH)))
             add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE, NavItem.ANIMATION)))
             add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.PRIVATE_DNS)))
             if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
@@ -283,6 +286,11 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             )
             NavItem.APP_CLEANUP -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.BLOAT_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
+                Copy.MENU_REPORT to report,
+            )
+            NavItem.REFRESH -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.REFRESH_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report,
             )
@@ -426,6 +434,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.HOME -> Dashboard(inner, state, sections, onOpen = { item, at -> revealFrom = at; feature = item; shown = item })
                             NavItem.ANIMATION -> AnimationScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.APP_CLEANUP -> BloatScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
+                            NavItem.REFRESH -> RefreshScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.PRIVATE_DNS -> DnsScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                         }
@@ -482,6 +491,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.ANIM_HELP -> AnimationHelpSheet()
                     Sheet.BLOAT_HELP -> BloatHelpSheet()
                     Sheet.DNS_HELP -> DnsHelpSheet()
+                    Sheet.REFRESH_HELP -> RefreshHelpSheet()
                 }
             }
         }
