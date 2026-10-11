@@ -88,7 +88,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.labok.goat.AppInfo
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.PanelSpec
 import com.labok.goat.domain.ScreenPolicy
@@ -307,7 +306,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                                 label = "title",
                             ) { f ->
                                 Text(
-                                    if (f == NavItem.DPI_MATCH) AppInfo.NAME else f.label,
+                                    f.label,
                                     fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp,
                                 )
                             }
