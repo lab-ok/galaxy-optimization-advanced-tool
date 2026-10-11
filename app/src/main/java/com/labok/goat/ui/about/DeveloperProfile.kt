@@ -6,7 +6,7 @@ import com.labok.goat.AppInfo
 object DeveloperProfile {
     const val PRODUCT = AppInfo.NAME
     const val TAGLINE = AppInfo.FULL_NAME
-    const val DESCRIPTION = "폴드의 외부·내부 화면 배율을 맞추고, 앱마다 화면 배율을 따로 정하는 갤럭시 화면 배율 도구입니다. 바꾼 값은 재부팅 후에도 유지됩니다."
+    const val DESCRIPTION = "갤럭시를 더 편하게 쓰게 해 주는 도구 모음입니다. 폴드의 두 화면 배율을 맞추고, 앱마다 화면 배율을 따로 정하고, 흔들어서 화면을 돌립니다. ROOT 없이 동작하고, 바꾼 설정은 재부팅 후에도 유지됩니다."
     const val CONTACT_EMAIL = "lala5bok@gmail.com"
     const val COPYRIGHT = "© 2026 lala5bok · GPL-3.0"
     const val LICENSE = "GPL-3.0 (오픈소스)"
