@@ -40,11 +40,15 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
-        "GOAT 1.2", "2026-10-12", "잠자기 모드 끄기를 더했습니다.",
+        "GOAT 1.2", "2026-10-12", "잠자기 모드 끄기를 더하고, 작동 기록 파일은 기본으로 남기지 않습니다.",
         listOf(
             "새 기능" to listOf(
                 "잠자기 모드 끄기: 화면이 꺼진 동안 앱 동작을 몰아서 늦추는 잠자기 모드(Doze)를 꺼 알림이 늦게 오지 않게 합니다. " +
                     "'adb shell dumpsys deviceidle disable'과 같은 방법이며, 재부팅하면 다시 켜지는 설정이라 부팅마다 Shizuku가 연결될 때 다시 끕니다(Shizuku).",
+            ),
+            "기록 파일" to listOf(
+                "기록 파일 남기기: 홈 맨 아래에 스위치를 두고 기본은 끔으로 했습니다. 끄면 다운로드 폴더에 작동 기록 파일을 만들지 않습니다.",
+                "기기에 따라 작동 기록 파일이 '(1)'·'(2)'처럼 번호를 붙여 계속 새로 생기던 문제를 고쳤습니다(새 파일은 하루 한 번만 만듭니다).",
             ),
         ),
     ),

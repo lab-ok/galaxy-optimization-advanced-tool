@@ -255,6 +255,8 @@ object Copy {
 
     // GOS 끄기
     const val FEATURE_GOS = "GOS 끄기"
+    const val LOG_FILE_TITLE = "기록 파일 남기기"
+    const val LOG_FILE_BODY = "켜면 다운로드/GOAT에 날짜별 작동 기록을 남깁니다. 문제를 신고할 때 도움이 됩니다."
     const val FEATURE_DOZE = "잠자기 모드 끄기"
     const val DOZE_INTRO_TITLE = "알림이 늦게 오지 않게"
     const val DOZE_INTRO_BODY = "화면을 끄고 두면 앱 동작을 몰아서 늦추는 잠자기 모드(Doze)를 끕니다."

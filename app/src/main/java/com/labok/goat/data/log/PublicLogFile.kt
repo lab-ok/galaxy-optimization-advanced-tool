@@ -29,27 +29,41 @@ object PublicLogFile {
 
     private val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
 
+    /**
+     * 기록 파일을 남길지(홈 맨 아래 스위치). 기본은 꺼짐: 끄면 다운로드 폴더에 아무 파일도 만들지 않는다.
+     * 앱 안의 짧은 기록(고급 정보·문제 신고용, 앱 저장소 안)은 그대로 남는다.
+     */
+    fun enabled(context: Context) = context.applicationContext.getSharedPreferences("public_log", Context.MODE_PRIVATE).getBoolean("enabled", false)
+
+    fun setEnabled(context: Context, on: Boolean) {
+        context.applicationContext.getSharedPreferences("public_log", Context.MODE_PRIVATE).edit().putBoolean("enabled", on).apply()
+    }
+
     /** 일반 기록: 백그라운드 스레드에서 덧붙인다(메인 스레드를 막지 않음). */
     fun post(context: Context, text: String) {
         val app = context.applicationContext
+        if (!enabled(app)) return
         executor.execute { append(app, text) }
     }
 
     /** 즉시 기록(강제 종료처럼 프로세스가 곧 끝나는 경우). */
     fun append(context: Context, text: String) = synchronized(lock) {
         val app = context.applicationContext
+        if (!enabled(app)) return@synchronized
         val pending = Storage.pendingPublicLog(app)
         val unlocked = app.getSystemService(UserManager::class.java).isUserUnlocked
         if (!unlocked) {
             runCatching { pending.parentFile?.mkdirs(); pending.appendText(text) }
             return@synchronized
         }
-        runCatching {
-            val carry = if (pending.exists()) pending.readText() else ""
-            val uri = uriForToday(app) ?: return@runCatching
-            app.contentResolver.openOutputStream(uri, "wa")?.use { it.write((carry + text).toByteArray()) }
-            if (carry.isNotEmpty()) pending.delete()
-        }
+        val carry = runCatching { if (pending.exists()) pending.readText() else "" }.getOrDefault("")
+        val wrote = runCatching {
+            val uri = uriForToday(app) ?: return@runCatching false
+            app.contentResolver.openOutputStream(uri, "wa")?.use { it.write((carry + text).toByteArray()) } != null
+        }.getOrDefault(false)
+        if (wrote) { if (carry.isNotEmpty()) pending.delete() }
+        // 쓰지 못했으면 앱 안에 모아 두었다가 다음에 오늘 파일을 찾으면 함께 쓴다(새 파일을 계속 만들지 않는다)
+        else runCatching { pending.parentFile?.mkdirs(); pending.appendText(text) }
     }
 
     /** 오늘 로그 파일(있으면). 공유에 첨부한다. */
@@ -97,14 +111,31 @@ object PublicLogFile {
 
     private fun todayName() = "goat-${dayFormat.format(Date())}-log.txt"
 
+    /**
+     * 오늘 로그 파일. ① 오늘 만든 파일의 Uri를 기억해 두었으면 그것을 쓰고, ② 없으면 이름으로 찾고, ③ 그래도 없을 때만 새로 만든다.
+     * 새로 만드는 것은 하루 한 번뿐이다: 기기에 따라 미디어 저장소가 다시 색인되며 이 앱이 만든 파일을 못 찾게 되는 일이 있어,
+     * 그때마다 새로 만들면 '(1)'·'(2)'처럼 번호 붙은 파일이 계속 쌓인다. 오늘 이미 만들었는데 쓰지 못하면 null을 돌려
+     * 앱 안에 모아 둔다.
+     */
     private fun uriForToday(context: Context): Uri? {
         val name = todayName()
-        find(context, name)?.let { return it }
+        val day = name.removeSuffix(".txt")
+        val p = context.getSharedPreferences("public_log", Context.MODE_PRIVATE)
+        val remembered = p.getString("uri", null)?.takeIf { p.getString("day", null) == day }?.let(Uri::parse)
+        if (remembered != null && writable(context, remembered)) return remembered
+        find(context, name)?.let { p.edit().putString("day", day).putString("uri", it.toString()).apply(); return it }
+        if (p.getString("created", null) == day) return null
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
             put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/")
         }
-        return context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+        val made = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return null
+        p.edit().putString("day", day).putString("uri", made.toString()).putString("created", day).apply()
+        return made
     }
+
+    /** 이 Uri에 덧붙여 쓸 수 있는지(지워졌거나 권한을 잃었으면 false). */
+    private fun writable(context: Context, uri: Uri): Boolean =
+        runCatching { context.contentResolver.openFileDescriptor(uri, "wa")?.use { true } ?: false }.getOrDefault(false)
 }

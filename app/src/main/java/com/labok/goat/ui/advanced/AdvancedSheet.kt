@@ -1,5 +1,6 @@
 package com.labok.goat.ui.advanced
 
+import androidx.compose.ui.platform.LocalContext
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -84,7 +85,11 @@ internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
         GlassCard {
             Text("로그", fontWeight = FontWeight.SemiBold, color = c.ink)
             Spacer(Modifier.height(Gap.Tight))
-            Text("내장 저장소 ${PublicLogFile.displayPath}에 날짜별로 자동 저장됩니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text(
+                if (PublicLogFile.enabled(LocalContext.current)) "내장 저장소 ${PublicLogFile.displayPath}에 날짜별로 저장합니다."
+                else "앱 안에만 짧게 남깁니다. 홈 맨 아래 '기록 파일 남기기'를 켜면 ${PublicLogFile.displayPath}에도 날짜별로 저장합니다.",
+                color = c.muted, style = MaterialTheme.typography.bodySmall,
+            )
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("앱 내부 로그 삭제", modifier = Modifier.fillMaxWidth(), onClick = onClearLogs, primary = false)
         }
