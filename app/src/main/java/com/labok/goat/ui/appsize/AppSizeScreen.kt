@@ -84,6 +84,7 @@ import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidTextField
+import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.text.Copy
@@ -307,7 +308,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                     }
                 }
                 if (apps == null) item(key = "loading") {
-                    Text("앱 목록을 불러오는 중…", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(6.dp))
+                    LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp))
                 }
                 if (applied.isNotEmpty()) {
                     item(key = "h-applied") {

@@ -51,6 +51,7 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.text.Copy
@@ -128,6 +129,9 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     }
                 }
             }
+        }
+        if (ready && found == null) item(key = "loading") {
+            LiquidLoader(Copy.BLOAT_LOADING, Modifier.widthIn(max = ContentMaxWidth))
         }
         if (!ready) item(key = "connect") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {

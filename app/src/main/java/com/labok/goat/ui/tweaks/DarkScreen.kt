@@ -135,6 +135,7 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 GlassCard {
                     Text(Copy.DARK_CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.DARK_CAUTION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(Copy.DARK_CAUTION_BODY2, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -158,10 +159,16 @@ internal fun DarkHelpSheet() {
         HelpTopic(
             "3. 다크 모드가 없는 앱 전체에 적용됩니다",
             "앱마다 따로 고르는 공식 방법이 없어 다크 모드가 없는 앱 전체에 적용됩니다. 앱이 스스로 강제 다크를 막아 둔 경우나 " +
-                "이미 다크 모드가 있는 앱은 그대로입니다. 일부 앱은 색이 어색하게 보일 수 있으니 그럴 때는 끄세요.",
+                "이미 다크 모드가 있는 앱은 그대로입니다.",
         )
         HelpTopic(
-            "4. 재부팅 뒤",
+            "4. 생길 수 있는 화면 오류",
+            "강제 다크는 시스템이 다른 앱의 색을 대신 바꾸는 기능이라 앱마다 어색한 부분이 생길 수 있습니다. 예를 들어 바탕은 어두워졌는데 " +
+                "상태 표시줄 글자·아이콘이 검은색으로 남아 보이지 않거나, 홈 화면 폴더 뒤에 흰 네모가 보일 수 있습니다. " +
+                "다른 앱 안의 일이라 GOAT가 고칠 수 없으니, 거슬리면 스위치를 꺼 주세요. 끄면 원래대로 돌아갑니다.",
+        )
+        HelpTopic(
+            "5. 재부팅 뒤",
             "이 설정은 재부팅하면 꺼집니다. '재부팅 뒤 다시 켜기'를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 다시 켭니다. " +
                 "같은 부팅 안에서 개발자 옵션으로 끈 것은 그대로 둡니다. Shizuku 셸 권한으로 바꿉니다.",
         )

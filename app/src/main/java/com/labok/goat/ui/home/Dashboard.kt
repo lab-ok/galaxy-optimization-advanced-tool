@@ -1,5 +1,7 @@
 package com.labok.goat.ui.home
 
+import android.os.SystemClock
+
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -164,6 +166,8 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
         }
     }
     val features = sections.flatMap { it.items }.filter { it != NavItem.HOME && it != NavItem.LAB_TOOLS }
+    // 홈이 처음 보인 시각: 이 시간 안에 그려진 카드만 등장 애니메이션을 한다
+    val shownAt = remember { SystemClock.uptimeMillis() }
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(168.dp),
@@ -193,7 +197,8 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             }
         }
         itemsIndexed(features, key = { _, it -> it.name }) { i, item ->
-            BlobCard(item, status(item), active(item), order = i + 1) { at -> onOpen(item, at) }
+            // 처음 화면에 보인 카드만 차례로 맺히고, 나중에 스크롤로 들어오는 카드는 동그라미에서 터지듯 커지지 않게 바로 그린다
+            BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> onOpen(item, at) }
         }
     }
 }
@@ -219,7 +224,7 @@ private fun Badge(label: String, on: Boolean) {
  * 표면장력으로 돌아온다. 켜진 기능은 테두리가 잉크색으로 굵어지고(바탕은 그대로), 오른쪽 위 상태 알약이 점에서 '켜짐' 알약으로 출렁이며 늘어난다.
  */
 @Composable
-private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onClick: (Offset) -> Unit) {
+private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, intro: Boolean, onClick: (Offset) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val haptics = rememberLiquidHaptics()
@@ -232,7 +237,8 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
     // 카드의 화면 위치(누른 자리를 화면 기준으로 바꿔 다음 화면이 거기서 번지게)
     var origin by remember { mutableStateOf(Offset.Zero) }
     val fill by animateFloatAsState(if (on) 1f else 0f, Springs.calm(reduce), label = "fill")
-    val text = remember { Animatable(if (reduce) 1f else 0f) }
+    val animateIn = intro && !reduce
+    val text = remember { Animatable(if (animateIn) 0f else 1f) }
     val corner = with(d) { LiquidShape.card.toPx() }
     val pillW = with(d) { 52.dp.toPx() }
     val pillH = with(d) { 24.dp.toPx() }
@@ -245,7 +251,7 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
     LaunchedEffect(box) {
         if (box == IntSize.Zero) return@LaunchedEffect
         val w = box.width.toFloat(); val h = box.height.toFloat()
-        if (!reduce) {
+        if (animateIn) {
             body.moveTo(w / 2, h / 2, w * 0.3f, w * 0.3f, animate = false)
             kotlinx.coroutines.delay(60L * order)
         }
@@ -254,8 +260,8 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
         body.blob.damping = 1.6f
         pill.blob.gain = 1.6f
         pill.blob.damping = 1.8f
-        body.moveTo(w / 2, h / 2, w, h, animate = !reduce, corner = corner)
-        text.animateTo(1f, Springs.calm(reduce))
+        body.moveTo(w / 2, h / 2, w, h, animate = animateIn, corner = corner)
+        if (animateIn) text.animateTo(1f, Springs.calm(reduce)) else text.snapTo(1f)
     }
     // 상태 알약: 꺼짐은 작은 점, 켜짐은 알약(출렁이며 늘어난다)
     LaunchedEffect(box, on) {
@@ -320,3 +326,6 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
         )
     }
 }
+
+/** 홈이 처음 보인 뒤 이 시간 안에 나타난 카드만 등장 애니메이션을 한다(ms). */
+private const val INTRO_MS = 1200L
