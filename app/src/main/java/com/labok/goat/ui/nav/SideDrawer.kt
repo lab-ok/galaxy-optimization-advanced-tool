@@ -108,6 +108,8 @@ fun SideDrawerContent(
     visible: Boolean,
     onSelect: (NavItem) -> Unit,
     onAbout: () -> Unit,
+    /** 위에 덮이는 서랍일 때: 살짝 비치는 유리처럼 뒤(흐려진 본문)가 은은하게 보인다. */
+    glass: Boolean = false,
 ) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
@@ -140,7 +142,7 @@ fun SideDrawerContent(
             .fillMaxHeight()
             .width(300.dp)
             .clip(RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp))
-            .background(c.bg),
+            .background(if (glass) c.bg.copy(alpha = GLASS_ALPHA) else c.bg),
     ) {
         Column(
             Modifier
@@ -438,3 +440,6 @@ private fun DrawScope.flask(c: Color, s: Stroke) {
     drawCircle(c, u(0.9f), p(10.5f, 17.4f))
     drawCircle(c, u(0.65f), p(13.8f, 16.8f))
 }
+
+/** 덮이는 서랍·시트의 불투명도: 흐려진 뒤 화면이 살짝 비친다. */
+internal const val GLASS_ALPHA = 0.84f

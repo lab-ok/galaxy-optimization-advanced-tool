@@ -1,5 +1,10 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.nav.GLASS_ALPHA
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.ui.draw.blur
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.domain.DpiPolicy
 import androidx.compose.ui.layout.positionInRoot
@@ -369,7 +374,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             else { revealFrom = null; feature = NavItem.HOME; shown = NavItem.HOME }
         }
         val drawerItems: @Composable () -> Unit = {
-                SideDrawerContent(sections, current = feature, visible = wide || drawer.targetValue == DrawerValue.Open, onAbout = {
+                SideDrawerContent(sections, current = feature, visible = wide || drawer.targetValue == DrawerValue.Open, glass = !wide, onAbout = {
                     scope.launch { drawer.close() }
                     sheet = Sheet.ABOUT
                 }, onSelect = { item ->
@@ -458,17 +463,21 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 }
             }
         }
+        // 서랍·시트가 덮으면 뒤 화면을 흐린다(덮개는 반투명이라 흐려진 화면이 살짝 비친다). 동작 줄이기면 바로 바꾼다.
+        val reduce = LocalReduceMotion.current
+        val covered = sheet != null || (!wide && drawer.targetValue == DrawerValue.Open)
+        val behind by animateDpAsState(if (covered) BEHIND_BLUR else 0.dp, if (reduce) snap() else tween(280), label = "behindBlur")
         if (wide) {
-            Row(Modifier.fillMaxSize().background(c.bg)) {
+            Row(Modifier.fillMaxSize().background(c.bg).blur(behind)) {
                 drawerItems()
                 Box(Modifier.weight(1f)) { main() }
             }
         } else {
             ModalNavigationDrawer(
                 drawerState = drawer,
-                scrimColor = c.ink.copy(alpha = 0.32f),
+                scrimColor = c.ink.copy(alpha = 0.16f),
                 drawerContent = drawerItems,
-            ) { main() }
+            ) { Box(Modifier.blur(behind)) { main() } }
         }
 
         if (counting) RowCountOverlay(onClose = { counting = false; sheet = Sheet.TEST })
@@ -481,7 +490,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             ModalBottomSheet(
                 onDismissRequest = { sheet = null },
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                containerColor = c.bg,
+                containerColor = c.bg.copy(alpha = GLASS_ALPHA),
+                scrimColor = c.ink.copy(alpha = 0.16f),
             ) {
                 when (current) {
                     Sheet.HELP -> HelpSheet(state, onOpenGuide = { sheet = Sheet.GUIDE })
@@ -800,3 +810,6 @@ private fun ResetSheet(
         }
     }
 }
+
+/** 서랍·시트가 덮었을 때 뒤 화면 흐림 반지름. */
+private val BEHIND_BLUR = 14.dp
