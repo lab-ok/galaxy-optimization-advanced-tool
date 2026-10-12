@@ -29,10 +29,12 @@ data class LiquidLook(
     val damping: Float,
     /** 휘두름·충격이 잡히면 물방울을 튀기는 세기(dp/프레임, 세기가 판정 기준의 몇 배인지(최대 3배)에 곱한다). */
     val splash: Float,
+    /** 흩어짐([FluidSim.scatter]): 1이 기본, 크면 흔들 때 무수한 작은 방울로 갈라진다. */
+    val scatter: Float = 1f,
 ) {
 
     fun apply(sim: FluidSim) {
-        sim.rest = rest; sim.k = k; sim.kNear = kNear; sim.sigma = sigma; sim.beta = beta; sim.damping = damping
+        sim.rest = rest; sim.k = k; sim.kNear = kNear; sim.sigma = sigma; sim.beta = beta; sim.damping = damping; sim.scatter = scatter
     }
 
     companion object {

@@ -25,6 +25,11 @@ class FluidSim(val n: Int, val h: Float) {
     var beta = 0.01f
     /** 속도 감쇠(프레임당). 1에 가까울수록 오래 출렁인다. */
     var damping = 0.995f
+    /**
+     * 흩어짐(1이 기본): 크면 충격·흔들기에 더 많은 입자가 튀고 옆으로도 넓게 퍼지며, 표면장력이 더 오래·더 많이 풀려
+     * 무수한 작은 방울로 갈라졌다가 천천히 다시 모인다. 작으면 가장자리 몇 방울만 튀고 금방 한 덩어리로 돌아온다.
+     */
+    var scatter = 1f
 
     /** 튀는 중(1 → 0): 충격 직후 표면장력을 잠깐 풀어 튄 물방울이 떨어져 날아갔다가 천천히 돌아오게 한다. */
     private var loose = 0f
@@ -42,10 +47,11 @@ class FluidSim(val n: Int, val h: Float) {
         var front = 1f
         for (i in 0 until n) front = maxOf(front, (x[i] - mx) * ux + (y[i] - my) * uy)
         for (i in 0 until n) {
-            val ahead = (((x[i] - mx) * ux + (y[i] - my) * uy) / front - 0.55f) / 0.45f
+            val cut = (1f - 0.45f * scatter).coerceAtLeast(-1f)
+            val ahead = (((x[i] - mx) * ux + (y[i] - my) * uy) / front - cut) / (1f - cut)
             if (ahead <= 0f) continue
             val h1 = ((i * 2654435761L) ushr 16 and 0xFF) / 255f
-            val h2 = ((i * 40503L + 12345L) ushr 4 and 0xFF) / 255f - 0.5f
+            val h2 = (((i * 40503L + 12345L) ushr 4 and 0xFF) / 255f - 0.5f) * scatter
             val k = power * ahead * (0.3f + 1.4f * h1 * h1)   // 몇 개만 멀리, 나머지는 조금
             vx[i] += (ux - uy * h2) * k
             vy[i] += (uy + ux * h2) * k
@@ -62,7 +68,8 @@ class FluidSim(val n: Int, val h: Float) {
         for (i in 0 until n) {
             val ox = x[i] - mx; val oy = y[i] - my
             val d = sqrt(ox * ox + oy * oy).coerceAtLeast(1e-4f)
-            val edge = ((d / far - 0.75f) / 0.25f).coerceIn(0f, 1f)
+            val band = (0.25f * scatter).coerceIn(0.05f, 1f)
+            val edge = ((d / far - (1f - band)) / band).coerceIn(0f, 1f)
             if (edge <= 0f) continue
             val h1 = ((i * 2654435761L) ushr 16 and 0xFF) / 255f
             val k = power * edge * (0.3f + 1.4f * h1 * h1)
@@ -100,9 +107,9 @@ class FluidSim(val n: Int, val h: Float) {
         if (!ready) return
         val (mx0, my0) = center()
         // 튄 직후에는 표면장력을 잠깐 약하게(튄 방울이 떨어져 나간다), 0.5초쯤 지나면 다시 모은다
-        val glue = cohesion * (1f - 0.9f * loose)
-        val visc = 1f - 0.85f * loose
-        loose = (loose - 0.03f * dt).coerceAtLeast(0f)
+        val glue = cohesion * (1f - (0.9f * scatter).coerceAtMost(1f) * loose)
+        val visc = 1f - (0.85f * scatter).coerceAtMost(0.98f) * loose
+        loose = (loose - 0.03f / scatter.coerceAtLeast(0.1f) * dt).coerceAtLeast(0f)
         // 1) 힘 → 속도
         for (i in 0 until n) {
             val rx = x[i] - cx; val ry = y[i] - cy

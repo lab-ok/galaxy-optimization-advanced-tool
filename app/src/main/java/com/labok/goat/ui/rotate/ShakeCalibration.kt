@@ -9,6 +9,11 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
@@ -63,6 +68,8 @@ import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.goo
 import com.labok.goat.ui.liquid.LiquidLook
+import com.labok.goat.ui.liquid.LiquidSlider
+import com.labok.goat.ui.liquid.LiquidTune
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.nudge
 import com.labok.goat.ui.liquid.poke
@@ -92,6 +99,8 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
     var running by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<Int?>(null) }
     var failed by remember { mutableStateOf(false) }
+    var tune by remember { mutableStateOf(LiquidTune.read(context)) }
+    var tuning by remember { mutableStateOf(false) }
     // 제목은 다른 시트처럼 왼쪽, 본문(물방울·결과)은 가운데
     SheetColumn(Copy.SHAKE_CALIBRATE) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -104,7 +113,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                 },
                 color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center,
             )
-            LiquidPlayground(round = round, recording = running, onDone = { lv ->
+            LiquidPlayground(round = round, recording = running, look = LiquidTune.look(tune), onDone = { lv ->
                 running = false
                 if (lv == null) failed = true
                 else { ShakeRotate.setLevel(context, lv, "자동 맞추기"); result = lv }
@@ -136,6 +145,11 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                     }
                 }
             }
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton(Copy.FLUID_TUNE, modifier = Modifier.fillMaxWidth(), primary = false, onClick = { tuning = !tuning })
+            AnimatedVisibility(tuning, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                FluidTuner(tune, onChange = { tune = it })
+            }
         }
     }
 }
@@ -150,7 +164,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
  * 둘레의 호는 남은 시간, 아래 점은 잡힌 휘두름 수다. 이 시트가 열려 있는 동안 흔들어도 화면은 돌지 않는다.
  */
 @Composable
-private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> Unit) {
+private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, onDone: (Int?) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val context = LocalContext.current
@@ -163,11 +177,15 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
     val time = remember { Animatable(1f) }
     var frame by remember { mutableLongStateOf(0L) }
     val haptics = rememberLiquidHaptics()
-    val look = LiquidLook.default
     val h = with(density) { look.hDp.dp.toPx() }
     val glass = with(density) { look.glassDp.dp.toPx() }
     val dp = density.density
-    val sim = remember { FluidSim(look.particles, h).apply { look.apply(this) } }
+    // 물의 양(입자 수)이 바뀌면 새로 채우고, 나머지 물성은 조절바를 움직이는 동안 그대로 이어서 바꾼다
+    val sim = remember(look.particles) { FluidSim(look.particles, h).apply { look.apply(this) } }
+    LaunchedEffect(look) { look.apply(sim) }
+    // 센서 콜백·프레임 루프는 한 번만 등록하므로 최신 액체와 물성을 이 상태로 읽는다
+    val simNow by rememberUpdatedState(sim)
+    val lookNow by rememberUpdatedState(look)
     // 센서 최신값(화면 좌표로 바꾼 힘)과 저역 통과로 떼어 낸 중력(기기 좌표)
     val force = remember { FloatArray(2) }
     val gravity = remember { FloatArray(2) }
@@ -183,7 +201,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
     }
     var record by remember { mutableStateOf(ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN)) }
 
-    LaunchedEffect(box) {
+    LaunchedEffect(box, sim) {
         if (box == IntSize.Zero) return@LaunchedEffect
         if (!sim.ready) sim.reset(box.width / 2f, box.height / 2f, glass) else sim.container(box.width / 2f, box.height / 2f, glass)
     }
@@ -216,6 +234,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
             val now = withFrameNanos { it }
             val f = if (last == 0L) 1f else ((now - last) / 16_666_667f).coerceIn(0.25f, 3f)
             last = now
+            val sim = simNow; val look = lookNow
             if (!sim.ready) continue
             // 한 걸음은 반 프레임 이하로 나눈다: 프레임이 밀려 한 번에 크게 적분하면 점성·표면장력이 강한 액체가 터진다.
             // 너무 밀리면(4걸음 넘게) 그만큼 느리게 움직이게 둔다.
@@ -242,6 +261,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, onDone: (Int?) -> U
                 // 화면 좌표: 기기 x는 화면 오른쪽, 기기 y는 화면 위쪽(반대로)
                 val ax = e.values[0]; val ay = e.values[1]
                 gravity[0] += (ax - gravity[0]) * GRAVITY_LP; gravity[1] += (ay - gravity[1]) * GRAVITY_LP
+                val sim = simNow; val look = lookNow
                 val g = look.gToPx * dp
                 val lx = ax - gravity[0]; val ly = ay - gravity[1]
                 force[0] = -(lx + gravity[0] * look.gravity) * g
@@ -327,5 +347,34 @@ private fun Dot(filled: Boolean) {
     Canvas(Modifier.size(18.dp)) {
         drawCircle(c.line, size.minDimension / 2 * 0.62f)
         if (k > 0.01f) drawCircle(c.ink, size.minDimension / 2 * (0.62f + 0.38f * k) * k.coerceAtMost(1.2f))
+    }
+}
+
+/**
+ * 물방울 조절바들([LiquidTune]). 움직이는 동안 위 물방울에 바로 반영하고, 손을 떼면 저장한다.
+ * 물의 양은 바꾸면 물방울을 새로 채우므로 손을 뗐을 때만 반영한다.
+ */
+@Composable
+private fun FluidTuner(tune: Map<String, Int>, onChange: (Map<String, Int>) -> Unit) {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    Column(Modifier.fillMaxWidth()) {
+        Spacer(Modifier.height(Gap.Item))
+        Text(Copy.FLUID_TUNE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        LiquidTune.all.forEach { knob ->
+            Spacer(Modifier.height(Gap.Item))
+            Text(knob.label, color = c.ink)
+            var v by remember(tune[knob.key]) { mutableIntStateOf(tune[knob.key] ?: knob.default) }
+            LiquidSlider(
+                value = v, range = knob.range,
+                onValueChange = { v = it; if (knob !== LiquidTune.WATER) onChange(tune + (knob.key to it)) },
+                onValueChangeFinished = { LiquidTune.save(context, knob, v); onChange(tune + (knob.key to v)) },
+                valueText = knob.text, description = knob.label,
+            )
+        }
+        Spacer(Modifier.height(Gap.Item))
+        LiquidButton(Copy.FLUID_RESET, modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+            LiquidTune.reset(context); onChange(LiquidTune.defaults())
+        })
     }
 }
