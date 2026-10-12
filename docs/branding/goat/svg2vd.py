@@ -1,4 +1,4 @@
-"""작은 SVG → Android VectorDrawable 변환기(염소 아이콘에 쓰인 요소만: g transform, path, circle, ellipse, rect, line, radialGradient)."""
+"""작은 SVG → Android VectorDrawable 변환기(염소 아이콘에 쓰인 요소만: g transform(좌우 반전·이동+배율·회전), path, circle, ellipse, rect, line, radialGradient)."""
 import re, sys, xml.etree.ElementTree as ET
 NS='{http://www.w3.org/2000/svg}'
 def num(v): return float(v)
@@ -79,6 +79,8 @@ class Conv:
                 if m: ga=['android:scaleX="-1"',f'android:pivotX="{float(m.group(1))/2}"']
                 m2=re.match(r'translate\((\S+) (\S+)\) scale\((\S+)\)',t)
                 if m2: ga=[f'android:translateX="{m2.group(1)}"',f'android:translateY="{m2.group(2)}"',f'android:scaleX="{m2.group(3)}"',f'android:scaleY="{m2.group(3)}"']
+                m3=re.match(r'rotate\((\S+) (\S+) (\S+)\)',t)
+                if m3: ga=[f'android:rotation="{m3.group(1)}"',f'android:pivotX="{m3.group(2)}"',f'android:pivotY="{m3.group(3)}"']
                 s.out.append(f'{ind}<group {" ".join(ga)}>'); s.group(c, ind+'    '); s.out.append(f'{ind}</group>')
             else: s.shape(c, ind)
 def convert(svg_text, size_dp=108):

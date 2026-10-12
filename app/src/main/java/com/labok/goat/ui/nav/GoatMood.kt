@@ -18,8 +18,9 @@ import kotlinx.coroutines.delay
 enum class Mood { CALM, SQUINT, CRY, ANGRY }
 
 /**
- * 염소 아이콘의 표정(사이드바 머리·앱 정보·홈 머리). 누를 때마다 잠깐 찡그리고, 3초 안에 [CRY_AT]번 넘게 누르면 울고,
- * [ANGRY_AT]번 넘게 누르면 화낸다(볼이 빨개짐). 손을 떼고 조금 지나면 평소 얼굴로 돌아온다.
+ * 염소 아이콘의 표정(사이드바 머리·앱 정보·홈 머리). 누를 때마다 잠깐 찡그리고, 쉬지 않고 이어서 [CRY_AT]번 누르면 울고,
+ * 계속 누르면 [CYCLE]번마다 화남(볼이 빨개짐)과 울음이 번갈아 나온다. 손을 떼고 조금 지나면 평소 얼굴로 돌아온다.
+ * '이어서'는 앞 누름과 [STREAK_GAP_MS] 안에 다시 누른 것을 말한다.
  */
 class GoatMoodState {
     var mood by mutableStateOf(Mood.CALM)
@@ -27,20 +28,19 @@ class GoatMoodState {
     internal var presses by mutableIntStateOf(0)
         private set
     private val taps = ArrayDeque<Long>()
+    /** 쉬지 않고 이어서 누른 횟수. */
+    private var streak = 0
 
     /** 눌렀다. 표정을 바꾸고, 화가 난 순간이면 true(더 단단한 진동용). 울기 시작한 순간은 [startedCrying]. */
     var startedCrying = false
         private set
 
     fun press(now: Long = System.currentTimeMillis()): Boolean {
+        streak = if (taps.isNotEmpty() && now - taps.last() <= STREAK_GAP_MS) streak + 1 else 1
         taps.addLast(now)
         while (taps.isNotEmpty() && now - taps.first() > WINDOW_MS) taps.removeFirst()
         val before = mood
-        mood = when {
-            taps.size >= ANGRY_AT -> Mood.ANGRY
-            taps.size >= CRY_AT -> Mood.CRY
-            else -> Mood.SQUINT
-        }
+        mood = moodAt(streak)
         presses++
         startedCrying = mood == Mood.CRY && before != Mood.CRY
         return mood == Mood.ANGRY && before != Mood.ANGRY
@@ -58,6 +58,17 @@ class GoatMoodState {
         const val WINDOW_MS = 3000L
         const val CRY_AT = 5
         const val ANGRY_AT = 10
+        /** 울음 다음부터 이만큼 누를 때마다 화남 ↔ 울음이 바뀐다. */
+        const val CYCLE = ANGRY_AT - CRY_AT
+        /** 이 시간 안에 다시 누르면 이어서 누른 것으로 본다(ms). */
+        const val STREAK_GAP_MS = 1200L
+
+        /** 이어서 [n]번째 누름의 표정: 찡그림 → 울음 → 화남 → 울음 → 화남 … */
+        fun moodAt(n: Int): Mood = when {
+            n < CRY_AT -> Mood.SQUINT
+            (n - CRY_AT) / CYCLE % 2 == 0 -> Mood.CRY
+            else -> Mood.ANGRY
+        }
         /** 표정이 남아 있는 시간(ms). */
         fun holdMs(m: Mood) = when (m) { Mood.SQUINT -> 450L; Mood.CRY -> 1800L; Mood.ANGRY -> 2400L; Mood.CALM -> 0L }
     }

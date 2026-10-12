@@ -20,13 +20,21 @@ goat, svg, tile, scale, HEAD = ns['goat'], ns['svg'], ns['tile'], ns['scale'], n
 res = os.path.join(HERE, '..', '..', '..', 'app', 'src', 'main', 'res', 'drawable')
 
 body = goat()
+
+
+def drop(x, y, r, c='#7CC8FF'):
+    """눈물 방울(위가 뾰족한 물방울)."""
+    return (f'<path d="M{x} {y-r*1.9} Q{x+r} {y-r*0.4} {x+r} {y+0.2*r} A{r} {r} 0 1 1 {x-r} {y+0.2*r} '
+            f'Q{x-r} {y-r*0.4} {x} {y-r*1.9} Z" fill="{c}"/>')
+
 out = {
     'ic_launcher_fg.xml': (svg(scale(body, 0.84, -4)), 108),
     'ic_app_logo.xml': (svg(tile('#111111'), scale(body, 1.04, -2)), 72),
     'ic_goat.xml': (svg(scale(body, 1.0, 0)), 72),
     # 누를 때 표정: 찡그림 / 많이 누르면 울음 / 더 누르면 화남(볼이 빨개짐)
     'ic_goat_squint.xml': (svg(scale(goat(eye='squint', mouth='frown'), 1.0, 0)), 72),
-    'ic_goat_cry.xml': (svg(scale(goat(eye='cry', mouth='wobble', blush='#FF8FA3', blush_op=0.75), 1.0, 0)), 72),
+    # 울음(그렁그렁): 눈물이 고인 큰 눈 + 걱정 눈썹 + 떨리는 입 + 볼에 맺힌 눈물 방울 + 처진 귀
+    'ic_goat_cry.xml': (svg(scale(goat(eye='teary', mouth='quiver', blush='#FF8FA3', blush_op=0.8, ear_rot=-24, extra=drop(184, 330, 11) + drop(330, 342, 9)), 1.0, 0)), 72),
     'ic_goat_angry.xml': (svg(scale(goat(eye='angry', mouth='frown', blush='#FF4D4D', blush_op=0.85), 1.0, 0)), 72),
 }
 

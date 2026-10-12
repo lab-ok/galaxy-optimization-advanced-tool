@@ -26,7 +26,7 @@ HEAD='M256 170 C320 170 362 212 360 270 C358 330 316 374 256 376 C196 374 154 33
 
 def goat(fur='#FFF6E9', shade='#F1DFC6', muzzle='#FFFFFF', horn_c='#C79A6B', ridge='#A87B4F', ear_in='#FFB8B8',
          eye='round', eye_c='#2B2024', blush='#FF9DA7', blush_op=0.55, outline=None, ow=10, mouth='smile',
-         horn_style='curl', beard=True, tuft=True, half=None, extra=''):
+         horn_style='curl', beard=True, tuft=True, half=None, extra='', ear_rot=0):
     o=f' stroke="{outline}" stroke-width="{ow}" stroke-linejoin="round"' if outline else ''
     g=[]
     g.append('<defs><radialGradient id="head" cx="0.42" cy="0.32" r="0.8"><stop offset="0" stop-color="%s"/><stop offset="1" stop-color="%s"/></radialGradient></defs>'%(fur,shade))
@@ -37,7 +37,9 @@ def goat(fur='#FFF6E9', shade='#F1DFC6', muzzle='#FFFFFF', horn_c='#C79A6B', rid
                  f'<path d="M168 250 C138 232 104 236 82 258 C80 262 82 266 86 268 C112 288 146 290 174 276 Z"/><g {MIR}><path d="M168 250 C138 232 104 236 82 258 C80 262 82 266 86 268 C112 288 146 290 174 276 Z"/></g>'
                  f'<path d="{HEAD}"/><path d="M240 368 Q256 414 272 368 Z"/></g>')
     g.append(horn(horn_c,ridge,horn_style)); g.append(f'<g {MIR}>{horn(horn_c,ridge,horn_style)}</g>')
-    g.append(ear(fur,ear_in)); g.append(f'<g {MIR}>{ear(fur,ear_in)}</g>')
+    # ear_rot: 귀를 돌린다(음수면 축 처진다, 울 때)
+    e = ear(fur,ear_in) if not ear_rot else f'<g transform="rotate({ear_rot} 172 262)">{ear(fur,ear_in)}</g>'
+    g.append(e); g.append(f'<g {MIR}>{e}</g>')
     if beard: g.append(f'<path d="M240 366 Q248 382 252 404 Q256 412 260 404 Q264 382 272 366 Z" fill="{shade}"/>')
     g.append(f'<path d="{HEAD}" fill="url(#head)"/>')
     if half:  # fold hinge: darken right half
@@ -49,6 +51,7 @@ def goat(fur='#FFF6E9', shade='#F1DFC6', muzzle='#FFFFFF', horn_c='#C79A6B', rid
     if mouth=='smile': g.append('<path d="M240 344 Q248 354 256 346 Q264 354 272 344" stroke="%s" stroke-width="5" fill="none" stroke-linecap="round"/>'%eye_c)
     if mouth=='frown': g.append('<path d="M238 352 Q256 336 274 352" stroke="%s" stroke-width="6" fill="none" stroke-linecap="round"/>'%eye_c)
     if mouth=='wobble': g.append('<path d="M244 352 Q250 344 256 350 Q262 344 268 352" stroke="%s" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'%eye_c)
+    if mouth=='quiver': g.append('<path d="M233.6 354 Q244.8 344 256 352 Q267.2 344 278.4 354" stroke="%s" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'%eye_c)
     if mouth=='tongue': g.append('<path d="M240 344 Q256 360 272 344" stroke="%s" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M250 352 Q256 368 262 352 Z" fill="#FF6F86"/>'%eye_c)
     for cx in (212,300):
         if eye=='round':
@@ -67,6 +70,15 @@ def goat(fur='#FFF6E9', shade='#F1DFC6', muzzle='#FFFFFF', horn_c='#C79A6B', rid
                      f'<path d="M{cx-24} 292 Q{cx} 316 {cx+24} 292 Q{cx} 302 {cx-24} 292 Z" fill="#8FD3FF" opacity="0.9"/>'
                      f'<circle cx="{cx-9}" cy="273" r="10" fill="#fff"/><circle cx="{cx+10}" cy="290" r="5" fill="#fff"/><circle cx="{cx+3}" cy="268" r="3" fill="#fff"/>'
                      f'<path d="M{cx+(16 if cx==300 else -16)} 302 Q{cx+(8 if cx==300 else -8)} 322 {cx+(16 if cx==300 else -16)} 332 Q{cx+(24 if cx==300 else -24)} 322 {cx+(16 if cx==300 else -16)} 302 Z" fill="#8FD3FF"/>')
+        elif eye=='teary':  # 그렁그렁: 아래쪽이 눈물로 찬 큰 눈 + 반짝임 셋 + 아래 눈꺼풀 눈물 띠 + 걱정 눈썹(안쪽이 올라감)
+            s = -1 if cx==212 else 1
+            r, cy, wy = 30, 284, 291.8
+            hw = (r*r-(wy-cy)**2)**0.5
+            g.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{eye_c}"/>'
+                     f'<path d="M{cx-hw:.1f} {wy} Q{cx} {wy-6} {cx+hw:.1f} {wy} A{r} {r} 0 0 1 {cx-hw:.1f} {wy} Z" fill="#7CC8FF" opacity="0.85"/>'
+                     f'<circle cx="{cx-9}" cy="{cy-11}" r="11" fill="#fff"/><circle cx="{cx+10}" cy="{cy+6}" r="6" fill="#fff"/><circle cx="{cx+4}" cy="{cy-17}" r="3.5" fill="#fff"/>'
+                     f'<path d="M{cx-r-3} {cy+6} Q{cx} {cy+r+12} {cx+r+3} {cy+6}" stroke="#B9E3FF" stroke-width="5" fill="none" stroke-linecap="round"/>'
+                     f'<path d="M{cx+24*s} 255.6 Q{cx+2*s} 242.8 {cx-16*s} 226" stroke="{eye_c}" stroke-width="7" fill="none" stroke-linecap="round"/>')
         elif eye=='angry':  # 화남: 작은 눈 + 안쪽으로 내려간 눈썹
             d = 1 if cx==212 else -1
             g.append(f'<circle cx="{cx}" cy="286" r="17" fill="{eye_c}"/><circle cx="{cx-5}" cy="280" r="5" fill="#fff"/>'
