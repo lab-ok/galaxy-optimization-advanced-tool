@@ -46,8 +46,44 @@ object Hotspot {
         Apn(map)
     }.toList()
 
-    /** 지금 쓰는 인터넷 APN(작업 스레드). 읽지 못하면 null. */
-    fun current(): Apn? = ShizukuAccess.shell("content query --uri $URI/preferapn")?.takeIf { it.ok }?.let { parse(it.out).firstOrNull() }
+    /** 국내 통신사 기본 인터넷 APN(통신사 번호 → APN). 기기가 APN 목록을 읽지 못하게 막을 때 쓴다. */
+    internal val KNOWN = mapOf(
+        "45005" to "lte.sktelecom.com", "45011" to "lte.sktelecom.com",
+        "45008" to "lte.ktfwing.com", "45002" to "lte.ktfwing.com", "45004" to "lte.ktfwing.com",
+        "45006" to "internet.lguplus.co.kr",
+    )
+
+    /** 마지막으로 찾은 APN의 출처나 실패 이유(화면 안내용). */
+    @Volatile var lastNote: String = ""
+        private set
+
+    /**
+     * 지금 쓰는 인터넷 APN(작업 스레드). 차례로 시도한다:
+     * ① 데이터 SIM의 preferapn(구독 번호별) ② preferapn ③ 지금 통신사 번호(numeric)의 인터넷(default) APN
+     * ④ 국내 통신사 기본값([KNOWN]). 모두 실패하면 null.
+     */
+    fun current(): Apn? {
+        val sub = ShizukuAccess.shell("settings get global multi_sim_data_call")?.out?.trim()?.toIntOrNull()
+        val numeric = ShizukuAccess.shell("getprop gsm.sim.operator.numeric")?.out?.trim()?.split(',')?.map { it.trim() }?.firstOrNull { it.length in 5..6 }
+        fun query(cmd: String) = ShizukuAccess.shell(cmd)?.takeIf { it.ok }?.let { parse(it.out) }.orEmpty()
+        val tries = buildList {
+            if (sub != null && sub >= 0) add("구독 preferapn" to "content query --uri $URI/preferapn/subId/$sub")
+            add("preferapn" to "content query --uri $URI/preferapn")
+            if (numeric != null) add("통신사 APN 목록" to "content query --uri $URI --where \"numeric='$numeric'\"")
+        }
+        for ((label, cmd) in tries) {
+            val rows = query(cmd).filter { it.apn.isNotEmpty() && it.name != NAME }
+            val pick = rows.firstOrNull { "default" in it.type || it.type.isEmpty() || it.type == "*" } ?: rows.firstOrNull()
+            if (pick != null) { lastNote = "${label}에서 찾음(${pick.apn})"; return pick }
+        }
+        val known = numeric?.let { KNOWN[it] }
+        if (numeric != null && known != null) {
+            lastNote = "APN 목록을 읽지 못해 통신사 기본값을 씀($known)"
+            return Apn(mapOf("apn" to known, "numeric" to numeric, "mcc" to numeric.take(3), "mnc" to numeric.drop(3), "protocol" to "IPV4V6", "roaming_protocol" to "IPV4V6"))
+        }
+        lastNote = if (numeric == null) "통신사 번호를 읽지 못함(유심 확인)" else "APN 목록을 읽지 못하고 기본값도 모르는 통신사($numeric)"
+        return null
+    }
 
     /** GOAT가 넣은 APN(작업 스레드). Shizuku가 없으면 null, 없으면 빈 목록. */
     fun ours(): List<Apn>? = ShizukuAccess.shell("content query --uri $URI --where \"name='$NAME'\"")?.let { if (it.ok || it.out.contains("No result")) parse(it.out) else null }
@@ -71,20 +107,42 @@ object Hotspot {
         val log = LogRepository.from(context)
         val mine = ours() ?: return Result.NO_SHIZUKU
         if (mine.isNotEmpty()) return Result.ALREADY
-        val base = current() ?: run { log.add("핫스팟 제한 우회: 지금 쓰는 APN을 읽지 못함"); return Result.NO_APN }
+        val base = current() ?: run { log.add("핫스팟 제한 우회: 지금 쓰는 APN을 찾지 못함($lastNote)"); return Result.NO_APN }
         val r = ShizukuAccess.shell(insertCommand(base))
         val ok = r?.ok == true && ours().orEmpty().isNotEmpty()
-        log.add("핫스팟 제한 우회: APN 추가 " + if (ok) "성공(${base.apn})" else "실패(${(r?.err ?: "").take(80)})")
+        if (ok) setApplied(context, true)
+        if (!ok) lastNote = "APN 쓰기가 막힘: " + (r?.err ?: r?.out ?: "").lineSequence().firstOrNull { it.isNotBlank() }.orEmpty().take(120)
+        log.add("핫스팟 제한 우회: APN 추가 " + if (ok) "성공(${base.apn}, $lastNote)" else "실패($lastNote)")
         return if (ok) Result.ADDED else Result.BLOCKED
     }
 
-    /** GOAT가 넣은 APN을 지운다(작업 스레드). 지웠거나 원래 없으면 true. */
+    /** GOAT가 넣은(또는 안내대로 직접 넣은) 'GOAT 테더링' APN을 지운다(작업 스레드). 지웠거나 원래 없으면 true. */
     fun remove(context: Context): Boolean {
         val r = ShizukuAccess.shell("content delete --uri $URI --where \"name='$NAME'\"")
         val ok = r?.ok == true && ours().orEmpty().isEmpty()
+        if (ok) setApplied(context, false)
         LogRepository.from(context).add("핫스팟 제한 우회: 추가한 APN 지우기 " + if (ok) "성공" else "실패")
         return ok
     }
+
+    /** 되돌리기 2단계: APN 목록 전체를 통신사 기본값으로 복원한다(TelephonyProvider의 restore, 작업 스레드). */
+    fun restoreDefaults(context: Context): Boolean {
+        val r = ShizukuAccess.shell("content delete --uri $URI/restore")
+        val ok = r?.ok == true
+        if (ok) setApplied(context, false)
+        LogRepository.from(context).add("핫스팟 제한 우회: APN 기본값 복원 " + if (ok) "성공" else "실패(${(r?.err ?: "").take(80)})")
+        return ok
+    }
+
+    /**
+     * 적용 상태: APN 목록을 읽을 수 있으면 그 결과를, 읽지 못하는 기기면 GOAT가 기억한 값([setApplied])을 쓴다.
+     * 직접 추가하기로 넣은 뒤 [다 했어요]를 누르면 기억해 두어, 목록을 못 읽는 기기에서도 되돌리기 버튼이 보인다.
+     */
+    fun applied(context: Context): Boolean? = ours()?.isNotEmpty() ?: prefs(context).getBoolean("applied", false).takeIf { it }
+
+    fun setApplied(context: Context, on: Boolean) = prefs(context).edit().putBoolean("applied", on).apply()
+
+    private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 
     /** 통신사 기기에서 숨겨진 'APN 추가' 화면을 연다(Shizuku 셸, 작업 스레드). */
     fun openEditor(): Boolean =

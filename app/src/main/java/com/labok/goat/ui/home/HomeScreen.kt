@@ -269,8 +269,9 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             // 화면 표시: 크기(해상도) → 움직임(주사율·애니메이션) → 색(다크) 순. 해상도는 화면 배율 바로 뒤라 이어서 읽힌다.
             add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK)))
             add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE)))
-            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.DOZE, NavItem.HOTSPOT)))
-            if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
+            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.DOZE)))
+            // 실험실: 기기·통신사마다 결과가 다를 수 있는 기능(일반 빌드에도 보인다). 조사 도구는 lab 빌드에서만.
+            add(NavSection(Copy.MENU_SECTION_LAB, listOfNotNull(NavItem.HOTSPOT, NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB })))
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
         val common = { help: Sheet, guide: Sheet, reset: Sheet ->
