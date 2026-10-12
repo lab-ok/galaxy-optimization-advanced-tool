@@ -97,6 +97,8 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
                 detector.lastMiss?.let { missed(it) }
                 if (!shook) return
                 if (covered) { missed("근접 센서 가려짐(주머니 속)"); return }
+                // '큰 화면에서만'이면 접은 상태(작은 화면)에서는 돌리지 않는다
+                if (ShakeRotate.largeOnly(context) && !ShakeRotate.isLargeScreen(context)) { missed("큰 화면에서만 켜져 있어 작은 화면에서는 건너뜀"); return }
                 if (ShakeRotate.calibrating || turning) return
                 beginTurn()
             }

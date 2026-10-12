@@ -118,7 +118,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.APP_SIZE -> DensityShell.savedCount(context).let { if (it == 0) "바꾼 앱 없음" else "바꾼 앱 ${it}개" } +
                 if (AppDensityNotifier.enabled(context)) " · 알림창 조절" else ""
             NavItem.ANIMATION -> AnimationSpeed.label(AnimationSpeed.read(context, AnimationSpeed.Kind.WINDOW))
-            NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) "켜짐 · 민감도 ${ShakeRotate.level(context)}" else "꺼짐"
+            NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) "켜짐 · 민감도 ${ShakeRotate.level(context)}" + (if (ShakeRotate.largeOnly(context)) " · 큰 화면만" else "") else "꺼짐"
             NavItem.CAMERA_MUTE -> when (camera) {
                 CameraMute.State.MUTED -> "촬영음 꺼 둠"
                 CameraMute.State.FORCED -> "촬영음 강제로 남"

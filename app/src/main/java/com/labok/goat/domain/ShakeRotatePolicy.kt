@@ -89,6 +89,12 @@ object ShakeRotatePolicy {
     /** 자동 맞추기에서 흔들림으로 셀 최소 세기. */
     const val CALIBRATE_MIN = 1f
 
+    /** 큰 화면으로 볼 짧은 변(dp). 안드로이드의 태블릿 기준(sw600dp)과 같다. 폴드 외부 화면은 약 400dp, 내부 화면은 약 700dp. */
+    const val LARGE_DP = 600
+
+    /** 짧은 변 [shortPx]·밀도 [densityDpi]인 화면이 큰 화면인지. */
+    fun isLarge(shortPx: Int, densityDpi: Int): Boolean = densityDpi > 0 && shortPx * 160 / densityDpi >= LARGE_DP
+
     /**
      * 휘두름 하나. [at] 시작 시각(ms), [force] 최고 세기(m/s²), [x]·[y]·[z] 그때 움직인 방향(중력 뺀 가속도),
      * [dur] 기준을 넘은 채 이어진 시간(ms, 한 샘플이면 0), [jerk] 가장 가파른 세기 변화(m/s² / 샘플), [gyro] 그동안 가장 빠른 손목 회전(rad/s).

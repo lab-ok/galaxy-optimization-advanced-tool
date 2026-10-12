@@ -51,9 +51,22 @@ object ShakeRotate {
     /** 한 번 톡 친 것·부딪힌 것을 거른다. */
     fun rejectTaps(context: Context): Boolean = prefs(context).getBoolean("taps", true)
 
+    /** 큰 화면(폴드를 펼쳤을 때·태블릿)에서만 흔들어서 돌린다. 접었을 때(외부 화면)는 흔들어도 돌리지 않는다. */
+    fun largeOnly(context: Context): Boolean = prefs(context).getBoolean("largeOnly", false)
+
+    /** 지금 기본 화면이 큰 화면인지: 짧은 변이 [LARGE_DP] 이상(폴드 내부 화면·태블릿). */
+    @Suppress("DEPRECATION")
+    fun isLargeScreen(context: Context): Boolean {
+        val m = android.util.DisplayMetrics()
+        context.getSystemService(android.hardware.display.DisplayManager::class.java)
+            .getDisplay(android.view.Display.DEFAULT_DISPLAY).getRealMetrics(m)
+        return ShakeRotatePolicy.isLarge(minOf(m.widthPixels, m.heightPixels), m.densityDpi)
+    }
+
     /** 고급 설정 하나를 바꾼다. 화면이 바로 따라 바뀌고, 돌고 있는 감지에도 바로 반영된다. */
-    fun setAdvanced(context: Context, pace: Int? = null, turn: Int? = null, swings: Int? = null, rejectTaps: Boolean? = null, how: String) {
+    fun setAdvanced(context: Context, pace: Int? = null, turn: Int? = null, swings: Int? = null, rejectTaps: Boolean? = null, largeOnly: Boolean? = null, how: String) {
         prefs(context).edit().apply {
+            largeOnly?.let { putBoolean("largeOnly", it) }
             pace?.let { putInt("pace", it) }
             turn?.let { putInt("turn", it) }
             swings?.let { putInt("swings", it) }
@@ -62,6 +75,7 @@ object ShakeRotate {
         LogRepository.from(context).add(
             "흔들어서 화면 회전 고급 설정($how): " + listOfNotNull(
                 pace?.let { "빠르기 $it" }, turn?.let { "손목 회전 $it" }, swings?.let { "횟수 $it" }, rejectTaps?.let { "탭 거르기 $it" },
+                largeOnly?.let { "큰 화면에서만 $it" },
             ).joinToString(", "),
         )
         changed.value++
@@ -70,7 +84,7 @@ object ShakeRotate {
 
     /** 고급 설정을 처음 값으로. */
     fun resetAdvanced(context: Context) =
-        setAdvanced(context, pace = 1, turn = DEFAULT_TURN, swings = ShakeRotatePolicy.Detector.PEAKS, rejectTaps = true, how = "기본값")
+        setAdvanced(context, pace = 1, turn = DEFAULT_TURN, swings = ShakeRotatePolicy.Detector.PEAKS, rejectTaps = true, largeOnly = false, how = "기본값")
 
     private const val DEFAULT_TURN = 4
 

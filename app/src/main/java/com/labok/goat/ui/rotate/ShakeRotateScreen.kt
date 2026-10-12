@@ -93,6 +93,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
     var turn by remember(version) { mutableIntStateOf(ShakeRotate.turn(context)) }
     var swings by remember(version) { mutableIntStateOf(ShakeRotate.swings(context)) }
     var taps by remember(version) { mutableStateOf(ShakeRotate.rejectTaps(context)) }
+    var largeOnly by remember(version) { mutableStateOf(ShakeRotate.largeOnly(context)) }
     var advanced by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
     var vibration by remember { mutableIntStateOf(ShakeRotate.vibration(context)) }
@@ -243,6 +244,15 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 }
                                 Spacer(Modifier.width(12.dp))
                                 LiquidSwitch(taps, { on -> taps = on; ShakeRotate.setAdvanced(context, rejectTaps = on, how = "스위치") })
+                            }
+                            Spacer(Modifier.height(Gap.Item))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(Copy.SHAKE_LARGE_TITLE, color = c.ink)
+                                    Text(Copy.SHAKE_LARGE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                LiquidSwitch(largeOnly, { on -> largeOnly = on; ShakeRotate.setAdvanced(context, largeOnly = on, how = "스위치") })
                             }
                             Spacer(Modifier.height(Gap.Item))
                             LiquidButton(Copy.SHAKE_ADVANCED_RESET, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { ShakeRotate.resetAdvanced(context) })
