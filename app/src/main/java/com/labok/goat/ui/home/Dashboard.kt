@@ -66,6 +66,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -315,8 +316,17 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
                 NavGlyph(item.icon, c.onInk)
             }
             Spacer(Modifier.height(Gap.Item))
-            Text(item.label, fontWeight = FontWeight.SemiBold, color = fg, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text(status, color = sub, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            // 모든 카드 높이를 같게: 제목 두 줄·상태 두 줄 자리를 늘 잡아 두고, 실제 글은 그 위쪽에 붙여 쓴다
+            Box {
+                Column(Modifier.graphicsLayer { alpha = 0f }.clearAndSetSemantics {}) {
+                    Text("", fontWeight = FontWeight.SemiBold, minLines = 2)
+                    Text("", style = MaterialTheme.typography.bodySmall, minLines = 2)
+                }
+                Column {
+                    Text(item.label, fontWeight = FontWeight.SemiBold, color = fg, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(status, color = sub, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+            }
         }
         // 알약 글자(켜짐일 때만, 알약이 다 늘어난 뒤 나타난다)
         val label by animateFloatAsState(if (on) 1f else 0f, Springs.calm(reduce), label = "pillText")
