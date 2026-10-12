@@ -268,6 +268,6 @@ private const val OVERFLOW = 30
 /** 떼기 직전 이 시간(ms) 안에 1만큼 바뀐 값은 손가락이 들리며 밀린 것으로 보고 되돌린다. */
 private const val LIFT_JITTER_MS = 90L
 /** 이 시간(ms) 동안 거의 움직이지 않고 붙들고 있으면 세밀 조절을 연다. */
-private const val FINE_HOLD_MS = 450L
+private const val FINE_HOLD_MS = 1000L
 /** 세밀 조절 패널이 보여 주는 칸 수(앞뒤). */
 private const val FINE_HALF = 10
