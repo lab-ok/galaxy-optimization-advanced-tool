@@ -19,7 +19,6 @@ import com.labok.goat.data.tweaks.Gos
 import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.data.display.ResolutionState
 import com.labok.goat.data.tweaks.RefreshRate
-import com.labok.goat.data.tweaks.StatusIcons
 import com.labok.goat.data.appsize.AppDensityNotifier
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -141,7 +140,6 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                 ResolutionState.base(context) == null -> Copy.RES_DASH_ORIGINAL
                 else -> Resolution.current(context).first.let { Copy.resDash(it, it * 100 / Resolution.base(context).first) }
             }
-            NavItem.STATUS_ICONS -> Copy.iconsHidden(StatusIcons.hidden(context).size)
             NavItem.REFRESH -> if (!RefreshRate.supported(context)) Copy.REFRESH_UNSUPPORTED_SHORT else RefreshRate.read(context).let {
                 if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
             }
@@ -161,7 +159,6 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))
             NavItem.DARK -> dark.forced == true
             NavItem.RESOLUTION -> ResolutionState.base(context) != null
-            NavItem.STATUS_ICONS -> StatusIcons.hidden(context).isNotEmpty()
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             else -> false
         }
@@ -219,7 +216,7 @@ private fun Badge(label: String, on: Boolean) {
 
 /**
  * 기능 카드(리퀴드): 카드 몸체가 연체 물방울이다. 처음엔 작은 방울에서 [order] 순서대로 맺히고, 누르면 그 자리가 움푹 들어갔다가
- * 표면장력으로 돌아온다. 켜진 기능은 몸체가 잉크로 차오르고(글자는 반전), 오른쪽 위 상태 알약이 점에서 '켜짐' 알약으로 출렁이며 늘어난다.
+ * 표면장력으로 돌아온다. 켜진 기능은 테두리가 잉크색으로 굵어지고(바탕은 그대로), 오른쪽 위 상태 알약이 점에서 '켜짐' 알약으로 출렁이며 늘어난다.
  */
 @Composable
 private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onClick: (Offset) -> Unit) {
@@ -293,25 +290,23 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
             body.frame; pill.frame
             if (!body.blob.ready) return@Canvas
             body.blob.path(bodyPath)
-            // 꺼짐: 유리판(표면 + 테두리) / 켜짐: 잉크로 차오름
+            // 꺼짐: 유리판(표면 + 얇은 테두리) / 켜짐: 같은 유리판에 잉크색 굵은 테두리(바탕은 채우지 않는다)
             drawPath(bodyPath, c.surface)
-            if (fill > 0f) drawPath(bodyPath, c.ink.copy(alpha = fill))
-            drawPath(bodyPath, c.line.copy(alpha = 1f - fill), style = Stroke(1.dp.toPx()))
+            drawPath(bodyPath, lerp(c.line, c.ink, fill), style = Stroke((1f + 2f * fill).dp.toPx()))
             if (pill.blob.ready) {
                 pill.blob.path(pillPath)
-                val ink = lerp(c.ink, c.bg, fill)
-                if (on) drawPath(pillPath, ink) else drawPath(pillPath, c.muted, style = Stroke(1.5.dp.toPx()))
+                if (on) drawPath(pillPath, c.ink) else drawPath(pillPath, c.muted, style = Stroke(1.5.dp.toPx()))
             }
         }
-        val fg = lerp(c.ink, c.onInk, fill)
-        val sub = lerp(c.muted, c.onInk.copy(alpha = 0.75f), fill)
+        val fg = c.ink
+        val sub = c.muted
         Column(
             Modifier
                 .padding(Gap.CardPadding)
                 .graphicsLayer { alpha = text.value; translationY = (1f - text.value) * 8.dp.toPx() },
         ) {
-            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(lerp(c.ink, c.bg, fill)), contentAlignment = Alignment.Center) {
-                NavGlyph(item.icon, lerp(c.onInk, c.ink, fill))
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(c.ink), contentAlignment = Alignment.Center) {
+                NavGlyph(item.icon, c.onInk)
             }
             Spacer(Modifier.height(Gap.Item))
             Text(item.label, fontWeight = FontWeight.SemiBold, color = fg, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -320,7 +315,7 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, onC
         // 알약 글자(켜짐일 때만, 알약이 다 늘어난 뒤 나타난다)
         val label by animateFloatAsState(if (on) 1f else 0f, Springs.calm(reduce), label = "pillText")
         if (label > 0.05f) Text(
-            "켜짐", color = lerp(c.onInk, c.ink, fill), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+            "켜짐", color = c.onInk, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.TopEnd).padding(top = 16.dp + 3.dp, end = 16.dp + 13.dp).graphicsLayer { alpha = label * text.value },
         )
     }

@@ -11,8 +11,6 @@ class CopyFunctionsTest {
             Copy.refreshUnsupported(144),
             Copy.refreshNow(144, 144),
             Copy.refreshAlways(144),
-            Copy.iconsHidden(0),
-            Copy.iconsHidden(99),
             Copy.resNow(1440, 3120, 1440, 3120),
             Copy.resNow(1080, 2340, 1440, 3120),
             Copy.resOption("FHD+", 1080, 2340, 75),

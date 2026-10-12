@@ -87,13 +87,11 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     RESOLUTION(Copy.FEATURE_RESOLUTION, NavIcon.PIXELS),
     /** 다크 모드 없는 앱도 시스템이 어둡게 그리게 한다(Shizuku setprop). */
     DARK(Copy.FEATURE_DARK, NavIcon.MOON),
-    /** 상태 표시줄의 늘 켜 둔 아이콘을 숨긴다(시스템 설정 권한). */
-    STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.STATUSBAR),
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, STATUSBAR, GAME, MOON, PIXELS, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, PIXELS, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -259,7 +257,6 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.SPEED -> speed(color, s)
             NavIcon.CLEAN -> clean(color, s)
             NavIcon.REFRESH -> refresh(color, s)
-            NavIcon.STATUSBAR -> statusBar(color, s)
             NavIcon.GAME -> game(color, s)
             NavIcon.MOON -> moon(color, s)
             NavIcon.PIXELS -> pixels(color, s)
@@ -379,19 +376,6 @@ private fun DrawScope.refresh(c: Color, s: Stroke) {
         val h = 1.6f + i * 0.9f
         drawLine(c.copy(alpha = 0.45f + i * 0.2f), p(x, 12f - h), p(x, 12f + h), s.width * 0.8f, StrokeCap.Round)
     }
-}
-
-/** 상태 표시줄 아이콘 숨기기: 폰 윗부분의 상태 표시줄 칸, 그 안에 남은 점 둘과 비워진(점선) 자리 하나. */
-private fun DrawScope.statusBar(c: Color, s: Stroke) {
-    val body = Path().apply {
-        moveTo(u(4f), u(21f)); lineTo(u(4f), u(6f)); quadraticBezierTo(u(4f), u(3f), u(7f), u(3f)); lineTo(u(17f), u(3f))
-        quadraticBezierTo(u(20f), u(3f), u(20f), u(6f)); lineTo(u(20f), u(21f))
-    }
-    drawPath(body, c, style = s)
-    drawLine(c, p(4f, 10f), p(20f, 10f), s.width * 0.75f, StrokeCap.Round)
-    drawCircle(c, u(1.3f), p(16.6f, 6.5f))
-    drawCircle(c, u(1.3f), p(13f, 6.5f))
-    drawCircle(c.copy(alpha = 0.35f), u(1.3f), p(9.4f, 6.5f))
 }
 
 /** GOS 끄기: 게임 패드(왼쪽 십자 키, 오른쪽 버튼 둘). */

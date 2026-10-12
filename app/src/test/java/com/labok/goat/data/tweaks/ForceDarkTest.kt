@@ -15,4 +15,15 @@ class ForceDarkTest {
         assertEquals("GOAT로 바꾼 부팅", false, ForceDark.shouldReapply(true, true, boot = 7, checkedBoot = 7, forced = false))
         assertEquals("못 읽으면 다음 연결 때", null, ForceDark.shouldReapply(true, true, boot = 3, checkedBoot = 2, forced = null))
     }
+
+    @Test
+    fun restoresPreviousNightMode() {
+        assertEquals(listOf("cmd uimode night no"), ForceDark.restoreNightCommands(android.app.UiModeManager.MODE_NIGHT_NO, null, null))
+        assertEquals(listOf("cmd uimode night auto"), ForceDark.restoreNightCommands(android.app.UiModeManager.MODE_NIGHT_AUTO, null, null))
+        assertEquals(
+            "예약이면 시각까지",
+            listOf("cmd uimode night custom_schedule", "cmd uimode time start 22:00", "cmd uimode time end 07:00"),
+            ForceDark.restoreNightCommands(android.app.UiModeManager.MODE_NIGHT_CUSTOM, "22:00", "07:00"),
+        )
+    }
 }
