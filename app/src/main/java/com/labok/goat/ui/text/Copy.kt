@@ -255,6 +255,17 @@ object Copy {
 
     // GOS 끄기
     const val FEATURE_GOS = "GOS 끄기"
+    const val UPDATE_TITLE = "업데이트"
+    const val UPDATE_CHECK = "업데이트 확인"
+    const val UPDATE_CHECKING = "새 버전을 확인하고 있습니다…"
+    const val UPDATE_NOW = "지금 업데이트"
+    const val UPDATE_DOWNLOADING = "내려받는 중"
+    const val UPDATE_INSTALLING = "설치하는 중… 끝나면 GOAT가 다시 시작됩니다"
+    const val UPDATE_FAILED_TITLE = "업데이트하지 못했습니다"
+    const val UPDATE_RETRY = "다시 시도"
+    fun updateTitle(v: String) = "새 버전 $v 업데이트가 있습니다"
+    fun updateLatest(v: String) = "지금 쓰는 $v 버전이 최신입니다."
+    fun updateCurrent(v: String) = "지금 쓰는 버전은 ${v}입니다. GitHub 릴리스에서 새 버전을 확인합니다."
     const val LOG_FILE_TITLE = "기록 파일 남기기"
     const val LOG_FILE_BODY = "켜면 다운로드/GOAT에 날짜별 작동 기록을 남깁니다. 문제를 신고할 때 도움이 됩니다."
     const val FEATURE_DOZE = "잠자기 모드 끄기"

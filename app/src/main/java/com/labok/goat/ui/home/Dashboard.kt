@@ -1,5 +1,9 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.about.worthShowing
+import com.labok.goat.ui.about.UpdateCard
+import com.labok.goat.data.update.Updater
+import androidx.compose.foundation.basicMarquee
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.data.log.PublicLogFile
 import android.os.SystemClock
@@ -105,6 +109,9 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     val gos by Gos.status.collectAsStateWithLifecycle()
     val dark by ForceDark.status.collectAsStateWithLifecycle()
     val doze by Doze.status.collectAsStateWithLifecycle()
+    val update by Updater.status.collectAsStateWithLifecycle()
+    // 홈을 열 때 새 버전을 조용히 확인한다(6시간에 한 번, 앱을 새로 켜면 한 번)
+    LaunchedEffect(Unit) { withContext(Dispatchers.IO) { Updater.autoCheck(context) } }
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     LifecycleResumeEffect(Unit) { tick++; onPauseOrDispose { } }
@@ -207,6 +214,8 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                 }
             }
         }
+        // 새 버전이 있으면 홈 머리 바로 아래에 업데이트 카드(바로 내려받아 설치)
+        if (update.worthShowing()) item(key = "update", span = { GridItemSpan(maxLineSpan) }) { UpdateCard(manual = false) }
         itemsIndexed(features, key = { _, it -> it.name }) { i, item ->
             // 처음 화면에 보인 카드만 차례로 맺히고, 나중에 스크롤로 들어오는 카드는 동그라미에서 터지듯 커지지 않게 바로 그린다
             BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> onOpen(item, at) }
@@ -248,9 +257,7 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
     val haptics = rememberLiquidHaptics()
     val d = LocalDensity.current
     val body = rememberSoftBlob()
-    val pill = rememberSoftBlob()
     val bodyPath = remember { Path() }
-    val pillPath = remember { Path() }
     var box by remember { mutableStateOf(IntSize.Zero) }
     // 카드의 화면 위치(누른 자리를 화면 기준으로 바꿔 다음 화면이 거기서 번지게)
     var origin by remember { mutableStateOf(Offset.Zero) }
@@ -258,12 +265,6 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
     val animateIn = intro && !reduce
     val text = remember { Animatable(if (animateIn) 0f else 1f) }
     val corner = with(d) { LiquidShape.card.toPx() }
-    val pillW = with(d) { 52.dp.toPx() }
-    val pillH = with(d) { 24.dp.toPx() }
-    val dot = with(d) { 10.dp.toPx() }
-    val inset = with(d) { 16.dp.toPx() }
-
-    fun pillCenter() = Offset(box.width - inset - pillW / 2, inset + pillH / 2)
 
     // 등장: 작은 방울 → 카드 모양(차례로)
     LaunchedEffect(box) {
@@ -276,23 +277,12 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
         // 큰 카드라 출렁임이 커 보인다: 처음 값(1.4·1.0, 너무 낭창)과 단단한 값(2.2·2.4) 사이로 살짝만 출렁이게 한다
         body.blob.gain = 1.7f
         body.blob.damping = 1.6f
-        pill.blob.gain = 1.6f
-        pill.blob.damping = 1.8f
         body.moveTo(w / 2, h / 2, w, h, animate = animateIn, corner = corner)
         if (animateIn) text.animateTo(1f, Springs.calm(reduce)) else text.snapTo(1f)
     }
-    // 상태 알약: 꺼짐은 작은 점, 켜짐은 알약(출렁이며 늘어난다)
-    LaunchedEffect(box, on) {
-        if (box == IntSize.Zero) return@LaunchedEffect
-        val p = pillCenter()
-        val (w, h) = if (on) pillW to pillH else dot to dot
-        pill.moveTo(if (on) p.x else p.x + pillW / 2 - dot / 2, p.y, w, h, animate = !reduce && pill.blob.ready)
-    }
-
     Box(
         Modifier
             .fillMaxWidth()
-            .heightIn(min = 132.dp)
             .onSizeChanged { box = it }
             .onGloballyPositioned { origin = it.positionInRoot() }
             .pointerInput(reduce) {
@@ -311,46 +301,32 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
             },
     ) {
         Canvas(Modifier.matchParentSize()) {
-            body.frame; pill.frame
+            body.frame
             if (!body.blob.ready) return@Canvas
             body.blob.path(bodyPath)
             // 꺼짐: 유리판(표면 + 얇은 테두리) / 켜짐: 같은 유리판에 잉크색 굵은 테두리(바탕은 채우지 않는다)
             drawPath(bodyPath, c.surface)
             drawPath(bodyPath, lerp(c.line, c.ink, fill), style = Stroke((1f + 2f * fill).dp.toPx()))
-            if (pill.blob.ready) {
-                pill.blob.path(pillPath)
-                if (on) drawPath(pillPath, c.ink) else drawPath(pillPath, c.muted, style = Stroke(1.5.dp.toPx()))
-            }
         }
         val fg = c.ink
         val sub = c.muted
-        Column(
+        // 아이콘 오른쪽에 제목과 지금 상태를 한 줄씩 둔다. 칸보다 길면 글자가 천천히 흘러 끝까지 보인다.
+        // 켜짐은 굵은 테두리로만 보이고, 모든 카드가 같은 높이(두 줄)라 빈칸이 생기지 않는다.
+        Row(
             Modifier
                 .padding(Gap.CardPadding)
                 .graphicsLayer { alpha = text.value; translationY = (1f - text.value) * 8.dp.toPx() },
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(c.ink), contentAlignment = Alignment.Center) {
                 NavGlyph(item.icon, c.onInk)
             }
-            Spacer(Modifier.height(Gap.Item))
-            // 모든 카드 높이를 같게: 제목 두 줄·상태 두 줄 자리를 늘 잡아 두고, 실제 글은 그 위쪽에 붙여 쓴다
-            Box {
-                Column(Modifier.graphicsLayer { alpha = 0f }.clearAndSetSemantics {}) {
-                    Text("", fontWeight = FontWeight.SemiBold, minLines = 2)
-                    Text("", style = MaterialTheme.typography.bodySmall, minLines = 2)
-                }
-                Column {
-                    Text(item.label, fontWeight = FontWeight.SemiBold, color = fg, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text(status, color = sub, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(item.label, fontWeight = FontWeight.SemiBold, color = c.ink, maxLines = 1, modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 1500))
+                Text(status, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 1500))
             }
         }
-        // 알약 글자(켜짐일 때만, 알약이 다 늘어난 뒤 나타난다)
-        val label by animateFloatAsState(if (on) 1f else 0f, Springs.calm(reduce), label = "pillText")
-        if (label > 0.05f) Text(
-            "켜짐", color = c.onInk, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.TopEnd).padding(top = 16.dp + 3.dp, end = 16.dp + 13.dp).graphicsLayer { alpha = label * text.value },
-        )
     }
 }
 

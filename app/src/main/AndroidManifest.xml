@@ -13,7 +13,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- 흔들어서 화면 회전: 돌렸을 때 짧게 진동으로 알린다 -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- WorkManager가 네트워크 조건용으로 넣는 권한. 이 앱은 네트워크를 쓰지 않으므로 뺀다. -->
+    <!-- 앱 안 업데이트: GitHub 릴리스에서 새 버전을 확인하고 APK를 내려받는다(그 밖의 통신은 하지 않는다) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 앱 안 업데이트: Shizuku가 없을 때 시스템 설치 창으로 새 버전을 설치한다 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- WorkManager가 네트워크 조건용으로 넣는 권한. 네트워크 상태는 보지 않으므로 뺀다. -->
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />
@@ -125,6 +129,11 @@
                 android:value="Re-applies the user's display density when the foldable switches screens" />
         </service>
         <!-- Shizuku가 GOAT에 셸 권한 바인더를 건네는 통로(PC 없이 WRITE_SECURE_SETTINGS 받기) -->
+        <!-- 앱 안 업데이트: 시스템 설치 결과(사용자 확인 필요·실패)를 받는다 -->
+        <receiver
+            android:name=".data.update.Updater$InstallResultReceiver"
+            android:exported="false" />
+
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"

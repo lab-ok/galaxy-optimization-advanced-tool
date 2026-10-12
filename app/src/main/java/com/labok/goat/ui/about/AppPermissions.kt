@@ -62,6 +62,14 @@ internal object AppPermissions {
             "흔들어서 화면 회전에서 화면을 돌렸을 때 짧게 진동으로 알려 줍니다.", How.INSTALL,
         ),
         Item(
+            Manifest.permission.INTERNET, "인터넷",
+            "업데이트 확인에만 씁니다. GitHub 릴리스에서 새 버전을 확인하고 APK를 내려받으며, 그 밖의 데이터는 보내지 않습니다.", How.INSTALL,
+        ),
+        Item(
+            Manifest.permission.REQUEST_INSTALL_PACKAGES, "앱 설치",
+            "Shizuku가 없을 때 새 버전을 시스템 설치 창으로 설치합니다. 처음 한 번 'GOAT의 앱 설치 허용'을 켜야 합니다.", How.USER,
+        ),
+        Item(
             Manifest.permission.WAKE_LOCK, "절전 모드 해제 방지",
             "백그라운드 작업(WorkManager)이 DPI 확인을 끝낼 때까지 잠깐 깨어 있게 합니다.", How.INSTALL,
         ),
@@ -71,6 +79,7 @@ internal object AppPermissions {
         !item.applies -> true
         // 사용 기록 접근은 권한이 아니라 앱 작업(AppOps)으로 허용 여부가 정해진다
         item.permission == Manifest.permission.PACKAGE_USAGE_STATS -> AppUsage.hasAccess(context)
+        item.permission == Manifest.permission.REQUEST_INSTALL_PACKAGES -> context.packageManager.canRequestPackageInstalls()
         else -> context.checkSelfPermission(item.permission) == PackageManager.PERMISSION_GRANTED
     }
 }

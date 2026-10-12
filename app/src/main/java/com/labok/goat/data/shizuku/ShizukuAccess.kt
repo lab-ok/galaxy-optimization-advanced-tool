@@ -196,6 +196,19 @@ object ShizukuAccess {
         ShellResult(p.waitFor() == 0, out, err)
     }.getOrNull()
 
+    /**
+     * [shell]과 같되 [input]을 명령의 표준 입력으로 흘려보낸다(작업 스레드). 앱 파일을 셸이 직접 읽을 수 없을 때
+     * (예: `pm install -S 크기`로 업데이트 APK 설치) 쓴다.
+     */
+    fun shellWithInput(command: String, input: java.io.InputStream): ShellResult? = runCatching {
+        if (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return null
+        val p = newProcess(command)
+        p.outputStream.use { out -> input.use { it.copyTo(out) } }
+        val out = p.inputStream.bufferedReader().readText().trim()
+        val err = p.errorStream.bufferedReader().readText().trim()
+        ShellResult(p.waitFor() == 0, out, err)
+    }.getOrNull()
+
     /** Shizuku API에 공개 함수가 없어 리플렉션으로 부른다. */
     private fun newProcess(command: String): Process {
         val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)

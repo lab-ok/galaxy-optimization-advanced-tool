@@ -68,6 +68,8 @@ internal fun AboutSheet(onMail: () -> Unit) {
             }
         }
         Spacer(Modifier.height(Gap.Card))
+        UpdateCard(manual = true)
+        Spacer(Modifier.height(Gap.Card))
         ChangelogCard()
         Spacer(Modifier.height(Gap.Card))
         PermissionsCard()
