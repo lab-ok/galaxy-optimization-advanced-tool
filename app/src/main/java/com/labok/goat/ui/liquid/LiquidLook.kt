@@ -39,10 +39,12 @@ data class LiquidLook(
 
     companion object {
         val default = LiquidLook(
-            particles = 300, hDp = 21f, radiusDp = 17f, blurDp = 11.5f, glassDp = 112f,
-            gToPx = 0.05f, gravity = 0.05f, pull = 0.0006f, cohesion = 0.0070f,
-            rest = 7f, k = 0.02f, kNear = 0.08f, sigma = 0.4f, beta = 0.08f, damping = 0.986f,
-            splash = 6f,
+            // 사용자가 조절바로 고른 값을 기본으로 삼았다(2026-10-12): 물 적게, 점도 아주 낮게, 표면장력 세게,
+            // 흔들면 잘게 흩어져 멀리 튀었다가 가운데로 빠르게 돌아온다
+            particles = 120, hDp = 21f, radiusDp = 17f, blurDp = 11.5f, glassDp = 112f,
+            gToPx = 0.05f, gravity = 0.05f, pull = 0.0024f, cohesion = 0.021f,
+            rest = 7f, k = 0.02f, kNear = 0.08f, sigma = 0.04f, beta = 0.008f, damping = 0.978f,
+            splash = 24f, scatter = 2f,
         )
     }
 }

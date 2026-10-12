@@ -12,14 +12,14 @@ object LiquidTune {
     class Knob(val key: String, val label: String, val range: IntRange, val default: Int, val text: (Int) -> String)
 
     private val percent: (Int) -> String = { "$it%" }
-    val WATER = Knob("water", Copy.FLUID_WATER, 120..420, 300) { "방울 ${it}개" }
+    val WATER = Knob("water", Copy.FLUID_WATER, 40..420, LiquidLook.default.particles) { "방울 ${it}개" }
     val VISCOSITY = Knob("viscosity", Copy.FLUID_VISCOSITY, 10..400, 100, percent)
     val TENSION = Knob("tension", Copy.FLUID_TENSION, 0..400, 100, percent)
     val SCATTER = Knob("scatter", Copy.FLUID_SCATTER, 20..400, 100, percent)
     val SPLASH = Knob("splash", Copy.FLUID_SPLASH, 0..400, 100, percent)
     val GRAVITY = Knob("gravity", Copy.FLUID_GRAVITY, 0..100, 5) { if (it == 0) "무중력" else "지구의 $it%" }
-    /** 출렁임이 이어지는 정도: 0이면 금방 멈추고 100이면 오래 출렁인다(속도 감쇠 0.958~0.998). */
-    val WOBBLE = Knob("wobble", Copy.FLUID_WOBBLE, 0..100, 70) { "$it" }
+    /** 출렁임이 이어지는 정도: 0이면 금방 멈추고 100이면 오래 출렁인다(속도 감쇠 0.958~0.998, 기본 50 = 0.978). */
+    val WOBBLE = Knob("wobble", Copy.FLUID_WOBBLE, 0..100, 50) { "$it" }
     val PULL = Knob("pull", Copy.FLUID_PULL, 0..400, 100, percent)
     val all = listOf(WATER, VISCOSITY, TENSION, SCATTER, SPLASH, GRAVITY, WOBBLE, PULL)
 
@@ -36,7 +36,7 @@ object LiquidTune {
             sigma = d.sigma * visc,
             beta = d.beta * visc,
             cohesion = d.cohesion * ratio(TENSION),
-            scatter = ratio(SCATTER),
+            scatter = d.scatter * ratio(SCATTER),
             splash = d.splash * ratio(SPLASH),
             gravity = of(GRAVITY) / 100f,
             damping = 0.958f + 0.04f * of(WOBBLE) / 100f,
@@ -46,12 +46,18 @@ object LiquidTune {
 
     fun read(context: Context): Map<String, Int> {
         val p = prefs(context)
+        // 기본 물성이 바뀌면(눈금은 기본에 대한 비율이라) 예전 눈금은 버린다
+        if (p.getInt(VERSION_KEY, 0) != VERSION) p.edit().clear().putInt(VERSION_KEY, VERSION).apply()
         return all.associate { it.key to p.getInt(it.key, it.default).coerceIn(it.range) }
     }
 
     fun save(context: Context, knob: Knob, value: Int) = prefs(context).edit().putInt(knob.key, value).apply()
 
-    fun reset(context: Context) = prefs(context).edit().clear().apply()
+    fun reset(context: Context) = prefs(context).edit().clear().putInt(VERSION_KEY, VERSION).apply()
+
+    /** 기본 물성([LiquidLook.default])을 바꿀 때마다 올린다. */
+    private const val VERSION = 2
+    private const val VERSION_KEY = "version"
 
     private fun prefs(context: Context) = context.getSharedPreferences("liquid_tune", Context.MODE_PRIVATE)
 }

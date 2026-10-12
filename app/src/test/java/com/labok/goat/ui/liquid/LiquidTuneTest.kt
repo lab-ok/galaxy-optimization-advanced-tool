@@ -18,7 +18,7 @@ class LiquidTuneTest {
         val t = LiquidTune.look(mapOf("viscosity" to 200, "tension" to 0, "scatter" to 300, "water" to 9999, "gravity" to 0))
         assertEquals(LiquidLook.default.sigma * 2, t.sigma, 1e-6f)
         assertEquals(0f, t.cohesion, 0f)
-        assertEquals(3f, t.scatter, 1e-6f)
+        assertEquals(LiquidLook.default.scatter * 3, t.scatter, 1e-6f)
         assertEquals(LiquidTune.WATER.range.last, t.particles)
         assertEquals(0f, t.gravity, 0f)
     }
