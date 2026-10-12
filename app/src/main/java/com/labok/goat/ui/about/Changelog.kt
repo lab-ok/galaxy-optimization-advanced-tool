@@ -1,5 +1,7 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.text.Copy
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
@@ -39,6 +41,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
+    Release(
+        "GOAT 1.3.2", "2026-10-12", "UI 탄성을 UI 유연성으로 바꾸고, 줄이면 속도는 그대로 두고 출렁임만 줄도록 고쳤습니다.",
+        listOf(
+            "앱 설정" to listOf(
+                "UI 유연성(이전 이름 UI 탄성): 줄여도 움직이는 속도는 그대로이고, 모양이 단단해져 출렁임만 줄어듭니다. 0%면 딱딱하게 움직입니다.",
+                "앱 설정을 '설정'(업데이트·UI 유연성·햅틱 세기·기록 파일)과 '정보'(앱 정보·변경 기록·필요 권한)로 나눴습니다.",
+                "필요 권한 안내에 인터넷(업데이트 확인용) 사용을 바르게 적었습니다.",
+            ),
+        ),
+    ),
     Release(
         "GOAT 1.3.1", "2026-10-12", "앱 설정 화면을 만들고 UI 탄성과 햅틱 세기를 조절할 수 있게 했습니다.",
         listOf(
@@ -141,9 +153,9 @@ internal val CHANGELOG = listOf(
 
 /** 변경 기록(앱 정보): 접었다 펴는 카드. 판마다 요약과 묶음별 바뀐 점. */
 @Composable
-internal fun ChangelogCard() {
+internal fun ChangelogCard(initiallyOpen: Boolean = false) {
     val c = LocalLiquid.current
-    var open by remember { mutableStateOf(false) }
+    var open by remember { mutableStateOf(initiallyOpen) }
     GlassCard {
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { open = !open },
@@ -176,4 +188,10 @@ internal fun ChangelogCard() {
             }
         }
     }
+}
+
+/** 변경 기록(앱 설정 → 정보): 펼친 채로 보여 준다. */
+@Composable
+internal fun ChangelogSheet() {
+    SheetColumn { ChangelogCard(initiallyOpen = true) }
 }

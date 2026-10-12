@@ -1,5 +1,7 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.about.PermissionsSheet
+import com.labok.goat.ui.about.ChangelogSheet
 import com.labok.goat.ui.about.SettingsScreen
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.nav.GLASS_ALPHA
@@ -164,7 +166,7 @@ import kotlinx.coroutines.launch
 /** 이 너비(dp) 이상이면 사이드바를 늘 펼쳐 둔다(폴드 내부 화면·태블릿). */
 private const val WIDE_DP = 600
 
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -471,7 +473,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
-                            NavItem.SETTINGS -> SettingsScreen(inner, onAbout = { sheet = Sheet.ABOUT })
+                            NavItem.SETTINGS -> SettingsScreen(inner, onAbout = { sheet = Sheet.ABOUT }, onChangelog = { sheet = Sheet.CHANGELOG }, onPermissions = { sheet = Sheet.PERMISSIONS })
                         }
                     }
                 }
@@ -533,6 +535,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.REFRESH_HELP -> RefreshHelpSheet()
                     Sheet.GOS_HELP -> GosHelpSheet()
                     Sheet.DOZE_HELP -> DozeHelpSheet()
+                    Sheet.CHANGELOG -> ChangelogSheet()
+                    Sheet.PERMISSIONS -> PermissionsSheet()
                     Sheet.DARK_HELP -> DarkHelpSheet()
                     Sheet.RES_HELP -> ResolutionHelpSheet()
                 }

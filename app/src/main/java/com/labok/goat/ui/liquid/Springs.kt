@@ -12,8 +12,8 @@ import androidx.compose.animation.core.spring
  * - lag : 꼬리 방울(강성 ×0.5)
  */
 object Springs {
-    fun <T> calm(reduce: Boolean = false): AnimationSpec<T> = if (reduce) snap() else spring(dampingRatio = UiMotion.ratio(0.82f), stiffness = 320f)
-    fun <T> pop(reduce: Boolean = false): AnimationSpec<T> = if (reduce) snap() else spring(dampingRatio = UiMotion.ratio(0.38f), stiffness = 560f)
-    fun <T> water(reduce: Boolean = false): AnimationSpec<T> = if (reduce) snap() else spring(dampingRatio = UiMotion.ratio(0.42f), stiffness = 240f)
-    fun <T> lag(reduce: Boolean = false): AnimationSpec<T> = if (reduce) snap() else spring(dampingRatio = UiMotion.ratio(0.82f), stiffness = 160f)
+    fun <T> calm(reduce: Boolean = false): AnimationSpec<T> = if (reduce) snap() else spring(dampingRatio = UiMotion.ratio(0.82f), stiffness = UiMotion.stiffness(320f, 0.82f))
+    fun <T> pop(reduce: Boolean = false): AnimationSpec<T> = if (reduce) snap() else spring(dampingRatio = UiMotion.ratio(0.38f), stiffness = UiMotion.stiffness(560f, 0.38f))
+    fun <T> water(reduce: Boolean = false): AnimationSpec<T> = if (reduce) snap() else spring(dampingRatio = UiMotion.ratio(0.42f), stiffness = UiMotion.stiffness(240f, 0.42f))
+    fun <T> lag(reduce: Boolean = false): AnimationSpec<T> = if (reduce) snap() else spring(dampingRatio = UiMotion.ratio(0.82f), stiffness = UiMotion.stiffness(160f, 0.82f))
 }

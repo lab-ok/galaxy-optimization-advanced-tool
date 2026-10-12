@@ -212,7 +212,22 @@ class SoftBlob(private val n: Int = N) {
             vx[i] += fx * dt; vy[i] += fy * dt
             energy += vx[i] * vx[i] + vy[i] * vy[i]
         }
+        // 앱 설정의 UI 유연성을 줄였으면 점들의 상대 속도·찌그러짐을 덜어 단단하게 만든다. 평균 속도와 무게 중심은
+        // 그대로 두므로(운동량 보존) 움직이는 속도는 같고 모양만 덜 출렁인다.
+        val rig = UiMotion.rigidity() * 0.25f
+        if (rig > 0f) {
+            var mvx = 0f; var mvy = 0f
+            for (i in 0 until n) { mvx += vx[i]; mvy += vy[i] }
+            mvx /= n; mvy /= n
+            for (i in 0 until n) { vx[i] += (mvx - vx[i]) * rig; vy[i] += (mvy - vy[i]) * rig }
+        }
         for (i in 0 until n) { px[i] += vx[i] * dt; py[i] += vy[i] * dt }
+        if (rig > 0f) {
+            var nx = 0f; var ny = 0f
+            for (i in 0 until n) { nx += px[i]; ny += py[i] }
+            nx /= n; ny /= n
+            for (i in 0 until n) { px[i] += (nx + rx[i] - px[i]) * rig; py[i] += (ny + ry[i] - py[i]) * rig }
+        }
         cx = mx; cy = my
         val moving = energy / n > 0.5f || dist > 0.5f
         if (!moving) {

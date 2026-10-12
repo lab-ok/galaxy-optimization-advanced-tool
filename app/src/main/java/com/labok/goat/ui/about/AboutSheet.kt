@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.ui.text.Copy
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
 import androidx.compose.animation.core.Animatable
@@ -67,10 +68,6 @@ internal fun AboutSheet(onMail: () -> Unit) {
                 LiquidButton("메일 보내기", modifier = Modifier.fillMaxWidth(), onClick = onMail, primary = false)
             }
         }
-        Spacer(Modifier.height(Gap.Card))
-        ChangelogCard()
-        Spacer(Modifier.height(Gap.Card))
-        PermissionsCard()
         Spacer(Modifier.height(Gap.Section))
         Text(DeveloperProfile.COPYRIGHT, color = c.muted, style = MaterialTheme.typography.bodySmall)
     }
@@ -78,12 +75,12 @@ internal fun AboutSheet(onMail: () -> Unit) {
 
 /** 필요 권한: 권한마다 상태 방울(허용되면 잉크 방울 + 체크, 아니면 빈 고리)이 차례로 맺히고, 받는 방법을 알약으로 보여 준다. */
 @Composable
-private fun PermissionsCard() {
+internal fun PermissionsCard() {
     val c = LocalLiquid.current
     val context = LocalContext.current
     GlassCard {
         Text("필요 권한", fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text("이 앱이 쓰는 권한 전체입니다. 네트워크·저장소·위치 권한은 쓰지 않습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("이 앱이 쓰는 권한 전체입니다. 저장소·위치 권한은 쓰지 않고, 인터넷은 업데이트 확인에만 씁니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         AppPermissions.all.forEachIndexed { i, item ->
             Spacer(Modifier.height(Gap.Card))
             if (i > 0) {
@@ -161,4 +158,10 @@ private fun Pill(text: String, strong: Boolean, outlined: Boolean = false) {
     ) {
         Text(text, color = if (outlined) c.muted else color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
     }
+}
+
+/** 필요 권한(앱 설정 → 정보). */
+@Composable
+internal fun PermissionsSheet() {
+    SheetColumn { PermissionsCard() }
 }

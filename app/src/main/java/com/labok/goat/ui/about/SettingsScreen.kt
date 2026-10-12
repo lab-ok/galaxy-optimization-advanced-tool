@@ -1,5 +1,13 @@
 package com.labok.goat.ui.about
 
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import com.labok.goat.ui.liquid.UiHaptics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,12 +46,12 @@ import com.labok.goat.ui.text.Copy
 import kotlin.math.roundToInt
 
 /**
- * 앱 설정(사이드바 맨 아래): 앱 정보, 업데이트, UI 탄성(UI가 출렁이는 정도), 기록 파일 남기기.
- * UI 탄성은 조절바를 움직이는 동안 바로 반영돼, 아래 미리 보기 스위치와 조절바 자신의 물방울로 느낌을 확인한다.
+ * 앱 설정(사이드바 맨 아래). 위는 '설정'(업데이트·UI 유연성·햅틱 세기·기록 파일), 아래는 '정보'(앱 정보·변경 기록·필요 권한)로 나눈다.
+ * UI 유연성은 조절바를 움직이는 동안 바로 반영돼, 아래 미리 보기 스위치와 조절바 자신의 물방울로 느낌을 확인한다.
  * @param onAbout 앱 정보 시트를 연다.
  */
 @Composable
-internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit) {
+internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, onChangelog: () -> Unit, onPermissions: () -> Unit) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     LazyColumn(
@@ -52,16 +60,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit) 
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        item(key = "about") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text("${Copy.MENU_ABOUT} · GOAT ${BuildConfig.VERSION_NAME}", fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.SETTINGS_ABOUT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.SETTINGS_ABOUT_OPEN, modifier = Modifier.fillMaxWidth(), primary = false, onClick = onAbout)
-                }
-            }
-        }
+        item(key = "settingsTitle") { SectionTitle(Copy.SETTINGS_SECTION) }
         item(key = "update") { Box(Modifier.widthIn(max = ContentMaxWidth)) { UpdateCard(manual = true) } }
         item(key = "motion") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
@@ -106,5 +105,37 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit) 
                 }
             }
         }
+        item(key = "infoTitle") { SectionTitle(Copy.INFO_SECTION) }
+        item(key = "info") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    InfoLink("${Copy.MENU_ABOUT} · GOAT ${BuildConfig.VERSION_NAME}", onAbout)
+                    InfoLink(Copy.INFO_CHANGELOG, onChangelog)
+                    InfoLink(Copy.INFO_PERMISSIONS, onPermissions)
+                }
+            }
+        }
+    }
+}
+
+/** 묶음 제목(설정·정보). */
+@Composable
+private fun SectionTitle(text: String) {
+    val c = LocalLiquid.current
+    Box(Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth()) {
+        Text(text, color = c.muted, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 8.dp, top = 4.dp))
+    }
+}
+
+/** 정보 한 줄: 누르면 시트를 연다(오른쪽 화살표). */
+@Composable
+private fun InfoLink(label: String, onClick: () -> Unit) {
+    val c = LocalLiquid.current
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = c.ink, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = c.muted)
     }
 }
