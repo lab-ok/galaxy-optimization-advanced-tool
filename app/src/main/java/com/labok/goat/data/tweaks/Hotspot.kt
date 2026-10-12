@@ -111,7 +111,12 @@ object Hotspot {
         val r = ShizukuAccess.shell(insertCommand(base))
         val ok = r?.ok == true && ours().orEmpty().isNotEmpty()
         if (ok) setApplied(context, true)
-        if (!ok) lastNote = "APN 쓰기가 막힘: " + (r?.err ?: r?.out ?: "").lineSequence().firstOrNull { it.isNotBlank() }.orEmpty().take(120)
+        if (!ok) {
+            val raw = (r?.err ?: r?.out ?: "").lineSequence().firstOrNull { it.isNotBlank() }.orEmpty()
+            // 삼성은 셸의 APN 쓰기를 보안 정책으로 막는다("Error while accessing provider:telephony"): 사람이 읽을 말로 바꾼다
+            lastNote = if ("provider" in raw || "Security" in raw || "ermission" in raw) "이 폰은 앱이 APN을 직접 바꾸지 못하게 막아 두었습니다. 아래 '직접 하기'로 진행하세요."
+            else "자동 추가 실패: " + raw.take(120)
+        }
         log.add("핫스팟 제한 우회: APN 추가 " + if (ok) "성공(${base.apn}, $lastNote)" else "실패($lastNote)")
         return if (ok) Result.ADDED else Result.BLOCKED
     }
