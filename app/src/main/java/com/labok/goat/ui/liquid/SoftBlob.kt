@@ -190,6 +190,8 @@ class SoftBlob(private val n: Int = N) {
         val ux = if (dist > 1e-3f) dx / dist else 0f; val uy = if (dist > 1e-3f) dy / dist else 0f
         val a = area(); val sign = if (a < 0) -1f else 1f
         val pressure = KP * ((area0 - abs(a)) / area0) * h
+        // 앱 설정의 UI 낭창거림(감쇠 배수)
+        val motion = UiMotion.dampScale()
         var energy = 0f
         for (i in 0 until n) {
             val p = (i - 1 + n) % n; val q = (i + 1) % n
@@ -204,7 +206,7 @@ class SoftBlob(private val n: Int = N) {
             fx += KT * ((px[p] + px[q] - 2 * px[i]) - lap0x[i]); fy += KT * ((py[p] + py[q] - 2 * py[i]) - lap0y[i])
             fx += pressure * nx; fy += pressure * ny
             // 이웃 점성(CV)은 배수하지 않는다. 1/240초 적분에서 CV·dt가 0.5를 넘으면 가장자리가 지글거린다.
-            val c = C * damping
+            val c = C * damping * motion
             fx -= c * vx[i]; fy -= c * vy[i]
             fx += CV * (vx[p] + vx[q] - 2 * vx[i]); fy += CV * (vy[p] + vy[q] - 2 * vy[i])
             vx[i] += fx * dt; vy[i] += fy * dt

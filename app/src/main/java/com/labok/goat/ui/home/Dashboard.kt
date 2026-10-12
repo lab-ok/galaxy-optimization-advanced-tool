@@ -220,13 +220,6 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             // 처음 화면에 보인 카드만 차례로 맺히고, 나중에 스크롤로 들어오는 카드는 동그라미에서 터지듯 커지지 않게 바로 그린다
             BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> onOpen(item, at) }
         }
-        // 맨 아래: 기록 파일 남기기(기본 꺼짐). 기능마다 남기는 작동 기록을 다운로드 폴더 파일로도 남길지 정한다.
-        item(key = "logfile", span = { GridItemSpan(maxLineSpan) }) {
-            var logFile by remember { mutableStateOf(PublicLogFile.enabled(context)) }
-            GlassCard {
-                LiquidSwitchRow(Copy.LOG_FILE_TITLE, Copy.LOG_FILE_BODY, logFile, true) { on -> logFile = on; PublicLogFile.setEnabled(context, on) }
-            }
-        }
     }
 }
 

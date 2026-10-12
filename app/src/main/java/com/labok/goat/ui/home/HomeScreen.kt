@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.about.SettingsScreen
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.nav.GLASS_ALPHA
 import androidx.compose.animation.core.snap
@@ -328,6 +329,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             )
             NavItem.HOME -> listOf(Copy.MENU_REPORT to report)
             NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
+            NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
         val dpiMatchList: @Composable (PaddingValues) -> Unit = { inner ->
@@ -383,8 +385,10 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         }
         val drawerItems: @Composable () -> Unit = {
                 SideDrawerContent(sections, current = feature, visible = wide || drawer.targetValue == DrawerValue.Open, glass = !wide, onAbout = {
+                    // 사이드바 맨 아래 '앱 설정': 앱 정보·업데이트·기록 파일·UI 탄성을 모은 화면으로 간다
+                    revealFrom = null
+                    feature = NavItem.SETTINGS; shown = NavItem.SETTINGS
                     scope.launch { drawer.close() }
-                    sheet = Sheet.ABOUT
                 }, onSelect = { item ->
                     // 방울이 고른 항목으로 옮겨 가는 것을 잠깐 보여 준 뒤 닫는다.
                     val moved = item != feature
@@ -467,6 +471,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
+                            NavItem.SETTINGS -> SettingsScreen(inner, onAbout = { sheet = Sheet.ABOUT })
                         }
                     }
                 }

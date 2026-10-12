@@ -87,7 +87,7 @@ internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
             Spacer(Modifier.height(Gap.Tight))
             Text(
                 if (PublicLogFile.enabled(LocalContext.current)) "내장 저장소 ${PublicLogFile.displayPath}에 날짜별로 저장합니다."
-                else "앱 안에만 짧게 남깁니다. 홈 맨 아래 '기록 파일 남기기'를 켜면 ${PublicLogFile.displayPath}에도 날짜별로 저장합니다.",
+                else "앱 안에만 짧게 남깁니다. 앱 설정의 '기록 파일 남기기'를 켜면 ${PublicLogFile.displayPath}에도 날짜별로 저장합니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(Gap.Item))

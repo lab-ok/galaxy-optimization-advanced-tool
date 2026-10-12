@@ -91,9 +91,11 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     DARK(Copy.FEATURE_DARK, NavIcon.MOON),
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
+    /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */
+    SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, INFO, GEAR }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -192,7 +194,7 @@ fun SideDrawerContent(
                     }
                 }
             }
-            // 맨 아래: 앱 정보(기능이 아니라 방울 선택 대상이 아니다)
+            // 맨 아래: 앱 설정(기능이 아니라 방울 선택 대상이 아니다)
             Spacer(Modifier.height(Gap.Section))
             Box(Modifier.fillMaxWidth().height(1.dp).padding(horizontal = 22.dp).background(c.line))
             Spacer(Modifier.height(Gap.Item))
@@ -209,9 +211,9 @@ fun SideDrawerContent(
                     .padding(start = 22.dp, end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                NavGlyph(NavIcon.INFO, c.muted)
+                NavGlyph(NavIcon.GEAR, if (current == NavItem.SETTINGS) c.ink else c.muted)
                 Spacer(Modifier.width(14.dp))
-                Text(Copy.MENU_ABOUT, color = c.muted, fontWeight = FontWeight.Medium)
+                Text(Copy.FEATURE_SETTINGS, color = if (current == NavItem.SETTINGS) c.ink else c.muted, fontWeight = if (current == NavItem.SETTINGS) FontWeight.SemiBold else FontWeight.Medium)
             }
         }
     }
@@ -271,6 +273,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.CAMERA -> camera(color, s)
             NavIcon.FLASK -> flask(color, s)
             NavIcon.INFO -> info(color, s)
+            NavIcon.GEAR -> gear(color, s)
         }
     }
 }
@@ -444,6 +447,18 @@ private fun DrawScope.info(c: Color, s: Stroke) {
     drawCircle(c, u(9f), p(12f, 12f), style = s)
     drawLine(c, p(12f, 11f), p(12f, 16.5f), s.width, StrokeCap.Round)
     drawCircle(c, s.width * 0.75f, p(12f, 7.8f))
+}
+
+/** 앱 설정: 톱니바퀴(바깥 이 8개, 가운데 구멍). */
+private fun DrawScope.gear(c: Color, s: Stroke) {
+    val o = p(12f, 12f)
+    for (k in 0 until 8) {
+        val a = Math.toRadians(k * 45.0)
+        val x = kotlin.math.cos(a).toFloat(); val y = kotlin.math.sin(a).toFloat()
+        drawLine(c, Offset(o.x + x * u(6.6f), o.y + y * u(6.6f)), Offset(o.x + x * u(9.2f), o.y + y * u(9.2f)), s.width * 1.6f, StrokeCap.Round)
+    }
+    drawCircle(c, u(6.4f), o, style = s)
+    drawCircle(c, u(2.6f), o, style = s)
 }
 
 /** 조사 도구: 플라스크, 안에 액체 선과 기포 둘. */
