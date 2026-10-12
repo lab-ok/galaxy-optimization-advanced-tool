@@ -155,4 +155,4 @@ private val LiquidType = androidx.compose.material3.Typography().let { t0 ->
 }
 
 /** 앱 글자 크기 배율(시스템 글자 크기 설정에 곱한다). */
-private const val TEXT_SCALE = 0.94f
+private const val TEXT_SCALE = 0.92f

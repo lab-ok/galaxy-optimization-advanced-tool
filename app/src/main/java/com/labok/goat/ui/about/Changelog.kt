@@ -42,10 +42,11 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
-        "GOAT 1.3.6", "2026-10-12", "삼성 글꼴 스타일(기기 글꼴)이 앱에도 적용되게 했습니다.",
+        "GOAT 1.3.6", "2026-10-12", "삼성 글꼴 스타일(기기 글꼴)이 앱에도 적용되게 하고, 글자를 아주 조금 더 줄였습니다.",
         listOf(
             "화면" to listOf(
                 "설정 → 디스플레이 → 글꼴 스타일에서 고른 글꼴(내려받은 글꼴 포함)이 GOAT 화면에도 적용됩니다. 굵은 글씨도 같은 글꼴의 굵은 굵기로 나옵니다.",
+                "앱 전체 글자 크기를 아주 조금 더 줄였습니다.",
             ),
         ),
     ),
