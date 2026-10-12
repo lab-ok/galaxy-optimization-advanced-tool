@@ -16,6 +16,7 @@
 | <sub>**카메라 촬영음 끄기**</sub> | <sub>국내 갤럭시의 강제 촬영음을 끄고 촬영음이 기기 소리 설정(무음·진동)을 따르게 합니다. 업데이트로 다시 켜지면 자동으로 다시 끕니다.</sub> | <sub>Shizuku(또는 PC adb 명령 한 번)</sub> |
 | <sub>**기본 앱 정리**</sub> | <sub>쓰지 않는 삼성·제휴 기본 앱(빅스비·AR·게임 런처·페이스북 등)을 지우지 않고 꺼 둡니다. 스위치로 언제든 다시 켭니다.</sub> | <sub>Shizuku</sub> |
 | <sub>**GOS 끄기**</sub> | <sub>게임 중 성능을 조절하는 게임 최적화 서비스를 끄고, 재부팅 뒤 다시 켜지면 다시 끕니다.</sub> | <sub>Shizuku</sub> |
+| <sub>**잠자기 모드 끄기**</sub> | <sub>화면이 꺼진 동안 앱 동작을 몰아서 늦추는 잠자기 모드(Doze)를 꺼 알림이 늦게 오지 않게 합니다. 대기 배터리 소모는 늘어납니다.</sub> | <sub>Shizuku</sub> |
 
 <sub>폴드는 외부 화면과 내부 화면의 픽셀 밀도(PPI)가 달라서, 같은 DPI를 써도 두 화면에서 글자와 아이콘의 실제 크기가 다르게 보입니다. `adb shell wm density`로 DPI를 바꿔도 재부팅하면 돌아가고 두 화면을 따로 맞추기도 번거롭습니다. 고급 화면 배율 설정은 외부 화면 DPI 하나만 정하면 내부 화면 DPI를 두 화면의 해상도와 PPI로 계산해 맞춥니다.</sub>
 
@@ -102,6 +103,12 @@
 - <sub>게임 최적화 서비스(`com.samsung.android.game.gos`, 이전 `com.enhance.gameservice`)를 기본 앱 정리와 같은 `pm disable-user`로 끕니다. 두 화면이 같은 상태를 씁니다. 게임 런처·게임 부스터는 건드리지 않습니다.</sub>
 - <sub>재부팅 뒤 다시 켜지는 기기를 위해 부팅마다 한 번 Shizuku 연결 때 다시 끕니다.</sub>
 
+#### 잠자기 모드 끄기
+
+- <sub>`dumpsys deviceidle disable`(깊은·가벼운 잠자기 모두)을 Shizuku 셸로 실행하고, `dumpsys deviceidle enabled deep|light`로 다시 읽어 확인합니다. 끌 때 배터리 영향을 한 번 더 묻습니다.</sub>
+- <sub>메모리에만 있는 설정이라 재부팅하면 다시 켜집니다. 꺼 두었다면 부팅마다 한 번 Shizuku가 연결될 때 다시 끄고, 같은 부팅 안에서 PC 등으로 직접 켠 것은 그대로 둡니다.</sub>
+- <sub>특정 앱의 알림만 늦다면 그 앱의 배터리 설정을 '제한 없음'으로 두는 편이 배터리에 낫다고 화면에서 안내합니다.</sub>
+
 #### 공통
 
 - <sub>**문제 신고**: 진단 파일과 오늘 로그를 첨부한 메일을 바로 작성합니다. 로그는 `다운로드/GOAT/`에 날짜별로 저장됩니다.</sub>
@@ -125,6 +132,7 @@
 | <sub>카메라 촬영음 끄기</sub> | <sub>국내·일본 모델만</sub> | <sub>같음</sub> | <sub>버전 무관(국가 설정에 따름)</sub> | <sub>강제 설정 값이 있는지 확인</sub> |
 | <sub>기본 앱 정리</sub> | <sub>지원</sub> | <sub>지원</sub> | <sub>지원</sub> | <sub>설치된 앱만 목록에 표시</sub> |
 | <sub>GOS 끄기</sub> | <sub>지원</sub> | <sub>GOS가 없는 탭은 안내만</sub> | <sub>지원</sub> | <sub>GOS 패키지 설치 여부</sub> |
+| <sub>잠자기 모드 끄기</sub> | <sub>지원</sub> | <sub>지원</sub> | <sub>지원(Android 6부터 있는 표준 기능)</sub> | <sub>없음</sub> |
 
 
 <sub>Android 12(API 31) 이상이 필요합니다. 고급 화면 배율 설정의 두 화면 맞추기는 Galaxy Z Fold 시리즈, 앱별 화면 배율 설정은 One UI 9 이상의 갤럭시가 대상입니다. 해상도 낮추기는 폴드를 지원하지 않고, 주사율 고정은 60Hz보다 빠른 화면에서만 의미가 있습니다. 흔들어서 화면 회전은 가속도 센서가 있는 기기면 됩니다. 아래 표는 고급 화면 배율 설정 기준입니다.</sub>
@@ -174,7 +182,7 @@ adb shell pm grant com.labok.goat android.permission.WRITE_SECURE_SETTINGS
 3. <sub>**자동 적용** 스위치를 켜 두면 재부팅·화면 전환·외부 변경 때 알아서 다시 맞춥니다.</sub>
 4. <sub>크기가 미세하게 다르게 느껴지면 **크기 테스트**로 확인하고 **내부 화면 보정**으로 다듬습니다.</sub>
 
-<sub>앱을 열면 **홈**에서 모든 기능의 지금 상태를 카드로 보고 바로 들어갑니다. 사이드바(왼쪽 위 ☰)는 **화면 배율**(고급 화면 배율 설정·앱별 화면 배율 설정), **화면 표시**(해상도 낮추기·주사율 고정·애니메이션 속도·앱 다크 모드 강제), **편의 기능**(흔들어서 화면 회전·카메라 촬영음 끄기), **시스템**(기본 앱 정리·GOS 끄기)으로 묶여 있고, 폴드 내부 화면·태블릿처럼 넓은 화면에서는 늘 왼쪽에 펼쳐져 있습니다. 뒤로 가기는 사이드바 닫기 → 홈 → 앱 닫기 순서입니다. 각 기능의 세부 도구(사용 방법·권한 설정·문제 신고·초기화)는 오른쪽 위 ⋮ 메뉴에 같은 순서로 있습니다. 표시 크기 조절바는 값만 바꾸고 [적용]을 눌러야 반영됩니다. 조절바를 붙들고 0.75초 가만히 있으면 앞뒤 10칸을 세밀하게 고르는 확대 패널이 열립니다. 사이드바나 팝업이 열리면 뒤 화면이 흐려집니다.</sub>
+<sub>앱을 열면 **홈**에서 모든 기능의 지금 상태를 카드로 보고 바로 들어갑니다. 사이드바(왼쪽 위 ☰)는 **화면 배율**(고급 화면 배율 설정·앱별 화면 배율 설정), **화면 표시**(해상도 낮추기·주사율 고정·애니메이션 속도·앱 다크 모드 강제), **편의 기능**(흔들어서 화면 회전·카메라 촬영음 끄기), **시스템**(기본 앱 정리·GOS 끄기·잠자기 모드 끄기)으로 묶여 있고, 폴드 내부 화면·태블릿처럼 넓은 화면에서는 늘 왼쪽에 펼쳐져 있습니다. 뒤로 가기는 사이드바 닫기 → 홈 → 앱 닫기 순서입니다. 각 기능의 세부 도구(사용 방법·권한 설정·문제 신고·초기화)는 오른쪽 위 ⋮ 메뉴에 같은 순서로 있습니다. 표시 크기 조절바는 값만 바꾸고 [적용]을 눌러야 반영됩니다. 조절바를 붙들고 0.75초 가만히 있으면 앞뒤 10칸을 세밀하게 고르는 확대 패널이 열립니다. 사이드바나 팝업이 열리면 뒤 화면이 흐려집니다.</sub>
 
 #### 앱별 화면 배율 설정
 
@@ -262,7 +270,7 @@ app/src/main/java/com/labok/goat/
 │   ├── rotate/                  흔들어서 화면 회전: ShakeRotate(설정·회전 잠금), ShakeEngine(센서·자동 회전 잠깐 켜기),
 │   │                            ShakeHaptics(흔든 리듬 진동)
 │   ├── camera/                  CameraMute(촬영음 강제 설정)
-│   ├── tweaks/                  RefreshRate · Resolution · ForceDark · Gos · Bloat · AnimationSpeed(Shizuku 셸·설정 쓰기)
+│   ├── tweaks/                  RefreshRate · Resolution · ForceDark · Gos · Doze · Bloat · AnimationSpeed(Shizuku 셸·설정 쓰기)
 │   ├── settings/                SettingsRepository(외부 DPI·보정·자동·학습 화면·꺼짐 PPI·적용 기록·외부 변경)
 │   └── log/                     LogRepository, PublicLogFile(Download/GOAT), CrashRecorder, DiagnosticReport
 ├── domain/                      판단·계산(단위 테스트 대상)
@@ -287,7 +295,7 @@ app/src/main/java/com/labok/goat/
     ├── shizuku/                 Shizuku 연결 단계 안내(ShizukuGuide)
     ├── appsize/                 앱별 화면 배율 설정(목록·사용 방법·권한 설정·초기화 시트, 알림 버튼 화면)
     ├── rotate/                  흔들어서 화면 회전(설정·고급 설정·사용 방법 그림·자동 맞추기 물방울 시트)
-    ├── tweaks/                  주사율·해상도·다크 모드·GOS·기본 앱 정리·애니메이션 화면과 그림
+    ├── tweaks/                  주사율·해상도·다크 모드·GOS·잠자기 모드·기본 앱 정리·애니메이션 화면과 그림
     ├── camera/                  카메라 촬영음 끄기
     ├── nav/                     사이드바(물방울 선택·머리 물방울)
     ├── advanced/                고급 정보(디스플레이 ID·해상도·PPI·설정 DPI·적용 기록·로그)
@@ -313,7 +321,7 @@ app/src/main/java/com/labok/goat/
 
 #### 테스트
 
-- <sub>단위 테스트(114개): DPI 계산·PPI 결정·화면 학습·외부 변경 판정·반복 방지·화면 방향·흔들기 판정·주사율·해상도 비율·염소 표정·문구와 간격 규칙 등. `./gradlew testDebugUnitTest`</sub>
+- <sub>단위 테스트(116개): DPI 계산·PPI 결정·화면 학습·외부 변경 판정·반복 방지·화면 방향·흔들기 판정·주사율·해상도 비율·염소 표정·문구와 간격 규칙 등. `./gradlew testDebugUnitTest`</sub>
 - <sub>화면 캡처: `./screenshots.sh`가 Robolectric과 Roborazzi로 주요 화면을 PNG로 만듭니다(`app/build/outputs/roborazzi`).</sub>
 - <sub>에뮬레이터 확인: 64비트 Android 컨테이너(redroid 등)에 설치해 `adb shell wm size`/`wm density`로 접기·펼치기와 외부 변경을 흉내 낼 수 있습니다.</sub>
 

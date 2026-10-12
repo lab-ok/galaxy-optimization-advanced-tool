@@ -40,6 +40,15 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.2", "2026-10-12", "잠자기 모드 끄기를 더했습니다.",
+        listOf(
+            "새 기능" to listOf(
+                "잠자기 모드 끄기: 화면이 꺼진 동안 앱 동작을 몰아서 늦추는 잠자기 모드(Doze)를 꺼 알림이 늦게 오지 않게 합니다. " +
+                    "'adb shell dumpsys deviceidle disable'과 같은 방법이며, 재부팅하면 다시 켜지는 설정이라 부팅마다 Shizuku가 연결될 때 다시 끕니다(Shizuku).",
+            ),
+        ),
+    ),
+    Release(
         "GOAT 1.1", "2026-10-12", "FoldFit 1.0에서 이름을 바꾸고 갤럭시 도구 모음으로 넓혔습니다.",
         listOf(
             "이름과 모습" to listOf(

@@ -2,6 +2,14 @@
 
 <sub>앱 안의 앱 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.2 · 2026-10-12
+
+<sub>잠자기 모드 끄기를 더했습니다.</sub>
+
+#### 새 기능
+
+- <sub>잠자기 모드 끄기: 화면이 꺼진 동안 앱 동작을 몰아서 늦추는 잠자기 모드(Doze)를 꺼 알림이 늦게 오지 않게 합니다. 'adb shell dumpsys deviceidle disable'과 같은 방법이며, 재부팅하면 다시 켜지는 설정이라 부팅마다 Shizuku가 연결될 때 다시 끕니다(Shizuku).</sub>
+
 ### GOAT 1.1 · 2026-10-12
 
 <sub>FoldFit 1.0에서 이름을 바꾸고 갤럭시 도구 모음으로 넓혔습니다.</sub>

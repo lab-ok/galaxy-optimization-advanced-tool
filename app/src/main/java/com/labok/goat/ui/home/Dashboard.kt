@@ -18,6 +18,7 @@ import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.data.tweaks.Bloat
 import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.data.tweaks.Gos
+import com.labok.goat.data.tweaks.Doze
 import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.data.display.ResolutionState
 import com.labok.goat.data.tweaks.RefreshRate
@@ -101,6 +102,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     val camera by CameraMute.status.collectAsStateWithLifecycle()
     val gos by Gos.status.collectAsStateWithLifecycle()
     val dark by ForceDark.status.collectAsStateWithLifecycle()
+    val doze by Doze.status.collectAsStateWithLifecycle()
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     LifecycleResumeEffect(Unit) { tick++; onPauseOrDispose { } }
@@ -108,7 +110,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     // 기본 앱 정리: 꺼 둔 목록 앱 수(Shizuku로 읽음, 못 읽으면 null)
     var cleaned by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(tick, shizuku) {
-        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); ForceDark.read(context); Bloat.scan()?.count { it.value } }
+        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); Doze.read(); ForceDark.read(context); Bloat.scan()?.count { it.value } }
     }
     // 기능마다 지금 상태 한 줄(돌아올 때마다 다시 읽는다)
     val status: (NavItem) -> String = { item ->
@@ -132,6 +134,11 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                 Gos.State.ON -> Copy.GOS_DASH_ON
                 Gos.State.NONE -> Copy.GOS_DASH_NONE
                 Gos.State.UNKNOWN -> if (Gos.wanted(context)) Copy.GOS_DASH_WANTED else Copy.GOS_DASH_UNKNOWN
+            }
+            NavItem.DOZE -> when (doze) {
+                Doze.State.OFF -> Copy.DOZE_DASH_OFF
+                Doze.State.ON -> Copy.DOZE_DASH_ON
+                Doze.State.UNKNOWN -> if (Doze.wanted(context)) Copy.DOZE_DASH_WANTED else Copy.GOS_DASH_UNKNOWN
             }
             NavItem.DARK -> when (dark.forced) {
                 true -> if (dark.night) Copy.DARK_DASH_ON else Copy.DARK_DASH_WAITING
@@ -161,6 +168,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.APP_CLEANUP -> (cleaned ?: 0) > 0
             NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))
             NavItem.DARK -> dark.forced == true
+            NavItem.DOZE -> doze == Doze.State.OFF || (doze == Doze.State.UNKNOWN && Doze.wanted(context))
             NavItem.RESOLUTION -> ResolutionState.base(context) != null
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             else -> false

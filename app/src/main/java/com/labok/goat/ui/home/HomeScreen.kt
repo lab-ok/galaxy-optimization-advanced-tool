@@ -20,6 +20,8 @@ import com.labok.goat.ui.tweaks.DarkHelpSheet
 import com.labok.goat.ui.tweaks.DarkScreen
 import com.labok.goat.ui.tweaks.GosHelpSheet
 import com.labok.goat.ui.tweaks.GosScreen
+import com.labok.goat.ui.tweaks.DozeHelpSheet
+import com.labok.goat.ui.tweaks.DozeScreen
 import com.labok.goat.ui.tweaks.RefreshHelpSheet
 import com.labok.goat.ui.tweaks.RefreshScreen
 import com.labok.goat.ui.camera.CameraMuteHelpSheet
@@ -161,7 +163,7 @@ import kotlinx.coroutines.launch
 /** 이 너비(dp) 이상이면 사이드바를 늘 펼쳐 둔다(폴드 내부 화면·태블릿). */
 private const val WIDE_DP = 600
 
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -258,7 +260,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             // 화면 표시: 크기(해상도) → 움직임(주사율·애니메이션) → 색(다크) 순. 해상도는 화면 배율 바로 뒤라 이어서 읽힌다.
             add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK)))
             add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE)))
-            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS)))
+            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.DOZE)))
             if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
@@ -306,6 +308,11 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             )
             NavItem.GOS -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.GOS_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
+                Copy.MENU_REPORT to report,
+            )
+            NavItem.DOZE -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.DOZE_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report,
             )
@@ -456,6 +463,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.APP_CLEANUP -> BloatScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.REFRESH -> RefreshScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.GOS -> GosScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
+                            NavItem.DOZE -> DozeScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
@@ -519,6 +527,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.BLOAT_HELP -> BloatHelpSheet()
                     Sheet.REFRESH_HELP -> RefreshHelpSheet()
                     Sheet.GOS_HELP -> GosHelpSheet()
+                    Sheet.DOZE_HELP -> DozeHelpSheet()
                     Sheet.DARK_HELP -> DarkHelpSheet()
                     Sheet.RES_HELP -> ResolutionHelpSheet()
                 }

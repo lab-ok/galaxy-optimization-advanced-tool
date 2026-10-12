@@ -83,6 +83,8 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     REFRESH(Copy.FEATURE_REFRESH, NavIcon.REFRESH),
     /** 게임 중 성능을 낮추는 GOS를 끈다(Shizuku, 기본 앱 정리와 같은 끄기). */
     GOS(Copy.FEATURE_GOS, NavIcon.GAME),
+    /** 잠자기 모드(Doze)를 꺼 알림이 늦게 오지 않게 한다(Shizuku, 재부팅 뒤 다시 끄기). */
+    DOZE(Copy.FEATURE_DOZE, NavIcon.BELL),
     /** 해상도를 낮추고 밀도도 같은 비율로 줄인다(시스템 설정 권한, 폴드 제외). */
     RESOLUTION(Copy.FEATURE_RESOLUTION, NavIcon.PIXELS),
     /** 다크 모드 없는 앱도 시스템이 어둡게 그리게 한다(Shizuku setprop). */
@@ -91,7 +93,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, PIXELS, FLASK, INFO }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, INFO }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -261,6 +263,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.REFRESH -> refresh(color, s)
             NavIcon.GAME -> game(color, s)
             NavIcon.MOON -> moon(color, s)
+            NavIcon.BELL -> bell(color, s)
             NavIcon.PIXELS -> pixels(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
@@ -394,6 +397,22 @@ private fun DrawScope.game(c: Color, s: Stroke) {
     drawLine(c, p(7.4f, 10f), p(7.4f, 14f), s.width, StrokeCap.Round)
     drawCircle(c, u(1.1f), p(16f, 12.8f))
     drawCircle(c, u(1.1f), p(18.6f, 10.6f))
+}
+
+/** 잠자기 모드 끄기: 알림 종과 오른쪽 위의 작은 z(잠). */
+private fun DrawScope.bell(c: Color, s: Stroke) {
+    val body = Path().apply {
+        moveTo(u(4.5f), u(17f))
+        cubicTo(u(6f), u(15.5f), u(6f), u(13.5f), u(6f), u(11f))
+        cubicTo(u(6f), u(7.4f), u(8.2f), u(5f), u(11.5f), u(5f))
+        cubicTo(u(14.8f), u(5f), u(17f), u(7.4f), u(17f), u(11f))
+        cubicTo(u(17f), u(13.5f), u(17f), u(15.5f), u(18.5f), u(17f)); close()
+    }
+    drawPath(body, c, style = s)
+    drawLine(c, p(9.8f, 20f), p(13.2f, 20f), s.width, StrokeCap.Round)
+    // z
+    val z = Path().apply { moveTo(u(17.6f), u(2.6f)); lineTo(u(21.4f), u(2.6f)); lineTo(u(17.6f), u(6.6f)); lineTo(u(21.4f), u(6.6f)) }
+    drawPath(z, c, style = Stroke(s.width * 0.8f, cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
 }
 
 /** 앱 다크 모드 강제: 초승달과 그 옆 작은 별 둘. */
