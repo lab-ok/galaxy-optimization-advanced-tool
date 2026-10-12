@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.data.tweaks.Hotspot
 import androidx.compose.ui.text.rememberTextMeasurer
 import com.labok.goat.ui.about.worthShowing
 import com.labok.goat.ui.about.UpdateCard
@@ -120,8 +121,9 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
 
     // 기본 앱 정리: 꺼 둔 목록 앱 수(Shizuku로 읽음, 못 읽으면 null)
     var cleaned by remember { mutableStateOf<Int?>(null) }
+    var hotspot by remember { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(tick, shizuku) {
-        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); Doze.read(); ForceDark.read(context); Bloat.scan()?.count { it.value } }
+        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); Doze.read(); hotspot = Hotspot.ours()?.isNotEmpty(); ForceDark.read(context); Bloat.scan()?.count { it.value } }
     }
     // 기능마다 지금 상태 한 줄(돌아올 때마다 다시 읽는다)
     val status: (NavItem) -> String = { item ->
@@ -146,6 +148,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                 Gos.State.NONE -> Copy.GOS_DASH_NONE
                 Gos.State.UNKNOWN -> if (Gos.wanted(context)) Copy.GOS_DASH_WANTED else Copy.GOS_DASH_UNKNOWN
             }
+            NavItem.HOTSPOT -> if (hotspot == true) Copy.HOTSPOT_DASH_ON else Copy.HOTSPOT_DASH_OFF
             NavItem.DOZE -> when (doze) {
                 Doze.State.OFF -> Copy.DOZE_DASH_OFF
                 Doze.State.ON -> Copy.DOZE_DASH_ON
@@ -179,6 +182,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             NavItem.APP_CLEANUP -> (cleaned ?: 0) > 0
             NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))
             NavItem.DARK -> dark.forced == true
+            NavItem.HOTSPOT -> hotspot == true
             NavItem.DOZE -> doze == Doze.State.OFF || (doze == Doze.State.UNKNOWN && Doze.wanted(context))
             NavItem.RESOLUTION -> ResolutionState.base(context) != null
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
