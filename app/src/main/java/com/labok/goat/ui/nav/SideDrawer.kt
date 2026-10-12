@@ -125,8 +125,8 @@ fun SideDrawerContent(
     val enter = remember { Animatable(0f) }
     LaunchedEffect(visible) {
         if (!visible) { enter.snapTo(0f); return@LaunchedEffect }
-        if (reduce) { enter.snapTo(items.size + sections.size + 1f); return@LaunchedEffect }
-        enter.animateTo(items.size + sections.size + 1f, tween(120 + 55 * (items.size + 2), easing = LinearEasing))
+        if (reduce) { enter.snapTo(items.size + sections.size + 2f); return@LaunchedEffect }
+        enter.animateTo(items.size + sections.size + 2f, tween(120 + 55 * (items.size + 2), easing = LinearEasing))
     }
 
     // 고른 항목 방울: 각 항목의 위치를 재고, 머리·꼬리 스프링으로 옮긴다
@@ -192,28 +192,24 @@ fun SideDrawerContent(
                         }
                         index++
                     }
+                    // 맨 아래: 앱 설정. 기능 묶음과 선으로 나누되, 고르면 다른 항목처럼 잉크 방울이 옮겨 와 덮는다.
+                    Spacer(Modifier.height(Gap.Section))
+                    Box(Modifier.fillMaxWidth().height(1.dp).padding(horizontal = 22.dp).background(c.line))
+                    Spacer(Modifier.height(Gap.Item))
+                    val settingsOrder = ++index
+                    DrawerRow(
+                        NavItem.SETTINGS, current == NavItem.SETTINGS,
+                        cover = cover@{
+                            val top = tops[NavItem.SETTINGS] ?: return@cover if (current == NavItem.SETTINGS) 1f else 0f
+                            blob.frame
+                            if (!blob.blob.ready || rowH <= 0f) (if (current == NavItem.SETTINGS) 1f else 0f)
+                            else (1f - kotlin.math.abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                        },
+                        appear = { (enter.value - settingsOrder).coerceIn(0f, 1f) },
+                        modifier = Modifier.onGloballyPositioned { tops[NavItem.SETTINGS] = it.positionInParent().y },
+                        onClick = { onSelect(NavItem.SETTINGS) },
+                    )
                 }
-            }
-            // 맨 아래: 앱 설정(기능이 아니라 방울 선택 대상이 아니다)
-            Spacer(Modifier.height(Gap.Section))
-            Box(Modifier.fillMaxWidth().height(1.dp).padding(horizontal = 22.dp).background(c.line))
-            Spacer(Modifier.height(Gap.Item))
-            val aboutOrder = items.size + sections.size
-            val interaction = remember { MutableInteractionSource() }
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .graphicsLayer { alpha = (enter.value - aboutOrder).coerceIn(0f, 1f) }
-                    .liquidPress(interaction, sx = 1.02f, sy = 0.95f)
-                    .clip(RoundedCornerShape(24.dp))
-                    .clickable(interaction, null, onClick = onAbout)
-                    .padding(start = 22.dp, end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                NavGlyph(NavIcon.GEAR, if (current == NavItem.SETTINGS) c.ink else c.muted)
-                Spacer(Modifier.width(14.dp))
-                Text(Copy.FEATURE_SETTINGS, color = if (current == NavItem.SETTINGS) c.ink else c.muted, fontWeight = if (current == NavItem.SETTINGS) FontWeight.SemiBold else FontWeight.Medium)
             }
         }
     }

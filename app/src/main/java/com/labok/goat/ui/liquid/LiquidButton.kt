@@ -108,9 +108,11 @@ fun LiquidButton(
                     haptics.press()
                     if (!reduce) scope.launch {
                         shake.snapTo(0f)
+                        // 흔들림 폭도 UI 유연성을 따른다(기본 100%에서 원래 폭)
+                        val k = (UiMotion.wobble / 0.75f).coerceIn(0f, 2f)
                         shake.animateTo(0f, keyframes {
                             durationMillis = 320
-                            -14f at 50; 12f at 110; -8f at 170; 5f at 230; -2f at 280
+                            -14f * k at 50; 12f * k at 110; -8f * k at 170; 5f * k at 230; -2f * k at 280
                         })
                     }
                     return@clickable

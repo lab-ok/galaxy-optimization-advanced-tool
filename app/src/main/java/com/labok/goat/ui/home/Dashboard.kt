@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import androidx.compose.ui.text.rememberTextMeasurer
 import com.labok.goat.ui.about.worthShowing
 import com.labok.goat.ui.about.UpdateCard
 import com.labok.goat.data.update.Updater
@@ -110,11 +111,12 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     val dark by ForceDark.status.collectAsStateWithLifecycle()
     val doze by Doze.status.collectAsStateWithLifecycle()
     val update by Updater.status.collectAsStateWithLifecycle()
-    // 홈을 열 때 새 버전을 조용히 확인한다(6시간에 한 번, 앱을 새로 켜면 한 번)
-    LaunchedEffect(Unit) { withContext(Dispatchers.IO) { Updater.autoCheck(context) } }
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     LifecycleResumeEffect(Unit) { tick++; onPauseOrDispose { } }
+    // 홈을 열거나 홈으로 돌아올 때 새 버전을 조용히 확인한다(앱을 새로 켜면 바로, 그 뒤로는 30분에 한 번).
+    // 새 버전이 있으면 홈 머리 바로 아래에 업데이트 카드가 뜬다.
+    LaunchedEffect(tick) { withContext(Dispatchers.IO) { Updater.autoCheck(context) } }
 
     // 기본 앱 정리: 꺼 둔 목록 앱 수(Shizuku로 읽음, 못 읽으면 null)
     var cleaned by remember { mutableStateOf<Int?>(null) }
@@ -187,8 +189,16 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     // 홈이 처음 보인 시각: 이 시간 안에 그려진 카드만 등장 애니메이션을 한다
     val shownAt = remember { SystemClock.uptimeMillis() }
 
+    // 타일 칸 폭: 가장 긴 기능 이름이 한 줄에 다 보이는 폭(아이콘·여백 포함)보다 좁아지지 않게, 화면 폭에 맞춰 칸 수를 정한다.
+    // 그보다 좁은 화면에서는 한 칸으로 두고, 상태 글처럼 긴 글만 흐르게 한다.
+    val titleMeasurer = rememberTextMeasurer()
+    val titleStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+    val minTile = with(LocalDensity.current) {
+        val widest = features.maxOfOrNull { titleMeasurer.measure(it.label, titleStyle).size.width } ?: 0
+        widest.toDp() + 40.dp + 12.dp + Gap.CardPadding * 2 + 8.dp
+    }
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(168.dp),
+        columns = GridCells.Adaptive(minTile),
         contentPadding = featurePadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
         horizontalArrangement = Arrangement.spacedBy(Gap.Card),
@@ -311,7 +321,8 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
                 .graphicsLayer { alpha = text.value; translationY = (1f - text.value) * 8.dp.toPx() },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(c.ink), contentAlignment = Alignment.Center) {
+            // 꺼진 기능은 아이콘 칸을 살짝 연하게(켜지면 테두리와 함께 진해진다)
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(c.ink.copy(alpha = 0.45f + 0.55f * fill)), contentAlignment = Alignment.Center) {
                 NavGlyph(item.icon, c.onInk)
             }
             Spacer(Modifier.width(12.dp))

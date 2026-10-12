@@ -1,5 +1,6 @@
 package com.labok.goat.ui.tweaks
 
+import com.labok.goat.ui.liquid.LiquidRadioGroup
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -130,7 +131,7 @@ internal fun ResolutionScreen(contentPadding: PaddingValues, permitted: Boolean,
                     Text(Copy.RES_PICK_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.resNow(now.first, now.second, base.first, base.second), color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Tight))
-                    Column(Modifier.selectableGroup()) {
+                    LiquidRadioGroup {
                         options.forEach { o ->
                             LiquidRadioRow(
                                 Copy.resOption(o.name, o.short, o.long, o.percent),

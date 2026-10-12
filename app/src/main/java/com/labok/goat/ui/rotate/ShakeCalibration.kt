@@ -1,5 +1,6 @@
 package com.labok.goat.ui.rotate
 
+import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.ui.liquid.FluidSim
 import androidx.compose.ui.graphics.Color
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
@@ -341,7 +342,7 @@ private fun Dot(filled: Boolean) {
     val c = LocalLiquid.current
     val k by animateFloatAsState(
         if (filled) 1f else 0f,
-        spring(dampingRatio = 0.32f, stiffness = Spring.StiffnessMediumLow),
+        spring(dampingRatio = UiMotion.ratio(0.32f), stiffness = UiMotion.stiffness(Spring.StiffnessMediumLow, 0.32f)),
         label = "dot",
     )
     Canvas(Modifier.size(18.dp)) {

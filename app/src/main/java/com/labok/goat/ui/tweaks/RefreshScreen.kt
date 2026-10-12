@@ -1,5 +1,6 @@
 package com.labok.goat.ui.tweaks
 
+import com.labok.goat.ui.liquid.LiquidRadioGroup
 import android.hardware.display.DisplayManager
 import android.os.Handler
 import android.os.Looper
@@ -134,7 +135,7 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
                     Text(Copy.REFRESH_PICK_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.refreshNow(nowHz, top), color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Tight))
-                    Column(Modifier.selectableGroup()) { RefreshRate.Choice.entries.forEach { ch ->
+                    LiquidRadioGroup { RefreshRate.Choice.entries.forEach { ch ->
                         val label = if (ch == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(top) else ch.label
                         LiquidRadioRow(label, ch.desc, choice == ch, enabled = canWrite && !busy) {
                             if (ch == choice) return@LiquidRadioRow

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.liquid
 
+import androidx.compose.ui.unit.sp
 import android.provider.Settings
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -87,6 +88,23 @@ fun LiquidTheme(content: @Composable () -> Unit) {
         )
     }
     CompositionLocalProvider(LocalLiquid provides c, LocalReduceMotion provides reduce) {
-        MaterialTheme(colorScheme = scheme, content = content)
+        MaterialTheme(colorScheme = scheme, typography = LiquidType, content = content)
     }
+}
+
+/**
+ * 글자 간격 규칙(앱 전체):
+ * 1. 설명 안의 줄 간격은 제목과 설명 사이 간격보다 좁다. 제목(본문 큰 글자)은 줄 높이에 위아래 약 3sp 여유를,
+ *    설명(작은 본문·라벨)은 약 1.5sp만 둬서, 제목과 설명 사이(약 4.5sp)보다 설명 줄 사이(약 3sp)가 늘 좁다.
+ * 2. 같은 제목 아래 이어지는 설명 문단 사이에는 따로 간격(Spacer)을 넣지 않는다(줄 간격으로만 나눈다).
+ * 글자 크기는 Material 3 기본과 같고 줄 높이만 줄였다.
+ */
+private val LiquidType = androidx.compose.material3.Typography().let { t ->
+    t.copy(
+        bodyLarge = t.bodyLarge.copy(lineHeight = 22.sp),
+        bodyMedium = t.bodyMedium.copy(lineHeight = 18.sp),
+        bodySmall = t.bodySmall.copy(lineHeight = 15.sp),
+        labelMedium = t.labelMedium.copy(lineHeight = 15.sp),
+        labelSmall = t.labelSmall.copy(lineHeight = 14.sp),
+    )
 }

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
@@ -67,11 +68,11 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                 GlassCard {
                     Text(Copy.MOTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.MOTION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    var v by remember { mutableIntStateOf((UiMotion.wobble * 100).roundToInt()) }
+                    var v by remember { mutableIntStateOf(UiMotion.percent) }
                     LiquidSlider(
-                        value = v, range = 0..(UiMotion.MAX * 100).roundToInt(),
-                        onValueChange = { v = it; UiMotion.set(context, it / 100f) },
-                        onValueChangeFinished = { UiMotion.set(context, v / 100f) },
+                        value = v, range = 0..UiMotion.MAX_PERCENT,
+                        onValueChange = { v = it; UiMotion.set(context, it) },
+                        onValueChangeFinished = { UiMotion.set(context, v) },
                         valueText = { "$it%" }, description = Copy.MOTION_TITLE,
                     )
                     var demo by remember { mutableStateOf(false) }
@@ -109,9 +110,10 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
         item(key = "info") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    InfoLink("${Copy.MENU_ABOUT} · GOAT ${BuildConfig.VERSION_NAME}", onAbout)
-                    InfoLink(Copy.INFO_CHANGELOG, onChangelog)
-                    InfoLink(Copy.INFO_PERMISSIONS, onPermissions)
+                    val perms = AppPermissions.all
+                    InfoLink(Copy.MENU_ABOUT, "GOAT ${BuildConfig.VERSION_NAME} · 라이선스·문의", onAbout)
+                    InfoLink(Copy.INFO_CHANGELOG, CHANGELOG.first().let { "최근 ${it.version.removePrefix("GOAT ")} · ${it.date}" }, onChangelog)
+                    InfoLink(Copy.INFO_PERMISSIONS, "권한 ${perms.size}개 중 ${perms.count { AppPermissions.granted(context, it) }}개 허용됨", onPermissions)
                 }
             }
         }
@@ -127,15 +129,18 @@ private fun SectionTitle(text: String) {
     }
 }
 
-/** 정보 한 줄: 누르면 시트를 연다(오른쪽 화살표). */
+/** 정보 항목: 제목과 세부 한 줄, 누르면 시트를 연다(오른쪽 화살표). */
 @Composable
-private fun InfoLink(label: String, onClick: () -> Unit) {
+private fun InfoLink(label: String, detail: String, onClick: () -> Unit) {
     val c = LocalLiquid.current
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = c.ink, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+        Column(Modifier.weight(1f)) {
+            Text(label, color = c.ink, fontWeight = FontWeight.SemiBold)
+            Text(detail, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        }
         Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = c.muted)
     }
 }

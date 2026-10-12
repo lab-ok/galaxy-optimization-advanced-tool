@@ -90,7 +90,8 @@ fun LiquidSlider(
 
     val span = (range.last - range.first).coerceAtLeast(1)
     // 잡으면 값 방울이 트랙 위로 떠오르므로 위쪽에 그만큼(26dp) 자리를 둔다. 방울 중심은 예전과 같은 높이(12dp)에 온다.
-    val trackY = with(density) { 38.dp.toPx() }
+    // 트랙은 조절바 높이의 가운데: 위로 떠오르는 값 방울은 위 내용에 겹쳐 그리므로 위쪽 여백을 따로 두지 않는다
+    val trackY = with(density) { (HEIGHT / 2).dp.toPx() }
     // 양 끝 여백: 가장 넓은 값 글자의 손잡이도 조절바 밖으로 잘리지 않게 그 절반 이상을 둔다
     val widest = remember(range) {
         range.maxOf { measurer.measure(valueText(it), TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold)).size.width }
@@ -137,6 +138,22 @@ fun LiquidSlider(
                 val slop = 5.dp.toPx()
                 awaitEachGesture {
                     val down = awaitFirstDown()
+                    // 먼저 손가락이 어디로 가는지 본다: 세로로 먼저 움직이면 화면 스크롤로 넘기고(값을 건드리지 않는다),
+                    // 가로로 움직이거나 그냥 톡 누르거나 가만히 붙들 때만 조절바를 움직인다. 스크롤하다 조절바가 바뀌지 않게 한다.
+                    val touchSlop = viewConfiguration.touchSlop
+                    var tapped = false
+                    var held = false
+                    while (true) {
+                        val ev = withTimeoutOrNull(FINE_HOLD_MS) { awaitPointerEvent() }
+                        if (ev == null) { held = true; break }
+                        val ch = ev.changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
+                        if (!ch.pressed) { tapped = true; break }
+                        if (ch.isConsumed) return@awaitEachGesture
+                        val dx = ch.position.x - down.position.x
+                        val dy = ch.position.y - down.position.y
+                        if (kotlin.math.abs(dy) > touchSlop && kotlin.math.abs(dy) >= kotlin.math.abs(dx)) return@awaitEachGesture
+                        if (kotlin.math.abs(dx) > touchSlop) { ch.consume(); break }
+                    }
                     dragX = down.position.x
                     active = true
                     haptics.press()
@@ -159,6 +176,12 @@ fun LiquidSlider(
                         if (fineBase != null) return
                         fineBase = v; anchorX = x; haptics.snap()
                     }
+                    if (tapped) {
+                        // 톡 누르기: 그 자리 값으로 바꾸고 끝
+                        active = false; dragX = -1f; finish()
+                        return@awaitEachGesture
+                    }
+                    if (held) openFine(down.position.x)
                     while (true) {
                         // 가만히 붙들고 있으면 이벤트가 오지 않으므로 시간으로도 확인한다
                         val ev = withTimeoutOrNull(FINE_HOLD_MS) { awaitPointerEvent() }
@@ -196,11 +219,13 @@ fun LiquidSlider(
         Canvas(Modifier.matchParentSize()) {
             val th = 8.dp.toPx()
             val trackColor = if (c.dark) c.muted.copy(alpha = 0.35f) else c.line
-            drawRoundRect(trackColor, Offset(edge / 2, trackY - th / 2), Size(width - edge, th), CornerRadius(th / 2))
+            // 보이는 트랙은 값 글자 폭과 상관없이 늘 같은 여백으로 그린다(손잡이가 움직이는 범위만 글자 폭에 맞춘다)
+            val inset = TRACK_INSET.dp.toPx()
+            drawRoundRect(trackColor, Offset(inset, trackY - th / 2), Size(width - 2 * inset, th), CornerRadius(th / 2))
             blob.frame
             // 채움 끝은 손잡이 방울 중심을 따라가 손잡이와 어긋나지 않는다.
             val cx = if (blob.blob.ready) blob.blob.cx else xOf(value)
-            val from = if (centered) xOf((range.first + range.last) / 2) else edge / 2
+            val from = if (centered) xOf((range.first + range.last) / 2) else inset
             val l = minOf(from, cx)
             val r = maxOf(from, cx)
             drawRoundRect(c.ink.copy(alpha = 0.85f), Offset(l, trackY - th / 2), Size(r - l, th), CornerRadius(th / 2))
@@ -262,12 +287,14 @@ fun LiquidSlider(
 /** 잡았을 때 값 방울이 트랙 위로 떠오르는 높이(dp). */
 private const val LIFT = 26
 /** 조절바 높이(dp). */
-private const val HEIGHT = 56
+private const val HEIGHT = 40
 /** goo 층을 조절바 위아래로 더 키우는 양(dp). */
-private const val OVERFLOW = 30
+private const val OVERFLOW = 40
 /** 떼기 직전 이 시간(ms) 안에 1만큼 바뀐 값은 손가락이 들리며 밀린 것으로 보고 되돌린다. */
 private const val LIFT_JITTER_MS = 90L
 /** 이 시간(ms) 동안 거의 움직이지 않고 붙들고 있으면 세밀 조절을 연다. */
 private const val FINE_HOLD_MS = 750L
+/** 보이는 트랙의 좌우 여백(dp): 모든 조절바가 같은 폭으로 보이게 한다. */
+private const val TRACK_INSET = 15
 /** 세밀 조절 패널이 보여 주는 칸 수(앞뒤). */
 private const val FINE_HALF = 10

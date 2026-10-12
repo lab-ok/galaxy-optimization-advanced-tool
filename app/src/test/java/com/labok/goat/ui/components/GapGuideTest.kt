@@ -27,4 +27,17 @@ class GapGuideTest {
         }.toList()
         assertTrue("간격 가이드라인 위반:\n" + problems.joinToString("\n"), problems.isEmpty())
     }
+
+    /** 규칙 2: 설명 글(muted) 두 개 사이에 Spacer를 넣지 않는다(같은 덩어리는 줄 간격으로만 잇는다). */
+    @Test
+    fun noSpacerBetweenDescriptions() {
+        val spacer = Regex("""^\s*Spacer\(Modifier\.height\(Gap\.\w+\)\)\s*$""")
+        fun desc(line: String) = line.trimStart().startsWith("Text(") && "c.muted" in line
+        val problems = ui.walkTopDown().filter { it.extension == "kt" }.flatMap { f ->
+            val lines = f.readLines()
+            (1 until lines.size - 1).filter { i -> spacer.matches(lines[i]) && desc(lines[i - 1]) && desc(lines[i + 1]) }
+                .map { i -> "${f.relativeTo(ui)}:${i + 1} 설명 문단 사이 Spacer" }
+        }.toList()
+        assertTrue("간격 규칙 2 위반:\n" + problems.joinToString("\n"), problems.isEmpty())
+    }
 }

@@ -28,8 +28,8 @@ import java.security.MessageDigest
 object Updater {
     const val REPO = "lab-ok/galaxy-optimization-advanced-tool"
     private const val PREF = "updater"
-    /** 홈을 열 때 자동으로 확인하는 간격. */
-    private const val AUTO_CHECK_MS = 6 * 60 * 60 * 1000L
+    /** 홈을 열거나 홈으로 돌아올 때 자동으로 확인하는 간격. */
+    private const val AUTO_CHECK_MS = 30 * 60 * 1000L
 
     data class Release(val version: String, val apkUrl: String, val size: Long, val sha256: String?, val notes: String, val page: String)
 

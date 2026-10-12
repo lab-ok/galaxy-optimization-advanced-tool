@@ -158,6 +158,8 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 if (on) Copy.SHAKE_ON_BODY else Copy.SHAKE_OFF_BODY,
                                 color = c.muted, style = MaterialTheme.typography.bodySmall,
                             )
+                            // 보조 설명도 같은 설명 덩어리: 띄우지 않고 줄 간격으로만 잇는다(Gap 규칙 2)
+                            Text(Copy.SHAKE_NOTIFY_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         }
                         Spacer(Modifier.width(12.dp))
                         LiquidSwitch(on, { want ->
@@ -170,8 +172,6 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                     AnimatedVisibility(message.isNotEmpty()) {
                         Text(message, color = c.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
                     }
-                    Spacer(Modifier.height(Gap.Tight))
-                    Text(Copy.SHAKE_NOTIFY_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
                 }
             }
         }

@@ -279,7 +279,7 @@ object Copy {
     fun updateLatest(v: String) = "지금 쓰는 $v 버전이 최신입니다."
     fun updateCurrent(v: String) = "지금 쓰는 버전은 ${v}입니다. GitHub 릴리스에서 새 버전을 확인합니다."
     const val LOG_FILE_TITLE = "기록 파일 남기기"
-    const val LOG_FILE_BODY = "켜면 다운로드/GOAT에 날짜별 작동 기록을 남깁니다. 문제를 신고할 때 도움이 됩니다."
+    const val LOG_FILE_BODY = "작동 기록을 다운로드/GOAT 폴더에 날짜별 파일로 저장합니다. 문제를 신고할 때 함께 보낼 수 있습니다."
     const val FEATURE_DOZE = "잠자기 모드 끄기"
     const val DOZE_INTRO_TITLE = "알림이 늦게 오지 않게"
     const val DOZE_INTRO_BODY = "화면을 끄고 두면 앱 동작을 몰아서 늦추는 잠자기 모드(Doze)를 끕니다."

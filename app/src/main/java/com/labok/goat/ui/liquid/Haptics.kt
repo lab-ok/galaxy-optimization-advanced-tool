@@ -16,18 +16,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalView
 
 /**
- * 햅틱 세기(앱 설정): 0이면 끄고, 100이 기본, 150까지 올린다. 리퀴드 요소의 촉각 피드백 전체에 곱한다.
+ * 햅틱 세기(앱 설정): 0이면 끄고, 100이 기본, 200까지 올린다. 리퀴드 요소의 촉각 피드백 전체에 곱한다.
  */
 object UiHaptics {
-    const val MAX = 150
+    const val MAX = 200
+    /** 실제 세기 배수: 조절바 100%(기본)가 예전 75%다. */
+    private const val BASE = 0.75f
     var level by mutableIntStateOf(100)
         private set
+    /** 실제 세기 배수(1이 기본 효과 세기 그대로). */
+    val factor: Float get() = level / 100f * BASE
 
-    fun load(context: Context) { level = prefs(context).getInt("level", 100).coerceIn(0, MAX) }
+    fun load(context: Context) {
+        val p = prefs(context)
+        // 1.3.1~1.3.2는 실제 세기(%)를 "level"에 저장했다: 새 눈금으로 옮긴다
+        if (!p.contains("percent") && p.contains("level")) p.edit().putInt("percent", (p.getInt("level", 75) / BASE).toInt()).remove("level").apply()
+        level = p.getInt("percent", 100).coerceIn(0, MAX)
+    }
 
     fun set(context: Context, value: Int) {
         level = value.coerceIn(0, MAX)
-        prefs(context).edit().putInt("level", level).apply()
+        prefs(context).edit().putInt("percent", level).apply()
     }
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences("ui_haptics", Context.MODE_PRIVATE)
@@ -52,11 +61,11 @@ class LiquidHaptics(private val view: View) {
 
     /** 기본 효과 [primitive]를 [scale](0~1, 세기 100% 기준)로 울린다. 못 쓰면 시스템 햅틱 [fallback]. */
     private fun play(primitive: Int, scale: Float, fallback: Int) {
-        val level = UiHaptics.level
-        if (level <= 0) return
+        val factor = UiHaptics.factor
+        if (factor <= 0f) return
         val v = vibrator
         if (v != null && v.hasVibrator() && v.areAllPrimitivesSupported(primitive)) {
-            val s = (scale * level / 100f).coerceIn(0.05f, 1f)
+            val s = (scale * factor).coerceIn(0.05f, 1f)
             val effect = VibrationEffect.startComposition().addPrimitive(primitive, s).compose()
             runCatching {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) v.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH))

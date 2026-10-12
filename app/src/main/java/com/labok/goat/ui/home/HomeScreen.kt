@@ -1,5 +1,9 @@
 package com.labok.goat.ui.home
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.labok.goat.ui.nav.NavGlyph
 import com.labok.goat.ui.about.PermissionsSheet
 import com.labok.goat.ui.about.ChangelogSheet
 import com.labok.goat.ui.about.SettingsScreen
@@ -417,10 +421,17 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                                 },
                                 label = "title",
                             ) { f ->
-                                Text(
-                                    f.label,
-                                    fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp,
-                                )
+                                // 메뉴 아이콘(사이드바·홈 타일과 같은 그림)과 제목
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(c.ink), contentAlignment = Alignment.Center) {
+                                        NavGlyph(f.icon, c.onInk, Modifier.size(20.dp))
+                                    }
+                                    Spacer(Modifier.width(12.dp))
+                                    Text(
+                                        f.label,
+                                        fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp,
+                                    )
+                                }
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
