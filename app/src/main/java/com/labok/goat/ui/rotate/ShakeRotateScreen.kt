@@ -138,16 +138,6 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                 }
             }
         }
-        if (on && autoOn && permitted) item(key = "auto") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard(accent = c.ink) {
-                    Text(Copy.SHAKE_AUTO_ON_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.SHAKE_AUTO_ON_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.SHAKE_AUTO_OFF_BUTTON, onClick = { ShakeRotate.turnOffAutoRotate(context); autoOn = ShakeRotate.autoRotateOn(context) }, modifier = Modifier.fillMaxWidth())
-                }
-            }
-        }
         if (!permitted) item(key = "permission") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
@@ -185,6 +175,17 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                 }
             }
         }
+        // 켠 뒤 자동 회전이 켜져 있으면 스위치 바로 아래에서 알린다(방금 켠 동작의 결과로 읽히게)
+        if (on && autoOn && permitted) item(key = "auto") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard(accent = c.ink) {
+                    Text(Copy.SHAKE_AUTO_ON_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.SHAKE_AUTO_ON_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidButton(Copy.SHAKE_AUTO_OFF_BUTTON, onClick = { ShakeRotate.turnOffAutoRotate(context); autoOn = ShakeRotate.autoRotateOn(context) }, modifier = Modifier.fillMaxWidth())
+                }
+            }
+        }
         item(key = "sensitivity") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
@@ -200,8 +201,32 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                     )
                     Spacer(Modifier.height(Gap.Item))
                     LiquidButton(Copy.SHAKE_CALIBRATE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = onCalibrate)
-                    Spacer(Modifier.height(Gap.Section))
-                    // 고급 설정(접었다 펴기): 자동 맞추기가 이 항목들도 함께 맞춘다
+                }
+            }
+        }
+        item(key = "vibration") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.SHAKE_VIBRATION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.SHAKE_VIBRATION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Tight))
+                    // 값이 바뀔 때마다 그 세기로 예시(휙 … 휘힉)를 울린다
+                    LiquidSlider(
+                        value = vibration, range = 0..ShakeHaptics.MAX_STRENGTH,
+                        onValueChange = { v ->
+                            if (v != vibration) { vibration = v; ShakeHaptics.play(context, ShakeHaptics.SAMPLE, v) }
+                        },
+                        onValueChangeFinished = { ShakeRotate.setVibration(context, vibration) },
+                        valueText = { if (it == 0) "끔" else "$it" },
+                        description = Copy.SHAKE_VIBRATION_TITLE,
+                    )
+                }
+            }
+        }
+        item(key = "advanced") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    // 고급 설정(접었다 펴기): 자주 바꾸지 않는 판정 세부값이라 맨 아래에 접어 둔다. 자동 맞추기가 앞의 셋을 함께 맞춘다
                     Row(
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { advanced = !advanced },
                         verticalAlignment = Alignment.CenterVertically,
@@ -258,25 +283,6 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                             LiquidButton(Copy.SHAKE_ADVANCED_RESET, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { ShakeRotate.resetAdvanced(context) })
                         }
                     }
-                }
-            }
-        }
-        item(key = "vibration") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.SHAKE_VIBRATION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.SHAKE_VIBRATION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Tight))
-                    // 값이 바뀔 때마다 그 세기로 예시(휙 … 휘힉)를 울린다
-                    LiquidSlider(
-                        value = vibration, range = 0..ShakeHaptics.MAX_STRENGTH,
-                        onValueChange = { v ->
-                            if (v != vibration) { vibration = v; ShakeHaptics.play(context, ShakeHaptics.SAMPLE, v) }
-                        },
-                        onValueChangeFinished = { ShakeRotate.setVibration(context, vibration) },
-                        valueText = { if (it == 0) "끔" else "$it" },
-                        description = Copy.SHAKE_VIBRATION_TITLE,
-                    )
                 }
             }
         }

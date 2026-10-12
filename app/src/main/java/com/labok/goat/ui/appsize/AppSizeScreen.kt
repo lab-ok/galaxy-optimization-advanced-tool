@@ -188,12 +188,12 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
         item(key = "intro") {
             Appear("intro", 0, shown) {
                 GlassCard {
+                    // 다른 기능 화면과 같은 순서: 제목 → 설명 → 그림
                     Text(Copy.APP_SIZE_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.APP_SIZE_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     // 왼쪽 앱만 배율이 바뀌고 오른쪽 앱은 기본 그대로: 기능을 한눈에
                     AppScaleArt()
-                    Spacer(Modifier.height(Gap.Tight))
-                    Text(Copy.APP_SIZE_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

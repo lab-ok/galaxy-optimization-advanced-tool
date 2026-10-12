@@ -1,5 +1,7 @@
 package com.labok.goat.ui.liquid
 
+import com.labok.goat.ui.text.Copy
+import androidx.compose.foundation.background
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.spring
@@ -132,6 +134,10 @@ fun LiquidMenu(
                             .padding(horizontal = 22.dp),
                         contentAlignment = Alignment.CenterStart,
                     ) {
+                        // 되돌릴 수 없는 '초기화'는 가는 선으로 위 항목들과 떼어 둔다(잘못 누르지 않게)
+                        if (label == Copy.MENU_RESET && i > 0) Box(
+                            Modifier.align(Alignment.TopCenter).fillMaxWidth().height(1.dp).background(c.onInk.copy(alpha = 0.22f)),
+                        )
                         Text(label, color = c.onInk, fontWeight = FontWeight.Medium)
                     }
                 }
