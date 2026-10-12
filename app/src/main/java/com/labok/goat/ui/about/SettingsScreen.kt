@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.ui.components.rowListEdges
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.Icons
@@ -110,10 +111,12 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
         item(key = "info") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
+                  Column(Modifier.rowListEdges()) {
                     val perms = AppPermissions.all
                     InfoLink(Copy.MENU_ABOUT, "GOAT ${BuildConfig.VERSION_NAME} · 라이선스·문의", onAbout)
                     InfoLink(Copy.INFO_CHANGELOG, CHANGELOG.first().let { "최근 ${it.version.removePrefix("GOAT ")} · ${it.date}" }, onChangelog)
                     InfoLink(Copy.INFO_PERMISSIONS, "권한 ${perms.size}개 중 ${perms.count { AppPermissions.granted(context, it) }}개 허용됨", onPermissions)
+                  }
                 }
             }
         }
@@ -134,7 +137,7 @@ private fun SectionTitle(text: String) {
 private fun InfoLink(label: String, detail: String, onClick: () -> Unit) {
     val c = LocalLiquid.current
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = Gap.RowPad),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {

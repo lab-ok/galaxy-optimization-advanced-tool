@@ -1,5 +1,7 @@
 package com.labok.goat.ui.liquid
 
+import com.labok.goat.ui.components.rowListEdges
+import com.labok.goat.ui.components.Gap
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.coroutineScope
 import androidx.compose.ui.layout.positionInParent
@@ -89,7 +91,8 @@ fun LiquidRadioGroup(modifier: Modifier = Modifier, content: @Composable ColumnS
         val k = state.pressed
         if (k != null && k != state.selected) { beadKey = k; bead.animateTo(1f, Springs.pop(reduce)) } else bead.animateTo(0f, Springs.calm(reduce))
     }
-    Box(modifier) {
+    // 규칙 5: 목록 위아래 줄 여백을 바깥과 겹쳐 카드 여백·위 설명과의 간격을 다른 요소와 맞춘다
+    Box(modifier.rowListEdges()) {
         Canvas(Modifier.matchParentSize().goo(c.ink, 6.dp)) {
             val x = RING_X.dp.toPx()
             val d = DOT.dp.toPx()
@@ -139,7 +142,7 @@ fun LiquidRadioRow(label: String, desc: String?, selected: Boolean, enabled: Boo
             .onGloballyPositioned { if (group != null) group.centers[label] = it.positionInParent().y + it.size.height / 2f }
             // 라디오 의미(선택됨·안 됨)를 접근성 서비스가 읽도록 selectable로 둔다
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, interactionSource = interaction, indication = null, onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = Gap.RowPad),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Canvas(Modifier.size(24.dp)) {

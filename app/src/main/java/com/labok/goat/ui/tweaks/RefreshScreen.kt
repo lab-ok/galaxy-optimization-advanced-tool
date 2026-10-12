@@ -134,7 +134,7 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
                 GlassCard {
                     Text(Copy.REFRESH_PICK_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.refreshNow(nowHz, top), color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Tight))
+                    Spacer(Modifier.height(Gap.Item))
                     LiquidRadioGroup { RefreshRate.Choice.entries.forEach { ch ->
                         val label = if (ch == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(top) else ch.label
                         LiquidRadioRow(label, ch.desc, choice == ch, enabled = canWrite && !busy) {

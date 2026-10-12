@@ -1,5 +1,7 @@
 package com.labok.goat.ui.components
 
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /**
@@ -26,10 +28,16 @@ import androidx.compose.ui.unit.dp
  *    보조 설명도 같은 글자 크기(bodySmall)로 설명 바로 아래에 둔다.
  * 3. [Tight]는 조작(조절바·버튼·칩) 바로 아래 붙는 작은 글(값 설명·힌트)에만 쓴다.
  * 4. 조절바는 높이 안에 위쪽 여백을 따로 두지 않는다(떠오르는 값 방울은 위 내용에 겹쳐 그린다).
+ * 5. 누르는 줄 목록(정보 링크·라디오 등)은 줄마다 위아래 [RowPad]만큼 누르는 여백을 두고, 목록 전체에는
+ *    [rowListEdges]를 달아 맨 위·맨 아래 줄의 그 여백을 바깥과 겹친다. 그래서 카드 가장자리에서 첫 글자까지,
+ *    그리고 목록 위아래의 간격이 다른 카드·요소와 똑같다.
  * - 시트의 큰 제목 아래는 [Title].
  * - 가로 간격(Row의 spacedBy, 아이콘과 글자 사이)은 이 규칙 밖이다.
  */
 object Gap {
+    /** 누르는 줄 하나의 위아래 여백(누르기 쉬운 높이). 목록 바깥 경계에서는 [rowListEdges]로 겹친다. */
+    val RowPad = 10.dp
+
     /** 조작(조절바·버튼·칩) 바로 아래 붙는 작은 글(값 설명·힌트)과 그 조작 사이. 설명 문단 사이에는 쓰지 않는다. */
     val Tight = 4.dp
 
@@ -47,4 +55,15 @@ object Gap {
 
     /** 카드 안쪽 여백(네 변 모두). */
     val CardPadding = 16.dp
+}
+
+/**
+ * 누르는 줄 목록의 바깥 경계 맞추기(규칙 5): 목록을 위아래로 [Gap.RowPad]만큼 겹쳐 놓는다. 줄을 누르는 범위는 그대로이고,
+ * 첫 줄 글자와 마지막 줄 글자가 다른 요소와 같은 간격에 놓인다.
+ */
+fun Modifier.rowListEdges(): Modifier = layout { measurable, constraints ->
+    val pad = Gap.RowPad.roundToPx()
+    val p = measurable.measure(constraints)
+    val h = (p.height - 2 * pad).coerceAtLeast(0)
+    layout(p.width, h) { p.place(0, -pad) }
 }

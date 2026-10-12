@@ -42,6 +42,15 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.3.4", "2026-10-12", "변경 기록을 판별로 접고 펴게 하고, 누르는 줄 목록의 위아래 여백을 다른 카드와 맞췄습니다.",
+        listOf(
+            "화면" to listOf(
+                "변경 기록: 판마다 접고 펴는 아코디언으로 바꾸고, 처음에는 가장 최근 판만 펼쳐 둡니다.",
+                "누르는 줄 목록(앱 설정 정보, 해상도·주사율 고르기)의 위아래 여백이 다른 카드보다 넓던 것을 같은 규칙으로 맞췄습니다.",
+            ),
+        ),
+    ),
+    Release(
         "GOAT 1.3.3", "2026-10-12", "UI 유연성과 햅틱 세기의 기본값을 조정하고, UI 유연성이 모든 리퀴드 요소에 적용되게 했습니다.",
         listOf(
             "앱 설정" to listOf(
@@ -171,9 +180,23 @@ internal val CHANGELOG = listOf(
     ),
 )
 
-/** 변경 기록(앱 정보): 접었다 펴는 카드. 판마다 요약과 묶음별 바뀐 점. */
+/**
+ * 변경 기록(앱 설정 → 정보): 판마다 접고 펴는 아코디언. 머리에는 판 이름·날짜·한 줄 요약, 펼치면 묶음별 바뀐 점.
+ * 처음에는 가장 최근 판만 펼쳐 둔다.
+ */
 @Composable
-internal fun ChangelogCard(initiallyOpen: Boolean = false) {
+internal fun ChangelogSheet() {
+    SheetColumn(Copy.INFO_CHANGELOG) {
+        CHANGELOG.forEachIndexed { i, r ->
+            if (i > 0) Spacer(Modifier.height(Gap.Card))
+            ReleaseCard(r, initiallyOpen = i == 0)
+        }
+    }
+}
+
+/** 판 하나(아코디언 한 칸). */
+@Composable
+private fun ReleaseCard(r: Release, initiallyOpen: Boolean) {
     val c = LocalLiquid.current
     var open by remember { mutableStateOf(initiallyOpen) }
     GlassCard {
@@ -182,36 +205,25 @@ internal fun ChangelogCard(initiallyOpen: Boolean = false) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
-                Text("변경 기록", fontWeight = FontWeight.SemiBold, color = c.ink)
-                Text("${CHANGELOG.first().version} · FoldFit 1.0 이후 바뀐 점", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text("${r.version} · ${r.date}", fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(r.summary, color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
             val turn by animateFloatAsState(if (open) 180f else 0f, label = "chevron")
             Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
         }
         AnimatedVisibility(open, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
             Column {
-                CHANGELOG.forEach { r ->
-                    Spacer(Modifier.height(Gap.Section))
-                    Text("${r.version} · ${r.date}", fontWeight = FontWeight.Bold, color = c.ink)
-                    Text(r.summary, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    r.sections.forEach { (title, items) ->
-                        Spacer(Modifier.height(Gap.Item))
-                        Text(title, fontWeight = FontWeight.SemiBold, color = c.ink, style = MaterialTheme.typography.bodyMedium)
-                        items.forEach { line ->
-                            Row(Modifier.padding(top = Gap.Tight)) {
-                                Text("•  ", color = c.muted, style = MaterialTheme.typography.bodySmall)
-                                Text(line, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                            }
+                r.sections.forEach { (title, items) ->
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(title, fontWeight = FontWeight.SemiBold, color = c.ink, style = MaterialTheme.typography.bodyMedium)
+                    items.forEach { line ->
+                        Row(Modifier.padding(top = Gap.Tight)) {
+                            Text("•  ", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            Text(line, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
             }
         }
     }
-}
-
-/** 변경 기록(앱 설정 → 정보): 펼친 채로 보여 준다. */
-@Composable
-internal fun ChangelogSheet() {
-    SheetColumn { ChangelogCard(initiallyOpen = true) }
 }

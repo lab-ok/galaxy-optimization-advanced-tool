@@ -130,7 +130,7 @@ internal fun ResolutionScreen(contentPadding: PaddingValues, permitted: Boolean,
                 GlassCard {
                     Text(Copy.RES_PICK_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.resNow(now.first, now.second, base.first, base.second), color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Tight))
+                    Spacer(Modifier.height(Gap.Item))
                     LiquidRadioGroup {
                         options.forEach { o ->
                             LiquidRadioRow(
