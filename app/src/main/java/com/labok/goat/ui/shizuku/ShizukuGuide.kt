@@ -91,7 +91,8 @@ internal fun ShizukuGuide(
                 "③ 화면 위에서 Shizuku 알림을 내려 그 숫자를 입력합니다.\n" +
                 "④ Shizuku로 돌아가 [시작]을 누른 뒤 이 화면으로 돌아오세요.",
         )
-        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Spacer(Modifier.height(Gap.Item))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             LiquidButton("Shizuku 열기", modifier = Modifier.weight(1f), onClick = { openShizuku(context) })
             LiquidButton("무선 디버깅 화면", modifier = Modifier.weight(1f), primary = false, onClick = { openDeveloperOptions(context) })
         }
@@ -101,7 +102,7 @@ internal fun ShizukuGuide(
         Hint("Shizuku가 묻는 창에서 '항상 허용'을 누르세요.")
         Action("허용하기") { ShizukuAccess.requestPermission() }
     }
-    Spacer(Modifier.height(Gap.Tight))
+    Spacer(Modifier.height(Gap.Item))
     Text(
         "[켜기]를 누르면 GOAT가 무선 디버깅을 대신 켜고, Shizuku가 켜지면 허용 창을 바로 띄웁니다.",
         color = c.muted, style = MaterialTheme.typography.labelSmall,
@@ -134,7 +135,7 @@ private fun Step(no: Int, title: String, done: Boolean, active: Boolean, body: @
                 style = MaterialTheme.typography.bodyMedium,
             )
             if (active) {
-                Spacer(Modifier.height(Gap.Tight))
+                Spacer(Modifier.height(Gap.Item))
                 body()
             }
         }
@@ -149,7 +150,8 @@ private fun Hint(text: String, warn: Boolean = false) {
 
 @Composable
 private fun Action(label: String, onClick: () -> Unit) {
-    LiquidButton(label, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), onClick = onClick)
+    Spacer(Modifier.height(Gap.Item))
+    LiquidButton(label, modifier = Modifier.fillMaxWidth(), onClick = onClick)
 }
 
 private fun openStore(context: Context) {

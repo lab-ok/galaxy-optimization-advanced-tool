@@ -94,7 +94,7 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                     Spacer(Modifier.height(Gap.Section))
                     Text(Copy.CAMERA_PC_TITLE, color = c.ink)
                     Text(Copy.CAMERA_PC_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Tight))
+                    Spacer(Modifier.height(Gap.Item))
                     CommandBox(CameraMute.PC_COMMAND, onCopy = {
                         if (copyText(context, CameraMute.PC_COMMAND)) Toast.makeText(context, Copy.TOAST_COPIED, Toast.LENGTH_SHORT).show()
                     })

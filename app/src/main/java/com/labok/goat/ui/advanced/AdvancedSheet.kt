@@ -74,7 +74,6 @@ internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
 
         GlassCard {
             Text("적용 기록", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Spacer(Modifier.height(Gap.Tight))
             state.lastApply?.let {
                 InfoRow("마지막 적용", "${if (it.success) "성공" else "실패"} · ${SimpleDateFormat("MM-dd HH:mm:ss", Locale.US).format(Date(it.timeMs))}")
                 InfoRow("내용", it.text)
@@ -84,7 +83,6 @@ internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
         Spacer(Modifier.height(Gap.Item))
         GlassCard {
             Text("로그", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Spacer(Modifier.height(Gap.Tight))
             Text(
                 if (PublicLogFile.enabled(LocalContext.current)) "내장 저장소 ${PublicLogFile.displayPath}에 날짜별로 저장합니다."
                 else "앱 안에만 짧게 남깁니다. 앱 설정의 '기록 파일 남기기'를 켜면 ${PublicLogFile.displayPath}에도 날짜별로 저장합니다.",
@@ -153,7 +151,8 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
             Text(if (open) "접기" else "상세", color = c.muted, style = MaterialTheme.typography.labelMedium)
         }
         AnimatedVisibility(open, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
-            Column(Modifier.padding(top = 10.dp)) {
+            Column {
+                Spacer(Modifier.height(Gap.Item))
                 InfoRow("디스플레이 ID", "${d.id}")
                 key?.let { InfoRow("해상도", it.replace("x", " × ")) }
                 if (panel != null) {

@@ -176,7 +176,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                     count == null -> "정해 둔 앱을 세는 중…"
                     else -> "지금 크기를 정해 둔 앱: ${count}개"
                 },
-                color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp),
+                color = c.ink, style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(Gap.Item))
             AnimatedContent(step, label = "reset") { s ->

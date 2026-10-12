@@ -70,6 +70,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                     Text(Copy.MOTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.MOTION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     var v by remember { mutableIntStateOf(UiMotion.percent) }
+                    Spacer(Modifier.height(Gap.Item))
                     LiquidSlider(
                         value = v, range = 0..UiMotion.MAX_PERCENT,
                         onValueChange = { v = it; UiMotion.set(context, it) },
@@ -91,6 +92,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                     Text(Copy.HAPTIC_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     var h by remember { mutableIntStateOf(UiHaptics.level) }
                     // 조절바 칸이 바뀔 때마다 그 세기로 틱이 울려(조절바의 기본 동작) 바로 느껴 본다
+                    Spacer(Modifier.height(Gap.Item))
                     LiquidSlider(
                         value = h, range = 0..UiHaptics.MAX, onValueChange = { h = it; UiHaptics.set(context, it) },
                         onValueChangeFinished = { UiHaptics.set(context, h) },

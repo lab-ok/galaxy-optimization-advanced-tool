@@ -103,7 +103,7 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             }
             if (outerRows != null && innerRows != null) {
                 val diff = (innerRows - outerRows) / outerRows * 100f
-                Spacer(Modifier.height(Gap.Tight))
+                Spacer(Modifier.height(Gap.Item))
                 Text(
                     "차이 %+.1f%% · %s".format(diff, if (abs(diff) < 2f) "일치" else if (diff > 0) "내부 화면이 더 작게 표시됨(보정 + 방향)" else "내부 화면이 더 크게 표시됨(보정 − 방향)"),
                     color = if (abs(diff) < 2f) c.ink else c.danger, fontWeight = FontWeight.SemiBold,
@@ -112,9 +112,10 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             }
             Spacer(Modifier.height(Gap.Card))
             LiquidButton("전체 화면으로 줄 수 보기", modifier = Modifier.fillMaxWidth(), onClick = onCount)
+            Spacer(Modifier.height(Gap.Item))
             Text(
                 "전체 화면에 번호 매긴 줄을 채웁니다. 이 상태로 접고 펼쳐서 두 화면의 마지막 번호를 비교해 보세요.",
-                color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
+                color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
         }
         Spacer(Modifier.height(Gap.Item))
@@ -195,6 +196,7 @@ private fun RulerCard(state: UiState, current: com.labok.goat.domain.PanelSpec.R
             valueText = { if (it > 0) "+$it%" else "$it%" },
             description = "카드 폭 맞추기", centered = true,
         )
+        Spacer(Modifier.height(Gap.Item))
         Text(
             "기준 PPI %.0f · %s".format(ppi, if (saved != null && pct == 0) "카드로 맞춘 값" else if (pct == 0) "기기가 알려 준 값" else "조절 중"),
             color = c.muted, style = MaterialTheme.typography.labelMedium,

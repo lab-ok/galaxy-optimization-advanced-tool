@@ -204,8 +204,9 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                         Text(Copy.APP_SIZE_CONNECT_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Spacer(Modifier.height(Gap.Item))
                         ShizukuBridgeArt()
+                        Spacer(Modifier.height(Gap.Item))
                         Text(Copy.APP_SIZE_CONNECT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                        Spacer(Modifier.height(Gap.Card))
+                        Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.APP_SIZE_CONNECT_ACTION, modifier = Modifier.fillMaxWidth(), onClick = onGuide)
                     }
                 }
@@ -251,8 +252,10 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                 }
                             }
                             if (!usage) {
-                                Text(Copy.APP_SIZE_USAGE_NEEDED, color = c.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 10.dp))
-                                LiquidButton("사용 기록 접근 허용", modifier = Modifier.fillMaxWidth().padding(top = 8.dp), primary = false, onClick = {
+                                Spacer(Modifier.height(Gap.Item))
+                                Text(Copy.APP_SIZE_USAGE_NEEDED, color = c.danger, style = MaterialTheme.typography.bodySmall)
+                                Spacer(Modifier.height(Gap.Item))
+                                LiquidButton("사용 기록 접근 허용", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
                                     scope.launch {
                                         usage = withContext(Dispatchers.IO) { shizuku == ShizukuAccess.State.READY && ShizukuAccess.grantUsageAccess(context) }
                                         if (!usage) runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
@@ -260,10 +263,12 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                 })
                             }
                             if (shell == null && !bootOn) {
-                                Text(Copy.APP_SIZE_BOOT_OFF, color = c.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+                                Spacer(Modifier.height(Gap.Item))
+                                Text(Copy.APP_SIZE_BOOT_OFF, color = c.danger, style = MaterialTheme.typography.bodySmall)
                             }
                             if (shell != null) {
-                                LiquidButton("PC 셸 도우미 끄기", modifier = Modifier.fillMaxWidth().padding(top = 10.dp), primary = false, onClick = {
+                                Spacer(Modifier.height(Gap.Item))
+                                LiquidButton("PC 셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
                                     scope.launch(Dispatchers.IO) { DensityShell.stop() }
                                 })
                             }
@@ -289,6 +294,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                             )
+                            Spacer(Modifier.height(Gap.Item))
                             Text(Copy.APP_SIZE_HOME_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall)
                         }
                     }
@@ -302,7 +308,10 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                 leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) },
                             )
                             AnimatedVisibility(message.isNotEmpty()) {
-                                Text(message, color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp, start = 6.dp))
+                                Column {
+                                    Spacer(Modifier.height(Gap.Item))
+                                    Text(message, color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 6.dp))
+                                }
                             }
                         }
                     }
@@ -420,7 +429,8 @@ private fun AppRow(
                     onSelect = onSelect,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Text(Copy.APP_SIZE_ROW_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 6.dp, start = 4.dp))
+                Spacer(Modifier.height(Gap.Item))
+                Text(Copy.APP_SIZE_ROW_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 4.dp))
             }
         }
     }

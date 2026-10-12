@@ -40,4 +40,65 @@ class GapGuideTest {
         }.toList()
         assertTrue("간격 규칙 2 위반:\n" + problems.joinToString("\n"), problems.isEmpty())
     }
+
+    /** 규칙 B: 세로 간격을 글·버튼·묶음의 padding(top = 숫자)로 만들지 않는다(Spacer(Gap.*)만). */
+    @Test
+    fun noPaddingTopSpacing() {
+        val bad = Regex("""^\s*(Text|LiquidButton|Column|Row)\(.*padding\(top = \d""")
+        val problems = ui.walkTopDown().filter { it.extension == "kt" && "/art/" !in it.path && "/liquid/" !in it.path }.flatMap { f ->
+            // 가로 줄(Row) 안에서 옆 요소와 글줄을 맞추는 미세 정렬(weight를 가진 칸)은 세로 간격이 아니라 제외한다
+            f.readLines().mapIndexedNotNull { i, line -> if (bad.containsMatchIn(line) && "weight(" !in line) "${f.relativeTo(ui)}:${i + 1}" else null }
+        }.toList()
+        assertTrue("간격 규칙 B 위반(padding(top)으로 간격):\n" + problems.joinToString("\n"), problems.isEmpty())
+    }
+
+    /**
+     * 규칙표: 글(Text) ↔ 조작·그림 사이는 Spacer(Gap.Item)(조작 다음이 새 묶음 제목이면 Gap.Section). 세로로 쌓은 조작 ↔ 조작도 Gap.Item.
+     * 가로로 나란한 버튼(Modifier.weight)은 예외. 화면 소스를 줄 단위로 읽어 이웃한 두 요소와 그 사이 Spacer를 본다.
+     */
+    @Test
+    fun textAndControlsSpacing() {
+        val control = Regex("""^\s*(LiquidSlider|LiquidChips|LiquidButton|LiquidRadioGroup|LiquidTextField|LiquidLoader|CommandBox|LiquidSwitchRow)\(|^\s*[A-Z]\w*Art\(""")
+        val text = Regex("""^\s*Text\(""")
+        val spacer = Regex("""^\s*Spacer\(Modifier\.height\((Gap\.\w+)\)\)\s*$""")
+        val skip = Regex("""^\s*(var |val |//|$)""")
+        fun strip(l: String) = l.replace(Regex("\"(?:[^\"\\\\]|\\\\.)*\""), "\"\"")
+        fun end(lines: List<String>, i: Int): Int {
+            var depth = 0
+            for (j in i until lines.size) {
+                val l = strip(lines[j]); depth += l.count { it == '(' } - l.count { it == ')' }
+                if (depth <= 0) {
+                    if (!l.trimEnd().endsWith("{")) return j
+                    var d = 0
+                    for (k in j until lines.size) { d += lines[k].count { it == '{' } - lines[k].count { it == '}' }; if (d <= 0) return k }
+                }
+            }
+            return i
+        }
+        val problems = mutableListOf<String>()
+        ui.walkTopDown().filter { it.extension == "kt" && "/art/" !in it.path }.forEach { f ->
+            val lines = f.readLines()
+            for (i in lines.indices) {
+                val isC = control.containsMatchIn(lines[i]); val isT = text.containsMatchIn(lines[i])
+                if (!isC && !isT) continue
+                val e = end(lines, i)
+                var n = e + 1
+                while (n < lines.size && skip.containsMatchIn(lines[n])) n++
+                var gap: String? = null
+                if (n < lines.size) spacer.find(lines[n])?.let { gap = it.groupValues[1]; n++; while (n < lines.size && skip.containsMatchIn(lines[n])) n++ }
+                if (n >= lines.size) continue
+                val nC = control.containsMatchIn(lines[n]); val nT = text.containsMatchIn(lines[n])
+                if (!nC && !nT || (isT && nT)) continue
+                val first = lines.subList(i, e + 1).joinToString(" "); val next = lines.subList(n, end(lines, n) + 1).joinToString(" ")
+                val want = when {
+                    isC && nC && ("weight" in first || "weight" in next) -> continue
+                    isC && nC && "LiquidSwitchRow" in first -> "Gap.Section"
+                    isC && nT && "c.ink" in next && "c.muted" !in next -> "Gap.Section"
+                    else -> "Gap.Item"
+                }
+                if (gap != want) problems += "${f.relativeTo(ui)}:${i + 1} ${if (isC) "조작" else "글"}→${if (nC) "조작" else "글"} 간격 ${gap ?: "없음"} (규칙: $want)"
+            }
+        }
+        assertTrue("간격 규칙표 위반:\n" + problems.joinToString("\n"), problems.isEmpty())
+    }
 }

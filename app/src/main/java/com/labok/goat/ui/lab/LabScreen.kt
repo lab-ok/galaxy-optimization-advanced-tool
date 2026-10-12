@@ -120,7 +120,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                 "기기의 시스템 서비스를 모두 훑어 화면 밀도·확대·배율과 관련된 함수 목록을 파일로 만듭니다. 함수를 실행하지는 않습니다.",
                 color = c.muted, style = MaterialTheme.typography.bodySmall,
             )
-            Spacer(Modifier.height(Gap.Card))
+            Spacer(Modifier.height(Gap.Item))
             LiquidButton(if (probing) "탐색 중…" else "탐색하고 파일로 보내기", modifier = Modifier.fillMaxWidth(), enabled = !probing, onClick = {
                 probing = true
                 scope.launch {

@@ -113,13 +113,13 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
         ConnectionIllustration(wireless = connection == GrantGuideContent.Connection.WIRELESS, done = hasPermission)
 
         AnimatedVisibility(visible = hasPermission, enter = fadeIn() + scaleIn(initialScale = 0.9f)) {
+          Column {
+            Spacer(Modifier.height(Gap.Item))
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 shape = MaterialTheme.shapes.medium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Outlined.CheckCircle, null, modifier = Modifier.size(28.dp))
@@ -130,6 +130,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                     }
                 }
             }
+          }
         }
 
         if (!hasPermission) {
@@ -142,6 +143,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                 if (it == 1) connection = GrantGuideContent.Connection.WIRELESS
                 if (it == 2) connection = GrantGuideContent.Connection.USB
             }
+            Spacer(Modifier.height(Gap.Item))
             Text(
                 listOf(
                     "PC 없이 폰만으로 합니다. 무료 앱 Shizuku와 Wi-Fi가 필요합니다.",
@@ -150,7 +152,6 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                 )[method],
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 6.dp),
             )
         }
         if (!hasPermission && viaShizuku) {
@@ -274,11 +275,11 @@ private fun StepCard(
             Crossfade(step.scene, label = "scene") { GuideSceneArt(it) }
             Spacer(Modifier.height(Gap.Item))
             Text(step.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(Gap.Tight))
             Text(step.body, style = MaterialTheme.typography.bodyMedium)
             step.links.forEach { (name, url) ->
                 Spacer(Modifier.height(Gap.Item))
                 Text(name, style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(Gap.Item))
                 CommandBox(url, onCopy = { onCopy(url) }, extra = { TextButton(onClick = { onOpenLink(url) }) { Text("열기") } })
             }
             step.commands.forEach { cmd ->
@@ -302,7 +303,7 @@ private fun Label(text: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> Choice(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
-    Spacer(Modifier.height(Gap.Tight))
+    Spacer(Modifier.height(Gap.Item))
     LiquidChips(options, selected, label, onSelect)
 }
 

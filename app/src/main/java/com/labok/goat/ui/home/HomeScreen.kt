@@ -690,6 +690,7 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
             Text("$outer dpi", color = c.ink, fontWeight = FontWeight.SemiBold)
         }
         Text(Copy.SIZE_OUTER_HINT, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
         LiquidSlider(
             value = outer, range = sliderRange,
             onValueChange = { outer = it },
@@ -700,12 +701,13 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
         )
         // 내부 화면 보정은 폴드에서만(화면이 하나면 맞출 다른 화면이 없다)
         if (state.foldable) {
-            Spacer(Modifier.height(Gap.Tight))
+            Spacer(Modifier.height(Gap.Section))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(Copy.SIZE_INNER_TUNE, color = c.ink, modifier = Modifier.weight(1f))
                 Text(innerDpi?.let { "$it dpi" } ?: "—", color = c.ink, fontWeight = FontWeight.SemiBold)
             }
             Text(Copy.SIZE_INNER_TUNE_HINT, color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(Gap.Item))
             LiquidSlider(
                 value = adjust, range = -SettingsRepository.MAX_ADJUST..SettingsRepository.MAX_ADJUST,
                 onValueChange = { adjust = it },
@@ -720,7 +722,8 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
         // 처음 설치해 저장된 값이 없을 때도 지금 값을 바로 적용할 수 있게 버튼을 보인다.
         val pending = state.hasPermission && (state.target == null || outer != state.target || adjust != state.adjust)
         AnimatedVisibility(pending, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-            Column(Modifier.padding(top = 8.dp)) {
+            Column {
+                Spacer(Modifier.height(Gap.Item))
                 Text(Copy.SIZE_PENDING, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(Gap.Item))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -732,7 +735,7 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
             }
         }
         if (state.foldable && outerPanel != null && innerPanel != null && innerDpi != null) {
-            Spacer(Modifier.height(Gap.Tight))
+            Spacer(Modifier.height(Gap.Item))
             ScreensPreview(
                 outerInch = outerPanel.screen.diagonalInch, outerAspect = aspect(outerPanel, outerPanel, false), outerPpi = outerPanel.screen.ppi, outerDpi = outer,
                 innerInch = innerPanel.screen.diagonalInch, innerAspect = aspect(innerPanel, outerPanel, true), innerPpi = innerPanel.screen.ppi, innerDpi = innerDpi,

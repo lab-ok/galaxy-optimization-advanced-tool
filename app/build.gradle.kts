@@ -13,8 +13,8 @@ android {
         // Android 12 이상(방울 효과에 RenderEffect 필요). Android 11은 지원하지 않는다(사용자 결정).
         minSdk = 31
         targetSdk = 35
-        versionCode = 9
-        versionName = "1.3.4"
+        versionCode = 10
+        versionName = "1.3.5"
         // 실험실 기능은 lab 빌드에만 켠다. 공개 release·debug에는 들어가지 않는다.
         buildConfigField("boolean", "LAB", "false")
     }

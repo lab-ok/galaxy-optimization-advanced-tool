@@ -52,10 +52,12 @@ internal fun UpdateCard(manual: Boolean) {
             }
             is Updater.State.Downloading -> {
                 Text(Copy.updateTitle(s.release.version), fontWeight = FontWeight.SemiBold, color = c.ink)
+                Spacer(Modifier.height(Gap.Item))
                 LiquidLoader("${Copy.UPDATE_DOWNLOADING} ${(s.progress * 100).toInt()}%")
             }
             is Updater.State.Installing -> {
                 Text(Copy.updateTitle(s.release.version), fontWeight = FontWeight.SemiBold, color = c.ink)
+                Spacer(Modifier.height(Gap.Item))
                 LiquidLoader(Copy.UPDATE_INSTALLING)
             }
             is Updater.State.Failed -> {

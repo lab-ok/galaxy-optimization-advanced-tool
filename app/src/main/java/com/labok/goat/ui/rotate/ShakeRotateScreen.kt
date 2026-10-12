@@ -170,7 +170,10 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                         }, enabled = permitted)
                     }
                     AnimatedVisibility(message.isNotEmpty()) {
-                        Text(message, color = c.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+                        Column {
+                            Spacer(Modifier.height(Gap.Item))
+                            Text(message, color = c.danger, style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
@@ -191,7 +194,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                 GlassCard {
                     Text(Copy.SHAKE_SENSITIVITY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.SHAKE_SENSITIVITY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Tight))
+                    Spacer(Modifier.height(Gap.Item))
                     LiquidSlider(
                         value = level, range = ShakeRotatePolicy.MIN_LEVEL..ShakeRotatePolicy.MAX_LEVEL,
                         onValueChange = { level = it },
@@ -209,7 +212,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                 GlassCard {
                     Text(Copy.SHAKE_VIBRATION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.SHAKE_VIBRATION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Tight))
+                    Spacer(Modifier.height(Gap.Item))
                     // 값이 바뀔 때마다 그 세기로 예시(휙 … 휘힉)를 울린다
                     LiquidSlider(
                         value = vibration, range = 0..ShakeHaptics.MAX_STRENGTH,
@@ -243,20 +246,25 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                             Spacer(Modifier.height(Gap.Section))
                             Text(Copy.SHAKE_SWINGS_TITLE, color = c.ink)
                             Text(Copy.SHAKE_SWINGS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            Spacer(Modifier.height(Gap.Item))
                             LiquidSlider(
                                 value = swings, range = 2..4, onValueChange = { swings = it },
                                 onValueChangeFinished = { ShakeRotate.setAdvanced(context, swings = swings, how = "조절바") },
                                 valueText = { "${it}번" }, description = Copy.SHAKE_SWINGS_TITLE,
                             )
+                            Spacer(Modifier.height(Gap.Section))
                             Text(Copy.SHAKE_PACE_TITLE, color = c.ink)
                             Text(Copy.SHAKE_PACE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            Spacer(Modifier.height(Gap.Item))
                             LiquidSlider(
                                 value = pace, range = 1..ShakeRotatePolicy.MAX_PACE, onValueChange = { pace = it },
                                 onValueChangeFinished = { ShakeRotate.setAdvanced(context, pace = pace, how = "조절바") },
                                 valueText = { "$it" }, description = Copy.SHAKE_PACE_TITLE,
                             )
+                            Spacer(Modifier.height(Gap.Section))
                             Text(Copy.SHAKE_TURN_TITLE, color = c.ink)
                             Text(Copy.SHAKE_TURN_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            Spacer(Modifier.height(Gap.Item))
                             LiquidSlider(
                                 value = turn, range = 0..ShakeRotatePolicy.MAX_TURN, onValueChange = { turn = it },
                                 onValueChangeFinished = { ShakeRotate.setAdvanced(context, turn = turn, how = "조절바") },

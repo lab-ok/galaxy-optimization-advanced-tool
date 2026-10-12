@@ -1,5 +1,7 @@
 package com.labok.goat.ui.liquid
 
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
 import android.provider.Settings
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -87,7 +89,12 @@ fun LiquidTheme(content: @Composable () -> Unit) {
             error = c.danger, onError = c.bg, errorContainer = c.surface, onErrorContainer = c.danger,
         )
     }
-    CompositionLocalProvider(LocalLiquid provides c, LocalReduceMotion provides reduce) {
+    // 앱 전체 글자를 조금 작게: 시스템 글자 크기 배율에 TEXT_SCALE을 곱한다(sp로 쓴 모든 글자·줄 높이에 같이 적용, dp 크기는 그대로)
+    val base = LocalDensity.current
+    CompositionLocalProvider(
+        LocalLiquid provides c, LocalReduceMotion provides reduce,
+        LocalDensity provides Density(base.density, base.fontScale * TEXT_SCALE),
+    ) {
         MaterialTheme(colorScheme = scheme, typography = LiquidType, content = content)
     }
 }
@@ -108,3 +115,6 @@ private val LiquidType = androidx.compose.material3.Typography().let { t ->
         labelSmall = t.labelSmall.copy(lineHeight = 14.sp),
     )
 }
+
+/** 앱 글자 크기 배율(시스템 글자 크기 설정에 곱한다). */
+private const val TEXT_SCALE = 0.94f

@@ -366,6 +366,7 @@ private fun FluidTuner(tune: Map<String, Int>, onChange: (Map<String, Int>) -> U
             Spacer(Modifier.height(Gap.Item))
             Text(knob.label, color = c.ink)
             var v by remember(tune[knob.key]) { mutableIntStateOf(tune[knob.key] ?: knob.default) }
+            Spacer(Modifier.height(Gap.Item))
             LiquidSlider(
                 value = v, range = knob.range,
                 onValueChange = { v = it; if (knob !== LiquidTune.WATER) onChange(tune + (knob.key to it)) },

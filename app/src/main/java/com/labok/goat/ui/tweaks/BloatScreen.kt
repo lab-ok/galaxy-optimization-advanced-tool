@@ -124,7 +124,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     Spacer(Modifier.height(Gap.Item))
                     CleanupArt()
                     if (found != null) {
-                        Spacer(Modifier.height(Gap.Tight))
+                        Spacer(Modifier.height(Gap.Item))
                         Text("이 기기에서 정리할 수 있는 앱 ${apps.size}개 · 꺼 둔 앱 ${offCount}개", color = c.ink, style = MaterialTheme.typography.labelMedium)
                     }
                 }
