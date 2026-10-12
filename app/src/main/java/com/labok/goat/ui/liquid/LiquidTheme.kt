@@ -100,13 +100,51 @@ fun LiquidTheme(content: @Composable () -> Unit) {
 }
 
 /**
+ * 기기 글꼴: 삼성 '글꼴 스타일'(기본 삼성 글꼴·내려받은 글꼴)은 시스템 기본 글꼴 객체(Typeface.DEFAULT)를 바꿔 끼우는
+ * 방식이라, Compose 기본 글꼴(이름으로 sans-serif를 찾음)로는 반영되지 않는 기기가 있다. 그 객체를 직접 써서 기기 글꼴을 따른다.
+ * 굵기는 안드로이드가 같은 글꼴에서 맞는 굵기를 고른다.
+ */
+@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+val GalaxyFont: androidx.compose.ui.text.font.FontFamily = androidx.compose.ui.text.font.FontFamily(
+    (1..9).flatMap { w -> listOf(false, true).map { italic -> DeviceDefaultFont(androidx.compose.ui.text.font.FontWeight(w * 100), italic) } },
+)
+
+/** 기기 기본 글꼴(Typeface.DEFAULT)의 [weight]·기울임 한 벌. 굵기마다 안드로이드가 같은 글꼴의 그 굵기를 고른다. */
+@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+private class DeviceDefaultFont(
+    override val weight: androidx.compose.ui.text.font.FontWeight,
+    italic: Boolean,
+) : androidx.compose.ui.text.font.AndroidFont(androidx.compose.ui.text.font.FontLoadingStrategy.Blocking, Loader) {
+    override val style = if (italic) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal
+
+    private object Loader : androidx.compose.ui.text.font.AndroidFont.TypefaceLoader {
+        override fun loadBlocking(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont): android.graphics.Typeface =
+            android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, font.weight.weight, font.style == androidx.compose.ui.text.font.FontStyle.Italic)
+
+        override suspend fun awaitLoad(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont): android.graphics.Typeface =
+            loadBlocking(context, font)
+    }
+}
+
+/**
  * 글자 간격 규칙(앱 전체):
  * 1. 설명 안의 줄 간격은 제목과 설명 사이 간격보다 좁다. 제목(본문 큰 글자)은 줄 높이에 위아래 약 3sp 여유를,
  *    설명(작은 본문·라벨)은 약 1.5sp만 둬서, 제목과 설명 사이(약 4.5sp)보다 설명 줄 사이(약 3sp)가 늘 좁다.
  * 2. 같은 제목 아래 이어지는 설명 문단 사이에는 따로 간격(Spacer)을 넣지 않는다(줄 간격으로만 나눈다).
  * 글자 크기는 Material 3 기본과 같고 줄 높이만 줄였다.
  */
-private val LiquidType = androidx.compose.material3.Typography().let { t ->
+private val LiquidType = androidx.compose.material3.Typography().let { t0 ->
+    // 모든 글자 모양에 기기 글꼴(GalaxyFont)을 쓴다
+    val t = t0.copy(
+        displayLarge = t0.displayLarge.copy(fontFamily = GalaxyFont), displayMedium = t0.displayMedium.copy(fontFamily = GalaxyFont),
+        displaySmall = t0.displaySmall.copy(fontFamily = GalaxyFont), headlineLarge = t0.headlineLarge.copy(fontFamily = GalaxyFont),
+        headlineMedium = t0.headlineMedium.copy(fontFamily = GalaxyFont), headlineSmall = t0.headlineSmall.copy(fontFamily = GalaxyFont),
+        titleLarge = t0.titleLarge.copy(fontFamily = GalaxyFont), titleMedium = t0.titleMedium.copy(fontFamily = GalaxyFont),
+        titleSmall = t0.titleSmall.copy(fontFamily = GalaxyFont), bodyLarge = t0.bodyLarge.copy(fontFamily = GalaxyFont),
+        bodyMedium = t0.bodyMedium.copy(fontFamily = GalaxyFont), bodySmall = t0.bodySmall.copy(fontFamily = GalaxyFont),
+        labelLarge = t0.labelLarge.copy(fontFamily = GalaxyFont), labelMedium = t0.labelMedium.copy(fontFamily = GalaxyFont),
+        labelSmall = t0.labelSmall.copy(fontFamily = GalaxyFont),
+    )
     t.copy(
         bodyLarge = t.bodyLarge.copy(lineHeight = 22.sp),
         bodyMedium = t.bodyMedium.copy(lineHeight = 18.sp),

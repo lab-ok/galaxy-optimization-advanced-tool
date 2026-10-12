@@ -94,7 +94,7 @@ fun LiquidSlider(
     val trackY = with(density) { (HEIGHT / 2).dp.toPx() }
     // 양 끝 여백: 가장 넓은 값 글자의 손잡이도 조절바 밖으로 잘리지 않게 그 절반 이상을 둔다
     val widest = remember(range) {
-        range.maxOf { measurer.measure(valueText(it), TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold)).size.width }
+        range.maxOf { measurer.measure(valueText(it), TextStyle(fontFamily = GalaxyFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)).size.width }
     }
     val edge = with(density) { maxOf(30.dp.toPx(), (widest + 32.dp.toPx()) / 2 + 2.dp.toPx()) }
     fun xOf(v: Int) = edge + (v - range.first).toFloat() / span * (width - 2 * edge)
@@ -111,7 +111,7 @@ fun LiquidSlider(
     // 뒤쪽 면은 늦게 따라오므라 빨리 끌수록 길게 늘어난다. 놓으면 값 자리로 가서 52×30dp로 돌아온다.
     var dragX by remember { mutableFloatStateOf(-1f) }
     // 손잡이 너비는 글자 너비를 따라 늘어난다(글자가 방울 밖으로 튀어나오지 않게): 쉴 때 12sp 글자 + 양옆 12dp
-    val restText = measurer.measure(valueText(value), TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold)).size.width
+    val restText = measurer.measure(valueText(value), TextStyle(fontFamily = GalaxyFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)).size.width
     val tw = with(density) { maxOf((if (active) 60 else 52).dp.toPx(), restText + 24.dp.toPx() + if (active) 8.dp.toPx() else 0f) }
     val tht = with(density) { (if (active) 24 else 30).dp.toPx() }
     LaunchedEffect(value, width, active, dragX) {
@@ -248,7 +248,7 @@ fun LiquidSlider(
                 }
                 val bs = bubbleSize.value.dp.toPx()
                 // 떠오른 값 방울도 17sp 글자 너비에 맞춰 옆으로 늘어난다(둥근 알약)
-                val liftText = measurer.measure(valueText(value), TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold)).size.width
+                val liftText = measurer.measure(valueText(value), TextStyle(fontFamily = GalaxyFont, fontSize = 17.sp, fontWeight = FontWeight.Bold)).size.width
                 val bw = maxOf(bs, (liftText + 20.dp.toPx()) * (bs / 46.dp.toPx()))
                 val by = trackY - bubbleLift.value * LIFT.dp.toPx()
                 drawRoundRect(c.ink, Offset(cx - bw / 2, by - bs / 2), Size(bw, bs), CornerRadius(bs / 2))
@@ -277,7 +277,7 @@ fun LiquidSlider(
             val cy = trackY - lift * LIFT.dp.toPx()
             val layout = measurer.measure(
                 valueText(value),
-                TextStyle(color = c.onInk, fontSize = (12 + 5 * lift).sp, fontWeight = FontWeight.Bold),
+                TextStyle(fontFamily = GalaxyFont, color = c.onInk, fontSize = (12 + 5 * lift).sp, fontWeight = FontWeight.Bold),
             )
             drawText(layout, topLeft = Offset(cx - layout.size.width / 2f, cy - layout.size.height / 2f))
         }

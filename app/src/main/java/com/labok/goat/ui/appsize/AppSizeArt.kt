@@ -1,5 +1,6 @@
 package com.labok.goat.ui.appsize
 
+import com.labok.goat.ui.liquid.GalaxyFont
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -215,9 +216,9 @@ internal fun NotifyArt() {
         drawRoundRect(c.surface, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()))
         drawRoundRect(c.line, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()), style = Stroke(1.5.dp.toPx()))
         val textLeft = tl.x + 16.dp.toPx()
-        val tTitle = tm.measure("앱별 화면 배율", TextStyle(color = c.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold))
+        val tTitle = tm.measure("앱별 화면 배율", TextStyle(fontFamily = GalaxyFont, color = c.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold))
         drawText(tTitle, topLeft = Offset(textLeft, tl.y + 10.dp.toPx()))
-        val tBody = tm.measure(if (pressed) "Discord · 480 dpi" else "Discord · 기본(450)", TextStyle(color = c.muted, fontSize = 10.sp))
+        val tBody = tm.measure(if (pressed) "Discord · 480 dpi" else "Discord · 기본(450)", TextStyle(fontFamily = GalaxyFont, color = c.muted, fontSize = 10.sp))
         drawText(tBody, topLeft = Offset(textLeft, tl.y + 26.dp.toPx()))
         val labels = listOf("작게", "기본", "크게")
         val bw = (cardW - 32.dp.toPx()) / 3
@@ -258,7 +259,7 @@ internal fun ResetArt() {
             drawRoundRect(c.surface, tl, Size(w, rowH), CornerRadius(rowH / 2.6f))
             drawRoundRect(c.line, tl, Size(w, rowH), CornerRadius(rowH / 2.6f), style = Stroke(1.dp.toPx()))
             drawRoundRect(c.ink.copy(alpha = 0.25f), Offset(tl.x + 10.dp.toPx(), y + rowH * 0.2f), Size(rowH * 0.6f, rowH * 0.6f), CornerRadius(rowH * 0.18f))
-            val nl = tm.measure(name, TextStyle(color = c.ink, fontSize = 11.sp))
+            val nl = tm.measure(name, TextStyle(fontFamily = GalaxyFont, color = c.ink, fontSize = 11.sp))
             drawText(nl, topLeft = Offset(tl.x + 16.dp.toPx() + rowH * 0.6f, y + (rowH - nl.size.height) / 2))
             val reset = t > 0.25f + i * 0.18f
             artPill(tm, c, if (reset) "기본" else v, Offset(tl.x + w - 30.dp.toPx(), y + rowH / 2), !reset)
