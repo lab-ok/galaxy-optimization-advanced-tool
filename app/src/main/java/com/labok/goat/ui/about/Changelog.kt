@@ -42,6 +42,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.3.7", "2026-10-13", "핫스팟 제한 우회를 더했습니다(처음 쓸 때 경고에 동의해야 합니다).",
+        listOf(
+            "새 기능" to listOf(
+                "핫스팟 제한 우회: 지금 쓰는 인터넷 APN과 같은 값에 유형만 dun인 'GOAT 테더링' APN을 더해 핫스팟이 일반 데이터 경로를 쓰게 합니다(Shizuku).",
+                "자동 추가가 막힌 기기에서는 숨겨진 APN 추가 화면을 열고 이름·APN·전각 ｄｕｎ을 복사해 넣게 안내합니다. 추가한 APN은 언제든 지울 수 있습니다.",
+                "통신사 약관 위반 소지와 책임을 처음에 알리고, 동의해야 추가 버튼이 나타납니다.",
+            ),
+        ),
+    ),
+    Release(
         "GOAT 1.3.6", "2026-10-12", "삼성 글꼴 스타일(기기 글꼴)이 앱에도 적용되게 하고, 글자를 아주 조금 더 줄였습니다.",
         listOf(
             "화면" to listOf(
