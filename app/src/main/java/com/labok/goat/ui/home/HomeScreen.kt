@@ -394,7 +394,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             else { revealFrom = null; feature = NavItem.HOME; shown = NavItem.HOME }
         }
         val drawerItems: @Composable () -> Unit = {
-                SideDrawerContent(sections, current = feature, visible = wide || drawer.targetValue == DrawerValue.Open, glass = !wide, onAbout = {
+                SideDrawerContent(sections, current = feature, visible = wide || drawer.targetValue == DrawerValue.Open, glass = !wide, animateSelection = wide, onAbout = {
                     // 사이드바 맨 아래 '앱 설정': 앱 정보·업데이트·기록 파일·UI 탄성을 모은 화면으로 간다
                     revealFrom = null
                     feature = NavItem.SETTINGS; shown = NavItem.SETTINGS

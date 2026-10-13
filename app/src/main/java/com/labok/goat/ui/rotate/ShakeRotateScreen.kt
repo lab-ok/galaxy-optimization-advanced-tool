@@ -1,5 +1,6 @@
 package com.labok.goat.ui.rotate
 
+import com.labok.goat.ui.liquid.LiquidSwitchRow
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.shrinkVertically
@@ -223,6 +224,15 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                         valueText = { if (it == 0) "끔" else "$it" },
                         description = Copy.SHAKE_VIBRATION_TITLE,
                     )
+                }
+            }
+        }
+        // 빠른 회전(1.4.7에서 실험실 → 정식): 시스템 자동 회전을 기다리지 않고 센서로 든 방향을 바로 계산해 돌린다
+        item(key = "fastTurn") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    var fast by remember { mutableStateOf(ShakeRotate.fastTurn(context)) }
+                    LiquidSwitchRow(Copy.SHAKE_FAST_TITLE, Copy.SHAKE_FAST_BODY, fast, enabled = true, onChange = { fast = it; ShakeRotate.setFastTurn(context, it) })
                 }
             }
         }

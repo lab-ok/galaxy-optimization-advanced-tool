@@ -143,7 +143,7 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
 
     private fun beginTurn() {
         before = ShakeRotate.currentRotation(context)
-        // 실험실 '빠른 회전': 든 방향이 분명하면 시스템을 기다리지 않고 바로 그 방향으로 잠근다(애매하면 아래 기존 방식)
+        // 빠른 회전(기본 켬): 든 방향이 분명하면 시스템을 기다리지 않고 바로 그 방향으로 잠근다(애매하면 아래 기존 방식)
         if (ShakeRotate.fastTurn(context)) ShakeRotatePolicy.rotationOf(gx, gy)?.let { r ->
             val log = LogRepository.from(context)
             if (r == before) { log.add("흔들어서 화면 회전(빠른 회전): 든 방향이 그대로라 ${ShakeRotate.label(r)} 유지"); return }

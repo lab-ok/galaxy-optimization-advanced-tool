@@ -118,6 +118,11 @@ fun SideDrawerContent(
     onAbout: () -> Unit,
     /** 위에 덮이는 서랍일 때: 살짝 비치는 유리처럼 뒤(흐려진 본문)가 은은하게 보인다. */
     glass: Boolean = false,
+    /**
+     * 고른 항목으로 방울이 옮겨 가는 애니메이션을 할지. 늘 펼쳐진 사이드바(태블릿·폴드 내부)에서만 한다.
+     * 덮이는 서랍은 고르자마자 닫히고 화면이 바뀌어 볼 틈이 없으므로, 방울을 그 자리로 바로 옮긴다.
+     */
+    animateSelection: Boolean = true,
 ) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
@@ -143,7 +148,7 @@ fun SideDrawerContent(
     var boxW by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(target, rowH, boxW) {
         val y = target ?: return@LaunchedEffect
-        if (rowH > 0f && boxW > 0f) blob.moveTo(boxW / 2, y + rowH / 2, boxW, rowH, animate = !reduce)
+        if (rowH > 0f && boxW > 0f) blob.moveTo(boxW / 2, y + rowH / 2, boxW, rowH, animate = !reduce && animateSelection)
     }
 
     Box(

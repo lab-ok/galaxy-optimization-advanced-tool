@@ -51,12 +51,12 @@ object ShakeRotate {
     /** 한 번 톡 친 것·부딪힌 것을 거른다. */
     fun rejectTaps(context: Context): Boolean = prefs(context).getBoolean("taps", true)
 
-    /** 실험실 '빠른 회전': 시스템 자동 회전을 기다리지 않고 센서로 방향을 바로 정해 잠근다. */
-    fun fastTurn(context: Context): Boolean = prefs(context).getBoolean("fastTurn", false)
+    /** 빠른 회전(기본 켬): 시스템 자동 회전을 기다리지 않고 센서로 든 방향을 바로 정해 잠근다. 애매하면 시스템에 맡긴다. */
+    fun fastTurn(context: Context): Boolean = prefs(context).getBoolean("fastTurn", true)
 
     fun setFastTurn(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("fastTurn", on).apply()
-        LogRepository.from(context).add("흔들어서 화면 회전: 빠른 회전(실험실) ${if (on) "켜짐" else "꺼짐"}")
+        LogRepository.from(context).add("흔들어서 화면 회전: 빠른 회전 ${if (on) "켜짐" else "꺼짐"}")
     }
 
     /** 큰 화면(폴드를 펼쳤을 때·태블릿)에서만 흔들어서 돌린다. 접었을 때(외부 화면)는 흔들어도 돌리지 않는다. */

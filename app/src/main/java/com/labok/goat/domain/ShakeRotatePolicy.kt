@@ -11,18 +11,26 @@ import kotlin.math.sqrt
  * 흔든 순간 어느 방향으로 돌릴지는 시스템 자동 회전이 정한다([com.labok.goat.data.rotate.ShakeEngine]).
  */
 object ShakeRotatePolicy {
-    /** 민감도 단계: 1(세게 흔들어야 함, 둔하게) ~ [MAX_LEVEL](살짝만 흔들어도 됨, 예민하게). */
+    /**
+     * 민감도 단계: 1(세게 흔들어야 함, 둔하게) ~ [MAX_LEVEL](살짝만 흔들어도 됨, 예민하게).
+     * 1~[CLASSIC_MAX]은 1.4.6까지와 같은 눈금이다(저장된 값의 느낌이 그대로). 그 위(31~100)는 더 예민한 구간으로,
+     * 기준을 [SOFTEST]에서 [FEATHER]까지, 손목 회전 기준을 [GYRO_SOFT]에서 [GYRO_FEATHER]까지 더 낮춘다.
+     */
     const val MIN_LEVEL = 1
-    const val MAX_LEVEL = 30
+    const val MAX_LEVEL = 100
+    /** 예전 눈금의 끝(1.4.6까지의 최대). */
+    const val CLASSIC_MAX = 30
     /** 처음 값: 손목으로 가볍게 휙휙 흔들면 돌아가는 정도. */
     const val DEFAULT_LEVEL = 17
     private const val STRONGEST = 18f
     private const val SOFTEST = 1.2f
+    private const val FEATHER = 0.5f
 
     /** 단계 → 흔들림 한 번으로 칠 세기(중력을 뺀 가속도, m/s²). */
     fun thresholdOf(level: Int): Float {
         val l = level.coerceIn(MIN_LEVEL, MAX_LEVEL)
-        return STRONGEST - (l - MIN_LEVEL) * (STRONGEST - SOFTEST) / (MAX_LEVEL - MIN_LEVEL)
+        return if (l <= CLASSIC_MAX) STRONGEST - (l - MIN_LEVEL) * (STRONGEST - SOFTEST) / (CLASSIC_MAX - MIN_LEVEL)
+        else SOFTEST - (l - CLASSIC_MAX) * (SOFTEST - FEATHER) / (MAX_LEVEL - CLASSIC_MAX)
     }
 
     /**
@@ -31,14 +39,17 @@ object ShakeRotatePolicy {
      */
     fun gyroMinOf(level: Int): Float {
         val l = level.coerceIn(MIN_LEVEL, MAX_LEVEL)
-        return GYRO_STRONG - (l - MIN_LEVEL) * (GYRO_STRONG - GYRO_SOFT) / (MAX_LEVEL - MIN_LEVEL)
+        return if (l <= CLASSIC_MAX) GYRO_STRONG - (l - MIN_LEVEL) * (GYRO_STRONG - GYRO_SOFT) / (CLASSIC_MAX - MIN_LEVEL)
+        else GYRO_SOFT - (l - CLASSIC_MAX) * (GYRO_SOFT - GYRO_FEATHER) / (MAX_LEVEL - CLASSIC_MAX)
     }
     private const val GYRO_STRONG = 2.4f
     private const val GYRO_SOFT = 0.3f
+    private const val GYRO_FEATHER = 0.12f
 
     /** 세기(m/s²) → 가장 가까운 단계. */
     fun levelOf(threshold: Float): Int {
-        val raw = MIN_LEVEL + (STRONGEST - threshold) * (MAX_LEVEL - MIN_LEVEL) / (STRONGEST - SOFTEST)
+        val raw = if (threshold >= SOFTEST) MIN_LEVEL + (STRONGEST - threshold) * (CLASSIC_MAX - MIN_LEVEL) / (STRONGEST - SOFTEST)
+        else CLASSIC_MAX + (SOFTEST - threshold) * (MAX_LEVEL - CLASSIC_MAX) / (SOFTEST - FEATHER)
         return Math.round(raw).coerceIn(MIN_LEVEL, MAX_LEVEL)
     }
 
@@ -304,7 +315,7 @@ object ShakeRotatePolicy {
     private const val E = 2.7182817f
 
     /**
-     * 실험실 '빠른 회전': 중력 방향([gx],[gy], 기기 기본 방향 기준 m/s²)으로 화면 방향(Surface.ROTATION_*)을 바로 정한다.
+     * 빠른 회전: 중력 방향([gx],[gy], 기기 기본 방향 기준 m/s²)으로 화면 방향(Surface.ROTATION_*)을 바로 정한다.
      * 기기가 [MIN_TILT] 이상 서 있고 방향이 한 축에서 [MAX_OFF_AXIS]도 안쪽일 때만 답하고, 애매하면 null(시스템에 맡긴다).
      * 거꾸로(180°)는 시스템도 대개 돌리지 않으므로 null.
      */
