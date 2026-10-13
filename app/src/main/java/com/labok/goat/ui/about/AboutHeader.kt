@@ -1,5 +1,11 @@
 package com.labok.goat.ui.about
 
+import kotlin.math.sin
+import kotlin.math.cos
+import kotlin.math.PI
+import kotlinx.coroutines.delay
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.Dp
 import com.labok.goat.ui.nav.rememberGoatMood
 import com.labok.goat.ui.nav.goatPainter
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
@@ -153,6 +159,91 @@ internal fun AboutHeader(title: String, subtitle: String) {
                 Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
                 Text(subtitle, color = c.muted, style = MaterialTheme.typography.bodyMedium)
             }
+        }
+    }
+}
+
+/**
+ * 작은 리퀴드 로고(홈 머리용): [AboutHeader]와 같은 검은 물방울 상자와 염소를 [size] 크기로 그린다.
+ * 나타날 때 원에서 둥근 네모로 맺히고, 누르면 움푹 들어가며 염소가 튕기고, 끌면 고무줄처럼 늘어났다 돌아온다.
+ * 모서리는 앱 정보 로고보다 둥글게(크기의 40%) 해 물방울에 가깝게 보인다. [idle]이면 가만히 있어도 몇 초마다
+ * 가장자리를 살짝 건드려 표면장력으로 출렁였다 돌아오는 모습을 보인다(동작 줄이기면 하지 않는다).
+ */
+@Composable
+internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boolean = false) {
+    val reduce = LocalReduceMotion.current
+    val haptics = rememberLiquidHaptics()
+    val d = LocalDensity.current
+    val logoS = with(d) { size.toPx() }
+    val logoR = logoS * 0.4f
+    val maxPull = logoS * 22f / 84f
+    val unit = logoS / 72f
+    var box by remember { mutableStateOf(IntSize.Zero) }
+    val logo = rememberSoftBlob()
+    val drop = rememberSoftBlob()
+    val mood = rememberGoatMood()
+    val goat = goatPainter(mood.mood)
+    val path = remember { Path() }
+    fun cx() = box.width / 2f
+    fun cy() = box.height / 2f
+
+    LaunchedEffect(box) {
+        if (box == IntSize.Zero) return@LaunchedEffect
+        if (!reduce) {
+            logo.moveTo(cx(), cy(), logoS * 0.45f, logoS * 0.45f, animate = false)
+            drop.moveTo(cx(), cy(), 4f * unit, 4f * unit, animate = false)
+        }
+        logo.moveTo(cx(), cy(), logoS, logoS, !reduce, corner = logoR)
+        drop.moveTo(cx(), cy(), 4f * unit, 4f * unit, !reduce)
+    }
+    // 쉬는 동안의 출렁임: 3~6초마다 가장자리 한 곳을 안쪽으로 살짝 밀면, 표면장력이 펴고 압력이 되밀며 물결처럼 잦아든다
+    LaunchedEffect(box, idle, reduce) {
+        if (!idle || reduce || box == IntSize.Zero) return@LaunchedEffect
+        val rnd = kotlin.random.Random(System.nanoTime())
+        while (true) {
+            delay(3000L + rnd.nextLong(3000L))
+            val a = rnd.nextFloat() * 2f * PI.toFloat()
+            val ex = cx() + cos(a) * logoS / 2; val ey = cy() + sin(a) * logoS / 2
+            logo.poke(ex, ey, -cos(a) * 520f, -sin(a) * 520f, logoS * 0.45f)
+            drop.poke(cx(), cy(), cos(a) * 60f, sin(a) * 60f, logoS)
+        }
+    }
+
+    Canvas(
+        modifier
+            .size(size)
+            .onSizeChanged { box = it }
+            .pointerInput(reduce) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    val p = down.position
+                    haptics.press()
+                    if (mood.press()) haptics.reject() else if (mood.startedCrying) haptics.snap()
+                    if (reduce) return@awaitEachGesture
+                    val k = mood.impulse
+                    val dx = cx() - p.x; val dy = cy() - p.y; val l = hypot(dx, dy).coerceAtLeast(1f)
+                    logo.poke(p.x, p.y, dx / l * 1600f * k, dy / l * 1600f * k, logoS * 0.5f)
+                    drop.poke(cx(), cy(), (p.x - cx()) * -14f * k, (p.y - cy()) * -14f * k, logoS)
+                    var total = Offset.Zero
+                    drag(down.id) { change ->
+                        total += change.positionChange()
+                        change.consume()
+                        val rx = maxPull * tanh(total.x / (maxPull * 3)); val ry = maxPull * tanh(total.y / (maxPull * 3))
+                        logo.nudge(cx() + rx, cy() + ry)
+                        drop.nudge(cx() + rx, cy() + ry)
+                    }
+                    logo.nudge(cx(), cy()); drop.nudge(cx(), cy())
+                }
+            },
+    ) {
+        logo.frame; drop.frame
+        if (!logo.blob.ready || !drop.blob.ready) return@Canvas
+        logo.blob.path(path)
+        drawPath(path, Color(0xFF111111))
+        val gs = logoS * 0.98f
+        val tilt = ((drop.blob.cx - logo.blob.cx) / logoS * 40f).coerceIn(-14f, 14f)
+        rotate(tilt, Offset(drop.blob.cx, drop.blob.cy)) {
+            translate(drop.blob.cx - gs / 2, drop.blob.cy - gs / 2) { with(goat) { draw(Size(gs, gs)) } }
         }
     }
 }

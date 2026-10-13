@@ -89,6 +89,8 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     RESOLUTION(Copy.FEATURE_RESOLUTION, NavIcon.PIXELS),
     /** 다크 모드 없는 앱도 시스템이 어둡게 그리게 한다(Shizuku setprop). */
     DARK(Copy.FEATURE_DARK, NavIcon.MOON),
+    /** 숨은 실험실: 염소를 열 번 누르면 나타난다(시험 중인 기능을 둔다). */
+    LAB(Copy.FEATURE_LAB, NavIcon.FLASK),
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */

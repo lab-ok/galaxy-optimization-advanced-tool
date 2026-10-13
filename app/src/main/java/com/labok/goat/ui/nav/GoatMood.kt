@@ -1,6 +1,10 @@
 package com.labok.goat.ui.nav
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import com.labok.goat.data.lab.LabUnlock
+import com.labok.goat.ui.text.Copy
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -30,6 +34,8 @@ class GoatMoodState {
     private val taps = ArrayDeque<Long>()
     /** 쉬지 않고 이어서 누른 횟수. */
     private var streak = 0
+    /** 지금까지 쉬지 않고 이어서 누른 횟수(실험실 열기용). */
+    val streakNow get() = streak
 
     /** 눌렀다. 표정을 바꾸고, 화가 난 순간이면 true(더 단단한 진동용). 울기 시작한 순간은 [startedCrying]. */
     var startedCrying = false
@@ -77,6 +83,11 @@ class GoatMoodState {
 @Composable
 fun rememberGoatMood(): GoatMoodState {
     val s = remember { GoatMoodState() }
+    val context = LocalContext.current
+    // 쉬지 않고 열 번 누르면 숨은 실험실을 연다(어느 염소를 눌러도 같다)
+    LaunchedEffect(s.presses) {
+        if (s.streakNow >= LabUnlock.TAPS && LabUnlock.unlock(context)) Toast.makeText(context, Copy.LAB_OPENED, Toast.LENGTH_SHORT).show()
+    }
     // 마지막으로 누른 뒤 표정 시간이 지나면 평소 얼굴로
     LaunchedEffect(s.presses) {
         if (s.mood == Mood.CALM) return@LaunchedEffect

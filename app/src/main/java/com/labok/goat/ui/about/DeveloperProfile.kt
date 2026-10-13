@@ -6,7 +6,13 @@ import com.labok.goat.AppInfo
 object DeveloperProfile {
     const val PRODUCT = AppInfo.NAME
     const val TAGLINE = AppInfo.FULL_NAME
-    const val DESCRIPTION = "갤럭시를 더 편하게 쓰게 해 주는 도구 모음입니다. 폴드의 두 화면 배율을 맞추고, 앱마다 화면 배율을 따로 정하고, 흔들어서 화면을 돌립니다. ROOT 없이 동작하고, 바꾼 설정은 재부팅 후에도 유지됩니다."
+    /** 앱 정보 소개: 한 줄 머리말과 짧은 특징 세 줄. 문단으로 붙이지 않고 줄마다 띄워 보여 준다. */
+    const val HEADLINE = "갤럭시를 내 손에 맞게"
+    val HIGHLIGHTS = listOf(
+        "화면 배율과 표시를 원하는 대로",
+        "ROOT 없이 안전하게",
+        "재부팅해도 그대로",
+    )
     const val CONTACT_EMAIL = "lala5bok@gmail.com"
     const val COPYRIGHT = "© 2026 lala5bok · GPL-3.0"
     const val LICENSE = "GPL-3.0 (오픈소스)"

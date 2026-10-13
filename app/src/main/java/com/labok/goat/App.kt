@@ -1,5 +1,6 @@
 package com.labok.goat
 
+import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.ui.liquid.UiHaptics
 import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.data.camera.CameraMute
@@ -23,6 +24,7 @@ class App : Application() {
         // 앱 설정의 UI 낭창거림을 첫 화면 전에 읽는다
         UiMotion.load(this)
         UiHaptics.load(this)
+        LabUnlock.load(this)
         DpiManager.exemptHiddenApis()
         // Shizuku가 켜지며(재부팅 뒤 자동 시작 포함) GOAT에 바인더를 건네면, 옵션에 따라 무선 디버깅을 끈다
         if (ShizukuAccess.autoOffEnabled(this)) ShizukuAccess.watch(this)

@@ -154,6 +154,8 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.DrawerValue
 import com.labok.goat.BuildConfig
 import com.labok.goat.ui.lab.LabScreen
+import com.labok.goat.ui.lab.LabEmptyScreen
+import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.ui.art.LocalDeviceShape
 import com.labok.goat.ui.art.DeviceShape
 import androidx.compose.runtime.CompositionLocalProvider
@@ -268,7 +270,9 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK)))
             add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE)))
             add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.DOZE)))
-            if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
+            // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구는 lab 빌드에서만 함께 둔다.
+            val lab = listOfNotNull(NavItem.LAB.takeIf { LabUnlock.unlocked }, NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB })
+            if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
         val common = { help: Sheet, guide: Sheet, reset: Sheet ->
@@ -334,7 +338,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 Copy.MENU_REPORT to report,
             )
             NavItem.HOME -> listOf(Copy.MENU_REPORT to report)
-            NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
+            NavItem.LAB, NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -483,6 +487,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.DOZE -> DozeScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
+                            NavItem.LAB -> LabEmptyScreen(inner)
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                             NavItem.SETTINGS -> SettingsScreen(inner, onAbout = { sheet = Sheet.ABOUT }, onChangelog = { sheet = Sheet.CHANGELOG }, onPermissions = { sheet = Sheet.PERMISSIONS })
                         }

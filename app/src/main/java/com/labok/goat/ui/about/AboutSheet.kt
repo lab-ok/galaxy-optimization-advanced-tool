@@ -56,7 +56,11 @@ internal fun AboutSheet(onMail: () -> Unit) {
     SheetColumn(horizontalAlignment = Alignment.CenterHorizontally) {
         AboutHeader(DeveloperProfile.PRODUCT, DeveloperProfile.TAGLINE)
         Spacer(Modifier.height(Gap.Section))
-        Text(DeveloperProfile.DESCRIPTION, color = c.ink, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+        Text(DeveloperProfile.HEADLINE, color = c.ink, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(Gap.Item))
+        DeveloperProfile.HIGHLIGHTS.forEach {
+            Text(it, color = c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.padding(vertical = Gap.Tight / 2))
+        }
         Spacer(Modifier.height(Gap.Section))
         GlassCard {
             InfoRow("버전", pkg.versionName ?: "-")

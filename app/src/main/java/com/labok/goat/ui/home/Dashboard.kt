@@ -1,5 +1,15 @@
 package com.labok.goat.ui.home
 
+import androidx.compose.foundation.layout.wrapContentWidth
+import com.labok.goat.ui.liquid.LiquidChips
+import androidx.compose.foundation.layout.widthIn
+import android.content.Context
+import com.labok.goat.ui.about.LiquidGoatLogo
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
+import com.labok.goat.R
 import androidx.compose.ui.text.rememberTextMeasurer
 import com.labok.goat.ui.about.worthShowing
 import com.labok.goat.ui.about.UpdateCard
@@ -12,7 +22,6 @@ import android.os.SystemClock
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
-import com.labok.goat.ui.about.AboutHeader
 import com.labok.goat.AppInfo
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -185,7 +194,11 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             else -> false
         }
     }
-    val features = sections.flatMap { it.items }.filter { it != NavItem.HOME && it != NavItem.LAB_TOOLS }
+    val features = sections.flatMap { it.items }.filter { it != NavItem.HOME && it != NavItem.LAB && it != NavItem.LAB_TOOLS }
+    // 보기 방식: 전체(기존 순서) 또는 켜진 기능만. 고른 방식은 저장해 다음에도 그대로 연다.
+    val homePrefs = remember { context.getSharedPreferences("home", Context.MODE_PRIVATE) }
+    var onlyOn by remember { mutableStateOf(homePrefs.getBoolean("only_on", false)) }
+    val shown = if (onlyOn) features.filter(active) else features
     // 홈이 처음 보인 시각: 이 시간 안에 그려진 카드만 등장 애니메이션을 한다
     val shownAt = remember { SystemClock.uptimeMillis() }
 
@@ -205,43 +218,89 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
         modifier = Modifier.fillMaxWidth(),
     ) {
         item(key = "hello", span = { GridItemSpan(maxLineSpan) }) {
-            GlassCard {
-                // 앱 정보와 같은 리퀴드 로고: 맺히며 나타나고, 누르고 끌면 출렁인다
-                AboutHeader(AppInfo.NAME, AppInfo.FULL_NAME)
-                Spacer(Modifier.height(Gap.Item))
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(Copy.HOME_SUBTITLE, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Badge(Copy.HOME_PERMISSION, state.hasPermission)
-                        Badge(Copy.HOME_SHIZUKU, shizuku == ShizukuAccess.State.READY)
+            // 홈 머리: 카드 없이 바탕 위에 바로 놓는 요약(갤럭시 '디바이스 케어'식). 왼쪽 염소, 가운데 상태 한 문장, 오른쪽 켜진 비율 고리,
+            // 아래 권한·Shizuku 상태 알약.
+            val on = features.count(active)
+            Column(Modifier.fillMaxWidth().padding(horizontal = Gap.Tight, vertical = Gap.Item)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // 앱 정보 로고와 같은 리퀴드 상자(누르면 출렁이고 표정이 바뀐다, 열 번이면 실험실)
+                    LiquidGoatLogo(68.dp, idle = true)
+                    // 아이콘과 글은 다른 덩어리라 글 사이 간격보다 넓게 띄운다
+                    Spacer(Modifier.width(Gap.Title + Gap.Tight))
+                    Column(Modifier.weight(1f)) {
+                        Text(AppInfo.FULL_NAME, color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = Modifier.basicMarquee())
+                        Text(if (on == 0) Copy.HOME_HERO_NONE else "기능 ${on}개가 켜져 있어요", color = c.ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(Copy.HOME_SUBTITLE, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        // 알약은 글 줄 시작에 맞춘다(염소 아래로 튀어나오지 않게)
+                        Row(horizontalArrangement = Arrangement.spacedBy(Gap.Tight * 2)) {
+                            StatusPill(Copy.HOME_PERMISSION, state.hasPermission)
+                            StatusPill(Copy.HOME_SHIZUKU, shizuku == ShizukuAccess.State.READY)
+                        }
                     }
-                    Spacer(Modifier.height(Gap.Tight))
-                    Text(
-                        "켜진 기능 ${features.count(active)}개 / ${features.size}개",
-                        color = c.muted, style = MaterialTheme.typography.labelMedium,
-                    )
+                    Spacer(Modifier.width(Gap.Card))
+                    ActiveRing(on, features.size)
                 }
             }
         }
         // 새 버전이 있으면 홈 머리 바로 아래에 업데이트 카드(바로 내려받아 설치)
         if (update.worthShowing()) item(key = "update", span = { GridItemSpan(maxLineSpan) }) { UpdateCard(manual = false) }
-        itemsIndexed(features, key = { _, it -> it.name }) { i, item ->
+        item(key = "view", span = { GridItemSpan(maxLineSpan) }) {
+            Box(Modifier.fillMaxWidth().wrapContentWidth(Alignment.Start).widthIn(max = 260.dp)) {
+                LiquidChips(
+                    options = listOf(false, true),
+                    selected = onlyOn,
+                    label = { if (it) Copy.HOME_VIEW_ON else Copy.HOME_VIEW_ALL },
+                    onSelect = { onlyOn = it; homePrefs.edit().putBoolean("only_on", it).apply() },
+                )
+            }
+        }
+        if (shown.isEmpty()) item(key = "none", span = { GridItemSpan(maxLineSpan) }) {
+            GlassCard {
+                Text(Copy.HOME_VIEW_EMPTY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(Copy.HOME_VIEW_EMPTY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        itemsIndexed(shown, key = { _, it -> it.name }) { i, item ->
             // 처음 화면에 보인 카드만 차례로 맺히고, 나중에 스크롤로 들어오는 카드는 동그라미에서 터지듯 커지지 않게 바로 그린다
             BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> onOpen(item, at) }
         }
     }
 }
 
-/** 상태 방울과 이름: 되어 있으면 잉크 방울이 통 차오르고, 아니면 빈 고리. */
+/** 켜진 기능 비율 고리: 잉크 호가 출렁이며 차오르고, 가운데에 켜진 수/전체 수. */
 @Composable
-private fun Badge(label: String, on: Boolean) {
+private fun ActiveRing(on: Int, total: Int) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
-    val k by animateFloatAsState(if (on) 1f else 0f, Springs.pop(reduce), label = "badge")
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Canvas(Modifier.size(12.dp)) {
-            drawCircle(c.line, size.minDimension / 2, style = Stroke(1.5.dp.toPx()))
+    val k by animateFloatAsState(if (total == 0) 0f else on.toFloat() / total, Springs.water(reduce), label = "ring")
+    Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.matchParentSize()) {
+            val w = 6.dp.toPx()
+            val r = Size(size.width - w, size.height - w)
+            val tl = Offset(w / 2, w / 2)
+            drawArc(if (c.dark) c.muted.copy(alpha = 0.35f) else c.line, 0f, 360f, false, tl, r, style = Stroke(w))
+            if (k > 0.005f) drawArc(c.ink, -90f, 360f * k.coerceIn(0f, 1.05f), false, tl, r, style = Stroke(w, cap = StrokeCap.Round))
+        }
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("$on", color = c.ink, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("/$total", color = c.muted, style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+/** 상태 알약: 되어 있으면 잉크 점이 통 차오르고, 아니면 빈 고리와 '필요'. */
+@Composable
+private fun StatusPill(label: String, on: Boolean) {
+    val c = LocalLiquid.current
+    val reduce = LocalReduceMotion.current
+    val k by animateFloatAsState(if (on) 1f else 0f, Springs.pop(reduce), label = "pill")
+    Row(
+        Modifier.border(1.dp, if (c.dark) c.muted.copy(alpha = 0.5f) else c.line, CircleShape).padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Canvas(Modifier.size(8.dp)) {
+            drawCircle(if (c.dark) c.muted else c.line, size.minDimension / 2, style = Stroke(1.2.dp.toPx()))
             if (k > 0.01f) drawCircle(c.ink, size.minDimension / 2 * k.coerceAtMost(1.25f))
         }
         Spacer(Modifier.width(6.dp))
