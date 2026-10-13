@@ -42,6 +42,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.4.3", "2026-10-13", "Shizuku 무선 디버깅 끄기 옵션을 앱 설정으로 옮기고, Shizuku가 멈추는 기기를 스스로 알아차리게 했습니다.",
+        listOf(
+            "앱 설정" to listOf(
+                "'Shizuku가 켜지면 무선 디버깅 끄기' 옵션을 앱별 화면 배율 화면에서 앱 설정으로 옮겼습니다.",
+                "일부 기기는 무선 디버깅을 끄면 Shizuku도 멈춘다는 점을 설명에 적었습니다.",
+                "무선 디버깅을 끈 뒤 Shizuku가 멈추면 무선 디버깅을 다시 켜고 이 옵션을 스스로 끈 다음, 앱 설정에 알려 줍니다. 멈춘 Shizuku는 한 번 다시 시작해 주세요.",
+            ),
+        ),
+    ),
+    Release(
         "GOAT 1.4.2", "2026-10-13", "핫스팟 제한 우회 기능을 뺐고, 다크 모드에서 라디오 버튼이 잘 보이게 했습니다.",
         listOf(
             "변경" to listOf(
