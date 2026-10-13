@@ -15,6 +15,7 @@ import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.data.tweaks.Gos
 import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.ui.liquid.UiHaptics
+import com.labok.goat.ui.liquid.UiInk
 import com.labok.goat.ui.liquid.UiMotion
 
 class App : Application() {
@@ -24,6 +25,7 @@ class App : Application() {
         // 앱 설정의 UI 낭창거림을 첫 화면 전에 읽는다
         UiMotion.load(this)
         UiHaptics.load(this)
+        UiInk.load(this)
         LabUnlock.load(this)
         DpiManager.exemptHiddenApis()
         // Shizuku가 켜지며(재부팅 뒤 자동 시작 포함) GOAT에 바인더를 건네면, 옵션에 따라 무선 디버깅을 끈다

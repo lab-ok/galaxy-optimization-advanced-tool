@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
@@ -142,7 +141,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
                 drop.frame
                 if (!logo.blob.ready || !drop.blob.ready) return@Canvas
                 logo.blob.path(path)
-                drawPath(path, Color(0xFF111111))
+                drawPath(path, c.logo)
                 val gs = logoS * 0.98f
                 val tilt = ((drop.blob.cx - logo.blob.cx) / logoS * 40f).coerceIn(-14f, 14f)
                 rotate(tilt, Offset(drop.blob.cx, drop.blob.cy)) {
@@ -179,6 +178,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
  */
 @Composable
 internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boolean = false) {
+    val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val haptics = rememberLiquidHaptics()
     val d = LocalDensity.current
@@ -249,7 +249,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
         drop.frame
         if (!logo.blob.ready || !drop.blob.ready) return@Canvas
         logo.blob.path(path)
-        drawPath(path, Color(0xFF111111))
+        drawPath(path, c.logo)
         val gs = logoS * 0.98f
         val tilt = ((drop.blob.cx - logo.blob.cx) / logoS * 40f).coerceIn(-14f, 14f)
         rotate(tilt, Offset(drop.blob.cx, drop.blob.cy)) {

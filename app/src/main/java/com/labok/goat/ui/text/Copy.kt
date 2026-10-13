@@ -209,6 +209,10 @@ object Copy {
     const val HAPTIC_BODY = "누르고 켜고 고를 때의 진동 세기입니다. 0%는 끄고, 기기의 터치 진동 설정도 따릅니다."
     const val MOTION_PREVIEW = "미리 보기: 눌러서 움직여 보세요"
     const val SPEED_TITLE = "UI 애니메이션 속도"
+    const val INK_TITLE = "잉크 색"
+    const val INK_BODY = "방울·선택 표시·버튼의 색입니다. 갤럭시 테마를 고르면 색상 팔레트의 가장 진한 색을 씁니다."
+    const val INK_DEFAULT = "기본"
+    const val INK_THEME = "갤럭시 테마"
     const val SPEED_BODY = "물방울 UI가 움직이는 빠르기입니다. 클수록 빠르게, 작을수록 천천히 움직입니다."
 
     // 초기화

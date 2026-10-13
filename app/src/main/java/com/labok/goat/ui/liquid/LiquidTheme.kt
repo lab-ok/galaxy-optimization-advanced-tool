@@ -13,6 +13,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,19 +32,22 @@ data class LiquidColors(
     val tint: Color,
     val brand: Color,
     val danger: Color,
-    val dark: Boolean
+    val dark: Boolean,
+    /** 염소 로고 상자 색(홈·사이드바·앱 정보). 라이트는 잉크와 같고, 다크는 흰 잉크 대신 어두운 상자를 둔다. */
+    val logo: Color = ink
 ) {
     /** 방울 위 글자색(배경색으로 반전). */
     val onInk: Color get() = bg
 }
 
 val LightLiquid = LiquidColors(
-    bg = Color(0xFFEDEDED), surface = Color(0xFFF7F7F7), ink = Color(0xFF151515), muted = Color(0xFF686868),
+    bg = Color(0xFFEDEDED), surface = Color(0xFFF7F7F7), ink = Color(0xFF3D3833), muted = Color(0xFF686868),
     line = Color(0xFFD3D3D3), tint = Color(0x6BFFFFFF), brand = Color(0xFF000000), danger = Color(0xFFB3261E), dark = false
 )
 val DarkLiquid = LiquidColors(
     bg = Color(0xFF0F0F0F), surface = Color(0xFF171717), ink = Color(0xFFEBEBEB), muted = Color(0xFF8D8D8D),
-    line = Color(0xFF2A2A2A), tint = Color(0x12FFFFFF), brand = Color(0xFFFFFFFF), danger = Color(0xFFF2B8B5), dark = true
+    line = Color(0xFF2A2A2A), tint = Color(0x12FFFFFF), brand = Color(0xFFFFFFFF), danger = Color(0xFFF2B8B5), dark = true,
+    logo = Color(0xFF111111)
 )
 
 /** 모양 토큰(원본: 컨트롤 알약 999px, 상자 12px — 모바일 터치 크기에 맞춰 키움). */
@@ -60,7 +64,11 @@ val LocalReduceMotion = staticCompositionLocalOf { false }
 @Composable
 fun LiquidTheme(content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
-    val c = if (dark) DarkLiquid else LightLiquid
+    val plain = if (dark) DarkLiquid else LightLiquid
+    // 잉크 색을 갤럭시 테마로 고르면 팔레트 강조색의 가장 진한(다크는 가장 밝은) 단계를 쓴다
+    val themeInk = colorResource(if (dark) android.R.color.system_accent1_100 else android.R.color.system_accent1_900)
+    val themeLogo = colorResource(android.R.color.system_accent1_900)
+    val c = if (UiInk.mode == UiInk.Mode.THEME) plain.copy(ink = themeInk, logo = themeLogo) else plain
     val context = LocalContext.current
     val reduce = remember {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f

@@ -38,11 +38,13 @@ import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.components.rowListEdges
 import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.UiHaptics
+import com.labok.goat.ui.liquid.UiInk
 import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.ui.text.Copy
 
@@ -107,6 +109,21 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                         onValueChangeFinished = { UiMotion.setSpeed(context, sp) },
                         valueText = { "$it%" },
                         description = Copy.SPEED_TITLE
+                    )
+                }
+            }
+        }
+        item(key = "ink") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.INK_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.INK_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidChips(
+                        options = UiInk.Mode.entries,
+                        selected = UiInk.mode,
+                        label = { if (it == UiInk.Mode.THEME) Copy.INK_THEME else Copy.INK_DEFAULT },
+                        onSelect = { UiInk.set(context, it) }
                     )
                 }
             }

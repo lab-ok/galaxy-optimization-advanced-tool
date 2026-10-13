@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -166,7 +165,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
             drawPath(hp, c.line, style = Stroke(1.dp.toPx()))
             // 아이콘 바탕
             logo.blob.path(lp)
-            drawPath(lp, Color(0xFF111111))
+            drawPath(lp, c.logo)
             // 염소 얼굴: 안쪽 방울(drop)의 중심을 따라가므로, 아이콘을 끌면 염소가 관성으로 늦게 따라오며 고개를 갸웃한다
             val gs = logoS * 0.98f
             val tilt = ((drop.blob.cx - logo.blob.cx) / logoS * 40f).coerceIn(-14f, 14f)
