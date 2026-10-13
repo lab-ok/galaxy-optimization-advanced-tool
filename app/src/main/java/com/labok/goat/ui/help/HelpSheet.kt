@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -27,6 +26,7 @@ import com.labok.goat.ui.home.UiState
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.liquid.Text
 
 /** 사용 방법: 원리 두 장면 + 준비 안내로 이어지는 버튼. 쉬운 말 한두 문장만. */
 @Composable

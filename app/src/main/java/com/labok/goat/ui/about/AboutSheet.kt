@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -40,6 +39,7 @@ import com.labok.goat.ui.liquid.LiquidShape
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Springs
+import com.labok.goat.ui.liquid.Text
 
 /** 앱 정보: 사이드바처럼 리퀴드로 반응하는 로고·제목([AboutHeader]), 버전과 문의 메일, 필요 권한. */
 @Composable

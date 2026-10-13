@@ -24,6 +24,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -51,7 +52,6 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
@@ -136,6 +136,7 @@ import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidToast
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.liquidReveal
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.nav.GLASS_ALPHA
@@ -702,6 +703,9 @@ private fun todosOf(state: UiState): List<Todo> = buildList {
     if (state.hasCrash) add(Todo("crash", Copy.TODO_CRASH_TITLE, Copy.TODO_CRASH_BODY, TodoAction.REPORT, Copy.TODO_CRASH_ACTION))
 }
 
+/** 할 일 카드 안쪽 폭이 이보다 넓을 때만 버튼을 글 옆에 둔다. */
+private val TODO_SIDE_BUTTON = 360.dp
+
 @Composable
 private fun TodoCard(todo: Todo, onAction: (TodoAction) -> Unit) {
     val c = LocalLiquid.current
@@ -722,14 +726,28 @@ private fun TodoCard(todo: Todo, onAction: (TodoAction) -> Unit) {
                     LiquidButton(todo.secondLabel ?: "", modifier = Modifier.weight(1f), onClick = { onAction(todo.second) }, primary = false)
                 }
             } else {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(todo.title, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        todo.body?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
-                    }
-                    if (todo.action != null && todo.actionLabel != null) {
-                        Spacer(Modifier.width(10.dp))
-                        LiquidButton(todo.actionLabel, onClick = { onAction(todo.action) })
+                // 넓으면 글 옆에 버튼, 좁으면(제목이 버튼에 밀려 접히는 폭) 버튼을 글 아래 폭 전체로 둔다
+                BoxWithConstraints {
+                    if (maxWidth >= TODO_SIDE_BUTTON) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(todo.title, fontWeight = FontWeight.SemiBold, color = c.ink)
+                                todo.body?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
+                            }
+                            if (todo.action != null && todo.actionLabel != null) {
+                                Spacer(Modifier.width(10.dp))
+                                LiquidButton(todo.actionLabel, onClick = { onAction(todo.action) })
+                            }
+                        }
+                    } else {
+                        Column {
+                            Text(todo.title, fontWeight = FontWeight.SemiBold, color = c.ink)
+                            todo.body?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
+                            if (todo.action != null && todo.actionLabel != null) {
+                                Spacer(Modifier.height(Gap.Card))
+                                LiquidButton(todo.actionLabel, modifier = Modifier.fillMaxWidth(), onClick = { onAction(todo.action) })
+                            }
+                        }
                     }
                 }
             }

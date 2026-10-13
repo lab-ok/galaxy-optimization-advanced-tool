@@ -37,7 +37,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +69,7 @@ import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidDots
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.shizuku.ShizukuGuide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

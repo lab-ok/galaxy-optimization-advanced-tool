@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,6 +48,7 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidShape
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.liquidPress
 import java.text.SimpleDateFormat
 import java.util.Date

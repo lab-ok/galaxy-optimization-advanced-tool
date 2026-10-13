@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.SoftBlobState
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.nudge
 import com.labok.goat.ui.liquid.poke

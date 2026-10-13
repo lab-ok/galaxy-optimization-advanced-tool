@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.labok.goat.ui.liquid.Text
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp

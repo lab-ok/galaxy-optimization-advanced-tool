@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,6 +34,7 @@ import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.openDeveloperOptions
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
 
 /**
  * Shizuku 설정 안내: 단계마다 버튼 하나로 진행하고, 끝난 단계는 돌아올 때마다 자동으로 확인해 체크한다.

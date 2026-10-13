@@ -23,12 +23,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
 
 /** 넓은 내부 화면에서도 읽기 좋은 카드 최대 폭(모든 기능 화면 공통). */
 internal val ContentMaxWidth = 640.dp

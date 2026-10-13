@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,6 +29,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.labok.goat.ui.liquid.Text
 
 /**
  * 액체 입력칸: 칸 자체가 연체 물방울([SoftBlob])이다.

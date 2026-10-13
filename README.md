@@ -330,7 +330,7 @@ app/src/main/java/com/labok/goat/
 
 #### 테스트
 
-- <sub>단위 테스트(116개): DPI 계산·PPI 결정·화면 학습·외부 변경 판정·반복 방지·화면 방향·흔들기 판정·주사율·해상도 비율·염소 표정·문구 및 간격 규칙 등을 검증합니다. `./gradlew testDebugUnitTest`</sub>
+- <sub>단위 테스트(117개): DPI 계산·PPI 결정·화면 학습·외부 변경 판정·반복 방지·화면 방향·흔들기 판정·주사율·해상도 비율·염소 표정·문구 및 간격 규칙 등을 검증합니다. `./gradlew testDebugUnitTest`</sub>
 - <sub>화면 캡처: `./screenshots.sh`가 Robolectric과 Roborazzi를 사용하여 주요 화면을 PNG로 생성합니다(`app/build/outputs/roborazzi`).</sub>
 - <sub>코드 스타일: Android 공식 Kotlin 스타일(ktlint `android_studio`)을 따르며 기준은 `.editorconfig`에 있습니다. Android lint 예외는 `app/lint.xml`에 이유와 함께 적습니다.</sub>
 - <sub>에뮬레이터 확인: 64비트 Android 컨테이너(redroid 등)에 설치하여 `adb shell wm size`/`wm density`로 접기·펼치기와 외부 변경을 시뮬레이션할 수 있습니다.</sub>

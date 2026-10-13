@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -42,6 +41,7 @@ import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -99,9 +99,11 @@ internal fun LabAirplaneScreen(contentPadding: PaddingValues) {
         val raw = remember(w.version) { AirplaneRadios.setting.read(context) }
         Text(Copy.LAB_AIRPLANE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
         Text(Copy.LAB_AIRPLANE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        // 세 줄에 같은 설명을 되풀이하지 않고 한 번만 적는다
+        Text(Copy.LAB_AIRPLANE_ROW, color = c.muted, style = MaterialTheme.typography.bodySmall)
         AirplaneRadios.Radio.entries.forEach { radio ->
             Spacer(Modifier.height(Gap.Item))
-            LiquidSwitchRow("${radio.label} 켜 두기", Copy.LAB_AIRPLANE_ROW, AirplaneRadios.kept(raw, radio), true) { keep ->
+            LiquidSwitchRow("${radio.label} 켜 두기", null, AirplaneRadios.kept(raw, radio), true) { keep ->
                 w.write(AirplaneRadios.setting, AirplaneRadios.edit(raw, radio, keep))
             }
         }

@@ -313,6 +313,12 @@ object Copy {
     const val UPDATE_CHECKING = "새 버전을 확인하고 있습니다…"
     const val UPDATE_NOW = "지금 업데이트"
     const val UPDATE_DOWNLOADING = "내려받는 중"
+
+    /** 내려받는 중: "내려받는 중 42% · 8.9 / 21.1MB · 2.4MB/s"(속도를 아직 모르면 뺀다). */
+    fun updateProgress(percent: Int, done: Float, total: Float, bps: Float): String {
+        fun mb(b: Float) = String.format(java.util.Locale.ROOT, "%.1f", b / (1024 * 1024))
+        return "$UPDATE_DOWNLOADING $percent% · ${mb(done)} / ${mb(total)}MB" + if (bps > 0f) " · ${mb(bps)}MB/s" else ""
+    }
     const val UPDATE_INSTALLING = "설치하는 중… 끝나면 GOAT가 다시 시작됩니다"
     const val UPDATE_FAILED_TITLE = "업데이트하지 못했습니다"
     const val UPDATE_RETRY = "다시 시도"

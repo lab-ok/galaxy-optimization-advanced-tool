@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -55,6 +54,7 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
 import kotlin.math.abs
 
 /** 기준 도형 한 변(dp). 런처 아이콘 크기와 같다. */

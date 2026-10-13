@@ -3,7 +3,6 @@ package com.labok.goat.ui.lab
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.IconBlacklist.Slot
+import com.labok.goat.ui.liquid.Text
 
 /**
  * 상태 표시줄 아이콘 그림(실험실 아이콘 숨기기): 줄마다 숨길 아이콘이 상태 표시줄에서 어떻게 생겼는지 보여 준다.

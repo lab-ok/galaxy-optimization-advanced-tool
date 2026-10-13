@@ -23,7 +23,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.liquidPress
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.rememberSoftBlob
@@ -165,6 +165,12 @@ fun SideDrawerContent(
             return@LaunchedEffect
         }
         enter.animateTo(items.size + sections.size + 2f, tween(120 + 55 * (items.size + 2), easing = LinearEasing))
+    }
+    // 열려 있는 동안 항목이 늘면(염소를 열 번 눌러 실험실이 생길 때) 새 항목도 마저 나타나게 끝값을 늘린다.
+    // 늘리지 않으면 새 항목은 등장 값이 0에 머물러 투명한 채로 남는다
+    LaunchedEffect(items.size, sections.size) {
+        val end = items.size + sections.size + 2f
+        if (visible && enter.value > 0f && enter.targetValue < end) enter.animateTo(end, tween(if (reduce) 0 else 220, easing = LinearEasing))
     }
 
     // 고른 항목 방울: 각 항목의 위치를 재고, 머리·꼬리 스프링으로 옮긴다

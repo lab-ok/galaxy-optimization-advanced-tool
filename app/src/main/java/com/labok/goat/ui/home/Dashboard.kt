@@ -4,6 +4,9 @@ import android.content.Context
 import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -11,7 +14,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,11 +32,11 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,6 +58,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -83,6 +89,8 @@ import com.labok.goat.ui.liquid.LiquidShape
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Springs
+import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.poke
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
@@ -93,12 +101,14 @@ import com.labok.goat.ui.nav.NavSection
 import com.labok.goat.ui.text.Copy
 import kotlin.math.hypot
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /**
  * 메인 화면: 권한·Shizuku 상태 한 줄과, 기능마다 아이콘·이름·지금 상태를 보여 주는 카드. 카드를 누르면 그 기능으로 간다.
  * 카드는 사이드바와 같은 묶음 순서로 놓고, 넓은 화면에서는 한 줄에 더 많이 놓는다.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: List<NavSection>, onOpen: (NavItem, Offset) -> Unit) {
     val c = LocalLiquid.current
@@ -207,6 +217,9 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                 ?: if (homePrefs.getBoolean("only_on", false)) HomeView.ON else HomeView.ALL
         )
     }
+    // 보기를 마지막으로 바꾼 시각: 이 시간 안에 새로 그려지는 카드만 방울처럼 맺힌다(스크롤로 들어오는 카드는 그대로)
+    var viewChangedAt by remember { mutableLongStateOf(0L) }
+    val reduce = LocalReduceMotion.current
     val shown = when (view) {
         HomeView.ALL -> features
         HomeView.ON -> features.filter(active)
@@ -234,25 +247,52 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             // 홈 머리: 카드 없이 바탕 위에 바로 놓는 요약(갤럭시 '디바이스 케어'식). 왼쪽 염소, 가운데 상태 한 문장, 오른쪽 켜진 비율 고리,
             // 아래 권한·Shizuku 상태 알약.
             val on = features.count(active)
-            Column(Modifier.fillMaxWidth().padding(horizontal = Gap.Tight, vertical = Gap.Item)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // 앱 정보 로고와 같은 리퀴드 상자(누르면 출렁이고 표정이 바뀐다, 열 번이면 실험실)
-                    LiquidGoatLogo(68.dp, idle = true)
-                    // 아이콘과 글은 다른 덩어리라 글 사이 간격보다 넓게 띄운다
-                    Spacer(Modifier.width(Gap.Title + Gap.Tight))
-                    Column(Modifier.weight(1f)) {
-                        Text(AppInfo.FULL_NAME, color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = Modifier.basicMarquee())
-                        Text(if (on == 0) Copy.HOME_HERO_NONE else "기능 ${on}개가 켜져 있어요", color = c.ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            val headline = if (on == 0) Copy.HOME_HERO_NONE else "기능 ${on}개가 켜져 있어요"
+            val pills: @Composable () -> Unit = {
+                // 폭이 모자라면 다음 줄로 넘긴다
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Gap.Tight * 2), verticalArrangement = Arrangement.spacedBy(Gap.Tight * 2)) {
+                    StatusPill(Copy.HOME_PERMISSION, state.hasPermission)
+                    StatusPill(Copy.HOME_SHIZUKU, shizuku == ShizukuAccess.State.READY)
+                }
+            }
+            BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = Gap.Tight, vertical = Gap.Item)) {
+                if (maxWidth >= HERO_WIDE) {
+                    // 넓은 화면: 왼쪽 로고, 가운데 이름·상태·안내·알약, 오른쪽 고리
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // 앱 정보 로고와 같은 리퀴드 상자(누르면 출렁이고 표정이 바뀐다, 열 번이면 실험실)
+                        LiquidGoatLogo(68.dp, idle = true)
+                        // 아이콘과 글은 다른 덩어리라 글 사이 간격보다 넓게 띄운다
+                        Spacer(Modifier.width(Gap.Title + Gap.Tight))
+                        Column(Modifier.weight(1f)) {
+                            Text(AppInfo.FULL_NAME, color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                            Text(headline, color = c.ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text(Copy.HOME_SUBTITLE, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            Spacer(Modifier.height(Gap.Item))
+                            // 알약은 글 줄 시작에 맞춘다(염소 아래로 튀어나오지 않게)
+                            pills()
+                        }
+                        Spacer(Modifier.width(Gap.Card))
+                        ActiveRing(on, features.size, 64.dp)
+                    }
+                } else {
+                    // 좁은 화면: 위 줄은 로고·이름·상태·고리만 두고, 안내와 알약은 아래에 폭 전체로 펼친다
+                    // (세 덩어리를 한 줄에 두면 가운데 글이 너무 좁아져 줄마다 잘게 접혔다)
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            LiquidGoatLogo(54.dp, idle = true)
+                            Spacer(Modifier.width(Gap.Title))
+                            Column(Modifier.weight(1f)) {
+                                Text(AppInfo.NAME, color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                                Text(headline, color = c.ink, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(Modifier.width(Gap.Card))
+                            ActiveRing(on, features.size, 54.dp)
+                        }
+                        Spacer(Modifier.height(Gap.Item))
                         Text(Copy.HOME_SUBTITLE, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
-                        // 알약은 글 줄 시작에 맞춘다(염소 아래로 튀어나오지 않게)
-                        Row(horizontalArrangement = Arrangement.spacedBy(Gap.Tight * 2)) {
-                            StatusPill(Copy.HOME_PERMISSION, state.hasPermission)
-                            StatusPill(Copy.HOME_SHIZUKU, shizuku == ShizukuAccess.State.READY)
-                        }
+                        pills()
                     }
-                    Spacer(Modifier.width(Gap.Card))
-                    ActiveRing(on, features.size)
                 }
             }
         }
@@ -266,6 +306,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                     selected = view,
                     label = { it.label },
                     onSelect = {
+                        if (it != view) viewChangedAt = SystemClock.uptimeMillis()
                         view = it
                         homePrefs.edit().putString("view", it.name).apply()
                     }
@@ -281,24 +322,53 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             }
         }
         itemsIndexed(shown, key = { _, it -> it.name }) { i, item ->
-            // 처음 화면에 보인 카드만 차례로 맺히고, 나중에 스크롤로 들어오는 카드는 동그라미에서 터지듯 커지지 않게 바로 그린다
-            BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> onOpen(item, at) }
+            // 보기를 바꾸면(전체·활성화·비활성화) 남는 카드는 물처럼 출렁이며 새 자리로 흘러가고, 새로 들어오는 카드는
+            // 작은 방울에서 통 부풀며 맺히고, 빠지는 카드는 옅어지며 사라진다. 카드마다 조금씩 늦게 시작해 물결처럼 이어진다.
+            val switched = SystemClock.uptimeMillis() - viewChangedAt < VIEW_SWITCH_MS
+            val bead = remember { Animatable(if (switched && !reduce) 0.82f else 1f) }
+            LaunchedEffect(Unit) {
+                if (bead.value < 1f) {
+                    delay(i * 28L)
+                    bead.animateTo(1f, Springs.pop())
+                }
+            }
+            Box(
+                Modifier
+                    .animateItem(
+                        fadeInSpec = if (reduce) snap() else tween(220, delayMillis = i * 28),
+                        placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)),
+                        fadeOutSpec = if (reduce) snap() else tween(160)
+                    )
+                    .graphicsLayer {
+                        scaleX = bead.value
+                        scaleY = bead.value
+                    }
+            ) {
+                // 처음 화면에 보인 카드만 차례로 맺히고, 나중에 스크롤로 들어오는 카드는 동그라미에서 터지듯 커지지 않게 바로 그린다
+                BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> onOpen(item, at) }
+            }
         }
     }
 }
+
+/** 이 폭부터 홈 머리를 한 줄(로고·글·고리)로 놓는다. 그보다 좁으면 두 줄로 나눈다. */
+private val HERO_WIDE = 420.dp
+
+/** 보기를 바꾼 뒤 이 시간 안에 나타나는 카드만 방울처럼 맺힌다(ms). */
+private const val VIEW_SWITCH_MS = 600L
 
 /** 홈 타일 보기 방식. */
 private enum class HomeView(val label: String) { ALL(Copy.HOME_VIEW_ALL), ON(Copy.HOME_VIEW_ON), OFF(Copy.HOME_VIEW_OFF) }
 
 /** 켜진 기능 비율 고리: 잉크 호가 출렁이며 차오르고, 가운데에 켜진 수/전체 수. */
 @Composable
-private fun ActiveRing(on: Int, total: Int) {
+private fun ActiveRing(on: Int, total: Int, diameter: Dp) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val k by animateFloatAsState(if (total == 0) 0f else on.toFloat() / total, Springs.water(reduce), label = "ring")
-    Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(diameter), contentAlignment = Alignment.Center) {
         Canvas(Modifier.matchParentSize()) {
-            val w = 6.dp.toPx()
+            val w = (diameter / 10.7f).toPx()
             val r = Size(size.width - w, size.height - w)
             val tl = Offset(w / 2, w / 2)
             drawArc(if (c.dark) c.muted.copy(alpha = 0.35f) else c.line, 0f, 360f, false, tl, r, style = Stroke(w))
@@ -326,7 +396,7 @@ private fun StatusPill(label: String, on: Boolean) {
             if (k > 0.01f) drawCircle(c.ink, size.minDimension / 2 * k.coerceAtMost(1.25f))
         }
         Spacer(Modifier.width(6.dp))
-        Text(label + if (on) "" else " 필요", color = if (on) c.ink else c.muted, style = MaterialTheme.typography.labelMedium)
+        Text(label + if (on) "" else " 필요", color = if (on) c.ink else c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, softWrap = false)
     }
 }
 

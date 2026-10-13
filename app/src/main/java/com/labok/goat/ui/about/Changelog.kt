@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +30,7 @@ import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
 
 /** 변경 기록 한 판. [sections]는 (묶음 이름, 바뀐 점들). */
@@ -39,17 +39,32 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.5.1",
+        "2026-10-14",
+        "좁은 화면에서도 보기 좋게 다듬고, 탭 전환과 업데이트에 리퀴드 애니메이션을 더했습니다.",
+        listOf(
+            "화면" to listOf(
+                "좁은 화면·큰 글자에서 모든 화면을 다듬었습니다. 한국어가 띄어쓰기 단위로만 줄바뀜되어 '다.' 같은 낱글자가 다음 줄로 넘어가지 않습니다.",
+                "좁은 화면에서는 홈 머리를 두 줄로 나누고, 상태 알약이 세로로 찌그러지지 않게 다음 줄로 넘깁니다. 다크 모드의 염소 로고 상자가 바탕에 묻히지 않게 했습니다.",
+                "홈의 전체·활성화·비활성화를 바꾸면 타일이 물처럼 흘러 자리를 옮기고, 새 타일은 방울처럼 차례로 맺힙니다.",
+            ),
+            "업데이트" to listOf(
+                "업데이트 확인·최신·새 버전·내려받기·설치·실패마다 방울 애니메이션이 이어집니다. 내려받는 동안에는 받은 양만큼 물이 차오르고 속도에 따라 출렁이며, 받은 크기와 속도를 보여 줍니다.",
+            ),
+        ),
+    ),
+    Release(
         "GOAT 1.5.0",
         "2026-10-14",
         "잉크 색을 부드러운 회색으로 바꾸고, 갤럭시 테마 색을 따라가는 옵션을 더했습니다.",
         listOf(
             "화면" to listOf(
-                "기본 잉크 색(방울·선택 표시·버튼)을 #151515에서 부드럽고 따뜻한 회색(#3D3833)으로 바꿨습니다. 염소 로고 상자도 같은 색을 따릅니다.",
+                "기본 잉크 색(방울·선택 표시·버튼)을 #151515에서 부드럽고 따뜻한 회색(#3D3833)으로 바꿨습니다. 염소 로고 상자도 같은 색을 따릅니다."
             ),
             "앱 설정" to listOf(
-                "'잉크 색'을 더했습니다. [갤럭시 테마]를 고르면 색상 팔레트의 가장 진한 색(다크 모드는 가장 밝은 색)을 쓰고, 배경화면·팔레트를 바꾸면 따라 바뀝니다.",
-            ),
-        ),
+                "'잉크 색'을 더했습니다. [갤럭시 테마]를 고르면 색상 팔레트의 가장 진한 색(다크 모드는 가장 밝은 색)을 쓰고, 배경화면·팔레트를 바꾸면 따라 바뀝니다."
+            )
+        )
     ),
     Release(
         "GOAT 1.4.9",

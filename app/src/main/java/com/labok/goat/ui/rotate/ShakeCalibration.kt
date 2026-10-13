@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -65,6 +64,7 @@ import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LiquidTune
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.ui.liquid.goo
 import com.labok.goat.ui.liquid.rememberLiquidHaptics

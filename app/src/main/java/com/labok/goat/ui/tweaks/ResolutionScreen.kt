@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +40,7 @@ import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidRadioGroup
 import com.labok.goat.ui.liquid.LiquidRadioRow
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers

@@ -20,7 +20,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.rowListEdges
+import com.labok.goat.ui.liquid.Text
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 

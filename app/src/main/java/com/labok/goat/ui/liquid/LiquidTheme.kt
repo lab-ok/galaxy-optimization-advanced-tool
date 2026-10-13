@@ -14,6 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,7 +36,7 @@ data class LiquidColors(
     val brand: Color,
     val danger: Color,
     val dark: Boolean,
-    /** 염소 로고 상자 색(홈·사이드바·앱 정보). 라이트는 잉크와 같고, 다크는 흰 잉크 대신 어두운 상자를 둔다. */
+    /** 염소 로고 상자 색(홈·사이드바·앱 정보). 라이트는 잉크와 같고, 다크는 흰 잉크 대신 바탕(#0F0F0F)보다 한 단계 밝은 어두운 상자를 둔다. */
     val logo: Color = ink
 ) {
     /** 방울 위 글자색(배경색으로 반전). */
@@ -47,7 +50,7 @@ val LightLiquid = LiquidColors(
 val DarkLiquid = LiquidColors(
     bg = Color(0xFF0F0F0F), surface = Color(0xFF171717), ink = Color(0xFFEBEBEB), muted = Color(0xFF8D8D8D),
     line = Color(0xFF2A2A2A), tint = Color(0x12FFFFFF), brand = Color(0xFFFFFFFF), danger = Color(0xFFF2B8B5), dark = true,
-    logo = Color(0xFF111111)
+    logo = Color(0xFF2A2A2A)
 )
 
 /** 모양 토큰(원본: 컨트롤 알약 999px, 상자 12px — 모바일 터치 크기에 맞춰 키움). */
@@ -152,14 +155,33 @@ private val LiquidType = androidx.compose.material3.Typography().let { t0 ->
         labelLarge = t0.labelLarge.copy(fontFamily = GalaxyFont), labelMedium = t0.labelMedium.copy(fontFamily = GalaxyFont),
         labelSmall = t0.labelSmall.copy(fontFamily = GalaxyFont)
     )
-    t.copy(
+    val t2 = t.copy(
         bodyLarge = t.bodyLarge.copy(lineHeight = 22.sp),
         bodyMedium = t.bodyMedium.copy(lineHeight = 18.sp),
         bodySmall = t.bodySmall.copy(lineHeight = 15.sp),
         labelMedium = t.labelMedium.copy(lineHeight = 15.sp),
         labelSmall = t.labelSmall.copy(lineHeight = 14.sp)
     )
+
+    // 한국어 줄바꿈: 글자 중간이 아니라 어절(띄어쓰기) 단위로 넘기고, 줄 길이를 고르게 맞춰
+    // 좁은 화면에서 마지막 줄에 '다.' 한 글자만 남는 일을 막는다
+    // 구절 줄바꿈은 글자의 언어가 한국어일 때만 동작하므로, 기기 언어가 영어여도 한국어로 다루게 언어를 정해 둔다
+    fun TextStyle.kr() = copy(lineBreak = KoreanLineBreak, localeList = LocaleList("ko-KR"))
+    t2.copy(
+        displayLarge = t2.displayLarge.kr(), displayMedium = t2.displayMedium.kr(), displaySmall = t2.displaySmall.kr(),
+        headlineLarge = t2.headlineLarge.kr(), headlineMedium = t2.headlineMedium.kr(), headlineSmall = t2.headlineSmall.kr(),
+        titleLarge = t2.titleLarge.kr(), titleMedium = t2.titleMedium.kr(), titleSmall = t2.titleSmall.kr(),
+        bodyLarge = t2.bodyLarge.kr(), bodyMedium = t2.bodyMedium.kr(), bodySmall = t2.bodySmall.kr(),
+        labelLarge = t2.labelLarge.kr(), labelMedium = t2.labelMedium.kr(), labelSmall = t2.labelSmall.kr()
+    )
 }
+
+/** 어절 단위·고른 줄 길이 줄바꿈(Android 13+ 구절 줄바꿈). */
+private val KoreanLineBreak = LineBreak(
+    strategy = LineBreak.Strategy.Balanced,
+    strictness = LineBreak.Strictness.Strict,
+    wordBreak = LineBreak.WordBreak.Phrase
+)
 
 /** 앱 글자 크기 배율(시스템 글자 크기 설정에 곱한다). */
 private const val TEXT_SCALE = 0.92f

@@ -1,13 +1,21 @@
 package com.labok.goat.ui.about
 
+import android.os.SystemClock
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -18,8 +26,9 @@ import com.labok.goat.data.update.Updater
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
-import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,46 +51,72 @@ internal fun UpdateCard(manual: Boolean) {
     val scope = rememberCoroutineScope()
     val state by Updater.status.collectAsStateWithLifecycle()
     fun run(block: () -> Unit) = scope.launch(Dispatchers.IO) { block() }
+    // 받는 속도: 진행률이 바뀔 때마다 (늘어난 양 × 파일 크기) ÷ 걸린 시간으로 재고 부드럽게 따라간다
+    val dl = state as? Updater.State.Downloading
+    var lastP by remember { mutableFloatStateOf(0f) }
+    var lastAt by remember { mutableLongStateOf(0L) }
+    var bps by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(dl?.progress) {
+        val d = dl
+        if (d == null) {
+            lastAt = 0L
+            bps = 0f
+            return@LaunchedEffect
+        }
+        val now = SystemClock.elapsedRealtime()
+        if (lastAt != 0L && now > lastAt && d.progress >= lastP) {
+            val inst = (d.progress - lastP) * d.release.size / ((now - lastAt) / 1000f)
+            bps = if (bps == 0f) inst else bps * 0.7f + inst * 0.3f
+        }
+        lastP = d.progress
+        lastAt = now
+    }
+    // 그림에 넘기는 속도(0~1): 초당 4MB면 가장 크게 출렁인다
+    val rate = (bps / (4f * 1024 * 1024)).coerceIn(0f, 1f)
     GlassCard {
-        when (val s = state) {
-            is Updater.State.Available -> {
-                Text(Copy.updateTitle(s.release.version), fontWeight = FontWeight.SemiBold, color = c.ink)
-                Text(firstLine(s.release.notes), color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Spacer(Modifier.height(Gap.Item))
-                LiquidButton(Copy.UPDATE_NOW, modifier = Modifier.fillMaxWidth(), onClick = { run { Updater.update(context, s.release) } })
-            }
-            is Updater.State.Downloading -> {
-                Text(Copy.updateTitle(s.release.version), fontWeight = FontWeight.SemiBold, color = c.ink)
-                Spacer(Modifier.height(Gap.Item))
-                LiquidLoader("${Copy.UPDATE_DOWNLOADING} ${(s.progress * 100).toInt()}%")
-            }
-            is Updater.State.Installing -> {
-                Text(Copy.updateTitle(s.release.version), fontWeight = FontWeight.SemiBold, color = c.ink)
-                Spacer(Modifier.height(Gap.Item))
-                LiquidLoader(Copy.UPDATE_INSTALLING)
-            }
-            is Updater.State.Failed -> {
-                Text(Copy.UPDATE_FAILED_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                Text(s.message, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(Gap.Item))
-                LiquidButton(Copy.UPDATE_RETRY, modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
-                    run { s.release?.let { Updater.update(context, it) } ?: Updater.check(context) }
-                })
-            }
-            else -> {
-                Text(Copy.UPDATE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                Text(
-                    when (s) {
-                        Updater.State.UpToDate -> Copy.updateLatest(BuildConfig.VERSION_NAME)
-                        Updater.State.Checking -> Copy.UPDATE_CHECKING
-                        else -> Copy.updateCurrent(BuildConfig.VERSION_NAME)
-                    },
-                    color = c.muted,
-                    style = MaterialTheme.typography.bodySmall
-                )
-                if (manual) {
+        // 상태가 바뀌면 카드 높이도 물처럼 늘었다 줄어든다
+        Column(Modifier.animateContentSize(spring(UiMotion.ratio(0.7f), UiMotion.stiffness(320f, 0.7f)))) {
+            LiquidUpdateArt(state, dl?.progress ?: 0f, rate)
+            Spacer(Modifier.height(Gap.Item))
+            when (val s = state) {
+                is Updater.State.Available -> {
+                    Text(Copy.updateTitle(s.release.version), fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(firstLine(s.release.notes), color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.UPDATE_CHECK, modifier = Modifier.fillMaxWidth(), primary = false, enabled = s != Updater.State.Checking, onClick = { run { Updater.check(context) } })
+                    LiquidButton(Copy.UPDATE_NOW, modifier = Modifier.fillMaxWidth(), onClick = { run { Updater.update(context, s.release) } })
+                }
+                is Updater.State.Downloading -> {
+                    Text(Copy.updateTitle(s.release.version), fontWeight = FontWeight.SemiBold, color = c.ink)
+                    // 받은 양·전체 크기·속도
+                    Text(Copy.updateProgress((s.progress * 100).toInt(), s.progress * s.release.size, s.release.size.toFloat(), bps), color = c.muted, style = MaterialTheme.typography.bodySmall)
+                }
+                is Updater.State.Installing -> {
+                    Text(Copy.updateTitle(s.release.version), fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.UPDATE_INSTALLING, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                }
+                is Updater.State.Failed -> {
+                    Text(Copy.UPDATE_FAILED_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(s.message, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidButton(Copy.UPDATE_RETRY, modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                        run { s.release?.let { Updater.update(context, it) } ?: Updater.check(context) }
+                    })
+                }
+                else -> {
+                    Text(Copy.UPDATE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(
+                        when (s) {
+                            Updater.State.UpToDate -> Copy.updateLatest(BuildConfig.VERSION_NAME)
+                            Updater.State.Checking -> Copy.UPDATE_CHECKING
+                            else -> Copy.updateCurrent(BuildConfig.VERSION_NAME)
+                        },
+                        color = c.muted,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    if (manual) {
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.UPDATE_CHECK, modifier = Modifier.fillMaxWidth(), primary = false, enabled = s != Updater.State.Checking, onClick = { run { Updater.check(context) } })
+                    }
                 }
             }
         }

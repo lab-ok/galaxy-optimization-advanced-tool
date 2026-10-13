@@ -27,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -58,6 +57,7 @@ import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
 
 /**
