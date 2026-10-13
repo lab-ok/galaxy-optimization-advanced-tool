@@ -82,8 +82,20 @@ object ShizukuAccess {
             if (!Shizuku.pingBinder()) return@postDelayed
             val ok = runCatching { Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 0) }.isSuccess
             LogRepository.from(context).add("Shizuku가 켜져 있어 무선 디버깅을 껐습니다: ${if (ok) "성공" else "실패"}")
+            if (!ok) return@postDelayed
+            // 무선 디버깅을 끄면 Shizuku가 같이 멈추는 기기가 있다: 잠시 뒤 살아 있는지 보고, 멈췄으면 무선 디버깅을 다시 켜고
+            // 이 옵션을 스스로 끈다(다음부터 Shizuku가 멈추지 않게). 앱 설정에서 그 사실을 알린다.
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                if (Shizuku.pingBinder()) return@postDelayed
+                runCatching { Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 1) }
+                prefs(context).edit().putBoolean("wireless_auto_off", false).putBoolean("auto_off_stops_shizuku", true).apply()
+                LogRepository.from(context).add("무선 디버깅을 끄자 Shizuku가 멈춤: 무선 디버깅을 다시 켜고 '무선 디버깅 끄기'를 껐습니다(이 기기는 지원 안 함)")
+            }, 4_000)
         }, 5_000)
     }
+
+    /** 이 기기에서 무선 디버깅을 끄면 Shizuku가 멈추는 것을 확인했는지(앱 설정에 알린다). */
+    fun autoOffStopsShizuku(context: Context) = prefs(context).getBoolean("auto_off_stops_shizuku", false)
 
     private fun prefs(context: Context) = context.getSharedPreferences("shizuku", Context.MODE_PRIVATE)
 

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.rowListEdges
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
@@ -98,6 +99,20 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                         onValueChangeFinished = { UiHaptics.set(context, h) },
                         valueText = { if (it == 0) "끔" else "$it%" }, description = Copy.HAPTIC_TITLE,
                     )
+                }
+            }
+        }
+        // Shizuku: 무선 디버깅은 Shizuku를 시작할 때만 필요하다. 여러 기능이 같이 쓰는 연결이라 앱 설정에 둔다.
+        item(key = "shizuku") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                var autoOff by remember { mutableStateOf(ShizukuAccess.autoOffEnabled(context)) }
+                GlassCard {
+                    LiquidSwitchRow(Copy.APP_SIZE_AUTO_OFF_TITLE, Copy.APP_SIZE_AUTO_OFF_BODY, autoOff, true) { on -> autoOff = on; ShizukuAccess.setAutoOff(context, on) }
+                    // 이 기기에서 무선 디버깅을 끄자 Shizuku가 멈췄으면 GOAT가 옵션을 스스로 껐다는 것을 알린다
+                    if (ShizukuAccess.autoOffStopsShizuku(context)) {
+                        Spacer(Modifier.height(Gap.Item))
+                        Text(Copy.AUTO_OFF_STOPS_SHIZUKU, color = c.danger, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
         }

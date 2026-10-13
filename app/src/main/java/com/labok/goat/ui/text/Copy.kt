@@ -235,7 +235,8 @@ object Copy {
     const val APP_SIZE_DEFAULT = "기본"
     const val APP_SIZE_FAILED = "바꾸지 못했습니다: "
     const val APP_SIZE_AUTO_OFF_TITLE = "Shizuku가 켜지면 무선 디버깅 끄기"
-    const val APP_SIZE_AUTO_OFF_BODY = "무선 디버깅은 Shizuku 시작에만 필요합니다. 끄면 Shizuku가 멈추는 기기도 있어 기본은 꺼짐입니다."
+    const val APP_SIZE_AUTO_OFF_BODY = "무선 디버깅은 Shizuku를 시작할 때만 필요합니다. 일부 기기는 끄면 Shizuku도 멈춥니다."
+    const val AUTO_OFF_STOPS_SHIZUKU = "이 기기는 무선 디버깅을 끄면 Shizuku가 멈춰서, 무선 디버깅을 다시 켜고 이 옵션을 껐습니다."
 
     // 주사율 고정
     const val FEATURE_REFRESH = "주사율 고정"
