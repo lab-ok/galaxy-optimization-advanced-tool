@@ -399,16 +399,14 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     revealFrom = null
                     feature = NavItem.SETTINGS; shown = NavItem.SETTINGS
                     scope.launch { drawer.close() }
-                }, onSelect = { item ->
-                    // 방울이 고른 항목으로 옮겨 가는 것을 잠깐 보여 준 뒤 닫는다.
+                }, onSelect = { item, at ->
+                    // 방울이 고른 항목으로 옮겨 가는 동안, 새 화면이 누른 줄에서 번져 나오고 사이드바도 함께 닫힌다(한 동작으로 이어지게).
                     val moved = item != feature
                     if (moved) haptics.segment()
-                    revealFrom = null
+                    revealFrom = at
                     feature = item
-                    scope.launch {
-                        if (moved) { delay(440); shown = item }
-                        drawer.close()
-                    }
+                    shown = item
+                    scope.launch { drawer.close() }
                 })
         }
         val main: @Composable () -> Unit = {

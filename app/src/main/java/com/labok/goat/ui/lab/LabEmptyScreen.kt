@@ -1,5 +1,12 @@
 package com.labok.goat.ui.lab
 
+import com.labok.goat.ui.liquid.LiquidSwitchRow
+import com.labok.goat.data.rotate.ShakeRotate
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,21 +26,30 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.text.Copy
 
-/** 실험실(염소를 열 번 눌러 연다). 시험 중인 기능을 여기에 둔다. 지금은 비어 있다. */
+/** 실험실(염소를 열 번 눌러 연다). 시험 중인 기능을 여기에 둔다. */
 @Composable
 internal fun LabEmptyScreen(contentPadding: PaddingValues) {
     val c = LocalLiquid.current
+    val context = LocalContext.current
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = featurePadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        item(key = "empty") {
+        item(key = "intro") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    Text(Copy.LAB_EMPTY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.LAB_EMPTY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(Copy.LAB_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.LAB_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        item(key = "fastTurn") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    var on by remember { mutableStateOf(ShakeRotate.fastTurn(context)) }
+                    LiquidSwitchRow(Copy.LAB_FAST_TURN_TITLE, Copy.LAB_FAST_TURN_BODY, on, enabled = true, onChange = { on = it; ShakeRotate.setFastTurn(context, it) })
                 }
             }
         }

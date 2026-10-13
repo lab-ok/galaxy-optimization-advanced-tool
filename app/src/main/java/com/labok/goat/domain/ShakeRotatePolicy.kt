@@ -1,5 +1,7 @@
 package com.labok.goat.domain
 
+import kotlin.math.hypot
+import kotlin.math.atan2
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.sqrt
@@ -300,4 +302,25 @@ object ShakeRotatePolicy {
     const val MIN_GAP_MS = 50
     const val MAX_GAP_MS = 400
     private const val E = 2.7182817f
+
+    /**
+     * 실험실 '빠른 회전': 중력 방향([gx],[gy], 기기 기본 방향 기준 m/s²)으로 화면 방향(Surface.ROTATION_*)을 바로 정한다.
+     * 기기가 [MIN_TILT] 이상 서 있고 방향이 한 축에서 [MAX_OFF_AXIS]도 안쪽일 때만 답하고, 애매하면 null(시스템에 맡긴다).
+     * 거꾸로(180°)는 시스템도 대개 돌리지 않으므로 null.
+     */
+    fun rotationOf(gx: Float, gy: Float): Int? {
+        if (hypot(gx, gy) < MIN_TILT) return null
+        val deg = Math.toDegrees(atan2(gx.toDouble(), gy.toDouble())).toFloat()  // 0=세로, +90=왼쪽으로 눕힘
+        return when {
+            abs(deg) <= MAX_OFF_AXIS -> 0
+            abs(deg - 90f) <= MAX_OFF_AXIS -> 1
+            abs(deg + 90f) <= MAX_OFF_AXIS -> 3
+            else -> null
+        }
+    }
+
+    /** 기기가 이만큼 서 있어야(중력의 화면 평면 성분, m/s²) 방향을 정한다. 약 30°. */
+    const val MIN_TILT = 4.9f
+    /** 한 축에서 이만큼 벗어나면 애매한 것으로 본다(도). */
+    const val MAX_OFF_AXIS = 30f
 }

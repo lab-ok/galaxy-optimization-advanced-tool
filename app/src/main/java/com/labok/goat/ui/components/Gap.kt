@@ -60,6 +60,9 @@ object Gap {
 
     /** 카드 안쪽 여백(네 변 모두). */
     val CardPadding = 16.dp
+
+    /** 누름 물결이 카드 끝까지 차야 하는 카드(아코디언 머리 등): 카드는 여백 없이 두고, 안쪽 줄이 [CardPadding]을 갖는다. */
+    val Flush = 0.dp
 }
 
 /**

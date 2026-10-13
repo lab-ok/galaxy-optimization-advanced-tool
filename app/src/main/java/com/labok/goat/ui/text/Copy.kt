@@ -169,8 +169,10 @@ object Copy {
     const val HOME_VIEW_EMPTY_OFF_BODY = "꺼 둔 기능이 생기면 여기에 모입니다."
     const val FEATURE_LAB = "실험실"
     const val LAB_OPENED = "실험실이 열렸습니다. 사이드바에서 찾을 수 있습니다."
-    const val LAB_EMPTY_TITLE = "아직 준비 중인 실험이 없습니다"
-    const val LAB_EMPTY_BODY = "시험해 볼 새 기능이 생기면 여기에 먼저 올라옵니다."
+    const val LAB_INTRO_TITLE = "시험 중인 기능"
+    const val LAB_INTRO_BODY = "정식 기능이 되기 전에 먼저 써 보는 곳입니다. 기기에 따라 다르게 동작할 수 있습니다."
+    const val LAB_FAST_TURN_TITLE = "빠른 회전"
+    const val LAB_FAST_TURN_BODY = "흔들면 시스템을 기다리지 않고 센서로 든 방향을 바로 계산해 돌립니다. 방향이 애매하면 시스템에 맡깁니다."
     const val MENU_SECTION_TOOLS = "편의 기능"
     const val MENU_ADVANCED = "고급 정보"
     const val MENU_REPORT = "문제 신고"
@@ -189,6 +191,8 @@ object Copy {
     const val HAPTIC_TITLE = "햅틱 세기"
     const val HAPTIC_BODY = "누르고 켜고 고를 때의 진동 세기입니다. 0%는 끄고, 기기의 터치 진동 설정도 따릅니다."
     const val MOTION_PREVIEW = "미리 보기: 눌러서 움직여 보세요"
+    const val SPEED_TITLE = "UI 애니메이션 속도"
+    const val SPEED_BODY = "물방울 UI가 움직이는 빠르기입니다. 클수록 빠르게, 작을수록 천천히 움직입니다."
 
     // 초기화
     const val RESET_TITLE = "초기화"

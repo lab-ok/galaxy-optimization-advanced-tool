@@ -1,5 +1,7 @@
 package com.labok.goat.ui.nav
 
+import com.labok.goat.ui.about.idleRipple
+import com.labok.goat.ui.about.LOGO_CORNER
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.R
 import androidx.compose.ui.graphics.drawscope.translate
@@ -72,7 +74,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
     val headH = with(d) { 64.dp.toPx() }
     val headR = with(d) { 22.dp.toPx() }
     val logoS = with(d) { 44.dp.toPx() }
-    val logoR = with(d) { 13.dp.toPx() }
+    val logoR = logoS * LOGO_CORNER
     val logoX = with(d) { (10 + 22).dp.toPx() }
     val maxPull = with(d) { 18.dp.toPx() }
     val unit = logoS / 72f  // 아이콘 벡터 72칸 → px
@@ -104,6 +106,11 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
         logo.moveTo(logoX, cy(), logoS, logoS, animate, corner = logoR)
         drop.moveTo(logoX, cy(), 4f * unit, 4f * unit, animate)
         if (animate) text.animateTo(1f, tween(260, delayMillis = 120)) else text.snapTo(1f)
+    }
+    // 홈·앱 정보 로고와 같이, 사이드바가 열려 있는 동안 가끔 표면장력으로 일렁인다
+    LaunchedEffect(visible, box, reduce) {
+        if (!visible || reduce || box == IntSize.Zero) return@LaunchedEffect
+        idleRipple(logo, drop, { logoX }, { cy() }, logoS)
     }
 
     Box(

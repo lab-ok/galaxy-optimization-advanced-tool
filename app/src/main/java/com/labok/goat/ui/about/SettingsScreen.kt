@@ -86,6 +86,23 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                 }
             }
         }
+        item(key = "speed") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.SPEED_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.SPEED_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    var sp by remember { mutableIntStateOf(UiMotion.speedPercent) }
+                    // 조절바 손잡이 방울도 바뀐 속도로 움직여 바로 느껴 본다
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidSlider(
+                        value = sp, range = UiMotion.SPEED_MIN..UiMotion.SPEED_MAX,
+                        onValueChange = { sp = it; UiMotion.setSpeed(context, it) },
+                        onValueChangeFinished = { UiMotion.setSpeed(context, sp) },
+                        valueText = { "$it%" }, description = Copy.SPEED_TITLE,
+                    )
+                }
+            }
+        }
         item(key = "haptic") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {

@@ -93,6 +93,9 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
             // 근접 센서는 기기마다 '멀다'를 최대 거리나 5cm 등으로 알린다: 최대 거리의 절반보다 가까울 때만 가려진 것으로 본다
             Sensor.TYPE_PROXIMITY -> covered = v[0] < event.sensor.maximumRange * 0.5f
             Sensor.TYPE_ACCELEROMETER -> {
+                // 빠른 회전용 중력: 흔드는 동안의 출렁임이 평균으로 지워지도록 느린 저역 통과(시간 상수 약 0.4초)
+                if (gravityAt == 0L) { gx = v[0]; gy = v[1] } else { gx += (v[0] - gx) * 0.1f; gy += (v[1] - gy) * 0.1f }
+                gravityAt = now
                 val shook = detector.feed(v[0], v[1], v[2], now)
                 detector.lastMiss?.let { missed(it) }
                 if (!shook) return
@@ -134,8 +137,21 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
     }
     private val timeout = Runnable { finishTurn() }
 
+    private var gx = 0f
+    private var gy = 0f
+    private var gravityAt = 0L
+
     private fun beginTurn() {
         before = ShakeRotate.currentRotation(context)
+        // 실험실 '빠른 회전': 든 방향이 분명하면 시스템을 기다리지 않고 바로 그 방향으로 잠근다(애매하면 아래 기존 방식)
+        if (ShakeRotate.fastTurn(context)) ShakeRotatePolicy.rotationOf(gx, gy)?.let { r ->
+            val log = LogRepository.from(context)
+            if (r == before) { log.add("흔들어서 화면 회전(빠른 회전): 든 방향이 그대로라 ${ShakeRotate.label(r)} 유지"); return }
+            if (!ShakeRotate.lock(context, r)) return
+            ShakeHaptics.play(context, detector.lastPattern, ShakeRotate.vibration(context))
+            log.add("흔들어서 화면 회전(빠른 회전): ${ShakeRotate.label(before)}($before) → ${ShakeRotate.label(r)}($r)")
+            return
+        }
         val ok = runCatching { Settings.System.putInt(context.contentResolver, Settings.System.ACCELEROMETER_ROTATION, 1) }.getOrDefault(false)
         if (!ok) return
         turning = true

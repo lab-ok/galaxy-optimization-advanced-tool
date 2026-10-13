@@ -1,7 +1,7 @@
 package com.labok.goat.ui.liquid
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,8 +46,8 @@ fun Modifier.liquidReveal(active: Boolean, origin: (Size) -> Offset): Modifier {
         blob.blob.damping = 3f
         blob.moveTo(o.x, o.y, start * 2, start * 2, animate = false)
         val follow = launch { snapshotFlow { r.value }.collect { val d = 2 * (start + it); blob.moveTo(o.x, o.y, d, d, animate = true, carry = 0.85f) } }
-        // 사이드바가 닫히며 물러나는 동안 그 뒤에서 번져 나오도록 천천히 키운다
-        r.animateTo(far * 1.08f, tween(720, easing = FastOutSlowInEasing))
+        // 누른 자리에서 바로 번져 나와(초반이 빠른 곡선) 사이드바가 물러나는 동안 화면을 덮는다. 앱 설정의 UI 애니메이션 속도를 따른다.
+        r.animateTo(far * 1.08f, tween((640 / UiMotion.speed).toInt(), easing = LinearOutSlowInEasing))
         follow.cancel()
         done = true
     }

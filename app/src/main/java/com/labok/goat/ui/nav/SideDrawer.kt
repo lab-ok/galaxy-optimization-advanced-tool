@@ -1,5 +1,6 @@
 package com.labok.goat.ui.nav
 
+import androidx.compose.ui.layout.positionInRoot
 import com.labok.goat.ui.components.Gap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.foundation.Canvas
@@ -112,7 +113,8 @@ fun SideDrawerContent(
     sections: List<NavSection>,
     current: NavItem?,
     visible: Boolean,
-    onSelect: (NavItem) -> Unit,
+    /** 고른 항목과 그 줄 가운데의 화면 좌표(새 화면이 거기서 번진다). */
+    onSelect: (NavItem, Offset?) -> Unit,
     onAbout: () -> Unit,
     /** 위에 덮이는 서랍일 때: 살짝 비치는 유리처럼 뒤(흐려진 본문)가 은은하게 보인다. */
     glass: Boolean = false,
@@ -133,6 +135,7 @@ fun SideDrawerContent(
 
     // 고른 항목 방울: 각 항목의 위치를 재고, 머리·꼬리 스프링으로 옮긴다
     val tops = remember { mutableStateMapOf<NavItem, Float>() }
+    val centers = remember { HashMap<NavItem, Offset>() }
     var rowH by remember { mutableFloatStateOf(0f) }
     val target = current?.let { tops[it] }
     // 고른 항목 아래 물방울(연체 물리). 항목을 바꾸면 그 자리로 끌려가며 휘었다가 표면장력으로 둥글게 돌아온다.
@@ -189,8 +192,9 @@ fun SideDrawerContent(
                                 modifier = Modifier.onGloballyPositioned {
                                     tops[item] = it.positionInParent().y
                                     rowH = it.size.height.toFloat()
+                                    centers[item] = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f)
                                 },
-                            ) { onSelect(item) }
+                            ) { onSelect(item, centers[item]) }
                         }
                         index++
                     }
@@ -209,7 +213,7 @@ fun SideDrawerContent(
                         },
                         appear = { (enter.value - settingsOrder).coerceIn(0f, 1f) },
                         modifier = Modifier.onGloballyPositioned { tops[NavItem.SETTINGS] = it.positionInParent().y },
-                        onClick = { onSelect(NavItem.SETTINGS) },
+                        onClick = { onSelect(NavItem.SETTINGS, null) },
                     )
                 }
             }

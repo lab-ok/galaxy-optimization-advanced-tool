@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Icon
@@ -41,6 +40,22 @@ internal data class Release(val version: String, val date: String, val summary: 
 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
+    Release(
+        "GOAT 1.4.6", "2026-10-13", "흔들기 진동을 더 세게 다듬고, UI 애니메이션 속도 조절과 이어지는 사이드바 전환을 더했습니다.",
+        listOf(
+            "흔들어서 화면 회전" to listOf(
+                "진동 세기 7~10단계를 모두 모터 최대 세기로 치고 길이(16·22·30·45ms)로 세기를 나눴습니다. 8단계가 9단계보다 크게 약하던 차이를 없앴습니다.",
+            ),
+            "앱 설정" to listOf(
+                "'UI 애니메이션 속도'(50~200%)를 더했습니다. 물방울 UI와 화면 전환이 함께 빨라지거나 느려집니다.",
+            ),
+            "화면" to listOf(
+                "사이드바에서 기능을 고르면 기다리지 않고 누른 자리에서 새 화면이 번지며, 사이드바도 동시에 닫힙니다.",
+                "앱 정보와 사이드바의 로고를 홈과 같은 둥근 리퀴드 상자로 맞췄습니다. 가만히 있어도 가끔 출렁입니다.",
+                "변경 기록의 버전 카드를 누를 때 나오는 물결이 카드 끝까지 차도록 고쳤습니다.",
+            ),
+        ),
+    ),
     Release(
         "GOAT 1.4.5", "2026-10-13", "홈 보기를 전체·활성화·비활성화 세 가지로 나눴습니다.",
         listOf(
@@ -282,9 +297,10 @@ internal fun ChangelogSheet() {
 private fun ReleaseCard(r: Release, initiallyOpen: Boolean) {
     val c = LocalLiquid.current
     var open by remember { mutableStateOf(initiallyOpen) }
-    GlassCard {
+    // 누름 물결이 카드 가장자리까지 꽉 차도록 카드 안쪽 여백을 없애고, 여백은 머리 줄·본문이 각자 갖는다
+    GlassCard(padding = Gap.Flush) {
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { open = !open },
+            Modifier.fillMaxWidth().clickable { open = !open }.padding(Gap.CardPadding),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
@@ -295,9 +311,10 @@ private fun ReleaseCard(r: Release, initiallyOpen: Boolean) {
             Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
         }
         AnimatedVisibility(open, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-            Column {
-                r.sections.forEach { (title, items) ->
-                    Spacer(Modifier.height(Gap.Item))
+            Column(Modifier.padding(start = Gap.CardPadding, end = Gap.CardPadding, bottom = Gap.CardPadding)) {
+                r.sections.forEachIndexed { i, (title, items) ->
+                    // 첫 묶음은 머리 줄의 아래 여백이 위 간격을 대신한다
+                    if (i > 0) Spacer(Modifier.height(Gap.Item))
                     Text(title, fontWeight = FontWeight.SemiBold, color = c.ink, style = MaterialTheme.typography.bodyMedium)
                     items.forEach { line ->
                         Row(Modifier.padding(top = Gap.Tight)) {

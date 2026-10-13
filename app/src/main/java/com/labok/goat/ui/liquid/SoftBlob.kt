@@ -288,7 +288,8 @@ fun rememberSoftBlob(): SoftBlobState {
             while (true) {
                 val now = withFrameNanos { it }
                 // 실제 흐른 시간만큼 적분한다(프레임이 밀려도 물리 시간은 실제와 같게). 한 번에 1/240초 이하로 쪼갠다.
-                val dt = if (last == 0L) 1f / 60 else ((now - last) / 1e9f).coerceIn(1f / 480, 1f / 12)
+                // 앱 설정의 UI 애니메이션 속도만큼 물리 시간을 빨리(느리게) 흘린다
+                val dt = (if (last == 0L) 1f / 60 else ((now - last) / 1e9f).coerceIn(1f / 480, 1f / 12)) * UiMotion.speed
                 last = now
                 val sub = kotlin.math.ceil(dt * 240f).toInt().coerceAtLeast(1)
                 var moving = false

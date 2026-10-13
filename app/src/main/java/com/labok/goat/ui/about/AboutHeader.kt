@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.ui.liquid.SoftBlobState
 import kotlin.math.sin
 import kotlin.math.cos
 import kotlin.math.PI
@@ -71,7 +72,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
     val haptics = rememberLiquidHaptics()
     val d = LocalDensity.current
     val logoS = with(d) { 84.dp.toPx() }
-    val logoR = with(d) { 24.dp.toPx() }
+    val logoR = logoS * LOGO_CORNER
     val logoTop = with(d) { 8.dp.toPx() }
     val maxPull = with(d) { 22.dp.toPx() }
     val unit = logoS / 72f  // 아이콘 벡터 72칸 → px
@@ -97,6 +98,10 @@ internal fun AboutHeader(title: String, subtitle: String) {
         logo.moveTo(cx(), cy(), logoS, logoS, !reduce, corner = logoR)
         drop.moveTo(cx(), cy(), 4f * unit, 4f * unit, !reduce)
         if (reduce) text.snapTo(1f) else text.animateTo(1f, tween(300, delayMillis = 140))
+    }
+    LaunchedEffect(box, reduce) {
+        if (reduce || box == IntSize.Zero) return@LaunchedEffect
+        idleRipple(logo, drop, { cx() }, { cy() }, logoS)
     }
 
     Box(
@@ -175,7 +180,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
     val haptics = rememberLiquidHaptics()
     val d = LocalDensity.current
     val logoS = with(d) { size.toPx() }
-    val logoR = logoS * 0.4f
+    val logoR = logoS * LOGO_CORNER
     val maxPull = logoS * 22f / 84f
     val unit = logoS / 72f
     var box by remember { mutableStateOf(IntSize.Zero) }
@@ -199,14 +204,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
     // 쉬는 동안의 출렁임: 3~6초마다 가장자리 한 곳을 안쪽으로 살짝 밀면, 표면장력이 펴고 압력이 되밀며 물결처럼 잦아든다
     LaunchedEffect(box, idle, reduce) {
         if (!idle || reduce || box == IntSize.Zero) return@LaunchedEffect
-        val rnd = kotlin.random.Random(System.nanoTime())
-        while (true) {
-            delay(3000L + rnd.nextLong(3000L))
-            val a = rnd.nextFloat() * 2f * PI.toFloat()
-            val ex = cx() + cos(a) * logoS / 2; val ey = cy() + sin(a) * logoS / 2
-            logo.poke(ex, ey, -cos(a) * 520f, -sin(a) * 520f, logoS * 0.45f)
-            drop.poke(cx(), cy(), cos(a) * 60f, sin(a) * 60f, logoS)
-        }
+        idleRipple(logo, drop, { cx() }, { cy() }, logoS)
     }
 
     Canvas(
@@ -245,5 +243,23 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
         rotate(tilt, Offset(drop.blob.cx, drop.blob.cy)) {
             translate(drop.blob.cx - gs / 2, drop.blob.cy - gs / 2) { with(goat) { draw(Size(gs, gs)) } }
         }
+    }
+}
+
+/** 리퀴드 로고 상자의 모서리 반지름(크기 대비). 홈·앱 정보·사이드바가 같은 모양을 쓴다. */
+internal const val LOGO_CORNER = 0.4f
+
+/**
+ * 쉬는 동안의 출렁임: 3~6초마다 상자 가장자리 한 곳을 안쪽으로 살짝 밀면, 표면장력이 펴고 압력이 되밀며 물결처럼 잦아든다.
+ * 염소 물방울도 반대쪽으로 조금 흔들린다. 부른 쪽의 LaunchedEffect가 끝나면(화면을 떠나면) 멈춘다.
+ */
+internal suspend fun idleRipple(logo: SoftBlobState, drop: SoftBlobState, cx: () -> Float, cy: () -> Float, logoS: Float) {
+    val rnd = kotlin.random.Random(System.nanoTime())
+    while (true) {
+        delay(3000L + rnd.nextLong(3000L))
+        val a = rnd.nextFloat() * 2f * PI.toFloat()
+        val ex = cx() + cos(a) * logoS / 2; val ey = cy() + sin(a) * logoS / 2
+        logo.poke(ex, ey, -cos(a) * 520f, -sin(a) * 520f, logoS * 0.45f)
+        drop.poke(cx(), cy(), cos(a) * 60f, sin(a) * 60f, logoS)
     }
 }

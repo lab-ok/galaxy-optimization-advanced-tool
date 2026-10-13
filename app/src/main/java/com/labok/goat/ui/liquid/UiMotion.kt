@@ -31,10 +31,24 @@ object UiMotion {
     /** 스프링 감쇠비: 1이면 그대로, 0이면 1(넘치지 않음), 클수록 더 통통 튄다. */
     fun ratio(base: Float): Float = (1f - (1f - base) * wobble).coerceIn(0.2f, 1f)
 
-    /** 스프링 강성: 감쇠비를 올린 만큼 강성도 올려 도착하는 데 걸리는 시간을 비슷하게 지킨다. */
+    /** 스프링 강성: 감쇠비를 올린 만큼 강성도 올려 도착하는 데 걸리는 시간을 비슷하게 지킨다. [speed]만큼 빠르게(강성은 속도의 제곱). */
     fun stiffness(base: Float, baseRatio: Float): Float {
         val r = ratio(baseRatio)
-        return if (r <= baseRatio) base else base * (r / baseRatio).pow(2)
+        val k = if (r <= baseRatio) base else base * (r / baseRatio).pow(2)
+        return k * speed * speed
+    }
+
+    /** UI 애니메이션 속도(앱 설정): 조절바 값(%). 100%가 기본, [SPEED_MIN]~[SPEED_MAX]. 출렁임 정도([percent])와는 따로 움직인다. */
+    var speedPercent by mutableIntStateOf(100)
+        private set
+    const val SPEED_MIN = 50
+    const val SPEED_MAX = 200
+    /** 시간 배수: 2면 같은 움직임을 절반 시간에 끝낸다. 스프링 강성과 연체 물방울의 적분 시간에 곱한다. */
+    val speed: Float get() = speedPercent / 100f
+
+    fun setSpeed(context: Context, value: Int) {
+        speedPercent = value.coerceIn(SPEED_MIN, SPEED_MAX)
+        prefs(context).edit().putInt("speed", speedPercent).apply()
     }
 
     fun load(context: Context) {
@@ -42,6 +56,7 @@ object UiMotion {
         // 1.3.1~1.3.2는 실제 배수(wobble)를 저장했다: 새 눈금(%)으로 옮긴다
         if (!p.contains("percent") && p.contains("wobble")) p.edit().putInt("percent", (p.getFloat("wobble", BASE) / BASE * 100).toInt()).remove("wobble").apply()
         percent = p.getInt("percent", 100).coerceIn(0, MAX_PERCENT)
+        speedPercent = p.getInt("speed", 100).coerceIn(SPEED_MIN, SPEED_MAX)
     }
 
     fun set(context: Context, value: Int) {

@@ -204,4 +204,15 @@ class ShakeRotatePolicyTest {
         assertFalse("훨씬 느린 왕복은 그 사람의 흔들기가 아니다", slowTuned.shake(15f, hz = 1.2f, ms = 2000, gyro = 4f))
         assertEquals("리듬을 모르면 기본값", ShakeRotatePolicy.Detector.MAX_GAP_MS, ShakeRotatePolicy.maxGapFor(null))
     }
+
+    @Test
+    fun fastTurnReadsHeldDirectionFromGravity() {
+        assertEquals("세로로 세워 든 폰", 0, ShakeRotatePolicy.rotationOf(0f, 9.8f))
+        assertEquals("왼쪽으로 눕힌 폰(위가 왼쪽)", 1, ShakeRotatePolicy.rotationOf(9.8f, 0f))
+        assertEquals("오른쪽으로 눕힌 폰(위가 오른쪽)", 3, ShakeRotatePolicy.rotationOf(-9.8f, 0f))
+        assertEquals("조금 기울여도 세로", 0, ShakeRotatePolicy.rotationOf(3f, 8f))
+        assertNull("책상에 거의 눕힘", ShakeRotatePolicy.rotationOf(1f, 2f))
+        assertNull("45° 비스듬함은 애매", ShakeRotatePolicy.rotationOf(6f, 6f))
+        assertNull("거꾸로는 시스템에 맡김", ShakeRotatePolicy.rotationOf(0f, -9.8f))
+    }
 }
