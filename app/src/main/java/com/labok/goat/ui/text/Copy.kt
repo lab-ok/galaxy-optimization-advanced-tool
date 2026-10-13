@@ -169,8 +169,19 @@ object Copy {
     const val HOME_VIEW_EMPTY_OFF_BODY = "꺼 둔 기능이 생기면 여기에 모입니다."
     const val FEATURE_LAB = "실험실"
     const val LAB_OPENED = "실험실이 열렸습니다. 사이드바에서 찾을 수 있습니다."
-    const val LAB_EMPTY_TITLE = "아직 준비 중인 실험이 없습니다"
-    const val LAB_EMPTY_BODY = "시험해 볼 새 기능이 생기면 여기에 먼저 올라옵니다."
+    const val LAB_INTRO_TITLE = "시험 중인 기능"
+    const val LAB_INTRO_BODY = "정식 기능이 되기 전에 먼저 써 보는 곳입니다. 기기에 따라 다르게 동작할 수 있습니다."
+    const val LAB_RESTORE = "처음대로"
+    const val LAB_RESTORED = "처음 값으로 되돌렸습니다."
+    const val LAB_WRITE_FAILED = "바꾸지 못했습니다. 권한이나 Shizuku 연결을 확인하세요."
+    const val LAB_AIRPLANE_TITLE = "비행기 모드 때 켜 둘 무선"
+    const val LAB_AIRPLANE_BODY = "비행기 모드를 켜도 고른 무선은 끄지 않습니다. 모바일 데이터는 늘 꺼집니다."
+    const val LAB_AIRPLANE_ROW = "다음에 비행기 모드를 켤 때부터 적용됩니다."
+    const val LAB_ICONS_TITLE = "상태 표시줄 아이콘 숨기기"
+    const val LAB_ICONS_BODY = "맨 위 줄에서 고른 아이콘을 숨깁니다. One UI 버전에 따라 안 숨겨지는 아이콘도 있습니다."
+    const val LAB_SCREEN_TITLE = "화면 모드"
+    const val LAB_SCREEN_BODY = "디스플레이 색 모드 값을 바꿔 봅니다. 값의 뜻은 기기마다 달라 하나씩 바꿔 보며 확인하세요."
+    const val LAB_SCREEN_NONE = "이 기기에서는 화면 모드 설정을 찾지 못했습니다."
     const val SHAKE_FAST_TITLE = "빠른 회전"
     const val SHAKE_FAST_BODY = "시스템을 기다리지 않고 센서로 든 방향을 바로 계산해 돌립니다. 방향이 애매하면 시스템에 맡깁니다."
     const val MENU_SECTION_TOOLS = "편의 기능"
@@ -272,10 +283,13 @@ object Copy {
     const val REFRESH_SAVER_DESC = "60Hz로 고정해 배터리를 아낍니다. 움직임은 조금 덜 부드럽습니다."
     const val REFRESH_TOAST_FAILED = "바꾸지 못했습니다. Shizuku 연결을 확인해 주세요"
     const val REFRESH_CAUTION_TITLE = "알아 두세요"
+
     /** 바꿀 수 없는 기기 안내(실제 최고 주사율을 적는다). */
     fun refreshUnsupported(top: Int) = "이 기기 화면은 최고 ${top}Hz라 주사율을 바꿀 수 없습니다."
+
     /** 고르기 카드의 지금 상태 줄. */
     fun refreshNow(now: Int, top: Int) = "지금 화면 ${now}Hz · 이 기기 최고 ${top}Hz"
+
     /** '항상 최고'를 실제 값으로 적은 이름(화면 고르기 줄·홈 카드가 함께 쓴다). */
     fun refreshAlways(top: Int) = "항상 ${top}Hz"
     const val REFRESH_UNSUPPORTED_SHORT = "바꿀 수 없는 화면"
@@ -395,11 +409,12 @@ object Copy {
     const val RES_CONFIRM_REVERT = "되돌리기"
     const val RES_DASH_ORIGINAL = "원래 해상도"
     const val RES_DASH_FOLD = "폴드는 지원 안 함"
-    fun resNow(w: Int, h: Int, bw: Int, bh: Int) = if (w == bw && h == bh) "지금 ${w} × ${h}" else "지금 ${w} × ${h} · 원래 ${bw} × ${bh}"
+    fun resNow(w: Int, h: Int, bw: Int, bh: Int) = if (w == bw && h == bh) "지금 $w × $h" else "지금 $w × $h · 원래 $bw × $bh"
+
     /** 해상도 선택지 이름. [percent]는 변 비율이고, 화면에는 그리는 점(넓이) 비율로 적는다. */
-    fun resOption(name: String?, w: Int, h: Int, percent: Int) =
-        if (percent >= 100) "원래대로 ${w} × ${h}" else listOfNotNull(name, "${w} × ${h}").joinToString(" ") + " · 점 ${resPoints(percent)}%"
+    fun resOption(name: String?, w: Int, h: Int, percent: Int) = if (percent >= 100) "원래대로 $w × $h" else listOfNotNull(name, "$w × $h").joinToString(" ") + " · 점 ${resPoints(percent)}%"
     fun resOptionDesc(percent: Int) = "그리는 점이 약 ${100 - resPoints(percent)}% 줄어듭니다."
+
     /** 변 비율 [percent]%일 때 그리는 점 수 비율(%). */
     fun resPoints(percent: Int) = percent * percent / 100
     fun resAppsBody(n: Int) = "앱 ${n}개는 정해진 단계로만 배율을 바꿀 수 있어, 해상도를 낮추는 동안 그 앱들이 조금 커 보입니다."

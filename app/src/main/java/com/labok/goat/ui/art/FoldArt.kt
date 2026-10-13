@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
-import com.labok.goat.ui.liquid.rememberBreath
 import com.labok.goat.ui.liquid.Springs
+import com.labok.goat.ui.liquid.rememberBreath
 
 /**
  * 상태 카드의 폴드 기기 그림. [unfolded]가 바뀌면 기기가 실제처럼 펼쳐지거나 접힌다(물 스프링).
@@ -34,7 +34,7 @@ fun FoldDeviceArt(
     coverAspect: Float = LocalDeviceShape.current.cover,
     innerAspect: Float = LocalDeviceShape.current.inner,
     /** true면 테두리 숨쉬기를 멈춘다(사용 중이 아닌 화면). */
-    still: Boolean = false,
+    still: Boolean = false
 ) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current

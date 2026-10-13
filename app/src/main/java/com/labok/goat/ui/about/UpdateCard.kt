@@ -76,7 +76,8 @@ internal fun UpdateCard(manual: Boolean) {
                         Updater.State.Checking -> Copy.UPDATE_CHECKING
                         else -> Copy.updateCurrent(BuildConfig.VERSION_NAME)
                     },
-                    color = c.muted, style = MaterialTheme.typography.bodySmall,
+                    color = c.muted,
+                    style = MaterialTheme.typography.bodySmall
                 )
                 if (manual) {
                     Spacer(Modifier.height(Gap.Item))
@@ -88,5 +89,4 @@ internal fun UpdateCard(manual: Boolean) {
 }
 
 /** 릴리스 노트에서 첫 번째 바뀐 점(제목·빈 줄·목록 기호를 뺀다). */
-private fun firstLine(notes: String): String =
-    notes.lineSequence().map { it.trim().removePrefix("-").trim() }.firstOrNull { it.isNotEmpty() && !it.startsWith("#") } ?: ""
+private fun firstLine(notes: String): String = notes.lineSequence().map { it.trim().removePrefix("-").trim() }.firstOrNull { it.isNotEmpty() && !it.startsWith("#") } ?: ""

@@ -1,15 +1,15 @@
 package com.labok.goat.data.display
 
-import com.labok.goat.data.UserId
-import android.annotation.SuppressLint
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
-import android.hardware.display.DisplayManager
 import android.graphics.Point
+import android.hardware.display.DisplayManager
 import android.util.DisplayMetrics
 import android.view.Display
+import com.labok.goat.data.UserId
 import com.labok.goat.domain.DpiPolicy
 import com.labok.goat.domain.ScreenInfo
 import java.lang.reflect.InvocationTargetException
@@ -30,9 +30,8 @@ class DpiManager(context: Context) : DpiController {
 
     private val appContext = context.applicationContext
 
-    override fun hasPermission(): Boolean =
-        appContext.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) ==
-            PackageManager.PERMISSION_GRANTED
+    override fun hasPermission(): Boolean = appContext.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) ==
+        PackageManager.PERMISSION_GRANTED
 
     override fun read(): DpiState {
         readViaWindowManager()?.let { return it }
@@ -107,13 +106,17 @@ class DpiManager(context: Context) : DpiController {
         try {
             val physical = invoke("getInitialDisplayDensity", id) as Int
             if (physical <= 0) return@mapNotNull null
-            val base = try { invoke("getBaseDisplayDensity", id) as Int } catch (t: Throwable) { -1 }
+            val base = try {
+                invoke("getBaseDisplayDensity", id) as Int
+            } catch (t: Throwable) {
+                -1
+            }
             DisplayDensity(
                 id = id,
                 screen = screenOf(id),
                 physical = physical,
                 override = base.takeIf { it > 0 && it != physical },
-                readable = base > 0,
+                readable = base > 0
             )
         } catch (t: Throwable) {
             null
@@ -125,7 +128,11 @@ class DpiManager(context: Context) : DpiController {
         if (!hasPermission()) return ApplyResult(false, "-", "WRITE_SECURE_SETTINGS 권한 없음")
         return try {
             invoke("setForcedDisplayDensityForUser", displayId, dpi, userId())
-            val base = try { invoke("getBaseDisplayDensity", displayId) as Int } catch (t: Throwable) { -1 }
+            val base = try {
+                invoke("getBaseDisplayDensity", displayId) as Int
+            } catch (t: Throwable) {
+                -1
+            }
             when {
                 base == dpi -> ApplyResult(true, METHOD_BINDER, "-d $displayId 적용 후 확인 $base")
                 base <= 0 -> ApplyResult(true, METHOD_BINDER, "-d $displayId 적용(꺼진 화면이라 값 확인 불가)")
@@ -186,12 +193,10 @@ class DpiManager(context: Context) : DpiController {
     }
 
     /** 물리 해상도(짧은 변, 긴 변). 못 읽으면 null. */
-    fun physicalSize(displayId: Int = Display.DEFAULT_DISPLAY): Pair<Int, Int>? =
-        initialSize(displayId)?.let { minOf(it.x, it.y) to maxOf(it.x, it.y) }
+    fun physicalSize(displayId: Int = Display.DEFAULT_DISPLAY): Pair<Int, Int>? = initialSize(displayId)?.let { minOf(it.x, it.y) to maxOf(it.x, it.y) }
 
     /** 물리 해상도를 기기의 자연 방향 그대로(가로, 세로). 강제 해상도도 이 방향으로 건다. 못 읽으면 null. */
-    fun physicalSizeNatural(displayId: Int = Display.DEFAULT_DISPLAY): Pair<Int, Int>? =
-        initialSize(displayId)?.let { it.x to it.y }
+    fun physicalSizeNatural(displayId: Int = Display.DEFAULT_DISPLAY): Pair<Int, Int>? = initialSize(displayId)?.let { it.x to it.y }
 
     private fun readViaWindowManager(): DpiState? = try {
         val physical = invoke("getInitialDisplayDensity", Display.DEFAULT_DISPLAY) as Int
@@ -232,7 +237,7 @@ class DpiManager(context: Context) : DpiController {
             ShellResult(
                 p.exitValue(),
                 p.inputStream.bufferedReader().readText().trim(),
-                p.errorStream.bufferedReader().readText().trim(),
+                p.errorStream.bufferedReader().readText().trim()
             )
         }
     } catch (t: Throwable) {
@@ -249,6 +254,7 @@ class DpiManager(context: Context) : DpiController {
     companion object {
         const val METHOD_BINDER = "IWindowManager"
         private const val SHELL_TIMEOUT_SEC = 5L
+
         /** Galaxy Fold는 0(외부)·1(내부). 여유 있게 0~3번을 본다. */
         private const val MAX_DISPLAY_ID = 4
 
@@ -257,8 +263,7 @@ class DpiManager(context: Context) : DpiController {
          * 그 직전 크기를 키로 쓰고 지금 크기와의 비율을 [ScreenInfo.scale]에 둔다(같은 화면으로 보고 목표 DPI를 같은 비율로 줄이게).
          * 삼성 공식 해상도 설정(FHD+ 등)처럼 GOAT 밖에서 줄인 크기는 지금처럼 그대로 키가 된다. PPI는 패널 값이라 그대로다.
          */
-        internal fun toScreen(m: DisplayMetrics, base: Pair<Int, Int>?): ScreenInfo =
-            screenOf(m.widthPixels, m.heightPixels, m.xdpi, m.ydpi, base)
+        internal fun toScreen(m: DisplayMetrics, base: Pair<Int, Int>?): ScreenInfo = screenOf(m.widthPixels, m.heightPixels, m.xdpi, m.ydpi, base)
 
         /** [toScreen]의 계산(시험할 수 있게 DisplayMetrics와 뗐다). */
         internal fun screenOf(widthPx: Int, heightPx: Int, xdpi: Float, ydpi: Float, base: Pair<Int, Int>?): ScreenInfo {
@@ -298,7 +303,7 @@ class DpiManager(context: Context) : DpiController {
             runCatching {
                 HiddenApiBypass.addHiddenApiExemptions(
                     "Landroid/view/IWindowManager",
-                    "Landroid/view/WindowManagerGlobal",
+                    "Landroid/view/WindowManagerGlobal"
                 )
             }
             exempted = true

@@ -1,6 +1,5 @@
 package com.labok.goat.data.appsize
 
-import com.labok.goat.data.log.LogRepository
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
@@ -8,6 +7,7 @@ import android.net.Uri
 import android.os.Binder
 import android.os.Bundle
 import android.os.Process
+import com.labok.goat.data.log.LogRepository
 
 /**
  * 셸 도우미([DensityServer])가 바인더를 건네는 통로.

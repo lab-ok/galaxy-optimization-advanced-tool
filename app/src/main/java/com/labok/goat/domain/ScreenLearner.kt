@@ -10,7 +10,7 @@ import com.labok.goat.data.settings.SettingsRepository
 class ScreenLearner(
     private val settings: SettingsRepository,
     private val log: (String) -> Unit,
-    private val clock: () -> Long = System::currentTimeMillis,
+    private val clock: () -> Long = System::currentTimeMillis
 ) {
     fun observe(screen: ScreenInfo?, source: String) {
         if (screen == null || !ScreenPolicy.isPlausible(screen)) return

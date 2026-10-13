@@ -24,7 +24,8 @@ private fun ease(x: Float) = x * x * (3 - 2 * x)
 internal fun RefreshArt(low: Int, high: Int, selected: Int) {
     val t = artLoop(2400)
     ArtCanvas(132.dp) { c, tm ->
-        val left = 28.dp.toPx(); val right = size.width - 92.dp.toPx()
+        val left = 28.dp.toPx()
+        val right = size.width - 92.dp.toPx()
         val r = 8.dp.toPx()
         listOf(low, high).forEachIndexed { i, hz ->
             val y = (26 + i * 60).dp.toPx()
@@ -33,7 +34,10 @@ internal fun RefreshArt(low: Int, high: Int, selected: Int) {
             drawRoundRect(c.line, Offset(left - r, y - 1.dp.toPx()), Size(right - left + 2 * r, 2.dp.toPx()), CornerRadius(1.dp.toPx()))
             // 장 수: 왕복 한 번에 low는 12장, high는 그 비율만큼 더 많이 그린다
             val frames = (12f * hz / low).coerceAtLeast(2f)
-            fun pos(p: Float): Float { val k = if (p < 0.5f) p * 2 else (1 - p) * 2; return left + (right - left) * ease(k) }
+            fun pos(p: Float): Float {
+                val k = if (p < 0.5f) p * 2 else (1 - p) * 2
+                return left + (right - left) * ease(k)
+            }
             val step = floor(t * frames) / frames
             // 잔상: 앞서 그린 네 장(옅어지며)
             for (g in 4 downTo 1) {

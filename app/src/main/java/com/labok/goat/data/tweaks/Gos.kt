@@ -25,12 +25,15 @@ object Gos {
     enum class State {
         /** 켜져 있다(성능 제한이 걸릴 수 있다). */
         ON,
+
         /** 꺼져 있다. */
         OFF,
+
         /** 이 기기에 GOS가 없다(삼성이 아니거나 오래된 기기). */
         NONE,
+
         /** Shizuku가 없어 읽지 못했다. */
-        UNKNOWN,
+        UNKNOWN
     }
 
     private val state = MutableStateFlow(State.UNKNOWN)
@@ -84,8 +87,7 @@ object Gos {
     }
 
     /** 기본 앱 정리 목록의 GOS 항목(없는 이전 패키지는 같은 설명으로 만든다). */
-    private fun appOf(pkg: String): Bloat.App =
-        Bloat.CATALOG.firstOrNull { it.pkg == pkg } ?: Bloat.CATALOG.first { it.pkg == PACKAGES.first() }.copy(pkg = pkg)
+    private fun appOf(pkg: String): Bloat.App = Bloat.CATALOG.firstOrNull { it.pkg == pkg } ?: Bloat.CATALOG.first { it.pkg == PACKAGES.first() }.copy(pkg = pkg)
 
     /** [Bloat.set]이 GOS 패키지를 바꿀 때 부른다: 사용자가 끄기를 원하는지 남긴다(다시 끄기의 기준). */
     fun noteChange(context: Context, pkg: String, off: Boolean) {
@@ -108,12 +110,15 @@ object Gos {
     internal enum class Action {
         /** 아무것도 하지 않는다(원하지 않음·keep 꺼짐·이번 부팅에 이미 확인함). */
         SKIP,
+
         /** 상태를 못 읽었다: 확인 기록을 남기지 않고 다음 Shizuku 연결 때 다시 확인한다. */
         RETRY_LATER,
+
         /** 이미 꺼져 있다(또는 GOS가 없다): 이번 부팅은 확인한 것으로 남긴다. */
         MARK,
+
         /** 다시 켜져 있다: 끄고 확인한 것으로 남긴다. */
-        DISABLE,
+        DISABLE
     }
 
     /**
@@ -146,10 +151,10 @@ object Gos {
     }
 
     /** 부팅 횟수(Settings.Global.BOOT_COUNT). 없는 기기면 null(그때는 연결될 때마다 확인한다). */
-    private fun bootCount(context: Context): Int? =
-        runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
+    private fun bootCount(context: Context): Int? = runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
 
     private val binder = Shizuku.OnBinderReceivedListener { reapplyAsync?.invoke() }
+
     @Volatile private var reapplyAsync: (() -> Unit)? = null
 
     /** 앱 시작 때 부른다: Shizuku가 연결되는 순간(재부팅 뒤 자동 시작 포함) 다시 끄기를 확인한다. */

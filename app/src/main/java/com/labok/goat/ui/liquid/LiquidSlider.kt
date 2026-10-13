@@ -1,7 +1,5 @@
 package com.labok.goat.ui.liquid
 
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -9,6 +7,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,24 +22,23 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
 import kotlinx.coroutines.launch
 
 /**
@@ -59,7 +57,7 @@ fun LiquidSlider(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     /** true면 채움이 가운데(0)에서 값 쪽으로 뻗는다(미세조정처럼 ± 값). */
-    centered: Boolean = false,
+    centered: Boolean = false
 ) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
@@ -98,6 +96,7 @@ fun LiquidSlider(
     }
     val edge = with(density) { maxOf(30.dp.toPx(), (widest + 32.dp.toPx()) / 2 + 2.dp.toPx()) }
     fun xOf(v: Int) = edge + (v - range.first).toFloat() / span * (width - 2 * edge)
+
     /** 세밀 조절 중 값 [v]의 x(확대 눈금 위치). */
     // 확대 칸 수: 앞뒤 FINE_HALF칸, 범위가 좁으면 그 절반(최소 1)
     val fineHalf = minOf(FINE_HALF, maxOf(1, span / 2))
@@ -130,7 +129,9 @@ fun LiquidSlider(
                 contentDescription = description
                 progressBarRangeInfo = ProgressBarRangeInfo(value.toFloat(), range.first.toFloat()..range.last.toFloat())
                 setProgress { target ->
-                    change(target.roundToInt().coerceIn(range)); finish(); true
+                    change(target.roundToInt().coerceIn(range))
+                    finish()
+                    true
                 }
             }
             .pointerInput(enabled, range) {
@@ -145,14 +146,23 @@ fun LiquidSlider(
                     var held = false
                     while (true) {
                         val ev = withTimeoutOrNull(FINE_HOLD_MS) { awaitPointerEvent() }
-                        if (ev == null) { held = true; break }
+                        if (ev == null) {
+                            held = true
+                            break
+                        }
                         val ch = ev.changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
-                        if (!ch.pressed) { tapped = true; break }
+                        if (!ch.pressed) {
+                            tapped = true
+                            break
+                        }
                         if (ch.isConsumed) return@awaitEachGesture
                         val dx = ch.position.x - down.position.x
                         val dy = ch.position.y - down.position.y
                         if (kotlin.math.abs(dy) > touchSlop && kotlin.math.abs(dy) >= kotlin.math.abs(dx)) return@awaitEachGesture
-                        if (kotlin.math.abs(dx) > touchSlop) { ch.consume(); break }
+                        if (kotlin.math.abs(dx) > touchSlop) {
+                            ch.consume()
+                            break
+                        }
                     }
                     dragX = down.position.x
                     active = true
@@ -170,28 +180,42 @@ fun LiquidSlider(
                     fun set(nv: Int, at: Long) {
                         if (nv == v) return
                         if (at - changedAt >= LIFT_JITTER_MS) stable = v
-                        changedAt = at; v = nv; change(nv); haptics.tick()
+                        changedAt = at
+                        v = nv
+                        change(nv)
+                        haptics.tick()
                     }
                     fun openFine(x: Float) {
                         if (fineBase != null) return
-                        fineBase = v; anchorX = x; haptics.snap()
+                        fineBase = v
+                        anchorX = x
+                        haptics.snap()
                     }
                     if (tapped) {
                         // 톡 누르기: 그 자리 값으로 바꾸고 끝
-                        active = false; dragX = -1f; finish()
+                        active = false
+                        dragX = -1f
+                        finish()
                         return@awaitEachGesture
                     }
                     if (held) openFine(down.position.x)
                     while (true) {
                         // 가만히 붙들고 있으면 이벤트가 오지 않으므로 시간으로도 확인한다
                         val ev = withTimeoutOrNull(FINE_HOLD_MS) { awaitPointerEvent() }
-                        if (ev == null) { openFine(stillX); continue }
+                        if (ev == null) {
+                            openFine(stillX)
+                            continue
+                        }
                         val ch = ev.changes.firstOrNull { it.id == down.id } ?: break
                         upAt = ch.uptimeMillis
                         if (!ch.pressed) break
                         val x = ch.position.x
-                        if (kotlin.math.abs(x - stillX) > slop) { stillX = x; stillSince = ch.uptimeMillis }
-                        else if (ch.uptimeMillis - stillSince >= FINE_HOLD_MS) openFine(x)
+                        if (kotlin.math.abs(x - stillX) > slop) {
+                            stillX = x
+                            stillSince = ch.uptimeMillis
+                        } else if (ch.uptimeMillis - stillSince >= FINE_HOLD_MS) {
+                            openFine(x)
+                        }
                         val base = fineBase
                         if (base == null) {
                             dragX = x
@@ -213,7 +237,7 @@ fun LiquidSlider(
                     finish()
                 }
             }
-            .graphicsLayer { alpha = if (enabled) 1f else 0.45f },
+            .graphicsLayer { alpha = if (enabled) 1f else 0.45f }
     ) {
         // 트랙(유리판 층, goo 없음)
         Canvas(Modifier.matchParentSize()) {
@@ -256,16 +280,18 @@ fun LiquidSlider(
         }
         // 세밀 조절 눈금(패널 위, 반전색): 앞뒤 FINE_HALF칸, 5칸마다 길게
         val base = fineBase
-        if (base != null || fineK.value > 0.01f) Canvas(Modifier.matchParentSize()) {
-            val b = base ?: value
-            val k = fineK.value
-            for (i in -fineHalf..fineHalf) {
-                val vv = b + i
-                if (vv !in range) continue
-                val x = xFine(b, vv)
-                val long = vv % 5 == 0 || fineHalf < 5
-                val h = (if (long) 10 else 5).dp.toPx() * k
-                drawLine(c.onInk.copy(alpha = 0.75f * k), Offset(x, trackY - h / 2), Offset(x, trackY + h / 2), 1.5.dp.toPx())
+        if (base != null || fineK.value > 0.01f) {
+            Canvas(Modifier.matchParentSize()) {
+                val b = base ?: value
+                val k = fineK.value
+                for (i in -fineHalf..fineHalf) {
+                    val vv = b + i
+                    if (vv !in range) continue
+                    val x = xFine(b, vv)
+                    val long = vv % 5 == 0 || fineHalf < 5
+                    val h = (if (long) 10 else 5).dp.toPx() * k
+                    drawLine(c.onInk.copy(alpha = 0.75f * k), Offset(x, trackY - h / 2), Offset(x, trackY + h / 2), 1.5.dp.toPx())
+                }
             }
         }
         // 값 글자(방울 위에서 반전). 글자 크기를 재서 손잡이·방울의 정확한 가운데에 놓는다.
@@ -277,7 +303,7 @@ fun LiquidSlider(
             val cy = trackY - lift * LIFT.dp.toPx()
             val layout = measurer.measure(
                 valueText(value),
-                TextStyle(fontFamily = GalaxyFont, color = c.onInk, fontSize = (12 + 5 * lift).sp, fontWeight = FontWeight.Bold),
+                TextStyle(fontFamily = GalaxyFont, color = c.onInk, fontSize = (12 + 5 * lift).sp, fontWeight = FontWeight.Bold)
             )
             drawText(layout, topLeft = Offset(cx - layout.size.width / 2f, cy - layout.size.height / 2f))
         }
@@ -286,15 +312,21 @@ fun LiquidSlider(
 
 /** 잡았을 때 값 방울이 트랙 위로 떠오르는 높이(dp). */
 private const val LIFT = 26
+
 /** 조절바 높이(dp). */
 private const val HEIGHT = 40
+
 /** goo 층을 조절바 위아래로 더 키우는 양(dp). */
 private const val OVERFLOW = 40
+
 /** 떼기 직전 이 시간(ms) 안에 1만큼 바뀐 값은 손가락이 들리며 밀린 것으로 보고 되돌린다. */
 private const val LIFT_JITTER_MS = 90L
+
 /** 이 시간(ms) 동안 거의 움직이지 않고 붙들고 있으면 세밀 조절을 연다. */
 private const val FINE_HOLD_MS = 750L
+
 /** 보이는 트랙의 좌우 여백(dp): 모든 조절바가 같은 폭으로 보이게 한다. */
 private const val TRACK_INSET = 15
+
 /** 세밀 조절 패널이 보여 주는 칸 수(앞뒤). */
 private const val FINE_HALF = 10

@@ -23,7 +23,7 @@ class ForceDarkTest {
         assertEquals(
             "예약이면 시각까지",
             listOf("cmd uimode night custom_schedule", "cmd uimode time start 22:00", "cmd uimode time end 07:00"),
-            ForceDark.restoreNightCommands(android.app.UiModeManager.MODE_NIGHT_CUSTOM, "22:00", "07:00"),
+            ForceDark.restoreNightCommands(android.app.UiModeManager.MODE_NIGHT_CUSTOM, "22:00", "07:00")
         )
     }
 }

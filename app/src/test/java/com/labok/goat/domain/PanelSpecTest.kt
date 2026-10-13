@@ -47,8 +47,10 @@ class PanelSpecTest {
     fun f971TargetMatchesUserObservation() {
         val all = listOf(f971Outer, f971Inner)
         val plan = DensityPlan(
-            referenceDpi = 360, reference = Role.OUTER, adjust = 0,
-            panels = listOf(PanelSpec.resolve(f971Outer, null, all), PanelSpec.resolve(f971Inner, 404.2f, all)),
+            referenceDpi = 360,
+            reference = Role.OUTER,
+            adjust = 0,
+            panels = listOf(PanelSpec.resolve(f971Outer, null, all), PanelSpec.resolve(f971Inner, 404.2f, all))
         )
         // 360 × 404.2 / 428.2 = 339.8 → 340 (사용자가 335~338을 선호 → 미세조정 -3 정도)
         assertEquals(340, plan.targetFor(f971Inner).dpi)
@@ -59,7 +61,7 @@ class PanelSpecTest {
         referenceDpi = 360,
         reference = Role.OUTER,
         adjust = adjust,
-        panels = listOf(outer, inner).map { PanelSpec.resolve(it, null, listOf(outer, inner)) },
+        panels = listOf(outer, inner).map { PanelSpec.resolve(it, null, listOf(outer, inner)) }
     )
 
     @Test

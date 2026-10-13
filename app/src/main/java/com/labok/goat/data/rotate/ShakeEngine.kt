@@ -26,6 +26,7 @@ import com.labok.goat.domain.ShakeRotatePolicy
  */
 class ShakeEngine(private val context: Context) : SensorEventListener {
     private val detector = ShakeRotatePolicy.Detector().also { applyLevel(it) }
+
     /** 근접 센서가 가려져 있으면(주머니·가방 속) 흔들어도 돌리지 않는다. */
     private var covered = false
     private val main = Handler(Looper.getMainLooper())
@@ -42,7 +43,13 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
     fun start() {
         if (started) return
         started = true
-        context.registerReceiver(screen, IntentFilter().apply { addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_SCREEN_OFF) })
+        context.registerReceiver(
+            screen,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_SCREEN_OFF)
+            }
+        )
         if (context.getSystemService(PowerManager::class.java).isInteractive) listen()
     }
 
@@ -94,14 +101,26 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
             Sensor.TYPE_PROXIMITY -> covered = v[0] < event.sensor.maximumRange * 0.5f
             Sensor.TYPE_ACCELEROMETER -> {
                 // 빠른 회전용 중력: 흔드는 동안의 출렁임이 평균으로 지워지도록 느린 저역 통과(시간 상수 약 0.4초)
-                if (gravityAt == 0L) { gx = v[0]; gy = v[1] } else { gx += (v[0] - gx) * 0.1f; gy += (v[1] - gy) * 0.1f }
+                if (gravityAt == 0L) {
+                    gx = v[0]
+                    gy = v[1]
+                } else {
+                    gx += (v[0] - gx) * 0.1f
+                    gy += (v[1] - gy) * 0.1f
+                }
                 gravityAt = now
                 val shook = detector.feed(v[0], v[1], v[2], now)
                 detector.lastMiss?.let { missed(it) }
                 if (!shook) return
-                if (covered) { missed("근접 센서 가려짐(주머니 속)"); return }
+                if (covered) {
+                    missed("근접 센서 가려짐(주머니 속)")
+                    return
+                }
                 // '큰 화면에서만'이면 접은 상태(작은 화면)에서는 돌리지 않는다
-                if (ShakeRotate.largeOnly(context) && !ShakeRotate.isLargeScreen(context)) { missed("큰 화면에서만 켜져 있어 작은 화면에서는 건너뜀"); return }
+                if (ShakeRotate.largeOnly(context) && !ShakeRotate.isLargeScreen(context)) {
+                    missed("큰 화면에서만 켜져 있어 작은 화면에서는 건너뜀")
+                    return
+                }
                 if (ShakeRotate.calibrating || turning) return
                 beginTurn()
             }
@@ -144,13 +163,18 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
     private fun beginTurn() {
         before = ShakeRotate.currentRotation(context)
         // 빠른 회전(기본 켬): 든 방향이 분명하면 시스템을 기다리지 않고 바로 그 방향으로 잠근다(애매하면 아래 기존 방식)
-        if (ShakeRotate.fastTurn(context)) ShakeRotatePolicy.rotationOf(gx, gy)?.let { r ->
-            val log = LogRepository.from(context)
-            if (r == before) { log.add("흔들어서 화면 회전(빠른 회전): 든 방향이 그대로라 ${ShakeRotate.label(r)} 유지"); return }
-            if (!ShakeRotate.lock(context, r)) return
-            ShakeHaptics.play(context, detector.lastPattern, ShakeRotate.vibration(context))
-            log.add("흔들어서 화면 회전(빠른 회전): ${ShakeRotate.label(before)}($before) → ${ShakeRotate.label(r)}($r)")
-            return
+        if (ShakeRotate.fastTurn(context)) {
+            ShakeRotatePolicy.rotationOf(gx, gy)?.let { r ->
+                val log = LogRepository.from(context)
+                if (r == before) {
+                    log.add("흔들어서 화면 회전(빠른 회전): 든 방향이 그대로라 ${ShakeRotate.label(r)} 유지")
+                    return
+                }
+                if (!ShakeRotate.lock(context, r)) return
+                ShakeHaptics.play(context, detector.lastPattern, ShakeRotate.vibration(context))
+                log.add("흔들어서 화면 회전(빠른 회전): ${ShakeRotate.label(before)}($before) → ${ShakeRotate.label(r)}($r)")
+                return
+            }
         }
         val ok = runCatching { Settings.System.putInt(context.contentResolver, Settings.System.ACCELEROMETER_ROTATION, 1) }.getOrDefault(false)
         if (!ok) return
@@ -182,6 +206,7 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
     private companion object {
         /** 자동 회전을 켜 둔 채 시스템이 돌리기를 기다리는 최대 시간. */
         const val WAIT_MS = 1600L
+
         /** 돌아간 뒤 잠그기 전에 기다리는 시간. */
         const val SETTLE_MS = 250L
     }

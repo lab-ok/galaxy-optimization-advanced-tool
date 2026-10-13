@@ -1,11 +1,5 @@
 package com.labok.goat.ui.art
 
-import com.labok.goat.ui.liquid.GalaxyFont
-import androidx.compose.runtime.withFrameNanos
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -17,7 +11,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -32,6 +31,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LiquidColors
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
@@ -46,9 +46,10 @@ import com.labok.goat.ui.liquid.LocalReduceMotion
 internal fun artLoop(periodMs: Int, reverse: Boolean = false): Float {
     val reduce = LocalReduceMotion.current
     val t by rememberInfiniteTransition(label = "art").animateFloat(
-        0f, 1f,
+        0f,
+        1f,
         infiniteRepeatable(tween(periodMs, easing = if (reverse) FastOutSlowInEasing else LinearEasing), if (reverse) RepeatMode.Reverse else RepeatMode.Restart),
-        label = "t",
+        label = "t"
     )
     return if (reduce) 1f else t
 }
@@ -86,8 +87,8 @@ internal fun DrawScope.artLabel(tm: TextMeasurer, text: String, center: Offset, 
 /** 값 표시 알약. */
 internal fun DrawScope.artPill(tm: TextMeasurer, c: LiquidColors, text: String, center: Offset, filled: Boolean) {
     val l = tm.measure(text, TextStyle(fontFamily = GalaxyFont, color = if (filled) c.onInk else c.muted, fontSize = 10.sp, fontWeight = FontWeight.Bold))
-    val w = l.size.width + 14.dp.toPx(); val h = l.size.height + 6.dp.toPx()
+    val w = l.size.width + 14.dp.toPx()
+    val h = l.size.height + 6.dp.toPx()
     drawRoundRect(if (filled) c.ink else c.line, Offset(center.x - w / 2, center.y - h / 2), Size(w, h), CornerRadius(h / 2))
     drawText(l, topLeft = Offset(center.x - l.size.width / 2f, center.y - l.size.height / 2f))
 }
-

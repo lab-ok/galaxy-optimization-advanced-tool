@@ -1,23 +1,23 @@
 package com.labok.goat.data.shizuku
 
-import com.labok.goat.data.log.LogRepository
-import com.labok.goat.data.HiddenApi
-import com.labok.goat.data.UserId
 import android.Manifest
 import android.app.AppOpsManager
 import android.content.ComponentName
 import android.content.Context
-import android.provider.Settings
 import android.content.pm.PackageManager
+import android.provider.Settings
+import com.labok.goat.data.HiddenApi
+import com.labok.goat.data.UserId
 import com.labok.goat.data.appsize.AppUsage
+import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.AppDensityPolicy
+import java.lang.reflect.InvocationTargetException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
-import java.lang.reflect.InvocationTargetException
 
 /**
  * Shizuku 연동. Shizuku가 켜져 있고 GOAT를 허용했으면 셸 권한이 필요한 일을 PC 없이 한다(ShizukuBinderWrapper).
@@ -33,15 +33,22 @@ object ShizukuAccess {
 
     private val state = MutableStateFlow(State.NOT_RUNNING)
     val status: StateFlow<State> = state.asStateFlow()
+
     @Volatile private var installed = false
     private val started = java.util.concurrent.atomic.AtomicBoolean(false)
 
     /** 상태 감시를 시작한다. 여러 번 불러도 한 번만 등록한다. */
     fun watch(context: Context) {
-        installed = runCatching { context.packageManager.getPackageInfo(PACKAGE, 0); true }.getOrDefault(false)
+        installed = runCatching {
+            context.packageManager.getPackageInfo(PACKAGE, 0)
+            true
+        }.getOrDefault(false)
         if (started.compareAndSet(false, true)) {
             val app = context.applicationContext
-            Shizuku.addBinderReceivedListenerSticky { refresh(); autoDisableWirelessDebug(app) }
+            Shizuku.addBinderReceivedListenerSticky {
+                refresh()
+                autoDisableWirelessDebug(app)
+            }
             Shizuku.addBinderDeadListener { refresh() }
             Shizuku.addRequestPermissionResultListener { _, _ -> refresh() }
         }
@@ -58,8 +65,7 @@ object ShizukuAccess {
     }
 
     /** 무선 디버깅이 켜져 있는지. */
-    fun wirelessDebugOn(context: Context): Boolean =
-        Settings.Global.getInt(context.contentResolver, "adb_wifi_enabled", 0) == 1
+    fun wirelessDebugOn(context: Context): Boolean = Settings.Global.getInt(context.contentResolver, "adb_wifi_enabled", 0) == 1
 
     /** 'Shizuku가 켜지면 무선 디버깅 끄기' 옵션(기본 꺼짐). */
     fun autoOffEnabled(context: Context) = prefs(context).getBoolean("wireless_auto_off", false)
@@ -124,15 +130,20 @@ object ShizukuAccess {
         val m = pm.javaClass.methods.first { it.name == "grantRuntimePermission" && it.parameterTypes.size >= 3 }
         val types = m.parameterTypes
         val args = arrayOfNulls<Any>(types.size)
-        args[0] = context.packageName; args[1] = perm
+        args[0] = context.packageName
+        args[1] = perm
         for (k in 2 until types.size) {
             args[k] = when {
                 k == types.lastIndex -> user
-                types[k] == String::class.java -> "default:0"  // VirtualDeviceManager.PERSISTENT_DEVICE_ID_DEFAULT
-                else -> 0                                     // Context.DEVICE_ID_DEFAULT
+                types[k] == String::class.java -> "default:0" // VirtualDeviceManager.PERSISTENT_DEVICE_ID_DEFAULT
+                else -> 0 // Context.DEVICE_ID_DEFAULT
             }
         }
-        try { m.invoke(pm, *args) } catch (e: InvocationTargetException) { throw e.targetException }
+        try {
+            m.invoke(pm, *args)
+        } catch (e: InvocationTargetException) {
+            throw e.targetException
+        }
         context.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED
     }.getOrDefault(false).also { LogRepository.from(context).add("Shizuku로 WRITE_SECURE_SETTINGS 받기: ${if (it) "성공" else "실패"}") }
 
@@ -150,9 +161,7 @@ object ShizukuAccess {
         if (Shizuku.pingBinder()) Shizuku.requestPermission(REQUEST)
     }
 
-    internal fun atm(): Any {
-        return HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
-    }
+    internal fun atm(): Any = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
 
     private fun call(name: String, size: Int, vararg args: Any): Any? {
         val svc = atm()

@@ -93,15 +93,29 @@ class ScreenshotTest {
         compose.onRoot().captureRoboImage("build/outputs/roborazzi/$name.png")
     }
 
-    @Test fun home_setup_needed() { prepare(granted = false, learned = false); shotHome("01_home_setup_needed") }
+    @Test fun home_setup_needed() {
+        prepare(granted = false, learned = false)
+        shotHome("01_home_setup_needed")
+    }
 
-    @Test fun home_ready() { prepare(granted = true, learned = true); shotHome("02_home_ready") }
+    @Test fun home_ready() {
+        prepare(granted = true, learned = true)
+        shotHome("02_home_ready")
+    }
 
     @Config(qualifiers = "$COVER-night")
-    @Test fun home_ready_dark() { prepare(granted = true, learned = true); shotHome("03_home_ready_dark") }
+    @Test
+    fun home_ready_dark() {
+        prepare(granted = true, learned = true)
+        shotHome("03_home_ready_dark")
+    }
 
     @Config(qualifiers = MAIN)
-    @Test fun home_ready_inner() { prepare(granted = true, learned = true); shotHome("04_home_ready_inner") }
+    @Test
+    fun home_ready_inner() {
+        prepare(granted = true, learned = true)
+        shotHome("04_home_ready_inner")
+    }
 
     private fun fakeState(): UiState {
         prepare(granted = true, learned = true)
@@ -112,19 +126,29 @@ class ScreenshotTest {
             plan = plan, activeScreen = OUTER, effective = plan?.targetFor(OUTER),
             displays = listOf(
                 DisplayDensity(0, OUTER, 420, 360, true),
-                DisplayDensity(1, INNER, 420, 337, true),
+                DisplayDensity(1, INNER, 420, 337, true)
             ),
-            inactivePpi = mapOf(INNER.key to 404.2f),
+            inactivePpi = mapOf(INNER.key to 404.2f)
         )
     }
 
-    @Test fun sheet_help() { val st = fakeState(); shotContent("05_sheet_help") { HelpSheet(st, onOpenGuide = {}) } }
+    @Test fun sheet_help() {
+        val st = fakeState()
+        shotContent("05_sheet_help") { HelpSheet(st, onOpenGuide = {}) }
+    }
 
-    @Test fun sheet_guide() { shotContent("06_sheet_guide") { GrantGuideSheet(hasPermission = false, onCopied = {}) } }
+    @Test fun sheet_guide() {
+        shotContent("06_sheet_guide") { GrantGuideSheet(hasPermission = false, onCopied = {}) }
+    }
 
-    @Test fun sheet_advanced() { val st = fakeState(); shotContent("07_sheet_advanced") { AdvancedSheet(st, onClearLogs = {}) } }
+    @Test fun sheet_advanced() {
+        val st = fakeState()
+        shotContent("07_sheet_advanced") { AdvancedSheet(st, onClearLogs = {}) }
+    }
 
-    @Test fun sheet_about() { shotContent("08_sheet_about") { AboutSheet(onMail = {}) } }
+    @Test fun sheet_about() {
+        shotContent("08_sheet_about") { AboutSheet(onMail = {}) }
+    }
 
     private companion object {
         val OUTER = ScreenInfo("1248x1972", 428.2f, 5.45f)

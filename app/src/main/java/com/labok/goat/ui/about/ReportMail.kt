@@ -1,14 +1,14 @@
 package com.labok.goat.ui.about
 
-import com.labok.goat.data.log.LogRepository
+import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.ClipData
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import com.labok.goat.AppInfo
+import com.labok.goat.data.log.LogRepository
 
 /**
  * 개발자에게 보내는 메일.

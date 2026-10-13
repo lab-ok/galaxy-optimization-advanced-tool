@@ -35,7 +35,8 @@ fun LiquidLoader(label: String, modifier: Modifier = Modifier) {
             val u = size.width / 156f
             val s = ((1 - cos(t * 2 * PI)) / 2).toFloat()
             val off = 48f * (1 - s) * u
-            val cx = size.width / 2; val cy = size.height / 2
+            val cx = size.width / 2
+            val cy = size.height / 2
             val side = 11f * (1 - 0.25f * s) * u
             drawCircle(c.ink, side, Offset(cx - off, cy))
             drawCircle(c.ink, side, Offset(cx + off, cy))

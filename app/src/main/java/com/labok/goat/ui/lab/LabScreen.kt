@@ -1,6 +1,5 @@
 package com.labok.goat.ui.lab
 
-import com.labok.goat.ui.components.Gap
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -32,13 +31,14 @@ import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.log.PublicLogFile
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 /**
  * 실험실 '조사 도구'. 기능을 만들 때 기기 설정과 시스템 함수를 살펴보는 시험 화면이다.
@@ -63,13 +63,14 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
             .padding(horizontal = 16.dp)
-            .padding(top = 4.dp, bottom = 28.dp),
+            .padding(top = 4.dp, bottom = 28.dp)
     ) {
         GlassCard {
             Text("조사 도구", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "기능을 만들 때 기기의 설정·시스템 함수를 살펴보는 실험실 도구입니다. 결과는 파일로 저장해 보낼 수 있습니다.",
-                color = c.muted, style = MaterialTheme.typography.bodySmall,
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
             )
         }
         Spacer(Modifier.height(Gap.Card))
@@ -77,7 +78,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             Text("설정 변경 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "① [바꾸기 전 저장]을 누릅니다.\n② 설정 → 디스플레이 → 앱 화면 크게/작게에서 앱 하나의 값을 바꿉니다.\n③ 돌아와 [바꾼 뒤 비교]를 누르면 바뀐 설정 키를 파일로 저장하고 공유 창을 엽니다.",
-                color = c.muted, style = MaterialTheme.typography.bodySmall,
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Card))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -118,7 +120,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             Text("시스템 함수 탐색", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "기기의 시스템 서비스를 모두 훑어 화면 밀도·확대·배율과 관련된 함수 목록을 파일로 만듭니다. 함수를 실행하지는 않습니다.",
-                color = c.muted, style = MaterialTheme.typography.bodySmall,
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
             LiquidButton(if (probing) "탐색 중…" else "탐색하고 파일로 보내기", modifier = Modifier.fillMaxWidth(), enabled = !probing, onClick = {

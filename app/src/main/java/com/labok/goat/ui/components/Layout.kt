@@ -35,18 +35,19 @@ internal val ContentMaxWidth = 640.dp
 
 /** 기능 화면 목록의 여백: 좌우 16dp, 제목 줄·내비게이션 막대 아래로 내용이 비치도록 위아래는 안쪽 여백에 더한다. */
 internal fun featurePadding(inner: PaddingValues) = PaddingValues(
-    start = 16.dp, end = 16.dp,
+    start = 16.dp,
+    end = 16.dp,
     top = inner.calculateTopPadding() + 4.dp,
-    bottom = inner.calculateBottomPadding() + 28.dp,
+    bottom = inner.calculateBottomPadding() + 28.dp
 )
 
 /** 아래에서 올라오는 시트의 공통 골격: 세로 스크롤, 좌우 20dp, 내비게이션 막대 위로 28dp. [title]이 있으면 맨 위에 큰 제목. */
 @Composable
 internal fun SheetColumn(
-    title: String? = null,
     modifier: Modifier = Modifier,
+    title: String? = null,
     horizontalAlignment: androidx.compose.ui.Alignment.Horizontal = androidx.compose.ui.Alignment.Start,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         modifier
@@ -54,7 +55,7 @@ internal fun SheetColumn(
             .padding(horizontal = 20.dp)
             .navigationBarsPadding()
             .padding(bottom = 28.dp),
-        horizontalAlignment = horizontalAlignment,
+        horizontalAlignment = horizontalAlignment
     ) {
         if (title != null) {
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = LocalLiquid.current.ink)
@@ -74,7 +75,7 @@ internal fun DangerConfirmBox(message: String, note: String? = null, actions: @C
             .fillMaxWidth()
             .background(c.danger.copy(alpha = 0.08f), shape)
             .border(1.dp, c.danger.copy(alpha = 0.5f), shape)
-            .padding(14.dp),
+            .padding(14.dp)
     ) {
         Text("⚠ $message", color = c.danger, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
         if (note != null) Text(note, color = c.muted, style = MaterialTheme.typography.bodySmall)

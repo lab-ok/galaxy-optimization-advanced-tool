@@ -1,15 +1,5 @@
 package com.labok.goat.ui.about
 
-import com.labok.goat.ui.liquid.SoftBlobState
-import kotlin.math.sin
-import kotlin.math.cos
-import kotlin.math.PI
-import kotlinx.coroutines.delay
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.unit.Dp
-import com.labok.goat.ui.nav.rememberGoatMood
-import com.labok.goat.ui.nav.goatPainter
-import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -21,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,27 +29,30 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.labok.goat.R
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.liquid.SoftBlobState
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.nudge
 import com.labok.goat.ui.liquid.poke
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.liquid.rememberSoftBlob
+import com.labok.goat.ui.nav.goatPainter
+import com.labok.goat.ui.nav.rememberGoatMood
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.sin
 import kotlin.math.tanh
+import kotlinx.coroutines.delay
 
 /**
  * 앱 정보 머리: 사이드바 머리([com.labok.goat.ui.nav.DrawerHeader])와 같은 리퀴드 로고.
@@ -75,7 +69,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
     val logoR = logoS * LOGO_CORNER
     val logoTop = with(d) { 8.dp.toPx() }
     val maxPull = with(d) { 22.dp.toPx() }
-    val unit = logoS / 72f  // 아이콘 벡터 72칸 → px
+    val unit = logoS / 72f // 아이콘 벡터 72칸 → px
 
     var box by remember { mutableStateOf(IntSize.Zero) }
     val logo = rememberSoftBlob()
@@ -115,10 +109,16 @@ internal fun AboutHeader(title: String, subtitle: String) {
                     val p = down.position
                     if (hypot(p.x - cx(), p.y - cy()) > logoS * 0.75f) return@awaitEachGesture
                     haptics.press()
-                    if (mood.press()) haptics.reject() else if (mood.startedCrying) haptics.snap()
+                    if (mood.press()) {
+                        haptics.reject()
+                    } else if (mood.startedCrying) {
+                        haptics.snap()
+                    }
                     val k = mood.impulse
                     // 누른 자리를 안쪽으로 밀어 움푹 들어가게 하고, 염소 방울은 반대로 튕긴다
-                    val dx = cx() - p.x; val dy = cy() - p.y; val l = hypot(dx, dy).coerceAtLeast(1f)
+                    val dx = cx() - p.x
+                    val dy = cy() - p.y
+                    val l = hypot(dx, dy).coerceAtLeast(1f)
                     logo.poke(p.x, p.y, dx / l * 1600f * k, dy / l * 1600f * k, logoS * 0.5f)
                     drop.poke(cx(), cy(), (p.x - cx()) * -14f * k, (p.y - cy()) * -14f * k, logoS)
                     var total = Offset.Zero
@@ -126,17 +126,20 @@ internal fun AboutHeader(title: String, subtitle: String) {
                         total += change.positionChange()
                         change.consume()
                         // 고무줄: 멀리 끌수록 덜 늘어난다
-                        val rx = maxPull * tanh(total.x / (maxPull * 3)); val ry = maxPull * tanh(total.y / (maxPull * 3))
+                        val rx = maxPull * tanh(total.x / (maxPull * 3))
+                        val ry = maxPull * tanh(total.y / (maxPull * 3))
                         logo.nudge(cx() + rx, cy() + ry)
                         drop.nudge(cx() + rx, cy() + ry)
                     }
-                    logo.nudge(cx(), cy()); drop.nudge(cx(), cy())
+                    logo.nudge(cx(), cy())
+                    drop.nudge(cx(), cy())
                 }
-            },
+            }
     ) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Canvas(Modifier.fillMaxWidth().height(84.dp + 16.dp)) {
-                logo.frame; drop.frame
+                logo.frame
+                drop.frame
                 if (!logo.blob.ready || !drop.blob.ready) return@Canvas
                 logo.blob.path(path)
                 drawPath(path, Color(0xFF111111))
@@ -159,7 +162,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
                         translationX = dx * 0.6f
                         translationY = dy * 0.6f + (1f - k) * 10.dp.toPx()
                     },
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
                 Text(subtitle, color = c.muted, style = MaterialTheme.typography.bodyMedium)
@@ -216,25 +219,34 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
                     val down = awaitFirstDown()
                     val p = down.position
                     haptics.press()
-                    if (mood.press()) haptics.reject() else if (mood.startedCrying) haptics.snap()
+                    if (mood.press()) {
+                        haptics.reject()
+                    } else if (mood.startedCrying) {
+                        haptics.snap()
+                    }
                     if (reduce) return@awaitEachGesture
                     val k = mood.impulse
-                    val dx = cx() - p.x; val dy = cy() - p.y; val l = hypot(dx, dy).coerceAtLeast(1f)
+                    val dx = cx() - p.x
+                    val dy = cy() - p.y
+                    val l = hypot(dx, dy).coerceAtLeast(1f)
                     logo.poke(p.x, p.y, dx / l * 1600f * k, dy / l * 1600f * k, logoS * 0.5f)
                     drop.poke(cx(), cy(), (p.x - cx()) * -14f * k, (p.y - cy()) * -14f * k, logoS)
                     var total = Offset.Zero
                     drag(down.id) { change ->
                         total += change.positionChange()
                         change.consume()
-                        val rx = maxPull * tanh(total.x / (maxPull * 3)); val ry = maxPull * tanh(total.y / (maxPull * 3))
+                        val rx = maxPull * tanh(total.x / (maxPull * 3))
+                        val ry = maxPull * tanh(total.y / (maxPull * 3))
                         logo.nudge(cx() + rx, cy() + ry)
                         drop.nudge(cx() + rx, cy() + ry)
                     }
-                    logo.nudge(cx(), cy()); drop.nudge(cx(), cy())
+                    logo.nudge(cx(), cy())
+                    drop.nudge(cx(), cy())
                 }
-            },
+            }
     ) {
-        logo.frame; drop.frame
+        logo.frame
+        drop.frame
         if (!logo.blob.ready || !drop.blob.ready) return@Canvas
         logo.blob.path(path)
         drawPath(path, Color(0xFF111111))
@@ -258,7 +270,8 @@ internal suspend fun idleRipple(logo: SoftBlobState, drop: SoftBlobState, cx: ()
     while (true) {
         delay(3000L + rnd.nextLong(3000L))
         val a = rnd.nextFloat() * 2f * PI.toFloat()
-        val ex = cx() + cos(a) * logoS / 2; val ey = cy() + sin(a) * logoS / 2
+        val ex = cx() + cos(a) * logoS / 2
+        val ey = cy() + sin(a) * logoS / 2
         logo.poke(ex, ey, -cos(a) * 520f, -sin(a) * 520f, logoS * 0.45f)
         drop.poke(cx(), cy(), cos(a) * 60f, sin(a) * 60f, logoS)
     }

@@ -1,14 +1,9 @@
 package com.labok.goat.ui.appsize
 
-import android.content.pm.PackageManager
-import com.labok.goat.data.log.LogRepository
-import com.labok.goat.ui.components.Gap
-import com.labok.goat.ui.components.featurePadding
-import com.labok.goat.ui.components.ContentMaxWidth
-import com.labok.goat.domain.AppDensityPolicy
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -78,13 +73,18 @@ import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.AppList
 import com.labok.goat.data.appsize.AppUsage
 import com.labok.goat.data.appsize.DensityShell
+import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.domain.AppDensityPolicy
+import com.labok.goat.ui.components.ContentMaxWidth
+import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
+import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidTextField
-import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.text.Copy
@@ -93,7 +93,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private class AppEntry(val label: String, val pkg: String, val icon: ImageBitmap?, val lastUsed: Long)
-
 
 /**
  * 앱별 화면 배율 설정: 삼성 '앱 화면 크게/작게'와 같은 설정을 GOAT에서 바꾼다.
@@ -124,12 +123,15 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
     val shown = remember { mutableSetOf<String>() }
     val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         LogRepository.from(context).add("알림 권한 요청(알림창 앱 배율): ${if (granted) "허용" else "거부"}")
-        if (granted) { notify = true; AppDensityNotifier.setEnabled(context, true) }
+        if (granted) {
+            notify = true
+            AppDensityNotifier.setEnabled(context, true)
+        }
     }
 
     LaunchedEffect(Unit) {
         ShizukuAccess.watch(context)
-        AppDensityNotifier.start(context)  // 켜 둔 알림 조절이 업데이트 등으로 멈춰 있으면 다시 띄운다
+        AppDensityNotifier.start(context) // 켜 둔 알림 조절이 업데이트 등으로 멈춰 있으면 다시 띄운다
     }
     // 다른 곳(알림창·삼성 설정)에서 바꾸고 돌아와도 바로 보이도록 돌아올 때마다 다시 읽는다
     LifecycleResumeEffect(Unit) {
@@ -145,7 +147,11 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
     }
     LaunchedEffect(ready, shell, apps, changed, resumed) {
         val list = apps
-        if (!ready || list == null) { supported = null; values = emptyMap(); return@LaunchedEffect }
+        if (!ready || list == null) {
+            supported = null
+            values = emptyMap()
+            return@LaunchedEffect
+        }
         // 이전 값은 그대로 두고 새 값으로 한꺼번에 바꾼다(다시 읽는 동안 '…'로 깜빡이지 않게). 읽기는 IO, 대입은 메인에서.
         val (ok, read) = withContext(Dispatchers.IO) {
             val ok = runCatching { DensityShell.supported() }.getOrDefault(false)
@@ -167,8 +173,16 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
 
     fun applyDensity(app: AppEntry, dpi: Int) {
         scope.launch {
-            val now = withContext(Dispatchers.IO) { runCatching { DensityShell.set(context, app.pkg, dpi); DensityShell.get(context, app.pkg) } }
-            now.onSuccess { values = values + (app.pkg to it); message = "${app.label}: ${if (it == 0) Copy.APP_SIZE_DEFAULT else "$it dpi"}" }
+            val now = withContext(Dispatchers.IO) {
+                runCatching {
+                    DensityShell.set(context, app.pkg, dpi)
+                    DensityShell.get(context, app.pkg)
+                }
+            }
+            now.onSuccess {
+                values = values + (app.pkg to it)
+                message = "${app.label}: ${if (it == 0) Copy.APP_SIZE_DEFAULT else "$it dpi"}"
+            }
                 .onFailure { message = "${Copy.APP_SIZE_FAILED}${it.message}" }
         }
     }
@@ -182,7 +196,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = featurePadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
     ) {
         item(key = "intro") {
             Appear("intro", 0, shown) {
@@ -232,12 +246,18 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                     if (on && !ExternalChangeNotifier.canNotify(context) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                         notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                                     } else {
-                                        notify = on; AppDensityNotifier.setEnabled(context, on)
+                                        notify = on
+                                        AppDensityNotifier.setEnabled(context, on)
                                     }
                                 })
                             }
                             // 켜기 전에는 알림창 조절이 어떻게 동작하는지 그림으로 보여 준다
-                            AnimatedVisibility(!notify) { Column { Spacer(Modifier.height(Gap.Item)); NotifyArt() } }
+                            AnimatedVisibility(!notify) {
+                                Column {
+                                    Spacer(Modifier.height(Gap.Item))
+                                    NotifyArt()
+                                }
+                            }
                             if (!usage) {
                                 Spacer(Modifier.height(Gap.Item))
                                 Text(Copy.APP_SIZE_USAGE_NEEDED, color = c.danger, style = MaterialTheme.typography.bodySmall)
@@ -262,27 +282,37 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                         }
                     }
                 }
-                if (home != null) item(key = "home") {
-                    Appear("home", 2, shown) {
-                        GlassCard {
-                            Text(Copy.APP_SIZE_HOME_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                            Text(Copy.APP_SIZE_HOME_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                            Spacer(Modifier.height(Gap.Item))
-                            LiquidChips(
-                                options = listOf(0) + AppDensityPolicy.STEPS,
-                                selected = homeValue?.takeIf { it == 0 || it in AppDensityPolicy.STEPS } ?: 0,
-                                label = { if (it == 0) Copy.APP_SIZE_DEFAULT else "$it" },
-                                onSelect = { dpi ->
-                                    scope.launch {
-                                        val now = withContext(Dispatchers.IO) { runCatching { DensityShell.set(context, home, dpi); DensityShell.get(context, home) } }
-                                        now.onSuccess { homeValue = it; message = "${Copy.APP_SIZE_HOME_TITLE}: ${if (it == 0) Copy.APP_SIZE_DEFAULT else "$it dpi"}" }
-                                            .onFailure { message = "${Copy.APP_SIZE_FAILED}${it.message}" }
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            Spacer(Modifier.height(Gap.Item))
-                            Text(Copy.APP_SIZE_HOME_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                if (home != null) {
+                    item(key = "home") {
+                        Appear("home", 2, shown) {
+                            GlassCard {
+                                Text(Copy.APP_SIZE_HOME_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                                Text(Copy.APP_SIZE_HOME_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                                Spacer(Modifier.height(Gap.Item))
+                                LiquidChips(
+                                    options = listOf(0) + AppDensityPolicy.STEPS,
+                                    selected = homeValue?.takeIf { it == 0 || it in AppDensityPolicy.STEPS } ?: 0,
+                                    label = { if (it == 0) Copy.APP_SIZE_DEFAULT else "$it" },
+                                    onSelect = { dpi ->
+                                        scope.launch {
+                                            val now = withContext(Dispatchers.IO) {
+                                                runCatching {
+                                                    DensityShell.set(context, home, dpi)
+                                                    DensityShell.get(context, home)
+                                                }
+                                            }
+                                            now.onSuccess {
+                                                homeValue = it
+                                                message = "${Copy.APP_SIZE_HOME_TITLE}: ${if (it == 0) Copy.APP_SIZE_DEFAULT else "$it dpi"}"
+                                            }
+                                                .onFailure { message = "${Copy.APP_SIZE_FAILED}${it.message}" }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                Spacer(Modifier.height(Gap.Item))
+                                Text(Copy.APP_SIZE_HOME_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }
@@ -290,9 +320,11 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                     Appear("search", 2, shown) {
                         Column(Modifier.widthIn(max = ContentMaxWidth)) {
                             LiquidTextField(
-                                query, { query = it }, "앱 이름 검색",
+                                query,
+                                { query = it },
+                                "앱 이름 검색",
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                                leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) },
+                                leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) }
                             )
                             AnimatedVisibility(message.isNotEmpty()) {
                                 Column {
@@ -303,15 +335,19 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                         }
                     }
                 }
-                if (apps == null) item(key = "loading") {
-                    LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp))
+                if (apps == null) {
+                    item(key = "loading") {
+                        LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp))
+                    }
                 }
                 if (applied.isNotEmpty()) {
                     item(key = "h-applied") {
                         Section("적용된 앱 ${applied.size}", Modifier.animateItem()) {
                             Text(
-                                Copy.APP_SIZE_RESET_ACTION, color = c.danger, style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onReset).padding(horizontal = 8.dp, vertical = 6.dp),
+                                Copy.APP_SIZE_RESET_ACTION,
+                                color = c.danger,
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onReset).padding(horizontal = 8.dp, vertical = 6.dp)
                             )
                         }
                     }
@@ -320,8 +356,10 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                     }
                 }
                 item(key = "h-rest") { Section(if (usage) "최근 사용 순" else "모든 앱(이름 순)", Modifier.animateItem()) }
-                if (apps != null && rest.isEmpty()) item(key = "empty") {
-                    Text("찾는 앱이 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(6.dp))
+                if (apps != null && rest.isEmpty()) {
+                    item(key = "empty") {
+                        Text("찾는 앱이 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(6.dp))
+                    }
                 }
                 items(rest, key = { it.pkg }) { app ->
                     AppRow(app, values[app.pkg], open == app.pkg, { open = if (open == app.pkg) null else app.pkg }, { applyDensity(app, it) }, Modifier.animateItem())
@@ -341,7 +379,12 @@ private fun Appear(key: String, order: Int, shown: MutableSet<String>, content: 
     val k = remember { Animatable(if (reduce || key in shown) 1f else 0f) }
     shown += key
     LaunchedEffect(Unit) { k.animateTo(1f, tween(360, delayMillis = 70 * order, easing = FastOutSlowInEasing)) }
-    Box(Modifier.widthIn(max = ContentMaxWidth).graphicsLayer { alpha = k.value; translationY = (1f - k.value) * 18.dp.toPx() }) { content() }
+    Box(
+        Modifier.widthIn(max = ContentMaxWidth).graphicsLayer {
+            alpha = k.value
+            translationY = (1f - k.value) * 18.dp.toPx()
+        }
+    ) { content() }
 }
 
 @Composable
@@ -362,7 +405,7 @@ private fun AppRow(
     expanded: Boolean,
     onToggle: () -> Unit,
     onSelect: (Int) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val c = LocalLiquid.current
     val on = value != null && value > 0
@@ -374,14 +417,14 @@ private fun AppRow(
             .fillMaxWidth()
             .clip(shape)
             .background(c.surface)
-            .border(1.dp, border, shape),
+            .border(1.dp, border, shape)
     ) {
         Row(
             Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onToggle)
                 .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
             Spacer(Modifier.width(12.dp))
@@ -397,12 +440,18 @@ private fun AppRow(
                 AnimatedContent(
                     value,
                     transitionSpec = { (slideInVertically { it } + fadeIn()) togetherWith (slideOutVertically { -it } + fadeOut()) },
-                    label = "value",
+                    label = "value"
                 ) { v ->
                     Text(
-                        when (v) { null -> "…"; -1 -> "?"; 0 -> Copy.APP_SIZE_DEFAULT; else -> "$v" },
-                        color = ink, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
-                        style = MaterialTheme.typography.labelMedium,
+                        when (v) {
+                            null -> "…"
+                            -1 -> "?"
+                            0 -> Copy.APP_SIZE_DEFAULT
+                            else -> "$v"
+                        },
+                        color = ink,
+                        fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
             }
@@ -414,7 +463,7 @@ private fun AppRow(
                     selected = value?.takeIf { it == 0 || it in AppDensityPolicy.STEPS } ?: 0,
                     label = { if (it == 0) Copy.APP_SIZE_DEFAULT else "$it" },
                     onSelect = onSelect,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(Gap.Item))
                 Text(Copy.APP_SIZE_ROW_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 4.dp))

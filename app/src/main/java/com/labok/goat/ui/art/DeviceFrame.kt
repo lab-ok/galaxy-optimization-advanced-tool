@@ -24,7 +24,7 @@ internal fun DrawScope.deviceFrame(
     topLeft: Offset,
     size: Size,
     emphasis: Float = 1f,
-    glow: Float = 0f,
+    glow: Float = 0f
 ): Rect {
     val base = size.height
     val bezel = maxOf(base * BEZEL, 2.5.dp.toPx())
@@ -33,8 +33,11 @@ internal fun DrawScope.deviceFrame(
     val r = CornerRadius(base * FoldGeometry.SCREEN_CORNER)
     drawRoundRect(c.surface, screen.topLeft, screen.size, r)
     drawRoundRect(
-        c.ink.copy(alpha = 0.10f + 0.10f * glow), screen.topLeft, screen.size, r,
-        style = Stroke(2.dp.toPx() + 2.dp.toPx() * glow),
+        c.ink.copy(alpha = 0.10f + 0.10f * glow),
+        screen.topLeft,
+        screen.size,
+        r,
+        style = Stroke(2.dp.toPx() + 2.dp.toPx() * glow)
     )
     return screen
 }

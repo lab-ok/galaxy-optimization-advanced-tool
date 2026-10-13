@@ -1,7 +1,5 @@
 package com.labok.goat.ui.appsize
 
-import com.labok.goat.data.log.LogRepository
-import com.labok.goat.ui.text.Copy
 import android.app.Activity
 import android.content.res.Resources
 import android.os.Build
@@ -11,10 +9,12 @@ import android.os.Looper
 import android.widget.Toast
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.AppUsage
-import com.labok.goat.domain.AppDensityPolicy
 import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.appsize.ForegroundWatcher
+import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.domain.AppDensityPolicy
+import com.labok.goat.ui.text.Copy
 import rikka.shizuku.Shizuku
 
 /**
@@ -26,20 +26,35 @@ class DensityStepActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // 처리 중에 접거나 펴서 다시 만들어진 경우: 같은 단계를 두 번 적용하지 않게 바로 닫는다
-        if (savedInstanceState != null) { finish(); return }
+        if (savedInstanceState != null) {
+            finish()
+            return
+        }
         val step = intent.getIntExtra(EXTRA_STEP, 0)
         val main = Handler(Looper.getMainLooper())
         Thread {
             // 방금 쓰던 앱: 작업 스택 감시가 돌고 있으면 그 값, 아니면 사용 기록(기기에 따라 늦을 수 있음). 사용 기록 읽기는 무거워 작업 스레드에서 한다.
             val target = if (ForegroundWatcher.running) ForegroundWatcher.current else AppUsage.foregroundApp(this)
             val msg = runCatching { change(target, step) }.getOrElse { "${Copy.APP_SIZE_FAILED}${it.message}" }
-            LogRepository.from(this).add("알림창 배율 ${if (step < 0) "작게" else if (step > 0) "크게" else "기본"}: ${target ?: "앱 없음"} → $msg")
+            LogRepository.from(this).add(
+                "알림창 배율 ${if (step < 0) {
+                    "작게"
+                } else if (step > 0) {
+                    "크게"
+                } else {
+                    "기본"
+                }}: ${target ?: "앱 없음"} → $msg"
+            )
             main.post {
                 AppDensityNotifier.show(this, msg)
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
                 finish()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
-                else @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+                } else {
+                    @Suppress("DEPRECATION")
+                    overridePendingTransition(0, 0)
+                }
             }
         }.start()
     }

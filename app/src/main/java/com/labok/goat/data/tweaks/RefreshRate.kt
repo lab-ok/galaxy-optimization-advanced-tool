@@ -30,7 +30,7 @@ object RefreshRate {
     enum class Choice(val label: String, val desc: String) {
         SYSTEM(Copy.REFRESH_SYSTEM, Copy.REFRESH_SYSTEM_DESC),
         SMOOTH(Copy.REFRESH_SMOOTH, Copy.REFRESH_SMOOTH_DESC),
-        SAVER(Copy.REFRESH_SAVER, Copy.REFRESH_SAVER_DESC),
+        SAVER(Copy.REFRESH_SAVER, Copy.REFRESH_SAVER_DESC)
     }
 
     /** 이 기기 기본 화면이 지원하는 주사율(정수 Hz, 오름차순). */
@@ -45,8 +45,7 @@ object RefreshRate {
     fun supported(context: Context) = max(context) > 60
 
     /** 지금 화면이 실제로 그리는 주사율(Hz). */
-    fun now(context: Context): Int =
-        context.getSystemService(DisplayManager::class.java)?.getDisplay(Display.DEFAULT_DISPLAY)?.refreshRate?.roundToInt() ?: 60
+    fun now(context: Context): Int = context.getSystemService(DisplayManager::class.java)?.getDisplay(Display.DEFAULT_DISPLAY)?.refreshRate?.roundToInt() ?: 60
 
     /** 설정에 적힌 값(키가 없으면 null). */
     data class Values(val peak: Float?, val min: Float?, val mode: Int?)
@@ -56,7 +55,7 @@ object RefreshRate {
         return Values(
             runCatching { Settings.System.getString(r, PEAK)?.toFloat() }.getOrNull(),
             runCatching { Settings.System.getString(r, MIN)?.toFloat() }.getOrNull(),
-            runCatching { Settings.Secure.getString(r, MODE)?.toInt() }.getOrNull(),
+            runCatching { Settings.Secure.getString(r, MODE)?.toInt() }.getOrNull()
         )
     }
 
@@ -80,11 +79,15 @@ object RefreshRate {
         return when (choice) {
             Choice.SMOOTH -> listOfNotNull(put("system", PEAK, top.toFloat()), put("system", MIN, top.toFloat()), if (samsung) put("secure", MODE, 1) else null)
             Choice.SAVER -> listOfNotNull(put("system", PEAK, 60f), put("system", MIN, 60f), if (samsung) put("secure", MODE, 0) else null)
-            Choice.SYSTEM -> if (original == null) emptyList() else listOfNotNull(
-                original.peak?.let { put("system", PEAK, it) } ?: del("system", PEAK),
-                original.min?.let { put("system", MIN, it) } ?: del("system", MIN),
-                if (samsung) original.mode?.let { put("secure", MODE, it) } ?: del("secure", MODE) else null,
-            )
+            Choice.SYSTEM -> if (original == null) {
+                emptyList()
+            } else {
+                listOfNotNull(
+                    original.peak?.let { put("system", PEAK, it) } ?: del("system", PEAK),
+                    original.min?.let { put("system", MIN, it) } ?: del("system", MIN),
+                    if (samsung) original.mode?.let { put("secure", MODE, it) } ?: del("secure", MODE) else null
+                )
+            }
         }
     }
 
@@ -111,11 +114,13 @@ object RefreshRate {
         val ok = r?.ok == true && if (choice == Choice.SYSTEM) values(context) == original else after == choice
         // 시스템 기본으로 돌아갔으면 처음 값 기억을 지운다(다음 고정 때 그때 값을 새로 남긴다)
         if (choice == Choice.SYSTEM && ok) prefs(context).edit().clear().apply()
-        log.add("주사율 고정($how): ${before.label} → ${after.label}" + when {
-            r == null -> " 실패(Shizuku 연결 안 됨)"
-            !ok -> " 실패(${r.err.ifBlank { "결과 다름" }.take(80)})"
-            else -> ""
-        })
+        log.add(
+            "주사율 고정($how): ${before.label} → ${after.label}" + when {
+                r == null -> " 실패(Shizuku 연결 안 됨)"
+                !ok -> " 실패(${r.err.ifBlank { "결과 다름" }.take(80)})"
+                else -> ""
+            }
+        )
         return ok
     }
 
@@ -129,7 +134,7 @@ object RefreshRate {
         return Values(
             if (p.contains("peak")) p.getFloat("peak", 0f) else null,
             if (p.contains("min")) p.getFloat("min", 0f) else null,
-            if (p.contains("mode")) p.getInt("mode", 0) else null,
+            if (p.contains("mode")) p.getInt("mode", 0) else null
         )
     }
 

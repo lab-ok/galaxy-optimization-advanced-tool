@@ -76,7 +76,7 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = featurePadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
     ) {
         item(key = "intro") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
@@ -88,13 +88,15 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 }
             }
         }
-        if (!ready) item(key = "connect") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.DARK_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.DARK_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.DARK_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+        if (!ready) {
+            item(key = "connect") {
+                Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                    GlassCard {
+                        Text(Copy.DARK_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.DARK_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.DARK_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                    }
                 }
             }
         }
@@ -109,10 +111,14 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                             state.forced == true -> Copy.DARK_FORCE_ON
                             else -> Copy.DARK_FORCE_OFF
                         },
-                        state.forced == true, ready && !busy && state.forced != null,
+                        state.forced == true,
+                        ready && !busy && state.forced != null
                     ) { on -> change({ ForceDark.setForced(context, on, "스위치") }, if (on) Copy.DARK_TOAST_FORCE_ON else Copy.DARK_TOAST_FORCE_OFF) }
                     Spacer(Modifier.height(Gap.Section))
-                    LiquidSwitchRow(Copy.DARK_KEEP_TITLE, Copy.DARK_KEEP_BODY, keep, true) { on -> keep = on; ForceDark.setKeep(context, on) }
+                    LiquidSwitchRow(Copy.DARK_KEEP_TITLE, Copy.DARK_KEEP_BODY, keep, true) { on ->
+                        keep = on
+                        ForceDark.setKeep(context, on)
+                    }
                 }
             }
         }
@@ -145,32 +151,32 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
 /** 사용 방법. */
 @Composable
 internal fun DarkHelpSheet() {
-    SheetColumn("사용 방법") {
+    SheetColumn(title = "사용 방법") {
         HelpTopic(
             "1. 무엇을 하나요",
             "다크 모드를 지원하지 않아 밤에도 하얗게 빛나는 앱을, 시스템이 색을 바꿔 어둡게 그리게 합니다. " +
-                "개발자 옵션의 '강제 다크 모드 재정의'와 같은 기능이며, 사진과 동영상 색은 바꾸지 않습니다.",
+                "개발자 옵션의 '강제 다크 모드 재정의'와 같은 기능이며, 사진과 동영상 색은 바꾸지 않습니다."
         ) { DarkArt(on = true) }
         HelpTopic(
             "2. 시스템 다크 모드가 먼저 켜져 있어야 합니다",
             "안드로이드는 시스템 다크 모드가 켜져 있을 때만 강제 다크를 적용합니다. 그래서 스위치를 켤 때 다크 모드가 꺼져 있으면 함께 켜고, " +
-                "끌 때는 GOAT가 켜기 전 방식(꺼짐·자동·예약 시각)으로 되돌립니다. 이미 열려 있던 앱은 다시 열어야 바뀝니다.",
+                "끌 때는 GOAT가 켜기 전 방식(꺼짐·자동·예약 시각)으로 되돌립니다. 이미 열려 있던 앱은 다시 열어야 바뀝니다."
         )
         HelpTopic(
             "3. 다크 모드가 없는 앱 전체에 적용됩니다",
             "앱마다 따로 고르는 공식 방법이 없어 다크 모드가 없는 앱 전체에 적용됩니다. 앱이 스스로 강제 다크를 막아 둔 경우나 " +
-                "이미 다크 모드가 있는 앱은 그대로입니다.",
+                "이미 다크 모드가 있는 앱은 그대로입니다."
         )
         HelpTopic(
             "4. 생길 수 있는 화면 오류",
             "강제 다크는 시스템이 다른 앱의 색을 대신 바꾸는 기능이라 앱마다 어색한 부분이 생길 수 있습니다. 예를 들어 바탕은 어두워졌는데 " +
                 "상태 표시줄 글자·아이콘이 검은색으로 남아 보이지 않거나, 홈 화면 폴더 뒤에 흰 네모가 보일 수 있습니다. " +
-                "다른 앱 안의 일이라 GOAT가 고칠 수 없으니, 거슬리면 스위치를 꺼 주세요. 끄면 원래대로 돌아갑니다.",
+                "다른 앱 안의 일이라 GOAT가 고칠 수 없으니, 거슬리면 스위치를 꺼 주세요. 끄면 원래대로 돌아갑니다."
         )
         HelpTopic(
             "5. 재부팅 뒤",
             "이 설정은 재부팅하면 꺼집니다. '재부팅 뒤 다시 켜기'를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 다시 켭니다. " +
-                "같은 부팅 안에서 개발자 옵션으로 끈 것은 그대로 둡니다. Shizuku 셸 권한으로 바꿉니다.",
+                "같은 부팅 안에서 개발자 옵션으로 끈 것은 그대로 둡니다. Shizuku 셸 권한으로 바꿉니다."
         )
     }
 }

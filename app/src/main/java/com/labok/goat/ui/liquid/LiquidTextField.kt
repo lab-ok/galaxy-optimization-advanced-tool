@@ -44,7 +44,7 @@ fun LiquidTextField(
     placeholder: String,
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    leading: (@Composable () -> Unit)? = null,
+    leading: (@Composable () -> Unit)? = null
 ) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
@@ -65,7 +65,10 @@ fun LiquidTextField(
         blob.moveTo(box.width / 2f, box.height / 2f, box.width + 2 * g, box.height + 2 * g, animate = !reduce, corner = corner)
     }
     LaunchedEffect(value) {
-        if (reduce || box == IntSize.Zero || value == last) { last = value; return@LaunchedEffect }
+        if (reduce || box == IntSize.Zero || value == last) {
+            last = value
+            return@LaunchedEffect
+        }
         val sign = if (value.length >= last.length) 1f else -1f
         last = value
         // 커서는 글자 끝 근처(대략 왼쪽에서 글자 수만큼): 그 자리 윗·아랫면을 바깥(지우면 안쪽)으로 톡 친다
@@ -78,7 +81,7 @@ fun LiquidTextField(
         modifier
             .fillMaxWidth()
             .height(52.dp)
-            .onSizeChanged { box = it },
+            .onSizeChanged { box = it }
     ) {
         Canvas(Modifier.matchParentSize()) {
             blob.frame
@@ -88,7 +91,10 @@ fun LiquidTextField(
             drawPath(path, if (focused) c.ink else c.line, style = Stroke((if (focused) 1.6f else 1f).dp.toPx()))
         }
         Row(Modifier.matchParentSize().padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (leading != null) { leading(); Spacer(Modifier.width(10.dp)) }
+            if (leading != null) {
+                leading()
+                Spacer(Modifier.width(10.dp))
+            }
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                 if (value.isEmpty()) Text(placeholder, color = c.muted, style = MaterialTheme.typography.bodyMedium)
                 BasicTextField(
@@ -99,7 +105,7 @@ fun LiquidTextField(
                     cursorBrush = SolidColor(c.ink),
                     keyboardOptions = keyboardOptions,
                     interactionSource = interaction,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

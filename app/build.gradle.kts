@@ -13,8 +13,8 @@ android {
         // Android 12 이상(방울 효과에 RenderEffect 필요). Android 11은 지원하지 않는다(사용자 결정).
         minSdk = 31
         targetSdk = 35
-        versionCode = 20
-        versionName = "1.4.7"
+        versionCode = 21
+        versionName = "1.4.8"
         // 실험실 기능은 lab 빌드에만 켠다. 공개 release·debug에는 들어가지 않는다.
         buildConfigField("boolean", "LAB", "false")
     }
@@ -59,7 +59,7 @@ android {
                     test.systemProperty("robolectric.offline", "true")
                     test.systemProperty(
                         "robolectric.dependency.dir",
-                        System.getProperty("user.home") + "/.m2/repository/org/robolectric/android-all-instrumented/15-robolectric-12650502-i7",
+                        System.getProperty("user.home") + "/.m2/repository/org/robolectric/android-all-instrumented/15-robolectric-12650502-i7"
                     )
                     test.maxHeapSize = "3g"
                 } else {

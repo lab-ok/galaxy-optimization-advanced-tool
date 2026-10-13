@@ -22,12 +22,12 @@ class RefreshRateTest {
     fun planFixesBothLimitsAndSamsungModeOnlyOnSamsung() {
         assertEquals(
             listOf("settings put system peak_refresh_rate 120.0", "settings put system min_refresh_rate 120.0", "settings put secure refresh_rate_mode 1"),
-            RefreshRate.plan(Choice.SMOOTH, 120, samsung = true, original = null),
+            RefreshRate.plan(Choice.SMOOTH, 120, samsung = true, original = null)
         )
         assertEquals(
             "삼성이 아니면 refresh_rate_mode를 건드리지 않는다",
             listOf("settings put system peak_refresh_rate 60.0", "settings put system min_refresh_rate 60.0"),
-            RefreshRate.plan(Choice.SAVER, 120, samsung = false, original = null),
+            RefreshRate.plan(Choice.SAVER, 120, samsung = false, original = null)
         )
     }
 
@@ -35,12 +35,12 @@ class RefreshRateTest {
     fun planRestoresOriginalAndDeletesKeysThatDidNotExist() {
         assertEquals(
             listOf("settings put system peak_refresh_rate 120.0", "settings delete system min_refresh_rate", "settings put secure refresh_rate_mode 1"),
-            RefreshRate.plan(Choice.SYSTEM, 120, samsung = true, original = Values(120f, null, 1)),
+            RefreshRate.plan(Choice.SYSTEM, 120, samsung = true, original = Values(120f, null, 1))
         )
         assertEquals(
             "처음부터 키가 없던 기기는 모두 지운다",
             listOf("settings delete system peak_refresh_rate", "settings delete system min_refresh_rate"),
-            RefreshRate.plan(Choice.SYSTEM, 120, samsung = false, original = Values(null, null, null)),
+            RefreshRate.plan(Choice.SYSTEM, 120, samsung = false, original = Values(null, null, null))
         )
         assertTrue("GOAT로 바꾼 적 없으면 시스템 기본은 아무것도 쓰지 않는다", RefreshRate.plan(Choice.SYSTEM, 120, samsung = true, original = null).isEmpty())
     }

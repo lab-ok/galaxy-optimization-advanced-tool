@@ -2,9 +2,6 @@ package com.labok.goat.ui.nav
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import com.labok.goat.data.lab.LabUnlock
-import com.labok.goat.ui.text.Copy
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -14,8 +11,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.VectorPainter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import com.labok.goat.R
+import com.labok.goat.data.lab.LabUnlock
+import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.delay
 
 /** 염소 표정. */
@@ -32,8 +32,10 @@ class GoatMoodState {
     internal var presses by mutableIntStateOf(0)
         private set
     private val taps = ArrayDeque<Long>()
+
     /** 쉬지 않고 이어서 누른 횟수. */
     private var streak = 0
+
     /** 지금까지 쉬지 않고 이어서 누른 횟수(실험실 열기용). */
     val streakNow get() = streak
 
@@ -52,7 +54,9 @@ class GoatMoodState {
         return mood == Mood.ANGRY && before != Mood.ANGRY
     }
 
-    internal fun calm() { mood = Mood.CALM }
+    internal fun calm() {
+        mood = Mood.CALM
+    }
 
     /**
      * 누르는 힘 배수: 연달아 누를수록 줄인다. 물방울은 누를 때마다 속도를 더하므로, 빠르게 여러 번 누르면 힘이 쌓여
@@ -64,8 +68,10 @@ class GoatMoodState {
         const val WINDOW_MS = 3000L
         const val CRY_AT = 5
         const val ANGRY_AT = 10
+
         /** 울음 다음부터 이만큼 누를 때마다 화남 ↔ 울음이 바뀐다. */
         const val CYCLE = ANGRY_AT - CRY_AT
+
         /** 이 시간 안에 다시 누르면 이어서 누른 것으로 본다(ms). */
         const val STREAK_GAP_MS = 1200L
 
@@ -75,8 +81,14 @@ class GoatMoodState {
             (n - CRY_AT) / CYCLE % 2 == 0 -> Mood.CRY
             else -> Mood.ANGRY
         }
+
         /** 표정이 남아 있는 시간(ms). */
-        fun holdMs(m: Mood) = when (m) { Mood.SQUINT -> 450L; Mood.CRY -> 1800L; Mood.ANGRY -> 2400L; Mood.CALM -> 0L }
+        fun holdMs(m: Mood) = when (m) {
+            Mood.SQUINT -> 450L
+            Mood.CRY -> 1800L
+            Mood.ANGRY -> 2400L
+            Mood.CALM -> 0L
+        }
     }
 }
 
@@ -104,5 +116,10 @@ fun goatPainter(mood: Mood): VectorPainter {
     val squint = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat_squint))
     val cry = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat_cry))
     val angry = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat_angry))
-    return when (mood) { Mood.CALM -> calm; Mood.SQUINT -> squint; Mood.CRY -> cry; Mood.ANGRY -> angry }
+    return when (mood) {
+        Mood.CALM -> calm
+        Mood.SQUINT -> squint
+        Mood.CRY -> cry
+        Mood.ANGRY -> angry
+    }
 }

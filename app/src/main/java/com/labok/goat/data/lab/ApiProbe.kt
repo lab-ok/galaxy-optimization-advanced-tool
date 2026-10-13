@@ -1,9 +1,10 @@
 package com.labok.goat.data.lab
 
-import com.labok.goat.data.HiddenApi
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.os.IBinder
+import com.labok.goat.data.HiddenApi
 
 /**
  * 실험실: 기기의 시스템 서비스를 모두 훑어 '앱별 화면 크기'와 관련 있어 보이는 함수를 찾는다.
@@ -21,9 +22,11 @@ object ApiProbe {
         "com.samsung.android.multiwindow.MultiWindowManager",
         "com.samsung.android.app.SemActivityManager",
         "android.app.ActivityTaskManager",
-        "android.content.res.CompatibilityInfo",
+        "android.content.res.CompatibilityInfo"
     )
 
+    // 숨은 시스템 서비스 목록을 훑는 조사 도구라 일부러 숨은 API를 부른다
+    @SuppressLint("PrivateApi")
     fun run(context: Context): String = buildString {
         appendLine("기기: ${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT}) · ${Build.DISPLAY}")
         HiddenApi.exemptAll()
@@ -53,7 +56,10 @@ object ApiProbe {
         appendLine("== 추가 클래스 ==")
         EXTRA_CLASSES.forEach { n ->
             val cls = runCatching { Class.forName(n) }.getOrNull()
-            if (cls == null) { appendLine("[$n] 없음"); return@forEach }
+            if (cls == null) {
+                appendLine("[$n] 없음")
+                return@forEach
+            }
             val matched = cls.declaredMethods.filter { KEYWORDS.containsMatchIn(it.name) }.sortedBy { it.name }
             appendLine("[$n] ${matched.size}개")
             matched.forEach { m -> appendLine("    ${m.name}(${m.parameterTypes.joinToString { it.simpleName }}): ${m.returnType.simpleName}") }

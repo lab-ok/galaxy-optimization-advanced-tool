@@ -1,11 +1,11 @@
 package com.labok.goat.ui.home
 
-import com.labok.goat.domain.ScreenGeometry
 import com.labok.goat.data.display.DisplayDensity
 import com.labok.goat.data.display.DpiState
 import com.labok.goat.data.settings.LastApply
 import com.labok.goat.domain.DensityPlan
 import com.labok.goat.domain.ExternalChange
+import com.labok.goat.domain.ScreenGeometry
 import com.labok.goat.domain.ScreenInfo
 import com.labok.goat.domain.ScreenPolicy
 
@@ -34,7 +34,7 @@ data class UiState(
     /** 사용자 선택을 기다리는 외부 DPI 변경. */
     val external: ExternalChange? = null,
     /** 크기 테스트 자를 카드로 맞춘 PPI(화면 key별). */
-    val rulerPpi: Map<String, Float> = emptyMap(),
+    val rulerPpi: Map<String, Float> = emptyMap()
 ) {
     val status: Status
         get() = when {

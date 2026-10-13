@@ -1,0 +1,16 @@
+# Kotlin 코드 스타일: Android 공식 Kotlin 스타일 가이드(ktlint android_studio)
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_size = 4
+indent_style = space
+max_line_length = off
+ktlint_code_style = android_studio
+# Compose 함수는 대문자로 시작한다(Android Compose API 지침)
+ktlint_function_naming_ignore_when_annotated_with = Composable

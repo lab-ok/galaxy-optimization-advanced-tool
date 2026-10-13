@@ -15,7 +15,10 @@ class CopyTest {
     fun everydayCopyHasNoTechnicalTerms() {
         val texts = Copy::class.java.declaredFields
             .filter { it.type == String::class.java }
-            .map { it.isAccessible = true; it.get(null) as String }
+            .map {
+                it.isAccessible = true
+                it.get(null) as String
+            }
         assertTrue("문구가 비어 있다", texts.isNotEmpty())
         texts.forEach { t ->
             forbidden.forEach { word -> assertTrue("'$t'에 '$word'", !t.contains(word)) }

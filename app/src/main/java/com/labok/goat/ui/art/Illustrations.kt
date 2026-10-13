@@ -31,14 +31,17 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
     val c = com.labok.goat.ui.liquid.LocalLiquid.current
     val reduce = com.labok.goat.ui.liquid.LocalReduceMotion.current
     val t0 by rememberInfiniteTransition(label = "conn").animateFloat(
-        0f, 1f, infiniteRepeatable(tween(1800, easing = LinearEasing)), label = "t",
+        0f,
+        1f,
+        infiniteRepeatable(tween(1800, easing = LinearEasing)),
+        label = "t"
     )
     val t = if (reduce) 0.5f else t0
     val shape = LocalDeviceShape.current
     Canvas(
         Modifier
             .fillMaxWidth()
-            .height(104.dp),
+            .height(104.dp)
     ) {
         val h = size.height
         val pcW = h * 1.05f
@@ -69,9 +72,12 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
                 val on = ((t * 3).toInt() % 3) >= k
                 drawArc(
                     c.ink.copy(alpha = if (on) 0.85f else 0.18f),
-                    startAngle = -135f, sweepAngle = 90f, useCenter = false,
-                    topLeft = Offset(cx - r, cy - r), size = Size(r * 2, r * 2),
-                    style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round),
+                    startAngle = -135f,
+                    sweepAngle = 90f,
+                    useCenter = false,
+                    topLeft = Offset(cx - r, cy - r),
+                    size = Size(r * 2, r * 2),
+                    style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round)
                 )
             }
             drawCircle(c.ink, 3.dp.toPx(), Offset(cx, cy))
@@ -81,7 +87,8 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
             val b = Offset(phone.center.x, phTop.y + phH + 4.dp.toPx())
             val ctrl = Offset((a.x + b.x) / 2, h * 1.02f)
             val path = androidx.compose.ui.graphics.Path().apply {
-                moveTo(a.x, a.y); quadraticBezierTo(ctrl.x, ctrl.y, b.x, b.y)
+                moveTo(a.x, a.y)
+                quadraticBezierTo(ctrl.x, ctrl.y, b.x, b.y)
             }
             drawPath(path, c.ink.copy(alpha = 0.55f), style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round))
             // 단자
@@ -108,7 +115,7 @@ internal fun DensityIllustration(corrected: Float) {
     Canvas(
         Modifier
             .fillMaxWidth()
-            .height(150.dp),
+            .height(150.dp)
     ) {
         // 기기 실제 화면비(앱이 알아낸 해상도, 모르면 폴드8). 높이는 같게 두고 폭만 화면비대로.
         val coverIn = Size(shape.cover, 1f)

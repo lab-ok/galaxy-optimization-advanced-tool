@@ -17,7 +17,7 @@ data class ScreenInfo(
      * GOAT 해상도 낮추기 비율 = 지금 논리 짧은 변 / GOAT가 바꾸기 직전 논리 짧은 변. GOAT가 해상도를 바꾸지 않았으면 1.
      * GOAT가 바꿔 둔 동안 [key]·[diagonalInch]는 그 직전 크기 기준이라 같은 화면으로 본다. 저장하지 않는다(읽을 때마다 잰다).
      */
-    val scale: Float = 1f,
+    val scale: Float = 1f
 )
 
 /**
@@ -78,7 +78,7 @@ object ScreenPolicy {
         reference: Role,
         screens: List<ScreenInfo>,
         active: ScreenInfo?,
-        adjust: Int = 0,
+        adjust: Int = 0
     ): Target {
         if (active == null || !isPlausible(active)) return Target(referenceDpi, "화면 정보를 읽지 못해 보정 없이 적용", null)
         val role = roleOf(screens, active.key)
@@ -104,8 +104,7 @@ object ScreenPolicy {
         return Target(clamped, note, role, blocked)
     }
 
-    fun scale(referenceDpi: Int, referencePpi: Float, activePpi: Float): Int =
-        (referenceDpi * activePpi / referencePpi).roundToInt()
+    fun scale(referenceDpi: Int, referencePpi: Float, activePpi: Float): Int = (referenceDpi * activePpi / referencePpi).roundToInt()
 
     /** 알고 있는 두 화면 이상이 모두 목표값으로 확인됐는지. 감시 서비스를 끌 시점을 정한다. */
     fun allConfirmed(screens: List<ScreenInfo>, confirmedKeys: Set<String>): Boolean {
@@ -114,21 +113,18 @@ object ScreenPolicy {
     }
 
     /** 설정 저장용 직렬화: key,ppi,diag;key,ppi,diag */
-    fun encode(screens: List<ScreenInfo>): String =
-        screens.joinToString(";") { "${it.key},${it.ppi},${it.diagonalInch}" }
+    fun encode(screens: List<ScreenInfo>): String = screens.joinToString(";") { "${it.key},${it.ppi},${it.diagonalInch}" }
 
-    fun decode(raw: String?): List<ScreenInfo> =
-        raw.orEmpty().split(';').mapNotNull { part ->
-            val f = part.split(',')
-            if (f.size != 3) return@mapNotNull null
-            val ppi = f[1].toFloatOrNull() ?: return@mapNotNull null
-            val diag = f[2].toFloatOrNull() ?: return@mapNotNull null
-            ScreenInfo(f[0], ppi, diag)
-        }
+    fun decode(raw: String?): List<ScreenInfo> = raw.orEmpty().split(';').mapNotNull { part ->
+        val f = part.split(',')
+        if (f.size != 3) return@mapNotNull null
+        val ppi = f[1].toFloatOrNull() ?: return@mapNotNull null
+        val diag = f[2].toFloatOrNull() ?: return@mapNotNull null
+        ScreenInfo(f[0], ppi, diag)
+    }
 
     /** 같은 패널이면 최신 값으로 바꾸고, 최대 [MAX_SCREENS]개만 기억한다. */
-    fun remember(screens: List<ScreenInfo>, s: ScreenInfo): List<ScreenInfo> =
-        (screens.filter { it.key != s.key } + s).takeLast(MAX_SCREENS)
+    fun remember(screens: List<ScreenInfo>, s: ScreenInfo): List<ScreenInfo> = (screens.filter { it.key != s.key } + s).takeLast(MAX_SCREENS)
 
     private const val MAX_SCREENS = 4
 }

@@ -15,6 +15,8 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.DpiFixer
 import com.labok.goat.domain.DpiPolicy
+import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,8 +26,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
-import kotlin.math.roundToInt
 
 /**
  * 해상도 낮추기: 기본 화면(0)의 강제 해상도(wm size와 같은 setForcedDisplaySize)를 줄이고, 화면 크기가 그대로 보이도록 밀도도
@@ -102,9 +102,13 @@ object Resolution {
         val standard = listOf(1080 to "FHD+", 900 to null, 720 to "HD+")
             .filter { (s, _) -> s < bs - 20 && s >= bs * 0.55 }
             .map { (s, n) -> of(s, n) }
-        val ratios = if (standard.size >= 2) emptyList() else listOf(0.85, 0.75)
-            .map { of(even(bs * it), null) }
-            .filter { r -> standard.none { kotlin.math.abs(it.short - r.short) < 40 } }
+        val ratios = if (standard.size >= 2) {
+            emptyList()
+        } else {
+            listOf(0.85, 0.75)
+                .map { of(even(bs * it), null) }
+                .filter { r -> standard.none { kotlin.math.abs(it.short - r.short) < 40 } }
+        }
         return listOf(Option(bs, bl, null, 100)) + (standard + ratios).sortedByDescending { it.short }
     }
 
@@ -112,10 +116,16 @@ object Resolution {
     fun apply(context: Context, option: Option, how: String): Boolean {
         val app = context.applicationContext
         val log = LogRepository.from(app)
-        if (!supported(app)) { log.add("해상도 낮추기($how): 폴드는 지원하지 않아 바꾸지 않음"); return false }
+        if (!supported(app)) {
+            log.add("해상도 낮추기($how): 폴드는 지원하지 않아 바꾸지 않음")
+            return false
+        }
         if (option.percent >= 100) return revert(app, how)
         val dpi = DpiManager(app)
-        if (!dpi.hasPermission()) { log.add("해상도 낮추기($how): 시스템 설정 권한 없음"); return false }
+        if (!dpi.hasPermission()) {
+            log.add("해상도 낮추기($how): 시스템 설정 권한 없음")
+            return false
+        }
         val ok = DpiFixer.from(app).exclusive {
             // ① 처음이면 직전 상태를 남긴다(이미 낮춰 둔 상태에서 다른 크기로 바꾸면 처음 기록을 그대로 둔다)
             val saved = ResolutionState.saved(app) ?: run {
@@ -185,7 +195,10 @@ object Resolution {
         countdown?.cancel()
         runCatching { WorkManager.getInstance(app).cancelUniqueWork(WORK) }
         pendingState.value = 0
-        val saved = ResolutionState.saved(app) ?: run { ResolutionState.setDeadline(app, 0); return true }
+        val saved = ResolutionState.saved(app) ?: run {
+            ResolutionState.setDeadline(app, 0)
+            return true
+        }
         val dpi = DpiManager(app)
         val log = LogRepository.from(app)
         return DpiFixer.from(app).exclusive {
@@ -193,7 +206,9 @@ object Resolution {
             val sizeOk = if (saved.hadForced) {
                 val (w, h) = if (isPortraitNatural(app)) saved.base else saved.base.second to saved.base.first
                 dpi.setForcedSize(Display.DEFAULT_DISPLAY, w, h)
-            } else dpi.clearForcedSize(Display.DEFAULT_DISPLAY)
+            } else {
+                dpi.clearForcedSize(Display.DEFAULT_DISPLAY)
+            }
             if (!sizeOk) {
                 log.add("해상도 낮추기 되돌리기($how): 해상도를 되돌리지 못함. PC에서 '$PC_UNDO'")
                 return@exclusive false
@@ -253,6 +268,5 @@ object Resolution {
     }
 
     /** 기기의 자연 방향이 세로인지(폰은 세로, 대부분의 태블릿은 가로). 강제 해상도는 자연 방향의 가로·세로로 건다. */
-    private fun isPortraitNatural(context: Context): Boolean =
-        DpiManager(context).physicalSizeNatural()?.let { (w, h) -> w <= h } ?: true
+    private fun isPortraitNatural(context: Context): Boolean = DpiManager(context).physicalSizeNatural()?.let { (w, h) -> w <= h } ?: true
 }

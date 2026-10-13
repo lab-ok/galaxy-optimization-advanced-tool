@@ -9,16 +9,17 @@ import org.junit.Test
 
 class GrantGuideContentTest {
 
-    private fun commands(c: Connection, os: PcOs) =
-        GrantGuideContent.steps(c, os).flatMap { it.commands }
+    private fun commands(c: Connection, os: PcOs) = GrantGuideContent.steps(c, os).flatMap { it.commands }
 
     @Test
     fun everyCombinationEndsWithGrantForThatOs() {
-        for (c in Connection.entries) for (os in PcOs.entries) {
-            val steps = GrantGuideContent.steps(c, os)
-            assertTrue(steps.first().openDevOptions)
-            assertEquals("마무리", steps.last().title)
-            assertTrue(commands(c, os).contains(GrantGuideContent.grantCommand(os)))
+        for (c in Connection.entries) {
+            for (os in PcOs.entries) {
+                val steps = GrantGuideContent.steps(c, os)
+                assertTrue(steps.first().openDevOptions)
+                assertEquals("마무리", steps.last().title)
+                assertTrue(commands(c, os).contains(GrantGuideContent.grantCommand(os)))
+            }
         }
     }
 
@@ -28,7 +29,7 @@ class GrantGuideContentTest {
         assertTrue(cmds.filter { "adb" in it }.all { it.startsWith(".\\adb ") })
         assertEquals(
             ".\\adb shell pm grant com.labok.goat android.permission.WRITE_SECURE_SETTINGS",
-            GrantGuideContent.grantCommand(PcOs.WINDOWS),
+            GrantGuideContent.grantCommand(PcOs.WINDOWS)
         )
     }
 

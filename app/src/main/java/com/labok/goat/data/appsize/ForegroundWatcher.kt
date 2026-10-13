@@ -1,6 +1,5 @@
 package com.labok.goat.data.appsize
 
-import com.labok.goat.data.HiddenApi
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
@@ -8,6 +7,7 @@ import android.os.Binder
 import android.os.Handler
 import android.os.Looper
 import android.os.Parcel
+import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.shizuku.ShizukuAccess
 import java.util.concurrent.Executors
 
@@ -27,7 +27,9 @@ object ForegroundWatcher {
 
     private val main = Handler(Looper.getMainLooper())
     private val io = Executors.newSingleThreadExecutor()
+
     @Volatile private var proxy: Any? = null
+
     @Volatile private var onChange: ((String?) -> Unit)? = null
 
     val running get() = proxy != null
@@ -54,11 +56,19 @@ object ForegroundWatcher {
                 .apply { isAccessible = true }.getInt(null)
             val refresh = Runnable { io.execute { update(ctx) } }
             val binder = object : Binder() {
-                init { attachInterface(null, DESCRIPTOR) }
+                init {
+                    attachInterface(null, DESCRIPTOR)
+                }
                 override fun onTransact(c: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
-                    if (c == INTERFACE_TRANSACTION) { reply?.writeString(DESCRIPTOR); return true }
+                    if (c == INTERFACE_TRANSACTION) {
+                        reply?.writeString(DESCRIPTOR)
+                        return true
+                    }
                     // 스택이 바뀌는 순간 여러 번 올 수 있어 잠깐 모았다가 한 번 읽는다
-                    if (c == code) { main.removeCallbacks(refresh); main.postDelayed(refresh, 200) }
+                    if (c == code) {
+                        main.removeCallbacks(refresh)
+                        main.postDelayed(refresh, 200)
+                    }
                     return true
                 }
             }

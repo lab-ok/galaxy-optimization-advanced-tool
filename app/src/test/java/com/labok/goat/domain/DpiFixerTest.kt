@@ -17,11 +17,17 @@ import org.junit.Test
 class MemoryStore : KeyValueStore {
     val map = mutableMapOf<String, Any?>()
     override fun getInt(key: String) = map[key] as Int?
-    override fun putInt(key: String, value: Int) { map[key] = value }
+    override fun putInt(key: String, value: Int) {
+        map[key] = value
+    }
     override fun getBoolean(key: String, default: Boolean) = map[key] as Boolean? ?: default
-    override fun putBoolean(key: String, value: Boolean) { map[key] = value }
+    override fun putBoolean(key: String, value: Boolean) {
+        map[key] = value
+    }
     override fun getString(key: String) = map[key] as String?
-    override fun putString(key: String, value: String?) { map[key] = value }
+    override fun putString(key: String, value: String?) {
+        map[key] = value
+    }
 }
 
 /** Samsung이 덮어쓰는 상황을 흉내 내는 가짜 컨트롤러. */
@@ -32,7 +38,7 @@ class FakeController(
     /** true면 apply가 호출돼도 값이 바뀌지 않는다(계속 덮어쓰는 단말). */
     var stubborn: Boolean = false,
     var screen: ScreenInfo? = null,
-    var others: MutableList<DisplayDensity> = mutableListOf(),
+    var others: MutableList<DisplayDensity> = mutableListOf()
 ) : DpiController {
     val applyToCalls = mutableListOf<Pair<Int, Int>>()
     override fun displays(): List<DisplayDensity> = others
@@ -50,7 +56,10 @@ class FakeController(
         if (!stubborn) override = dpi
         return ApplyResult(!stubborn, "fake", "")
     }
-    override fun reset(): ApplyResult { override = null; return ApplyResult(true, "fake", "") }
+    override fun reset(): ApplyResult {
+        override = null
+        return ApplyResult(true, "fake", "")
+    }
     override fun currentScreen() = screen
 }
 
@@ -218,7 +227,7 @@ class DpiFixerTest {
         val outer = ScreenInfo("920x2320", 428f, 5.5f)
         val c = FakeController(
             screen = outer,
-            others = mutableListOf(DisplayDensity(1, ScreenInfo("1820x2120", 428f, 7.2f), 420, null, readable = true)),
+            others = mutableListOf(DisplayDensity(1, ScreenInfo("1820x2120", 428f, 7.2f), 420, null, readable = true))
         )
         fixer(c, settings(360)).ensure("boot", automatic = true)
         assertTrue(c.applyToCalls.isEmpty())
@@ -228,7 +237,7 @@ class DpiFixerTest {
     fun unidentifiedDisplayIsLeftAlone() {
         val c = FakeController(
             screen = ScreenInfo("904x2316", 402f, 6.2f),
-            others = mutableListOf(DisplayDensity(1, null, 420, null, readable = false)),
+            others = mutableListOf(DisplayDensity(1, null, 420, null, readable = false))
         )
         fixer(c, settings(360)).ensure("boot", automatic = true)
         assertTrue(c.applyToCalls.isEmpty())
@@ -254,7 +263,10 @@ class DpiFixerTest {
     fun manualChangesAreNeverRateLimited() {
         val c = FakeController(stubborn = true)
         val f = fixer(c, settings())
-        repeat(12) { f.ensure("수동", automatic = false); now += 500 }
+        repeat(12) {
+            f.ensure("수동", automatic = false)
+            now += 500
+        }
         assertEquals(12, c.applyCalls)
         // 수동 적용은 자동 반복 방지 횟수에 세지 않는다.
         assertEquals(DpiPolicy.Decision.APPLY, f.ensure("boot", automatic = true))
@@ -271,7 +283,11 @@ class ExternalChangeTest {
     private val inner = ScreenInfo("1900x2200", 380f, 8.0f)
 
     private fun setup(): Triple<FakeController, SettingsRepository, DpiFixer> {
-        val s = SettingsRepository(MemoryStore()).also { it.targetDpi = 360; it.autoRecover = true; it.screens = listOf(outer, inner) }
+        val s = SettingsRepository(MemoryStore()).also {
+            it.targetDpi = 360
+            it.autoRecover = true
+            it.screens = listOf(outer, inner)
+        }
         val c = FakeController(physical = 420, screen = outer)
         return Triple(c, s, DpiFixer(c, s, {}))
     }
@@ -328,7 +344,7 @@ class ExternalChangeTest {
     fun bootResetToPhysicalIsRestoredAutomatically() {
         val (c, _, f) = setup()
         f.ensure("start", automatic = true)
-        c.override = null   // 부팅 뒤 기기가 기본값(420)으로 되돌림
+        c.override = null // 부팅 뒤 기기가 기본값(420)으로 되돌림
         assertEquals(DpiPolicy.Decision.APPLY, f.ensure("boot", automatic = true))
         assertEquals(360, c.read().current)
     }

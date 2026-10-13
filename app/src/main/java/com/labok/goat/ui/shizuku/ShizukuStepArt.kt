@@ -40,12 +40,16 @@ internal fun StoreStepArt() {
         drawRoundRect(c.ink, tl, Size(s, s), CornerRadius(s * 0.28f))
         artLabel(tm, "S", Offset(tl.x + s / 2, tl.y + s / 2), c.onInk, 20, bold = true)
         val k = min(1f, t / 0.6f)
-        val ax = tl.x + s + 26.dp.toPx(); val ay = tl.y - 6.dp.toPx() + (s * 0.6f) * k
+        val ax = tl.x + s + 26.dp.toPx()
+        val ay = tl.y - 6.dp.toPx() + (s * 0.6f) * k
         drawLine(c.ink, Offset(ax, ay - 18.dp.toPx()), Offset(ax, ay), 3.dp.toPx(), StrokeCap.Round)
         drawLine(c.ink, Offset(ax, ay), Offset(ax - 6.dp.toPx(), ay - 6.dp.toPx()), 3.dp.toPx(), StrokeCap.Round)
         drawLine(c.ink, Offset(ax, ay), Offset(ax + 6.dp.toPx(), ay - 6.dp.toPx()), 3.dp.toPx(), StrokeCap.Round)
-        if (t > 0.65f) artLabel(tm, "✓ 설치됨", Offset(size.width / 2, size.height * 0.88f), c.ink, 11, bold = true)
-        else artLabel(tm, "Shizuku · 무료", Offset(size.width / 2, size.height * 0.88f), c.muted, 11)
+        if (t > 0.65f) {
+            artLabel(tm, "✓ 설치됨", Offset(size.width / 2, size.height * 0.88f), c.ink, 11, bold = true)
+        } else {
+            artLabel(tm, "Shizuku · 무료", Offset(size.width / 2, size.height * 0.88f), c.muted, 11)
+        }
     }
 }
 
@@ -55,11 +59,14 @@ internal fun WirelessStepArt() {
     val t = artLoop(2400)
     ArtCanvas(96.dp) { c, tm ->
         val on = t > 0.4f
-        val rowTl = Offset(size.width * 0.08f, size.height * 0.28f); val rowW = size.width * 0.84f; val rowH = size.height * 0.44f
+        val rowTl = Offset(size.width * 0.08f, size.height * 0.28f)
+        val rowW = size.width * 0.84f
+        val rowH = size.height * 0.44f
         drawRoundRect(c.surface, rowTl, Size(rowW, rowH), CornerRadius(rowH / 2))
         drawRoundRect(c.line, rowTl, Size(rowW, rowH), CornerRadius(rowH / 2), style = Stroke(1.dp.toPx()))
         artLabel(tm, "무선 디버깅", Offset(rowTl.x + rowW * 0.3f, rowTl.y + rowH / 2), c.ink, 12, bold = true)
-        val sw = Size(40.dp.toPx(), 22.dp.toPx()); val sc = Offset(rowTl.x + rowW - 34.dp.toPx(), rowTl.y + rowH / 2)
+        val sw = Size(40.dp.toPx(), 22.dp.toPx())
+        val sc = Offset(rowTl.x + rowW - 34.dp.toPx(), rowTl.y + rowH / 2)
         drawRoundRect(if (on) c.ink else c.line, Offset(sc.x - sw.width / 2, sc.y - sw.height / 2), sw, CornerRadius(sw.height / 2))
         drawCircle(if (on) c.onInk else c.ink, sw.height * 0.36f, Offset(if (on) sc.x + sw.width / 2 - sw.height / 2 else sc.x - sw.width / 2 + sw.height / 2, sc.y))
         if (on) {
@@ -80,7 +87,8 @@ internal fun PairingStepArt() {
     val t = artLoop(3600)
     ArtCanvas(120.dp) { c, tm ->
         val code = "482931"
-        val w = size.width * 0.42f; val h = size.height * 0.78f
+        val w = size.width * 0.42f
+        val h = size.height * 0.78f
         val left = Offset(size.width * 0.05f, size.height * 0.08f)
         val right = Offset(size.width * 0.53f, size.height * 0.08f)
         // 왼쪽: 설정 → 무선 디버깅 → 페어링 코드
@@ -114,7 +122,8 @@ internal fun PairingStepArt() {
 internal fun AllowStepArt() {
     val t = artLoop(2600)
     ArtCanvas(110.dp) { c, tm ->
-        val w = size.width * 0.8f; val h = size.height * 0.84f
+        val w = size.width * 0.8f
+        val h = size.height * 0.84f
         val tl = Offset((size.width - w) / 2, size.height * 0.06f)
         drawRoundRect(c.surface, tl, Size(w, h), CornerRadius(18.dp.toPx()))
         drawRoundRect(c.line, tl, Size(w, h), CornerRadius(18.dp.toPx()), style = Stroke(1.dp.toPx()))

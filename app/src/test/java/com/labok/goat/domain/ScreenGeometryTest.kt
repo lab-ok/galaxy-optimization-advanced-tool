@@ -36,7 +36,7 @@ class CommandDisplayTest {
     @Test
     fun longWordGoesOnItsOwnLine() {
         val shown = com.labok.goat.ui.components.displayCommand(
-            ".\\adb shell pm grant com.labok.goat android.permission.WRITE_SECURE_SETTINGS",
+            ".\\adb shell pm grant com.labok.goat android.permission.WRITE_SECURE_SETTINGS"
         )
         assertEquals(".\\adb shell pm grant com.labok.goat\nandroid.permission.WRITE_SECURE_SETTINGS", shown)
     }

@@ -48,7 +48,10 @@ fun LiquidSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier:
             .size(56.dp, 32.dp)
             .onSizeChanged { box = it }
             .liquidPress(interaction, releaseHaptic = false)
-            .toggleable(checked, interaction, null, enabled, Role.Switch) { on -> haptics.toggle(on); onCheckedChange(on) },
+            .toggleable(checked, interaction, null, enabled, Role.Switch) { on ->
+                haptics.toggle(on)
+                onCheckedChange(on)
+            }
     ) {
         blob.frame
         val h = size.height

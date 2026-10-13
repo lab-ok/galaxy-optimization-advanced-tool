@@ -1,12 +1,12 @@
 package com.labok.goat.data.appsize
 
-import com.labok.goat.data.log.LogRepository
-import com.labok.goat.data.UserId
-import com.labok.goat.data.shizuku.ShizukuAccess
 import android.content.Context
-import com.labok.goat.domain.AppDensityPolicy
 import android.os.IBinder
 import android.os.Parcel
+import com.labok.goat.data.UserId
+import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.domain.AppDensityPolicy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,7 +41,8 @@ object DensityShell {
 
     private fun <T> tx(code: Int, write: Parcel.() -> Unit = {}, read: Parcel.() -> T): T {
         val b = binder.value ?: throw IllegalStateException("셸 도우미가 연결돼 있지 않습니다.")
-        val data = Parcel.obtain(); val reply = Parcel.obtain()
+        val data = Parcel.obtain()
+        val reply = Parcel.obtain()
         try {
             data.writeInterfaceToken(DensityServer.DESCRIPTOR)
             data.write()
@@ -49,18 +50,31 @@ object DensityShell {
             reply.readException()
             return reply.read()
         } finally {
-            data.recycle(); reply.recycle()
+            data.recycle()
+            reply.recycle()
         }
     }
 
     private fun helper() = binder.value != null
 
     /** 이 기기에서 삼성 함수를 찾았는지. */
-    fun supported(): Boolean =
-        if (helper()) tx(DensityServer.PING) { readInt(); readInt() == 1 } else ShizukuAccess.supported()
+    fun supported(): Boolean = if (helper()) {
+        tx(DensityServer.PING) {
+            readInt()
+            readInt() == 1
+        }
+    } else {
+        ShizukuAccess.supported()
+    }
 
-    private fun raw(pkg: String): Int =
-        if (helper()) tx(DensityServer.GET, { writeString(pkg); writeInt(user()) }) { readInt() } else ShizukuAccess.get(pkg, user())
+    private fun raw(pkg: String): Int = if (helper()) {
+        tx(DensityServer.GET, {
+            writeString(pkg)
+            writeInt(user())
+        }) { readInt() }
+    } else {
+        ShizukuAccess.get(pkg, user())
+    }
 
     /**
      * 앱의 현재 화면 크기(dpi). 0이면 시스템 기본.
@@ -80,7 +94,15 @@ object DensityShell {
     fun set(context: Context, pkg: String, dpi: Int) {
         val via = if (helper()) "PC 도우미" else "Shizuku"
         runCatching {
-            if (helper()) tx(DensityServer.SET, { writeString(pkg); writeInt(user()); writeInt(dpi) }) { } else ShizukuAccess.set(pkg, user(), dpi)
+            if (helper()) {
+                tx(DensityServer.SET, {
+                    writeString(pkg)
+                    writeInt(user())
+                    writeInt(dpi)
+                }) { }
+            } else {
+                ShizukuAccess.set(pkg, user(), dpi)
+            }
         }.onFailure { LogRepository.from(context).add("앱별 화면 배율 실패: $pkg → ${if (dpi == 0) "기본" else dpi} ($via): ${it.javaClass.simpleName}: ${it.message}") }
             .getOrThrow()
         LogRepository.from(context).add("앱별 화면 배율: $pkg → ${if (dpi == 0) "기본" else "$dpi dpi"} ($via)")
@@ -94,15 +116,13 @@ object DensityShell {
     private fun prefs(context: Context) = context.getSharedPreferences("lab_app_density", Context.MODE_PRIVATE)
 
     /** 사용자가 크기를 정해 둔 앱(홈 화면에 아이콘이 있는 앱 중). */
-    fun appliedApps(context: Context): List<String> =
-        AppList.launcherApps(context).map { it.pkg }.filter { runCatching { get(context, it) > 0 }.getOrDefault(false) }
+    fun appliedApps(context: Context): List<String> = AppList.launcherApps(context).map { it.pkg }.filter { runCatching { get(context, it) > 0 }.getOrDefault(false) }
 
     /** 정해 둔 앱을 모두 기본 크기로 되돌린다. 되돌린 앱 수를 돌려준다. */
-    fun resetAll(context: Context): Int =
-        appliedApps(context).count { runCatching { set(context, it, 0) }.isSuccess }.also {
-            LogRepository.from(context).add("앱별 화면 배율 초기화: ${it}개 앱을 기본으로")
-            notifyChanged()
-        }
+    fun resetAll(context: Context): Int = appliedApps(context).count { runCatching { set(context, it, 0) }.isSuccess }.also {
+        LogRepository.from(context).add("앱별 화면 배율 초기화: ${it}개 앱을 기본으로")
+        notifyChanged()
+    }
 
     fun stop() {
         runCatching { tx(DensityServer.EXIT) { } }

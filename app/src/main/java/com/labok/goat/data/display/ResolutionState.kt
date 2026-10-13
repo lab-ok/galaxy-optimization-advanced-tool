@@ -1,5 +1,6 @@
 package com.labok.goat.data.display
 
+import android.annotation.SuppressLint
 import android.content.Context
 
 /**
@@ -13,6 +14,8 @@ import android.content.Context
  * - [baseDensity]·[densityOverride]: 그때의 밀도와 강제 밀도(없었으면 null). DPI 기능을 쓰지 않는 사용자의 밀도를 되돌릴 때 쓴다.
  * - [deadline]: 확인을 기다리는 중이면 자동으로 되돌릴 시각(ms, 벽시계). 0이면 확인됨.
  */
+// 해상도를 바꾼 직후 프로세스가 끝나거나 재부팅돼도 되돌릴 기록이 남도록 바로 디스크에 쓴다(commit)
+@SuppressLint("ApplySharedPref")
 object ResolutionState {
     private const val PREF = "resolution_state"
 
@@ -21,7 +24,8 @@ object ResolutionState {
     fun saved(context: Context): Saved? {
         val p = prefs(context)
         if (!p.getBoolean("active", false)) return null
-        val s = p.getInt("baseShort", 0); val l = p.getInt("baseLong", 0)
+        val s = p.getInt("baseShort", 0)
+        val l = p.getInt("baseLong", 0)
         if (s <= 0 || l <= 0) return null
         return Saved(s to l, p.getBoolean("hadForced", false), p.getInt("baseDensity", 0), p.getInt("densityOverride", -1).takeIf { it > 0 })
     }
@@ -39,12 +43,15 @@ object ResolutionState {
             .commit()
     }
 
-    fun clear(context: Context) { prefs(context).edit().clear().commit() }
+    fun clear(context: Context) {
+        prefs(context).edit().clear().commit()
+    }
 
     fun deadline(context: Context): Long = prefs(context).getLong("deadline", 0L)
 
-    fun setDeadline(context: Context, at: Long) { prefs(context).edit().putLong("deadline", at).commit() }
+    fun setDeadline(context: Context, at: Long) {
+        prefs(context).edit().putLong("deadline", at).commit()
+    }
 
-    private fun prefs(context: Context) =
-        context.createDeviceProtectedStorageContext().getSharedPreferences(PREF, Context.MODE_PRIVATE)
+    private fun prefs(context: Context) = context.createDeviceProtectedStorageContext().getSharedPreferences(PREF, Context.MODE_PRIVATE)
 }

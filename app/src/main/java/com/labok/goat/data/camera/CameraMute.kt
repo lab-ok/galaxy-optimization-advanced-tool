@@ -24,12 +24,15 @@ object CameraMute {
     enum class State(val label: String) {
         /** 촬영음 강제가 꺼져 있다(기기 소리 설정을 따른다). */
         MUTED("꺼짐"),
+
         /** 촬영음이 강제로 난다. */
         FORCED("강제로 남"),
+
         /** 이 기기에는 촬영음 강제 설정이 없다(해외 모델 등: 기기 소리 설정을 이미 따른다). */
         NONE("설정 없음"),
+
         /** Shizuku가 없어 읽지 못했다. */
-        UNKNOWN("읽지 못함"),
+        UNKNOWN("읽지 못함")
     }
 
     private val state = MutableStateFlow(State.UNKNOWN)
@@ -66,14 +69,20 @@ object CameraMute {
         val log = LogRepository.from(context)
         prefs(context).edit().putBoolean("muted", mute).apply()
         val before = read()
-        if (before == State.UNKNOWN) { log.add("카메라 촬영음 ${if (mute) "끄기" else "되돌리기"}($how): Shizuku가 연결되지 않아 바꾸지 못함"); return false }
-        if (before == State.NONE) { log.add("카메라 촬영음($how): 이 기기에는 촬영음 강제 설정이 없음"); return true }
+        if (before == State.UNKNOWN) {
+            log.add("카메라 촬영음 ${if (mute) "끄기" else "되돌리기"}($how): Shizuku가 연결되지 않아 바꾸지 못함")
+            return false
+        }
+        if (before == State.NONE) {
+            log.add("카메라 촬영음($how): 이 기기에는 촬영음 강제 설정이 없음")
+            return true
+        }
         val r = ShizukuAccess.shell("settings put system $KEY ${if (mute) 0 else 1}")
         val after = read()
         val ok = after == (if (mute) State.MUTED else State.FORCED)
         log.add(
             "카메라 촬영음 ${if (mute) "끄기" else "되돌리기"}($how): ${before.label} → ${after.label}" +
-                if (ok) "" else " 실패(${r?.err?.ifBlank { null } ?: "결과 다름"})",
+                if (ok) "" else " 실패(${r?.err?.ifBlank { null } ?: "결과 다름"})"
         )
         return ok
     }
@@ -85,6 +94,7 @@ object CameraMute {
     }
 
     private val binder = Shizuku.OnBinderReceivedListener { reapplyAsync?.invoke() }
+
     @Volatile private var reapplyAsync: (() -> Unit)? = null
 
     /** 앱 시작 때 부른다: Shizuku가 연결되는 순간(재부팅 뒤 자동 시작 포함) 다시 끄기를 확인한다. */

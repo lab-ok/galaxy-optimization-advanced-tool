@@ -16,7 +16,10 @@ fun rememberBreath(key: Any?, times: Int = 3): Float {
     val reduce = LocalReduceMotion.current
     val v = remember { Animatable(0.5f) }
     LaunchedEffect(key, reduce) {
-        if (reduce) { v.snapTo(0.5f); return@LaunchedEffect }
+        if (reduce) {
+            v.snapTo(0.5f)
+            return@LaunchedEffect
+        }
         repeat(times) {
             v.animateTo(1f, tween(1300, easing = FastOutSlowInEasing))
             v.animateTo(0f, tween(1300, easing = FastOutSlowInEasing))

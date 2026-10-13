@@ -1,6 +1,5 @@
 package com.labok.goat.ui.liquid
 
-import com.labok.goat.ui.components.Gap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -14,6 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.labok.goat.ui.components.Gap
 
 /**
  * 유리판(원본 sc.panel): 그림자 없이 표면색 + 엷은 틴트 + 1px 테두리. 실시간 블러는 쓰지 않는다(성능).
@@ -23,7 +23,7 @@ fun GlassCard(
     modifier: Modifier = Modifier,
     padding: Dp = Gap.CardPadding,
     accent: Color? = null,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     val c = LocalLiquid.current
     val shape = RoundedCornerShape(LiquidShape.card)
@@ -35,6 +35,6 @@ fun GlassCard(
             .background(c.tint)
             .border(1.dp, accent ?: c.line, shape)
             .padding(padding),
-        content = content,
+        content = content
     )
 }

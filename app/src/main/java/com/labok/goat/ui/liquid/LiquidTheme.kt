@@ -1,8 +1,5 @@
 package com.labok.goat.ui.liquid
 
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.sp
 import android.provider.Settings
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -15,7 +12,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /**
  * 리퀴드모피즘 색 토큰. 원본: trafix_its_edge static/component/core/tokens.css.
@@ -31,7 +31,7 @@ data class LiquidColors(
     val tint: Color,
     val brand: Color,
     val danger: Color,
-    val dark: Boolean,
+    val dark: Boolean
 ) {
     /** 방울 위 글자색(배경색으로 반전). */
     val onInk: Color get() = bg
@@ -39,11 +39,11 @@ data class LiquidColors(
 
 val LightLiquid = LiquidColors(
     bg = Color(0xFFEDEDED), surface = Color(0xFFF7F7F7), ink = Color(0xFF151515), muted = Color(0xFF686868),
-    line = Color(0xFFD3D3D3), tint = Color(0x6BFFFFFF), brand = Color(0xFF000000), danger = Color(0xFFB3261E), dark = false,
+    line = Color(0xFFD3D3D3), tint = Color(0x6BFFFFFF), brand = Color(0xFF000000), danger = Color(0xFFB3261E), dark = false
 )
 val DarkLiquid = LiquidColors(
     bg = Color(0xFF0F0F0F), surface = Color(0xFF171717), ink = Color(0xFFEBEBEB), muted = Color(0xFF8D8D8D),
-    line = Color(0xFF2A2A2A), tint = Color(0x12FFFFFF), brand = Color(0xFFFFFFFF), danger = Color(0xFFF2B8B5), dark = true,
+    line = Color(0xFF2A2A2A), tint = Color(0x12FFFFFF), brand = Color(0xFFFFFFFF), danger = Color(0xFFF2B8B5), dark = true
 )
 
 /** 모양 토큰(원본: 컨트롤 알약 999px, 상자 12px — 모바일 터치 크기에 맞춰 키움). */
@@ -75,7 +75,7 @@ fun LiquidTheme(content: @Composable () -> Unit) {
             surfaceVariant = c.surface, onSurfaceVariant = c.muted, surfaceContainer = c.surface,
             surfaceContainerLow = c.surface, surfaceContainerHigh = c.surface, surfaceContainerHighest = c.surface,
             surfaceContainerLowest = c.bg, outline = c.line, outlineVariant = c.line,
-            error = c.danger, onError = c.bg, errorContainer = c.surface, onErrorContainer = c.danger,
+            error = c.danger, onError = c.bg, errorContainer = c.surface, onErrorContainer = c.danger
         )
     } else {
         lightColorScheme(
@@ -86,14 +86,15 @@ fun LiquidTheme(content: @Composable () -> Unit) {
             surfaceVariant = c.surface, onSurfaceVariant = c.muted, surfaceContainer = c.surface,
             surfaceContainerLow = c.surface, surfaceContainerHigh = c.surface, surfaceContainerHighest = c.surface,
             surfaceContainerLowest = c.bg, outline = c.line, outlineVariant = c.line,
-            error = c.danger, onError = c.bg, errorContainer = c.surface, onErrorContainer = c.danger,
+            error = c.danger, onError = c.bg, errorContainer = c.surface, onErrorContainer = c.danger
         )
     }
     // 앱 전체 글자를 조금 작게: 시스템 글자 크기 배율에 TEXT_SCALE을 곱한다(sp로 쓴 모든 글자·줄 높이에 같이 적용, dp 크기는 그대로)
     val base = LocalDensity.current
     CompositionLocalProvider(
-        LocalLiquid provides c, LocalReduceMotion provides reduce,
-        LocalDensity provides Density(base.density, base.fontScale * TEXT_SCALE),
+        LocalLiquid provides c,
+        LocalReduceMotion provides reduce,
+        LocalDensity provides Density(base.density, base.fontScale * TEXT_SCALE)
     ) {
         MaterialTheme(colorScheme = scheme, typography = LiquidType, content = content)
     }
@@ -106,23 +107,21 @@ fun LiquidTheme(content: @Composable () -> Unit) {
  */
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 val GalaxyFont: androidx.compose.ui.text.font.FontFamily = androidx.compose.ui.text.font.FontFamily(
-    (1..9).flatMap { w -> listOf(false, true).map { italic -> DeviceDefaultFont(androidx.compose.ui.text.font.FontWeight(w * 100), italic) } },
+    (1..9).flatMap { w -> listOf(false, true).map { italic -> DeviceDefaultFont(androidx.compose.ui.text.font.FontWeight(w * 100), italic) } }
 )
 
 /** 기기 기본 글꼴(Typeface.DEFAULT)의 [weight]·기울임 한 벌. 굵기마다 안드로이드가 같은 글꼴의 그 굵기를 고른다. */
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 private class DeviceDefaultFont(
     override val weight: androidx.compose.ui.text.font.FontWeight,
-    italic: Boolean,
+    italic: Boolean
 ) : androidx.compose.ui.text.font.AndroidFont(androidx.compose.ui.text.font.FontLoadingStrategy.Blocking, Loader) {
     override val style = if (italic) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal
 
     private object Loader : androidx.compose.ui.text.font.AndroidFont.TypefaceLoader {
-        override fun loadBlocking(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont): android.graphics.Typeface =
-            android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, font.weight.weight, font.style == androidx.compose.ui.text.font.FontStyle.Italic)
+        override fun loadBlocking(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont): android.graphics.Typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, font.weight.weight, font.style == androidx.compose.ui.text.font.FontStyle.Italic)
 
-        override suspend fun awaitLoad(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont): android.graphics.Typeface =
-            loadBlocking(context, font)
+        override suspend fun awaitLoad(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont): android.graphics.Typeface = loadBlocking(context, font)
     }
 }
 
@@ -143,14 +142,14 @@ private val LiquidType = androidx.compose.material3.Typography().let { t0 ->
         titleSmall = t0.titleSmall.copy(fontFamily = GalaxyFont), bodyLarge = t0.bodyLarge.copy(fontFamily = GalaxyFont),
         bodyMedium = t0.bodyMedium.copy(fontFamily = GalaxyFont), bodySmall = t0.bodySmall.copy(fontFamily = GalaxyFont),
         labelLarge = t0.labelLarge.copy(fontFamily = GalaxyFont), labelMedium = t0.labelMedium.copy(fontFamily = GalaxyFont),
-        labelSmall = t0.labelSmall.copy(fontFamily = GalaxyFont),
+        labelSmall = t0.labelSmall.copy(fontFamily = GalaxyFont)
     )
     t.copy(
         bodyLarge = t.bodyLarge.copy(lineHeight = 22.sp),
         bodyMedium = t.bodyMedium.copy(lineHeight = 18.sp),
         bodySmall = t.bodySmall.copy(lineHeight = 15.sp),
         labelMedium = t.labelMedium.copy(lineHeight = 15.sp),
-        labelSmall = t.labelSmall.copy(lineHeight = 14.sp),
+        labelSmall = t.labelSmall.copy(lineHeight = 14.sp)
     )
 }
 

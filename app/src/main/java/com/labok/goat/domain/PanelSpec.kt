@@ -24,13 +24,13 @@ object PanelSpec {
         "1856x2160" to Spec(7.6f, "Galaxy Z Fold6 메인"),
         "968x2376" to Spec(6.3f, "Galaxy Z Fold6 커버"),
         "1968x2184" to Spec(8.0f, "Galaxy Z Fold7 메인"),
-        "1080x2520" to Spec(6.5f, "Galaxy Z Fold7 커버"),
+        "1080x2520" to Spec(6.5f, "Galaxy Z Fold7 커버")
     )
 
     enum class Source(val label: String) {
         SPEC("제조사 사양"),
         INACTIVE("비활성 디스플레이 보고값"),
-        REPORTED("시스템 보고값"),
+        REPORTED("시스템 보고값")
     }
 
     const val MIN_DIAGONAL = 3f
@@ -42,7 +42,7 @@ object PanelSpec {
         /** 시스템이 보고한 원래 값. */
         val reported: ScreenInfo,
         val source: Source,
-        val specLabel: String?,
+        val specLabel: String?
     )
 
     fun pixels(key: String): Pair<Int, Int>? {
@@ -93,7 +93,7 @@ data class DensityPlan(
     val reference: ScreenPolicy.Role,
     /** 보정 대상(기준이 아닌) 화면에 더할 미세조정 값(dpi). */
     val adjust: Int,
-    val panels: List<PanelSpec.Resolved>,
+    val panels: List<PanelSpec.Resolved>
 ) {
     val screens: List<ScreenInfo> get() = panels.map { it.screen }
 

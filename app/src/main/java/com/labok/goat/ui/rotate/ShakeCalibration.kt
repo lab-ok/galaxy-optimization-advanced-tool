@@ -1,26 +1,21 @@
 package com.labok.goat.ui.rotate
 
-import com.labok.goat.ui.liquid.UiMotion
-import com.labok.goat.ui.liquid.FluidSim
-import androidx.compose.ui.graphics.Color
-import com.labok.goat.ui.liquid.rememberLiquidHaptics
-import com.labok.goat.data.log.LogRepository
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -59,26 +53,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.domain.ShakeRotatePolicy
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
-import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.FluidSim
 import com.labok.goat.ui.liquid.LiquidButton
-import com.labok.goat.ui.liquid.LocalLiquid
-import com.labok.goat.ui.liquid.LocalReduceMotion
-import com.labok.goat.ui.liquid.goo
 import com.labok.goat.ui.liquid.LiquidLook
 import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LiquidTune
-import com.labok.goat.ui.liquid.moveTo
-import com.labok.goat.ui.liquid.nudge
-import com.labok.goat.ui.liquid.poke
-import com.labok.goat.ui.liquid.rememberSoftBlob
+import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.liquid.UiMotion
+import com.labok.goat.ui.liquid.goo
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.text.Copy
-import kotlin.math.cos
-import kotlin.math.hypot
-import kotlin.math.sin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -103,21 +93,28 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
     var tune by remember { mutableStateOf(LiquidTune.read(context)) }
     var tuning by remember { mutableStateOf(false) }
     // 제목은 다른 시트처럼 왼쪽, 본문(물방울·결과)은 가운데
-    SheetColumn(Copy.SHAKE_CALIBRATE) {
+    SheetColumn(title = Copy.SHAKE_CALIBRATE) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 when {
                     running -> Copy.SHAKE_CALIBRATE_NOW
-                    result != null -> "민감도를 ${result}(으)로 맞췄습니다"
+                    result != null -> "민감도를 $result(으)로 맞췄습니다"
                     failed -> "흔들림을 인식하지 못했습니다"
                     else -> "기기를 움직이면 물방울이 함께 움직입니다."
                 },
-                color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center,
+                color = c.ink,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
             )
             LiquidPlayground(round = round, recording = running, look = LiquidTune.look(tune), onDone = { lv ->
                 running = false
-                if (lv == null) failed = true
-                else { ShakeRotate.setLevel(context, lv, "자동 맞추기"); result = lv }
+                if (lv == null) {
+                    failed = true
+                } else {
+                    ShakeRotate.setLevel(context, lv, "자동 맞추기")
+                    result = lv
+                }
             })
             Spacer(Modifier.height(Gap.Item))
             AnimatedContent(Triple(running, result, failed), label = "calibrate") { (run, level, fail) ->
@@ -127,21 +124,33 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                         level != null -> {
                             Text(
                                 "이후에는 방금과 같거나 조금 약하게 흔들어도 화면이 회전합니다.",
-                                color = c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
+                                color = c.muted,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center
                             )
                             Spacer(Modifier.height(Gap.Item))
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                LiquidButton("다시 하기", modifier = Modifier.weight(1f), primary = false, onClick = { result = null; round++; running = true })
+                                LiquidButton("다시 하기", modifier = Modifier.weight(1f), primary = false, onClick = {
+                                    result = null
+                                    round++
+                                    running = true
+                                })
                                 LiquidButton("확인", modifier = Modifier.weight(1f), onClick = onClose)
                             }
                         }
                         else -> {
                             Text(
                                 if (fail) Copy.SHAKE_CALIBRATE_FAIL else "[시작]을 누른 뒤 ${CALIBRATE_SECONDS}초 동안 평소처럼 기기를 흔들어 주세요.",
-                                color = c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
+                                color = c.muted,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center
                             )
                             Spacer(Modifier.height(Gap.Item))
-                            LiquidButton(if (fail) "다시 하기" else "시작", modifier = Modifier.fillMaxWidth(), onClick = { failed = false; round++; running = true })
+                            LiquidButton(if (fail) "다시 하기" else "시작", modifier = Modifier.fillMaxWidth(), onClick = {
+                                failed = false
+                                round++
+                                running = true
+                            })
                         }
                     }
                 }
@@ -197,7 +206,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
             gyroMin = ShakeRotatePolicy.gyroOfTurn(ShakeRotate.turn(context)),
             maxGap = ShakeRotatePolicy.gapOfPace(ShakeRotate.pace(context)),
             needed = ShakeRotate.swings(context),
-            rejectTaps = ShakeRotate.rejectTaps(context),
+            rejectTaps = ShakeRotate.rejectTaps(context)
         )
     }
     var record by remember { mutableStateOf(ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN)) }
@@ -208,17 +217,25 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
     }
     // 시작한 회차: 기록을 새로 하고, 남은 시간 호를 줄이며, 끝나면 세기·빠르기·손목 회전을 맞춘다
     LaunchedEffect(round, recording) {
-        if (!recording) { time.snapTo(1f); return@LaunchedEffect }
+        if (!recording) {
+            time.snapTo(1f)
+            return@LaunchedEffect
+        }
         record = ShakeRotatePolicy.Detector(ShakeRotatePolicy.CALIBRATE_MIN)
-        count = 0; left = CALIBRATE_SECONDS; time.snapTo(1f)
+        count = 0
+        left = CALIBRATE_SECONDS
+        time.snapTo(1f)
         kotlinx.coroutines.coroutineScope {
             launch { time.animateTo(0f, tween(CALIBRATE_SECONDS * 1000, easing = LinearEasing)) }
-            while (left > 0) { delay(1000); left-- }
+            while (left > 0) {
+                delay(1000)
+                left--
+            }
         }
         val level = ShakeRotatePolicy.calibrate(record.peaks.map { it.force })
         LogRepository.from(context).add(
             "흔들어서 화면 회전 자동 맞추기: 휘두름 ${record.peaks.size}번, 세기 ${record.peaks.map { "%.1f".format(it.force) }}" +
-                if (level == null) " → 실패(흔들림 부족)" else " → 민감도 $level",
+                if (level == null) " → 실패(흔들림 부족)" else " → 민감도 $level"
         )
         // 세기를 맞췄으면 그 사람의 흔들기 리듬(빠르기)과 손목 회전 기준도 함께 맞춘다
         if (level != null) {
@@ -235,7 +252,8 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
             val now = withFrameNanos { it }
             val f = if (last == 0L) 1f else ((now - last) / 16_666_667f).coerceIn(0.25f, 3f)
             last = now
-            val sim = simNow; val look = lookNow
+            val sim = simNow
+            val look = lookNow
             if (!sim.ready) continue
             // 한 걸음은 반 프레임 이하로 나눈다: 프레임이 밀려 한 번에 크게 적분하면 점성·표면장력이 강한 액체가 터진다.
             // 너무 밀리면(4걸음 넘게) 그만큼 느리게 움직이게 둔다.
@@ -260,11 +278,15 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
                 }
                 // 가속도 원값 = 중력 + 관성. 중력은 천천히 따라가는 저역 통과로 떼어 내 약하게(달 중력)만 걸고, 관성은 그대로 건다.
                 // 화면 좌표: 기기 x는 화면 오른쪽, 기기 y는 화면 위쪽(반대로)
-                val ax = e.values[0]; val ay = e.values[1]
-                gravity[0] += (ax - gravity[0]) * GRAVITY_LP; gravity[1] += (ay - gravity[1]) * GRAVITY_LP
-                val sim = simNow; val look = lookNow
+                val ax = e.values[0]
+                val ay = e.values[1]
+                gravity[0] += (ax - gravity[0]) * GRAVITY_LP
+                gravity[1] += (ay - gravity[1]) * GRAVITY_LP
+                val sim = simNow
+                val look = lookNow
                 val g = look.gToPx * dp
-                val lx = ax - gravity[0]; val ly = ay - gravity[1]
+                val lx = ax - gravity[0]
+                val ly = ay - gravity[1]
                 force[0] = -(lx + gravity[0] * look.gravity) * g
                 force[1] = (ly + gravity[1] * look.gravity) * g
                 // 잡힌 것을 보여 준다: 휘두름·탭·충격 하나 → 덩어리는 한쪽으로 쏠리고 반대쪽(빈 곳)으로 물방울이 튄다.
@@ -300,11 +322,17 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
                 val o = Offset(size.width / 2, size.height / 2)
                 val ring = glass + 6.dp.toPx()
                 drawCircle(c.line, ring, o, style = Stroke(3.dp.toPx()))
-                if (recording) drawArc(
-                    c.ink, -90f, 360f * time.value, false,
-                    Offset(o.x - ring, o.y - ring), Size(ring * 2, ring * 2),
-                    style = Stroke(3.dp.toPx(), cap = StrokeCap.Round),
-                )
+                if (recording) {
+                    drawArc(
+                        c.ink,
+                        -90f,
+                        360f * time.value,
+                        false,
+                        Offset(o.x - ring, o.y - ring),
+                        Size(ring * 2, ring * 2),
+                        style = Stroke(3.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                }
             }
             // 액체(goo 층: 입자가 매끈한 한 덩어리 표면이 되고, 튄 물방울은 목처럼 이어졌다 떨어진다)
             Canvas(Modifier.fillMaxWidth().height(280.dp).goo(c.ink, look.blurDp.dp)) {
@@ -313,16 +341,22 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
                 val r = look.radiusDp.dp.toPx()
                 for (i in 0 until sim.n) drawCircle(c.ink, r, Offset(sim.x[i], sim.y[i]))
             }
-            if (recording) Text(
-                "$left", color = c.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.align(Alignment.Center).graphicsLayer {
-                    frame
-                    if (sim.ready) {
-                        val (mx, my) = sim.center()
-                        translationX = mx - box.width / 2f; translationY = my - box.height / 2f
+            if (recording) {
+                Text(
+                    "$left",
+                    color = c.onInk,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.align(Alignment.Center).graphicsLayer {
+                        frame
+                        if (sim.ready) {
+                            val (mx, my) = sim.center()
+                            translationX = mx - box.width / 2f
+                            translationY = my - box.height / 2f
+                        }
                     }
-                },
-            )
+                )
+            }
         }
         // 잡힌 휘두름 점: 찰 때마다 통 튀어 오른다(기록 중에만 센다)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -333,6 +367,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
 
 /** 시뮬레이션 한 걸음의 최대 길이(프레임). */
 private const val MAX_STEP = 0.5f
+
 /** 중력 저역 통과 계수(센서 값 하나마다, 50Hz면 약 0.4초에 따라간다). */
 private const val GRAVITY_LP = 0.05f
 
@@ -343,7 +378,7 @@ private fun Dot(filled: Boolean) {
     val k by animateFloatAsState(
         if (filled) 1f else 0f,
         spring(dampingRatio = UiMotion.ratio(0.32f), stiffness = UiMotion.stiffness(Spring.StiffnessMediumLow, 0.32f)),
-        label = "dot",
+        label = "dot"
     )
     Canvas(Modifier.size(18.dp)) {
         drawCircle(c.line, size.minDimension / 2 * 0.62f)
@@ -368,15 +403,24 @@ private fun FluidTuner(tune: Map<String, Int>, onChange: (Map<String, Int>) -> U
             var v by remember(tune[knob.key]) { mutableIntStateOf(tune[knob.key] ?: knob.default) }
             Spacer(Modifier.height(Gap.Item))
             LiquidSlider(
-                value = v, range = knob.range,
-                onValueChange = { v = it; if (knob !== LiquidTune.WATER) onChange(tune + (knob.key to it)) },
-                onValueChangeFinished = { LiquidTune.save(context, knob, v); onChange(tune + (knob.key to v)) },
-                valueText = knob.text, description = knob.label,
+                value = v,
+                range = knob.range,
+                onValueChange = {
+                    v = it
+                    if (knob !== LiquidTune.WATER) onChange(tune + (knob.key to it))
+                },
+                onValueChangeFinished = {
+                    LiquidTune.save(context, knob, v)
+                    onChange(tune + (knob.key to v))
+                },
+                valueText = knob.text,
+                description = knob.label
             )
         }
         Spacer(Modifier.height(Gap.Item))
         LiquidButton(Copy.FLUID_RESET, modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
-            LiquidTune.reset(context); onChange(LiquidTune.defaults())
+            LiquidTune.reset(context)
+            onChange(LiquidTune.defaults())
         })
     }
 }

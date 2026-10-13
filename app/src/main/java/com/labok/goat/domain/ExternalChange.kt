@@ -17,7 +17,7 @@ data class ExternalChange(
     val to: Int,
     val timeMs: Long,
     /** 그때 화면의 강제 해상도 비율([ScreenInfo.scale]). 값들은 이 비율이 걸린 밀도라, 기준으로 삼을 때 이 비율로 되돌린다. */
-    val scale: Float = 1f,
+    val scale: Float = 1f
 ) {
     fun serialize() = "$key|${role.name}|$from|$to|$timeMs|$scale"
 
@@ -28,8 +28,12 @@ data class ExternalChange(
             if (p.size != 5 && p.size != 6) return null
             val role = ScreenPolicy.Role.entries.find { it.name == p[1] } ?: return null
             return ExternalChange(
-                p[0], role, p[2].toIntOrNull() ?: return null, p[3].toIntOrNull() ?: return null, p[4].toLongOrNull() ?: return null,
-                p.getOrNull(5)?.toFloatOrNull()?.takeIf { it > 0f } ?: 1f,
+                p[0],
+                role,
+                p[2].toIntOrNull() ?: return null,
+                p[3].toIntOrNull() ?: return null,
+                p[4].toLongOrNull() ?: return null,
+                p.getOrNull(5)?.toFloatOrNull()?.takeIf { it > 0f } ?: 1f
             )
         }
 
@@ -49,7 +53,7 @@ data class ExternalChange(
             /** 앱이 다른 화면에 적용한 값들. 화면이 바뀐 직후 다른 화면 값이 잠시 보이는 것은 외부 변경이 아니다. */
             otherApplied: Collection<Int> = emptyList(),
             /** 지금 화면의 강제 해상도 비율. [target]은 이미 이 비율이 걸린 값이다. */
-            scale: Float = 1f,
+            scale: Float = 1f
         ): ExternalChange? {
             if (role == null || current == null || applied == null || target == null) return null
             if (current == applied || current == target || current in otherApplied) return null

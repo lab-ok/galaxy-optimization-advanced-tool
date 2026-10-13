@@ -20,8 +20,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -56,7 +56,10 @@ fun GuideSceneArt(scene: GuideScene, modifier: Modifier = Modifier) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val t0 by rememberInfiniteTransition(label = "scene").animateFloat(
-        0f, 1f, infiniteRepeatable(tween(4200, easing = LinearEasing), RepeatMode.Restart), label = "t",
+        0f,
+        1f,
+        infiniteRepeatable(tween(4200, easing = LinearEasing), RepeatMode.Restart),
+        label = "t"
     )
     // 애니메이션 제거 설정이면 '결과' 장면에서 멈춘다.
     val t = if (reduce) 0.92f else t0
@@ -90,7 +93,7 @@ private class SceneKit(
     val mono: TextStyle,
     val ui: TextStyle,
     /** 폰(외부 화면) 가로 ÷ 세로. 기기에 맞춘 비율. */
-    val coverAspect: Float,
+    val coverAspect: Float
 ) {
     // ---- 공통 부품 ----
 
@@ -196,7 +199,7 @@ private class SceneKit(
         finger(
             Offset(screen.center.x + screen.width * 0.1f, rowY(1) + 2.dp.toPx()),
             if (tapping) (taps * 7) % 1f else 0f,
-            visible = 1f - phase(t, 0.58f, 0.64f),
+            visible = 1f - phase(t, 0.58f, 0.64f)
         )
         // 남은 횟수 방울
         val left = 7 - tapCount
@@ -218,7 +221,7 @@ private class SceneKit(
         finger(
             Offset(screen.right - pad - 9.dp.toPx(), rowY(3) + 2.dp.toPx()),
             if (t in 0.7f..0.8f) phase(t, 0.7f, 0.8f) else 0f,
-            visible = phase(t, 0.64f, 0.7f) * (1f - phase(t, 0.86f, 0.92f)),
+            visible = phase(t, 0.64f, 0.7f) * (1f - phase(t, 0.86f, 0.92f))
         )
     }
 
@@ -267,7 +270,10 @@ private class SceneKit(
         val a = Offset(pc.right - pc.width * 0.12f, pc.bottom + size.height * 0.15f)
         val b = Offset(ph.center.x, ph.bottom + size.height * 0.05f)
         val ctrl = Offset((a.x + b.x) / 2, size.height * 1.02f)
-        val path = Path().apply { moveTo(a.x, a.y); quadraticBezierTo(ctrl.x, ctrl.y, b.x, b.y) }
+        val path = Path().apply {
+            moveTo(a.x, a.y)
+            quadraticBezierTo(ctrl.x, ctrl.y, b.x, b.y)
+        }
         drawPath(path, c.ink.copy(alpha = 0.5f * plug), style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round))
         drawRoundRect(c.ink.copy(alpha = plug), Offset(b.x - 5.dp.toPx(), b.y - 3.dp.toPx() + (1 - plug) * 6.dp.toPx()), Size(10.dp.toPx(), 6.dp.toPx()), CornerRadius(2.dp.toPx()))
         // PC: adb devices → device
@@ -318,7 +324,7 @@ private class SceneKit(
         terminal(
             pc,
             listOf("adb pair …" to phase(t, 0.36f, 0.5f), "482913" to phase(t, 0.52f, 0.62f), "paired" to phase(t, 0.68f, 0.74f)),
-            cursorBlink = blink(t),
+            cursorBlink = blink(t)
         )
         // 두 기기 사이: 점선 → 이어지면 실선과 고리
         val linked = phase(t, 0.7f, 0.8f)
@@ -328,7 +334,8 @@ private class SceneKit(
         if (linked < 1f) {
             var x = x0
             while (x < x1) {
-                drawCircle(c.ink.copy(alpha = 0.3f * (1f - linked)), 1.6.dp.toPx(), Offset(x, ly)); x += 7.dp.toPx()
+                drawCircle(c.ink.copy(alpha = 0.3f * (1f - linked)), 1.6.dp.toPx(), Offset(x, ly))
+                x += 7.dp.toPx()
             }
         }
         if (linked > 0f) {
@@ -353,8 +360,13 @@ private class SceneKit(
             val r = size.height * (0.09f + 0.09f * k)
             val on = ((t * 4).toInt() % 3) >= k
             drawArc(
-                c.ink.copy(alpha = if (on) 0.85f else 0.15f), -135f, 90f, false,
-                Offset(cx - r, cy - r), Size(r * 2, r * 2), style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round),
+                c.ink.copy(alpha = if (on) 0.85f else 0.15f),
+                -135f,
+                90f,
+                false,
+                Offset(cx - r, cy - r),
+                Size(r * 2, r * 2),
+                style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round)
             )
         }
         drawCircle(c.ink, 3.dp.toPx(), Offset(cx, cy))
@@ -367,7 +379,7 @@ private class SceneKit(
         terminal(
             pc,
             listOf("adb shell" to phase(t, 0.04f, 0.18f), "pm grant …" to phase(t, 0.18f, 0.32f), "WRITE_SECURE…" to phase(t, 0.32f, 0.42f)),
-            cursorBlink = t < 0.46f && blink(t),
+            cursorBlink = t < 0.46f && blink(t)
         )
         // Enter 키: 모니터 받침대 오른쪽의 키캡. 누르면 눌려 내려가고 진해진다.
         val enter = if (t in 0.44f..0.52f) phase(t, 0.44f, 0.48f) * (1f - phase(t, 0.48f, 0.52f)) else 0f
@@ -426,8 +438,13 @@ private class SceneKit(
         val sh = w * 0.32f
         val lift = open * w * 0.22f
         drawArc(
-            c.ink, 180f, 180f, false, Offset(center.x - sh + open * w * 0.2f, top - sh - lift), Size(sh * 2, sh * 2),
-            style = Stroke(w * 0.13f, cap = StrokeCap.Round),
+            c.ink,
+            180f,
+            180f,
+            false,
+            Offset(center.x - sh + open * w * 0.2f, top - sh - lift),
+            Size(sh * 2, sh * 2),
+            style = Stroke(w * 0.13f, cap = StrokeCap.Round)
         )
         if (open < 1f) {
             // 잠긴 동안에는 고리 양 다리가 몸통까지 내려온다

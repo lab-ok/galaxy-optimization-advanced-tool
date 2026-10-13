@@ -1,11 +1,11 @@
 package com.labok.goat.data.settings
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
 import com.labok.goat.domain.DpiPolicy
 import com.labok.goat.domain.ScreenInfo
 import com.labok.goat.domain.ScreenPolicy
-import android.content.Context
-import android.content.SharedPreferences
 
 /** SharedPreferences를 감싼 최소 key-value 인터페이스. 테스트에서는 메모리 구현을 쓴다. */
 interface KeyValueStore {
@@ -19,13 +19,20 @@ interface KeyValueStore {
 
 class PrefsStore(private val prefs: SharedPreferences) : KeyValueStore {
     override fun getInt(key: String): Int? = if (prefs.contains(key)) prefs.getInt(key, 0) else null
-    override fun putInt(key: String, value: Int) { prefs.edit().putInt(key, value).apply() }
+    override fun putInt(key: String, value: Int) {
+        prefs.edit().putInt(key, value).apply()
+    }
     override fun getBoolean(key: String, default: Boolean) = prefs.getBoolean(key, default)
-    override fun putBoolean(key: String, value: Boolean) { prefs.edit().putBoolean(key, value).apply() }
+    override fun putBoolean(key: String, value: Boolean) {
+        prefs.edit().putBoolean(key, value).apply()
+    }
     override fun getString(key: String): String? = prefs.getString(key, null)
+
     // 문자열 값(학습 화면·외부 변경·적용 기록)은 BroadcastReceiver·Worker에서 쓰고 곧 프로세스가 끝날 수 있어 바로 디스크에 쓴다.
     @SuppressLint("ApplySharedPref")
-    override fun putString(key: String, value: String?) { prefs.edit().putString(key, value).commit() }
+    override fun putString(key: String, value: String?) {
+        prefs.edit().putString(key, value).commit()
+    }
 }
 
 data class LastApply(val success: Boolean, val timeMs: Long, val text: String)
@@ -174,17 +181,14 @@ class SettingsRepository(private val store: KeyValueStore) {
         private const val KEY_RULER_PPI = "ruler_ppi"
         const val MAX_ADJUST = 20
 
-        fun from(context: Context): SettingsRepository =
-            SettingsRepository(PrefsStore(Storage.prefs(context)))
+        fun from(context: Context): SettingsRepository = SettingsRepository(PrefsStore(Storage.prefs(context)))
     }
 }
 
 object Storage {
-    private fun dpContext(context: Context): Context =
-        context.applicationContext.createDeviceProtectedStorageContext()
+    private fun dpContext(context: Context): Context = context.applicationContext.createDeviceProtectedStorageContext()
 
-    fun prefs(context: Context): SharedPreferences =
-        dpContext(context).getSharedPreferences("settings", Context.MODE_PRIVATE)
+    fun prefs(context: Context): SharedPreferences = dpContext(context).getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     fun logFile(context: Context) = java.io.File(dpContext(context).filesDir, "dpi_log.txt")
 

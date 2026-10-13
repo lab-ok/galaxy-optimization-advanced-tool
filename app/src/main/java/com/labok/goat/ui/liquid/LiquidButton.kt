@@ -28,9 +28,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
@@ -38,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
@@ -47,6 +44,7 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.random.Random
+import kotlinx.coroutines.launch
 
 /**
  * 액체 버튼. 원본 liquid_button.js + engine.js burster를 그대로 옮겼다.
@@ -66,7 +64,7 @@ fun LiquidButton(
     enabled: Boolean = true,
     burst: Boolean = primary,
     /** 되돌리기 어려운 동작(권한 초기화 등)은 빨간색으로 표시한다. */
-    danger: Boolean = false,
+    danger: Boolean = false
 ) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
@@ -106,45 +104,59 @@ fun LiquidButton(
             .clickable(interaction, null, role = Role.Button) {
                 if (!enabled) {
                     haptics.press()
-                    if (!reduce) scope.launch {
-                        shake.snapTo(0f)
-                        // 흔들림 폭도 UI 유연성을 따른다(기본 100%에서 원래 폭)
-                        val k = (UiMotion.wobble / 0.75f).coerceIn(0f, 2f)
-                        shake.animateTo(0f, keyframes {
-                            durationMillis = 320
-                            -14f * k at 50; 12f * k at 110; -8f * k at 170; 5f * k at 230; -2f * k at 280
-                        })
+                    if (!reduce) {
+                        scope.launch {
+                            shake.snapTo(0f)
+                            // 흔들림 폭도 UI 유연성을 따른다(기본 100%에서 원래 폭)
+                            val k = (UiMotion.wobble / 0.75f).coerceIn(0f, 2f)
+                            shake.animateTo(
+                                0f,
+                                keyframes {
+                                    durationMillis = 320
+                                    -14f * k at 50
+                                    12f * k at 110
+                                    -8f * k at 170
+                                    5f * k at 230
+                                    -2f * k at 280
+                                }
+                            )
+                        }
                     }
                     return@clickable
                 }
                 onClick()
-                if (burst && primary && !reduce && t < 0f) scope.launch {
-                    drops = List(N) { i -> Drop.random(i) }
-                    val start = withFrameNanos { it } - 14_000_000L      // 다음 프레임에 이미 절반 넘게 튀어 있도록
-                    haptics.press()
-                    while (true) {
-                        val now = withFrameNanos { it }
-                        val s = (now - start) / 1e9f
-                        if (s >= T_END) break
-                        t = s
+                if (burst && primary && !reduce && t < 0f) {
+                    scope.launch {
+                        drops = List(N) { i -> Drop.random(i) }
+                        val start = withFrameNanos { it } - 14_000_000L // 다음 프레임에 이미 절반 넘게 튀어 있도록
+                        haptics.press()
+                        while (true) {
+                            val now = withFrameNanos { it }
+                            val s = (now - start) / 1e9f
+                            if (s >= T_END) break
+                            t = s
+                        }
+                        t = -1f
+                        // 다 뭉치면 한 번 출렁
+                        bw.snapTo(0.92f)
+                        bh.snapTo(1.12f)
+                        launch { bw.animateTo(1f, Springs.pop()) }
+                        launch { bh.animateTo(1f, Springs.pop()) }
                     }
-                    t = -1f
-                    // 다 뭉치면 한 번 출렁
-                    bw.snapTo(0.92f); bh.snapTo(1.12f)
-                    launch { bw.animateTo(1f, Springs.pop()) }
-                    launch { bh.animateTo(1f, Springs.pop()) }
                 }
             },
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.Center
     ) {
         val running = t >= 0f
         val gather = if (running) gatherOf(t, drops) else 1f
         // 흔적: 터진 자리의 그림자와 물 자국 고리. 방울이 모일수록 마른다.
-        if (running) Canvas(Modifier.matchParentSize()) {
-            val a = 1f - gather
-            val r = CornerRadius(size.height / 2)
-            drawRoundRect(ink.copy(alpha = 0.16f * a), cornerRadius = r)
-            drawRoundRect(ink.copy(alpha = 0.18f * a), cornerRadius = r, style = Stroke(1.6.dp.toPx()))
+        if (running) {
+            Canvas(Modifier.matchParentSize()) {
+                val a = 1f - gather
+                val r = CornerRadius(size.height / 2)
+                drawRoundRect(ink.copy(alpha = 0.16f * a), cornerRadius = r)
+                drawRoundRect(ink.copy(alpha = 0.18f * a), cornerRadius = r, style = Stroke(1.6.dp.toPx()))
+            }
         }
         if (primary) {
             // 몸통과 방울: goo 층. 방울이 버튼 밖으로 튀므로 그리는 영역을 넉넉히 넓힌다.
@@ -166,14 +178,20 @@ fun LiquidButton(
                 val w = size.width * bw.value
                 val h = size.height * bh.value
                 // 사용할 수 없으면 테두리 안을 평평한 회색으로 채워 눌리지 않는 버튼임을 분명히 한다.
-                if (!enabled) drawRoundRect(
-                    c.muted.copy(alpha = 0.10f),
-                    Offset((size.width - w) / 2, (size.height - h) / 2), Size(w, h), CornerRadius(h / 2),
-                )
+                if (!enabled) {
+                    drawRoundRect(
+                        c.muted.copy(alpha = 0.10f),
+                        Offset((size.width - w) / 2, (size.height - h) / 2),
+                        Size(w, h),
+                        CornerRadius(h / 2)
+                    )
+                }
                 drawRoundRect(
                     if (enabled) (if (danger) c.danger else c.line) else c.line.copy(alpha = 0.6f),
-                    Offset((size.width - w) / 2, (size.height - h) / 2), Size(w, h), CornerRadius(h / 2),
-                    style = Stroke(1.dp.toPx()),
+                    Offset((size.width - w) / 2, (size.height - h) / 2),
+                    Size(w, h),
+                    CornerRadius(h / 2),
+                    style = Stroke(1.dp.toPx())
                 )
             }
         }
@@ -183,7 +201,7 @@ fun LiquidButton(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .padding(horizontal = 22.dp)
-                .graphicsLayer { alpha = if (running) ((gather - 0.8f) / 0.2f).coerceIn(0f, 1f) else 1f },
+                .graphicsLayer { alpha = if (running) ((gather - 0.8f) / 0.2f).coerceIn(0f, 1f) else 1f }
         )
     }
 }
@@ -221,10 +239,16 @@ private fun Modifier.overflow(pad: Dp) = layout { measurable, constraints ->
 
 /** 방울 하나. 값은 원본 burster의 난수 범위를 dp로 옮긴 것(원본 단위 px = dp). */
 private class Drop(
-    val ex: Float, val ey: Float,
-    val r: Float, val startK: Float, val dist: Float,
-    val vx: Float, val vy: Float,
-    val f: Float, val gyK: Float, val delay: Float,
+    val ex: Float,
+    val ey: Float,
+    val r: Float,
+    val startK: Float,
+    val dist: Float,
+    val vx: Float,
+    val vy: Float,
+    val f: Float,
+    val gyK: Float,
+    val delay: Float
 ) {
     fun draw(scope: DrawScope, color: androidx.compose.ui.graphics.Color, t: Float, cx: Float, cy: Float, w: Float, h: Float) = with(scope) {
         val dp = 1.dp.toPx()
@@ -237,7 +261,8 @@ private class Drop(
         val y: Float
         if (t < T_POP) {
             val k = out4(min(1f, t / T_POP))
-            x = sx + (endX - sx) * k; y = sy + (endY - sy) * k
+            x = sx + (endX - sx) * k
+            y = sy + (endY - sy) * k
             rr *= 0.6f + 0.4f * k
         } else {
             // 튄 자리에서 아주 조금 미끄러지며 멈춘다(위에서 본 장면이라 중력은 없다)
@@ -246,14 +271,16 @@ private class Drop(
             val hx = endX + vx * dp * slide
             val hy = endY + vy * dp * slide
             if (t < T_HANG) {
-                x = hx; y = hy
+                x = hx
+                y = hy
             } else {
                 val k = ((t - T_HANG - delay) / T_GATHER).coerceIn(0f, 1f)
                 val e = inOut(k)
                 val gx = cx - w / 2 + h / 2 + (w - h) * f
                 val gy = cy + gyK * h * 0.25f
-                x = hx + (gx - hx) * e; y = hy + (gy - hy) * e
-                rr *= 1f - max(0f, (k - 0.75f) / 0.25f) * 0.85f      // 다 오면 몸통에 녹아든다
+                x = hx + (gx - hx) * e
+                y = hy + (gy - hy) * e
+                rr *= 1f - max(0f, (k - 0.75f) / 0.25f) * 0.85f // 다 오면 몸통에 녹아든다
             }
         }
         // 그리는 영역 가장자리에서 잘리지 않게 안쪽에 둔다
@@ -265,7 +292,8 @@ private class Drop(
     companion object {
         fun random(i: Int): Drop {
             val a = (i.toFloat() / N) * 2f * PI.toFloat() + (Random.nextFloat() - 0.5f) * 0.55f
-            val ex = cos(a); val ey = sin(a)
+            val ex = cos(a)
+            val ey = sin(a)
             return Drop(
                 ex = ex, ey = ey,
                 r = 4f + Random.nextFloat() * 7.5f,
@@ -275,7 +303,7 @@ private class Drop(
                 vy = ey * (20f + Random.nextFloat() * 36f),
                 f = (i % 7) / 6f,
                 gyK = Random.nextFloat() - 0.5f,
-                delay = Random.nextFloat() * T_SPREAD,
+                delay = Random.nextFloat() * T_SPREAD
             )
         }
     }

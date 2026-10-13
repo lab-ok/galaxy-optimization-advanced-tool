@@ -4,13 +4,13 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -31,7 +31,7 @@ fun Modifier.goo(color: Color, blur: Dp = 6.dp): Modifier {
                 0f, 0f, 0f, 0f, r,
                 0f, 0f, 0f, 0f, g,
                 0f, 0f, 0f, 0f, b,
-                0f, 0f, 0f, 22f, -9f * 255f,
+                0f, 0f, 0f, 22f, -9f * 255f
             )
         )
         val blurFx = RenderEffect.createBlurEffect(px, px, Shader.TileMode.DECAL)
@@ -40,4 +40,3 @@ fun Modifier.goo(color: Color, blur: Dp = 6.dp): Modifier {
         clip = false
     }
 }
-

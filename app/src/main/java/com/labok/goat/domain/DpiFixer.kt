@@ -15,7 +15,7 @@ class DpiFixer(
     private val controller: DpiController,
     private val settings: SettingsRepository,
     private val log: (String) -> Unit,
-    private val clock: () -> Long = System::currentTimeMillis,
+    private val clock: () -> Long = System::currentTimeMillis
 ) {
     private val learner = ScreenLearner(settings, log, clock)
 
@@ -40,15 +40,17 @@ class DpiFixer(
         if (external != null) return@synchronized DpiPolicy.Decision.EXTERNAL_CHANGE
         val decision = if (blocked != null && (automatic.not() || settings.autoRecover) && hasPermission) {
             DpiPolicy.Decision.BLOCKED
-        } else DpiPolicy.decide(
-            automatic = automatic,
-            autoEnabled = settings.autoRecover,
-            hasPermission = hasPermission,
-            target = target,
-            current = state?.current,
-            recentApplyTimes = settings.applyTimes,
-            now = now,
-        )
+        } else {
+            DpiPolicy.decide(
+                automatic = automatic,
+                autoEnabled = settings.autoRecover,
+                hasPermission = hasPermission,
+                target = target,
+                current = state?.current,
+                recentApplyTimes = settings.applyTimes,
+                now = now
+            )
+        }
         when (decision) {
             DpiPolicy.Decision.BLOCKED -> log("[$reason] ${where}적용 보류: $blocked")
             DpiPolicy.Decision.SKIP_DISABLED -> log("[$reason] 자동 복구 꺼짐, 건너뜀")
@@ -67,7 +69,7 @@ class DpiFixer(
                 effective?.note?.let { log("[$reason] $it") }
                 val result = controller.apply(target!!)
                 if (automatic) settings.applyTimes = DpiPolicy.pruneApplyTimes(settings.applyTimes + now, now)
-                settings.lastApply = LastApply(result.success, now, "${where}${target} dpi · ${result.method}")
+                settings.lastApply = LastApply(result.success, now, "${where}$target dpi · ${result.method}")
                 if (result.success) {
                     screen?.let { settings.rememberApplied(it.key, target) }
                     log("[$reason] 적용 성공 $target (${result.method}) ${result.detail}")
@@ -144,7 +146,7 @@ class DpiFixer(
         effective: ScreenPolicy.Target?,
         state: com.labok.goat.data.display.DpiState?,
         physicalIsReset: Boolean,
-        now: Long,
+        now: Long
     ): ExternalChange? {
         val key = screen.key
         val current = state?.current
@@ -158,7 +160,7 @@ class DpiFixer(
             key, effective?.role, current, state?.physical, effective?.dpi,
             settings.appliedDpi[key], physicalIsReset, now,
             otherApplied = settings.appliedDpi.filterKeys { it != key }.values,
-            scale = screen.scale,
+            scale = screen.scale
         ) ?: return null
         settings.externalChange = found
         log("[$reason] 외부 DPI 변경 감지: ${found.role.label} ${found.from} → ${found.to}. 사용자 선택을 기다림")

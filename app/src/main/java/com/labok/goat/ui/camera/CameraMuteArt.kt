@@ -26,7 +26,8 @@ internal fun ShutterArt() {
         val wave = seg(t, 0.32f, 0.9f)
         listOf(0.27f to false, 0.73f to true).forEach { (fx, muted) ->
             val center = Offset(size.width * fx, size.height * 0.48f)
-            val w = 76.dp.toPx(); val h = 52.dp.toPx()
+            val w = 76.dp.toPx()
+            val h = 52.dp.toPx()
             val tl = Offset(center.x - w / 2, center.y - h / 2)
             // 카메라 몸체·렌즈·셔터 버튼
             drawRoundRect(c.ink, Offset(tl.x + w * 0.62f, tl.y - 7.dp.toPx()), Size(w * 0.2f, 9.dp.toPx()), CornerRadius(3.dp.toPx()))
@@ -47,8 +48,13 @@ internal fun ShutterArt() {
                 // 스피커(네모 + 나팔)와 그 위를 가로지르는 사선
                 val u = 1.dp.toPx()
                 val horn = Path().apply {
-                    moveTo(sx - 2 * u, center.y - 4 * u); lineTo(sx + 2 * u, center.y - 4 * u); lineTo(sx + 9 * u, center.y - 10 * u)
-                    lineTo(sx + 9 * u, center.y + 10 * u); lineTo(sx + 2 * u, center.y + 4 * u); lineTo(sx - 2 * u, center.y + 4 * u); close()
+                    moveTo(sx - 2 * u, center.y - 4 * u)
+                    lineTo(sx + 2 * u, center.y - 4 * u)
+                    lineTo(sx + 9 * u, center.y - 10 * u)
+                    lineTo(sx + 9 * u, center.y + 10 * u)
+                    lineTo(sx + 2 * u, center.y + 4 * u)
+                    lineTo(sx - 2 * u, center.y + 4 * u)
+                    close()
                 }
                 drawPath(horn, c.ink)
                 drawLine(c.surface, Offset(sx - 6 * u, center.y - 12 * u), Offset(sx + 13 * u, center.y + 12 * u), s.width * 2.2f, StrokeCap.Round)

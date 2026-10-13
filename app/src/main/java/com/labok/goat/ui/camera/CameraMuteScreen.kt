@@ -72,7 +72,7 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = featurePadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
     ) {
         item(key = "intro") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
@@ -84,20 +84,22 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                 }
             }
         }
-        if (!ready) item(key = "connect") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.CAMERA_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.CAMERA_NEED_SHIZUKU_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.CAMERA_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(Gap.Section))
-                    Text(Copy.CAMERA_PC_TITLE, color = c.ink)
-                    Text(Copy.CAMERA_PC_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    CommandBox(CameraMute.PC_COMMAND, onCopy = {
-                        if (copyText(context, CameraMute.PC_COMMAND)) Toast.makeText(context, Copy.TOAST_COPIED, Toast.LENGTH_SHORT).show()
-                    })
+        if (!ready) {
+            item(key = "connect") {
+                Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                    GlassCard {
+                        Text(Copy.CAMERA_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.CAMERA_NEED_SHIZUKU_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.CAMERA_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                        Spacer(Modifier.height(Gap.Section))
+                        Text(Copy.CAMERA_PC_TITLE, color = c.ink)
+                        Text(Copy.CAMERA_PC_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        CommandBox(CameraMute.PC_COMMAND, onCopy = {
+                            if (copyText(context, CameraMute.PC_COMMAND)) Toast.makeText(context, Copy.TOAST_COPIED, Toast.LENGTH_SHORT).show()
+                        })
+                    }
                 }
             }
         }
@@ -114,7 +116,8 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                                     CameraMute.State.NONE -> Copy.CAMERA_STATE_NONE
                                     CameraMute.State.UNKNOWN -> Copy.CAMERA_STATE_UNKNOWN
                                 },
-                                color = c.muted, style = MaterialTheme.typography.bodySmall,
+                                color = c.muted,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                         Spacer(Modifier.width(12.dp))
@@ -134,7 +137,10 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                             Text(Copy.CAMERA_KEEP_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         }
                         Spacer(Modifier.width(12.dp))
-                        LiquidSwitch(keep, { on -> keep = on; CameraMute.setKeep(context, on) })
+                        LiquidSwitch(keep, { on ->
+                            keep = on
+                            CameraMute.setKeep(context, on)
+                        })
                     }
                 }
             }
@@ -153,32 +159,32 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
 /** 사용 방법: 무엇을 하는지, 왜 Shizuku가 필요한지, 재부팅·업데이트 뒤, 되돌리기, 주의. */
 @Composable
 internal fun CameraMuteHelpSheet() {
-    SheetColumn("사용 방법") {
+    SheetColumn(title = "사용 방법") {
         HelpTopic(
             "1. 무엇을 하나요",
             "국내 갤럭시는 무음·진동 모드여도 카메라 촬영음이 강제로 납니다. 이 강제 설정을 끄면 촬영음이 기기 소리 설정을 따라, " +
-                "무음·진동 모드에서는 소리 없이 찍히고 소리 모드에서는 그대로 납니다. 삼성 기본 카메라와 대부분의 카메라 앱에 적용됩니다.",
+                "무음·진동 모드에서는 소리 없이 찍히고 소리 모드에서는 그대로 납니다. 삼성 기본 카메라와 대부분의 카메라 앱에 적용됩니다."
         ) { ShutterArt() }
         HelpTopic(
             "2. 꼭 지켜 주세요",
             "촬영음은 몰래 찍는 것을 막으려는 장치입니다. 다른 사람을 동의 없이 찍거나 몰래 찍는 것은 법으로 처벌받습니다. " +
-                "조용한 곳에서 내 물건·문서·음식을 찍을 때처럼 예절을 지키는 데만 쓰세요.",
+                "조용한 곳에서 내 물건·문서·음식을 찍을 때처럼 예절을 지키는 데만 쓰세요."
         )
         HelpTopic(
             "3. Shizuku가 필요한 이유",
             "촬영음 강제는 삼성이 숨겨 둔 시스템 설정이라, 일반 앱은 화면 배율 권한이 있어도 읽거나 바꿀 수 없습니다. " +
                 "Shizuku가 빌려 주는 셸 권한으로 'settings put system ${CameraMute.KEY} 0'을 실행합니다. " +
-                "Shizuku가 없으면 PC에서 같은 명령을 한 번 실행해도 됩니다.",
+                "Shizuku가 없으면 PC에서 같은 명령을 한 번 실행해도 됩니다."
         )
         HelpTopic(
             "4. 재부팅·업데이트 뒤",
             "기기에 따라 업데이트나 재부팅 뒤 촬영음이 다시 켜질 수 있습니다. '다시 켜지면 자동으로 끄기'를 켜 두면 " +
-                "Shizuku가 연결될 때마다(Android 13 이상은 재부팅 뒤 자동 연결) 확인해 다시 끕니다.",
+                "Shizuku가 연결될 때마다(Android 13 이상은 재부팅 뒤 자동 연결) 확인해 다시 끕니다."
         )
         HelpTopic(
             "5. 되돌리기",
             "스위치를 끄면 원래대로 촬영음이 강제로 나게 돌아갑니다. PC에서는 '${CameraMute.PC_UNDO}'로 되돌립니다. " +
-                "'이 기기에는 강제 설정이 없음'으로 나오면 해외 모델처럼 이미 소리 설정을 따르는 기기입니다.",
+                "'이 기기에는 강제 설정이 없음'으로 나오면 해외 모델처럼 이미 소리 설정을 따르는 기기입니다."
         )
     }
 }

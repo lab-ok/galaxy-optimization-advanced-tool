@@ -1,59 +1,59 @@
 package com.labok.goat.ui.sizetest
 
-import com.labok.goat.ui.components.Gap
-import com.labok.goat.ui.components.SheetColumn
-import androidx.compose.foundation.Canvas
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowCompat
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.runtime.DisposableEffect
 import android.app.Activity
-import com.labok.goat.ui.liquid.LiquidSlider
-import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.activity.compose.BackHandler
-import com.labok.goat.ui.liquid.LiquidButton
-import com.labok.goat.domain.ScreenGeometry
-import androidx.compose.ui.Alignment
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import com.labok.goat.domain.ScreenGeometry
 import com.labok.goat.domain.ScreenPolicy
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.InfoRow
+import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.home.UiState
 import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LocalLiquid
 import kotlin.math.abs
 
@@ -83,7 +83,8 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
         Text("크기 테스트", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Text(
             "이 화면을 연 채로 기기를 접고 펼쳐 아래 기준 도형과 글자가 두 화면에서 같은 크기로 보이는지 확인합니다.",
-            color = c.muted, style = MaterialTheme.typography.bodySmall,
+            color = c.muted,
+            style = MaterialTheme.typography.bodySmall
         )
         Spacer(Modifier.height(Gap.Section))
 
@@ -91,7 +92,8 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             Text("세로 줄 수 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "두 화면은 실제 높이가 거의 같아서, 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다. 가장 구분하기 쉬운 방법입니다.",
-                color = c.muted, style = MaterialTheme.typography.bodySmall,
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
             val cover = outer?.screen?.key
@@ -105,9 +107,20 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                 val diff = (innerRows - outerRows) / outerRows * 100f
                 Spacer(Modifier.height(Gap.Item))
                 Text(
-                    "차이 %+.1f%% · %s".format(diff, if (abs(diff) < 2f) "일치" else if (diff > 0) "내부 화면이 더 작게 표시됨(보정 + 방향)" else "내부 화면이 더 크게 표시됨(보정 − 방향)"),
-                    color = if (abs(diff) < 2f) c.ink else c.danger, fontWeight = FontWeight.SemiBold,
-                    style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(Alignment.CenterHorizontally),
+                    "차이 %+.1f%% · %s".format(
+                        diff,
+                        if (abs(diff) < 2f) {
+                            "일치"
+                        } else if (diff > 0) {
+                            "내부 화면이 더 작게 표시됨(보정 + 방향)"
+                        } else {
+                            "내부 화면이 더 크게 표시됨(보정 − 방향)"
+                        }
+                    ),
+                    color = if (abs(diff) < 2f) c.ink else c.danger,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             }
             Spacer(Modifier.height(Gap.Card))
@@ -115,7 +128,8 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             Spacer(Modifier.height(Gap.Item))
             Text(
                 "전체 화면에 번호 매긴 줄을 채웁니다. 이 상태로 접고 펼쳐서 두 화면의 마지막 번호를 비교해 보세요.",
-                color = c.muted, style = MaterialTheme.typography.bodySmall,
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
             )
         }
         Spacer(Modifier.height(Gap.Item))
@@ -151,11 +165,17 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                 val diff = (innerMm - outerMm) / outerMm * 100f
                 val ok = abs(diff) < 2f
                 InfoRow("차이", "%+.1f%% · %s".format(diff, if (ok) "일치" else "불일치"), emphasize = true)
-                if (!ok) Text(
-                    if (diff > 0) "내부 화면이 더 크게 표시됩니다. 내부 화면 보정을 − 방향으로 조정하세요."
-                    else "내부 화면이 더 작게 표시됩니다. 내부 화면 보정을 + 방향으로 조정하세요.",
-                    color = c.danger, style = MaterialTheme.typography.bodySmall,
-                )
+                if (!ok) {
+                    Text(
+                        if (diff > 0) {
+                            "내부 화면이 더 크게 표시됩니다. 내부 화면 보정을 − 방향으로 조정하세요."
+                        } else {
+                            "내부 화면이 더 작게 표시됩니다. 내부 화면 보정을 + 방향으로 조정하세요."
+                        },
+                        color = c.danger,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             } else {
                 Text("기기를 한 번 접었다 펼치면 두 화면을 비교할 수 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
@@ -186,20 +206,34 @@ private fun RulerCard(state: UiState, current: com.labok.goat.domain.PanelSpec.R
         val ppi = ScreenGeometry.calibratedPpi(base, 1f + pct / 100f)
         Text(
             "신용카드나 신분증의 짧은 변(54 mm)을 아래 칸에 대고, 칸의 양 끝이 카드 모서리와 꼭 맞도록 조절하세요. 맞추면 아래 mm 눈금이 실제 길이와 같아집니다.",
-            color = c.muted, style = MaterialTheme.typography.bodySmall,
+            color = c.muted,
+            style = MaterialTheme.typography.bodySmall
         )
         Spacer(Modifier.height(Gap.Item))
         CardEdge(ppi)
         LiquidSlider(
-            value = pct, range = -25..25,
-            onValueChange = { pct = it }, onValueChangeFinished = {},
+            value = pct,
+            range = -25..25,
+            onValueChange = { pct = it },
+            onValueChangeFinished = {},
             valueText = { if (it > 0) "+$it%" else "$it%" },
-            description = "카드 폭 맞추기", centered = true,
+            description = "카드 폭 맞추기",
+            centered = true
         )
         Spacer(Modifier.height(Gap.Item))
         Text(
-            "기준 PPI %.0f · %s".format(ppi, if (saved != null && pct == 0) "카드로 맞춘 값" else if (pct == 0) "기기가 알려 준 값" else "조절 중"),
-            color = c.muted, style = MaterialTheme.typography.labelMedium,
+            "기준 PPI %.0f · %s".format(
+                ppi,
+                if (saved != null && pct == 0) {
+                    "카드로 맞춘 값"
+                } else if (pct == 0) {
+                    "기기가 알려 준 값"
+                } else {
+                    "조절 중"
+                }
+            ),
+            color = c.muted,
+            style = MaterialTheme.typography.labelMedium
         )
         Spacer(Modifier.height(Gap.Item))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -210,7 +244,8 @@ private fun RulerCard(state: UiState, current: com.labok.goat.domain.PanelSpec.R
         val px = with(LocalDensity.current) { REF_DP.dp.toPx() }
         Text(
             "아래 상자는 ${REF_DP}dp로, 이 화면에서 약 %.1f mm입니다.".format(px / ppi * 25.4f),
-            color = c.muted, style = MaterialTheme.typography.bodySmall,
+            color = c.muted,
+            style = MaterialTheme.typography.bodySmall
         )
         Spacer(Modifier.height(Gap.Item))
         Ruler(ppi = ppi, boxPx = px)
@@ -304,7 +339,7 @@ internal fun RowCountOverlay(onClose: () -> Unit) {
                 .fillMaxSize()
                 .background(c.bg)
                 .onSizeChanged { boxPx = it.height }
-                .pointerInput(Unit) { detectTapGestures { } },
+                .pointerInput(Unit) { detectTapGestures { } }
         ) {
             Column(Modifier.fillMaxSize()) {
                 repeat(if (rows > 0f) rows.toInt() + 2 else 40) { i ->
@@ -315,7 +350,7 @@ internal fun RowCountOverlay(onClose: () -> Unit) {
                             .then(if (i == 0) Modifier.onSizeChanged { rowPx = it.height } else Modifier)
                             .background(if (i % 2 == 0) c.surface else c.bg)
                             .padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("${i + 1}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = c.ink, modifier = Modifier.width(48.dp))
                         Text("가나다라 Aa 123", fontSize = 16.sp, color = c.ink)
@@ -330,7 +365,7 @@ internal fun RowCountOverlay(onClose: () -> Unit) {
                     .background(c.ink)
                     .clickable(onClick = onClose)
                     .padding(horizontal = 16.dp, vertical = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("이 화면 %.1f줄".format(rows), color = c.onInk, fontWeight = FontWeight.Bold)
                 Text("눌러서 닫기", color = c.onInk.copy(alpha = 0.7f), style = MaterialTheme.typography.labelSmall)

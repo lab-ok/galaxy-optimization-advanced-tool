@@ -1,26 +1,21 @@
 package com.labok.goat.ui.about
 
-import com.labok.goat.data.shizuku.ShizukuAccess
-import com.labok.goat.ui.components.rowListEdges
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.Icon
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
-import com.labok.goat.ui.liquid.UiHaptics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,22 +26,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.labok.goat.BuildConfig
 import com.labok.goat.data.log.PublicLogFile
+import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.featurePadding
+import com.labok.goat.ui.components.rowListEdges
 import com.labok.goat.ui.liquid.GlassCard
-import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.UiHaptics
 import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.ui.text.Copy
-import kotlin.math.roundToInt
 
 /**
  * 앱 설정(사이드바 맨 아래). 위는 '설정'(업데이트·UI 유연성·햅틱 세기·기록 파일), 아래는 '정보'(앱 정보·변경 기록·필요 권한)로 나눈다.
@@ -61,7 +59,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = featurePadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
     ) {
         item(key = "settingsTitle") { SectionTitle(Copy.SETTINGS_SECTION) }
         item(key = "update") { Box(Modifier.widthIn(max = ContentMaxWidth)) { UpdateCard(manual = true) } }
@@ -73,10 +71,15 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                     var v by remember { mutableIntStateOf(UiMotion.percent) }
                     Spacer(Modifier.height(Gap.Item))
                     LiquidSlider(
-                        value = v, range = 0..UiMotion.MAX_PERCENT,
-                        onValueChange = { v = it; UiMotion.set(context, it) },
+                        value = v,
+                        range = 0..UiMotion.MAX_PERCENT,
+                        onValueChange = {
+                            v = it
+                            UiMotion.set(context, it)
+                        },
                         onValueChangeFinished = { UiMotion.set(context, v) },
-                        valueText = { "$it%" }, description = Copy.MOTION_TITLE,
+                        valueText = { "$it%" },
+                        description = Copy.MOTION_TITLE
                     )
                     var demo by remember { mutableStateOf(false) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -95,10 +98,15 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                     // 조절바 손잡이 방울도 바뀐 속도로 움직여 바로 느껴 본다
                     Spacer(Modifier.height(Gap.Item))
                     LiquidSlider(
-                        value = sp, range = UiMotion.SPEED_MIN..UiMotion.SPEED_MAX,
-                        onValueChange = { sp = it; UiMotion.setSpeed(context, it) },
+                        value = sp,
+                        range = UiMotion.SPEED_MIN..UiMotion.SPEED_MAX,
+                        onValueChange = {
+                            sp = it
+                            UiMotion.setSpeed(context, it)
+                        },
                         onValueChangeFinished = { UiMotion.setSpeed(context, sp) },
-                        valueText = { "$it%" }, description = Copy.SPEED_TITLE,
+                        valueText = { "$it%" },
+                        description = Copy.SPEED_TITLE
                     )
                 }
             }
@@ -112,9 +120,15 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                     // 조절바 칸이 바뀔 때마다 그 세기로 틱이 울려(조절바의 기본 동작) 바로 느껴 본다
                     Spacer(Modifier.height(Gap.Item))
                     LiquidSlider(
-                        value = h, range = 0..UiHaptics.MAX, onValueChange = { h = it; UiHaptics.set(context, it) },
+                        value = h,
+                        range = 0..UiHaptics.MAX,
+                        onValueChange = {
+                            h = it
+                            UiHaptics.set(context, it)
+                        },
                         onValueChangeFinished = { UiHaptics.set(context, h) },
-                        valueText = { if (it == 0) "끔" else "$it%" }, description = Copy.HAPTIC_TITLE,
+                        valueText = { if (it == 0) "끔" else "$it%" },
+                        description = Copy.HAPTIC_TITLE
                     )
                 }
             }
@@ -124,7 +138,10 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 var autoOff by remember { mutableStateOf(ShizukuAccess.autoOffEnabled(context)) }
                 GlassCard {
-                    LiquidSwitchRow(Copy.APP_SIZE_AUTO_OFF_TITLE, Copy.APP_SIZE_AUTO_OFF_BODY, autoOff, true) { on -> autoOff = on; ShizukuAccess.setAutoOff(context, on) }
+                    LiquidSwitchRow(Copy.APP_SIZE_AUTO_OFF_TITLE, Copy.APP_SIZE_AUTO_OFF_BODY, autoOff, true) { on ->
+                        autoOff = on
+                        ShizukuAccess.setAutoOff(context, on)
+                    }
                     // 이 기기에서 무선 디버깅을 끄자 Shizuku가 멈췄으면 GOAT가 옵션을 스스로 껐다는 것을 알린다
                     if (ShizukuAccess.autoOffStopsShizuku(context)) {
                         Spacer(Modifier.height(Gap.Item))
@@ -137,7 +154,10 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 var logFile by remember { mutableStateOf(PublicLogFile.enabled(context)) }
                 GlassCard {
-                    LiquidSwitchRow(Copy.LOG_FILE_TITLE, Copy.LOG_FILE_BODY, logFile, true) { on -> logFile = on; PublicLogFile.setEnabled(context, on) }
+                    LiquidSwitchRow(Copy.LOG_FILE_TITLE, Copy.LOG_FILE_BODY, logFile, true) { on ->
+                        logFile = on
+                        PublicLogFile.setEnabled(context, on)
+                    }
                 }
             }
         }
@@ -145,12 +165,12 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
         item(key = "info") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                  Column(Modifier.rowListEdges()) {
-                    val perms = AppPermissions.all
-                    InfoLink(Copy.MENU_ABOUT, "GOAT ${BuildConfig.VERSION_NAME} · 라이선스·문의", onAbout)
-                    InfoLink(Copy.INFO_CHANGELOG, CHANGELOG.first().let { "최근 ${it.version.removePrefix("GOAT ")} · ${it.date}" }, onChangelog)
-                    InfoLink(Copy.INFO_PERMISSIONS, "권한 ${perms.size}개 중 ${perms.count { AppPermissions.granted(context, it) }}개 허용됨", onPermissions)
-                  }
+                    Column(Modifier.rowListEdges()) {
+                        val perms = AppPermissions.all
+                        InfoLink(Copy.MENU_ABOUT, "GOAT ${BuildConfig.VERSION_NAME} · 라이선스·문의", onAbout)
+                        InfoLink(Copy.INFO_CHANGELOG, CHANGELOG.first().let { "최근 ${it.version.removePrefix("GOAT ")} · ${it.date}" }, onChangelog)
+                        InfoLink(Copy.INFO_PERMISSIONS, "권한 ${perms.size}개 중 ${perms.count { AppPermissions.granted(context, it) }}개 허용됨", onPermissions)
+                    }
                 }
             }
         }
@@ -172,7 +192,7 @@ private fun InfoLink(label: String, detail: String, onClick: () -> Unit) {
     val c = LocalLiquid.current
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = Gap.RowPad),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
             Text(label, color = c.ink, fontWeight = FontWeight.SemiBold)

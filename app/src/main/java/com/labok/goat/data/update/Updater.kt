@@ -8,14 +8,14 @@ import android.content.pm.PackageInstaller
 import com.labok.goat.BuildConfig
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import org.json.JSONObject
 
 /**
  * 앱 안 업데이트: GitHub 릴리스(최신 판)의 버전을 이 앱 버전과 비교하고, 새 판이면 APK를 내려받아 설치한다.
@@ -28,6 +28,7 @@ import java.security.MessageDigest
 object Updater {
     const val REPO = "lab-ok/galaxy-optimization-advanced-tool"
     private const val PREF = "updater"
+
     /** 홈을 열거나 홈으로 돌아올 때 자동으로 확인하는 간격. */
     private const val AUTO_CHECK_MS = 30 * 60 * 1000L
 
@@ -49,9 +50,11 @@ object Updater {
     /** 버전 비교: 점으로 나눈 숫자를 앞에서부터 비교한다("1.10" > "1.9", "1.2" == "1.2.0"). 숫자가 아닌 꼬리(-beta 등)는 무시한다. */
     internal fun isNewer(remote: String, local: String): Boolean {
         fun parts(v: String) = v.trim().removePrefix("v").split('.').map { p -> p.takeWhile { it.isDigit() }.toIntOrNull() ?: 0 }
-        val r = parts(remote); val l = parts(local)
+        val r = parts(remote)
+        val l = parts(local)
         for (i in 0 until maxOf(r.size, l.size)) {
-            val a = r.getOrElse(i) { 0 }; val b = l.getOrElse(i) { 0 }
+            val a = r.getOrElse(i) { 0 }
+            val b = l.getOrElse(i) { 0 }
             if (a != b) return a > b
         }
         return false
@@ -74,7 +77,7 @@ object Updater {
                 size = a.optLong("size"),
                 sha256 = shaOf(notes),
                 notes = notes,
-                page = o.optString("html_url"),
+                page = o.optString("html_url")
             )
         }
         return null
@@ -87,7 +90,8 @@ object Updater {
         if (!quiet) state.value = State.Checking
         val result = runCatching {
             val c = (URL("https://api.github.com/repos/$REPO/releases/latest").openConnection() as HttpURLConnection).apply {
-                connectTimeout = 10_000; readTimeout = 15_000
+                connectTimeout = 10_000
+                readTimeout = 15_000
                 setRequestProperty("Accept", "application/vnd.github+json")
                 setRequestProperty("User-Agent", "GOAT/${BuildConfig.VERSION_NAME}")
             }
@@ -121,17 +125,23 @@ object Updater {
         state.value = State.Downloading(release, 0f)
         val downloaded = runCatching {
             val c = (URL(release.apkUrl).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 15_000; readTimeout = 30_000; instanceFollowRedirects = true
+                connectTimeout = 15_000
+                readTimeout = 30_000
+                instanceFollowRedirects = true
                 setRequestProperty("User-Agent", "GOAT/${BuildConfig.VERSION_NAME}")
             }
             val total = c.contentLengthLong.takeIf { it > 0 } ?: release.size
             val md = MessageDigest.getInstance("SHA-256")
             c.inputStream.use { input ->
                 file.outputStream().use { out ->
-                    val buf = ByteArray(64 * 1024); var done = 0L
+                    val buf = ByteArray(64 * 1024)
+                    var done = 0L
                     while (true) {
-                        val n = input.read(buf); if (n < 0) break
-                        out.write(buf, 0, n); md.update(buf, 0, n); done += n
+                        val n = input.read(buf)
+                        if (n < 0) break
+                        out.write(buf, 0, n)
+                        md.update(buf, 0, n)
+                        done += n
                         if (total > 0) state.value = State.Downloading(release, (done.toFloat() / total).coerceIn(0f, 1f))
                     }
                 }
@@ -173,7 +183,10 @@ object Updater {
         }
         val id = installer.createSession(params)
         installer.openSession(id).use { session ->
-            session.openWrite("goat.apk", 0, file.length()).use { out -> file.inputStream().use { it.copyTo(out) }; session.fsync(out) }
+            session.openWrite("goat.apk", 0, file.length()).use { out ->
+                file.inputStream().use { it.copyTo(out) }
+                session.fsync(out)
+            }
             val intent = Intent(context, InstallResultReceiver::class.java)
             val pi = PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
             session.commit(pi.intentSender)

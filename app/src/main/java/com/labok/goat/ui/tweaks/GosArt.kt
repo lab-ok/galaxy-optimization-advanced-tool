@@ -54,7 +54,8 @@ internal fun GosArt(off: Boolean, none: Boolean = false) {
             clipRect(left, top, left + graphW, top + h) { drawPath(path, ink, style = Stroke(2.2f.dp.toPx(), cap = StrokeCap.Round)) }
             // 온도계: GOS 꺼짐이 더 높이 오른다
             val tx = left + graphW + 12.dp.toPx()
-            val tubeTop = top + 6.dp.toPx(); val tubeBottom = top + h - 14.dp.toPx()
+            val tubeTop = top + 6.dp.toPx()
+            val tubeBottom = top + h - 14.dp.toPx()
             drawRoundRect(c.line, Offset(tx - 3.dp.toPx(), tubeTop), Size(6.dp.toPx(), tubeBottom - tubeTop), CornerRadius(3.dp.toPx()))
             val heat = ease((t / 0.8f).coerceAtMost(1f)) * (if (gosOff) 0.9f else 0.45f)
             val fillTop = tubeBottom - (tubeBottom - tubeTop) * heat

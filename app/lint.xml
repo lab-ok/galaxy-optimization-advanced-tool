@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- ic_app_logo는 docs/branding/goat에서 만드는 브랜드 원본(앱 안 로고는 리퀴드로 직접 그린다). 생성물이라 남겨 둔다. -->
+    <issue id="UnusedResources">
+        <ignore path="src/main/res/drawable/ic_app_logo.xml" />
+    </issue>
+    <!-- 이 빌드 환경의 aapt2(arm64)는 버전 없는 mipmap-anydpi의 적응형 아이콘을 찾지 못해 -v26 폴더를 유지한다. -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+</lint>

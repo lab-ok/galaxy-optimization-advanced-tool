@@ -22,10 +22,12 @@ object Doze {
     enum class State {
         /** 잠자기 모드가 켜져 있다(안드로이드 기본). */
         ON,
+
         /** 잠자기 모드가 꺼져 있다(깊은·가벼운 잠자기 모두). */
         OFF,
+
         /** Shizuku가 없어 읽지 못했다. */
-        UNKNOWN,
+        UNKNOWN
     }
 
     private val state = MutableStateFlow(State.UNKNOWN)
@@ -99,10 +101,10 @@ object Doze {
         bootCount(context)?.let { prefs(context).edit().putInt("checkedBoot", it).apply() }
     }
 
-    private fun bootCount(context: Context): Int? =
-        runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
+    private fun bootCount(context: Context): Int? = runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
 
     private val binder = Shizuku.OnBinderReceivedListener { reapplyAsync?.invoke() }
+
     @Volatile private var reapplyAsync: (() -> Unit)? = null
 
     /** 앱 시작 때 부른다: Shizuku가 연결되는 순간(재부팅 뒤 자동 시작 포함) 다시 끄기를 확인한다. */

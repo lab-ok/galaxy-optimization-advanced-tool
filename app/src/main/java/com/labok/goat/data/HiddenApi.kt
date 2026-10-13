@@ -1,9 +1,10 @@
 package com.labok.goat.data
 
+import android.annotation.SuppressLint
 import android.os.IBinder
-import org.lsposed.hiddenapibypass.HiddenApiBypass
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicBoolean
+import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 /**
  * 숨은 시스템 API(AIDL 인터페이스)를 리플렉션으로 쓰는 공통 도구.
@@ -24,7 +25,8 @@ object HiddenApi {
         return Class.forName("$iface\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, binder)!!
     }
 
-    /** ServiceManager.getService([name]). */
+    /** ServiceManager.getService([name]). 공개 API가 없는 시스템 서비스를 쓰려고 일부러 숨은 API를 부른다. */
+    @SuppressLint("PrivateApi")
     fun service(name: String): IBinder {
         exemptAll()
         return Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, name) as IBinder

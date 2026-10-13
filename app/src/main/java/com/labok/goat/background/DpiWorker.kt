@@ -1,7 +1,5 @@
 package com.labok.goat.background
 
-import com.labok.goat.domain.DpiFixer
-import com.labok.goat.domain.DpiPolicy
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -9,6 +7,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.labok.goat.domain.DpiFixer
+import com.labok.goat.domain.DpiPolicy
 import kotlinx.coroutines.delay
 
 /**

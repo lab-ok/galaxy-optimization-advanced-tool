@@ -1,12 +1,11 @@
 package com.labok.goat.ui.liquid
 
-import com.labok.goat.ui.text.Copy
-import androidx.compose.foundation.background
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -20,8 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Path
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.launch
 
 /**
@@ -45,15 +45,15 @@ import kotlinx.coroutines.launch
 fun LiquidMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
-    items: List<Pair<String, () -> Unit>>,
+    items: List<Pair<String, () -> Unit>>
 ) {
     if (!expanded) return
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
-    val items0 = remember { Animatable(0f) }  // 항목 등장 진행 0→items.size
-    val fade = remember { Animatable(1f) }    // 닫을 때 메뉴판 투명도
+    val items0 = remember { Animatable(0f) } // 항목 등장 진행 0→items.size
+    val fade = remember { Animatable(1f) } // 닫을 때 메뉴판 투명도
     val menuW = 220.dp
     val rowH = 50.dp
     val menuH = rowH * items.size + 16.dp
@@ -62,7 +62,9 @@ fun LiquidMenu(
     val path = remember { Path() }
     // 캔버스 좌표: 오른쪽 8dp, 위 4dp 안쪽에 버튼(지름 40dp)과 메뉴판의 오른쪽 위 모서리를 맞춘다.
     val geo = with(density) {
-        val btn = 40.dp.toPx(); val right = menuW.toPx() + 8.dp.toPx(); val top = 4.dp.toPx()
+        val btn = 40.dp.toPx()
+        val right = menuW.toPx() + 8.dp.toPx()
+        val top = 4.dp.toPx()
         floatArrayOf(btn, right, top, menuW.toPx(), menuH.toPx(), radius.toPx())
     }
     // 펼침 정도(가로 pw, 세로 ph, 0=버튼 원 → 1=메뉴판). 이 값으로 매 프레임 방울 크기를 바꾸는데,
@@ -72,7 +74,8 @@ fun LiquidMenu(
     val ph = remember { Animatable(0f) }
     fun shape(animate: Boolean) {
         val (btn, right, top) = geo
-        val w = btn + (geo[3] - btn) * pw.value; val h = btn + (geo[4] - btn) * ph.value
+        val w = btn + (geo[3] - btn) * pw.value
+        val h = btn + (geo[4] - btn) * ph.value
         blob.moveTo(right - w / 2, top + h / 2, w, h, animate, corner = geo[5], carry = 0.85f)
     }
     val haptics = rememberLiquidHaptics()
@@ -80,7 +83,13 @@ fun LiquidMenu(
         haptics.open()
         blob.blob.gain = 6f
         blob.blob.damping = 3.5f
-        if (reduce) { pw.snapTo(1f); ph.snapTo(1f); shape(false); items0.snapTo(items.size.toFloat()); return@LaunchedEffect }
+        if (reduce) {
+            pw.snapTo(1f)
+            ph.snapTo(1f)
+            shape(false)
+            items0.snapTo(items.size.toFloat())
+            return@LaunchedEffect
+        }
         shape(false)
         launch { snapshotFlow { pw.value to ph.value }.collect { shape(true) } }
         launch { pw.animateTo(1f, spring(dampingRatio = 1f, stiffness = 520f)) }
@@ -106,7 +115,7 @@ fun LiquidMenu(
         alignment = Alignment.TopEnd,
         offset = IntOffset(0, 0),
         onDismissRequest = { close {} },
-        properties = PopupProperties(focusable = true),
+        properties = PopupProperties(focusable = true)
     ) {
         Box(Modifier.width(menuW + 16.dp).height(menuH + 16.dp)) {
             Canvas(Modifier.size(menuW + 16.dp, menuH + 16.dp).graphicsLayer { alpha = fade.value }) {
@@ -119,7 +128,7 @@ fun LiquidMenu(
                 Modifier
                     .padding(top = 12.dp, end = 8.dp)
                     .width(menuW)
-                    .align(Alignment.TopEnd),
+                    .align(Alignment.TopEnd)
             ) {
                 items.forEachIndexed { i, (label, action) ->
                     val interaction = remember { MutableInteractionSource() }
@@ -128,16 +137,21 @@ fun LiquidMenu(
                         Modifier
                             .fillMaxWidth()
                             .height(rowH)
-                            .graphicsLayer { alpha = k; translationY = (1f - k) * -6.dp.toPx() }
+                            .graphicsLayer {
+                                alpha = k
+                                translationY = (1f - k) * -6.dp.toPx()
+                            }
                             .liquidPress(interaction, sx = 1.03f, sy = 0.94f)
                             .clickable(interaction, null) { close(action) }
                             .padding(horizontal = 22.dp),
-                        contentAlignment = Alignment.CenterStart,
+                        contentAlignment = Alignment.CenterStart
                     ) {
                         // 되돌릴 수 없는 '초기화'는 가는 선으로 위 항목들과 떼어 둔다(잘못 누르지 않게)
-                        if (label == Copy.MENU_RESET && i > 0) Box(
-                            Modifier.align(Alignment.TopCenter).fillMaxWidth().height(1.dp).background(c.onInk.copy(alpha = 0.22f)),
-                        )
+                        if (label == Copy.MENU_RESET && i > 0) {
+                            Box(
+                                Modifier.align(Alignment.TopCenter).fillMaxWidth().height(1.dp).background(c.onInk.copy(alpha = 0.22f))
+                            )
+                        }
                         Text(label, color = c.onInk, fontWeight = FontWeight.Medium)
                     }
                 }

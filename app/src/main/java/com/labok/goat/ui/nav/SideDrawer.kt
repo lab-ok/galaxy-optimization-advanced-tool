@@ -1,27 +1,13 @@
 package com.labok.goat.ui.nav
 
-import androidx.compose.ui.layout.positionInRoot
-import com.labok.goat.ui.components.Gap
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.foundation.Canvas
-import com.labok.goat.ui.liquid.moveTo
-import com.labok.goat.ui.liquid.rememberSoftBlob
-import androidx.compose.ui.layout.onSizeChanged
-import com.labok.goat.ui.liquid.LocalReduceMotion
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.foundation.layout.Box
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,8 +25,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,11 +44,21 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.liquidPress
+import com.labok.goat.ui.liquid.moveTo
+import com.labok.goat.ui.liquid.rememberSoftBlob
 import com.labok.goat.ui.text.Copy
 
 /**
@@ -68,34 +68,48 @@ import com.labok.goat.ui.text.Copy
 enum class NavItem(val label: String, val icon: NavIcon) {
     /** 메인 화면: 모든 기능의 지금 상태를 한눈에 보고 바로 들어간다. */
     HOME(Copy.FEATURE_HOME, NavIcon.HOME),
+
     /** 접고 펼 때도 두 화면의 표시 크기(DPI)를 일관되게 맞추는 기본 기능. */
     DPI_MATCH(Copy.FEATURE_DPI, NavIcon.FOLD),
+
     /** 앱마다 화면 크기를 따로 두는 기능(삼성 '앱 화면 크게/작게', Shizuku 필요). */
     APP_SIZE(Copy.FEATURE_APP_SIZE, NavIcon.APPS),
+
     /** 창·전환·애니메이터 배율(전역 설정). */
     ANIMATION(Copy.FEATURE_ANIMATION, NavIcon.SPEED),
+
     /** 평소에는 회전을 잠가 두고, 흔들면 폰이 놓인 방향으로 한 번 돌린다. */
     SHAKE_ROTATE(Copy.FEATURE_SHAKE_ROTATE, NavIcon.ROTATE),
+
     /** 국내 모델의 강제 촬영음을 끈다(Shizuku 셸로 숨은 시스템 설정을 바꾼다). */
     CAMERA_MUTE(Copy.FEATURE_CAMERA_MUTE, NavIcon.CAMERA),
+
     /** 쓰지 않는 기본 앱 끄기(Shizuku, 되돌릴 수 있음). */
     APP_CLEANUP(Copy.FEATURE_APP_CLEANUP, NavIcon.CLEAN),
+
     /** 화면 주사율의 위·아래 한계를 고정한다(Shizuku 셸). */
     REFRESH(Copy.FEATURE_REFRESH, NavIcon.REFRESH),
+
     /** 게임 중 성능을 낮추는 GOS를 끈다(Shizuku, 기본 앱 정리와 같은 끄기). */
     GOS(Copy.FEATURE_GOS, NavIcon.GAME),
+
     /** 잠자기 모드(Doze)를 꺼 알림이 늦게 오지 않게 한다(Shizuku, 재부팅 뒤 다시 끄기). */
     DOZE(Copy.FEATURE_DOZE, NavIcon.BELL),
+
     /** 해상도를 낮추고 밀도도 같은 비율로 줄인다(시스템 설정 권한, 폴드 제외). */
     RESOLUTION(Copy.FEATURE_RESOLUTION, NavIcon.PIXELS),
+
     /** 다크 모드 없는 앱도 시스템이 어둡게 그리게 한다(Shizuku setprop). */
     DARK(Copy.FEATURE_DARK, NavIcon.MOON),
+
     /** 숨은 실험실: 염소를 열 번 누르면 나타난다(시험 중인 기능을 둔다). */
     LAB(Copy.FEATURE_LAB, NavIcon.FLASK),
+
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
+
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */
-    SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR),
+    SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR)
 }
 
 enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, INFO, GEAR }
@@ -122,7 +136,7 @@ fun SideDrawerContent(
      * 고른 항목으로 방울이 옮겨 가는 애니메이션을 할지. 늘 펼쳐진 사이드바(태블릿·폴드 내부)에서만 한다.
      * 덮이는 서랍은 고르자마자 닫히고 화면이 바뀌어 볼 틈이 없으므로, 방울을 그 자리로 바로 옮긴다.
      */
-    animateSelection: Boolean = true,
+    animateSelection: Boolean = true
 ) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
@@ -133,8 +147,14 @@ fun SideDrawerContent(
     // 등장: 항목이 차례로(머리는 DrawerHeader가 물방울로 맺힌다)
     val enter = remember { Animatable(0f) }
     LaunchedEffect(visible) {
-        if (!visible) { enter.snapTo(0f); return@LaunchedEffect }
-        if (reduce) { enter.snapTo(items.size + sections.size + 2f); return@LaunchedEffect }
+        if (!visible) {
+            enter.snapTo(0f)
+            return@LaunchedEffect
+        }
+        if (reduce) {
+            enter.snapTo(items.size + sections.size + 2f)
+            return@LaunchedEffect
+        }
         enter.animateTo(items.size + sections.size + 2f, tween(120 + 55 * (items.size + 2), easing = LinearEasing))
     }
 
@@ -156,14 +176,14 @@ fun SideDrawerContent(
             .fillMaxHeight()
             .width(300.dp)
             .clip(RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp))
-            .background(if (glass) c.bg.copy(alpha = GLASS_ALPHA) else c.bg),
+            .background(if (glass) c.bg.copy(alpha = GLASS_ALPHA) else c.bg)
     ) {
         Column(
             Modifier
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 18.dp),
+                .padding(horizontal = 14.dp, vertical = 18.dp)
         ) {
             DrawerHeader(version, visible)
             Box(Modifier.onSizeChanged { boxW = it.width.toFloat() }) {
@@ -179,26 +199,34 @@ fun SideDrawerContent(
                         Spacer(Modifier.height(Gap.Section))
                         val titleOrder = index
                         // 제목 없는 묶음(맨 위 홈)은 제목 줄을 그리지 않는다
-                        if (section.title.isNotEmpty()) Text(
-                            section.title, color = c.muted, style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier.padding(start = 22.dp, bottom = 6.dp).graphicsLayer { alpha = (enter.value - titleOrder).coerceIn(0f, 1f) },
-                        )
+                        if (section.title.isNotEmpty()) {
+                            Text(
+                                section.title,
+                                color = c.muted,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.padding(start = 22.dp, bottom = 6.dp).graphicsLayer { alpha = (enter.value - titleOrder).coerceIn(0f, 1f) }
+                            )
+                        }
                         section.items.forEach { item ->
                             val order = ++index
                             DrawerRow(
-                                item, item == current,
+                                item,
+                                item == current,
                                 cover = cover@{
                                     val top = tops[item] ?: return@cover if (item == current) 1f else 0f
                                     blob.frame
-                                    if (!blob.blob.ready || rowH <= 0f) (if (item == current) 1f else 0f)
-                                    else (1f - kotlin.math.abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                                    if (!blob.blob.ready || rowH <= 0f) {
+                                        (if (item == current) 1f else 0f)
+                                    } else {
+                                        (1f - kotlin.math.abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                                    }
                                 },
                                 appear = { (enter.value - order).coerceIn(0f, 1f) },
                                 modifier = Modifier.onGloballyPositioned {
                                     tops[item] = it.positionInParent().y
                                     rowH = it.size.height.toFloat()
                                     centers[item] = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f)
-                                },
+                                }
                             ) { onSelect(item, centers[item]) }
                         }
                         index++
@@ -209,16 +237,20 @@ fun SideDrawerContent(
                     Spacer(Modifier.height(Gap.Item))
                     val settingsOrder = ++index
                     DrawerRow(
-                        NavItem.SETTINGS, current == NavItem.SETTINGS,
+                        NavItem.SETTINGS,
+                        current == NavItem.SETTINGS,
                         cover = cover@{
                             val top = tops[NavItem.SETTINGS] ?: return@cover if (current == NavItem.SETTINGS) 1f else 0f
                             blob.frame
-                            if (!blob.blob.ready || rowH <= 0f) (if (current == NavItem.SETTINGS) 1f else 0f)
-                            else (1f - kotlin.math.abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                            if (!blob.blob.ready || rowH <= 0f) {
+                                (if (current == NavItem.SETTINGS) 1f else 0f)
+                            } else {
+                                (1f - kotlin.math.abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                            }
                         },
                         appear = { (enter.value - settingsOrder).coerceIn(0f, 1f) },
                         modifier = Modifier.onGloballyPositioned { tops[NavItem.SETTINGS] = it.positionInParent().y },
-                        onClick = { onSelect(NavItem.SETTINGS, null) },
+                        onClick = { onSelect(NavItem.SETTINGS, null) }
                     )
                 }
             }
@@ -233,7 +265,7 @@ private fun DrawerRow(
     cover: () -> Float,
     appear: () -> Float,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit,
+    onClick: () -> Unit
 ) {
     val c = LocalLiquid.current
     val interaction = remember { MutableInteractionSource() }
@@ -245,14 +277,15 @@ private fun DrawerRow(
             .height(48.dp)
             .graphicsLayer {
                 val k = appear()
-                alpha = k; translationX = (1f - k) * -18.dp.toPx()
+                alpha = k
+                translationX = (1f - k) * -18.dp.toPx()
             }
             .liquidPress(interaction, sx = 1.02f, sy = 0.95f)
             .clip(RoundedCornerShape(24.dp))
             .clickable(interaction, null, onClick = onClick)
             // 선택 방울의 둥근 끝(반지름 24dp) 안쪽 깊숙이 아이콘을 둬 검은 경계와 붙어 보이지 않게 한다.
             .padding(start = 22.dp, end = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         NavGlyph(item.icon, fg)
         Spacer(Modifier.width(14.dp))
@@ -345,10 +378,20 @@ private fun DrawScope.rotate(c: Color, s: Stroke) {
 /** 카메라 촬영음 끄기: 카메라와 오른쪽 위로 그은 사선(소리 끔). */
 private fun DrawScope.camera(c: Color, s: Stroke) {
     val body = Path().apply {
-        moveTo(u(4.5f), u(8f)); lineTo(u(8f), u(8f)); lineTo(u(9.5f), u(5.5f)); lineTo(u(14.5f), u(5.5f)); lineTo(u(16f), u(8f))
-        lineTo(u(19.5f), u(8f)); quadraticBezierTo(u(21f), u(8f), u(21f), u(9.5f)); lineTo(u(21f), u(17.5f))
-        quadraticBezierTo(u(21f), u(19f), u(19.5f), u(19f)); lineTo(u(4.5f), u(19f))
-        quadraticBezierTo(u(3f), u(19f), u(3f), u(17.5f)); lineTo(u(3f), u(9.5f)); quadraticBezierTo(u(3f), u(8f), u(4.5f), u(8f)); close()
+        moveTo(u(4.5f), u(8f))
+        lineTo(u(8f), u(8f))
+        lineTo(u(9.5f), u(5.5f))
+        lineTo(u(14.5f), u(5.5f))
+        lineTo(u(16f), u(8f))
+        lineTo(u(19.5f), u(8f))
+        quadraticBezierTo(u(21f), u(8f), u(21f), u(9.5f))
+        lineTo(u(21f), u(17.5f))
+        quadraticBezierTo(u(21f), u(19f), u(19.5f), u(19f))
+        lineTo(u(4.5f), u(19f))
+        quadraticBezierTo(u(3f), u(19f), u(3f), u(17.5f))
+        lineTo(u(3f), u(9.5f))
+        quadraticBezierTo(u(3f), u(8f), u(4.5f), u(8f))
+        close()
     }
     drawPath(body, c, style = s)
     drawCircle(c, u(3.4f), p(12f, 13.2f), style = s)
@@ -358,9 +401,15 @@ private fun DrawScope.camera(c: Color, s: Stroke) {
 /** 홈: 지붕과 문이 있는 집. */
 private fun DrawScope.home(c: Color, s: Stroke) {
     val path = Path().apply {
-        moveTo(u(3.5f), u(11f)); lineTo(u(12f), u(4f)); lineTo(u(20.5f), u(11f))
-        moveTo(u(5.5f), u(9.5f)); lineTo(u(5.5f), u(18.5f)); quadraticBezierTo(u(5.5f), u(20f), u(7f), u(20f)); lineTo(u(17f), u(20f))
-        quadraticBezierTo(u(18.5f), u(20f), u(18.5f), u(18.5f)); lineTo(u(18.5f), u(9.5f))
+        moveTo(u(3.5f), u(11f))
+        lineTo(u(12f), u(4f))
+        lineTo(u(20.5f), u(11f))
+        moveTo(u(5.5f), u(9.5f))
+        lineTo(u(5.5f), u(18.5f))
+        quadraticBezierTo(u(5.5f), u(20f), u(7f), u(20f))
+        lineTo(u(17f), u(20f))
+        quadraticBezierTo(u(18.5f), u(20f), u(18.5f), u(18.5f))
+        lineTo(u(18.5f), u(9.5f))
     }
     drawPath(path, c, style = s)
     drawLine(c, p(10f, 20f), p(10f, 15f), s.width, StrokeCap.Round)
@@ -396,11 +445,16 @@ private fun DrawScope.refresh(c: Color, s: Stroke) {
 /** GOS 끄기: 게임 패드(왼쪽 십자 키, 오른쪽 버튼 둘). */
 private fun DrawScope.game(c: Color, s: Stroke) {
     val pad = Path().apply {
-        moveTo(u(7f), u(7f)); lineTo(u(17f), u(7f))
-        cubicTo(u(20.5f), u(7f), u(22f), u(10f), u(22f), u(14f)); cubicTo(u(22f), u(17.5f), u(20f), u(19f), u(18.4f), u(19f))
-        cubicTo(u(16.6f), u(19f), u(15.6f), u(16.5f), u(14.5f), u(16.5f)); lineTo(u(9.5f), u(16.5f))
-        cubicTo(u(8.4f), u(16.5f), u(7.4f), u(19f), u(5.6f), u(19f)); cubicTo(u(4f), u(19f), u(2f), u(17.5f), u(2f), u(14f))
-        cubicTo(u(2f), u(10f), u(3.5f), u(7f), u(7f), u(7f)); close()
+        moveTo(u(7f), u(7f))
+        lineTo(u(17f), u(7f))
+        cubicTo(u(20.5f), u(7f), u(22f), u(10f), u(22f), u(14f))
+        cubicTo(u(22f), u(17.5f), u(20f), u(19f), u(18.4f), u(19f))
+        cubicTo(u(16.6f), u(19f), u(15.6f), u(16.5f), u(14.5f), u(16.5f))
+        lineTo(u(9.5f), u(16.5f))
+        cubicTo(u(8.4f), u(16.5f), u(7.4f), u(19f), u(5.6f), u(19f))
+        cubicTo(u(4f), u(19f), u(2f), u(17.5f), u(2f), u(14f))
+        cubicTo(u(2f), u(10f), u(3.5f), u(7f), u(7f), u(7f))
+        close()
     }
     drawPath(pad, c, style = s)
     drawLine(c, p(5.4f, 12f), p(9.4f, 12f), s.width, StrokeCap.Round)
@@ -416,12 +470,18 @@ private fun DrawScope.bell(c: Color, s: Stroke) {
         cubicTo(u(6f), u(15.5f), u(6f), u(13.5f), u(6f), u(11f))
         cubicTo(u(6f), u(7.4f), u(8.2f), u(5f), u(11.5f), u(5f))
         cubicTo(u(14.8f), u(5f), u(17f), u(7.4f), u(17f), u(11f))
-        cubicTo(u(17f), u(13.5f), u(17f), u(15.5f), u(18.5f), u(17f)); close()
+        cubicTo(u(17f), u(13.5f), u(17f), u(15.5f), u(18.5f), u(17f))
+        close()
     }
     drawPath(body, c, style = s)
     drawLine(c, p(9.8f, 20f), p(13.2f, 20f), s.width, StrokeCap.Round)
     // z
-    val z = Path().apply { moveTo(u(17.6f), u(2.6f)); lineTo(u(21.4f), u(2.6f)); lineTo(u(17.6f), u(6.6f)); lineTo(u(21.4f), u(6.6f)) }
+    val z = Path().apply {
+        moveTo(u(17.6f), u(2.6f))
+        lineTo(u(21.4f), u(2.6f))
+        lineTo(u(17.6f), u(6.6f))
+        lineTo(u(21.4f), u(6.6f))
+    }
     drawPath(z, c, style = Stroke(s.width * 0.8f, cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
 }
 
@@ -431,7 +491,8 @@ private fun DrawScope.moon(c: Color, s: Stroke) {
         moveTo(u(14.5f), u(3.6f))
         cubicTo(u(8.2f), u(3.4f), u(4.2f), u(8.6f), u(5.4f), u(14f))
         cubicTo(u(6.6f), u(19.4f), u(13.4f), u(22f), u(18.4f), u(18.2f))
-        cubicTo(u(12.4f), u(18.4f), u(9.4f), u(10.6f), u(14.5f), u(3.6f)); close()
+        cubicTo(u(12.4f), u(18.4f), u(9.4f), u(10.6f), u(14.5f), u(3.6f))
+        close()
     }
     drawPath(crescent, c, style = s)
     drawCircle(c, u(1.1f), p(18.6f, 7f))
@@ -461,7 +522,8 @@ private fun DrawScope.gear(c: Color, s: Stroke) {
     val o = p(12f, 12f)
     for (k in 0 until 8) {
         val a = Math.toRadians(k * 45.0)
-        val x = kotlin.math.cos(a).toFloat(); val y = kotlin.math.sin(a).toFloat()
+        val x = kotlin.math.cos(a).toFloat()
+        val y = kotlin.math.sin(a).toFloat()
         drawLine(c, Offset(o.x + x * u(6.6f), o.y + y * u(6.6f)), Offset(o.x + x * u(9.2f), o.y + y * u(9.2f)), s.width * 1.6f, StrokeCap.Round)
     }
     drawCircle(c, u(6.4f), o, style = s)
@@ -471,9 +533,14 @@ private fun DrawScope.gear(c: Color, s: Stroke) {
 /** 조사 도구: 플라스크, 안에 액체 선과 기포 둘. */
 private fun DrawScope.flask(c: Color, s: Stroke) {
     val path = Path().apply {
-        moveTo(u(9.5f), u(3.5f)); lineTo(u(9.5f), u(9.2f)); lineTo(u(4.6f), u(17.8f))
-        quadraticBezierTo(u(3.9f), u(20.5f), u(6.6f), u(20.5f)); lineTo(u(17.4f), u(20.5f))
-        quadraticBezierTo(u(20.1f), u(20.5f), u(19.4f), u(17.8f)); lineTo(u(14.5f), u(9.2f)); lineTo(u(14.5f), u(3.5f))
+        moveTo(u(9.5f), u(3.5f))
+        lineTo(u(9.5f), u(9.2f))
+        lineTo(u(4.6f), u(17.8f))
+        quadraticBezierTo(u(3.9f), u(20.5f), u(6.6f), u(20.5f))
+        lineTo(u(17.4f), u(20.5f))
+        quadraticBezierTo(u(20.1f), u(20.5f), u(19.4f), u(17.8f))
+        lineTo(u(14.5f), u(9.2f))
+        lineTo(u(14.5f), u(3.5f))
     }
     drawPath(path, c, style = s)
     drawLine(c, p(8f, 3.5f), p(16f, 3.5f), s.width, StrokeCap.Round)

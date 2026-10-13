@@ -53,7 +53,10 @@ object PublicLogFile {
         val pending = Storage.pendingPublicLog(app)
         val unlocked = app.getSystemService(UserManager::class.java).isUserUnlocked
         if (!unlocked) {
-            runCatching { pending.parentFile?.mkdirs(); pending.appendText(text) }
+            runCatching {
+                pending.parentFile?.mkdirs()
+                pending.appendText(text)
+            }
             return@synchronized
         }
         val carry = runCatching { if (pending.exists()) pending.readText() else "" }.getOrDefault("")
@@ -61,9 +64,16 @@ object PublicLogFile {
             val uri = uriForToday(app) ?: return@runCatching false
             app.contentResolver.openOutputStream(uri, "wa")?.use { it.write((carry + text).toByteArray()) } != null
         }.getOrDefault(false)
-        if (wrote) { if (carry.isNotEmpty()) pending.delete() }
+        if (wrote) {
+            if (carry.isNotEmpty()) pending.delete()
+        }
         // 쓰지 못했으면 앱 안에 모아 두었다가 다음에 오늘 파일을 찾으면 함께 쓴다(새 파일을 계속 만들지 않는다)
-        else runCatching { pending.parentFile?.mkdirs(); pending.appendText(text) }
+        else {
+            runCatching {
+                pending.parentFile?.mkdirs()
+                pending.appendText(text)
+            }
+        }
     }
 
     /** 오늘 로그 파일(있으면). 공유에 첨부한다. */
@@ -72,8 +82,7 @@ object PublicLogFile {
     }
 
     /** "goat-<kind>-yyMMdd-HHmmss.txt"처럼 시각을 붙인 새 파일 이름. */
-    fun timestampedName(kind: String): String =
-        "goat-$kind-${java.text.SimpleDateFormat("yyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date())}.txt"
+    fun timestampedName(kind: String): String = "goat-$kind-${java.text.SimpleDateFormat("yyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date())}.txt"
 
     /** Download/GOAT에 새 파일로 저장하고 Uri를 돌려준다. */
     fun saveNew(context: Context, name: String, text: String): Uri? = synchronized(lock) {
@@ -102,7 +111,7 @@ object PublicLogFile {
             arrayOf(MediaStore.MediaColumns._ID),
             "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?",
             arrayOf("$stem%.txt", relative),
-            "${MediaStore.MediaColumns._ID} DESC",
+            "${MediaStore.MediaColumns._ID} DESC"
         )?.use { c ->
             if (c.moveToFirst()) return Uri.withAppendedPath(collection, c.getLong(0).toString())
         }
@@ -123,7 +132,10 @@ object PublicLogFile {
         val p = context.getSharedPreferences("public_log", Context.MODE_PRIVATE)
         val remembered = p.getString("uri", null)?.takeIf { p.getString("day", null) == day }?.let(Uri::parse)
         if (remembered != null && writable(context, remembered)) return remembered
-        find(context, name)?.let { p.edit().putString("day", day).putString("uri", it.toString()).apply(); return it }
+        find(context, name)?.let {
+            p.edit().putString("day", day).putString("uri", it.toString()).apply()
+            return it
+        }
         if (p.getString("created", null) == day) return null
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
@@ -136,6 +148,5 @@ object PublicLogFile {
     }
 
     /** 이 Uri에 덧붙여 쓸 수 있는지(지워졌거나 권한을 잃었으면 false). */
-    private fun writable(context: Context, uri: Uri): Boolean =
-        runCatching { context.contentResolver.openFileDescriptor(uri, "wa")?.use { true } ?: false }.getOrDefault(false)
+    private fun writable(context: Context, uri: Uri): Boolean = runCatching { context.contentResolver.openFileDescriptor(uri, "wa")?.use { true } ?: false }.getOrDefault(false)
 }

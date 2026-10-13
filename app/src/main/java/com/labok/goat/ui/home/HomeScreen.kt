@@ -1,80 +1,27 @@
 package com.labok.goat.ui.home
 
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
-import com.labok.goat.ui.nav.NavGlyph
-import com.labok.goat.ui.about.PermissionsSheet
-import com.labok.goat.ui.about.ChangelogSheet
-import com.labok.goat.ui.about.SettingsScreen
-import com.labok.goat.ui.liquid.LocalReduceMotion
-import com.labok.goat.ui.nav.GLASS_ALPHA
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.ui.draw.blur
-import com.labok.goat.ui.liquid.rememberLiquidHaptics
-import com.labok.goat.domain.DpiPolicy
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.activity.compose.BackHandler
-import com.labok.goat.ui.tweaks.AnimationHelpSheet
-import com.labok.goat.ui.tweaks.AnimationScreen
-import com.labok.goat.ui.tweaks.BloatHelpSheet
-import com.labok.goat.ui.tweaks.BloatScreen
-import com.labok.goat.ui.tweaks.ResolutionHelpSheet
-import com.labok.goat.ui.tweaks.ResolutionScreen
-import com.labok.goat.ui.tweaks.DarkHelpSheet
-import com.labok.goat.ui.tweaks.DarkScreen
-import com.labok.goat.ui.tweaks.GosHelpSheet
-import com.labok.goat.ui.tweaks.GosScreen
-import com.labok.goat.ui.tweaks.DozeHelpSheet
-import com.labok.goat.ui.tweaks.DozeScreen
-import com.labok.goat.ui.tweaks.RefreshHelpSheet
-import com.labok.goat.ui.tweaks.RefreshScreen
-import com.labok.goat.ui.camera.CameraMuteHelpSheet
-import com.labok.goat.ui.camera.CameraMuteScreen
-import com.labok.goat.ui.rotate.ShakeCalibrationSheet
-import com.labok.goat.ui.components.Gap
-import com.labok.goat.ui.rotate.ShakeRotateHelpSheet
-import com.labok.goat.ui.rotate.ShakeRotateScreen
-import com.labok.goat.ui.components.copyText
-import com.labok.goat.ui.components.DangerConfirmBox
-import com.labok.goat.ui.components.featurePadding
-import com.labok.goat.ui.components.ContentMaxWidth
-import com.labok.goat.ui.components.SheetColumn
-import com.labok.goat.ui.appsize.AppSizeResetSheet
-import com.labok.goat.ui.appsize.AppSizeGuideSheet
-import com.labok.goat.ui.appsize.AppSizeHelpSheet
-import com.labok.goat.ui.appsize.AppSizeScreen
-import androidx.compose.ui.graphics.Color
-import dev.chrisbanes.haze.hazeChild
-import dev.chrisbanes.haze.haze
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeState
-import com.labok.goat.ui.liquid.liquidReveal
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.EnterTransition
-import com.labok.goat.ui.liquid.LiquidDots
-import com.labok.goat.data.display.PermissionReset
-import androidx.compose.foundation.background
-import androidx.compose.animation.AnimatedContent
 import android.Manifest
-import android.os.Build
 import android.hardware.display.DisplayManager
+import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -85,25 +32,32 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -111,9 +65,16 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -125,46 +86,85 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.labok.goat.BuildConfig
+import com.labok.goat.background.ExternalChangeNotifier
+import com.labok.goat.data.display.PermissionReset
+import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.data.settings.SettingsRepository
+import com.labok.goat.domain.DpiPolicy
 import com.labok.goat.domain.PanelSpec
+import com.labok.goat.domain.ScreenGeometry
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.about.AboutSheet
+import com.labok.goat.ui.about.ChangelogSheet
+import com.labok.goat.ui.about.PermissionsSheet
+import com.labok.goat.ui.about.ReportMail
+import com.labok.goat.ui.about.SettingsScreen
 import com.labok.goat.ui.advanced.AdvancedSheet
+import com.labok.goat.ui.appsize.AppSizeGuideSheet
+import com.labok.goat.ui.appsize.AppSizeHelpSheet
+import com.labok.goat.ui.appsize.AppSizeResetSheet
+import com.labok.goat.ui.appsize.AppSizeScreen
+import com.labok.goat.ui.art.DeviceShape
 import com.labok.goat.ui.art.FoldDeviceArt
 import com.labok.goat.ui.art.FoldGeometry
+import com.labok.goat.ui.art.LocalDeviceShape
 import com.labok.goat.ui.art.ReportFlightArt
 import com.labok.goat.ui.art.ScreensPreview
+import com.labok.goat.ui.camera.CameraMuteHelpSheet
+import com.labok.goat.ui.camera.CameraMuteScreen
+import com.labok.goat.ui.components.CommandBox
+import com.labok.goat.ui.components.ContentMaxWidth
+import com.labok.goat.ui.components.DangerConfirmBox
+import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.copyText
+import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.help.GrantGuideSheet
 import com.labok.goat.ui.help.HelpSheet
+import com.labok.goat.ui.lab.LabScreen
+import com.labok.goat.ui.lab.LabTweaksScreen
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidDots
+import com.labok.goat.ui.liquid.LiquidMenu
 import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidToast
 import com.labok.goat.ui.liquid.LocalLiquid
-import com.labok.goat.ui.text.Copy
-import androidx.compose.runtime.saveable.rememberSaveable
-import com.labok.goat.ui.liquid.LiquidMenu
-import androidx.compose.material.icons.outlined.MoreVert
-import com.labok.goat.ui.nav.SideDrawerContent
-import com.labok.goat.ui.nav.NavSection
+import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.liquid.liquidReveal
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
+import com.labok.goat.ui.nav.GLASS_ALPHA
+import com.labok.goat.ui.nav.NavGlyph
 import com.labok.goat.ui.nav.NavItem
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.DrawerValue
-import com.labok.goat.BuildConfig
-import com.labok.goat.ui.lab.LabScreen
-import com.labok.goat.ui.lab.LabEmptyScreen
-import com.labok.goat.data.lab.LabUnlock
-import com.labok.goat.ui.art.LocalDeviceShape
-import com.labok.goat.ui.art.DeviceShape
-import androidx.compose.runtime.CompositionLocalProvider
-import com.labok.goat.ui.about.ReportMail
-import com.labok.goat.domain.ScreenGeometry
-import com.labok.goat.background.ExternalChangeNotifier
-import com.labok.goat.ui.components.CommandBox
-import com.labok.goat.ui.sizetest.SizeTestSheet
+import com.labok.goat.ui.nav.NavSection
+import com.labok.goat.ui.nav.SideDrawerContent
+import com.labok.goat.ui.rotate.ShakeCalibrationSheet
+import com.labok.goat.ui.rotate.ShakeRotateHelpSheet
+import com.labok.goat.ui.rotate.ShakeRotateScreen
 import com.labok.goat.ui.sizetest.RowCountOverlay
+import com.labok.goat.ui.sizetest.SizeTestSheet
+import com.labok.goat.ui.text.Copy
+import com.labok.goat.ui.tweaks.AnimationHelpSheet
+import com.labok.goat.ui.tweaks.AnimationScreen
+import com.labok.goat.ui.tweaks.BloatHelpSheet
+import com.labok.goat.ui.tweaks.BloatScreen
+import com.labok.goat.ui.tweaks.DarkHelpSheet
+import com.labok.goat.ui.tweaks.DarkScreen
+import com.labok.goat.ui.tweaks.DozeHelpSheet
+import com.labok.goat.ui.tweaks.DozeScreen
+import com.labok.goat.ui.tweaks.GosHelpSheet
+import com.labok.goat.ui.tweaks.GosScreen
+import com.labok.goat.ui.tweaks.RefreshHelpSheet
+import com.labok.goat.ui.tweaks.RefreshScreen
+import com.labok.goat.ui.tweaks.ResolutionHelpSheet
+import com.labok.goat.ui.tweaks.ResolutionScreen
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -236,7 +236,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         if (!state.loading && !state.hasPermission) {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 while (true) {
-                    delay(2_500); vm.refresh()
+                    delay(2_500)
+                    vm.refresh()
                 }
             }
         }
@@ -252,14 +253,17 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         hadPermission = state.hasPermission
     }
     LaunchedEffect(message) {
-        message?.let { toast.showSnackbar(it); vm.messageShown() }
+        message?.let {
+            toast.showSnackbar(it)
+            vm.messageShown()
+        }
     }
 
     // 그림이 이 기기의 실제 화면비를 따르도록, 학습한 두 화면 비율을 모든 그림(시트 포함)에 내려 준다.
     val screenAspect = LocalConfiguration.current.let { cfg -> minOf(cfg.screenWidthDp, cfg.screenHeightDp).toFloat() / maxOf(cfg.screenWidthDp, cfg.screenHeightDp).coerceAtLeast(1) }
     val deviceShape = DeviceShape(
         cover = state.aspectOf(ScreenPolicy.Role.OUTER) ?: if (state.foldable) FoldGeometry.COVER_ASPECT else screenAspect,
-        inner = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT,
+        inner = state.aspectOf(ScreenPolicy.Role.INNER) ?: FoldGeometry.INNER_ASPECT
     )
     CompositionLocalProvider(LocalDeviceShape provides deviceShape) {
         // 사이드바는 기능 단위. DPI를 다루는 두 기능은 '화면 배율'로, 그 밖의 유틸은 '편의 기능'으로 묶는다. 조사 도구는 lab 빌드에서만.
@@ -280,62 +284,62 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 Copy.MENU_HELP to { sheet = help },
                 Copy.MENU_GUIDE to { sheet = guide },
                 Copy.MENU_REPORT to report,
-                Copy.MENU_RESET to { sheet = reset },
+                Copy.MENU_RESET to { sheet = reset }
             )
         }
         val menuItems = when (shown) {
             NavItem.DPI_MATCH -> listOfNotNull(
                 // 크기 테스트는 두 화면을 비교하는 도구라 폴드에서만
                 (Copy.MENU_TEST to { sheet = Sheet.TEST }).takeIf { state.foldable },
-                Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED },
+                Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED }
             ) + common(Sheet.HELP, Sheet.GUIDE, Sheet.RESET)
             NavItem.APP_SIZE -> common(Sheet.APP_HELP, Sheet.APP_GUIDE, Sheet.APP_RESET)
             // 권한은 고급 화면 배율 설정과 같은 시스템 설정 권한이라 같은 권한 설정 안내를 연다. 초기화할 것은 없다.
             NavItem.SHAKE_ROTATE -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.SHAKE_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
-                Copy.MENU_REPORT to report,
+                Copy.MENU_REPORT to report
             )
             // Shizuku 연결 안내는 앱별 화면 배율 설정과 같은 시트를 쓴다
             NavItem.CAMERA_MUTE -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.CAMERA_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
-                Copy.MENU_REPORT to report,
+                Copy.MENU_REPORT to report
             )
             NavItem.ANIMATION -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.ANIM_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
-                Copy.MENU_REPORT to report,
+                Copy.MENU_REPORT to report
             )
             NavItem.APP_CLEANUP -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.BLOAT_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
-                Copy.MENU_REPORT to report,
+                Copy.MENU_REPORT to report
             )
             NavItem.REFRESH -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.REFRESH_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
-                Copy.MENU_REPORT to report,
+                Copy.MENU_REPORT to report
             )
             NavItem.GOS -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.GOS_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
-                Copy.MENU_REPORT to report,
+                Copy.MENU_REPORT to report
             )
             NavItem.DOZE -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.DOZE_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
-                Copy.MENU_REPORT to report,
+                Copy.MENU_REPORT to report
             )
             NavItem.RESOLUTION -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.RES_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
-                Copy.MENU_REPORT to report,
+                Copy.MENU_REPORT to report
             )
             NavItem.DARK -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.DARK_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
-                Copy.MENU_REPORT to report,
+                Copy.MENU_REPORT to report
             )
             NavItem.HOME -> listOf(Copy.MENU_REPORT to report)
             NavItem.LAB, NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
@@ -347,32 +351,36 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = featurePadding(inner),
                 verticalArrangement = Arrangement.spacedBy(Gap.Card),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 // 고정 카드에도 키를 둬, 위에 할 일 카드가 생기거나 없어져도 카드 상태(스위치·슬라이더 방울)가 유지되게 한다.
                 item(key = "card:status") { Box(Modifier.widthIn(max = ContentMaxWidth)) { StatusCard(state) } }
                 items(todosOf(state), key = { it.key }) { todo ->
-                    Box(Modifier.widthIn(max = ContentMaxWidth)) { TodoCard(todo) { action ->
-                        when (action) {
-                            TodoAction.SETUP -> sheet = Sheet.GUIDE
-                            TodoAction.RELEARN -> vm.resetLearned()
-                            TodoAction.APPLY -> vm.applyNow()
-                            TodoAction.AUTO -> vm.setAuto(true)
-                            TodoAction.REPORT -> report()
-                            TodoAction.ADOPT -> vm.resolveExternal(adopt = true)
-                            TodoAction.RESTORE -> vm.resolveExternal(adopt = false)
+                    Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                        TodoCard(todo) { action ->
+                            when (action) {
+                                TodoAction.SETUP -> sheet = Sheet.GUIDE
+                                TodoAction.RELEARN -> vm.resetLearned()
+                                TodoAction.APPLY -> vm.applyNow()
+                                TodoAction.AUTO -> vm.setAuto(true)
+                                TodoAction.REPORT -> report()
+                                TodoAction.ADOPT -> vm.resolveExternal(adopt = true)
+                                TodoAction.RESTORE -> vm.resolveExternal(adopt = false)
+                            }
                         }
-                    } }
+                    }
                 }
                 item(key = "card:size") { Box(Modifier.widthIn(max = ContentMaxWidth)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
-                item(key = "card:auto") { Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                    AutoCard(state.auto) { on ->
-                        if (on && !ExternalChangeNotifier.canNotify(context)) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                item(key = "card:auto") {
+                    Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                        AutoCard(state.auto) { on ->
+                            if (on && !ExternalChangeNotifier.canNotify(context)) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                            vm.setAuto(on)
                         }
-                        vm.setAuto(on)
                     }
-                } }
+                }
             }
         }
 
@@ -385,29 +393,37 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
         var drawerWasOpen by remember { mutableStateOf(false) }
         LaunchedEffect(drawer.targetValue) {
             val open = drawer.targetValue == DrawerValue.Open
-            if (!wide && open != drawerWasOpen) { if (open) haptics.open() else haptics.close() }
+            if (!wide && open != drawerWasOpen) {
+                if (open) haptics.open() else haptics.close()
+            }
             drawerWasOpen = open
         }
         // 뒤로 가기: 열린 사이드바를 먼저 닫고, 다른 기능 화면이면 홈으로 돌아간다. 홈에서만 앱을 닫는다.
         BackHandler(enabled = drawer.isOpen || shown != NavItem.HOME) {
-            if (drawer.isOpen) scope.launch { drawer.close() }
-            else { revealFrom = null; feature = NavItem.HOME; shown = NavItem.HOME }
+            if (drawer.isOpen) {
+                scope.launch { drawer.close() }
+            } else {
+                revealFrom = null
+                feature = NavItem.HOME
+                shown = NavItem.HOME
+            }
         }
         val drawerItems: @Composable () -> Unit = {
-                SideDrawerContent(sections, current = feature, visible = wide || drawer.targetValue == DrawerValue.Open, glass = !wide, animateSelection = wide, onAbout = {
-                    // 사이드바 맨 아래 '앱 설정': 앱 정보·업데이트·기록 파일·UI 탄성을 모은 화면으로 간다
-                    revealFrom = null
-                    feature = NavItem.SETTINGS; shown = NavItem.SETTINGS
-                    scope.launch { drawer.close() }
-                }, onSelect = { item, at ->
-                    // 방울이 고른 항목으로 옮겨 가는 동안, 새 화면이 누른 줄에서 번져 나오고 사이드바도 함께 닫힌다(한 동작으로 이어지게).
-                    val moved = item != feature
-                    if (moved) haptics.segment()
-                    revealFrom = at
-                    feature = item
-                    shown = item
-                    scope.launch { drawer.close() }
-                })
+            SideDrawerContent(sections, current = feature, visible = wide || drawer.targetValue == DrawerValue.Open, glass = !wide, animateSelection = wide, onAbout = {
+                // 사이드바 맨 아래 '앱 설정': 앱 정보·업데이트·기록 파일·UI 탄성을 모은 화면으로 간다
+                revealFrom = null
+                feature = NavItem.SETTINGS
+                shown = NavItem.SETTINGS
+                scope.launch { drawer.close() }
+            }, onSelect = { item, at ->
+                // 방울이 고른 항목으로 옮겨 가는 동안, 새 화면이 누른 줄에서 번져 나오고 사이드바도 함께 닫힌다(한 동작으로 이어지게).
+                val moved = item != feature
+                if (moved) haptics.segment()
+                revealFrom = at
+                feature = item
+                shown = item
+                scope.launch { drawer.close() }
+            })
         }
         val main: @Composable () -> Unit = {
             Scaffold(
@@ -421,7 +437,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                                     (fadeIn(tween(260, delayMillis = 120)) + slideInVertically(tween(320, delayMillis = 120)) { it / 2 }) togetherWith
                                         (fadeOut(tween(140)) + slideOutVertically(tween(180)) { -it / 2 })
                                 },
-                                label = "title",
+                                label = "title"
                             ) { f ->
                                 // 메뉴 아이콘(사이드바·홈 타일과 같은 그림)과 제목
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -431,7 +447,8 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                                     Spacer(Modifier.width(12.dp))
                                     Text(
                                         f.label,
-                                        fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = (-0.3).sp
                                     )
                                 }
                             }
@@ -439,7 +456,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                         modifier = Modifier.hazeChild(
                             haze,
-                            HazeStyle(backgroundColor = c.bg, tint = HazeTint(c.bg.copy(alpha = 0.7f)), blurRadius = 24.dp, noiseFactor = 0f),
+                            HazeStyle(backgroundColor = c.bg, tint = HazeTint(c.bg.copy(alpha = 0.7f)), blurRadius = 24.dp, noiseFactor = 0f)
                         ),
                         navigationIcon = {
                             if (!wide) IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "기능 메뉴 열기") }
@@ -449,10 +466,10 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                                 IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, "설정 메뉴") }
                                 LiquidMenu(expanded = menu, onDismiss = { menu = false }, items = menuItems)
                             }
-                        },
+                        }
                     )
                 },
-                snackbarHost = { SnackbarHost(toast) { LiquidToast(it.visuals.message) } },
+                snackbarHost = { SnackbarHost(toast) { LiquidToast(it.visuals.message) } }
             ) { inner ->
                 // 기능을 바꾸면 새 화면이 왼쪽(사이드바 쪽)에서 물방울처럼 번지며 덮는다. 이전 화면은 다 덮인 뒤 사라진다.
                 AnimatedContent(
@@ -461,7 +478,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     transitionSpec = {
                         (EnterTransition.None togetherWith fadeOut(tween(1, delayMillis = 600))).apply { targetContentZIndex = 1f }
                     },
-                    label = "feature",
+                    label = "feature"
                 ) { f ->
                     // 처음 그릴 때가 들어오는 중(PreEnter)이면 번짐 전환, 앱을 처음 열 때(Visible)는 그대로 그린다
                     val entering = remember { transition.currentState == EnterExitState.PreEnter }
@@ -470,14 +487,18 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             .fillMaxSize()
                             // 홈 카드를 눌러 왔으면 누른 자리에서, 사이드바에서 왔으면 왼쪽(사이드바 쪽)에서 번진다
                             .liquidReveal(entering) { size -> revealFrom?.minus(contentOrigin) ?: Offset(0f, size.height * 0.3f) }
-                            .background(c.bg),
+                            .background(c.bg)
                     ) {
                         when (f) {
                             NavItem.DPI_MATCH -> dpiMatchList(inner)
                             NavItem.APP_SIZE -> AppSizeScreen(inner, onGuide = { sheet = Sheet.APP_GUIDE }, onReset = { sheet = Sheet.APP_RESET })
                             NavItem.SHAKE_ROTATE -> ShakeRotateScreen(inner, onGuide = { sheet = Sheet.GUIDE }, onCalibrate = { sheet = Sheet.SHAKE_CALIBRATE })
                             NavItem.CAMERA_MUTE -> CameraMuteScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
-                            NavItem.HOME -> Dashboard(inner, state, sections, onOpen = { item, at -> revealFrom = at; feature = item; shown = item })
+                            NavItem.HOME -> Dashboard(inner, state, sections, onOpen = { item, at ->
+                                revealFrom = at
+                                feature = item
+                                shown = item
+                            })
                             NavItem.ANIMATION -> AnimationScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.APP_CLEANUP -> BloatScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.REFRESH -> RefreshScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
@@ -485,7 +506,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.DOZE -> DozeScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
-                            NavItem.LAB -> LabEmptyScreen(inner)
+                            NavItem.LAB -> LabTweaksScreen(inner)
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                             NavItem.SETTINGS -> SettingsScreen(inner, onAbout = { sheet = Sheet.ABOUT }, onChangelog = { sheet = Sheet.CHANGELOG }, onPermissions = { sheet = Sheet.PERMISSIONS })
                         }
@@ -506,11 +527,16 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             ModalNavigationDrawer(
                 drawerState = drawer,
                 scrimColor = c.ink.copy(alpha = 0.16f),
-                drawerContent = drawerItems,
+                drawerContent = drawerItems
             ) { Box(Modifier.blur(behind)) { main() } }
         }
 
-        if (counting) RowCountOverlay(onClose = { counting = false; sheet = Sheet.TEST })
+        if (counting) {
+            RowCountOverlay(onClose = {
+                counting = false
+                sheet = Sheet.TEST
+            })
+        }
 
         flying?.let { done ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { ReportFlightArt(onDone = done) }
@@ -521,26 +547,38 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 onDismissRequest = { sheet = null },
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
                 containerColor = c.bg.copy(alpha = GLASS_ALPHA),
-                scrimColor = c.ink.copy(alpha = 0.16f),
+                scrimColor = c.ink.copy(alpha = 0.16f)
             ) {
                 when (current) {
                     Sheet.HELP -> HelpSheet(state, onOpenGuide = { sheet = Sheet.GUIDE })
                     Sheet.GUIDE -> GrantGuideSheet(state.hasPermission, onCopied = { vm.say(Copy.TOAST_COPIED) })
-                    Sheet.TEST -> SizeTestSheet(state, onCount = { sheet = null; counting = true }, onCalibrate = vm::setRulerPpi)
+                    Sheet.TEST -> SizeTestSheet(state, onCount = {
+                        sheet = null
+                        counting = true
+                    }, onCalibrate = vm::setRulerPpi)
                     Sheet.ADVANCED -> AdvancedSheet(state, onClearLogs = vm::clearDiagnostics)
                     Sheet.RESET -> ResetSheet(
                         canReset = state.hasPermission,
                         foldable = state.foldable,
-                        onRelearn = { sheet = null; vm.resetLearned() },
-                        onDefault = { sheet = null; vm.resetToDefault() },
+                        onRelearn = {
+                            sheet = null
+                            vm.resetLearned()
+                        },
+                        onDefault = {
+                            sheet = null
+                            vm.resetToDefault()
+                        },
                         onResetPermission = vm::resetPermissionState,
                         onPoll = { vm.refresh() },
-                        onCopy = { text -> if (copyText(context, text, "adb")) vm.say(Copy.TOAST_COPIED) },
+                        onCopy = { text -> if (copyText(context, text, "adb")) vm.say(Copy.TOAST_COPIED) }
                     )
                     Sheet.ABOUT -> AboutSheet(onMail = { ReportMail.inquiry(context) })
                     Sheet.APP_HELP -> AppSizeHelpSheet(foldable = state.foldable, onConnect = { sheet = Sheet.APP_GUIDE })
                     Sheet.APP_GUIDE -> AppSizeGuideSheet()
-                    Sheet.APP_RESET -> AppSizeResetSheet(onDone = { msg -> sheet = null; vm.say(msg) })
+                    Sheet.APP_RESET -> AppSizeResetSheet(onDone = { msg ->
+                        sheet = null
+                        vm.say(msg)
+                    })
                     Sheet.SHAKE_HELP -> ShakeRotateHelpSheet()
                     Sheet.SHAKE_CALIBRATE -> ShakeCalibrationSheet(onClose = { sheet = null })
                     Sheet.CAMERA_HELP -> CameraMuteHelpSheet()
@@ -578,20 +616,32 @@ private fun StatusCard(state: UiState) {
     GlassCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             FoldDeviceArt(
-                unfolded = unfolded, height = 118.dp,
+                unfolded = unfolded,
+                height = 118.dp
             )
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     // 폴드가 아니면 화면이 하나라 외부·내부를 말하지 않는다
-                    if (!state.foldable) Copy.CURRENT
-                    else when (role) { ScreenPolicy.Role.INNER -> Copy.INNER; ScreenPolicy.Role.OUTER -> Copy.OUTER; null -> Copy.CURRENT },
-                    color = c.muted, style = MaterialTheme.typography.labelLarge,
+                    if (!state.foldable) {
+                        Copy.CURRENT
+                    } else {
+                        when (role) {
+                            ScreenPolicy.Role.INNER -> Copy.INNER
+                            ScreenPolicy.Role.OUTER -> Copy.OUTER
+                            null -> Copy.CURRENT
+                        }
+                    },
+                    color = c.muted,
+                    style = MaterialTheme.typography.labelLarge
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         state.dpi?.current?.toString() ?: "—",
-                        fontSize = 52.sp, fontWeight = FontWeight.Bold, letterSpacing = (-1.5).sp, color = c.ink,
+                        fontSize = 52.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-1.5).sp,
+                        color = c.ink
                     )
                     Spacer(Modifier.width(4.dp))
                     Text("dpi", color = c.muted, modifier = Modifier.padding(bottom = 10.dp))
@@ -605,10 +655,15 @@ private fun StatusCard(state: UiState) {
 private enum class TodoAction { SETUP, RELEARN, APPLY, AUTO, REPORT, ADOPT, RESTORE }
 
 private data class Todo(
-    val key: String, val title: String, val body: String?, val action: TodoAction?, val actionLabel: String?,
+    val key: String,
+    val title: String,
+    val body: String?,
+    val action: TodoAction?,
+    val actionLabel: String?,
     val blocking: Boolean = false,
     /** 두 번째 선택지(외부 변경의 복원 등). 있으면 버튼을 본문 아래에 나란히 둔다. */
-    val second: TodoAction? = null, val secondLabel: String? = null,
+    val second: TodoAction? = null,
+    val secondLabel: String? = null
 )
 
 /** 사용자가 할 일만. 앱을 못 쓰게 하는 것(준비)을 맨 위에. 할 일이 없으면 아무것도 보여 주지 않는다. */
@@ -616,12 +671,18 @@ private fun todosOf(state: UiState): List<Todo> = buildList {
     if (state.loading) return@buildList
     if (!state.hasPermission) add(Todo("setup", Copy.TODO_SETUP_TITLE, Copy.TODO_SETUP_BODY, TodoAction.SETUP, Copy.TODO_SETUP_ACTION, blocking = true))
     state.external?.let { e ->
-        add(Todo(
-            "external", Copy.EXTERNAL_TITLE,
-            "다른 설정에서 ${if (state.foldable) "${e.role.label} 화면 " else ""}DPI가 ${e.from} → ${e.to}(으)로 변경되었습니다. ${Copy.EXTERNAL_BODY}",
-            TodoAction.ADOPT, "${e.to} 기준으로 설정", blocking = true,
-            second = TodoAction.RESTORE, secondLabel = "${e.from}(으)로 복원",
-        ))
+        add(
+            Todo(
+                "external",
+                Copy.EXTERNAL_TITLE,
+                "다른 설정에서 ${if (state.foldable) "${e.role.label} 화면 " else ""}DPI가 ${e.from} → ${e.to}(으)로 변경되었습니다. ${Copy.EXTERNAL_BODY}",
+                TodoAction.ADOPT,
+                "${e.to} 기준으로 설정",
+                blocking = true,
+                second = TodoAction.RESTORE,
+                secondLabel = "${e.from}(으)로 복원"
+            )
+        )
     }
     if (state.hasPermission && state.status == UiState.Status.BLOCKED) {
         add(Todo("hold", Copy.TODO_HOLD_TITLE, Copy.TODO_HOLD_BODY, TodoAction.RELEARN, Copy.TODO_HOLD_ACTION))
@@ -642,7 +703,7 @@ private fun TodoCard(todo: Todo, onAction: (TodoAction) -> Unit) {
     AnimatedVisibility(
         visible = shown,
         enter = fadeIn() + expandVertically() + scaleIn(initialScale = 0.92f),
-        exit = fadeOut() + shrinkVertically(),
+        exit = fadeOut() + shrinkVertically()
     ) {
         GlassCard(accent = if (todo.blocking) c.ink else null, padding = 16.dp) {
             if (todo.second != null) {
@@ -653,14 +714,16 @@ private fun TodoCard(todo: Todo, onAction: (TodoAction) -> Unit) {
                     if (todo.action != null && todo.actionLabel != null) LiquidButton(todo.actionLabel, modifier = Modifier.weight(1f), onClick = { onAction(todo.action) })
                     LiquidButton(todo.secondLabel ?: "", modifier = Modifier.weight(1f), onClick = { onAction(todo.second) }, primary = false)
                 }
-            } else Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(todo.title, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    todo.body?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
-                }
-                if (todo.action != null && todo.actionLabel != null) {
-                    Spacer(Modifier.width(10.dp))
-                    LiquidButton(todo.actionLabel, onClick = { onAction(todo.action) })
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(todo.title, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        todo.body?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
+                    }
+                    if (todo.action != null && todo.actionLabel != null) {
+                        Spacer(Modifier.width(10.dp))
+                        LiquidButton(todo.actionLabel, onClick = { onAction(todo.action) })
+                    }
                 }
             }
         }
@@ -695,12 +758,13 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
         Text(Copy.SIZE_OUTER_HINT, color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Item))
         LiquidSlider(
-            value = outer, range = sliderRange,
+            value = outer,
+            range = sliderRange,
             onValueChange = { outer = it },
             onValueChangeFinished = {},
             valueText = { "$it" },
             description = if (state.foldable) Copy.SIZE_OUTER else Copy.SIZE_SINGLE,
-            enabled = state.hasPermission,
+            enabled = state.hasPermission
         )
         // 내부 화면 보정은 폴드에서만(화면이 하나면 맞출 다른 화면이 없다)
         if (state.foldable) {
@@ -712,13 +776,14 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
             Text(Copy.SIZE_INNER_TUNE_HINT, color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             LiquidSlider(
-                value = adjust, range = -SettingsRepository.MAX_ADJUST..SettingsRepository.MAX_ADJUST,
+                value = adjust,
+                range = -SettingsRepository.MAX_ADJUST..SettingsRepository.MAX_ADJUST,
                 onValueChange = { adjust = it },
                 onValueChangeFinished = {},
                 valueText = { if (it > 0) "+$it" else "$it" },
                 centered = true,
                 description = Copy.SIZE_INNER_TUNE,
-                enabled = state.hasPermission && innerPanel != null,
+                enabled = state.hasPermission && innerPanel != null
             )
         }
         // 조절바는 값만 바꾸고, [적용]을 눌러야 화면에 반영한다(끄는 도중 화면이 계속 바뀌지 않게).
@@ -730,9 +795,12 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
                 Text(Copy.SIZE_PENDING, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(Gap.Item))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (state.target != null) LiquidButton(Copy.SIZE_REVERT, modifier = Modifier.weight(1f), primary = false, onClick = {
-                        outer = state.target; adjust = state.adjust
-                    })
+                    if (state.target != null) {
+                        LiquidButton(Copy.SIZE_REVERT, modifier = Modifier.weight(1f), primary = false, onClick = {
+                            outer = state.target
+                            adjust = state.adjust
+                        })
+                    }
                     LiquidButton(Copy.SIZE_APPLY, modifier = Modifier.weight(1f), onClick = { vm.commitSize(outer, adjust) })
                 }
             }
@@ -743,7 +811,7 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
                 outerInch = outerPanel.screen.diagonalInch, outerAspect = aspect(outerPanel, outerPanel, false), outerPpi = outerPanel.screen.ppi, outerDpi = outer,
                 innerInch = innerPanel.screen.diagonalInch, innerAspect = aspect(innerPanel, outerPanel, true), innerPpi = innerPanel.screen.ppi, innerDpi = innerDpi,
                 outerLabel = "${Copy.SIZE_PREVIEW_OUTER} $outer", innerLabel = "${Copy.SIZE_PREVIEW_INNER} $innerDpi",
-                innerActive = state.effective?.role?.let { it == ScreenPolicy.Role.INNER },
+                innerActive = state.effective?.role?.let { it == ScreenPolicy.Role.INNER }
             )
             Spacer(Modifier.height(Gap.Item))
             LiquidButton(Copy.SIZE_TEST, modifier = Modifier.fillMaxWidth(), onClick = onTest, primary = false)
@@ -751,11 +819,8 @@ private fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
     }
 }
 
-
-
 /** 세로 ÷ 가로(미리보기용). 내부 화면은 실제 방향(Fold8은 가로로 긴 화면)으로 계산한다. */
-private fun aspect(p: PanelSpec.Resolved, cover: PanelSpec.Resolved, isInner: Boolean): Float =
-    ScreenGeometry.orientedSize(p.screen.key, cover.screen.key, isInner)?.let { (w, h) -> h / w } ?: 2f
+private fun aspect(p: PanelSpec.Resolved, cover: PanelSpec.Resolved, isInner: Boolean): Float = ScreenGeometry.orientedSize(p.screen.key, cover.screen.key, isInner)?.let { (w, h) -> h / w } ?: 2f
 
 @Composable
 private fun AutoCard(on: Boolean, onChange: (Boolean) -> Unit) {
@@ -780,7 +845,7 @@ private fun ResetSheet(
     onDefault: () -> Unit,
     onResetPermission: () -> Unit,
     onPoll: () -> Unit,
-    onCopy: (String) -> Unit,
+    onCopy: (String) -> Unit
 ) {
     val c = LocalLiquid.current
     val context = LocalContext.current
@@ -788,7 +853,12 @@ private fun ResetSheet(
     var step by remember { mutableIntStateOf(0) }
     // PC에서 회수하는 즉시 알아채도록 대기 중에는 권한 상태를 확인한다.
     LaunchedEffect(step) {
-        if (step == 3) while (true) { delay(2_000); onPoll() }
+        if (step == 3) {
+            while (true) {
+                delay(2_000)
+                onPoll()
+            }
+        }
     }
     SheetColumn {
         Text(Copy.RESET_TITLE, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
@@ -827,7 +897,12 @@ private fun ResetSheet(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // 대기 표시: 방울이 세 칸을 차례로 흘러 다닌다.
                             var dot by remember { mutableIntStateOf(0) }
-                            LaunchedEffect(Unit) { while (true) { delay(600); dot = (dot + 1) % 3 } }
+                            LaunchedEffect(Unit) {
+                                while (true) {
+                                    delay(600)
+                                    dot = (dot + 1) % 3
+                                }
+                            }
                             LiquidDots(count = 3, index = dot)
                             Spacer(Modifier.width(8.dp))
                             Text(Copy.RESET_PERMISSION_WAITING, color = c.muted, style = MaterialTheme.typography.bodySmall)
@@ -835,11 +910,17 @@ private fun ResetSheet(
                     }
                     else -> DangerConfirmBox(
                         if (s == 1) Copy.RESET_PERMISSION_WARN else Copy.RESET_PERMISSION_CONFIRM,
-                        note = Copy.RESET_PERMISSION_KEEP,
+                        note = Copy.RESET_PERMISSION_KEEP
                     ) {
                         LiquidButton(Copy.CANCEL, modifier = Modifier.weight(1f), onClick = { step = 0 }, primary = false)
-                        if (s == 1) LiquidButton(Copy.CONTINUE, modifier = Modifier.weight(1f), onClick = { step = 2 }, primary = false, danger = true)
-                        else LiquidButton(Copy.RESET_PERMISSION, modifier = Modifier.weight(1f), onClick = { onResetPermission(); step = 3 }, danger = true, burst = false)
+                        if (s == 1) {
+                            LiquidButton(Copy.CONTINUE, modifier = Modifier.weight(1f), onClick = { step = 2 }, primary = false, danger = true)
+                        } else {
+                            LiquidButton(Copy.RESET_PERMISSION, modifier = Modifier.weight(1f), onClick = {
+                                onResetPermission()
+                                step = 3
+                            }, danger = true, burst = false)
+                        }
                     }
                 }
             }

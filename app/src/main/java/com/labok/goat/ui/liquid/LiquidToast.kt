@@ -36,9 +36,12 @@ fun LiquidToast(text: String) {
         Box(
             Modifier
                 .wrapContentWidth()
-                .graphicsLayer { scaleX = sx.value; scaleY = sy.value }
+                .graphicsLayer {
+                    scaleX = sx.value
+                    scaleY = sy.value
+                }
                 .background(c.ink, RoundedCornerShape(50))
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Text(text, color = c.onInk, fontWeight = FontWeight.SemiBold)
         }

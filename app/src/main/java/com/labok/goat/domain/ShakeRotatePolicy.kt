@@ -1,8 +1,8 @@
 package com.labok.goat.domain
 
-import kotlin.math.hypot
-import kotlin.math.atan2
 import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.hypot
 import kotlin.math.ln
 import kotlin.math.sqrt
 
@@ -18,8 +18,10 @@ object ShakeRotatePolicy {
      */
     const val MIN_LEVEL = 1
     const val MAX_LEVEL = 100
+
     /** 예전 눈금의 끝(1.4.6까지의 최대). */
     const val CLASSIC_MAX = 30
+
     /** 처음 값: 손목으로 가볍게 휙휙 흔들면 돌아가는 정도. */
     const val DEFAULT_LEVEL = 17
     private const val STRONGEST = 18f
@@ -29,8 +31,11 @@ object ShakeRotatePolicy {
     /** 단계 → 흔들림 한 번으로 칠 세기(중력을 뺀 가속도, m/s²). */
     fun thresholdOf(level: Int): Float {
         val l = level.coerceIn(MIN_LEVEL, MAX_LEVEL)
-        return if (l <= CLASSIC_MAX) STRONGEST - (l - MIN_LEVEL) * (STRONGEST - SOFTEST) / (CLASSIC_MAX - MIN_LEVEL)
-        else SOFTEST - (l - CLASSIC_MAX) * (SOFTEST - FEATHER) / (MAX_LEVEL - CLASSIC_MAX)
+        return if (l <= CLASSIC_MAX) {
+            STRONGEST - (l - MIN_LEVEL) * (STRONGEST - SOFTEST) / (CLASSIC_MAX - MIN_LEVEL)
+        } else {
+            SOFTEST - (l - CLASSIC_MAX) * (SOFTEST - FEATHER) / (MAX_LEVEL - CLASSIC_MAX)
+        }
     }
 
     /**
@@ -39,8 +44,11 @@ object ShakeRotatePolicy {
      */
     fun gyroMinOf(level: Int): Float {
         val l = level.coerceIn(MIN_LEVEL, MAX_LEVEL)
-        return if (l <= CLASSIC_MAX) GYRO_STRONG - (l - MIN_LEVEL) * (GYRO_STRONG - GYRO_SOFT) / (CLASSIC_MAX - MIN_LEVEL)
-        else GYRO_SOFT - (l - CLASSIC_MAX) * (GYRO_SOFT - GYRO_FEATHER) / (MAX_LEVEL - CLASSIC_MAX)
+        return if (l <= CLASSIC_MAX) {
+            GYRO_STRONG - (l - MIN_LEVEL) * (GYRO_STRONG - GYRO_SOFT) / (CLASSIC_MAX - MIN_LEVEL)
+        } else {
+            GYRO_SOFT - (l - CLASSIC_MAX) * (GYRO_SOFT - GYRO_FEATHER) / (MAX_LEVEL - CLASSIC_MAX)
+        }
     }
     private const val GYRO_STRONG = 2.4f
     private const val GYRO_SOFT = 0.3f
@@ -48,8 +56,11 @@ object ShakeRotatePolicy {
 
     /** 세기(m/s²) → 가장 가까운 단계. */
     fun levelOf(threshold: Float): Int {
-        val raw = if (threshold >= SOFTEST) MIN_LEVEL + (STRONGEST - threshold) * (CLASSIC_MAX - MIN_LEVEL) / (STRONGEST - SOFTEST)
-        else CLASSIC_MAX + (SOFTEST - threshold) * (MAX_LEVEL - CLASSIC_MAX) / (SOFTEST - FEATHER)
+        val raw = if (threshold >= SOFTEST) {
+            MIN_LEVEL + (STRONGEST - threshold) * (CLASSIC_MAX - MIN_LEVEL) / (STRONGEST - SOFTEST)
+        } else {
+            CLASSIC_MAX + (SOFTEST - threshold) * (MAX_LEVEL - CLASSIC_MAX) / (SOFTEST - FEATHER)
+        }
         return Math.round(raw).coerceIn(MIN_LEVEL, MAX_LEVEL)
     }
 
@@ -76,8 +87,7 @@ object ShakeRotatePolicy {
     }
 
     /** 리듬 → 휘두름 사이 가장 긴 간격. */
-    fun maxGapFor(rhythm: Long?): Long =
-        rhythm?.let { (it * RHYTHM_SLACK).toLong().coerceIn(MIN_RHYTHM_GAP_MS, Detector.MAX_GAP_MS) } ?: Detector.MAX_GAP_MS
+    fun maxGapFor(rhythm: Long?): Long = rhythm?.let { (it * RHYTHM_SLACK).toLong().coerceIn(MIN_RHYTHM_GAP_MS, Detector.MAX_GAP_MS) } ?: Detector.MAX_GAP_MS
 
     private const val RHYTHM_SLACK = 2.2f
     private const val MIN_RHYTHM_GAP_MS = 300L
@@ -96,8 +106,7 @@ object ShakeRotatePolicy {
     /** 빠르기 단계(1=천천히 ~ [MAX_PACE]=빠르게) ↔ 휘두름 사이 가장 긴 간격(ms). */
     const val MAX_PACE = 10
     fun gapOfPace(pace: Int): Long = Detector.MAX_GAP_MS - (pace.coerceIn(1, MAX_PACE) - 1) * (Detector.MAX_GAP_MS - 250L) / (MAX_PACE - 1)
-    fun paceOfGap(gap: Long): Int =
-        (1 + Math.round((Detector.MAX_GAP_MS - gap).toFloat() * (MAX_PACE - 1) / (Detector.MAX_GAP_MS - 250L))).coerceIn(1, MAX_PACE)
+    fun paceOfGap(gap: Long): Int = (1 + Math.round((Detector.MAX_GAP_MS - gap).toFloat() * (MAX_PACE - 1) / (Detector.MAX_GAP_MS - 250L))).coerceIn(1, MAX_PACE)
 
     /** 자동 맞추기에서 흔들림으로 셀 최소 세기. */
     const val CALIBRATE_MIN = 1f
@@ -113,9 +122,14 @@ object ShakeRotatePolicy {
      * [dur] 기준을 넘은 채 이어진 시간(ms, 한 샘플이면 0), [jerk] 가장 가파른 세기 변화(m/s² / 샘플), [gyro] 그동안 가장 빠른 손목 회전(rad/s).
      */
     data class Peak(
-        val at: Long, val force: Float,
-        val x: Float = 0f, val y: Float = 0f, val z: Float = 0f,
-        val dur: Long = 40, val jerk: Float = 0f, val gyro: Float = 0f,
+        val at: Long,
+        val force: Float,
+        val x: Float = 0f,
+        val y: Float = 0f,
+        val z: Float = 0f,
+        val dur: Long = 40,
+        val jerk: Float = 0f,
+        val gyro: Float = 0f
     ) {
         /** 두 휘두름이 반대쪽으로 움직였으면 true(왕복). */
         fun opposes(o: Peak) = x * o.x + y * o.y + z * o.z < 0f
@@ -149,7 +163,7 @@ object ShakeRotatePolicy {
         /** 흔든 것으로 칠 휘두름 수(2~4). */
         var needed: Int = PEAKS,
         /** 한 샘플짜리 탭·충격을 휘두름으로 세지 않는다. */
-        var rejectTaps: Boolean = true,
+        var rejectTaps: Boolean = true
     ) {
         private val swings = ArrayDeque<Peak>()
         private var lastShake = Long.MIN_VALUE / 2
@@ -174,37 +188,59 @@ object ShakeRotatePolicy {
             private set
 
         /** 마지막 값에서 중력을 뺀 가속도(기기 x·y, m/s²). 화면에서 움직임을 그대로 보여 줄 때 쓴다. */
-        var linearX = 0f; private set
-        var linearY = 0f; private set
+        var linearX = 0f
+            private set
+        var linearY = 0f
+            private set
 
         /** 방금 값에서 놓친 이유(로그용). 다음 값을 넣으면 지워진다. */
-        var lastMiss: String? = null; private set
+        var lastMiss: String? = null
+            private set
 
         /** 자이로 값(rad/s). 지금 회전 속도와 최근 [WINDOW_MS] 안의 가장 빠른 회전을 기억한다. */
         fun feedGyro(x: Float, y: Float, z: Float, ms: Long) {
             gyroSeen = true
             val w = sqrt(x * x + y * y + z * z)
             gyroNow = w
-            if (w >= gyroPeak || ms - gyroAt > WINDOW_MS) { gyroPeak = w; gyroAt = ms }
+            if (w >= gyroPeak || ms - gyroAt > WINDOW_MS) {
+                gyroPeak = w
+                gyroAt = ms
+            }
         }
 
         /** 새 가속도 값([ms]는 단조 증가 시각). 흔들기로 판정되면 true. */
         fun feed(x: Float, y: Float, z: Float, ms: Long): Boolean {
             lastMiss = null
-            if (!started) { gx = x; gy = y; gz = z; started = true }
+            if (!started) {
+                gx = x
+                gy = y
+                gz = z
+                started = true
+            }
             // 떨어뜨림(자유 낙하): 잠시 판정을 멈춘다
             if (sqrt(x * x + y * y + z * z) < FREE_FALL) {
-                if (++falling >= FREE_FALL_SAMPLES) { quietUntil = ms + FALL_QUIET_MS; swings.clear() }
-            } else falling = 0
+                if (++falling >= FREE_FALL_SAMPLES) {
+                    quietUntil = ms + FALL_QUIET_MS
+                    swings.clear()
+                }
+            } else {
+                falling = 0
+            }
             gx = GRAVITY_ALPHA * gx + (1 - GRAVITY_ALPHA) * x
             gy = GRAVITY_ALPHA * gy + (1 - GRAVITY_ALPHA) * y
             gz = GRAVITY_ALPHA * gz + (1 - GRAVITY_ALPHA) * z
-            val dx = x - gx; val dy = y - gy; val dz = z - gz
-            linearX = dx; linearY = dy
+            val dx = x - gx
+            val dy = y - gy
+            val dz = z - gz
+            linearX = dx
+            linearY = dy
             val force = sqrt(dx * dx + dy * dy + dz * dz)
             val jerk = abs(force - lastForce)
             lastForce = force
-            if (ms < quietUntil) { if (force > threshold) lastMiss = "떨어뜨림 직후"; return false }
+            if (ms < quietUntil) {
+                if (force > threshold) lastMiss = "떨어뜨림 직후"
+                return false
+            }
             if (ms - lastShake < COOLDOWN_MS) return false
             if (force <= threshold) return false
 
@@ -216,13 +252,18 @@ object ShakeRotatePolicy {
                 // 같은 휘두름이 이어진다: 길이·날카로움·회전·최고 세기를 갱신
                 lastAbove = ms
                 val grown = open.copy(
-                    dur = ms - open.at, jerk = maxOf(open.jerk, jerk), gyro = maxOf(open.gyro, gyroNow),
+                    dur = ms - open.at,
+                    jerk = maxOf(open.jerk, jerk),
+                    gyro = maxOf(open.gyro, gyroNow)
                 ).let { if (force > it.force) it.copy(force = force, x = dx, y = dy, z = dz) else it }
                 update(grown)
                 return tryShake(ms)
             }
             // 방향이 뒤집혔다: 앞 휘두름이 탭·충격이었으면 빼고 새 휘두름을 연다
-            if (open != null && isTap(open)) { swings.removeLast(); lastMiss = "탭·충격으로 봄" }
+            if (open != null && isTap(open)) {
+                swings.removeLast()
+                lastMiss = "탭·충격으로 봄"
+            }
             // 휘두름 시작 사이가 그 사람의 리듬보다 훨씬 길면(느린 왕복) 처음부터 다시 센다
             swings.lastOrNull()?.let { if (ms - it.at > maxGap) swings.clear() }
             lastAbove = ms
@@ -241,10 +282,13 @@ object ShakeRotatePolicy {
         private fun tryShake(ms: Long): Boolean {
             if (swings.size < needed) return false
             val last = swings.last()
-            if (isTap(last)) return false  // 아직 한 샘플뿐: 다음 값까지 기다린다
+            if (isTap(last)) return false // 아직 한 샘플뿐: 다음 값까지 기다린다
             // 손목이 돌았거나, 팔로 크게 흔들어 세 번 모두 기준의 [STRONG]배를 넘었으면 흔들기다(차량 진동처럼 약한 왕복은 아니다)
             val turned = !gyroSeen || gyroMin <= 0f || (gyroPeak >= gyroMin && ms - gyroAt <= WINDOW_MS) || swings.all { it.force >= threshold * STRONG }
-            if (!turned) { lastMiss = "회전 없음(${"%.1f".format(gyroPeak)}rad/s)"; return false }
+            if (!turned) {
+                lastMiss = "회전 없음(${"%.1f".format(gyroPeak)}rad/s)"
+                return false
+            }
             lastPattern = swings.toList()
             swings.clear()
             lastShake = ms
@@ -262,21 +306,28 @@ object ShakeRotatePolicy {
         companion object {
             /** 이만큼 휘둘러야 흔든 것이다(왕복 한 번 반 = 휙 휘힉). */
             const val PEAKS = 3
+
             /** 첫 휘두름부터 [PEAKS]번째까지 걸릴 수 있는 가장 긴 시간. */
             const val WINDOW_MS = 1400L
+
             /** 휘두름 사이 가장 짧은 간격(같은 휘두름의 떨림을 둘로 세지 않게). */
             const val MIN_GAP_MS = 70L
+
             /** 휘두름 사이 가장 긴 간격(이보다 뜸하면 처음부터 다시 센다). 천천히 크게 흔드는 것(약 1Hz)까지 받는다. */
             const val MAX_GAP_MS = 650L
             const val COOLDOWN_MS = 1200L
+
             /** 손목 회전 없이도 흔들기로 칠 세기 배수. */
             const val STRONG = 1.4f
+
             /** 기준을 넘은 시간이 이 이하면 탭·충격 후보(50Hz에서 한 샘플). */
             const val TAP_MAX_MS = 15L
+
             /** 자유 낙하로 볼 가속도 크기(m/s²)와 연속 샘플 수, 그 뒤 쉬는 시간. */
             const val FREE_FALL = 3f
             const val FREE_FALL_SAMPLES = 3
             const val FALL_QUIET_MS = 1500L
+
             /** 중력 추정 저역 통과 계수. 0.9면 50Hz에서 약 0.9Hz 아래를 중력으로 본다(천천히 흔드는 것도 움직임으로 남는다). */
             private const val GRAVITY_ALPHA = 0.9f
             private const val MAX_KEPT = 32
@@ -299,7 +350,7 @@ object ShakeRotatePolicy {
         return pattern.mapIndexed { i, p ->
             val gap = if (i == 0) 0 else (p.at - pattern[i - 1].at).toInt().coerceIn(MIN_GAP_MS, MAX_GAP_MS)
             val r = (p.force / top).coerceIn(0f, 1f)
-            val curve = ln(1f + r * (E - 1f))  // 0..1, 로그 곡선
+            val curve = ln(1f + r * (E - 1f)) // 0..1, 로그 곡선
             val scale = when {
                 curve > 0.85f -> 1f
                 curve > 0.6f -> 0.7f
@@ -315,13 +366,13 @@ object ShakeRotatePolicy {
     private const val E = 2.7182817f
 
     /**
-     * 빠른 회전: 중력 방향([gx],[gy], 기기 기본 방향 기준 m/s²)으로 화면 방향(Surface.ROTATION_*)을 바로 정한다.
+     * 빠른 회전: 중력 방향([gx], [gy], 기기 기본 방향 기준 m/s²)으로 화면 방향(Surface.ROTATION_*)을 바로 정한다.
      * 기기가 [MIN_TILT] 이상 서 있고 방향이 한 축에서 [MAX_OFF_AXIS]도 안쪽일 때만 답하고, 애매하면 null(시스템에 맡긴다).
      * 거꾸로(180°)는 시스템도 대개 돌리지 않으므로 null.
      */
     fun rotationOf(gx: Float, gy: Float): Int? {
         if (hypot(gx, gy) < MIN_TILT) return null
-        val deg = Math.toDegrees(atan2(gx.toDouble(), gy.toDouble())).toFloat()  // 0=세로, +90=왼쪽으로 눕힘
+        val deg = Math.toDegrees(atan2(gx.toDouble(), gy.toDouble())).toFloat() // 0=세로, +90=왼쪽으로 눕힘
         return when {
             abs(deg) <= MAX_OFF_AXIS -> 0
             abs(deg - 90f) <= MAX_OFF_AXIS -> 1
@@ -332,6 +383,7 @@ object ShakeRotatePolicy {
 
     /** 기기가 이만큼 서 있어야(중력의 화면 평면 성분, m/s²) 방향을 정한다. 약 30°. */
     const val MIN_TILT = 4.9f
+
     /** 한 축에서 이만큼 벗어나면 애매한 것으로 본다(도). */
     const val MAX_OFF_AXIS = 30f
 }

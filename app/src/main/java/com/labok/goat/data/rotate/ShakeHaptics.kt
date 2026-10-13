@@ -52,9 +52,11 @@ object ShakeHaptics {
         } else {
             // 프리미티브가 없으면 짧은 펄스: 세기가 높을수록 길고(12~32ms) 세게. 시작과 끝은 0으로 둔다.
             val pulse = 12L + 20L * (s - 1) / (MAX_STRENGTH - 1)
-            val timings = mutableListOf<Long>(); val amps = mutableListOf<Int>()
+            val timings = mutableListOf<Long>()
+            val amps = mutableListOf<Int>()
             beats.forEachIndexed { i, b ->
-                timings += if (i == 0) 0L else (b.gap - pulse).coerceAtLeast(30L); amps += 0
+                timings += if (i == 0) 0L else (b.gap - pulse).coerceAtLeast(30L)
+                amps += 0
                 timings += pulse
                 amps += if (v.hasAmplitudeControl()) (255 * b.scale * gain.coerceAtMost(1f)).toInt().coerceIn(30, 255) else 255
             }
@@ -64,9 +66,11 @@ object ShakeHaptics {
 
     /** 모터를 최대 진폭으로 [pulse]ms씩 흔든 리듬대로 친다(가장 센 진동). 약한 휘두름도 조금만 약하게(세 단계 중 최소 80%). */
     private fun powerPulses(v: Vibrator, beats: List<Beat>, pulse: Long): VibrationEffect {
-        val timings = mutableListOf<Long>(); val amps = mutableListOf<Int>()
+        val timings = mutableListOf<Long>()
+        val amps = mutableListOf<Int>()
         beats.forEachIndexed { i, b ->
-            timings += if (i == 0) 0L else (b.gap - pulse).coerceAtLeast(30L); amps += 0
+            timings += if (i == 0) 0L else (b.gap - pulse).coerceAtLeast(30L)
+            amps += 0
             timings += pulse
             amps += if (v.hasAmplitudeControl()) (255 * (0.8f + 0.2f * b.scale)).toInt().coerceAtMost(255) else 255
         }
@@ -75,6 +79,7 @@ object ShakeHaptics {
 
     /** 이 단계부터 모터 최대 출력 펄스를 쓴다. */
     private const val MAX_POWER_FROM = 7
+
     /** 7·8·9·10단계의 펄스 길이(ms). */
     private val POWER_PULSE_MS = longArrayOf(16L, 22L, 30L, 45L)
 }

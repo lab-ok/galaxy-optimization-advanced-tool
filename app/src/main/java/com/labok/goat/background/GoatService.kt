@@ -1,6 +1,5 @@
 package com.labok.goat.background
 
-import com.labok.goat.data.log.LogRepository
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -10,6 +9,7 @@ import android.os.IBinder
 import androidx.core.app.ServiceCompat
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.ForegroundWatcher
+import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeEngine
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
@@ -37,9 +37,15 @@ class GoatService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val apps = AppDensityNotifier.enabled(this)
         val rotate = ShakeRotate.enabled(this) && ShakeRotate.canWrite(this)
-        if (!apps && !rotate) { stopSelf(); return START_NOT_STICKY }
+        if (!apps && !rotate) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }).joinToString("·")
-        if (running != lastRunning) { LogRepository.from(this).add("GOAT 상주 서비스: $running"); lastRunning = running }
+        if (running != lastRunning) {
+            LogRepository.from(this).add("GOAT 상주 서비스: $running")
+            lastRunning = running
+        }
         // 켜진 기능에 맞는 알림으로 바꾼다(같은 번호라 알림은 하나로 남는다)
         startForegroundNow()
 
@@ -56,8 +62,17 @@ class GoatService : Service() {
             unhookShizuku()
         }
 
-        if (rotate) (shake ?: ShakeEngine(this).also { shake = it; it.start() }).refresh()
-        else { shake?.stop(); shake = null }
+        if (rotate) {
+            (
+                shake ?: ShakeEngine(this).also {
+                    shake = it
+                    it.start()
+                }
+                ).refresh()
+        } else {
+            shake?.stop()
+            shake = null
+        }
         return START_STICKY
     }
 
@@ -82,7 +97,8 @@ class GoatService : Service() {
     override fun onDestroy() {
         LogRepository.from(this).add("GOAT 상주 서비스 멈춤")
         ForegroundWatcher.stop()
-        shake?.stop(); shake = null
+        shake?.stop()
+        shake = null
         unhookShizuku()
         AppDensityNotifier.cancel(this)
         super.onDestroy()
@@ -95,16 +111,18 @@ class GoatService : Service() {
         fun sync(context: Context) {
             val any = AppDensityNotifier.enabled(context) || (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context))
             val intent = Intent(context, GoatService::class.java)
-            if (any) runCatching { context.startForegroundService(intent) }
-            else context.stopService(intent)
+            if (any) {
+                runCatching { context.startForegroundService(intent) }
+            } else {
+                context.stopService(intent)
+            }
         }
 
         /** 지금 켜진 기능에 맞는 알림. */
-        fun notification(context: Context) =
-            if (AppDensityNotifier.enabled(context)) {
-                AppDensityNotifier.build(context, AppDensityNotifier.describe(context, null), AppDensityNotifier.shakeNote(context))
-            } else {
-                ShakeRotate.buildNotification(context)
-            }
+        fun notification(context: Context) = if (AppDensityNotifier.enabled(context)) {
+            AppDensityNotifier.build(context, AppDensityNotifier.describe(context, null), AppDensityNotifier.shakeNote(context))
+        } else {
+            ShakeRotate.buildNotification(context)
+        }
     }
 }

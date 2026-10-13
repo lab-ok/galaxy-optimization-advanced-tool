@@ -11,9 +11,9 @@ import com.labok.goat.data.tweaks.AnimationSpeed
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.LocalDeviceShape
 import com.labok.goat.ui.art.artLabel
-import com.labok.goat.ui.art.realTimeLoop
 import com.labok.goat.ui.art.artPill
 import com.labok.goat.ui.art.deviceFrame
+import com.labok.goat.ui.art.realTimeLoop
 import com.labok.goat.ui.liquid.LiquidColors
 
 private fun ease(x: Float) = x * x * (3 - 2 * x)
@@ -28,7 +28,8 @@ internal fun SpeedArt(scale: Float) {
     val t = realTimeLoop(2600)
     val aspect = LocalDeviceShape.current.cover
     ArtCanvas(170.dp) { c, tm ->
-        val h = 112.dp.toPx(); val w = h * aspect
+        val h = 112.dp.toPx()
+        val w = h * aspect
         val top = 12.dp.toPx()
         listOf(0.3f to 1f, 0.7f to scale).forEachIndexed { i, (fx, s) ->
             val tl = Offset(size.width * fx - w / 2, top)
@@ -58,9 +59,11 @@ internal fun SpeedArt(scale: Float) {
 /** 화면 속 앱 아이콘 격자(3×3). 가운데 아이콘이 누를 앱. */
 private fun DrawScope.appGrid(c: LiquidColors, screen: Rect) {
     val cell = screen.width / 3
-    for (r in 0..2) for (col in 0..2) {
-        val center = Offset(screen.left + cell * (col + 0.5f), screen.top + screen.height * 0.22f + r * cell)
-        drawRoundRect(if (r == 1 && col == 1) c.ink else c.muted.copy(alpha = 0.55f), center - Offset(cell * 0.3f, cell * 0.3f), Size(cell * 0.6f, cell * 0.6f), CornerRadius(cell * 0.16f))
+    for (r in 0..2) {
+        for (col in 0..2) {
+            val center = Offset(screen.left + cell * (col + 0.5f), screen.top + screen.height * 0.22f + r * cell)
+            drawRoundRect(if (r == 1 && col == 1) c.ink else c.muted.copy(alpha = 0.55f), center - Offset(cell * 0.3f, cell * 0.3f), Size(cell * 0.6f, cell * 0.6f), CornerRadius(cell * 0.16f))
+        }
     }
 }
 

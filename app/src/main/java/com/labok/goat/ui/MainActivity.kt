@@ -14,7 +14,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             // 해상도를 바꾼 뒤 확인 창은 화면이 다시 만들어져도 다시 떠야 해서 맨 위에 둔다
-            LiquidTheme { HomeScreen(); ResolutionConfirm() }
+            LiquidTheme {
+                HomeScreen()
+                ResolutionConfirm()
+            }
         }
     }
 }

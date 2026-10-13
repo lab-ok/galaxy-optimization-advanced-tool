@@ -17,6 +17,5 @@ object PermissionReset {
     fun command(packageName: String) = "adb shell pm revoke $packageName $PERMISSION"
 
     /** 시스템 앱 삭제 확인 창. */
-    fun uninstallIntent(packageName: String): Intent =
-        Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    fun uninstallIntent(packageName: String): Intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 }

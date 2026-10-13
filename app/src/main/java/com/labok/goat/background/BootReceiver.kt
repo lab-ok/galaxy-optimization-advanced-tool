@@ -1,15 +1,15 @@
 package com.labok.goat.background
 
-import com.labok.goat.data.log.LogRepository
-import com.labok.goat.data.settings.SettingsRepository
-import com.labok.goat.domain.DpiFixer
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.labok.goat.data.tweaks.Resolution
-import com.labok.goat.data.appsize.AppDensityNotifier
-import com.labok.goat.data.rotate.ShakeRotate
 import android.os.UserManager
+import com.labok.goat.data.appsize.AppDensityNotifier
+import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.rotate.ShakeRotate
+import com.labok.goat.data.settings.SettingsRepository
+import com.labok.goat.data.tweaks.Resolution
+import com.labok.goat.domain.DpiFixer
 
 /**
  * LOCKED_BOOT_COMPLETED: 잠금 해제 전(Direct Boot)이라 WorkManager를 쓸 수 없으므로 한 번만 바로 확인한다.

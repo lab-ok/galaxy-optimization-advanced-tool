@@ -1,7 +1,5 @@
 package com.labok.goat.ui.shizuku
 
-import com.labok.goat.ui.components.Gap
-import com.labok.goat.ui.components.openDeveloperOptions
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -22,8 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.openDeveloperOptions
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
 
@@ -44,7 +44,7 @@ import com.labok.goat.ui.liquid.LocalLiquid
 @Composable
 internal fun ShizukuGuide(
     state: ShizukuAccess.State,
-    intro: String,
+    intro: String
 ) {
     val c = LocalLiquid.current
     val context = LocalContext.current
@@ -60,12 +60,15 @@ internal fun ShizukuGuide(
     val wireless = remember(tick, state) { running || ShizukuAccess.wirelessDebugOn(context) }
     val done = listOf(installed, wireless, running, state == ShizukuAccess.State.READY)
     val current = done.indexOfFirst { !it }.let { if (it < 0) done.size else it }
-    var note by remember { mutableIntStateOf(0) }  // 1: 무선 디버깅을 직접 켜야 함
+    var note by remember { mutableIntStateOf(0) } // 1: 무선 디버깅을 직접 켜야 함
     var asked by remember { mutableStateOf(false) }
     // 허용 창은 차례가 오면 바로 띄운다. 무선 디버깅은 기기 설정이라 사용자가 [켜기]를 눌렀을 때만 켠다
     // (화면을 열 때마다 자동으로 켜면 사용자가 꺼도 다시 켜진다).
     LaunchedEffect(state) {
-        if (state == ShizukuAccess.State.NEEDS_PERMISSION && !asked) { asked = true; ShizukuAccess.requestPermission() }
+        if (state == ShizukuAccess.State.NEEDS_PERMISSION && !asked) {
+            asked = true
+            ShizukuAccess.requestPermission()
+        }
     }
 
     Text(intro, color = c.muted, style = MaterialTheme.typography.bodySmall)
@@ -80,7 +83,12 @@ internal fun ShizukuGuide(
         Hint("Shizuku가 폰 안에서 권한을 얻는 통로입니다. Wi-Fi에 연결돼 있어야 하고, '이 네트워크에서 허용할까요?'가 뜨면 허용을 누르세요.")
         if (note == 1) Hint("개발자 옵션에서 '무선 디버깅'을 직접 켜고 돌아와 주세요.", warn = true)
         Action("켜기") {
-            if (ShizukuAccess.enableWirelessDebug(context)) { tick++ } else { note = 1; openDeveloperOptions(context) }
+            if (ShizukuAccess.enableWirelessDebug(context)) {
+                tick++
+            } else {
+                note = 1
+                openDeveloperOptions(context)
+            }
         }
     }
     Step(3, "Shizuku 페어링하고 시작", done[2], current == 2) {
@@ -89,7 +97,7 @@ internal fun ShizukuGuide(
             "① [Shizuku 열기] → '무선 디버깅으로 시작'의 [페어링]을 누릅니다. 알림 허용을 물으면 허용합니다.\n" +
                 "② [무선 디버깅 화면] → '페어링 코드로 기기 페어링'을 누르면 6자리 숫자가 나옵니다.\n" +
                 "③ 화면 위에서 Shizuku 알림을 내려 그 숫자를 입력합니다.\n" +
-                "④ Shizuku로 돌아가 [시작]을 누른 뒤 이 화면으로 돌아오세요.",
+                "④ Shizuku로 돌아가 [시작]을 누른 뒤 이 화면으로 돌아오세요."
         )
         Spacer(Modifier.height(Gap.Item))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -105,7 +113,8 @@ internal fun ShizukuGuide(
     Spacer(Modifier.height(Gap.Item))
     Text(
         "[켜기]를 누르면 GOAT가 무선 디버깅을 대신 켜고, Shizuku가 켜지면 허용 창을 바로 띄웁니다.",
-        color = c.muted, style = MaterialTheme.typography.labelSmall,
+        color = c.muted,
+        style = MaterialTheme.typography.labelSmall
     )
 }
 
@@ -120,9 +129,9 @@ private fun Step(no: Int, title: String, done: Boolean, active: Boolean, body: @
                     when {
                         done || active -> Modifier.background(c.ink, CircleShape)
                         else -> Modifier.border(1.5.dp, c.line, CircleShape)
-                    },
+                    }
                 ),
-            contentAlignment = Alignment.Center,
+            contentAlignment = Alignment.Center
         ) {
             Text(if (done) "✓" else "$no", color = if (done || active) c.onInk else c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
         }
@@ -132,7 +141,7 @@ private fun Step(no: Int, title: String, done: Boolean, active: Boolean, body: @
                 title + if (done) " · 완료" else "",
                 color = if (done) c.muted else c.ink,
                 fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium
             )
             if (active) {
                 Spacer(Modifier.height(Gap.Item))
@@ -163,4 +172,3 @@ private fun openStore(context: Context) {
 private fun openShizuku(context: Context) {
     context.packageManager.getLaunchIntentForPackage(ShizukuAccess.PACKAGE)?.let { runCatching { context.startActivity(it) } }
 }
-

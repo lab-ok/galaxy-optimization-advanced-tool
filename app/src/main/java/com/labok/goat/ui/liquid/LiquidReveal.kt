@@ -20,8 +20,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
-import kotlinx.coroutines.launch
 import kotlin.math.hypot
+import kotlinx.coroutines.launch
 
 /**
  * 물방울 번짐 전환: 화면을 [origin] 자리의 작은 물방울([SoftBlob]) 안에만 그리고, 그 물방울을 화면 전체로 키운다.
@@ -45,7 +45,12 @@ fun Modifier.liquidReveal(active: Boolean, origin: (Size) -> Offset): Modifier {
         blob.blob.gain = 4f
         blob.blob.damping = 3f
         blob.moveTo(o.x, o.y, start * 2, start * 2, animate = false)
-        val follow = launch { snapshotFlow { r.value }.collect { val d = 2 * (start + it); blob.moveTo(o.x, o.y, d, d, animate = true, carry = 0.85f) } }
+        val follow = launch {
+            snapshotFlow { r.value }.collect {
+                val d = 2 * (start + it)
+                blob.moveTo(o.x, o.y, d, d, animate = true, carry = 0.85f)
+            }
+        }
         // 누른 자리에서 바로 번져 나와(초반이 빠른 곡선) 사이드바가 물러나는 동안 화면을 덮는다. 앱 설정의 UI 애니메이션 속도를 따른다.
         r.animateTo(far * 1.08f, tween((640 / UiMotion.speed).toInt(), easing = LinearOutSlowInEasing))
         follow.cancel()

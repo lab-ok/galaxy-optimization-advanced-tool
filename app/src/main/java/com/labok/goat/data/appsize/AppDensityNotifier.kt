@@ -1,8 +1,5 @@
 package com.labok.goat.data.appsize
 
-import com.labok.goat.background.GoatService
-import com.labok.goat.data.rotate.ShakeRotate
-import com.labok.goat.data.log.LogRepository
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -13,9 +10,12 @@ import android.content.res.Resources
 import androidx.core.app.NotificationCompat
 import com.labok.goat.R
 import com.labok.goat.background.ExternalChangeNotifier
+import com.labok.goat.background.GoatService
+import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.ui.MainActivity
-import com.labok.goat.ui.text.Copy
 import com.labok.goat.ui.appsize.DensityStepActivity
+import com.labok.goat.ui.text.Copy
 
 /**
  * 알림창 앱별 화면 크기 조절. GOAT 상주 서비스([GoatService])가 이 알림을 띄워 둔 채로
@@ -25,6 +25,7 @@ import com.labok.goat.ui.appsize.DensityStepActivity
 object AppDensityNotifier {
     private const val CHANNEL_ID = "app_density"
     const val NOTIFICATION_ID = 3
+
     // 이전 버전(실험실 시절)과 같은 이름을 유지한다(사용자 설정 보존)
     private const val PREF = "lab_app_density_notify"
 
@@ -71,13 +72,14 @@ object AppDensityNotifier {
     fun build(context: Context, status: String? = null, extra: String? = null): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "앱별 화면 크기 조절", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) },
+            NotificationChannel(CHANNEL_ID, "앱별 화면 크기 조절", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) }
         )
         fun step(s: Int, code: Int) = PendingIntent.getActivity(
-            context, code,
+            context,
+            code,
             Intent(context, DensityStepActivity::class.java).putExtra(DensityStepActivity.EXTRA_STEP, s)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val open = PendingIntent.getActivity(context, 10, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)

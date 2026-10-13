@@ -12,10 +12,10 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.LocalDeviceShape
-import com.labok.goat.ui.art.deviceFrame
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.art.artPill
+import com.labok.goat.ui.art.deviceFrame
 import com.labok.goat.ui.liquid.LiquidColors
 import kotlin.math.PI
 import kotlin.math.abs
@@ -111,16 +111,20 @@ private fun DrawScope.phone(
     angle: Float,
     turn: Float,
     locked: Boolean,
-    open: Boolean = false,
+    open: Boolean = false
 ) {
     // 기기 모양은 고급 화면 배율 설정 그림과 같은 틀([deviceFrame])과 외부 화면 비율([aspect])을 쓴다
-    val h = 92.dp.toPx(); val w = h * aspect
+    val h = 92.dp.toPx()
+    val w = h * aspect
     rotate(angle, center) {
         val screen = deviceFrame(c, Offset(center.x - w / 2, center.y - h / 2), Size(w, h))
         rotate(turn, center) {
             // 가로 내용은 몸체의 긴 쪽을 따라 넓게, 세로 내용은 아이콘 격자
-            if (turn < -45f) content(c, center, screen.height * 0.86f, screen.width * 0.8f, wide = true)
-            else content(c, center, screen.width * 0.8f, screen.height * 0.86f, wide = false)
+            if (turn < -45f) {
+                content(c, center, screen.height * 0.86f, screen.width * 0.8f, wide = true)
+            } else {
+                content(c, center, screen.width * 0.8f, screen.height * 0.86f, wide = false)
+            }
         }
     }
     // 자물쇠는 돌리지 않고 늘 폰 바로 아래에 똑바로 둔다
@@ -133,17 +137,22 @@ private fun DrawScope.phone(
 
 /** 화면 내용: [wide]면 제목 줄과 긴 막대 둘(동영상·가로 화면), 아니면 아이콘 격자. */
 private fun DrawScope.content(c: LiquidColors, center: Offset, w: Float, h: Float, wide: Boolean) {
-    val left = center.x - w / 2; val top = center.y - h / 2
+    val left = center.x - w / 2
+    val top = center.y - h / 2
     if (wide) {
         drawRoundRect(c.ink, Offset(left + w * 0.06f, top + h * 0.12f), Size(w * 0.88f, h * 0.42f), CornerRadius(3.dp.toPx()))
         drawRoundRect(c.muted, Offset(left + w * 0.06f, top + h * 0.66f), Size(w * 0.6f, h * 0.1f), CornerRadius(2.dp.toPx()))
     } else {
         val cell = w / 3
-        for (r in 0..2) for (col in 0..2) {
-            drawRoundRect(
-                c.muted, Offset(left + col * cell + cell * 0.2f, top + h * 0.06f + r * cell),
-                Size(cell * 0.6f, cell * 0.6f), CornerRadius(2.dp.toPx()),
-            )
+        for (r in 0..2) {
+            for (col in 0..2) {
+                drawRoundRect(
+                    c.muted,
+                    Offset(left + col * cell + cell * 0.2f, top + h * 0.06f + r * cell),
+                    Size(cell * 0.6f, cell * 0.6f),
+                    CornerRadius(2.dp.toPx())
+                )
+            }
         }
         drawRoundRect(c.line, Offset(left + w * 0.1f, top + h * 0.72f), Size(w * 0.8f, h * 0.06f), CornerRadius(2.dp.toPx()))
     }
@@ -151,13 +160,18 @@ private fun DrawScope.content(c: LiquidColors, center: Offset, w: Float, h: Floa
 
 /** 작은 자물쇠. [open]이면 고리가 위로 들려 한쪽이 풀린다. */
 private fun DrawScope.lock(color: Color, center: Offset, open: Boolean = false) {
-    val bw = 12.dp.toPx(); val bh = 9.dp.toPx()
+    val bw = 12.dp.toPx()
+    val bh = 9.dp.toPx()
     drawRoundRect(color, Offset(center.x - bw / 2, center.y - bh / 2 + 2.dp.toPx()), Size(bw, bh), CornerRadius(2.dp.toPx()))
     val lift = if (open) 3.dp.toPx() else 0f
     val shift = if (open) 3.dp.toPx() else 0f
     drawArc(
-        color, 180f, 180f, false,
-        Offset(center.x - 4.dp.toPx() + shift, center.y - 7.dp.toPx() - lift), Size(8.dp.toPx(), 9.dp.toPx()),
-        style = Stroke(2.dp.toPx()),
+        color,
+        180f,
+        180f,
+        false,
+        Offset(center.x - 4.dp.toPx() + shift, center.y - 7.dp.toPx() - lift),
+        Size(8.dp.toPx(), 9.dp.toPx()),
+        style = Stroke(2.dp.toPx())
     )
 }

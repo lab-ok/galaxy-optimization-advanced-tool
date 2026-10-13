@@ -1,21 +1,21 @@
 package com.labok.goat
 
-import com.labok.goat.data.lab.LabUnlock
-import com.labok.goat.ui.liquid.UiHaptics
-import com.labok.goat.ui.liquid.UiMotion
-import com.labok.goat.data.camera.CameraMute
-import com.labok.goat.data.tweaks.ForceDark
-import com.labok.goat.data.tweaks.Gos
-import com.labok.goat.data.tweaks.Doze
-import com.labok.goat.data.tweaks.Resolution
-import com.labok.goat.data.shizuku.ShizukuAccess
+import android.app.Application
 import com.labok.goat.data.appsize.AppDensityNotifier
-import com.labok.goat.data.rotate.ShakeRotate
+import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.DpiManager
+import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.data.log.CrashRecorder
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.settings.SettingsRepository
-import android.app.Application
+import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.data.tweaks.Doze
+import com.labok.goat.data.tweaks.ForceDark
+import com.labok.goat.data.tweaks.Gos
+import com.labok.goat.data.tweaks.Resolution
+import com.labok.goat.ui.liquid.UiHaptics
+import com.labok.goat.ui.liquid.UiMotion
 
 class App : Application() {
     override fun onCreate() {

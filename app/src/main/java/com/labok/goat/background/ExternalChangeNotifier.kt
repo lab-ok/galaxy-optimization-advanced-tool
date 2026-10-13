@@ -23,15 +23,17 @@ object ExternalChangeNotifier {
     const val ACTION_ADOPT = "com.labok.goat.EXTERNAL_ADOPT"
     const val ACTION_RESTORE = "com.labok.goat.EXTERNAL_RESTORE"
 
-    fun text(change: ExternalChange) =
-        "다른 설정에서 ${change.role.label} 화면 DPI가 ${change.from}에서 ${change.to}(으)로 변경되었습니다."
+    fun text(change: ExternalChange) = "다른 설정에서 ${change.role.label} 화면 DPI가 ${change.from}에서 ${change.to}(으)로 변경되었습니다."
 
     fun show(context: Context, change: ExternalChange) {
         if (!canNotify(context)) return
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "외부 DPI 변경", NotificationManager.IMPORTANCE_DEFAULT))
         fun action(a: String, code: Int) = PendingIntent.getBroadcast(
-            context, code, Intent(context, ExternalChangeReceiver::class.java).setAction(a), PendingIntent.FLAG_IMMUTABLE,
+            context,
+            code,
+            Intent(context, ExternalChangeReceiver::class.java).setAction(a),
+            PendingIntent.FLAG_IMMUTABLE
         )
         val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val n = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -48,9 +50,8 @@ object ExternalChangeNotifier {
     }
 
     /** Android 13부터 알림 권한이 필요하다. 12(minSdk 31)에서는 권한 없이 보낼 수 있다. */
-    fun canNotify(context: Context): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    fun canNotify(context: Context): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+        context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
     fun cancel(context: Context) = context.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
 }

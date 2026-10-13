@@ -1,23 +1,23 @@
 package com.labok.goat.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.Alignment
-import androidx.compose.material3.TextButton
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.border
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.labok.goat.ui.liquid.LocalLiquid
 
 /** 이름–값 한 줄(고급 정보·앱 정보). 숫자는 고정폭 숫자(tabular). */
@@ -28,7 +28,7 @@ internal fun InfoRow(key: String, value: String, emphasize: Boolean = false) {
         Modifier
             .fillMaxWidth()
             .padding(vertical = 3.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(key, style = MaterialTheme.typography.bodyMedium, color = c.muted, modifier = Modifier.weight(1f))
         Text(
@@ -36,7 +36,7 @@ internal fun InfoRow(key: String, value: String, emphasize: Boolean = false) {
             // 숫자는 고정폭 숫자(tabular)로 줄을 맞추되 글꼴은 본문과 같게 둔다.
             style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
             fontWeight = if (emphasize) FontWeight.SemiBold else FontWeight.Medium,
-            color = c.ink,
+            color = c.ink
         )
     }
 }
@@ -54,12 +54,12 @@ internal fun CommandBox(text: String, onCopy: () -> Unit, extra: @Composable (()
             .fillMaxWidth()
             .background(c.surface, shape)
             .border(1.dp, c.line, shape)
-            .padding(start = 12.dp, top = 10.dp, end = 4.dp),
+            .padding(start = 12.dp, top = 10.dp, end = 4.dp)
     ) {
         Text(
             displayCommand(text),
             color = c.ink,
-            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp),
+            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp)
         )
         Row(Modifier.align(Alignment.End), verticalAlignment = Alignment.CenterVertically) {
             extra?.invoke()
@@ -69,8 +69,7 @@ internal fun CommandBox(text: String, onCopy: () -> Unit, extra: @Composable (()
 }
 
 /** 화면 표시용 줄바꿈: 18자를 넘는 낱말 앞에서 줄을 바꾼다. */
-internal fun displayCommand(text: String): String =
-    text.split(' ').fold(StringBuilder()) { sb, word ->
-        if (sb.isNotEmpty()) sb.append(if (word.length > 18) '\n' else ' ')
-        sb.append(word)
-    }.toString()
+internal fun displayCommand(text: String): String = text.split(' ').fold(StringBuilder()) { sb, word ->
+    if (sb.isNotEmpty()) sb.append(if (word.length > 18) '\n' else ' ')
+    sb.append(word)
+}.toString()

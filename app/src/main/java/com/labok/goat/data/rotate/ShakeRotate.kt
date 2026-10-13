@@ -1,6 +1,5 @@
 package com.labok.goat.data.rotate
 
-import com.labok.goat.background.GoatService
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -14,6 +13,7 @@ import android.provider.Settings
 import android.view.Display
 import androidx.core.app.NotificationCompat
 import com.labok.goat.R
+import com.labok.goat.background.GoatService
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.ShakeRotatePolicy
 import com.labok.goat.ui.MainActivity
@@ -24,11 +24,11 @@ import com.labok.goat.ui.MainActivity
  */
 object ShakeRotate {
     private const val PREF = "shake_rotate"
+
     // 1.1의 'shake_rotate'(중요도 낮음)와 다른 채널. 채널 중요도는 만든 뒤 바꿀 수 없어 새 이름을 쓴다.
     private const val CHANNEL_ID = "shake_rotate_quiet"
 
-    fun canWrite(context: Context) =
-        context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
+    fun canWrite(context: Context) = context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
 
     fun enabled(context: Context) = prefs(context).getBoolean("on", false)
 
@@ -36,8 +36,7 @@ object ShakeRotate {
     private const val LEVEL_KEY = "level30"
 
     /** 흔들기 민감도 단계([ShakeRotatePolicy.MIN_LEVEL]~[ShakeRotatePolicy.MAX_LEVEL], 클수록 예민). */
-    fun level(context: Context): Int =
-        prefs(context).getInt(LEVEL_KEY, ShakeRotatePolicy.DEFAULT_LEVEL).coerceIn(ShakeRotatePolicy.MIN_LEVEL, ShakeRotatePolicy.MAX_LEVEL)
+    fun level(context: Context): Int = prefs(context).getInt(LEVEL_KEY, ShakeRotatePolicy.DEFAULT_LEVEL).coerceIn(ShakeRotatePolicy.MIN_LEVEL, ShakeRotatePolicy.MAX_LEVEL)
 
     /** 흔드는 빠르기(1=천천히 ~ [ShakeRotatePolicy.MAX_PACE]=빠르게). 자동 맞추기가 그 사람의 리듬으로 정한다. */
     fun pace(context: Context): Int = prefs(context).getInt("pace", 1).coerceIn(1, ShakeRotatePolicy.MAX_PACE)
@@ -82,17 +81,19 @@ object ShakeRotate {
         }.apply()
         LogRepository.from(context).add(
             "흔들어서 화면 회전 고급 설정($how): " + listOfNotNull(
-                pace?.let { "빠르기 $it" }, turn?.let { "손목 회전 $it" }, swings?.let { "횟수 $it" }, rejectTaps?.let { "탭 거르기 $it" },
-                largeOnly?.let { "큰 화면에서만 $it" },
-            ).joinToString(", "),
+                pace?.let { "빠르기 $it" },
+                turn?.let { "손목 회전 $it" },
+                swings?.let { "횟수 $it" },
+                rejectTaps?.let { "탭 거르기 $it" },
+                largeOnly?.let { "큰 화면에서만 $it" }
+            ).joinToString(", ")
         )
         changed.value++
         if (enabled(context)) start(context)
     }
 
     /** 고급 설정을 처음 값으로. */
-    fun resetAdvanced(context: Context) =
-        setAdvanced(context, pace = 1, turn = DEFAULT_TURN, swings = ShakeRotatePolicy.Detector.PEAKS, rejectTaps = true, largeOnly = false, how = "기본값")
+    fun resetAdvanced(context: Context) = setAdvanced(context, pace = 1, turn = DEFAULT_TURN, swings = ShakeRotatePolicy.Detector.PEAKS, rejectTaps = true, largeOnly = false, how = "기본값")
 
     private const val DEFAULT_TURN = 4
 
@@ -100,8 +101,7 @@ object ShakeRotate {
     val changed = kotlinx.coroutines.flow.MutableStateFlow(0)
 
     /** 돌릴 때 진동 세기(0=끔, 1~[ShakeHaptics.MAX_STRENGTH]). */
-    fun vibration(context: Context): Int =
-        prefs(context).getInt("vibration", ShakeHaptics.DEFAULT_STRENGTH).coerceIn(0, ShakeHaptics.MAX_STRENGTH)
+    fun vibration(context: Context): Int = prefs(context).getInt("vibration", ShakeHaptics.DEFAULT_STRENGTH).coerceIn(0, ShakeHaptics.MAX_STRENGTH)
 
     fun setVibration(context: Context, strength: Int) {
         prefs(context).edit().putInt("vibration", strength).apply()
@@ -112,7 +112,7 @@ object ShakeRotate {
         prefs(context).edit().putInt(LEVEL_KEY, level).apply()
         changed.value++
         LogRepository.from(context).add("흔들어서 화면 회전 민감도: $level($how)")
-        if (enabled(context)) start(context)  // 서비스가 새 민감도를 읽게 한다
+        if (enabled(context)) start(context) // 서비스가 새 민감도를 읽게 한다
     }
 
     /** 흔든 순간 자동 회전을 잠깐 켜 둔 동안 true(화면의 '자동 회전이 켜져 있습니다' 안내를 띄우지 않는다). */
@@ -124,12 +124,10 @@ object ShakeRotate {
     var calibrating = false
 
     /** 빠른 설정의 자동 회전이 켜져 있으면 true. 켜져 있으면 흔들기 전에도 화면이 저절로 돌아간다. */
-    fun autoRotateOn(context: Context) =
-        Settings.System.getInt(context.contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0) == 1
+    fun autoRotateOn(context: Context) = Settings.System.getInt(context.contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0) == 1
 
     /** 자동 회전만 끈다(지금 방향 그대로 잠근다). */
-    fun turnOffAutoRotate(context: Context): Boolean =
-        lock(context, currentRotation(context)).also { if (it) LogRepository.from(context).add("흔들어서 화면 회전: 자동 회전 끄기(사용자)") }
+    fun turnOffAutoRotate(context: Context): Boolean = lock(context, currentRotation(context)).also { if (it) LogRepository.from(context).add("흔들어서 화면 회전: 자동 회전 끄기(사용자)") }
 
     /**
      * 켜면 지금 화면 방향 그대로 회전을 잠그고 감시를 시작한다. 끄면 켜기 전의 자동 회전 설정으로 되돌린다.
@@ -163,9 +161,8 @@ object ShakeRotate {
     }
 
     /** 지금 화면 방향(기본 디스플레이 기준). 서비스처럼 화면이 없는 곳에서도 읽힌다. */
-    fun currentRotation(context: Context): Int =
-        runCatching { context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY).rotation }
-            .getOrElse { Settings.System.getInt(context.contentResolver, Settings.System.USER_ROTATION, 0) }
+    fun currentRotation(context: Context): Int = runCatching { context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY).rotation }
+        .getOrElse { Settings.System.getInt(context.contentResolver, Settings.System.USER_ROTATION, 0) }
 
     /** 자동 회전을 끄고 [rotation] 방향으로 잠근다. */
     fun lock(context: Context, rotation: Int): Boolean = runCatching {
@@ -190,7 +187,7 @@ object ShakeRotate {
     fun buildNotification(context: Context): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "흔들어서 화면 회전", NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) },
+            NotificationChannel(CHANNEL_ID, "흔들어서 화면 회전", NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) }
         )
         val open = PendingIntent.getActivity(context, 20, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)

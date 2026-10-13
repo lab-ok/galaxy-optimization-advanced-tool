@@ -16,7 +16,7 @@ class CopyFunctionsTest {
             Copy.resOption("FHD+", 1080, 2340, 75),
             Copy.resOptionDesc(75),
             Copy.resAppsBody(99),
-            Copy.resConfirmBody(15),
+            Copy.resConfirmBody(15)
         ).forEach { assertTrue("'$it'이 너무 길다(${it.length}자)", it.length <= 70) }
     }
 }

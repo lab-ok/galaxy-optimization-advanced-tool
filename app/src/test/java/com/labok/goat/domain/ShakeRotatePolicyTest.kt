@@ -2,14 +2,14 @@ package com.labok.goat.domain
 
 import com.labok.goat.domain.ShakeRotatePolicy.Detector
 import com.labok.goat.domain.ShakeRotatePolicy.Peak
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * 흔들기 판정 시험. 실제 센서처럼 50Hz(20ms 간격)로 값을 넣는다.
@@ -21,7 +21,10 @@ class ShakeRotatePolicyTest {
     /** 세로로 든 채 [restMs] 동안 가만히. */
     private fun Detector.rest(from: Long, restMs: Long): Long {
         var t = from
-        while (t < from + restMs) { feed(0f, 9.8f, 0f, t); t += dt }
+        while (t < from + restMs) {
+            feed(0f, 9.8f, 0f, t)
+            t += dt
+        }
         return t
     }
 
@@ -113,7 +116,8 @@ class ShakeRotatePolicyTest {
         val d = detector(ShakeRotatePolicy.DEFAULT_LEVEL)
         var t = d.rest(0, 1000)
         repeat(4) {
-            assertFalse(d.feed(0f, 9.8f, 25f, t)); t += dt
+            assertFalse(d.feed(0f, 9.8f, 25f, t))
+            t += dt
             t = d.rest(t, 140)
         }
     }
@@ -145,7 +149,8 @@ class ShakeRotatePolicyTest {
         d.feedGyro(0f, 0f, 0.1f, 0)
         var t = d.rest(0, 1000)
         repeat(6) { i ->
-            assertFalse(d.feed(0f, 9.8f, if (i % 2 == 0) 25f else -25f, t)); t += dt
+            assertFalse(d.feed(0f, 9.8f, if (i % 2 == 0) 25f else -25f, t))
+            t += dt
             t = d.rest(t, 120)
         }
     }
@@ -155,8 +160,14 @@ class ShakeRotatePolicyTest {
         // 떨어뜨림: 자유 낙하(0.3초) 뒤 바닥에서 크게 튕김
         val d = detector(ShakeRotatePolicy.MAX_LEVEL)
         var t = d.rest(0, 1000)
-        repeat(15) { assertFalse(d.feed(0f, 0.5f, 0f, t)); t += dt }
-        repeat(6) { i -> assertFalse("떨어뜨린 뒤 튕김", d.feed(if (i % 2 == 0) 30f else -30f, 9.8f, 0f, t)); t += 100 }
+        repeat(15) {
+            assertFalse(d.feed(0f, 0.5f, 0f, t))
+            t += dt
+        }
+        repeat(6) { i ->
+            assertFalse("떨어뜨린 뒤 튕김", d.feed(if (i % 2 == 0) 30f else -30f, 9.8f, 0f, t))
+            t += 100
+        }
     }
 
     @Test

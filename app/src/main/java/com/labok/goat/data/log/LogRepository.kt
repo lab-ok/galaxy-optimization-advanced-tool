@@ -1,8 +1,8 @@
 package com.labok.goat.data.log
 
-import com.labok.goat.data.settings.Storage
 import android.content.Context
 import android.util.Log
+import com.labok.goat.data.settings.Storage
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date

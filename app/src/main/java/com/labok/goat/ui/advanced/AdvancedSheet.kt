@@ -1,31 +1,27 @@
 package com.labok.goat.ui.advanced
 
-import androidx.compose.ui.platform.LocalContext
-import com.labok.goat.ui.components.Gap
-import com.labok.goat.ui.components.SheetColumn
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import com.labok.goat.ui.liquid.liquidPress
-import com.labok.goat.ui.liquid.LiquidShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.material3.ripple
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,23 +29,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.labok.goat.data.display.DisplayDensity
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.art.FoldDeviceArt
+import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.InfoRow
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.TextStyle
+import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.home.UiState
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidShape
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.liquidPress
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -84,9 +84,13 @@ internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
         GlassCard {
             Text("로그", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
-                if (PublicLogFile.enabled(LocalContext.current)) "내장 저장소 ${PublicLogFile.displayPath}에 날짜별로 저장합니다."
-                else "앱 안에만 짧게 남깁니다. 앱 설정의 '기록 파일 남기기'를 켜면 ${PublicLogFile.displayPath}에도 날짜별로 저장합니다.",
-                color = c.muted, style = MaterialTheme.typography.bodySmall,
+                if (PublicLogFile.enabled(LocalContext.current)) {
+                    "내장 저장소 ${PublicLogFile.displayPath}에 날짜별로 저장합니다."
+                } else {
+                    "앱 안에만 짧게 남깁니다. 앱 설정의 '기록 파일 남기기'를 켜면 ${PublicLogFile.displayPath}에도 날짜별로 저장합니다."
+                },
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("앱 내부 로그 삭제", modifier = Modifier.fillMaxWidth(), onClick = onClearLogs, primary = false)
@@ -112,7 +116,7 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
             .clip(shape)
             .clickable(interaction, ripple(color = c.ink)) { open = !open },
         padding = 14.dp,
-        accent = if (active) c.ink else null,
+        accent = if (active) c.ink else null
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             // 외부/내부 화면 그림. 사용 중인 화면은 테두리가 숨 쉬고, 아래에 디스플레이 ID 방울.
@@ -120,23 +124,26 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
                 FoldDeviceArt(
                     unfolded = role == ScreenPolicy.Role.INNER,
                     height = 46.dp,
-                    still = !active,
+                    still = !active
                 )
                 Box(
                     Modifier
                         .align(Alignment.BottomEnd)
                         .size(18.dp)
                         .background(c.ink, CircleShape),
-                    contentAlignment = Alignment.Center,
+                    contentAlignment = Alignment.Center
                 ) {
                     // 글꼴 위아래 여백을 빼고 줄 높이 안에서 가운데 정렬해 숫자가 원의 정중앙에 오게 한다.
                     Text(
-                        "${d.id}", color = c.onInk,
+                        "${d.id}",
+                        color = c.onInk,
                         style = TextStyle(
-                            fontSize = 10.sp, fontWeight = FontWeight.Bold, lineHeight = 10.sp,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 10.sp,
                             platformStyle = PlatformTextStyle(includeFontPadding = false),
-                            lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
-                        ),
+                            lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both)
+                        )
                     )
                 }
             }
@@ -144,7 +151,8 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
             Column(Modifier.weight(1f)) {
                 Text(
                     "${role?.let { if (it.name == "OUTER") "외부" else "내부" } ?: "미확인"} 화면${if (active) " · 사용 중" else ""}",
-                    fontWeight = FontWeight.SemiBold, color = c.ink,
+                    fontWeight = FontWeight.SemiBold,
+                    color = c.ink
                 )
                 Text("현재 ${d.current?.let { "$it dpi" } ?: "꺼짐"} · 기본 ${d.physical} dpi", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }

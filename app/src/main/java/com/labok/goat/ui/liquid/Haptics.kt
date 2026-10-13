@@ -20,10 +20,12 @@ import androidx.compose.ui.platform.LocalView
  */
 object UiHaptics {
     const val MAX = 200
+
     /** 실제 세기 배수: 조절바 100%(기본)가 예전 75%다. */
     private const val BASE = 0.75f
     var level by mutableIntStateOf(100)
         private set
+
     /** 실제 세기 배수(1이 기본 효과 세기 그대로). */
     val factor: Float get() = level / 100f * BASE
 
@@ -68,17 +70,25 @@ class LiquidHaptics(private val view: View) {
             val s = (scale * factor).coerceIn(0.05f, 1f)
             val effect = VibrationEffect.startComposition().addPrimitive(primitive, s).compose()
             runCatching {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) v.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH))
-                else @Suppress("DEPRECATION") v.vibrate(effect)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    v.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH))
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.vibrate(effect)
+                }
             }
-        } else view.performHapticFeedback(fallback)
+        } else {
+            view.performHapticFeedback(fallback)
+        }
     }
 
     fun press() = play(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.5f, HapticFeedbackConstants.VIRTUAL_KEY)
     fun release() = play(VibrationEffect.Composition.PRIMITIVE_TICK, 0.4f, HapticFeedbackConstants.VIRTUAL_KEY_RELEASE)
-    fun toggle(on: Boolean) =
-        if (on) play(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.8f, if (api34) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.CONFIRM)
-        else play(VibrationEffect.Composition.PRIMITIVE_TICK, 0.6f, if (api34) HapticFeedbackConstants.TOGGLE_OFF else HapticFeedbackConstants.CONTEXT_CLICK)
+    fun toggle(on: Boolean) = if (on) {
+        play(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.8f, if (api34) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.CONFIRM)
+    } else {
+        play(VibrationEffect.Composition.PRIMITIVE_TICK, 0.6f, if (api34) HapticFeedbackConstants.TOGGLE_OFF else HapticFeedbackConstants.CONTEXT_CLICK)
+    }
     fun segment() = play(VibrationEffect.Composition.PRIMITIVE_TICK, 0.6f, if (api34) HapticFeedbackConstants.SEGMENT_TICK else HapticFeedbackConstants.CLOCK_TICK)
     fun tick() = play(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, 0.7f, HapticFeedbackConstants.CLOCK_TICK)
     fun open() = play(VibrationEffect.Composition.PRIMITIVE_QUICK_RISE, 0.5f, HapticFeedbackConstants.GESTURE_START)

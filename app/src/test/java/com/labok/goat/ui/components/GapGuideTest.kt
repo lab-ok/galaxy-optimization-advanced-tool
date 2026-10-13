@@ -1,8 +1,8 @@
 package com.labok.goat.ui.components
 
+import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 /**
  * 화면 간격 가이드라인([Gap]) 검사: 화면 소스에서 세로 간격·카드 여백을 숫자 dp로 직접 쓰지 않는다.
@@ -14,7 +14,7 @@ class GapGuideTest {
     private val rules = listOf(
         Regex("""Spacer\(Modifier\.height\(\d+(\.\d+)?\.dp\)\)""") to "세로 Spacer는 Gap 값을 쓴다",
         Regex("""verticalArrangement = Arrangement\.spacedBy\(\d+(\.\d+)?\.dp\)""") to "목록 세로 간격은 Gap.Card",
-        Regex("""GlassCard\(padding = \d+(\.\d+)?\.dp""") to "카드 안쪽 여백은 Gap.CardPadding(기본값)",
+        Regex("""GlassCard\(padding = \d+(\.\d+)?\.dp""") to "카드 안쪽 여백은 Gap.CardPadding(기본값)"
     )
 
     @Test
@@ -66,11 +66,15 @@ class GapGuideTest {
         fun end(lines: List<String>, i: Int): Int {
             var depth = 0
             for (j in i until lines.size) {
-                val l = strip(lines[j]); depth += l.count { it == '(' } - l.count { it == ')' }
+                val l = strip(lines[j])
+                depth += l.count { it == '(' } - l.count { it == ')' }
                 if (depth <= 0) {
                     if (!l.trimEnd().endsWith("{")) return j
                     var d = 0
-                    for (k in j until lines.size) { d += lines[k].count { it == '{' } - lines[k].count { it == '}' }; if (d <= 0) return k }
+                    for (k in j until lines.size) {
+                        d += lines[k].count { it == '{' } - lines[k].count { it == '}' }
+                        if (d <= 0) return k
+                    }
                 }
             }
             return i
@@ -79,17 +83,26 @@ class GapGuideTest {
         ui.walkTopDown().filter { it.extension == "kt" && "/art/" !in it.path }.forEach { f ->
             val lines = f.readLines()
             for (i in lines.indices) {
-                val isC = control.containsMatchIn(lines[i]); val isT = text.containsMatchIn(lines[i])
+                val isC = control.containsMatchIn(lines[i])
+                val isT = text.containsMatchIn(lines[i])
                 if (!isC && !isT) continue
                 val e = end(lines, i)
                 var n = e + 1
                 while (n < lines.size && skip.containsMatchIn(lines[n])) n++
                 var gap: String? = null
-                if (n < lines.size) spacer.find(lines[n])?.let { gap = it.groupValues[1]; n++; while (n < lines.size && skip.containsMatchIn(lines[n])) n++ }
+                if (n < lines.size) {
+                    spacer.find(lines[n])?.let {
+                        gap = it.groupValues[1]
+                        n++
+                        while (n < lines.size && skip.containsMatchIn(lines[n])) n++
+                    }
+                }
                 if (n >= lines.size) continue
-                val nC = control.containsMatchIn(lines[n]); val nT = text.containsMatchIn(lines[n])
+                val nC = control.containsMatchIn(lines[n])
+                val nT = text.containsMatchIn(lines[n])
                 if (!nC && !nT || (isT && nT)) continue
-                val first = lines.subList(i, e + 1).joinToString(" "); val next = lines.subList(n, end(lines, n) + 1).joinToString(" ")
+                val first = lines.subList(i, e + 1).joinToString(" ")
+                val next = lines.subList(n, end(lines, n) + 1).joinToString(" ")
                 val want = when {
                     isC && nC && ("weight" in first || "weight" in next) -> continue
                     isC && nC && "LiquidSwitchRow" in first -> "Gap.Section"

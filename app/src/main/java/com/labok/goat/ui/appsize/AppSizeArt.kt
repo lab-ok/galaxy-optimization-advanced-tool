@@ -1,19 +1,8 @@
 package com.labok.goat.ui.appsize
 
-import com.labok.goat.ui.liquid.GalaxyFont
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -22,24 +11,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.domain.AppDensityPolicy
-import com.labok.goat.ui.art.LocalDeviceShape
 import com.labok.goat.ui.art.ArtCanvas
+import com.labok.goat.ui.art.LocalDeviceShape
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.art.artPill
 import com.labok.goat.ui.art.deviceFrame
+import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LiquidColors
-import com.labok.goat.ui.liquid.LocalLiquid
-import com.labok.goat.ui.liquid.LocalReduceMotion
 import kotlin.math.abs
 import kotlin.math.sin
 
@@ -105,7 +90,8 @@ internal fun ShizukuBridgeArt() {
         val subs = listOf("크기 바꾸기 요청", "셸 권한 빌려줌", "앱 크기 저장")
         // 화살표
         for (i in 0..1) {
-            val a = xs[i] + box / 2 + 6.dp.toPx(); val b = xs[i + 1] - box / 2 - 6.dp.toPx()
+            val a = xs[i] + box / 2 + 6.dp.toPx()
+            val b = xs[i + 1] - box / 2 - 6.dp.toPx()
             drawLine(c.line, Offset(a, y), Offset(b, y), 3.dp.toPx(), StrokeCap.Round)
             drawLine(c.line, Offset(b, y), Offset(b - 8.dp.toPx(), y - 6.dp.toPx()), 3.dp.toPx(), StrokeCap.Round)
             drawLine(c.line, Offset(b, y), Offset(b - 8.dp.toPx(), y + 6.dp.toPx()), 3.dp.toPx(), StrokeCap.Round)
@@ -113,7 +99,8 @@ internal fun ShizukuBridgeArt() {
         // 흘러가는 점(앞 절반은 첫 화살표, 뒤 절반은 둘째 화살표)
         val seg = if (t < 0.5f) 0 else 1
         val k = (if (t < 0.5f) t else t - 0.5f) * 2f
-        val a = xs[seg] + box / 2; val b = xs[seg + 1] - box / 2
+        val a = xs[seg] + box / 2
+        val b = xs[seg + 1] - box / 2
         drawCircle(c.ink, 6.dp.toPx(), Offset(a + (b - a) * k, y))
         xs.forEachIndexed { i, x ->
             val active = (i == 0 && t < 0.15f) || (i == 1 && t in 0.45f..0.6f) || (i == 2 && t > 0.92f)
@@ -155,7 +142,8 @@ internal fun StepsArt() {
     val t = artLoop(4200)
     ArtCanvas(110.dp) { c, tm ->
         val steps = AppDensityPolicy.STEPS
-        val left = size.width * 0.08f; val right = size.width * 0.92f
+        val left = size.width * 0.08f
+        val right = size.width * 0.92f
         val y = size.height * 0.45f
         val xOf = { i: Float -> left + (right - left) * i / (steps.size - 1) }
         drawLine(c.line, Offset(left, y), Offset(right, y), 6.dp.toPx(), StrokeCap.Round)
@@ -166,7 +154,8 @@ internal fun StepsArt() {
         // 0~0.75: 칸에서 칸으로 이동(멈췄다 가기), 0.75~1: '400'을 넣었다가 튕김
         if (t < 0.75f) {
             val p = t / 0.75f * (steps.size - 1)
-            val i = p.toInt(); val f = p - i
+            val i = p.toInt()
+            val f = p - i
             val ease = if (f < 0.55f) 0f else ((f - 0.55f) / 0.45f).let { it * it * (3 - 2 * it) }
             val x = xOf(i + ease)
             val stretch = 1f + 0.6f * sin(ease * Math.PI.toFloat())
@@ -190,7 +179,8 @@ internal fun FoldDiffArt() {
     val shape = LocalDeviceShape.current
     ArtCanvas(160.dp) { c, tm ->
         val h = size.height * 0.72f
-        val coverW = h * shape.cover; val innerW = h * shape.inner
+        val coverW = h * shape.cover
+        val innerW = h * shape.inner
         val gap = size.width * 0.06f
         val start = (size.width - coverW - gap - innerW) / 2
         val cover = deviceFrame(c, Offset(start, 6.dp.toPx()), Size(coverW, h), emphasis = 0.5f + 0.5f * (1 - t))
@@ -211,7 +201,8 @@ internal fun NotifyArt() {
     val t = artLoop(3200)
     ArtCanvas(134.dp) { c, tm ->
         val pressed = t > 0.45f
-        val cardW = size.width * 0.86f; val cardH = 78.dp.toPx()
+        val cardW = size.width * 0.86f
+        val cardH = 78.dp.toPx()
         val tl = Offset((size.width - cardW) / 2, 8.dp.toPx())
         drawRoundRect(c.surface, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()))
         drawRoundRect(c.line, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()), style = Stroke(1.5.dp.toPx()))

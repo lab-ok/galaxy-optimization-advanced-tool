@@ -51,7 +51,7 @@ object DpiPolicy {
         target: Int?,
         current: Int?,
         recentApplyTimes: List<Long>,
-        now: Long,
+        now: Long
     ): Decision {
         if (automatic && !autoEnabled) return Decision.SKIP_DISABLED
         if (!hasPermission) return Decision.NO_PERMISSION
@@ -63,10 +63,8 @@ object DpiPolicy {
         return Decision.APPLY
     }
 
-    fun recentAppliesInWindow(times: List<Long>, now: Long): Int =
-        times.count { now - it in 0 until APPLY_WINDOW_MS }
+    fun recentAppliesInWindow(times: List<Long>, now: Long): Int = times.count { now - it in 0 until APPLY_WINDOW_MS }
 
     /** 저장할 적용 기록. 창 밖의 오래된 기록은 버린다. */
-    fun pruneApplyTimes(times: List<Long>, now: Long): List<Long> =
-        times.filter { now - it in 0 until APPLY_WINDOW_MS }.takeLast(MAX_APPLIES_PER_WINDOW * 2)
+    fun pruneApplyTimes(times: List<Long>, now: Long): List<Long> = times.filter { now - it in 0 until APPLY_WINDOW_MS }.takeLast(MAX_APPLIES_PER_WINDOW * 2)
 }

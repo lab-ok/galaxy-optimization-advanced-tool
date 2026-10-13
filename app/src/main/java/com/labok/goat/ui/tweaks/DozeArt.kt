@@ -34,8 +34,10 @@ internal fun DozeArt(off: Boolean) {
             val ink = if (on) c.ink else c.muted
             val trackW = w - 22.dp.toPx()
             drawRoundRect(c.line.copy(alpha = 0.5f), Offset(left, top), Size(trackW, h), CornerRadius(8.dp.toPx()))
-            val x0 = left + 8.dp.toPx(); val x1 = left + trackW - 8.dp.toPx()
-            val sendY = top + h * 0.3f; val getY = top + h * 0.72f
+            val x0 = left + 8.dp.toPx()
+            val x1 = left + trackW - 8.dp.toPx()
+            val sendY = top + h * 0.3f
+            val getY = top + h * 0.72f
             // 시간 축 두 줄: 위는 보낸 때, 아래는 알림이 온 때
             drawLine(c.line, Offset(x0, sendY), Offset(x1, sendY), 1.dp.toPx())
             drawLine(c.line, Offset(x0, getY), Offset(x1, getY), 1.dp.toPx())
@@ -44,10 +46,15 @@ internal fun DozeArt(off: Boolean) {
             val nx = x0 + (x1 - x0) * now
             drawLine(ink.copy(alpha = 0.35f), Offset(nx, top + 6.dp.toPx()), Offset(nx, top + h - 6.dp.toPx()), 1.5f.dp.toPx(), StrokeCap.Round)
             // 잠자기 켜짐: 몰아서 오는 때(점선)
-            if (!dozeOff) drawLine(
-                c.muted.copy(alpha = 0.5f), Offset(x0 + (x1 - x0) * batch, top + 6.dp.toPx()), Offset(x0 + (x1 - x0) * batch, top + h - 6.dp.toPx()),
-                1.dp.toPx(), pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
-            )
+            if (!dozeOff) {
+                drawLine(
+                    c.muted.copy(alpha = 0.5f),
+                    Offset(x0 + (x1 - x0) * batch, top + 6.dp.toPx()),
+                    Offset(x0 + (x1 - x0) * batch, top + h - 6.dp.toPx()),
+                    1.dp.toPx(),
+                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx()))
+                )
+            }
             sends.forEachIndexed { k, s ->
                 if (now >= s) drawCircle(ink, 4.dp.toPx() * easeD(((now - s) / 0.05f).coerceIn(0f, 1f)), Offset(x0 + (x1 - x0) * s, sendY))
                 // 알림: 꺼짐은 보내자마자, 켜짐은 몰아서 오는 때에 조금씩 비켜 한꺼번에
@@ -57,7 +64,8 @@ internal fun DozeArt(off: Boolean) {
             }
             // 배터리: 잠자기 꺼짐이 더 많이 준다
             val bx = left + trackW + 12.dp.toPx()
-            val bTop = top + 8.dp.toPx(); val bBottom = top + h - 8.dp.toPx()
+            val bTop = top + 8.dp.toPx()
+            val bBottom = top + h - 8.dp.toPx()
             drawRoundRect(c.line, Offset(bx - 5.dp.toPx(), bTop), Size(10.dp.toPx(), bBottom - bTop), CornerRadius(3.dp.toPx()), style = Stroke(1.5f.dp.toPx()))
             drawRoundRect(c.line, Offset(bx - 2.5f.dp.toPx(), bTop - 3.dp.toPx()), Size(5.dp.toPx(), 3.dp.toPx()), CornerRadius(1.dp.toPx()))
             val level = 0.9f - now * (if (dozeOff) 0.55f else 0.18f)

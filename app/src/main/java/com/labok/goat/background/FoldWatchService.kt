@@ -1,8 +1,5 @@
 package com.labok.goat.background
 
-import com.labok.goat.data.display.DeviceKind
-import com.labok.goat.domain.ScreenLearner
-
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -20,10 +17,12 @@ import android.view.Display
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.labok.goat.R
+import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.DpiFixer
 import com.labok.goat.domain.DpiPolicy
+import com.labok.goat.domain.ScreenLearner
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.MainActivity
 
@@ -114,7 +113,10 @@ class FoldWatchService : Service() {
             NotificationChannel(CHANNEL_ID, "디스플레이 전환 감지", NotificationManager.IMPORTANCE_MIN)
         )
         val open = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
+            this,
+            0,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE
         )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)

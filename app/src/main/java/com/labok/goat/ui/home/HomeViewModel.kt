@@ -1,25 +1,25 @@
 package com.labok.goat.ui.home
 
-import com.labok.goat.data.display.DeviceKind
-import com.labok.goat.background.FoldWatchService
+import android.app.Application
+import android.net.Uri
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.labok.goat.background.DensityWatchWorker
 import com.labok.goat.background.ExternalChangeNotifier
+import com.labok.goat.background.FoldWatchService
+import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.data.display.DpiManager
+import com.labok.goat.data.log.CrashRecorder
+import com.labok.goat.data.log.DiagnosticReport
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.DpiFixer
 import com.labok.goat.domain.DpiPolicy
-import com.labok.goat.domain.ScreenPolicy
-import com.labok.goat.ui.text.Copy
-import android.app.Application
-import android.net.Uri
-import com.labok.goat.data.log.CrashRecorder
-import com.labok.goat.data.log.DiagnosticReport
-import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.domain.ScreenLearner
+import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.domain.plan
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
+import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -87,8 +87,11 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                     // 처음 보는 화면은 두 번 읽혀야 학습된다. 잠시 뒤 한 번 더 확인해 학습과 보정 적용을 마친다.
                     if (ScreenLearner.hasPendingCandidate) {
                         delay(ScreenLearner.STABLE_MS + 200)
-                        if (settings.autoRecover) fixer.ensure("디스플레이 전환 확인(앱)", automatic = true)
-                        else learner.observe(dpi.currentScreen(), "화면")
+                        if (settings.autoRecover) {
+                            fixer.ensure("디스플레이 전환 확인(앱)", automatic = true)
+                        } else {
+                            learner.observe(dpi.currentScreen(), "화면")
+                        }
                     }
                 }
             }
@@ -177,7 +180,13 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         ExternalChangeNotifier.cancel(getApplication())
         when (fixer.resolveExternal(adopt, if (adopt) "앱: 변경값 기준" else "앱: 복원")) {
             DpiPolicy.Decision.APPLY, DpiPolicy.Decision.ALREADY_OK ->
-                if (settings.lastApply?.success == false) Copy.TOAST_FAILED else if (adopt) Copy.TOAST_ADOPTED else Copy.TOAST_RESTORED
+                if (settings.lastApply?.success == false) {
+                    Copy.TOAST_FAILED
+                } else if (adopt) {
+                    Copy.TOAST_ADOPTED
+                } else {
+                    Copy.TOAST_RESTORED
+                }
             DpiPolicy.Decision.BLOCKED -> Copy.STATUS_HOLD
             DpiPolicy.Decision.NO_PERMISSION -> Copy.TOAST_NO_PERMISSION
             else -> null
@@ -262,7 +271,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             displays = displays,
             hasCrash = CrashRecorder.read(getApplication()).isNotBlank(),
             foldable = DeviceKind.isFoldable(getApplication()),
-            inactivePpi = settings.inactivePpi,
+            inactivePpi = settings.inactivePpi
         )
     }
 }

@@ -13,12 +13,10 @@ object AnimationSpeed {
     enum class Kind(val key: String, val label: String) {
         WINDOW(Settings.Global.WINDOW_ANIMATION_SCALE, "창 애니메이션"),
         TRANSITION(Settings.Global.TRANSITION_ANIMATION_SCALE, "화면 전환 애니메이션"),
-        ANIMATOR(Settings.Global.ANIMATOR_DURATION_SCALE, "앱 안 움직임 길이"),
+        ANIMATOR(Settings.Global.ANIMATOR_DURATION_SCALE, "앱 안 움직임 길이")
     }
 
-
-    fun read(context: Context, kind: Kind): Float =
-        runCatching { Settings.Global.getFloat(context.contentResolver, kind.key, 1f) }.getOrDefault(1f)
+    fun read(context: Context, kind: Kind): Float = runCatching { Settings.Global.getFloat(context.contentResolver, kind.key, 1f) }.getOrDefault(1f)
 
     /** 하나를 바꾼다. 성공하면 true. */
     fun set(context: Context, kind: Kind, value: Float, how: String): Boolean {
@@ -29,8 +27,7 @@ object AnimationSpeed {
     }
 
     /** 셋을 같은 값으로. */
-    fun setAll(context: Context, value: Float, how: String): Boolean =
-        Kind.entries.map { set(context, it, value, how) }.all { it }
+    fun setAll(context: Context, value: Float, how: String): Boolean = Kind.entries.map { set(context, it, value, how) }.all { it }
 
     fun label(v: Float) = when {
         v == 0f -> "끔"

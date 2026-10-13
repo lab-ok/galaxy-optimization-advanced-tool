@@ -80,7 +80,7 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = featurePadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
     ) {
         item(key = "intro") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
@@ -92,13 +92,15 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 }
             }
         }
-        if (!ready) item(key = "connect") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.DOZE_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.DOZE_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.DOZE_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+        if (!ready) {
+            item(key = "connect") {
+                Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                    GlassCard {
+                        Text(Copy.DOZE_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.DOZE_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.DOZE_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                    }
                 }
             }
         }
@@ -114,7 +116,8 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                                     Doze.State.ON -> Copy.DOZE_STATE_ON
                                     Doze.State.UNKNOWN -> Copy.DOZE_STATE_UNKNOWN
                                 },
-                                color = c.muted, style = MaterialTheme.typography.bodySmall,
+                                color = c.muted,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                         Spacer(Modifier.width(12.dp))
@@ -134,37 +137,44 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
         }
     }
 
-    if (confirm) AlertDialog(
-        onDismissRequest = { confirm = false },
-        title = { Text(Copy.DOZE_CONFIRM_TITLE) },
-        text = { Text(Copy.DOZE_CONFIRM_BODY) },
-        confirmButton = { TextButton(onClick = { confirm = false; apply(off = true) }) { Text(Copy.DOZE_CONFIRM_OK) } },
-        dismissButton = { TextButton(onClick = { confirm = false }) { Text(Copy.GOS_CONFIRM_CANCEL) } },
-    )
+    if (confirm) {
+        AlertDialog(
+            onDismissRequest = { confirm = false },
+            title = { Text(Copy.DOZE_CONFIRM_TITLE) },
+            text = { Text(Copy.DOZE_CONFIRM_BODY) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirm = false
+                    apply(off = true)
+                }) { Text(Copy.DOZE_CONFIRM_OK) }
+            },
+            dismissButton = { TextButton(onClick = { confirm = false }) { Text(Copy.GOS_CONFIRM_CANCEL) } }
+        )
+    }
 }
 
 /** 사용 방법. */
 @Composable
 internal fun DozeHelpSheet() {
-    SheetColumn("사용 방법") {
+    SheetColumn(title = "사용 방법") {
         HelpTopic(
             "1. 무엇을 하나요",
             "화면을 끄고 폰을 가만히 두면 안드로이드는 배터리를 아끼려고 앱의 백그라운드 동작과 네트워크를 잠깐씩 몰아서 처리합니다(잠자기 모드, Doze). " +
-                "그래서 메신저·메일 알림이 늦게 오기도 합니다. 이 기능은 'adb shell dumpsys deviceidle disable'과 같은 방법으로 잠자기 모드를 끕니다.",
+                "그래서 메신저·메일 알림이 늦게 오기도 합니다. 이 기능은 'adb shell dumpsys deviceidle disable'과 같은 방법으로 잠자기 모드를 끕니다."
         ) { DozeArt(off = true) }
         HelpTopic(
             "2. 얻는 것과 잃는 것",
             "알림과 백그라운드 작업이 늦어지는 일이 줄어듭니다. 대신 화면이 꺼진 동안에도 앱이 계속 깨어 있어 대기 배터리 소모가 꽤 늘어납니다. " +
-                "특정 앱의 알림만 늦다면 그 앱의 배터리 설정을 '제한 없음'으로 바꾸는 편이 배터리에 낫습니다.",
+                "특정 앱의 알림만 늦다면 그 앱의 배터리 설정을 '제한 없음'으로 바꾸는 편이 배터리에 낫습니다."
         )
         HelpTopic(
             "3. 재부팅 뒤",
             "이 설정은 재부팅하면 다시 켜집니다. 꺼 두었다면 부팅마다 한 번, Shizuku가 연결될 때 GOAT가 다시 끕니다. " +
-                "같은 부팅 안에서 PC 등으로 직접 다시 켠 것은 그대로 둡니다.",
+                "같은 부팅 안에서 PC 등으로 직접 다시 켠 것은 그대로 둡니다."
         )
         HelpTopic(
             "4. 권한과 되돌리기",
-            "잠자기 모드는 셸 권한이 필요해 Shizuku로 끄고 켭니다. 스위치를 끄면 원래대로 켜지고, PC에서는 'adb shell dumpsys deviceidle enable'로 되돌립니다.",
+            "잠자기 모드는 셸 권한이 필요해 Shizuku로 끄고 켭니다. 스위치를 끄면 원래대로 켜지고, PC에서는 'adb shell dumpsys deviceidle enable'로 되돌립니다."
         )
     }
 }

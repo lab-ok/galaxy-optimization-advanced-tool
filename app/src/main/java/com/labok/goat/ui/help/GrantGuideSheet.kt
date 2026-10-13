@@ -1,30 +1,26 @@
 package com.labok.goat.ui.help
 
-import com.labok.goat.ui.components.Gap
-import com.labok.goat.ui.components.copyText
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.labok.goat.ui.components.SheetColumn
-import com.labok.goat.ui.components.openDeveloperOptions
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
-import com.labok.goat.ui.shizuku.ShizukuGuide
-import com.labok.goat.data.shizuku.ShizukuAccess
-import androidx.compose.runtime.LaunchedEffect
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,8 +29,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,37 +40,39 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.about.DeveloperProfile
 import com.labok.goat.ui.art.ConnectionIllustration
-import com.labok.goat.ui.components.CommandBox
 import com.labok.goat.ui.art.GuideSceneArt
-import com.labok.goat.ui.liquid.LiquidButton
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.draw.clip
-import androidx.compose.runtime.remember
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.background
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.expandVertically
+import com.labok.goat.ui.components.CommandBox
+import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.copyText
+import com.labok.goat.ui.components.openDeveloperOptions
 import com.labok.goat.ui.liquid.GlassCard
-import androidx.compose.animation.Crossfade
+import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidDots
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.shizuku.ShizukuGuide
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 최초 권한 부여 마법사. 연결 방식과 PC 운영체제를 고르면 단계를 하나씩 보여 준다.
@@ -107,37 +107,43 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
         Text(
             "한 번만 받으면 재부팅 후에도 유지됩니다.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(Gap.Card))
         ConnectionIllustration(wireless = connection == GrantGuideContent.Connection.WIRELESS, done = hasPermission)
 
         AnimatedVisibility(visible = hasPermission, enter = fadeIn() + scaleIn(initialScale = 0.9f)) {
-          Column {
-            Spacer(Modifier.height(Gap.Item))
-            Surface(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.CheckCircle, null, modifier = Modifier.size(28.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text("권한 설정 완료", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text("이 창을 닫아도 됩니다. 디버깅은 꺼도 됩니다.", style = MaterialTheme.typography.bodySmall)
+            Column {
+                Spacer(Modifier.height(Gap.Item))
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.CheckCircle, null, modifier = Modifier.size(28.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text("권한 설정 완료", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text("이 창을 닫아도 됩니다. 디버깅은 꺼도 됩니다.", style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
-          }
         }
 
         if (!hasPermission) {
             Spacer(Modifier.height(Gap.Section))
             // 세 가지 방법을 한 줄에서 고른다: Shizuku(PC 없이) · PC 무선 디버깅 · PC USB 케이블
             Label("연결 방법")
-            val method = if (viaShizuku) 0 else if (connection == GrantGuideContent.Connection.WIRELESS) 1 else 2
+            val method = if (viaShizuku) {
+                0
+            } else if (connection == GrantGuideContent.Connection.WIRELESS) {
+                1
+            } else {
+                2
+            }
             Choice(listOf(0, 1, 2), method, { listOf("Shizuku", "PC 무선", "PC 유선")[it] }) {
                 viaShizuku = it == 0
                 if (it == 1) connection = GrantGuideContent.Connection.WIRELESS
@@ -148,10 +154,10 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                 listOf(
                     "PC 없이 폰만으로 합니다. 무료 앱 Shizuku와 Wi-Fi가 필요합니다.",
                     "PC와 폰이 같은 Wi-Fi에 있으면 케이블 없이 합니다.",
-                    "USB 케이블로 PC에 연결해서 합니다. 가장 확실합니다.",
+                    "USB 케이블로 PC에 연결해서 합니다. 가장 확실합니다."
                 )[method],
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         if (!hasPermission && viaShizuku) {
@@ -159,12 +165,15 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             ShizukuGuide(
                 shizuku,
                 intro = "무료 앱 Shizuku로 폰 안에서 권한을 받습니다. 아래 순서대로 버튼만 누르면 되고, 마지막 단계가 끝나면 GOAT가 스스로 권한을 받습니다. " +
-                    "권한을 받은 뒤에는 Shizuku를 꺼도 됩니다.",
+                    "권한을 받은 뒤에는 Shizuku를 꺼도 됩니다."
             )
-            if (grantError) Text(
-                "Shizuku로 권한을 받지 못했습니다. PC 무선이나 PC 유선 방법으로 해 주세요.",
-                color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
-            )
+            if (grantError) {
+                Text(
+                    "Shizuku로 권한을 받지 못했습니다. PC 무선이나 PC 유선 방법으로 해 주세요.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
         if (!hasPermission && !viaShizuku) {
             Spacer(Modifier.height(Gap.Item))
@@ -181,7 +190,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                 Text(
                     "${index + 1} / ${steps.size} 단계",
                     style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
                 )
                 LiquidDots(count = steps.size, index = index.coerceIn(0, steps.lastIndex))
             }
@@ -194,7 +203,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                     (slideInHorizontally { it * dir / 3 } + fadeIn()) togetherWith
                         (slideOutHorizontally { -it * dir / 3 } + fadeOut())
                 },
-                label = "step",
+                label = "step"
             ) { i ->
                 StepCard(steps[i], onCopy = copy, onOpenDev = { openDeveloperOptions(context) }, onOpenLink = { openLink(context, it) })
             }
@@ -209,7 +218,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                         "명령을 실행하면 자동으로 확인합니다",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.CenterVertically),
+                        modifier = Modifier.align(Alignment.CenterVertically)
                     )
                 }
             }
@@ -239,7 +248,7 @@ private fun TroubleCard(items: List<GrantGuideContent.Trouble>, onCopy: (String)
                     .clip(RoundedCornerShape(10.dp))
                     .clickable { open = if (expanded) null else tr.title }
                     .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(tr.title, color = c.ink, fontWeight = FontWeight.Medium)
@@ -267,7 +276,7 @@ private fun StepCard(
     step: GrantGuideContent.Step,
     onCopy: (String) -> Unit,
     onOpenDev: () -> Unit,
-    onOpenLink: (String) -> Unit,
+    onOpenLink: (String) -> Unit
 ) {
     GlassCard {
         Column {
@@ -335,4 +344,3 @@ private fun openLink(context: Context, url: String) {
         // 브라우저가 없으면 아무것도 하지 않는다(복사 버튼으로 대신).
     }
 }
-

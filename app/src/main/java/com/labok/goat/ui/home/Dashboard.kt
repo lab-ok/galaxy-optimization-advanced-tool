@@ -1,60 +1,14 @@
 package com.labok.goat.ui.home
 
-import com.labok.goat.ui.liquid.LiquidChips
 import android.content.Context
-import com.labok.goat.ui.about.LiquidGoatLogo
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.border
-import com.labok.goat.R
-import androidx.compose.ui.text.rememberTextMeasurer
-import com.labok.goat.ui.about.worthShowing
-import com.labok.goat.ui.about.UpdateCard
-import com.labok.goat.data.update.Updater
-import androidx.compose.foundation.basicMarquee
-import com.labok.goat.ui.liquid.LiquidSwitchRow
-import com.labok.goat.data.log.PublicLogFile
 import android.os.SystemClock
-
-import com.labok.goat.ui.liquid.rememberLiquidHaptics
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import com.labok.goat.AppInfo
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
-import kotlin.math.hypot
-import com.labok.goat.ui.liquid.rememberSoftBlob
-import com.labok.goat.ui.liquid.poke
-import com.labok.goat.ui.liquid.moveTo
-import com.labok.goat.ui.liquid.Springs
-import com.labok.goat.ui.liquid.LocalReduceMotion
-import com.labok.goat.data.tweaks.Bloat
-import com.labok.goat.data.tweaks.ForceDark
-import com.labok.goat.data.tweaks.Gos
-import com.labok.goat.data.tweaks.Doze
-import com.labok.goat.data.tweaks.Resolution
-import com.labok.goat.data.display.ResolutionState
-import com.labok.goat.data.tweaks.RefreshRate
-import com.labok.goat.data.appsize.AppDensityNotifier
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.Canvas
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,12 +17,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -81,28 +37,63 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.AppInfo
+import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.camera.CameraMute
+import com.labok.goat.data.display.ResolutionState
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.tweaks.AnimationSpeed
+import com.labok.goat.data.tweaks.Bloat
+import com.labok.goat.data.tweaks.Doze
+import com.labok.goat.data.tweaks.ForceDark
+import com.labok.goat.data.tweaks.Gos
+import com.labok.goat.data.tweaks.RefreshRate
+import com.labok.goat.data.tweaks.Resolution
+import com.labok.goat.data.update.Updater
+import com.labok.goat.ui.about.LiquidGoatLogo
+import com.labok.goat.ui.about.UpdateCard
+import com.labok.goat.ui.about.worthShowing
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidShape
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.liquid.Springs
+import com.labok.goat.ui.liquid.moveTo
+import com.labok.goat.ui.liquid.poke
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
+import com.labok.goat.ui.liquid.rememberSoftBlob
 import com.labok.goat.ui.nav.NavGlyph
 import com.labok.goat.ui.nav.NavItem
 import com.labok.goat.ui.nav.NavSection
 import com.labok.goat.ui.text.Copy
+import kotlin.math.hypot
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 메인 화면: 권한·Shizuku 상태 한 줄과, 기능마다 아이콘·이름·지금 상태를 보여 주는 카드. 카드를 누르면 그 기능으로 간다.
@@ -120,7 +111,10 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     val update by Updater.status.collectAsStateWithLifecycle()
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
-    LifecycleResumeEffect(Unit) { tick++; onPauseOrDispose { } }
+    LifecycleResumeEffect(Unit) {
+        tick++
+        onPauseOrDispose { }
+    }
     // 홈을 열거나 홈으로 돌아올 때 새 버전을 조용히 확인한다(앱을 새로 켜면 바로, 그 뒤로는 30분에 한 번).
     // 새 버전이 있으면 홈 머리 바로 아래에 업데이트 카드가 뜬다.
     LaunchedEffect(tick) { withContext(Dispatchers.IO) { Updater.autoCheck(context) } }
@@ -128,7 +122,14 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     // 기본 앱 정리: 꺼 둔 목록 앱 수(Shizuku로 읽음, 못 읽으면 null)
     var cleaned by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(tick, shizuku) {
-        if (shizuku == ShizukuAccess.State.READY) cleaned = withContext(Dispatchers.IO) { Gos.read(); Doze.read(); ForceDark.read(context); Bloat.scan()?.count { it.value } }
+        if (shizuku == ShizukuAccess.State.READY) {
+            cleaned = withContext(Dispatchers.IO) {
+                Gos.read()
+                Doze.read()
+                ForceDark.read(context)
+                Bloat.scan()?.count { it.value }
+            }
+        }
     }
     // 기능마다 지금 상태 한 줄(돌아올 때마다 다시 읽는다)
     val status: (NavItem) -> String = { item ->
@@ -168,8 +169,12 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                 ResolutionState.base(context) == null -> Copy.RES_DASH_ORIGINAL
                 else -> Resolution.current(context).first.let { Copy.resDash(it, it * 100 / Resolution.base(context).first) }
             }
-            NavItem.REFRESH -> if (!RefreshRate.supported(context)) Copy.REFRESH_UNSUPPORTED_SHORT else RefreshRate.read(context).let {
-                if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
+            NavItem.REFRESH -> if (!RefreshRate.supported(context)) {
+                Copy.REFRESH_UNSUPPORTED_SHORT
+            } else {
+                RefreshRate.read(context).let {
+                    if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
+                }
             }
             else -> ""
         }
@@ -197,8 +202,10 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
     val homePrefs = remember { context.getSharedPreferences("home", Context.MODE_PRIVATE) }
     var view by remember {
         // 1.4.4의 '켜진 기능만'(only_on)을 활성화로 이어받는다
-        mutableStateOf(homePrefs.getString("view", null)?.let { runCatching { HomeView.valueOf(it) }.getOrNull() }
-            ?: if (homePrefs.getBoolean("only_on", false)) HomeView.ON else HomeView.ALL)
+        mutableStateOf(
+            homePrefs.getString("view", null)?.let { runCatching { HomeView.valueOf(it) }.getOrNull() }
+                ?: if (homePrefs.getBoolean("only_on", false)) HomeView.ON else HomeView.ALL
+        )
     }
     val shown = when (view) {
         HomeView.ALL -> features
@@ -221,7 +228,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
         contentPadding = featurePadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
         horizontalArrangement = Arrangement.spacedBy(Gap.Card),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
     ) {
         item(key = "hello", span = { GridItemSpan(maxLineSpan) }) {
             // 홈 머리: 카드 없이 바탕 위에 바로 놓는 요약(갤럭시 '디바이스 케어'식). 왼쪽 염소, 가운데 상태 한 문장, 오른쪽 켜진 비율 고리,
@@ -258,14 +265,19 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
                     options = HomeView.entries,
                     selected = view,
                     label = { it.label },
-                    onSelect = { view = it; homePrefs.edit().putString("view", it.name).apply() },
+                    onSelect = {
+                        view = it
+                        homePrefs.edit().putString("view", it.name).apply()
+                    }
                 )
             }
         }
-        if (shown.isEmpty()) item(key = "none", span = { GridItemSpan(maxLineSpan) }) {
-            GlassCard {
-                Text(if (view == HomeView.OFF) Copy.HOME_VIEW_EMPTY_OFF_TITLE else Copy.HOME_VIEW_EMPTY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                Text(if (view == HomeView.OFF) Copy.HOME_VIEW_EMPTY_OFF_BODY else Copy.HOME_VIEW_EMPTY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        if (shown.isEmpty()) {
+            item(key = "none", span = { GridItemSpan(maxLineSpan) }) {
+                GlassCard {
+                    Text(if (view == HomeView.OFF) Copy.HOME_VIEW_EMPTY_OFF_TITLE else Copy.HOME_VIEW_EMPTY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(if (view == HomeView.OFF) Copy.HOME_VIEW_EMPTY_OFF_BODY else Copy.HOME_VIEW_EMPTY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
         itemsIndexed(shown, key = { _, it -> it.name }) { i, item ->
@@ -307,7 +319,7 @@ private fun StatusPill(label: String, on: Boolean) {
     val k by animateFloatAsState(if (on) 1f else 0f, Springs.pop(reduce), label = "pill")
     Row(
         Modifier.border(1.dp, if (c.dark) c.muted.copy(alpha = 0.5f) else c.line, CircleShape).padding(horizontal = 10.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Canvas(Modifier.size(8.dp)) {
             drawCircle(if (c.dark) c.muted else c.line, size.minDimension / 2, style = Stroke(1.2.dp.toPx()))
@@ -341,7 +353,8 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
     // 등장: 작은 방울 → 카드 모양(차례로)
     LaunchedEffect(box) {
         if (box == IntSize.Zero) return@LaunchedEffect
-        val w = box.width.toFloat(); val h = box.height.toFloat()
+        val w = box.width.toFloat()
+        val h = box.height.toFloat()
         if (animateIn) {
             body.moveTo(w / 2, h / 2, w * 0.3f, w * 0.3f, animate = false)
             kotlinx.coroutines.delay(60L * order)
@@ -362,15 +375,18 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
                     if (!reduce && body.blob.ready) {
                         haptics.press()
                         // 누른 자리를 안쪽으로 밀어 움푹 들어가게 한다
-                        val cx = box.width / 2f; val cy = box.height / 2f
-                        val dx = cx - pos.x; val dy = cy - pos.y; val l = hypot(dx, dy).coerceAtLeast(1f)
+                        val cx = box.width / 2f
+                        val cy = box.height / 2f
+                        val dx = cx - pos.x
+                        val dy = cy - pos.y
+                        val l = hypot(dx, dy).coerceAtLeast(1f)
                         body.poke(pos.x, pos.y, dx / l * 720f, dy / l * 720f, box.height * 0.42f)
                     }
                     val released = tryAwaitRelease()
                     if (!reduce) haptics.release()
                     if (released) onClick(origin + pos)
                 })
-            },
+            }
     ) {
         Canvas(Modifier.matchParentSize()) {
             body.frame
@@ -387,8 +403,11 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
         Row(
             Modifier
                 .padding(Gap.CardPadding)
-                .graphicsLayer { alpha = text.value; translationY = (1f - text.value) * 8.dp.toPx() },
-            verticalAlignment = Alignment.CenterVertically,
+                .graphicsLayer {
+                    alpha = text.value
+                    translationY = (1f - text.value) * 8.dp.toPx()
+                },
+            verticalAlignment = Alignment.CenterVertically
         ) {
             // 꺼진 기능은 아이콘 칸을 살짝 연하게(켜지면 테두리와 함께 진해진다)
             Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(c.ink.copy(alpha = 0.45f + 0.55f * fill)), contentAlignment = Alignment.Center) {

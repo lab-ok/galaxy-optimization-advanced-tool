@@ -23,6 +23,7 @@ import rikka.shizuku.Shizuku
  */
 object ForceDark {
     const val PROP = "debug.hwui.force_dark"
+
     /** 안드로이드 16 이상의 '더 많은 앱을 어둡게'(확장 다크 테마) 보안 설정. */
     const val INVERT = "accessibility_force_invert_color_enabled"
     private const val PREF = "force_dark"
@@ -64,8 +65,9 @@ object ForceDark {
             val ui = context.getSystemService(UiModeManager::class.java)
             val prev = ui?.nightMode ?: UiModeManager.MODE_NIGHT_NO
             p.edit().putInt("prevNight", prev).apply {
-                if (Build.VERSION.SDK_INT >= 30 && prev == UiModeManager.MODE_NIGHT_CUSTOM) {
-                    putString("prevStart", ui?.customNightModeStart?.toString()); putString("prevEnd", ui?.customNightModeEnd?.toString())
+                if (prev == UiModeManager.MODE_NIGHT_CUSTOM) {
+                    putString("prevStart", ui?.customNightModeStart?.toString())
+                    putString("prevEnd", ui?.customNightModeEnd?.toString())
                 }
             }.apply()
             cmds += "cmd uimode night yes"
@@ -81,7 +83,7 @@ object ForceDark {
         if (ok) prefs(context).edit().putBoolean("wanted", on).apply { bootCount(context)?.let { putInt("checkedBoot", it) } }.apply()
         log.add(
             "앱 다크 모드 강제($how): ${if (on) "켜기" else "끄기"} " + (if (ok) "성공" else "실패(${r?.err?.ifBlank { null } ?: if (r == null) "Shizuku 없음" else "결과 다름"})") +
-                " · 시스템 다크 모드 ${if (night(context)) "켜짐" else "꺼짐"}",
+                " · 시스템 다크 모드 ${if (night(context)) "켜짐" else "꺼짐"}"
         )
         return ok
     }
@@ -93,7 +95,7 @@ object ForceDark {
         UiModeManager.MODE_NIGHT_CUSTOM -> listOfNotNull(
             "cmd uimode night custom_schedule",
             start?.let { "cmd uimode time start ${it.take(5)}" },
-            end?.let { "cmd uimode time end ${it.take(5)}" },
+            end?.let { "cmd uimode time end ${it.take(5)}" }
         )
         else -> listOf("cmd uimode night no")
     }
@@ -112,7 +114,7 @@ object ForceDark {
     internal fun shouldReapply(wanted: Boolean, keep: Boolean, boot: Int?, checkedBoot: Int?, forced: Boolean?): Boolean? = when {
         !wanted || !keep -> false
         boot != null && boot == checkedBoot -> false
-        forced == null -> null  // 못 읽음: 다음 연결 때 다시
+        forced == null -> null // 못 읽음: 다음 연결 때 다시
         else -> !forced
     }
 
@@ -130,10 +132,10 @@ object ForceDark {
     }
 
     /** 부팅 횟수(Settings.Global.BOOT_COUNT). 없는 기기면 null. */
-    private fun bootCount(context: Context): Int? =
-        runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
+    private fun bootCount(context: Context): Int? = runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
 
     private val binder = Shizuku.OnBinderReceivedListener { reapplyAsync?.invoke() }
+
     @Volatile private var reapplyAsync: (() -> Unit)? = null
 
     /** 앱 시작 때 부른다. */

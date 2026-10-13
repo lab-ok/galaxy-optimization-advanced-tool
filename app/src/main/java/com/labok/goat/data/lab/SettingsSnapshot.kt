@@ -52,9 +52,18 @@ object SettingsSnapshot {
                 val x = a[k]?.replace('\n', ' ')
                 val y = b[k]?.replace('\n', ' ')
                 when {
-                    k !in a -> { appendLine("[$t] + $k = $y"); changes++ }
-                    k !in b -> { appendLine("[$t] - $k (이전 $x)"); changes++ }
-                    x != y -> { appendLine("[$t] * $k : $x → $y"); changes++ }
+                    k !in a -> {
+                        appendLine("[$t] + $k = $y")
+                        changes++
+                    }
+                    k !in b -> {
+                        appendLine("[$t] - $k (이전 $x)")
+                        changes++
+                    }
+                    x != y -> {
+                        appendLine("[$t] * $k : $x → $y")
+                        changes++
+                    }
                 }
             }
         }

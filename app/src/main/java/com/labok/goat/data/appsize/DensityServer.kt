@@ -1,9 +1,6 @@
 package com.labok.goat.data.appsize
 
-import com.labok.goat.data.HiddenApi
 import android.content.AttributionSource
-import com.labok.goat.BuildConfig
-import com.labok.goat.domain.AppDensityPolicy
 import android.os.Binder
 import android.os.Bundle
 import android.os.Handler
@@ -12,6 +9,9 @@ import android.os.IInterface
 import android.os.Looper
 import android.os.Parcel
 import android.os.Process
+import com.labok.goat.BuildConfig
+import com.labok.goat.data.HiddenApi
+import com.labok.goat.domain.AppDensityPolicy
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import kotlin.system.exitProcess
@@ -43,9 +43,8 @@ object DensityServer {
     private const val IDLE_MS = IDLE_MINUTES * 60 * 1000L
 
     /** PC PowerShell(platform-tools 폴더)에서 실행할 명령. 작은따옴표 안이라 $( )를 PowerShell이 건드리지 않는다. */
-    fun startCommand(): String =
-        ".\\adb shell 'CLASSPATH=\$(pm path $PKG | cut -d: -f2) setsid app_process /system/bin --nice-name=goat_shell " +
-            "${DensityServer::class.java.name} > /data/local/tmp/goat-shell.log 2>&1 &'"
+    fun startCommand(): String = ".\\adb shell 'CLASSPATH=\$(pm path $PKG | cut -d: -f2) setsid app_process /system/bin --nice-name=goat_shell " +
+        "${DensityServer::class.java.name} > /data/local/tmp/goat-shell.log 2>&1 &'"
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -71,16 +70,24 @@ object DensityServer {
                 handler.postDelayed(idle, IDLE_MS)
                 try {
                     when (code) {
-                        PING -> { reply?.writeNoException(); reply?.writeInt(VERSION); reply?.writeInt(if (getM != null && setM != null) 1 else 0) }
+                        PING -> {
+                            reply?.writeNoException()
+                            reply?.writeInt(VERSION)
+                            reply?.writeInt(if (getM != null && setM != null) 1 else 0)
+                        }
                         GET -> {
-                            val pkg = data.readString()!!; val user = data.readInt()
+                            val pkg = data.readString()!!
+                            val user = data.readInt()
                             if (getM == null) throw UnsupportedOperationException("이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.")
                             // (패키지, 사용자, 사용자 설정만): true면 사용자가 정한 값만, false면 삼성이 정해 둔 앱별 기본값까지 돌려준다.
                             val v = unwrap { getM.invoke(atm, pkg, user, true) } as Int
-                            reply?.writeNoException(); reply?.writeInt(v)
+                            reply?.writeNoException()
+                            reply?.writeInt(v)
                         }
                         SET -> {
-                            val pkg = data.readString()!!; val user = data.readInt(); val dpi = data.readInt()
+                            val pkg = data.readString()!!
+                            val user = data.readInt()
+                            val dpi = data.readInt()
                             if (setM == null) throw UnsupportedOperationException("이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.")
                             require(AppDensityPolicy.isAllowed(dpi)) { "허용되지 않는 값: $dpi" }
                             // 실기기 코드 기준 인자 순서는 (패키지, 사용자, 밀도, 메모). 바뀌면 그 앱을 다시 띄워 바로 적용된다.
@@ -88,7 +95,10 @@ object DensityServer {
                             log("바꿈: $pkg → ${if (dpi == 0) "기본" else dpi}")
                             reply?.writeNoException()
                         }
-                        EXIT -> { reply?.writeNoException(); handler.post { quit("GOAT가 끝내기를 요청했습니다.") } }
+                        EXIT -> {
+                            reply?.writeNoException()
+                            handler.post { quit("GOAT가 끝내기를 요청했습니다.") }
+                        }
                         else -> return false
                     }
                 } catch (e: Exception) {
@@ -116,7 +126,6 @@ object DensityServer {
         log(msg)
         exitProcess(0)
     }
-
 
     private inline fun unwrap(block: () -> Any?): Any? = try {
         block()

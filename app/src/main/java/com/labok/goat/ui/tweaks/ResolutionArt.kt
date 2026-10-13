@@ -33,13 +33,17 @@ internal fun ResolutionArt(percent: Int) {
             // 픽셀 크기: 원래 칸을 16칸으로 나누고, 해상도를 낮추면 그 비율만큼 굵어진다
             val cell = box / (16f * scale)
             val r = box * (0.30f + 0.06f * ease(t))
-            val cx = left + box / 2; val cy = top + box / 2
+            val cx = left + box / 2
+            val cy = top + box / 2
             // 칸을 가운데에서부터 대칭으로 놓아 동그라미가 한쪽으로 치우치지 않게 한다
             val half = (r / cell).toInt() + 1
-            for (j in -half until half) for (i in -half until half) {
-                val px = cx + i * cell; val py = cy + j * cell
-                if (hypot(px + cell / 2 - cx, py + cell / 2 - cy) <= r) {
-                    drawRect(if (on) c.ink else c.muted, Offset(px + 0.6f, py + 0.6f), Size(cell - 1.2f, cell - 1.2f))
+            for (j in -half until half) {
+                for (i in -half until half) {
+                    val px = cx + i * cell
+                    val py = cy + j * cell
+                    if (hypot(px + cell / 2 - cx, py + cell / 2 - cy) <= r) {
+                        drawRect(if (on) c.ink else c.muted, Offset(px + 0.6f, py + 0.6f), Size(cell - 1.2f, cell - 1.2f))
+                    }
                 }
             }
             drawRoundRect(if (on) c.ink else c.line, Offset(left, top), Size(box, box), CornerRadius(12.dp.toPx()), style = Stroke(1.5f.dp.toPx()))

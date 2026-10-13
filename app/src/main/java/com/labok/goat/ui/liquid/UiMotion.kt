@@ -1,8 +1,8 @@
 package com.labok.goat.ui.liquid
 
-import androidx.compose.runtime.mutableIntStateOf
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import kotlin.math.pow
 
@@ -16,9 +16,11 @@ object UiMotion {
     /** 조절바 최대(%). 100%가 기본이고, 실제 세기는 [BASE]배다(예전 75%를 새 100%로 삼았다). */
     const val MAX_PERCENT = 200
     private const val BASE = 0.75f
+
     /** 조절바 값(%). */
     var percent by mutableIntStateOf(100)
         private set
+
     /** 실제 출렁임 배수(1이 연체 원래 값). 기본 100% = 0.75. */
     val wobble: Float get() = percent / 100f * BASE
 
@@ -43,6 +45,7 @@ object UiMotion {
         private set
     const val SPEED_MIN = 50
     const val SPEED_MAX = 200
+
     /** 시간 배수: 2면 같은 움직임을 절반 시간에 끝낸다. 스프링 강성과 연체 물방울의 적분 시간에 곱한다. */
     val speed: Float get() = speedPercent / 100f
 

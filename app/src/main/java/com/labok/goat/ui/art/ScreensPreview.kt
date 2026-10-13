@@ -4,19 +4,19 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
-import com.labok.goat.ui.liquid.rememberBreath
 import com.labok.goat.ui.liquid.Springs
+import com.labok.goat.ui.liquid.rememberBreath
 
 /**
  * 미리보기: 외부·내부 화면을 같은 높이(폴드 실물 비율, 내부는 가로로 긴 화면)로 나란히 그리고, 각 화면에 적용될 밀도로 아이콘을 그린다.
@@ -25,12 +25,19 @@ import com.labok.goat.ui.liquid.Springs
  */
 @Composable
 fun ScreensPreview(
-    @Suppress("UNUSED_PARAMETER") outerInch: Float, outerAspect: Float, outerPpi: Float, outerDpi: Int,
-    innerInch: Float, innerAspect: Float, innerPpi: Float, innerDpi: Int,
-    outerLabel: String, innerLabel: String,
+    @Suppress("UNUSED_PARAMETER") outerInch: Float,
+    outerAspect: Float,
+    outerPpi: Float,
+    outerDpi: Int,
+    innerInch: Float,
+    innerAspect: Float,
+    innerPpi: Float,
+    innerDpi: Int,
+    outerLabel: String,
+    innerLabel: String,
     modifier: Modifier = Modifier,
     /** 지금 켜진 화면: true면 내부, false면 외부, null이면 모름. 켜진 화면의 테두리가 숨 쉬고, 바뀌면 부드럽게 옮겨 간다. */
-    innerActive: Boolean? = null,
+    innerActive: Boolean? = null
 ) {
     val reduceMotion = LocalReduceMotion.current
     val sel by animateFloatAsState(if (innerActive == true) 1f else 0f, Springs.calm(reduceMotion), label = "sel")
@@ -49,8 +56,10 @@ fun ScreensPreview(
         val gap = 28.dp.toPx()
         val area = size.height - labelH
         val h = minOf(area * 0.94f, (size.width - gap) * 0.92f / (1f / outerAspect + 1f / innerAspect))
-        val ow = h / outerAspect; val oh = h
-        val iw = h / innerAspect; val ih = h
+        val ow = h / outerAspect
+        val oh = h
+        val iw = h / innerAspect
+        val ih = h
         // 아이콘 배율: 내부 화면의 실제 높이(인치)를 그려진 높이에 맞춘 값을 두 화면에 똑같이 쓴다.
         val innerHeightIn = innerInch / kotlin.math.sqrt(1 + innerAspect * innerAspect) * innerAspect
         val scale = h / innerHeightIn

@@ -1,13 +1,13 @@
 package com.labok.goat.data.appsize
 
-import com.labok.goat.ui.appsize.DensityStepActivity
-import com.labok.goat.data.shizuku.ShizukuAccess
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.os.Process
+import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.appsize.DensityStepActivity
 
 /**
  * 사용 기록(UsageStats)으로 앱을 최근 사용 순으로 정렬하고, 지금 화면에 떠 있던 앱을 찾는다.

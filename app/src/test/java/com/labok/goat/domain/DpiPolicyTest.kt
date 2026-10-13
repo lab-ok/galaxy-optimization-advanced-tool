@@ -30,7 +30,7 @@ class DpiPolicyTest {
         target: Int? = 420,
         current: Int? = 480,
         times: List<Long> = emptyList(),
-        now: Long = 1_000_000L,
+        now: Long = 1_000_000L
     ) = DpiPolicy.decide(automatic, autoEnabled, hasPermission, target, current, times, now)
 
     @Test

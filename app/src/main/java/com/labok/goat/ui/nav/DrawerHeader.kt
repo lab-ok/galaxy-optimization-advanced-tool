@@ -1,14 +1,5 @@
 package com.labok.goat.ui.nav
 
-import com.labok.goat.ui.about.idleRipple
-import com.labok.goat.ui.about.LOGO_CORNER
-import com.labok.goat.ui.liquid.rememberLiquidHaptics
-import com.labok.goat.R
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -35,23 +26,26 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.labok.goat.AppInfo
+import com.labok.goat.ui.about.LOGO_CORNER
+import com.labok.goat.ui.about.idleRipple
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.SoftBlob
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.nudge
 import com.labok.goat.ui.liquid.poke
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.liquid.rememberSoftBlob
 import kotlin.math.hypot
 import kotlin.math.tanh
@@ -77,7 +71,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
     val logoR = logoS * LOGO_CORNER
     val logoX = with(d) { (10 + 22).dp.toPx() }
     val maxPull = with(d) { 18.dp.toPx() }
-    val unit = logoS / 72f  // 아이콘 벡터 72칸 → px
+    val unit = logoS / 72f // 아이콘 벡터 72칸 → px
 
     var box by remember { mutableStateOf(IntSize.Zero) }
     val head = rememberSoftBlob()
@@ -124,14 +118,21 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
                     val down = awaitFirstDown()
                     haptics.press()
                     val p = down.position
+
                     // 누른 자리를 안쪽으로 밀어 움푹 들어가게 한다
                     fun inward(cx: Float, cy: Float, speed: Float): Offset {
-                        val dx = cx - p.x; val dy = cy - p.y; val l = hypot(dx, dy).coerceAtLeast(1f)
+                        val dx = cx - p.x
+                        val dy = cy - p.y
+                        val l = hypot(dx, dy).coerceAtLeast(1f)
                         return Offset(dx / l * speed, dy / l * speed)
                     }
                     inward(headX(), cy(), 1800f).let { head.poke(p.x, p.y, it.x, it.y, headH * 0.6f) }
                     if (hypot(p.x - logoX, p.y - cy()) < logoS * 0.7f) {
-                        if (mood.press()) haptics.reject() else if (mood.startedCrying) haptics.snap()
+                        if (mood.press()) {
+                            haptics.reject()
+                        } else if (mood.startedCrying) {
+                            haptics.snap()
+                        }
                         val k = mood.impulse
                         inward(logoX, cy(), 1400f * k).let { logo.poke(p.x, p.y, it.x, it.y, logoS * 0.5f) }
                         drop.poke(logoX, cy(), (p.x - logoX) * -14f * k, (p.y - cy()) * -14f * k, logoS)
@@ -141,17 +142,22 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
                         total += change.positionChange()
                         change.consume()
                         // 고무줄: 멀리 끌수록 덜 늘어난다
-                        val rx = maxPull * tanh(total.x / (maxPull * 3)); val ry = maxPull * tanh(total.y / (maxPull * 3))
+                        val rx = maxPull * tanh(total.x / (maxPull * 3))
+                        val ry = maxPull * tanh(total.y / (maxPull * 3))
                         head.nudge(headX() + rx * 0.5f, cy() + ry * 0.5f)
                         logo.nudge(logoX + rx, cy() + ry)
                         drop.nudge(logoX + rx, cy() + ry)
                     }
-                    head.nudge(headX(), cy()); logo.nudge(logoX, cy()); drop.nudge(logoX, cy())
+                    head.nudge(headX(), cy())
+                    logo.nudge(logoX, cy())
+                    drop.nudge(logoX, cy())
                 }
-            },
+            }
     ) {
         Canvas(Modifier.matchParentSize()) {
-            head.frame; logo.frame; drop.frame
+            head.frame
+            logo.frame
+            drop.frame
             if (!head.blob.ready || !logo.blob.ready || !drop.blob.ready) return@Canvas
             val (hp, lp) = paths
             // 머리판(유리)
@@ -181,7 +187,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
                     val dy = if (logo.blob.ready) logo.blob.cy - box.height / 2f else 0f
                     translationX = dx * 0.8f + (1f - k) * -10.dp.toPx()
                     translationY = dy * 0.8f
-                },
+                }
         ) {
             Text(AppInfo.NAME, fontWeight = FontWeight.Bold, color = c.ink, style = MaterialTheme.typography.titleMedium)
             Text("버전 $version", color = c.muted, style = MaterialTheme.typography.labelMedium)

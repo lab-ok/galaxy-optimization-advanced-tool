@@ -13,7 +13,7 @@ object Bloat {
     /** 끄면 생길 수 있는 영향. */
     enum class Risk(val label: String) {
         SAFE("안전"),
-        CARE("주의"),
+        CARE("주의")
     }
 
     /** 정리할 수 있는 앱 하나. [note]는 끄면 달라지는 점. */
@@ -49,7 +49,7 @@ object Bloat {
         App("com.facebook.system", "Facebook 앱 설치 도우미", "제휴 앱", "페이스북 앱을 미리 설치하는 구성 요소입니다."),
         App("com.microsoft.skydrive", "OneDrive", "제휴 앱", "마이크로소프트 OneDrive를 쓸 수 없습니다."),
         App("com.linkedin.android", "LinkedIn", "제휴 앱", "링크드인 앱을 쓸 수 없습니다."),
-        App("com.netflix.partner.activation", "Netflix 활성화 도우미", "제휴 앱", "넷플릭스 미리 설치 구성 요소입니다(넷플릭스 앱은 그대로)."),
+        App("com.netflix.partner.activation", "Netflix 활성화 도우미", "제휴 앱", "넷플릭스 미리 설치 구성 요소입니다(넷플릭스 앱은 그대로).")
     )
 
     /** 이 기기에 있는 목록 앱과 꺼져 있는지(작업 스레드). Shizuku가 없으면 null. */
@@ -72,7 +72,7 @@ object Bloat {
         if (ok) Gos.noteChange(context, app.pkg, off)
         LogRepository.from(context).add(
             "기본 앱 정리($how): ${app.name}(${app.pkg}) ${if (off) "끄기" else "켜기"} " +
-                if (ok) "성공" else "실패(${r?.err?.ifBlank { null } ?: r?.out ?: "Shizuku 없음"})",
+                if (ok) "성공" else "실패(${r?.err?.ifBlank { null } ?: r?.out ?: "Shizuku 없음"})"
         )
         return ok
     }

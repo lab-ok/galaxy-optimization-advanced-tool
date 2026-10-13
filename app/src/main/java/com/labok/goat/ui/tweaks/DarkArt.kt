@@ -31,7 +31,8 @@ internal fun DarkArt(on: Boolean) {
     val t = artLoop(3200)
     val aspect = LocalDeviceShape.current.cover
     ArtCanvas(176.dp) { c, tm ->
-        val h = 116.dp.toPx(); val w = h * aspect
+        val h = 116.dp.toPx()
+        val w = h * aspect
         val top = 10.dp.toPx()
         val k = ease(seg(t, 0.3f, 0.55f)) * (1 - ease(seg(t, 0.9f, 1f)))
         listOf(0.3f to false, 0.7f to true).forEachIndexed { i, (fx, forced) ->
@@ -50,7 +51,8 @@ private val DARK = Color(0xFF1C1C1E)
 /** 앱 화면 하나. [dark] 0→1이면 위에서부터 바탕이 어두워지고 글줄이 밝아진다(사진 칸은 그대로). */
 private fun DrawScope.app(c: LiquidColors, screen: Rect, dark: Float) {
     val wipe = screen.top + screen.height * dark
-    val light = LIGHT; val ink = DARK
+    val light = LIGHT
+    val ink = DARK
     clipRect(screen.left, screen.top, screen.right, screen.bottom) {
         drawRect(light, screen.topLeft, screen.size)
         if (dark > 0f) drawRect(lerp(ink, light, 0.08f), screen.topLeft, Size(screen.width, wipe - screen.top))
