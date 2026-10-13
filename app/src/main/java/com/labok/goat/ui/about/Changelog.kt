@@ -42,6 +42,15 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.4.5", "2026-10-13", "홈 보기를 전체·활성화·비활성화 세 가지로 나눴습니다.",
+        listOf(
+            "홈" to listOf(
+                "홈 보기 전환을 '전체 / 활성화 / 비활성화'로 나눴습니다. 활성화는 켜진 기능만, 비활성화는 꺼진 기능만 보여 줍니다. 1.4.4에서 '켜진 기능만'을 골라 두었다면 활성화로 이어집니다.",
+                "보기 전환을 화면 폭 전체로 넓히고, 전환 아래 여백을 위쪽과 같게 맞췄습니다.",
+            ),
+        ),
+    ),
+    Release(
         "GOAT 1.4.4", "2026-10-13", "홈 머리를 한눈에 보는 요약으로 새로 만들고, 켜진 기능만 모아 보는 보기를 더했습니다.",
         listOf(
             "홈" to listOf(

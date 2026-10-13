@@ -1,8 +1,6 @@
 package com.labok.goat.ui.home
 
-import androidx.compose.foundation.layout.wrapContentWidth
 import com.labok.goat.ui.liquid.LiquidChips
-import androidx.compose.foundation.layout.widthIn
 import android.content.Context
 import com.labok.goat.ui.about.LiquidGoatLogo
 import androidx.compose.ui.geometry.Size
@@ -195,10 +193,18 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
         }
     }
     val features = sections.flatMap { it.items }.filter { it != NavItem.HOME && it != NavItem.LAB && it != NavItem.LAB_TOOLS }
-    // 보기 방식: 전체(기존 순서) 또는 켜진 기능만. 고른 방식은 저장해 다음에도 그대로 연다.
+    // 보기 방식: 전체(기존 순서)·활성화(켜진 기능만)·비활성화(꺼진 기능만). 고른 방식은 저장해 다음에도 그대로 연다.
     val homePrefs = remember { context.getSharedPreferences("home", Context.MODE_PRIVATE) }
-    var onlyOn by remember { mutableStateOf(homePrefs.getBoolean("only_on", false)) }
-    val shown = if (onlyOn) features.filter(active) else features
+    var view by remember {
+        // 1.4.4의 '켜진 기능만'(only_on)을 활성화로 이어받는다
+        mutableStateOf(homePrefs.getString("view", null)?.let { runCatching { HomeView.valueOf(it) }.getOrNull() }
+            ?: if (homePrefs.getBoolean("only_on", false)) HomeView.ON else HomeView.ALL)
+    }
+    val shown = when (view) {
+        HomeView.ALL -> features
+        HomeView.ON -> features.filter(active)
+        HomeView.OFF -> features.filterNot(active)
+    }
     // 홈이 처음 보인 시각: 이 시간 안에 그려진 카드만 등장 애니메이션을 한다
     val shownAt = remember { SystemClock.uptimeMillis() }
 
@@ -246,19 +252,20 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
         // 새 버전이 있으면 홈 머리 바로 아래에 업데이트 카드(바로 내려받아 설치)
         if (update.worthShowing()) item(key = "update", span = { GridItemSpan(maxLineSpan) }) { UpdateCard(manual = false) }
         item(key = "view", span = { GridItemSpan(maxLineSpan) }) {
-            Box(Modifier.fillMaxWidth().wrapContentWidth(Alignment.Start).widthIn(max = 260.dp)) {
+            // 머리와 전환 사이, 전환과 타일 사이 여백을 같게 둔다(머리 아래 여백 Gap.Item + 칸 간격 Gap.Card)
+            Box(Modifier.fillMaxWidth().padding(bottom = Gap.Item)) {
                 LiquidChips(
-                    options = listOf(false, true),
-                    selected = onlyOn,
-                    label = { if (it) Copy.HOME_VIEW_ON else Copy.HOME_VIEW_ALL },
-                    onSelect = { onlyOn = it; homePrefs.edit().putBoolean("only_on", it).apply() },
+                    options = HomeView.entries,
+                    selected = view,
+                    label = { it.label },
+                    onSelect = { view = it; homePrefs.edit().putString("view", it.name).apply() },
                 )
             }
         }
         if (shown.isEmpty()) item(key = "none", span = { GridItemSpan(maxLineSpan) }) {
             GlassCard {
-                Text(Copy.HOME_VIEW_EMPTY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                Text(Copy.HOME_VIEW_EMPTY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text(if (view == HomeView.OFF) Copy.HOME_VIEW_EMPTY_OFF_TITLE else Copy.HOME_VIEW_EMPTY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(if (view == HomeView.OFF) Copy.HOME_VIEW_EMPTY_OFF_BODY else Copy.HOME_VIEW_EMPTY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
         }
         itemsIndexed(shown, key = { _, it -> it.name }) { i, item ->
@@ -267,6 +274,9 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
         }
     }
 }
+
+/** 홈 타일 보기 방식. */
+private enum class HomeView(val label: String) { ALL(Copy.HOME_VIEW_ALL), ON(Copy.HOME_VIEW_ON), OFF(Copy.HOME_VIEW_OFF) }
 
 /** 켜진 기능 비율 고리: 잉크 호가 출렁이며 차오르고, 가운데에 켜진 수/전체 수. */
 @Composable
