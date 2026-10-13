@@ -85,8 +85,6 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     GOS(Copy.FEATURE_GOS, NavIcon.GAME),
     /** 잠자기 모드(Doze)를 꺼 알림이 늦게 오지 않게 한다(Shizuku, 재부팅 뒤 다시 끄기). */
     DOZE(Copy.FEATURE_DOZE, NavIcon.BELL),
-    /** 핫스팟 제한 우회: 테더링을 일반 데이터 경로로(Shizuku, 처음 쓸 때 경고). */
-    HOTSPOT(Copy.FEATURE_HOTSPOT, NavIcon.HOTSPOT),
     /** 해상도를 낮추고 밀도도 같은 비율로 줄인다(시스템 설정 권한, 폴드 제외). */
     RESOLUTION(Copy.FEATURE_RESOLUTION, NavIcon.PIXELS),
     /** 다크 모드 없는 앱도 시스템이 어둡게 그리게 한다(Shizuku setprop). */
@@ -97,7 +95,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR),
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, HOTSPOT, PIXELS, FLASK, INFO, GEAR }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, INFO, GEAR }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -264,7 +262,6 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.GAME -> game(color, s)
             NavIcon.MOON -> moon(color, s)
             NavIcon.BELL -> bell(color, s)
-            NavIcon.HOTSPOT -> hotspot(color, s)
             NavIcon.PIXELS -> pixels(color, s)
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
@@ -415,14 +412,6 @@ private fun DrawScope.bell(c: Color, s: Stroke) {
     // z
     val z = Path().apply { moveTo(u(17.6f), u(2.6f)); lineTo(u(21.4f), u(2.6f)); lineTo(u(17.6f), u(6.6f)); lineTo(u(21.4f), u(6.6f)) }
     drawPath(z, c, style = Stroke(s.width * 0.8f, cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
-}
-
-/** 핫스팟: 가운데 점에서 위로 퍼지는 전파 두 겹. */
-private fun DrawScope.hotspot(c: Color, s: Stroke) {
-    val o = p(12f, 15f)
-    drawCircle(c, u(1.7f), o)
-    for (r in listOf(4.6f, 8.4f)) drawArc(c, 210f, 120f, false, Offset(o.x - u(r), o.y - u(r)), androidx.compose.ui.geometry.Size(u(2 * r), u(2 * r)), style = s)
-    drawLine(c, p(12f, 16.7f), p(12f, 21f), s.width, StrokeCap.Round)
 }
 
 /** 앱 다크 모드 강제: 초승달과 그 옆 작은 별 둘. */

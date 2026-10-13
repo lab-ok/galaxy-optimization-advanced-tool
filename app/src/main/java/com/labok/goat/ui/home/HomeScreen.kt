@@ -1,7 +1,5 @@
 package com.labok.goat.ui.home
 
-import com.labok.goat.ui.tweaks.HotspotHelpSheet
-import com.labok.goat.ui.tweaks.HotspotScreen
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -172,7 +170,7 @@ import kotlinx.coroutines.launch
 /** 이 너비(dp) 이상이면 사이드바를 늘 펼쳐 둔다(폴드 내부 화면·태블릿). */
 private const val WIDE_DP = 600
 
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, HOTSPOT_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -270,8 +268,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK)))
             add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE)))
             add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.DOZE)))
-            // 실험실: 기기·통신사마다 결과가 다를 수 있는 기능(일반 빌드에도 보인다). 조사 도구는 lab 빌드에서만.
-            add(NavSection(Copy.MENU_SECTION_LAB, listOfNotNull(NavItem.HOTSPOT, NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB })))
+            if (BuildConfig.LAB) add(NavSection(Copy.MENU_SECTION_LAB, listOf(NavItem.LAB_TOOLS)))
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
         val common = { help: Sheet, guide: Sheet, reset: Sheet ->
@@ -318,11 +315,6 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             )
             NavItem.GOS -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.GOS_HELP },
-                Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
-                Copy.MENU_REPORT to report,
-            )
-            NavItem.HOTSPOT -> listOf(
-                Copy.MENU_HELP to { sheet = Sheet.HOTSPOT_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report,
             )
@@ -489,7 +481,6 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                             NavItem.REFRESH -> RefreshScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.GOS -> GosScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.DOZE -> DozeScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
-                            NavItem.HOTSPOT -> HotspotScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.LAB_TOOLS -> LabScreen(inner)
@@ -555,7 +546,6 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                     Sheet.REFRESH_HELP -> RefreshHelpSheet()
                     Sheet.GOS_HELP -> GosHelpSheet()
                     Sheet.DOZE_HELP -> DozeHelpSheet()
-                    Sheet.HOTSPOT_HELP -> HotspotHelpSheet()
                     Sheet.CHANGELOG -> ChangelogSheet()
                     Sheet.PERMISSIONS -> PermissionsSheet()
                     Sheet.DARK_HELP -> DarkHelpSheet()

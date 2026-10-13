@@ -42,6 +42,15 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.4.2", "2026-10-13", "핫스팟 제한 우회 기능을 뺐고, 다크 모드에서 라디오 버튼이 잘 보이게 했습니다.",
+        listOf(
+            "변경" to listOf(
+                "핫스팟 제한 우회 기능과 사이드바의 실험실 묶음을 앱에서 뺐습니다. 이미 추가한 'GOAT 테더링' APN은 설정 → 연결 → 모바일 네트워크 → 액세스 포인트 이름에서 지우거나, 모바일 네트워크 설정 초기화로 되돌릴 수 있습니다.",
+                "다크 모드에서 고르지 않은 라디오 버튼의 동그라미가 바탕에 묻히던 것을 잘 보이게 고쳤습니다.",
+            ),
+        ),
+    ),
+    Release(
         "GOAT 1.4.0", "2026-10-13", "핫스팟 제한 우회를 실험실로 옮기고, 초보자도 버튼 하나로 쓰고 언제든 되돌릴 수 있게 다시 만들었습니다.",
         listOf(
             "실험실" to listOf(
