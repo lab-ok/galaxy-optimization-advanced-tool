@@ -147,7 +147,8 @@ fun LiquidRadioRow(label: String, desc: String?, selected: Boolean, enabled: Boo
     ) {
         Canvas(Modifier.size(24.dp)) {
             val r = size.minDimension / 2
-            drawCircle(if (selected) c.ink else c.line, r - 1.dp.toPx(), style = Stroke(2.dp.toPx()))
+            // 다크 모드의 선(line)은 바탕과 거의 같아 동그라미가 묻히므로, 안 고른 동그라미는 흐린 글자색으로 그린다
+            drawCircle(if (selected) c.ink else if (c.dark) c.muted else c.line, r - 1.dp.toPx(), style = Stroke(2.dp.toPx()))
             if (group == null && fill > 0.01f) drawCircle(c.ink, (r - 5.dp.toPx()) * fill.coerceAtMost(1.15f))
         }
         Spacer(Modifier.width(12.dp))
