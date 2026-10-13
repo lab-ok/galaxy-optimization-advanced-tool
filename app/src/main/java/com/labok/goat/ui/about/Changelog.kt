@@ -39,17 +39,27 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.4.9",
+        "2026-10-13",
+        "숨은 기능을 정리하고 다듬었습니다.",
+        listOf(
+            "변경" to listOf(
+                "숨은 기능의 메뉴와 화면을 정리했습니다.",
+            ),
+        ),
+    ),
+    Release(
         "GOAT 1.4.8",
         "2026-10-13",
         "폴드를 펼쳤을 때 보기 전환이 깨지던 문제를 고치고, 소스 코드를 Android 기준에 맞게 정리했습니다.",
         listOf(
             "고침" to listOf(
-                "폴드를 펼치거나 화면 폭이 바뀌면 홈 보기 전환(전체·활성화·비활성화)의 방울이 옆 칸까지 덮던 문제를 고쳤습니다.",
+                "폴드를 펼치거나 화면 폭이 바뀌면 홈 보기 전환(전체·활성화·비활성화)의 방울이 옆 칸까지 덮던 문제를 고쳤습니다."
             ),
             "정리" to listOf(
-                "소스 코드를 Android 공식 Kotlin 스타일에 맞게 정리하고 Android lint 경고를 줄였습니다. 동작은 바뀌지 않습니다.",
-            ),
-        ),
+                "소스 코드를 Android 공식 Kotlin 스타일에 맞게 정리하고 Android lint 경고를 줄였습니다. 동작은 바뀌지 않습니다."
+            )
+        )
     ),
     Release(
         "GOAT 1.4.7",

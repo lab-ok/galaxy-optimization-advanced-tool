@@ -103,16 +103,25 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     DARK(Copy.FEATURE_DARK, NavIcon.MOON),
 
     /** 숨은 실험실: 염소를 열 번 누르면 나타난다(시험 중인 기능을 둔다). */
-    LAB(Copy.FEATURE_LAB, NavIcon.FLASK),
+    LAB_AIRPLANE(Copy.FEATURE_LAB_AIRPLANE, NavIcon.AIRPLANE),
+    LAB_ICONS(Copy.FEATURE_LAB_ICONS, NavIcon.EYE_OFF),
+    LAB_SCREEN(Copy.FEATURE_LAB_SCREEN, NavIcon.PALETTE),
+    LAB_PROBE(Copy.FEATURE_LAB_PROBE, NavIcon.FLASK),
 
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */
     SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR)
+    ;
+
+    companion object {
+        /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
+        val LAB_ITEMS = setOf(LAB_AIRPLANE, LAB_ICONS, LAB_SCREEN, LAB_PROBE, LAB_TOOLS)
+    }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, INFO, GEAR }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, INFO, GEAR }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -312,6 +321,9 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.ROTATE -> rotate(color, s)
             NavIcon.CAMERA -> camera(color, s)
             NavIcon.FLASK -> flask(color, s)
+            NavIcon.AIRPLANE -> airplane(color, s)
+            NavIcon.EYE_OFF -> eyeOff(color, s)
+            NavIcon.PALETTE -> palette(color, s)
             NavIcon.INFO -> info(color, s)
             NavIcon.GEAR -> gear(color, s)
         }
@@ -547,6 +559,54 @@ private fun DrawScope.flask(c: Color, s: Stroke) {
     drawLine(c, p(6.8f, 14.5f), p(17.2f, 14.5f), s.width * 0.8f, StrokeCap.Round)
     drawCircle(c, u(0.9f), p(10.5f, 17.4f))
     drawCircle(c, u(0.65f), p(13.8f, 16.8f))
+}
+
+/** 실험실 비행기 모드 무선: 위에서 본 비행기(동체·주날개·꼬리날개). */
+private fun DrawScope.airplane(c: Color, s: Stroke) {
+    val path = Path().apply {
+        moveTo(u(12f), u(2.8f))
+        quadraticBezierTo(u(13.4f), u(2.8f), u(13.4f), u(5f))
+        lineTo(u(13.4f), u(9.6f))
+        lineTo(u(20.6f), u(13.6f))
+        lineTo(u(20.6f), u(15.6f))
+        lineTo(u(13.4f), u(13.6f))
+        lineTo(u(13.4f), u(17.8f))
+        lineTo(u(15.8f), u(19.6f))
+        lineTo(u(15.8f), u(21.2f))
+        lineTo(u(12f), u(20.2f))
+        lineTo(u(8.2f), u(21.2f))
+        lineTo(u(8.2f), u(19.6f))
+        lineTo(u(10.6f), u(17.8f))
+        lineTo(u(10.6f), u(13.6f))
+        lineTo(u(3.4f), u(15.6f))
+        lineTo(u(3.4f), u(13.6f))
+        lineTo(u(10.6f), u(9.6f))
+        lineTo(u(10.6f), u(5f))
+        quadraticBezierTo(u(10.6f), u(2.8f), u(12f), u(2.8f))
+        close()
+    }
+    drawPath(path, c, style = s)
+}
+
+/** 실험실 아이콘 숨기기: 눈(아몬드 모양과 눈동자)에 사선. */
+private fun DrawScope.eyeOff(c: Color, s: Stroke) {
+    val eye = Path().apply {
+        moveTo(u(2.6f), u(12f))
+        quadraticBezierTo(u(12f), u(2.4f), u(21.4f), u(12f))
+        quadraticBezierTo(u(12f), u(21.6f), u(2.6f), u(12f))
+        close()
+    }
+    drawPath(eye, c, style = s)
+    drawCircle(c, u(2.8f), p(12f, 12f), style = s)
+    drawLine(c, p(4.2f, 3.8f), p(19.8f, 20.2f), s.width, StrokeCap.Round)
+}
+
+/** 실험실 화면 모드: 화면 틀 안의 반쪽 칠한 원(색 모드). */
+private fun DrawScope.palette(c: Color, s: Stroke) {
+    drawRoundRect(c, p(3f, 4.5f), Size(u(18f), u(13f)), CornerRadius(u(2.2f)), style = s)
+    drawLine(c, p(9f, 20.5f), p(15f, 20.5f), s.width, StrokeCap.Round)
+    drawCircle(c, u(3.6f), p(12f, 11f), style = s)
+    drawArc(c, 90f, 180f, true, p(8.4f, 7.4f), Size(u(7.2f), u(7.2f)))
 }
 
 /** 덮이는 서랍·시트의 불투명도: 흐려진 뒤 화면이 살짝 비친다. */

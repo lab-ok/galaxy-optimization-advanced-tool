@@ -197,7 +197,7 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             else -> false
         }
     }
-    val features = sections.flatMap { it.items }.filter { it != NavItem.HOME && it != NavItem.LAB && it != NavItem.LAB_TOOLS }
+    val features = sections.flatMap { it.items }.filter { it != NavItem.HOME && it !in NavItem.LAB_ITEMS }
     // 보기 방식: 전체(기존 순서)·활성화(켜진 기능만)·비활성화(꺼진 기능만). 고른 방식은 저장해 다음에도 그대로 연다.
     val homePrefs = remember { context.getSharedPreferences("home", Context.MODE_PRIVATE) }
     var view by remember {
