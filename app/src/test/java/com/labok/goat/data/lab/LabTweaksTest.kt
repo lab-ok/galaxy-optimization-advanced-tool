@@ -42,4 +42,17 @@ class LabTweaksTest {
         assertNull(FineHinge.parse("I/sensors-hal( 812): something else"))
         assertNull("범위 밖은 버린다", FineHinge.parse("lid_angle_fusion ts=1 ns value [1/ 400/2]"))
     }
+
+    @Test
+    fun fineHingeSnapsFlatAndDropsJitter() {
+        val s = FineHinge.Smoother()
+        assertEquals(172f, s.feed(172f)!!, 0f)
+        assertEquals(180f, s.feed(179f)!!, 0f) // 가운데 값 179 → 펼침으로 붙인다
+        assertNull(s.feed(177f)) // 그대로 180
+        val f = FineHinge.Smoother()
+        f.feed(100f)
+        assertNull(f.feed(101f)) // 1° 흔들림은 무시
+        assertNull(f.feed(140f)) // 한 번 튄 값은 가운데 값(101)으로 걸러진다
+        assertEquals(140f, f.feed(140f)!!, 0f)
+    }
 }

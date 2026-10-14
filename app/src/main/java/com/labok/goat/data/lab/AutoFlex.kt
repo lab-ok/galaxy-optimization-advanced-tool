@@ -32,8 +32,8 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 object AutoFlex {
     private const val PREF = "auto_flex"
-    const val DEFAULT_MIN = 75
-    const val DEFAULT_MAX = 115
+    const val DEFAULT_MIN = 30
+    const val DEFAULT_MAX = 125
     const val ANGLE_LOW = 30
     const val ANGLE_HIGH = 160
     private const val CHANNEL_ID = "auto_flex_quiet"
@@ -92,6 +92,110 @@ object AutoFlex {
         prefs(context).edit().putInt("min", min.coerceIn(ANGLE_LOW, ANGLE_HIGH)).putInt("max", max.coerceIn(ANGLE_LOW, ANGLE_HIGH)).apply()
     }
 
+    /**
+     * 딸깍으로 켜기: 펼친 채 화면을 살짝 접었다가(딸깍) 곧바로 다시 펴면 플렉스 모드를 켜고, 한 번 더 하면 끈다.
+     * 켜 두는 동안은 펼친 채로도 플렉스 모드처럼 쓴다(위 화면에 앱, 아래 화면에 패널).
+     */
+    fun click(context: Context) = prefs(context).getBoolean("click", false)
+
+    fun setClick(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("click", on).apply()
+        LogRepository.from(context).add("딸깍으로 플렉스 모드 ${if (on) "켜짐" else "꺼짐"}")
+        engine?.recheck()
+    }
+
+    /** 딸깍 판정: [OPEN]도 이상으로 펼친 상태에서 [DIP]도 아래로 접었다가 [CLICK_MS] 안에 다시 펴면 한 번. */
+    internal const val OPEN = 165f
+    internal const val DIP = 150f
+    internal const val CLICK_MS = 1500L
+
+    /** 펼침→살짝 접힘→펼침 흐름을 보고 딸깍인지 가린다(시험할 수 있게 뗐다). 너무 깊이 접었다 편 것([ANGLE_LOW] 아래)은 딸깍이 아니다. */
+    internal class ClickDetector {
+        private var open = false
+        private var dipAt = -1L
+        private var lowest = 180f
+
+        /** 딸깍이 끝난 순간 true. */
+        fun feed(angle: Float, now: Long): Boolean {
+            if (angle >= OPEN) {
+                val hit = open && dipAt >= 0 && now - dipAt <= CLICK_MS && lowest >= ANGLE_LOW
+                open = true
+                dipAt = -1
+                lowest = 180f
+                return hit
+            }
+            if (angle < DIP && open && dipAt < 0) dipAt = now
+            if (dipAt >= 0) lowest = minOf(lowest, angle)
+            if (dipAt >= 0 && now - dipAt > CLICK_MS) open = false
+            return false
+        }
+    }
+
+    private val pausedFlow = MutableStateFlow(false)
+    private val pauses = mutableSetOf<String>()
+
+    /**
+     * 자동 플렉스를 잠시 멈춘다(걸어 둔 반쯤 접힘도 푼다). 멈추는 까닭마다 [key]를 따로 두고, 하나라도 남아 있으면 멈춰 있다.
+     * 예: 자동 플렉스 설정 화면을 보는 동안("screen"), 게이지 손잡이를 끄는 동안("drag").
+     */
+    fun setPaused(key: String, on: Boolean) {
+        synchronized(pauses) {
+            if (on) pauses.add(key) else pauses.remove(key)
+            pausedFlow.value = pauses.isNotEmpty()
+        }
+        engine?.recheck()
+    }
+
+    @Volatile private var engine: Engine? = null
+
+    /**
+     * 딸깍 진동: 접었다 편 손놀림을 그대로 되짚는다. 켤 때는 접힘(가벼운 틱)→펴짐(딸깍)→켜짐(딸깍) 세 박,
+     * 끌 때는 힘이 빠지듯 내려가는 틱 한 번. 효과 조합을 못 쓰는 기기는 짧은 진동 길이로 같은 박자를 낸다.
+     */
+    private fun buzz(context: Context, on: Boolean) {
+        val v = context.getSystemService(android.os.VibratorManager::class.java)?.defaultVibrator ?: return
+        if (!v.hasVibrator()) return
+        val tick = android.os.VibrationEffect.Composition.PRIMITIVE_TICK
+        val clickP = android.os.VibrationEffect.Composition.PRIMITIVE_CLICK
+        val fall = android.os.VibrationEffect.Composition.PRIMITIVE_QUICK_FALL
+        val effect = if (on && v.areAllPrimitivesSupported(tick, clickP)) {
+            android.os.VibrationEffect.startComposition()
+                .addPrimitive(tick, 0.6f)
+                .addPrimitive(clickP, 1f, 70)
+                .addPrimitive(clickP, 1f, 110)
+                .compose()
+        } else if (!on && v.areAllPrimitivesSupported(fall)) {
+            android.os.VibrationEffect.startComposition().addPrimitive(fall, 0.8f).compose()
+        } else if (on) {
+            android.os.VibrationEffect.createWaveform(longArrayOf(0, 12, 70, 25, 110, 25), intArrayOf(0, 120, 0, 255, 0, 255), -1)
+        } else {
+            android.os.VibrationEffect.createWaveform(longArrayOf(0, 40), intArrayOf(0, 140), -1)
+        }
+        runCatching { v.vibrate(effect) }
+    }
+
+    /**
+     * 범위 진동: 들어오면 스스스 점점 세지는 진동(천천히 차오름), 벗어나면 탁 치고 힘이 빠지는 진동.
+     * 효과 조합을 못 쓰는 기기는 진동 세기를 단계로 올리고 내려 비슷하게 낸다.
+     */
+    private fun rangeBuzz(context: Context, inside: Boolean) {
+        val v = context.getSystemService(android.os.VibratorManager::class.java)?.defaultVibrator ?: return
+        if (!v.hasVibrator()) return
+        val rise = android.os.VibrationEffect.Composition.PRIMITIVE_SLOW_RISE
+        val clickP = android.os.VibrationEffect.Composition.PRIMITIVE_CLICK
+        val fall = android.os.VibrationEffect.Composition.PRIMITIVE_QUICK_FALL
+        val effect = if (inside && v.areAllPrimitivesSupported(rise)) {
+            android.os.VibrationEffect.startComposition().addPrimitive(rise, 0.9f).compose()
+        } else if (!inside && v.areAllPrimitivesSupported(clickP, fall)) {
+            android.os.VibrationEffect.startComposition().addPrimitive(clickP, 1f).addPrimitive(fall, 0.6f, 10).compose()
+        } else if (inside) {
+            android.os.VibrationEffect.createWaveform(longArrayOf(0, 60, 60, 60, 60, 60), intArrayOf(0, 40, 90, 150, 210, 255), -1)
+        } else {
+            android.os.VibrationEffect.createWaveform(longArrayOf(0, 18, 50), intArrayOf(0, 255, 50), -1)
+        }
+        runCatching { v.vibrate(effect) }
+    }
+
     /** 범위 안인지(시험할 수 있게 뗐다). */
     internal fun inRange(angle: Float, min: Int, max: Int) = angle >= min && angle <= max
 
@@ -101,6 +205,11 @@ object AutoFlex {
     val angle: StateFlow<Float?> = angleFlow.asStateFlow()
 
     private val activeFlow = MutableStateFlow(false)
+
+    private val latchedFlow = MutableStateFlow(false)
+
+    /** 딸깍으로 켜 둔 상태인지. */
+    val latched: StateFlow<Boolean> = latchedFlow.asStateFlow()
 
     /** 지금 반쯤 접힘을 걸어 둔 상태인지. */
     val active: StateFlow<Boolean> = activeFlow.asStateFlow()
@@ -126,6 +235,7 @@ object AutoFlex {
 
     /**
      * 상주 서비스 안에서 도는 감시. 화면이 켜진 동안만 힌지 각도를 듣고, 범위에 0.25초 머물면 걸고/벗어나면 푼다.
+     * 딸깍으로 켜기를 쓰면 딸깍마다 켜고 끄며, 켜 둔 동안은 각도와 상관없이 걸어 둔다(딸깍 도중 범위를 지나쳐도 깜빡이지 않게 머무는 시간을 늘린다).
      * 셸 명령은 따로 만든 스레드에서 부른다(센서 스레드를 막지 않게).
      */
     class Engine(private val context: Context) : SensorEventListener {
@@ -135,6 +245,11 @@ object AutoFlex {
         private var started = false
         private var want = false
         private val apply = Runnable { set(want) }
+        private val clicks = ClickDetector()
+
+        // 다음 바뀜은 진동 없이(딸깍은 따로 울리고, 멈춤·설정 바뀜은 손놀림이 아니라서)
+        @Volatile private var quiet = false
+        private var last: Float? = null
 
         // 세밀한 각도(시스템 로그). 최근 1초 안에 값이 왔으면 거친 센서 값(0·90·180)은 무시한다
         @Volatile private var fineAt = 0L
@@ -150,6 +265,13 @@ object AutoFlex {
                     if (syncDue(context)) worker.post { syncApps(context) }
                 } else {
                     stopListening()
+                    // 화면을 끄면 딸깍으로 켠 플렉스 모드도 끈다
+                    worker.post {
+                        if (latchedFlow.value) {
+                            latchedFlow.value = false
+                            set(false)
+                        }
+                    }
                 }
             }
         }
@@ -157,6 +279,7 @@ object AutoFlex {
         fun start() {
             if (started) return
             started = true
+            engine = this
             context.registerReceiver(
                 screen,
                 IntentFilter().apply {
@@ -171,6 +294,8 @@ object AutoFlex {
         fun stop() {
             if (!started) return
             started = false
+            if (engine === this) engine = null
+            latchedFlow.value = false
             runCatching { context.unregisterReceiver(screen) }
             stopListening()
             worker.removeCallbacksAndMessages(null)
@@ -203,11 +328,53 @@ object AutoFlex {
 
         private fun onAngle(a: Float) {
             angleFlow.value = a
-            val next = inRange(a, min(context), max(context))
+            last = a
+            val click = click(context)
+            var hit = false
+            if (click && !pausedFlow.value && clicks.feed(a, android.os.SystemClock.elapsedRealtime())) {
+                latchedFlow.value = !latchedFlow.value
+                hit = true
+                LogRepository.from(context).add("딸깍: 플렉스 모드 ${if (latchedFlow.value) "켬" else "끔"}")
+                buzz(context, latchedFlow.value)
+            }
+            if (a < ANGLE_LOW && latchedFlow.value) {
+                latchedFlow.value = false // 닫으면 딸깍으로 켠 것도 끈다
+                hit = true
+            }
+            if (hit) quiet = true
+            // 딸깍은 바로, 각도 범위는 잠깐 머문 뒤에 바꾼다(딸깍을 쓰면 도중에 범위를 지나쳐도 깜빡이지 않게 더 오래)
+            decide(
+                a,
+                if (hit || latchedFlow.value) {
+                    0L
+                } else if (click) {
+                    700L
+                } else {
+                    250L
+                }
+            )
+        }
+
+        private fun decide(a: Float?, delay: Long) {
+            val next = when {
+                pausedFlow.value -> false
+                latchedFlow.value -> true
+                a == null -> false
+                else -> inRange(a, min(context), max(context))
+            }
             if (next == want && worker.hasCallbacks(apply)) return
             want = next
             worker.removeCallbacks(apply)
-            if (next != activeFlow.value) worker.postDelayed(apply, 250)
+            if (next != activeFlow.value) worker.postDelayed(apply, delay) else quiet = false
+        }
+
+        /** 멈춤·딸깍 설정이 바뀌었을 때 지금 각도로 다시 정한다. */
+        fun recheck() {
+            worker.post {
+                if (!click(context)) latchedFlow.value = false
+                quiet = true
+                decide(last, 0L)
+            }
         }
 
         override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
@@ -216,7 +383,11 @@ object AutoFlex {
             if (on == activeFlow.value) return
             if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return
             val err = if (on) FlexPanel.forceHalfOpened(context) else FlexPanel.resetPosture(context)
-            if (err == null) activeFlow.value = on
+            if (err == null) {
+                activeFlow.value = on
+                if (!quiet) rangeBuzz(context, on)
+            }
+            quiet = false
         }
     }
 }

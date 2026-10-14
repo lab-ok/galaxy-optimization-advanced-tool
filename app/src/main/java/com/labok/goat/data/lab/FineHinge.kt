@@ -24,11 +24,12 @@ class FineHinge(private val onAngle: (Float) -> Unit) {
                 return@thread
             }
             process = p
+            val smooth = Smoother()
             runCatching {
                 p.inputStream.bufferedReader().useLines { lines ->
                     for (line in lines) {
                         if (!running) break
-                        parse(line)?.let(onAngle)
+                        parse(line)?.let { smooth.feed(it) }?.let(onAngle)
                     }
                 }
             }
@@ -40,6 +41,31 @@ class FineHinge(private val onAngle: (Float) -> Unit) {
         running = false
         process?.destroy()
         process = null
+    }
+
+    /**
+     * 센서 부품이 합쳐 낸 각도는 펼쳐 둬도 176~179°처럼 몇 도씩 흔들린다. 최근 세 값의 가운데 값으로 튀는 값을 버리고,
+     * 끝에 가까우면 끝으로 붙이고(175° 이상은 180°, 5° 이하는 0°), 1° 넘게 바뀔 때만 새 값을 낸다(시험할 수 있게 뗐다).
+     */
+    internal class Smoother {
+        private val recent = ArrayDeque<Float>()
+        private var shown = Float.NaN
+
+        /** 새로 보여 줄 각도, 바뀌지 않았으면 null. */
+        fun feed(raw: Float): Float? {
+            recent.addLast(raw)
+            if (recent.size > 3) recent.removeFirst()
+            val mid = recent.sorted()[recent.size / 2]
+            val v = when {
+                mid >= 175f -> 180f
+                mid <= 5f -> 0f
+                else -> mid
+            }
+            if (!shown.isNaN() && kotlin.math.abs(v - shown) < 1.5f && v != 180f && v != 0f) return null
+            if (v == shown) return null
+            shown = v
+            return v
+        }
     }
 
     companion object {
