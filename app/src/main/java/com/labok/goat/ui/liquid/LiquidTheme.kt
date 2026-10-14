@@ -49,7 +49,8 @@ val LightLiquid = LiquidColors(
 )
 val DarkLiquid = LiquidColors(
     bg = Color(0xFF0F0F0F), surface = Color(0xFF171717), ink = Color(0xFFEBEBEB), muted = Color(0xFF8D8D8D),
-    line = Color(0xFF2A2A2A), tint = Color(0x12FFFFFF), brand = Color(0xFFFFFFFF), danger = Color(0xFFF2B8B5), dark = true,
+    // 선·꺼진 스위치 바탕: 카드(#171717) 위에서 보이도록 #2A2A2A보다 밝게(다크 모드 전수 점검에서 꺼진 스위치가 흰 점만 보였다)
+    line = Color(0xFF424242), tint = Color(0x12FFFFFF), brand = Color(0xFFFFFFFF), danger = Color(0xFFF2B8B5), dark = true,
     logo = Color(0xFF2A2A2A)
 )
 

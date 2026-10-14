@@ -61,7 +61,8 @@ internal fun CleanupArt() {
         val sw = 46.dp.toPx()
         val sh = 24.dp.toPx()
         drawRoundRect(if (off > 0.5f) c.line else c.ink, Offset(sx - sw / 2, sy - sh / 2), Size(sw, sh), CornerRadius(sh / 2))
-        drawCircle(c.surface, sh * 0.38f, Offset(sx + (sw / 2 - sh / 2) * (1 - 2 * off), sy))
+        // 꺼진 손잡이: 다크 모드에서는 카드색이면 바탕에 묻히므로 흐린 글자색으로
+        drawCircle(if (c.dark && off > 0.5f) c.muted else c.surface, sh * 0.38f, Offset(sx + (sw / 2 - sh / 2) * (1 - 2 * off), sy))
         artLabel(tm, "게임 런처", Offset(sx, sy - 26.dp.toPx()), c.ink, bold = true)
         artPill(tm, c, if (off > 0.5f) "꺼 둠" else "켜짐", Offset(sx, sy + 30.dp.toPx()), filled = off <= 0.5f)
         artLabel(tm, "지우지 않고 꺼 둠", Offset(sx, size.height - 14.dp.toPx()), c.muted)

@@ -93,7 +93,8 @@ object ShakeRotate {
     }
 
     /** 고급 설정을 처음 값으로. */
-    fun resetAdvanced(context: Context) = setAdvanced(context, pace = 1, turn = DEFAULT_TURN, swings = ShakeRotatePolicy.Detector.PEAKS, rejectTaps = true, largeOnly = false, how = "기본값")
+    /** 고급 설정(흔들기 인식 세부값)만 기본값으로. '큰 화면에서만'은 고급 설정 밖(돌릴 때)으로 옮겨 그대로 둔다. */
+    fun resetAdvanced(context: Context) = setAdvanced(context, pace = 1, turn = DEFAULT_TURN, swings = ShakeRotatePolicy.Detector.PEAKS, rejectTaps = true, how = "기본값")
 
     private const val DEFAULT_TURN = 4
 

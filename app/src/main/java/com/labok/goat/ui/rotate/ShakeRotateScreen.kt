@@ -205,6 +205,27 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                 }
             }
         }
+        // 돌릴 때: 어떻게 돌릴지 고르는 두 가지(빠른 회전·큰 화면에서만)를 한 카드에 모은다.
+        // 큰 화면에서만은 판정 세부값이 아니라 사용자가 고르는 동작이라 고급 설정에서 꺼내 왔다.
+        item(key = "behavior") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    var fast by remember { mutableStateOf(ShakeRotate.fastTurn(context)) }
+                    // 묶음 이름은 작고 흐리게: 아래 두 항목 제목과 같은 굵기면 무엇이 묶음이고 무엇이 항목인지 헷갈린다
+                    Text(Copy.SHAKE_BEHAVIOR_TITLE, color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidSwitchRow(Copy.SHAKE_FAST_TITLE, Copy.SHAKE_FAST_BODY, fast, enabled = true, onChange = {
+                        fast = it
+                        ShakeRotate.setFastTurn(context, it)
+                    })
+                    Spacer(Modifier.height(Gap.Section))
+                    LiquidSwitchRow(Copy.SHAKE_LARGE_TITLE, Copy.SHAKE_LARGE_BODY, largeOnly, enabled = true, onChange = { on ->
+                        largeOnly = on
+                        ShakeRotate.setAdvanced(context, largeOnly = on, how = "스위치")
+                    })
+                }
+            }
+        }
         item(key = "vibration") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
@@ -228,22 +249,10 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                 }
             }
         }
-        // 빠른 회전(1.4.7에서 실험실 → 정식): 시스템 자동 회전을 기다리지 않고 센서로 든 방향을 바로 계산해 돌린다
-        item(key = "fastTurn") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    var fast by remember { mutableStateOf(ShakeRotate.fastTurn(context)) }
-                    LiquidSwitchRow(Copy.SHAKE_FAST_TITLE, Copy.SHAKE_FAST_BODY, fast, enabled = true, onChange = {
-                        fast = it
-                        ShakeRotate.setFastTurn(context, it)
-                    })
-                }
-            }
-        }
         item(key = "advanced") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    // 고급 설정(접었다 펴기): 자주 바꾸지 않는 판정 세부값이라 맨 아래에 접어 둔다. 자동 맞추기가 앞의 셋을 함께 맞춘다
+                    // 고급 설정(접었다 펴기): 흔들기를 알아보는 세부값(횟수·빠르기·손목 회전·탭 거르기)만 맨 아래에 접어 둔다. 자동 맞추기가 앞의 셋을 함께 맞춘다
                     Row(
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { advanced = !advanced },
                         verticalAlignment = Alignment.CenterVertically
@@ -293,30 +302,12 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 valueText = { if (it == 0) "끔" else "$it" },
                                 description = Copy.SHAKE_TURN_TITLE
                             )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(Copy.SHAKE_TAPS_TITLE, color = c.ink)
-                                    Text(Copy.SHAKE_TAPS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                                }
-                                Spacer(Modifier.width(12.dp))
-                                LiquidSwitch(taps, { on ->
-                                    taps = on
-                                    ShakeRotate.setAdvanced(context, rejectTaps = on, how = "스위치")
-                                }, label = Copy.SHAKE_TAPS_TITLE)
-                            }
                             Spacer(Modifier.height(Gap.Item))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(Copy.SHAKE_LARGE_TITLE, color = c.ink)
-                                    Text(Copy.SHAKE_LARGE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                                }
-                                Spacer(Modifier.width(12.dp))
-                                LiquidSwitch(largeOnly, { on ->
-                                    largeOnly = on
-                                    ShakeRotate.setAdvanced(context, largeOnly = on, how = "스위치")
-                                }, label = Copy.SHAKE_LARGE_TITLE)
-                            }
-                            Spacer(Modifier.height(Gap.Item))
+                            LiquidSwitchRow(Copy.SHAKE_TAPS_TITLE, Copy.SHAKE_TAPS_BODY, taps, enabled = true, onChange = { on ->
+                                taps = on
+                                ShakeRotate.setAdvanced(context, rejectTaps = on, how = "스위치")
+                            })
+                            Spacer(Modifier.height(Gap.Section))
                             LiquidButton(Copy.SHAKE_ADVANCED_RESET, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { ShakeRotate.resetAdvanced(context) })
                         }
                     }

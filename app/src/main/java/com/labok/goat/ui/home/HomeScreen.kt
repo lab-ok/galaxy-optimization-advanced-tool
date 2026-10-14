@@ -180,7 +180,13 @@ private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
+internal fun HomeScreen(
+    vm: HomeViewModel = viewModel(),
+    /** 처음 보여 줄 기능 화면(NavItem 이름). 화면 점검 도구(tools/ui-sweep.sh)가 각 화면을 바로 열 때 쓴다. */
+    openScreen: String? = null,
+    /** 처음 띄울 시트(Sheet 이름). 보여 주기만 하고 아무것도 실행하지 않는다. */
+    openSheet: String? = null
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     val message by vm.messages.collectAsStateWithLifecycle()
     val toast = remember { SnackbarHostState() }
@@ -196,6 +202,15 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
     var feature by rememberSaveable { mutableStateOf(NavItem.HOME) }
     // 화면에 보이는 기능. 사이드바에서 고르면 방울 이동을 보여 준 뒤 사이드바가 닫히면서 바뀐다(물방울 번짐 전환).
     var shown by rememberSaveable { mutableStateOf(NavItem.HOME) }
+    // 점검 도구용 진입: 이름이 맞을 때만 그 화면·시트를 연다(실험실 항목은 열린 경우에만)
+    LaunchedEffect(openScreen, openSheet) {
+        val item = openScreen?.let { n -> runCatching { NavItem.valueOf(n) }.getOrNull() }
+        if (item != null && (item !in NavItem.LAB_ITEMS || LabUnlock.unlocked)) {
+            feature = item
+            shown = item
+        }
+        openSheet?.let { n -> runCatching { Sheet.valueOf(n) }.getOrNull() }?.let { sheet = it }
+    }
     var flying by remember { mutableStateOf<(() -> Unit)?>(null) }
     // 다음 화면이 번지기 시작할 자리(홈 카드를 누른 곳, 화면 기준). 사이드바에서 고르면 null.
     var revealFrom by remember { mutableStateOf<Offset?>(null) }

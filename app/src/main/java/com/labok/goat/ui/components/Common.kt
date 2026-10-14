@@ -5,8 +5,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
@@ -15,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -30,13 +33,17 @@ internal fun InfoRow(key: String, value: String, emphasize: Boolean = false) {
             .padding(vertical = 3.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(key, style = MaterialTheme.typography.bodyMedium, color = c.muted, modifier = Modifier.weight(1f))
+        // 이름은 한 줄로 두고(좁은 화면에서 '외부/화면'처럼 접히던 것), 값이 길면 값 쪽이 오른쪽 정렬로 줄바꿈한다
+        Text(key, style = MaterialTheme.typography.bodyMedium, color = c.muted, maxLines = 1, softWrap = false)
+        Spacer(Modifier.width(12.dp))
         Text(
             value,
             // 숫자는 고정폭 숫자(tabular)로 줄을 맞추되 글꼴은 본문과 같게 둔다.
             style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
             fontWeight = if (emphasize) FontWeight.SemiBold else FontWeight.Medium,
-            color = c.ink
+            color = c.ink,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
         )
     }
 }
