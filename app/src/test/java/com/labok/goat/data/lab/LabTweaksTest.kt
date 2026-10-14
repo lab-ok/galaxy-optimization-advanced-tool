@@ -106,4 +106,11 @@ class LabTweaksTest {
         DexStrings.strings(b, 0) { got.add(it) }
         assertEquals(listOf("abc", "FlexPanel"), got)
     }
+
+    @Test
+    fun privacyDotErrorShowsRealReason() {
+        val err = "Exception occurred while executing 'put':\njava.lang.SecurityException: Permission denial: writing to settings requires:android.permission.WRITE_DEVICE_CONFIG\n\tat android.os.Parcel"
+        assertEquals("SecurityException: Permission denial: writing to settings requires:android.permission.WRITE_DEVICE_CONFIG", PrivacyDot.reason(err))
+        assertEquals("뭔가 실패", PrivacyDot.reason("뭔가 실패"))
+    }
 }

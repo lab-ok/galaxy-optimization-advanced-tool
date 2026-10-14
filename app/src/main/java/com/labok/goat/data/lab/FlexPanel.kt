@@ -161,7 +161,7 @@ object FlexPanel {
         ShizukuAccess.shell("logcat -c")
         appendLine("삼성 패널 화면 직접 열기 → ${sh("am start -n '$PANEL_ACTIVITY'")}")
         Thread.sleep(2500)
-        val log = ShizukuAccess.shell("logcat -d -v brief | grep -i -E 'flexpanel|controlpanel|flex_panel|FlexMode|tabletop' | tail -80")?.out?.trim().orEmpty()
+        val log = ShizukuAccess.shell("logcat -d -b main,system,events -v time | grep -i -E 'flex|controlpanel|tabletop|wm_finish_activity|wm_set_resumed' | tail -300")?.out?.trim().orEmpty()
         appendLine("── 패널 화면 로그 ──")
         appendLine(log.ifBlank { "(로그 없음)" })
         appendLine("──")

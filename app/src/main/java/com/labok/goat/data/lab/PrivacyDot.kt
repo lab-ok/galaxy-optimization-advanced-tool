@@ -27,6 +27,17 @@ object PrivacyDot {
         "device_config put $NS $KEY $value"
     )
 
+    /**
+     * 셸 오류에서 실제 이유를 고른다. 첫 줄은 "Exception occurred while executing 'put':"뿐이라(폴드8 실기) 그 아래
+     * `…Exception: 이유` 줄을 찾아 예외 이름과 이유를 돌려준다(시험할 수 있게 뗐다).
+     */
+    internal fun reason(text: String): String {
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        val pat = Regex("""([\w$]+(?:Exception|Error)):\s*(.*)""")
+        val ex = lines.firstNotNullOfOrNull { pat.find(it) }
+        return (ex?.let { "${it.groupValues[1]}: ${it.groupValues[2]}" } ?: lines.firstOrNull() ?: "바뀌지 않음").take(200)
+    }
+
     /** [hide]면 초록 점을 끄고, 아니면 다시 켠다. 바뀌었으면 null, 못 바꾸면 이유(셸 메시지). 작업 스레드에서 부른다. */
     fun set(context: Context, hide: Boolean): String? {
         var last = "Shizuku 연결이 필요합니다."
@@ -36,7 +47,7 @@ object PrivacyDot {
                 LogRepository.from(context).add("실험실 마이크·카메라 사용 표시 ${if (hide) "끔" else "켬"} ($cmd)")
                 return null
             }
-            last = r.err.ifBlank { r.out }.trim().lineSequence().firstOrNull { it.isNotBlank() }?.take(160) ?: "바뀌지 않음"
+            last = reason(r.err.ifBlank { r.out })
         }
         LogRepository.from(context).add("실험실 마이크·카메라 사용 표시 ${if (hide) "끔" else "켬"} 실패: $last")
         return last

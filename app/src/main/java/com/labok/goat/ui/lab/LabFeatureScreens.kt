@@ -186,25 +186,45 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         val changed = remember(w.version) { IconBlacklist.setting.changed(context) }
         LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(IconBlacklist.setting) })
         // 마이크·카메라 사용 표시(초록 점): 상태 표시줄 아이콘과 같은 자리라 이 화면에 함께 둔다(기기 설정 값이라 Shizuku로 바꾼다)
+        // 제목·스위치를 따로 두지 않고 아이콘 줄 하나로 묶는다(위 아이콘 목록과 같은 모양)
         Spacer(Modifier.height(Gap.Section))
-        Text(Copy.LAB_PRIVACY_DOT_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text(Copy.LAB_PRIVACY_DOT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(Gap.Item))
         val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
         var dotHidden by remember { mutableStateOf<Boolean?>(null) }
         LaunchedEffect(shizuku) { dotHidden = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.hidden() } }
-        LiquidSwitchRow(Copy.LAB_PRIVACY_DOT_SWITCH, "privacy/camera_mic_icons_enabled", dotHidden == true, dotHidden != null) { hide ->
-            dotHidden = hide
-            scope.launch {
-                val err = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.set(context, hide) }
-                if (err != null) {
-                    dotHidden = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.hidden() }
-                    // 왜 안 되는지 보이게 셸 메시지를 함께 띄운다
-                    Toast.makeText(context, "${Copy.LAB_WRITE_FAILED} $err", Toast.LENGTH_LONG).show()
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            PrivacyDotGlyph(c.ink)
+            Spacer(Modifier.width(Gap.Card))
+            Box(Modifier.weight(1f)) {
+                LiquidSwitchRow(Copy.LAB_PRIVACY_DOT_SWITCH, Copy.LAB_PRIVACY_DOT_BODY, dotHidden == true, dotHidden != null) { hide ->
+                    dotHidden = hide
+                    scope.launch {
+                        val err = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.set(context, hide) }
+                        if (err != null) {
+                            dotHidden = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.hidden() }
+                            // 왜 안 되는지 보이게 셸 메시지를 함께 띄운다
+                            Toast.makeText(context, "${Copy.LAB_WRITE_FAILED} $err", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+/** 마이크·카메라 사용 표시 아이콘: 상태 표시줄 아이콘과 같은 선 굵기로 마이크를 그리고, 오른쪽 위에 사용 표시 점을 찍는다. */
+@Composable
+private fun PrivacyDotGlyph(color: androidx.compose.ui.graphics.Color, size: androidx.compose.ui.unit.Dp = 22.dp) {
+    androidx.compose.foundation.Canvas(Modifier.size(size)) {
+        val u = this.size.width / 24f
+        val s = androidx.compose.ui.graphics.drawscope.Stroke(1.7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
+        // 마이크 머리(둥근 캡슐)
+        drawRoundRect(color, androidx.compose.ui.geometry.Offset(7f * u, 3f * u), androidx.compose.ui.geometry.Size(7f * u, 11f * u), androidx.compose.ui.geometry.CornerRadius(3.5f * u), style = s)
+        // 받침 호와 기둥
+        drawArc(color, 0f, 180f, false, androidx.compose.ui.geometry.Offset(4.5f * u, 7.5f * u), androidx.compose.ui.geometry.Size(12f * u, 10f * u), style = s)
+        drawLine(color, androidx.compose.ui.geometry.Offset(10.5f * u, 17.5f * u), androidx.compose.ui.geometry.Offset(10.5f * u, 21f * u), s.width, androidx.compose.ui.graphics.StrokeCap.Round)
+        // 사용 표시 점(초록 점 자리)
+        drawCircle(color, 2.6f * u, androidx.compose.ui.geometry.Offset(19.5f * u, 4.5f * u))
     }
 }
 
@@ -274,6 +294,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var diagStatus by remember { mutableStateOf("") }
     var reviving by remember { mutableStateOf(false) }
     var reviveResult by remember { mutableStateOf("") }
+    var reviveUri by remember { mutableStateOf<Uri?>(null) }
     var wheel by remember { mutableStateOf(AutoFlex.wheel.read(context)) }
     // 이 설정 화면을 보는 동안에는 자동 플렉스를 멈춰 화면이 바뀌지 않게 한다. 시험은 [플렉스 모드 테스트하기]가 여는
     // 시험 화면(FlexTestActivity)에서만 하므로, 이 화면이 앞에 있을 때(RESUMED)만 멈춘다
@@ -492,12 +513,20 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                         reviving = true
                         scope.launch {
                             reviveResult = withContext(Dispatchers.IO) { com.labok.goat.data.lab.FlexPanel.revive(context) }
+                            // 패널 화면 로그가 길어 화면으로는 다 볼 수 없으니 결과 전체를 파일로 남겨 공유할 수 있게 한다
+                            reviveUri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("flex-revive"), reviveResult) }
                             reviving = false
                         }
                     })
                     if (reviveResult.isNotEmpty()) {
                         Spacer(Modifier.height(Gap.Item))
-                        Text(reviveResult.trim(), color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        // 화면에는 한 일만 짧게(로그 앞까지) 보여 주고, 로그를 포함한 전체는 파일로 공유한다
+                        val head = reviveResult.substringBefore("── 패널 화면 로그 ──").trim().lines().take(10).joinToString("\n")
+                        Text(head, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        reviveUri?.let { uri ->
+                            Spacer(Modifier.height(Gap.Item))
+                            LiquidButton(Copy.LAB_FLEX_REVIVE_SHARE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { share(context, uri) })
+                        }
                     }
                     Spacer(Modifier.height(Gap.Item))
                     // 진단은 1~3분 걸려, 업데이트 진행 통처럼 버튼 안에 물이 차오르며 지금 하는 일과 퍼센트를 보여 준다
