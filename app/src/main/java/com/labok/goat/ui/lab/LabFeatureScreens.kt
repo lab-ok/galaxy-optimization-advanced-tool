@@ -197,10 +197,11 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         LiquidSwitchRow(Copy.LAB_PRIVACY_DOT_SWITCH, "privacy/camera_mic_icons_enabled", dotHidden == true, dotHidden != null) { hide ->
             dotHidden = hide
             scope.launch {
-                val ok = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.set(context, hide) }
-                if (!ok) {
+                val err = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.set(context, hide) }
+                if (err != null) {
                     dotHidden = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.hidden() }
-                    Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+                    // 왜 안 되는지 보이게 셸 메시지를 함께 띄운다
+                    Toast.makeText(context, "${Copy.LAB_WRITE_FAILED} $err", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -511,12 +512,37 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                             diagProgress = 0f
                             diagStatus = Copy.LAB_FLEX_DIAG_RUNNING
                             scope.launch {
-                                val text = withContext(Dispatchers.IO) {
-                                    com.labok.goat.data.lab.FlexPanel.diagnose(context) { p, msg ->
-                                        diagProgress = p
-                                        diagStatus = msg
+                                // 진단은 다른 스레드에서 단계를 알리고, 화면은 0.2초마다 그 단계 구간 안에서 진행률과 경과 시간을 다시 그린다.
+                                // 파일 읽기처럼 얼마나 했는지 알 수 있으면 그만큼, 모르면 시간이 갈수록 구간 끝으로 천천히 다가간다(멈춰 보이지 않게)
+                                val main = android.os.Handler(android.os.Looper.getMainLooper())
+                                var from = 0f
+                                var to = 0.02f
+                                var label = Copy.LAB_FLEX_DIAG_RUNNING
+                                var startedAt = System.currentTimeMillis()
+                                var inner: Float? = null
+                                val ticker = launch {
+                                    while (true) {
+                                        val sec = (System.currentTimeMillis() - startedAt) / 1000f
+                                        val k = inner ?: (0.9f * (1f - kotlin.math.exp(-sec / 15f)))
+                                        diagProgress = from + (to - from) * k.coerceIn(0f, 1f)
+                                        diagStatus = "$label · ${sec.toInt()}초"
+                                        kotlinx.coroutines.delay(200)
                                     }
                                 }
+                                val progress = com.labok.goat.data.lab.FlexPanel.Progress(
+                                    step = { f, t, l ->
+                                        main.post {
+                                            from = f
+                                            to = t
+                                            label = l
+                                            inner = null
+                                            startedAt = System.currentTimeMillis()
+                                        }
+                                    },
+                                    inner = { k -> main.post { inner = k } }
+                                )
+                                val text = withContext(Dispatchers.IO) { com.labok.goat.data.lab.FlexPanel.diagnose(context, progress) }
+                                ticker.cancel()
                                 diagProgress = 0.97f
                                 diagStatus = "파일 저장 중"
                                 val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("flex-panel"), text) }

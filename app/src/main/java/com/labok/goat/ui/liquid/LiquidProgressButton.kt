@@ -104,9 +104,13 @@ fun LiquidProgressButton(
             }
             drawRoundRect(c.line, cornerRadius = r, style = Stroke(1.dp.toPx()))
             // 글자: 물 밖은 잉크색, 물 안은 반전색
-            val style = TextStyle(fontFamily = GalaxyFont, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            val outside = measurer.measure(label, style.copy(color = c.ink))
-            val inside = measurer.measure(label, style.copy(color = c.onInk))
+            // 글이 길면(좁은 화면) 버튼 안에 들어가게 글자를 줄인다(최소 11sp)
+            var style = TextStyle(fontFamily = GalaxyFont, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            val room = size.width - 32.dp.toPx()
+            val w15 = measurer.measure(label, style).size.width
+            if (w15 > room) style = style.copy(fontSize = (15f * room / w15).coerceAtLeast(11f).sp)
+            val outside = measurer.measure(label, style.copy(color = c.ink), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, constraints = androidx.compose.ui.unit.Constraints(maxWidth = room.toInt().coerceAtLeast(1)))
+            val inside = measurer.measure(label, style.copy(color = c.onInk), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, constraints = androidx.compose.ui.unit.Constraints(maxWidth = room.toInt().coerceAtLeast(1)))
             val at = Offset((size.width - outside.size.width) / 2f, (h - outside.size.height) / 2f)
             drawText(outside, topLeft = at)
             clipPath(water) { drawText(inside, topLeft = at) }

@@ -13,15 +13,17 @@ object DexStrings {
     private const val MAX_BYTES = 160L * 1024 * 1024
 
     /** [path] 파일에서 [pattern]에 맞는 문자열(최대 [limit]개). 읽지 못하면 이유를 담은 한 줄. 작업 스레드에서 부른다. */
-    fun find(path: String, pattern: Regex, limit: Int = 60): List<String> {
-        val bytes = read(path) ?: return listOf("(읽지 못함)")
+    fun find(path: String, pattern: Regex, limit: Int = 60, onRead: (Float) -> Unit = {}): List<String> {
+        val bytes = read(path, onRead) ?: return listOf("(읽지 못함)")
         val found = sortedSetOf<String>()
         val dexes = if (path.endsWith(".apk") || path.endsWith(".jar")) unzipDex(bytes) else listOf(bytes)
         dexes.forEach { d -> dexOffsets(d).forEach { off -> runCatching { strings(d, off) { if (pattern.containsMatchIn(it) && it.length <= 160) found.add(it) } } } }
         return found.take(limit).ifEmpty { listOf("(없음)") }
     }
 
-    private fun read(path: String): ByteArray? = runCatching {
+    /** 셸로 파일을 읽는다. 크기를 먼저 알아 두고 1MB마다 읽은 비율을 [onRead]로 알린다. */
+    private fun read(path: String, onRead: (Float) -> Unit): ByteArray? = runCatching {
+        val size = ShizukuAccess.shell("stat -c %s '$path'")?.out?.trim()?.toLongOrNull() ?: 0L
         val p = ShizukuAccess.stream("cat '$path'") ?: return null
         p.inputStream.use { input ->
             val out = java.io.ByteArrayOutputStream()
@@ -30,6 +32,7 @@ object DexStrings {
             while (true) {
                 val n = input.read(buf)
                 if (n < 0) break
+                if ((total + n) / (1 shl 20) != total / (1 shl 20) && size > 0) onRead((total + n).toFloat() / size)
                 total += n
                 if (total > MAX_BYTES) return null
                 out.write(buf, 0, n)
