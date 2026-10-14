@@ -10,8 +10,15 @@ import com.labok.goat.data.shizuku.ShizukuAccess
  * 여러 방식을 차례로 시도하고, 다시 읽어 바뀐 방식에서 멈춘다. 모두 실패하면 마지막 셸 메시지를 돌려준다.
  */
 object PrivacyDot {
+    private const val PREF = "privacy_dot"
     private const val NS = "privacy"
     private const val KEY = "camera_mic_icons_enabled"
+
+    /**
+     * 이 기기에서 쓸 수 있는지. Android 14부터는 셸(ADB·Shizuku)도 구글 허용 목록에 있는 값만 바꿀 수 있는데 이 값은 목록에 없어
+     * 막힌다(폴드8 Android 17 실기: "must add flag to the allowlist"). 그래서 Android 13 이하에서만 켜고, 그 밖에서도 한 번 막히면 끈다.
+     */
+    fun supported(context: Context): Boolean = android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.TIRAMISU && !context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getBoolean("blocked", false)
 
     /** 초록 점이 꺼져 있는지. Shizuku가 없거나 읽지 못하면 null. 작업 스레드에서 부른다. */
     fun hidden(): Boolean? {
@@ -50,6 +57,8 @@ object PrivacyDot {
             last = reason(r.err.ifBlank { r.out })
         }
         LogRepository.from(context).add("실험실 마이크·카메라 사용 표시 ${if (hide) "끔" else "켬"} 실패: $last")
+        // 허용 목록 때문에 막힌 기기는 다시 시도해도 같으니 기억해 두고 스위치를 잠근다
+        if (last.contains("allowlist", ignoreCase = true)) context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putBoolean("blocked", true).apply()
         return last
     }
 }

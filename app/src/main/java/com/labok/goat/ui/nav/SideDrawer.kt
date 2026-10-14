@@ -102,9 +102,13 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 다크 모드 없는 앱도 시스템이 어둡게 그리게 한다(Shizuku setprop). */
     DARK(Copy.FEATURE_DARK, NavIcon.MOON),
 
+    /** 비행기 모드를 켜도 고른 무선(와이파이·블루투스·NFC)은 그대로 둔다(시스템 설정 권한, 실험실에서 정식으로). */
+    AIRPLANE(Copy.FEATURE_AIRPLANE, NavIcon.AIRPLANE),
+
+    /** 상태 표시줄의 고른 아이콘을 숨긴다(시스템 설정 권한, 실험실에서 정식으로). */
+    STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.EYE_OFF),
+
     /** 숨은 실험실: 염소를 열 번 누르면 나타난다(시험 중인 기능을 둔다). */
-    LAB_AIRPLANE(Copy.FEATURE_LAB_AIRPLANE, NavIcon.AIRPLANE),
-    LAB_ICONS(Copy.FEATURE_LAB_ICONS, NavIcon.EYE_OFF),
     LAB_SCREEN(Copy.FEATURE_LAB_SCREEN, NavIcon.PALETTE),
     LAB_FLEX(Copy.FEATURE_LAB_FLEX, NavIcon.FLEX),
     LAB_PROBE(Copy.FEATURE_LAB_PROBE, NavIcon.FLASK),
@@ -118,7 +122,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_AIRPLANE, LAB_ICONS, LAB_SCREEN, LAB_FLEX, LAB_PROBE, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_PROBE, LAB_TOOLS)
     }
 }
 

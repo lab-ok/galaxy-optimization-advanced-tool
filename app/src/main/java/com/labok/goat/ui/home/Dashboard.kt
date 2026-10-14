@@ -197,6 +197,17 @@ internal fun Dashboard(
                     if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
                 }
             }
+            NavItem.STATUS_ICONS -> com.labok.goat.data.lab.IconBlacklist.setting.read(context).let { raw ->
+                com.labok.goat.data.lab.IconBlacklist.Slot.entries.count { com.labok.goat.data.lab.IconBlacklist.hidden(raw, it) }
+            }.let { if (it == 0) Copy.ICONS_DASH_NONE else Copy.iconsDash(it) }
+            // 기기마다 기본값이 달라(NFC가 원래 빠진 기기 등) GOAT로 바꾼 적이 없으면 '기본 설정'으로 둔다
+            NavItem.AIRPLANE -> if (!com.labok.goat.data.lab.AirplaneRadios.setting.changed(context)) {
+                Copy.AIRPLANE_DASH_DEFAULT
+            } else {
+                com.labok.goat.data.lab.AirplaneRadios.setting.read(context).let { raw ->
+                    com.labok.goat.data.lab.AirplaneRadios.Radio.entries.filter { com.labok.goat.data.lab.AirplaneRadios.kept(raw, it) }.map { it.label }
+                }.let { if (it.isEmpty()) Copy.AIRPLANE_DASH_NONE else Copy.airplaneDash(it) }
+            }
             else -> ""
         }
     }
@@ -215,6 +226,13 @@ internal fun Dashboard(
             NavItem.DOZE -> doze == Doze.State.OFF || (doze == Doze.State.UNKNOWN && Doze.wanted(context))
             NavItem.RESOLUTION -> ResolutionState.base(context) != null
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
+            NavItem.STATUS_ICONS -> com.labok.goat.data.lab.IconBlacklist.setting.read(context).let { raw ->
+                com.labok.goat.data.lab.IconBlacklist.Slot.entries.any { com.labok.goat.data.lab.IconBlacklist.hidden(raw, it) }
+            }
+            NavItem.AIRPLANE -> com.labok.goat.data.lab.AirplaneRadios.setting.changed(context) &&
+                com.labok.goat.data.lab.AirplaneRadios.setting.read(context).let { raw ->
+                    com.labok.goat.data.lab.AirplaneRadios.Radio.entries.any { com.labok.goat.data.lab.AirplaneRadios.kept(raw, it) }
+                }
             else -> false
         }
     }

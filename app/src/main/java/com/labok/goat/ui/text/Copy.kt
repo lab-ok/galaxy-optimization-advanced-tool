@@ -171,8 +171,8 @@ object Copy {
     const val HOME_VIEW_EMPTY_BODY = "'전체'에서 쓰고 싶은 기능을 골라 켜 보세요."
     const val HOME_VIEW_EMPTY_OFF_TITLE = "모든 기능이 켜져 있습니다"
     const val HOME_VIEW_EMPTY_OFF_BODY = "꺼 둔 기능이 생기면 여기에 모입니다."
-    const val FEATURE_LAB_AIRPLANE = "비행기 모드 무선"
-    const val FEATURE_LAB_ICONS = "상태 표시줄 아이콘"
+    const val FEATURE_AIRPLANE = "비행기 모드 무선"
+    const val FEATURE_STATUS_ICONS = "상태 표시줄 아이콘"
     const val FEATURE_LAB_SCREEN = "화면 모드"
     const val LAB_OPENED = "실험실이 열렸습니다. 사이드바에서 찾을 수 있습니다."
     const val FEATURE_LAB_PROBE = "숨은 기능 찾기"
@@ -349,6 +349,12 @@ object Copy {
 
     /** '항상 최고'를 실제 값으로 적은 이름(화면 고르기 줄·홈 카드가 함께 쓴다). */
     fun refreshAlways(top: Int) = "항상 ${top}Hz"
+    const val ICONS_DASH_NONE = "숨긴 아이콘 없음"
+    fun iconsDash(n: Int) = "숨긴 아이콘 ${n}개"
+    const val AIRPLANE_DASH_NONE = "비행기 모드 때 모두 끔"
+    const val AIRPLANE_DASH_DEFAULT = "기본 설정"
+    fun airplaneDash(kept: List<String>) = "${kept.joinToString("·")} 켜 둠"
+    const val LAB_PRIVACY_DOT_BLOCKED = "이 Android 버전은 시스템이 막아 두어 바꿀 수 없습니다"
     const val REFRESH_UNSUPPORTED_SHORT = "바꿀 수 없는 화면"
     const val REFRESH_TOAST_EXTERNAL = "GOAT가 바꾼 값이 아니라 그대로 둡니다. 삼성 설정에서 바꿔 주세요"
     const val REFRESH_CAUTION_BODY = "높은 주사율은 배터리를 더 씁니다. 절전 모드와 일부 게임에서는 시스템이 잠시 주사율을 낮춥니다."

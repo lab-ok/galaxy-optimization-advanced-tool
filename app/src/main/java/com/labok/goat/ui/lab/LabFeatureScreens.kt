@@ -196,7 +196,9 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
             PrivacyDotGlyph(c.ink)
             Spacer(Modifier.width(Gap.Card))
             Box(Modifier.weight(1f)) {
-                LiquidSwitchRow(Copy.LAB_PRIVACY_DOT_SWITCH, Copy.LAB_PRIVACY_DOT_BODY, dotHidden == true, dotHidden != null) { hide ->
+                // 지원되는 버전(Android 13 이하)에서만 켤 수 있고, 그 밖에서는 잠그고 이유를 적는다
+                val dotOk = remember(dotHidden) { com.labok.goat.data.lab.PrivacyDot.supported(context) }
+                LiquidSwitchRow(Copy.LAB_PRIVACY_DOT_SWITCH, if (dotOk) Copy.LAB_PRIVACY_DOT_BODY else Copy.LAB_PRIVACY_DOT_BLOCKED, dotHidden == true, dotOk && dotHidden != null) { hide ->
                     dotHidden = hide
                     scope.launch {
                         val err = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.set(context, hide) }
@@ -905,6 +907,50 @@ internal fun rememberHingeHorizontal(on: Boolean): Boolean {
         onDispose { sm?.unregisterListener(l) }
     }
     return horizontal
+}
+
+/** 상태 표시줄 아이콘 사용 방법(점 세 개 메뉴 → 사용 방법). */
+@Composable
+internal fun StatusIconsHelpSheet() {
+    com.labok.goat.ui.components.SheetColumn(title = "사용 방법") {
+        com.labok.goat.ui.components.HelpTopic(
+            "1. 무엇을 하나요",
+            "화면 맨 위 상태 표시줄에서 알람·블루투스·진동 같은 아이콘 중 고른 것을 숨겨 줄을 깔끔하게 합니다. " +
+                "아이콘만 숨길 뿐 기능은 그대로 켜져 있습니다."
+        )
+        com.labok.goat.ui.components.HelpTopic(
+            "2. 필요한 권한",
+            "안드로이드 시스템 UI 튜너가 쓰는 설정(icon_blacklist)을 바꿔서, 고급 화면 배율 설정과 같은 시스템 설정 권한이 필요합니다. " +
+                "점 세 개 메뉴의 '권한 설정'에서 켜는 방법을 볼 수 있습니다."
+        )
+        com.labok.goat.ui.components.HelpTopic(
+            "3. 안 숨겨지는 아이콘",
+            "One UI 버전에 따라 일부 아이콘은 이름이 달라 숨겨지지 않을 수 있습니다. 마이크·카메라 사용 표시(초록 점)는 Android 13 이하에서만 " +
+                "바꿀 수 있고, 그 위 버전은 시스템이 막아 두어 스위치가 잠깁니다."
+        )
+        com.labok.goat.ui.components.HelpTopic("4. 되돌리기", "[처음대로]를 누르면 GOAT가 바꾸기 전 값으로 돌아갑니다.")
+    }
+}
+
+/** 비행기 모드 무선 사용 방법(점 세 개 메뉴 → 사용 방법). */
+@Composable
+internal fun AirplaneHelpSheet() {
+    com.labok.goat.ui.components.SheetColumn(title = "사용 방법") {
+        com.labok.goat.ui.components.HelpTopic(
+            "1. 무엇을 하나요",
+            "비행기 모드를 켜면 보통 와이파이·블루투스·NFC까지 함께 꺼집니다. 여기서 고른 무선은 비행기 모드를 켜도 끄지 않고 그대로 둡니다. " +
+                "모바일 데이터(통신)는 비행기 모드의 뜻이라 늘 꺼집니다."
+        )
+        com.labok.goat.ui.components.HelpTopic(
+            "2. 언제 바뀌나요",
+            "다음에 비행기 모드를 켤 때부터 적용됩니다. 이미 비행기 모드라면 한 번 껐다 다시 켜 주세요."
+        )
+        com.labok.goat.ui.components.HelpTopic(
+            "3. 필요한 권한",
+            "시스템 설정(airplane_mode_radios)을 바꿔서 시스템 설정 권한이 필요합니다. 점 세 개 메뉴의 '권한 설정'에서 켜는 방법을 볼 수 있습니다."
+        )
+        com.labok.goat.ui.components.HelpTopic("4. 되돌리기", "[처음대로]를 누르면 GOAT가 바꾸기 전 값으로 돌아갑니다.")
+    }
 }
 
 /** 자동 플렉스 모드 사용 방법(점 세 개 메뉴 → 사용 방법). */

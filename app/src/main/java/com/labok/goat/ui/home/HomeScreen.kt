@@ -177,7 +177,7 @@ import kotlinx.coroutines.launch
 /** 이 너비(dp) 이상이면 사이드바를 늘 펼쳐 둔다(폴드 내부 화면·태블릿). */
 private const val WIDE_DP = 600
 
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, ICONS_HELP, AIRPLANE_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -299,11 +299,11 @@ internal fun HomeScreen(
             add(NavSection("", listOf(NavItem.HOME)))
             add(NavSection(Copy.MENU_SECTION_SCREEN, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
             // 화면 표시: 크기(해상도) → 움직임(주사율·애니메이션) → 색(다크) 순. 해상도는 화면 배율 바로 뒤라 이어서 읽힌다.
-            add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK)))
-            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE)))
+            add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, NavItem.STATUS_ICONS)))
+            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE, NavItem.AIRPLANE)))
             add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.DOZE)))
             // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구는 lab 빌드에서만 함께 둔다.
-            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_AIRPLANE, NavItem.LAB_ICONS, NavItem.LAB_SCREEN, NavItem.LAB_FLEX.takeIf { com.labok.goat.data.lab.AutoFlex.supported() }, NavItem.LAB_PROBE) else emptyList()) +
+            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_SCREEN, NavItem.LAB_FLEX.takeIf { com.labok.goat.data.lab.AutoFlex.supported() }, NavItem.LAB_PROBE) else emptyList()) +
                 listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB })
             if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }
@@ -377,7 +377,18 @@ internal fun HomeScreen(
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report
             )
-            NavItem.LAB_AIRPLANE, NavItem.LAB_ICONS, NavItem.LAB_SCREEN, NavItem.LAB_PROBE, NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
+            // 상태 표시줄 아이콘·비행기 모드 무선은 시스템 설정 권한(보안 설정 쓰기)으로 바꿔 같은 권한 설정 안내를 연다
+            NavItem.STATUS_ICONS -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.ICONS_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
+                Copy.MENU_REPORT to report
+            )
+            NavItem.AIRPLANE -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.AIRPLANE_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
+                Copy.MENU_REPORT to report
+            )
+            NavItem.LAB_SCREEN, NavItem.LAB_PROBE, NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -541,8 +552,8 @@ internal fun HomeScreen(
                             NavItem.DOZE -> DozeScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
-                            NavItem.LAB_AIRPLANE -> LabAirplaneScreen(inner)
-                            NavItem.LAB_ICONS -> LabIconsScreen(inner)
+                            NavItem.AIRPLANE -> LabAirplaneScreen(inner)
+                            NavItem.STATUS_ICONS -> LabIconsScreen(inner)
                             NavItem.LAB_SCREEN -> LabScreenModeScreen(inner)
                             NavItem.LAB_FLEX -> LabFlexScreen(inner)
                             NavItem.LAB_PROBE -> LabProbeScreen(inner)
@@ -627,6 +638,8 @@ internal fun HomeScreen(
                     Sheet.REFRESH_HELP -> RefreshHelpSheet()
                     Sheet.GOS_HELP -> GosHelpSheet()
                     Sheet.DOZE_HELP -> DozeHelpSheet()
+                    Sheet.ICONS_HELP -> com.labok.goat.ui.lab.StatusIconsHelpSheet()
+                    Sheet.AIRPLANE_HELP -> com.labok.goat.ui.lab.AirplaneHelpSheet()
                     Sheet.CHANGELOG -> ChangelogSheet()
                     Sheet.PERMISSIONS -> PermissionsSheet()
                     Sheet.DARK_HELP -> DarkHelpSheet()
