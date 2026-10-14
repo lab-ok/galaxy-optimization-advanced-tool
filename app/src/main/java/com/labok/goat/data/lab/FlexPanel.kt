@@ -62,16 +62,23 @@ object FlexPanel {
      * 터치패널 진단(3차): 폴드8 시스템에 삼성 플렉스 패널 코드가 남아 있는지 본다. 시스템 UI·설정 앱·멀티 창·시스템 서비스 파일의
      * 코드 이름에서 패널 흔적을 찾고, 패널 관련 구성요소·앱별 패널 값·설정·접힘 상태를 함께 모은다(읽기만 한다).
      */
-    fun diagnose(context: Context): String = buildString {
+    fun diagnose(context: Context, progress: (Float, String) -> Unit = { _, _ -> }): String = buildString {
         val flex = Regex("(?i)flex")
         fun sh(cmd: String) = ShizukuAccess.shell(cmd)?.let { it.out.ifBlank { it.err } }?.trim()?.ifBlank { "(없음)" } ?: "Shizuku 연결 안 됨"
+        progress(0.02f, "패널 구성요소 찾는 중")
         val comps = panelComponents()
+        progress(0.08f, "읽을 시스템 파일 고르는 중")
         val files = listOf("com.android.systemui", "com.android.settings", "com.samsung.android.multistar")
             .flatMap { pkg -> ShizukuAccess.shell("pm path $pkg")?.out.orEmpty().lines().map { it.removePrefix("package:").trim() }.filter { it.isNotEmpty() } } +
             listOf("/system/framework/services.jar", "/system/framework/framework.jar") +
             ShizukuAccess.shell("ls /system/framework/oat/arm64/")?.out.orEmpty().lines().map { it.trim() }
                 .filter { it.endsWith(".vdex") && (it.startsWith("services") || it.startsWith("framework")) }.map { "/system/framework/oat/arm64/$it" }
-        val traces = files.associateWith { DexStrings.find(it, PANEL_WORDS) }
+        // 시스템 파일 읽기가 가장 오래 걸려 진행률의 대부분(10~90%)을 파일 수로 나눠 쓴다
+        val traces = files.withIndex().associate { (i, f) ->
+            progress(0.1f + 0.8f * i / files.size, "${f.substringAfterLast('/')} 읽는 중")
+            f to DexStrings.find(f, PANEL_WORDS)
+        }
+        progress(0.92f, "설정·접힘 상태 모으는 중")
         val hit = traces.count { (_, v) -> v.none { it.startsWith("(") } }
         appendLine("요약: 패널 관련 구성요소 ${comps.size}개 · 패널 코드 흔적이 있는 파일 $hit/${files.size}개 · 창 관리자 패널 함수 ${if (hasAppApi()) "있음" else "없음"}")
         appendLine()
@@ -109,22 +116,39 @@ object FlexPanel {
         appendLine(sh("dumpsys package com.android.settings | grep -i -A6 'FlexModePanel' | head -60"))
     }
 
+    /** 폴드8 시스템 UI 안에 남아 있는 삼성 패널 화면(진단 3차에서 코드 이름으로 찾음). */
+    private const val PANEL_ACTIVITY = "com.android.systemui/com.android.wm.shell.controlpanel.activity.FlexPanelActivity"
+
+    /** 플렉스 패널을 부르는 시스템 신호(프레임워크 코드 이름에서 찾음). */
+    private val PANEL_ACTIONS = listOf("android.intent.action.AUTORUN_FLEX_PANEL", "android.intent.action.EXPAND_FLEX_PANEL")
+
     /**
-     * 삼성 터치패널 살리기 시도: 패널 설정을 켜고, 설정 앱에 숨어 있는 '플렉스 모드 패널' 화면을 연다.
-     * 패널 관련 시스템 UI 화면이 있으면 반쯤 접힘을 건 채 한 번씩 띄워 본다. 한 일과 결과를 줄마다 돌려준다. 작업 스레드에서 부른다.
+     * 삼성 터치패널 살리기 시도: 패널 설정을 켜고, 크롬(없으면 유튜브)을 앞에 띄운 뒤 반쯤 접힘을 걸고 시스템 UI에 남아 있는 삼성 패널 화면을
+     * 직접 열고 패널 신호를 보낸다. 패널이 뜨는지 사용자가 볼 수 있게 20초 동안 그대로 두었다가 접힘 상태를 원래대로 돌린다.
+     * 한 일과 결과를 줄마다 돌려준다. 작업 스레드에서 부른다.
      */
     fun revive(context: Context): String = buildString {
-        fun sh(cmd: String) = ShizukuAccess.shell(cmd)?.let { r -> (if (r.ok) "성공" else "실패") + r.out.ifBlank { r.err }.trim().take(160).let { if (it.isEmpty()) "" else " · $it" } } ?: "Shizuku 연결 안 됨"
+        fun sh(cmd: String) = ShizukuAccess.shell(cmd)?.let { r -> (if (r.ok) "성공" else "실패") + r.out.ifBlank { r.err }.trim().take(200).let { if (it.isEmpty()) "" else " · $it" } } ?: "Shizuku 연결 안 됨"
         appendLine("패널 설정 켜기 → ${sh("settings put global flex_mode_panel_enabled 1")}")
-        // 이름에 $가 있어 작은따옴표로 감싼다(셸이 변수로 읽지 않게)
-        appendLine("숨은 '플렉스 모드 패널' 설정 화면 열기 → ${sh("am start -n 'com.android.settings/.Settings\$FlexModePanelSettingsActivity'")}")
-        val panels = panelComponents().filter { it.startsWith("com.android.systemui/") && Regex("(?i)activity|panel").containsMatchIn(it.substringAfter('/')) }
-        if (panels.isEmpty()) {
-            appendLine("시스템 UI에 패널 화면이 없어 직접 띄우기는 건너뜀")
-        } else {
-            appendLine("반쯤 접힘 걸기 → ${forceHalfOpened(context) ?: "성공"}")
-            panels.forEach { appendLine("$it 띄우기 → ${sh("am start -n '$it'")}") }
+        listOf("global", "secure", "system").forEach { t ->
+            val v = ShizukuAccess.shell("settings get $t flex_mode_apps_to_show_flex_mode_panel_automatically")?.out?.trim()
+            if (!v.isNullOrBlank() && v != "null") appendLine("자동 표시 앱 목록($t) = ${v.take(200)}")
         }
+        val pm = context.packageManager
+        val app = listOf("com.android.chrome", "com.google.android.youtube").firstOrNull { pm.getLaunchIntentForPackage(it) != null }
+        if (app != null) {
+            appendLine("$app 띄우기 → ${sh("monkey -p $app -c android.intent.category.LAUNCHER 1")}")
+            Thread.sleep(1500)
+        }
+        appendLine("반쯤 접힘 걸기 → ${forceHalfOpened(context) ?: "성공"}")
+        Thread.sleep(1000)
+        appendLine("삼성 패널 화면 직접 열기 → ${sh("am start -n '$PANEL_ACTIVITY'")}")
+        Thread.sleep(800)
+        PANEL_ACTIONS.forEach { appendLine("${it.substringAfterLast('.')} 신호 → ${sh("am broadcast -a $it")}") }
+        appendLine("지금 맨 앞 화면 → ${sh("dumpsys activity activities | grep -m1 -E 'topResumedActivity|mResumedActivity'")}")
+        // 패널이 떴는지 볼 시간을 준 뒤 접힘 상태를 되돌린다
+        Thread.sleep(20_000)
+        appendLine("접힘 상태 되돌리기 → ${resetPosture(context) ?: "성공"}")
         LogRepository.from(context).add("실험실 플렉스: 삼성 터치패널 살리기 시도")
     }
 

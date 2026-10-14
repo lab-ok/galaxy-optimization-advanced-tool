@@ -201,7 +201,7 @@ object Copy {
     const val LAB_FLEX_DIM = "가까이 접으면 밝기 고정"
     const val LAB_FLEX_DIM_BODY = "50° 안쪽으로 접으면 마주 본 화면 빛에 밝기가 올라가지 않게 자동 밝기를 잠시 멈춥니다."
     const val LAB_FLEX_DIAG_TITLE = "삼성 터치패널 살리기"
-    const val LAB_FLEX_DIAG_BODY = "폴드8에서 빠진 삼성 터치패널을 다시 띄워 봅니다. 결과를 보고 다음 방법을 정합니다."
+    const val LAB_FLEX_DIAG_BODY = "크롬을 열고 반쯤 접힘에서 삼성 패널을 불러 봅니다. 20초 동안 살펴본 뒤 GOAT로 돌아와 결과를 보세요."
     const val LAB_FLEX_REVIVE = "살리기 시도"
     const val LAB_FLEX_REVIVE_RUNNING = "시도하는 중…"
     const val LAB_FLEX_DIAG_RUN = "진단 파일 만들기"

@@ -250,7 +250,8 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var off by remember { mutableStateOf(AutoFlex.excluded(context)) }
     var appsOpen by remember { mutableStateOf(false) }
     var gesturesOpen by remember { mutableStateOf(false) }
-    var diagRunning by remember { mutableStateOf(false) }
+    var diagProgress by remember { mutableStateOf<Float?>(null) }
+    var diagStatus by remember { mutableStateOf("") }
     var reviving by remember { mutableStateOf(false) }
     var reviveResult by remember { mutableStateOf("") }
     var wheel by remember { mutableStateOf(AutoFlex.wheel.read(context)) }
@@ -479,15 +480,35 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                         Text(reviveResult.trim(), color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(if (diagRunning) Copy.LAB_FLEX_DIAG_RUNNING else Copy.LAB_FLEX_DIAG_RUN, primary = false, enabled = !diagRunning && shizuku == ShizukuAccess.State.READY, modifier = Modifier.fillMaxWidth(), onClick = {
-                        diagRunning = true
-                        scope.launch {
-                            val text = withContext(Dispatchers.IO) { com.labok.goat.data.lab.FlexPanel.diagnose(context) }
-                            val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("flex-panel"), text) }
-                            diagRunning = false
-                            uri?.let { share(context, it) }
+                    // 진단은 1~3분 걸려, 업데이트 진행 통처럼 버튼 안에 물이 차오르며 지금 하는 일과 퍼센트를 보여 준다
+                    com.labok.goat.ui.liquid.LiquidProgressButton(
+                        Copy.LAB_FLEX_DIAG_RUN,
+                        progress = diagProgress,
+                        status = diagStatus,
+                        enabled = shizuku == ShizukuAccess.State.READY,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            if (diagProgress != null) return@LiquidProgressButton
+                            diagProgress = 0f
+                            diagStatus = Copy.LAB_FLEX_DIAG_RUNNING
+                            scope.launch {
+                                val text = withContext(Dispatchers.IO) {
+                                    com.labok.goat.data.lab.FlexPanel.diagnose(context) { p, msg ->
+                                        diagProgress = p
+                                        diagStatus = msg
+                                    }
+                                }
+                                diagProgress = 0.97f
+                                diagStatus = "파일 저장 중"
+                                val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("flex-panel"), text) }
+                                diagProgress = 1f
+                                diagStatus = "완료"
+                                kotlinx.coroutines.delay(600)
+                                diagProgress = null
+                                uri?.let { share(context, it) }
+                            }
                         }
-                    })
+                    )
                 }
             }
         }
