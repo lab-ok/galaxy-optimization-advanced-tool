@@ -255,6 +255,21 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         onDispose { AutoFlex.setPaused("screen", false) }
     }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
+    // 설정 화면에서는 자동 플렉스를 멈춰 두지만, 각도가 범위에 들어오고 나가는 것은 진동으로 느끼게 한다(서비스와 같은 진동).
+    // 범위를 끌어 바꿀 때가 아니라 폰을 접고 펼 때만 울리도록 각도가 바뀔 때만 본다. 시험 화면에서는 서비스가 울린다
+    val rangeNow by androidx.compose.runtime.rememberUpdatedState(min to max)
+    val testingNow by androidx.compose.runtime.rememberUpdatedState(testing)
+    val angleNow by androidx.compose.runtime.rememberUpdatedState(angle)
+    LaunchedEffect(supported) {
+        if (!supported) return@LaunchedEffect
+        var was: Boolean? = null
+        androidx.compose.runtime.snapshotFlow { angleNow }.collect { a ->
+            if (a == null) return@collect
+            val inside = AutoFlex.inRange(a, rangeNow.first, rangeNow.second)
+            if (was != null && inside != was && !testingNow) AutoFlex.rangeBuzz(context, inside)
+            was = inside
+        }
+    }
     LaunchedEffect(supported) {
         if (supported) apps = withContext(Dispatchers.IO) { loadApps(context) }
     }
@@ -638,8 +653,9 @@ private fun FlexTestDialog(angle: Float?, min: Int, max: Int, active: Boolean, l
                         Spacer(Modifier.height(Gap.Item))
                         Text(Copy.LAB_FLEX_TEST_HOW, color = c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         Text("$min~$max°", color = c.ink, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Spacer(Modifier.height(Gap.Item))
-                        FlexAngleGauge(angle, min, max, active, editable = false)
+                        Spacer(Modifier.height(Gap.Section))
+                        // 시험만 한다: 조절바 없이 지금 각도만 크게
+                        Text(angle?.let { "${it.roundToInt()}°" } ?: "—", color = c.ink, fontSize = 64.sp, lineHeight = 68.sp, fontWeight = FontWeight.Bold)
                     }
                 } else {
                     Column(Modifier.padding(Gap.CardPadding).graphicsLayer { alpha = (split - 0.5f) * 2 }, horizontalAlignment = Alignment.CenterHorizontally) {

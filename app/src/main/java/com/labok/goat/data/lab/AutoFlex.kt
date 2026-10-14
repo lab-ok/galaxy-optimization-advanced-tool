@@ -178,7 +178,7 @@ object AutoFlex {
      * 범위 진동: 들어오면 스스스 점점 세지는 진동(천천히 차오름), 벗어나면 탁 치고 힘이 빠지는 진동.
      * 효과 조합을 못 쓰는 기기는 진동 세기를 단계로 올리고 내려 비슷하게 낸다.
      */
-    private fun rangeBuzz(context: Context, inside: Boolean) {
+    fun rangeBuzz(context: Context, inside: Boolean) {
         val v = context.getSystemService(android.os.VibratorManager::class.java)?.defaultVibrator ?: return
         if (!v.hasVibrator()) return
         val rise = android.os.VibrationEffect.Composition.PRIMITIVE_SLOW_RISE
