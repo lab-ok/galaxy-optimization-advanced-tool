@@ -189,46 +189,51 @@ object FlexPanel {
         if (help.contains("base-state")) {
             val half = Regex("identifier=(\\d+), name='HALF_OPENED'").find(ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty())?.groupValues?.get(1) ?: "2"
             // 10차: 9차에서 회전을 0~3 어느 쪽으로 고정해도 isSupportRotation=false였다. 삼성 코드(디컴파일 덤프)에서 이 값은
-            // 시스템 UI가 처음 뜰 때의 회전을 한 번만 읽어 두는 final 필드다(mRotation, 0·2만 허용). 그래서 회전을 0으로 고정한 채
-            // 시스템 UI를 다시 띄워 그 값을 0으로 새로 읽게 한 뒤 반쯤 접힘을 건다. 화면이 몇 초 깜빡이고 상태 표시줄이 다시 그려진다
+            // 시스템 UI가 처음 뜰 때의 회전을 한 번만 읽어 두는 final 필드다(mRotation, 덤프 기준 0·2만 허용).
+            // 11차: 10차에서 회전 0으로 고정한 채 시스템 UI를 다시 띄워도 false였다. 폴드8 빌드는 덤프와 기준이 다를 수 있어
+            // (폴드8 로그에는 덤프에 없는 mIsInFixedRotation이 찍힌다), 회전 0·1·2·3마다 시스템 UI를 다시 띄워 어느 방향에서 통과하는지 본다.
+            // 패널이 뜨면 그 방향에서 멈춘다. 방향마다 화면이 몇 초 깜빡이고 상태 표시줄이 다시 그려진다
             val autoRot0 = ShizukuAccess.shell("settings get system accelerometer_rotation")?.out?.trim()
             val userRot0 = ShizukuAccess.shell("settings get system user_rotation")?.out?.trim()
-            appendLine("시도 0: 회전 0°로 고정 → ${sh("settings put system accelerometer_rotation 0 && settings put system user_rotation 0")}")
-            Thread.sleep(2000)
-            appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
-            val before = ShizukuAccess.shell("pidof com.android.systemui")?.out?.trim()
-            appendLine("시도 0: 시스템 UI 다시 띄우기 → ${sh("am crash com.android.systemui 2>&1 || am force-stop com.android.systemui 2>&1")}")
-            var after: String? = null
-            for (i in 0 until 20) {
+            for (rot in 0..3) {
+                appendLine("시도 0-$rot: 회전 ${rot * 90}°로 고정 → ${sh("settings put system accelerometer_rotation 0 && settings put system user_rotation $rot")}")
+                Thread.sleep(2000)
+                appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
+                val before = ShizukuAccess.shell("pidof com.android.systemui")?.out?.trim()
+                appendLine("시도 0-$rot: 시스템 UI 다시 띄우기 → ${sh("am crash com.android.systemui 2>&1 || am force-stop com.android.systemui 2>&1")}")
+                var after: String? = null
+                for (i in 0 until 20) {
+                    Thread.sleep(1000)
+                    after = ShizukuAccess.shell("pidof com.android.systemui")?.out?.trim()?.takeIf { it.isNotBlank() && it != before }
+                    if (after != null) break
+                }
+                appendLine("시스템 UI 프로세스 ${before ?: "-"} → ${after ?: "(바뀌지 않음)"}")
+                Thread.sleep(6000)
+                ShizukuAccess.shell("logcat -b all -c")
+                appendLine("시도 0-$rot: 물리 상태를 반쯤 접힘으로 → ${sh("cmd device_state base-state $half")}")
+                Thread.sleep(3000)
+                val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -E 'FlexPanelStartController|FlexPanelActivity' | grep -v -E 'at (com|android|java|dalvik)\\.' | head -40")?.out?.trim().orEmpty()
+                appendLine("── 시도 0-$rot 로그 ──")
+                appendLine(log.ifBlank { "(로그 없음)" })
+                appendLine("──")
+                val opened = log.contains("wm_create_activity") && !log.contains("wm_finish_activity")
+                appendLine(
+                    "시도 0-$rot 결과: ${if (opened) {
+                        "패널이 떠서 유지됨"
+                    } else if (log.contains("wm_create_activity")) {
+                        "패널이 떴다가 닫힘"
+                    } else {
+                        "패널이 뜨지 않음"
+                    }}"
+                )
+                if (opened) {
+                    appendLine("패널을 10초 동안 그대로 둡니다. 화면을 눌러 보세요")
+                    Thread.sleep(10_000)
+                }
+                appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
                 Thread.sleep(1000)
-                after = ShizukuAccess.shell("pidof com.android.systemui")?.out?.trim()?.takeIf { it.isNotBlank() && it != before }
-                if (after != null) break
+                if (opened) break
             }
-            appendLine("시스템 UI 프로세스 ${before ?: "-"} → ${after ?: "(바뀌지 않음)"}")
-            Thread.sleep(6000)
-            ShizukuAccess.shell("logcat -b all -c")
-            appendLine("시도 0: 물리 상태를 반쯤 접힘으로 → ${sh("cmd device_state base-state $half")}")
-            Thread.sleep(3000)
-            val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -E 'FlexPanelStartController|FlexPanelActivity' | grep -v -E 'at (com|android|java|dalvik)\\.' | head -40")?.out?.trim().orEmpty()
-            appendLine("── 시도 0 로그 ──")
-            appendLine(log.ifBlank { "(로그 없음)" })
-            appendLine("──")
-            val opened = log.contains("wm_create_activity") && !log.contains("wm_finish_activity")
-            appendLine(
-                "시도 0 결과: ${if (opened) {
-                    "패널이 떠서 유지됨"
-                } else if (log.contains("wm_create_activity")) {
-                    "패널이 떴다가 닫힘"
-                } else {
-                    "패널이 뜨지 않음"
-                }}"
-            )
-            if (opened) {
-                appendLine("패널을 10초 동안 그대로 둡니다. 화면을 눌러 보세요")
-                Thread.sleep(10_000)
-            }
-            appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
-            Thread.sleep(1000)
             appendLine("회전 설정 되돌리기 → ${sh("settings put system accelerometer_rotation ${autoRot0?.takeIf { it != "null" } ?: "1"} && settings put system user_rotation ${userRot0?.takeIf { it != "null" } ?: "0"}")}")
             Thread.sleep(1500)
         } else {
