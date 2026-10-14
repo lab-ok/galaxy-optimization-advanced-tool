@@ -1,5 +1,7 @@
 package com.labok.goat.ui.text
 
+import java.util.Locale
+
 /**
  * 화면 문구 한곳. 원칙: 사용자가 알아야 할 것만 한 문장으로. 지나치게 풀어 쓰지 않고 DPI·해상도·권한처럼
  * 표준 용어를 그대로 쓴다. 어조는 시스템 설정 앱처럼 "~합니다/~하세요".
@@ -382,7 +384,7 @@ object Copy {
 
     /** 내려받는 중: "내려받는 중 42% · 8.9 / 21.1MB · 2.4MB/s"(속도를 아직 모르면 뺀다). */
     fun updateProgress(percent: Int, done: Float, total: Float, bps: Float): String {
-        fun mb(b: Float) = String.format(java.util.Locale.ROOT, "%.1f", b / (1024 * 1024))
+        fun mb(b: Float) = String.format(Locale.ROOT, "%.1f", b / (1024 * 1024))
         return "$UPDATE_DOWNLOADING $percent% · ${mb(done)} / ${mb(total)}MB" + if (bps > 0f) " · ${mb(bps)}MB/s" else ""
     }
     const val UPDATE_INSTALLING = "설치하는 중… 끝나면 GOAT가 다시 시작됩니다"

@@ -1,5 +1,7 @@
 package com.labok.goat.ui.help
 
+import com.labok.goat.ui.art.GuideScene
+
 /**
  * PC adb로 WRITE_SECURE_SETTINGS를 부여하는 안내 문구.
  * 연결 방식(USB/무선)과 PC 운영체제에 따라 단계와 명령이 달라진다. Android 의존성이 없어 단위 테스트로 검증한다.
@@ -19,16 +21,16 @@ object GrantGuideContent {
         val links: List<Pair<String, String>> = emptyList()
     ) {
         /** 이 단계에 보여 줄 그림 장면. */
-        val scene: com.labok.goat.ui.art.GuideScene
+        val scene: GuideScene
             get() = when {
-                title.startsWith("폰 준비") -> com.labok.goat.ui.art.GuideScene.DEV_OPTIONS
-                title.startsWith("PC에 adb 설치") -> com.labok.goat.ui.art.GuideScene.INSTALL
-                title.startsWith("페어링") -> com.labok.goat.ui.art.GuideScene.PAIR
-                title.startsWith("연결 확인") -> com.labok.goat.ui.art.GuideScene.USB_CONNECT
-                title.startsWith("연결") -> com.labok.goat.ui.art.GuideScene.WIRELESS_CONNECT
-                title.startsWith("권한 부여") -> com.labok.goat.ui.art.GuideScene.COMMAND
-                title.startsWith("마무리") -> com.labok.goat.ui.art.GuideScene.DONE
-                else -> com.labok.goat.ui.art.GuideScene.USB_CONNECT
+                title.startsWith("폰 준비") -> GuideScene.DEV_OPTIONS
+                title.startsWith("PC에 adb 설치") -> GuideScene.INSTALL
+                title.startsWith("페어링") -> GuideScene.PAIR
+                title.startsWith("연결 확인") -> GuideScene.USB_CONNECT
+                title.startsWith("연결") -> GuideScene.WIRELESS_CONNECT
+                title.startsWith("권한 부여") -> GuideScene.COMMAND
+                title.startsWith("마무리") -> GuideScene.DONE
+                else -> GuideScene.USB_CONNECT
             }
     }
 

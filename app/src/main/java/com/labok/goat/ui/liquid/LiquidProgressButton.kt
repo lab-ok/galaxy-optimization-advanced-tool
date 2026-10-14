@@ -27,6 +27,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
@@ -109,8 +111,8 @@ fun LiquidProgressButton(
             val room = size.width - 32.dp.toPx()
             val w15 = measurer.measure(label, style).size.width
             if (w15 > room) style = style.copy(fontSize = (15f * room / w15).coerceAtLeast(11f).sp)
-            val outside = measurer.measure(label, style.copy(color = c.ink), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, constraints = androidx.compose.ui.unit.Constraints(maxWidth = room.toInt().coerceAtLeast(1)))
-            val inside = measurer.measure(label, style.copy(color = c.onInk), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, constraints = androidx.compose.ui.unit.Constraints(maxWidth = room.toInt().coerceAtLeast(1)))
+            val outside = measurer.measure(label, style.copy(color = c.ink), maxLines = 1, overflow = TextOverflow.Ellipsis, constraints = Constraints(maxWidth = room.toInt().coerceAtLeast(1)))
+            val inside = measurer.measure(label, style.copy(color = c.onInk), maxLines = 1, overflow = TextOverflow.Ellipsis, constraints = Constraints(maxWidth = room.toInt().coerceAtLeast(1)))
             val at = Offset((size.width - outside.size.width) / 2f, (h - outside.size.height) / 2f)
             drawText(outside, topLeft = at)
             clipPath(water) { drawText(inside, topLeft = at) }

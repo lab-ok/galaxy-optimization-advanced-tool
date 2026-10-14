@@ -11,7 +11,9 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.Path
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.cos
+import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -244,7 +246,7 @@ class SoftBlob(private val n: Int = N) {
         for (i in 0 until n) {
             val dx = px[i] - x
             val dy = py[i] - y
-            val k = kotlin.math.exp(-(dx * dx + dy * dy) / r2)
+            val k = exp(-(dx * dx + dy * dy) / r2)
             vx[i] += ix * k
             vy[i] += iy * k
         }
@@ -436,7 +438,7 @@ fun rememberSoftBlob(): SoftBlobState {
                 // 앱 설정의 UI 애니메이션 속도만큼 물리 시간을 빨리(느리게) 흘린다
                 val dt = (if (last == 0L) 1f / 60 else ((now - last) / 1e9f).coerceIn(1f / 480, 1f / 12)) * UiMotion.speed
                 last = now
-                val sub = kotlin.math.ceil(dt * 240f).toInt().coerceAtLeast(1)
+                val sub = ceil(dt * 240f).toInt().coerceAtLeast(1)
                 var moving = false
                 repeat(sub) { moving = s.blob.step(dt / sub) or moving }
                 s.frame++

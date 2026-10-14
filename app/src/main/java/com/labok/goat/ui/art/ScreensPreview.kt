@@ -17,6 +17,7 @@ import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Springs
 import com.labok.goat.ui.liquid.rememberBreath
+import kotlin.math.sqrt
 
 /**
  * 미리보기: 외부·내부 화면을 같은 높이(폴드 실물 비율, 내부는 가로로 긴 화면)로 나란히 그리고, 각 화면에 적용될 밀도로 아이콘을 그린다.
@@ -61,7 +62,7 @@ fun ScreensPreview(
         val iw = h / innerAspect
         val ih = h
         // 아이콘 배율: 내부 화면의 실제 높이(인치)를 그려진 높이에 맞춘 값을 두 화면에 똑같이 쓴다.
-        val innerHeightIn = innerInch / kotlin.math.sqrt(1 + innerAspect * innerAspect) * innerAspect
+        val innerHeightIn = innerInch / sqrt(1 + innerAspect * innerAspect) * innerAspect
         val scale = h / innerHeightIn
         val start = (size.width - ow - gap - iw) / 2
         // 두 화면의 아래쪽을 맞춘다(실제로 나란히 둔 모습).

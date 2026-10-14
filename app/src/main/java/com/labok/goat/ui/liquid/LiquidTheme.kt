@@ -1,8 +1,11 @@
 package com.labok.goat.ui.liquid
 
+import android.content.Context
+import android.graphics.Typeface
 import android.provider.Settings
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -14,7 +17,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.AndroidFont
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontLoadingStrategy
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.Density
@@ -117,23 +126,23 @@ fun LiquidTheme(content: @Composable () -> Unit) {
  * 방식이라, Compose 기본 글꼴(이름으로 sans-serif를 찾음)로는 반영되지 않는 기기가 있다. 그 객체를 직접 써서 기기 글꼴을 따른다.
  * 굵기는 안드로이드가 같은 글꼴에서 맞는 굵기를 고른다.
  */
-@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
-val GalaxyFont: androidx.compose.ui.text.font.FontFamily = androidx.compose.ui.text.font.FontFamily(
-    (1..9).flatMap { w -> listOf(false, true).map { italic -> DeviceDefaultFont(androidx.compose.ui.text.font.FontWeight(w * 100), italic) } }
+@OptIn(ExperimentalTextApi::class)
+val GalaxyFont: FontFamily = FontFamily(
+    (1..9).flatMap { w -> listOf(false, true).map { italic -> DeviceDefaultFont(FontWeight(w * 100), italic) } }
 )
 
 /** 기기 기본 글꼴(Typeface.DEFAULT)의 [weight]·기울임 한 벌. 굵기마다 안드로이드가 같은 글꼴의 그 굵기를 고른다. */
-@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class)
 private class DeviceDefaultFont(
-    override val weight: androidx.compose.ui.text.font.FontWeight,
+    override val weight: FontWeight,
     italic: Boolean
-) : androidx.compose.ui.text.font.AndroidFont(androidx.compose.ui.text.font.FontLoadingStrategy.Blocking, Loader) {
-    override val style = if (italic) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal
+) : AndroidFont(FontLoadingStrategy.Blocking, Loader) {
+    override val style = if (italic) FontStyle.Italic else FontStyle.Normal
 
-    private object Loader : androidx.compose.ui.text.font.AndroidFont.TypefaceLoader {
-        override fun loadBlocking(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont): android.graphics.Typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, font.weight.weight, font.style == androidx.compose.ui.text.font.FontStyle.Italic)
+    private object Loader : AndroidFont.TypefaceLoader {
+        override fun loadBlocking(context: Context, font: AndroidFont): Typeface = Typeface.create(Typeface.DEFAULT, font.weight.weight, font.style == FontStyle.Italic)
 
-        override suspend fun awaitLoad(context: android.content.Context, font: androidx.compose.ui.text.font.AndroidFont): android.graphics.Typeface = loadBlocking(context, font)
+        override suspend fun awaitLoad(context: Context, font: AndroidFont): Typeface = loadBlocking(context, font)
     }
 }
 
@@ -144,7 +153,7 @@ private class DeviceDefaultFont(
  * 2. 같은 제목 아래 이어지는 설명 문단 사이에는 따로 간격(Spacer)을 넣지 않는다(줄 간격으로만 나눈다).
  * 글자 크기는 Material 3 기본과 같고 줄 높이만 줄였다.
  */
-private val LiquidType = androidx.compose.material3.Typography().let { t0 ->
+private val LiquidType = Typography().let { t0 ->
     // 모든 글자 모양에 기기 글꼴(GalaxyFont)을 쓴다
     val t = t0.copy(
         displayLarge = t0.displayLarge.copy(fontFamily = GalaxyFont), displayMedium = t0.displayMedium.copy(fontFamily = GalaxyFont),

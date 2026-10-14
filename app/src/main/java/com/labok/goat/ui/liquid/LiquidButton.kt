@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -223,7 +224,7 @@ private fun gatherOf(t: Float, drops: List<Drop>): Float {
     return drops.sumOf { inOut(((t - T_HANG - it.delay) / T_GATHER).coerceIn(0f, 1f)).toDouble() }.toFloat() / drops.size
 }
 
-private fun DrawScope.drawBody(color: androidx.compose.ui.graphics.Color, cx: Float, cy: Float, w: Float, h: Float) {
+private fun DrawScope.drawBody(color: Color, cx: Float, cy: Float, w: Float, h: Float) {
     if (w <= 0f || h <= 0f) return
     drawRoundRect(color, Offset(cx - w / 2, cy - h / 2), Size(w, h), CornerRadius(h / 2))
 }
@@ -250,7 +251,7 @@ private class Drop(
     val gyK: Float,
     val delay: Float
 ) {
-    fun draw(scope: DrawScope, color: androidx.compose.ui.graphics.Color, t: Float, cx: Float, cy: Float, w: Float, h: Float) = with(scope) {
+    fun draw(scope: DrawScope, color: Color, t: Float, cx: Float, cy: Float, w: Float, h: Float) = with(scope) {
         val dp = 1.dp.toPx()
         val sx = cx + ex * w * 0.3f * startK
         val sy = cy + ey * h * 0.3f * startK

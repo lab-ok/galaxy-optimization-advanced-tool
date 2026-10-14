@@ -16,11 +16,17 @@ import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.PowerManager
+import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.labok.goat.R
+import com.labok.goat.data.appsize.AppList
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.MainActivity
+import kotlin.math.abs
+import kotlin.math.sqrt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -93,7 +99,7 @@ object AutoFlex {
         }
         val skip = excluded(context)
         val mine = FlexPanel.registered(context)
-        com.labok.goat.data.appsize.AppList.launcherApps(context)
+        AppList.launcherApps(context)
             .map { it.pkg }
             .filter { it != context.packageName && it !in skip && it !in mine }
             .forEach { FlexPanel.setApp(context, it, true) }
@@ -182,23 +188,23 @@ object AutoFlex {
      * 끌 때는 힘이 빠지듯 내려가는 틱 한 번. 효과 조합을 못 쓰는 기기는 짧은 진동 길이로 같은 박자를 낸다.
      */
     private fun buzz(context: Context, on: Boolean) {
-        val v = context.getSystemService(android.os.VibratorManager::class.java)?.defaultVibrator ?: return
+        val v = context.getSystemService(VibratorManager::class.java)?.defaultVibrator ?: return
         if (!v.hasVibrator()) return
-        val tick = android.os.VibrationEffect.Composition.PRIMITIVE_TICK
-        val clickP = android.os.VibrationEffect.Composition.PRIMITIVE_CLICK
-        val fall = android.os.VibrationEffect.Composition.PRIMITIVE_QUICK_FALL
+        val tick = VibrationEffect.Composition.PRIMITIVE_TICK
+        val clickP = VibrationEffect.Composition.PRIMITIVE_CLICK
+        val fall = VibrationEffect.Composition.PRIMITIVE_QUICK_FALL
         val effect = if (on && v.areAllPrimitivesSupported(tick, clickP)) {
-            android.os.VibrationEffect.startComposition()
+            VibrationEffect.startComposition()
                 .addPrimitive(tick, 0.6f)
                 .addPrimitive(clickP, 1f, 70)
                 .addPrimitive(clickP, 1f, 110)
                 .compose()
         } else if (!on && v.areAllPrimitivesSupported(fall)) {
-            android.os.VibrationEffect.startComposition().addPrimitive(fall, 0.8f).compose()
+            VibrationEffect.startComposition().addPrimitive(fall, 0.8f).compose()
         } else if (on) {
-            android.os.VibrationEffect.createWaveform(longArrayOf(0, 12, 70, 25, 110, 25), intArrayOf(0, 120, 0, 255, 0, 255), -1)
+            VibrationEffect.createWaveform(longArrayOf(0, 12, 70, 25, 110, 25), intArrayOf(0, 120, 0, 255, 0, 255), -1)
         } else {
-            android.os.VibrationEffect.createWaveform(longArrayOf(0, 40), intArrayOf(0, 140), -1)
+            VibrationEffect.createWaveform(longArrayOf(0, 40), intArrayOf(0, 140), -1)
         }
         runCatching { v.vibrate(effect) }
     }
@@ -208,19 +214,19 @@ object AutoFlex {
      * 효과 조합을 못 쓰는 기기는 진동 세기를 단계로 올리고 내려 비슷하게 낸다.
      */
     fun rangeBuzz(context: Context, inside: Boolean) {
-        val v = context.getSystemService(android.os.VibratorManager::class.java)?.defaultVibrator ?: return
+        val v = context.getSystemService(VibratorManager::class.java)?.defaultVibrator ?: return
         if (!v.hasVibrator()) return
-        val rise = android.os.VibrationEffect.Composition.PRIMITIVE_SLOW_RISE
-        val clickP = android.os.VibrationEffect.Composition.PRIMITIVE_CLICK
-        val fall = android.os.VibrationEffect.Composition.PRIMITIVE_QUICK_FALL
+        val rise = VibrationEffect.Composition.PRIMITIVE_SLOW_RISE
+        val clickP = VibrationEffect.Composition.PRIMITIVE_CLICK
+        val fall = VibrationEffect.Composition.PRIMITIVE_QUICK_FALL
         val effect = if (inside && v.areAllPrimitivesSupported(rise)) {
-            android.os.VibrationEffect.startComposition().addPrimitive(rise, 0.9f).compose()
+            VibrationEffect.startComposition().addPrimitive(rise, 0.9f).compose()
         } else if (!inside && v.areAllPrimitivesSupported(clickP, fall)) {
-            android.os.VibrationEffect.startComposition().addPrimitive(clickP, 1f).addPrimitive(fall, 0.6f, 10).compose()
+            VibrationEffect.startComposition().addPrimitive(clickP, 1f).addPrimitive(fall, 0.6f, 10).compose()
         } else if (inside) {
-            android.os.VibrationEffect.createWaveform(longArrayOf(0, 60, 60, 60, 60, 60), intArrayOf(0, 40, 90, 150, 210, 255), -1)
+            VibrationEffect.createWaveform(longArrayOf(0, 60, 60, 60, 60, 60), intArrayOf(0, 40, 90, 150, 210, 255), -1)
         } else {
-            android.os.VibrationEffect.createWaveform(longArrayOf(0, 18, 50), intArrayOf(0, 255, 50), -1)
+            VibrationEffect.createWaveform(longArrayOf(0, 18, 50), intArrayOf(0, 255, 50), -1)
         }
         runCatching { v.vibrate(effect) }
     }
@@ -240,9 +246,9 @@ object AutoFlex {
      * (축이 바닥과 거의 나란하면) 가로로 본다. 폴드의 힌지 축은 기본 방향에서 세로(Y)지만, 화면이 알려 준 방향으로 고쳐 둘 수 있다([setHingeAlongY]).
      */
     internal fun isHorizontal(gx: Float, gy: Float, gz: Float, alongY: Boolean): Boolean {
-        val g = kotlin.math.sqrt(gx * gx + gy * gy + gz * gz)
+        val g = sqrt(gx * gx + gy * gy + gz * gz)
         if (g < 1f) return true
-        return kotlin.math.abs(if (alongY) gy else gx) < 0.5f * g
+        return abs(if (alongY) gy else gx) < 0.5f * g
     }
 
     fun hingeAlongY(context: Context) = prefs(context).getBoolean("hingeY", true)
@@ -331,7 +337,7 @@ object AutoFlex {
         // 세밀한 각도(시스템 로그). 최근 1초 안에 값이 왔으면 거친 센서 값(0·90·180)은 무시한다
         @Volatile private var fineAt = 0L
         private val fine = FineHinge { a ->
-            fineAt = android.os.SystemClock.elapsedRealtime()
+            fineAt = SystemClock.elapsedRealtime()
             // 시스템이 '닫힘'(기본 센서 0°)이라고 하면 세밀한 값은 믿지 않는다: 접은 채 움직이면 센서 부품이 엉뚱한 각도를 낼 수 있어,
             // 커버 화면이 켜진 채(접혀서 서비스가 계속 듣는 동안) 범위에 든 것으로 잘못 보고 플렉스·진동이 켜질 수 있었다
             worker.post { onAngle(if (coarseLast == 0f) 0f else a) }
@@ -423,12 +429,12 @@ object AutoFlex {
         @Volatile private var coarseLast: Float? = null
         private val coarseFallback = Runnable {
             val c = coarseLast ?: return@Runnable
-            if (android.os.SystemClock.elapsedRealtime() - fineAt >= 1000 && (c <= 0f || c >= 180f) && c != last) onAngle(c)
+            if (SystemClock.elapsedRealtime() - fineAt >= 1000 && (c <= 0f || c >= 180f) && c != last) onAngle(c)
         }
 
         override fun onSensorChanged(event: SensorEvent) {
             coarseLast = event.values[0]
-            if (android.os.SystemClock.elapsedRealtime() - fineAt < 1000) {
+            if (SystemClock.elapsedRealtime() - fineAt < 1000) {
                 worker.removeCallbacks(coarseFallback)
                 worker.postDelayed(coarseFallback, 1100)
                 return
@@ -443,7 +449,7 @@ object AutoFlex {
             if (!enabled(context)) return
             val click = click(context)
             var hit = false
-            if (click && !pausedFlow.value && clicks.feed(a, android.os.SystemClock.elapsedRealtime()) && horizontalFlow.value) {
+            if (click && !pausedFlow.value && clicks.feed(a, SystemClock.elapsedRealtime()) && horizontalFlow.value) {
                 latchedFlow.value = !latchedFlow.value
                 hit = true
                 LogRepository.from(context).add("까딱: 플렉스 모드 ${if (latchedFlow.value) "켬" else "끔"}")
@@ -469,7 +475,7 @@ object AutoFlex {
             }
             if (next == want && worker.hasCallbacks(apply)) {
                 // 켜기를 기다리는 동안 각도가 크게 움직이면(펴거나 닫는 중) 기다림을 처음부터 다시 센다
-                if (next && a != null && kotlin.math.abs(a - dwellAngle) > STABLE_DEG) {
+                if (next && a != null && abs(a - dwellAngle) > STABLE_DEG) {
                     dwellAngle = a
                     worker.removeCallbacks(apply)
                     worker.postDelayed(apply, delay)

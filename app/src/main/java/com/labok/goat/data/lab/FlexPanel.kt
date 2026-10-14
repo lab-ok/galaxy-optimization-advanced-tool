@@ -1,6 +1,8 @@
 package com.labok.goat.data.lab
 
 import android.content.Context
+import android.content.res.Resources
+import android.os.Build
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.log.LogRepository
@@ -96,7 +98,7 @@ object FlexPanel {
         val hit = traces.count { (_, v) -> v.none { it.startsWith("(") } }
         appendLine("요약: 패널 관련 구성요소 ${comps.size}개 · 패널 코드 흔적이 있는 파일 $hit/${files.size}개 · 창 관리자 패널 함수 ${if (hasAppApi()) "있음" else "없음"}")
         appendLine()
-        appendLine("기기: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (SDK ${android.os.Build.VERSION.SDK_INT}) · ${android.os.Build.DISPLAY}")
+        appendLine("기기: ${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT}) · ${Build.DISPLAY}")
         appendLine("Shizuku: ${ShizukuAccess.status.value}")
         appendLine()
         appendLine("== 패널 관련 구성요소(시스템 UI·전체 패키지) ==")
@@ -150,8 +152,8 @@ object FlexPanel {
         // 시스템 리소스에 삼성이 넣어 둔 '플렉스 화면 앱' 목록이 있으면(다른 기종 framework-res에서 확인된 이름) 읽어 둔다.
         // 있으면 GOAT가 플렉스 지원 앱을 구분하는 데 그대로 쓸 수 있다
         listOf("flex_mode_app_list", "flex_panel_default_list", "flex_panel_default_app_list", "flex_mode_panel_default_list").forEach { name ->
-            val id = android.content.res.Resources.getSystem().getIdentifier(name, "array", "android")
-            val items = if (id == 0) null else runCatching { android.content.res.Resources.getSystem().getStringArray(id).toList() }.getOrNull()
+            val id = Resources.getSystem().getIdentifier(name, "array", "android")
+            val items = if (id == 0) null else runCatching { Resources.getSystem().getStringArray(id).toList() }.getOrNull()
             appendLine("시스템 목록 $name → ${items?.let { "${it.size}개: ${it.joinToString(" | ").take(1500)}" } ?: "(없음)"}")
         }
         listOf("global", "secure", "system").forEach { t ->

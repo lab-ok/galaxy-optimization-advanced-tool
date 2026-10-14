@@ -16,6 +16,7 @@ import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.DpiFixer
 import com.labok.goat.domain.DpiPolicy
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -107,7 +108,7 @@ object Resolution {
         } else {
             listOf(0.85, 0.75)
                 .map { of(even(bs * it), null) }
-                .filter { r -> standard.none { kotlin.math.abs(it.short - r.short) < 40 } }
+                .filter { r -> standard.none { abs(it.short - r.short) < 40 } }
         }
         return listOf(Option(bs, bl, null, 100)) + (standard + ratios).sortedByDescending { it.short }
     }

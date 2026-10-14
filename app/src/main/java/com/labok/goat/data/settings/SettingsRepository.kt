@@ -4,8 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import com.labok.goat.domain.DpiPolicy
+import com.labok.goat.domain.ExternalChange
 import com.labok.goat.domain.ScreenInfo
 import com.labok.goat.domain.ScreenPolicy
+import java.io.File
+import kotlin.math.abs
 
 /** SharedPreferences를 감싼 최소 key-value 인터페이스. 테스트에서는 메모리 구현을 쓴다. */
 interface KeyValueStore {
@@ -107,7 +110,7 @@ class SettingsRepository(private val store: KeyValueStore) {
     /** 새 값이면 저장하고 true. */
     fun rememberInactivePpi(key: String, ppi: Float): Boolean {
         val cur = inactivePpi
-        if (cur[key]?.let { kotlin.math.abs(it - ppi) < 0.05f } == true) return false
+        if (cur[key]?.let { abs(it - ppi) < 0.05f } == true) return false
         inactivePpi = cur + (key to ppi)
         return true
     }
@@ -151,8 +154,8 @@ class SettingsRepository(private val store: KeyValueStore) {
         set(v) = store.putString(KEY_RULER_PPI, v.entries.joinToString(";") { "${it.key}=${it.value}" })
 
     /** 사용자 선택을 기다리는 외부 변경. */
-    var externalChange: com.labok.goat.domain.ExternalChange?
-        get() = com.labok.goat.domain.ExternalChange.parse(store.getString(KEY_EXTERNAL))
+    var externalChange: ExternalChange?
+        get() = ExternalChange.parse(store.getString(KEY_EXTERNAL))
         set(v) = store.putString(KEY_EXTERNAL, v?.serialize())
 
     var lastApply: LastApply?
@@ -190,10 +193,10 @@ object Storage {
 
     fun prefs(context: Context): SharedPreferences = dpContext(context).getSharedPreferences("settings", Context.MODE_PRIVATE)
 
-    fun logFile(context: Context) = java.io.File(dpContext(context).filesDir, "dpi_log.txt")
+    fun logFile(context: Context) = File(dpContext(context).filesDir, "dpi_log.txt")
 
-    fun crashFile(context: Context) = java.io.File(dpContext(context).filesDir, "crash_log.txt")
+    fun crashFile(context: Context) = File(dpContext(context).filesDir, "crash_log.txt")
 
     /** 잠금 해제 전에 쌓아 둔, 공용 로그 파일로 옮길 내용. */
-    fun pendingPublicLog(context: Context) = java.io.File(dpContext(context).filesDir, "pending_public.log")
+    fun pendingPublicLog(context: Context) = File(dpContext(context).filesDir, "pending_public.log")
 }

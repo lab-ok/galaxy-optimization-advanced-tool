@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.rowListEdges
 import com.labok.goat.ui.liquid.Text
+import kotlin.math.abs
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -111,7 +112,7 @@ fun LiquidRadioGroup(modifier: Modifier = Modifier, content: @Composable ColumnS
             if (hy.isNaN()) return@Canvas
             val t = headY.targetValue
             // 끌려가는 동안 진행 방향으로 늘어나되, 앞쪽 끝이 목표 동그라미 가장자리를 넘지 않는다
-            val dist = kotlin.math.abs(t - hy)
+            val dist = abs(t - hy)
             val stretch = (dist * 0.35f).coerceAtMost(dist + RING_R.dp.toPx() * 0.4f)
             val h = d + stretch
             val w = d * (1f - 0.25f * (stretch / (stretch + d))) * (1f + 0.18f * wobble.value)

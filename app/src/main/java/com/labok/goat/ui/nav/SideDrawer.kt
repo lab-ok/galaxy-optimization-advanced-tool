@@ -60,6 +60,9 @@ import com.labok.goat.ui.liquid.liquidPress
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.rememberSoftBlob
 import com.labok.goat.ui.text.Copy
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * 사이드바 항목 = 앱의 기능(화면) 단위. 기능 안의 세부 설정·도구는 각 화면의 점 세 개 메뉴에 둔다.
@@ -237,7 +240,7 @@ fun SideDrawerContent(
                                     if (!blob.blob.ready || rowH <= 0f) {
                                         (if (item == current) 1f else 0f)
                                     } else {
-                                        (1f - kotlin.math.abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                                        (1f - abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
                                     }
                                 },
                                 appear = { (enter.value - order).coerceIn(0f, 1f) },
@@ -264,7 +267,7 @@ fun SideDrawerContent(
                             if (!blob.blob.ready || rowH <= 0f) {
                                 (if (current == NavItem.SETTINGS) 1f else 0f)
                             } else {
-                                (1f - kotlin.math.abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                                (1f - abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
                             }
                         },
                         appear = { (enter.value - settingsOrder).coerceIn(0f, 1f) },
@@ -386,12 +389,12 @@ private fun DrawScope.rotate(c: Color, s: Stroke) {
     fun arcWithHead(start: Float, sweep: Float) {
         drawArc(c, start, sweep, false, Offset(center.x - rad, center.y - rad), Size(rad * 2, rad * 2), style = s)
         val e = Math.toRadians((start + sweep).toDouble())
-        val tip = Offset(center.x + rad * kotlin.math.cos(e).toFloat(), center.y + rad * kotlin.math.sin(e).toFloat())
+        val tip = Offset(center.x + rad * cos(e).toFloat(), center.y + rad * sin(e).toFloat())
         // 시계 방향 진행 방향 = (-sin, cos). 화살촉은 진행 방향 뒤로 ±40도
-        val dir = Math.atan2(kotlin.math.cos(e), -kotlin.math.sin(e))
+        val dir = Math.atan2(cos(e), -sin(e))
         val len = u(2.8f)
         for (a in listOf(dir + Math.PI - 0.7, dir + Math.PI + 0.7)) {
-            drawLine(c, tip, Offset(tip.x + len * kotlin.math.cos(a).toFloat(), tip.y + len * kotlin.math.sin(a).toFloat()), s.width, StrokeCap.Round)
+            drawLine(c, tip, Offset(tip.x + len * cos(a).toFloat(), tip.y + len * sin(a).toFloat()), s.width, StrokeCap.Round)
         }
     }
     arcWithHead(-75f, 55f)
@@ -505,7 +508,7 @@ private fun DrawScope.bell(c: Color, s: Stroke) {
         lineTo(u(17.6f), u(6.6f))
         lineTo(u(21.4f), u(6.6f))
     }
-    drawPath(z, c, style = Stroke(s.width * 0.8f, cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+    drawPath(z, c, style = Stroke(s.width * 0.8f, cap = StrokeCap.Round, join = StrokeJoin.Round))
 }
 
 /** 앱 다크 모드 강제: 초승달과 그 옆 작은 별 둘. */
@@ -545,8 +548,8 @@ private fun DrawScope.gear(c: Color, s: Stroke) {
     val o = p(12f, 12f)
     for (k in 0 until 8) {
         val a = Math.toRadians(k * 45.0)
-        val x = kotlin.math.cos(a).toFloat()
-        val y = kotlin.math.sin(a).toFloat()
+        val x = cos(a).toFloat()
+        val y = sin(a).toFloat()
         drawLine(c, Offset(o.x + x * u(6.6f), o.y + y * u(6.6f)), Offset(o.x + x * u(9.2f), o.y + y * u(9.2f)), s.width * 1.6f, StrokeCap.Round)
     }
     drawCircle(c, u(6.4f), o, style = s)

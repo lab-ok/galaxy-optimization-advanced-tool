@@ -43,6 +43,7 @@ import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.text.Copy
+import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -67,7 +68,7 @@ internal fun ResolutionScreen(contentPadding: PaddingValues, permitted: Boolean,
     val base = remember(version, pending, config) { Resolution.base(context) }
     val now = remember(version, pending, config) { Resolution.current(context) }
     val options = remember(base) { Resolution.optionsFor(base) }
-    val selected = options.minByOrNull { kotlin.math.abs(it.short - now.first) }
+    val selected = options.minByOrNull { abs(it.short - now.first) }
     var busy by remember { mutableStateOf(false) }
     var ask by remember { mutableStateOf<Resolution.Option?>(null) }
     LifecycleResumeEffect(Unit) {

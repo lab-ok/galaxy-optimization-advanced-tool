@@ -1,5 +1,7 @@
 package com.labok.goat.ui.liquid
 
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
@@ -98,8 +100,8 @@ class FluidSim(val n: Int, val h: Float) {
         for (i in 0 until n) {
             val r = spread * sqrt(i + 0.5f)
             val a = i * 2.39996f
-            x[i] = cx + r * kotlin.math.cos(a)
-            y[i] = cy + r * kotlin.math.sin(a)
+            x[i] = cx + r * cos(a)
+            y[i] = cy + r * sin(a)
             vx[i] = 0f
             vy[i] = 0f
         }

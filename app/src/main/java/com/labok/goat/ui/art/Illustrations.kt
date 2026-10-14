@@ -15,10 +15,13 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.LocalReduceMotion
 
 /**
  * PC ↔ 폰 연결 그림(공통 기기 틀). 두 기기를 가운데에 가까이 모아 둔다.
@@ -28,8 +31,8 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
-    val c = com.labok.goat.ui.liquid.LocalLiquid.current
-    val reduce = com.labok.goat.ui.liquid.LocalReduceMotion.current
+    val c = LocalLiquid.current
+    val reduce = LocalReduceMotion.current
     val t0 by rememberInfiniteTransition(label = "conn").animateFloat(
         0f,
         1f,
@@ -86,7 +89,7 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
             val a = Offset(pcCenter.x + pcW * 0.24f, h * 0.9f)
             val b = Offset(phone.center.x, phTop.y + phH + 4.dp.toPx())
             val ctrl = Offset((a.x + b.x) / 2, h * 1.02f)
-            val path = androidx.compose.ui.graphics.Path().apply {
+            val path = Path().apply {
                 moveTo(a.x, a.y)
                 quadraticBezierTo(ctrl.x, ctrl.y, b.x, b.y)
             }
@@ -109,7 +112,7 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
  */
 @Composable
 internal fun DensityIllustration(corrected: Float) {
-    val lc = com.labok.goat.ui.liquid.LocalLiquid.current
+    val lc = LocalLiquid.current
     val glyph = lc.ink.copy(alpha = 0.55f)
     val shape = LocalDeviceShape.current
     Canvas(

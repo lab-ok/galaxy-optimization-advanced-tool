@@ -10,6 +10,7 @@ import com.labok.goat.data.settings.Storage
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.Executors
 
 /**
  * 로그를 사용자가 바로 열 수 있는 파일로 저장한다: 내장 저장소 `Download/GOAT/goat-YYMMDD-log.txt`.
@@ -27,7 +28,7 @@ object PublicLogFile {
     /** 사용자에게 보여 줄 저장 위치. */
     val displayPath: String get() = "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/"
 
-    private val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private val executor = Executors.newSingleThreadExecutor()
 
     /**
      * 기록 파일을 남길지(홈 맨 아래 스위치). 기본은 꺼짐: 끄면 다운로드 폴더에 아무 파일도 만들지 않는다.
@@ -82,7 +83,7 @@ object PublicLogFile {
     }
 
     /** "goat-<kind>-yyMMdd-HHmmss.txt"처럼 시각을 붙인 새 파일 이름. */
-    fun timestampedName(kind: String): String = "goat-$kind-${java.text.SimpleDateFormat("yyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date())}.txt"
+    fun timestampedName(kind: String): String = "goat-$kind-${SimpleDateFormat("yyMMdd-HHmmss", Locale.US).format(Date())}.txt"
 
     /** [saveNew]로 만든 파일 끝에 [text]를 덧붙인다(실시간 기록용). 실패하면 false. */
     fun appendTo(context: Context, uri: Uri, text: String): Boolean = synchronized(lock) {

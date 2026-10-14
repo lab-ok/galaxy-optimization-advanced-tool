@@ -1,6 +1,7 @@
 package com.labok.goat.data.lab
 
 import android.content.Context
+import android.os.Build
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 
@@ -18,7 +19,7 @@ object PrivacyDot {
      * 이 기기에서 쓸 수 있는지. Android 14부터는 셸(ADB·Shizuku)도 구글 허용 목록에 있는 값만 바꿀 수 있는데 이 값은 목록에 없어
      * 막힌다(폴드8 Android 17 실기: "must add flag to the allowlist"). 그래서 Android 13 이하에서만 켜고, 그 밖에서도 한 번 막히면 끈다.
      */
-    fun supported(context: Context): Boolean = android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.TIRAMISU && !context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getBoolean("blocked", false)
+    fun supported(context: Context): Boolean = Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU && !context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getBoolean("blocked", false)
 
     /** 초록 점이 꺼져 있는지. Shizuku가 없거나 읽지 못하면 null. 작업 스레드에서 부른다. */
     fun hidden(): Boolean? {

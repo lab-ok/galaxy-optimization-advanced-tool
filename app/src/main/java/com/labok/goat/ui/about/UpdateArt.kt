@@ -18,7 +18,9 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -166,7 +168,7 @@ private fun DrawScope.u(v: Float) = v * 1.dp.toPx()
 private fun DrawScope.liquid(t: Float, orbit: Float, arrow: Float, tank: Float, swirl: Float, sad: Float, pop: Float, fill: Float, rate: Float) {
     val cx = size.width / 2
     val cy = size.height / 2
-    val ink = androidx.compose.ui.graphics.Color.Black
+    val ink = Color.Black
     val breathe = 1f + 0.04f * sin(t * 2.2f)
     // 기본 방울 반지름: 실패면 납작하게, 통이 되면 사라진다(통의 물이 대신한다)
     val r = u(22f) * breathe * pop * (1f - 0.15f * sad) * (1f - tank)
@@ -206,7 +208,7 @@ private fun DrawScope.liquid(t: Float, orbit: Float, arrow: Float, tank: Float, 
         val h = u(28f)
         val front = left + width * fill
         val path = waterPath(left, top, h, front, rate, swirl, t)
-        clipPath(Path().apply { addRoundRect(androidx.compose.ui.geometry.RoundRect(left, top, left + width, top + h, CornerRadius(h / 2))) }) {
+        clipPath(Path().apply { addRoundRect(RoundRect(left, top, left + width, top + h, CornerRadius(h / 2))) }) {
             drawPath(path, ink)
         }
         // 앞면에서 튀어 오르는 물방울: 받는 속도가 빠를수록 많이·높이
@@ -252,7 +254,7 @@ private fun DrawScope.waterPath(left: Float, top: Float, h: Float, front: Float,
 }
 
 /** 또렷한 선: 통 테두리, 최신 체크, 새 버전 화살표, 실패 느낌표. */
-private fun DrawScope.marks(ink: androidx.compose.ui.graphics.Color, onInk: androidx.compose.ui.graphics.Color, t: Float, check: Float, arrow: Float, tank: Float, swirl: Float, sad: Float, pop: Float) {
+private fun DrawScope.marks(ink: Color, onInk: Color, t: Float, check: Float, arrow: Float, tank: Float, swirl: Float, sad: Float, pop: Float) {
     val cx = size.width / 2
     val cy = size.height / 2
     val s = Stroke(u(3f), cap = StrokeCap.Round, join = StrokeJoin.Round)

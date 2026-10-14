@@ -1,5 +1,6 @@
 package com.labok.goat.ui.liquid
 
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -38,7 +39,7 @@ fun Text(
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
     onTextLayout: ((TextLayoutResult) -> Unit)? = null,
-    style: TextStyle = androidx.compose.material3.LocalTextStyle.current
+    style: TextStyle = LocalTextStyle.current
 ) {
     val shown = remember(text) { keepAll(text) }
     androidx.compose.material3.Text(

@@ -5,13 +5,17 @@ import android.app.AppOpsManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.appsize.AppUsage
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.AppDensityPolicy
+import java.io.InputStream
 import java.lang.reflect.InvocationTargetException
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,7 +39,7 @@ object ShizukuAccess {
     val status: StateFlow<State> = state.asStateFlow()
 
     @Volatile private var installed = false
-    private val started = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val started = AtomicBoolean(false)
 
     /** 상태 감시를 시작한다. 여러 번 불러도 한 번만 등록한다. */
     fun watch(context: Context) {
@@ -84,14 +88,14 @@ object ShizukuAccess {
     fun autoDisableWirelessDebug(context: Context) {
         if (!autoOffEnabled(context) || !Shizuku.pingBinder() || !wirelessDebugOn(context)) return
         if (context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) != PackageManager.PERMISSION_GRANTED) return
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+        Handler(Looper.getMainLooper()).postDelayed({
             if (!Shizuku.pingBinder()) return@postDelayed
             val ok = runCatching { Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 0) }.isSuccess
             LogRepository.from(context).add("Shizuku가 켜져 있어 무선 디버깅을 껐습니다: ${if (ok) "성공" else "실패"}")
             if (!ok) return@postDelayed
             // 무선 디버깅을 끄면 Shizuku가 같이 멈추는 기기가 있다: 잠시 뒤 살아 있는지 보고, 멈췄으면 무선 디버깅을 다시 켜고
             // 이 옵션을 스스로 끈다(다음부터 Shizuku가 멈추지 않게). 앱 설정에서 그 사실을 알린다.
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            Handler(Looper.getMainLooper()).postDelayed({
                 if (Shizuku.pingBinder()) return@postDelayed
                 runCatching { Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 1) }
                 prefs(context).edit().putBoolean("wireless_auto_off", false).putBoolean("auto_off_stops_shizuku", true).apply()
@@ -221,7 +225,7 @@ object ShizukuAccess {
      * [shell]과 같되 [input]을 명령의 표준 입력으로 흘려보낸다(작업 스레드). 앱 파일을 셸이 직접 읽을 수 없을 때
      * (예: `pm install -S 크기`로 업데이트 APK 설치) 쓴다.
      */
-    fun shellWithInput(command: String, input: java.io.InputStream): ShellResult? = runCatching {
+    fun shellWithInput(command: String, input: InputStream): ShellResult? = runCatching {
         if (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return null
         val p = newProcess(command)
         p.outputStream.use { out -> input.use { it.copyTo(out) } }

@@ -51,6 +51,7 @@ import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
 import kotlin.math.tanh
+import kotlin.random.Random
 import kotlinx.coroutines.delay
 
 /**
@@ -266,7 +267,7 @@ internal const val LOGO_CORNER = 0.4f
  * 염소 물방울도 반대쪽으로 조금 흔들린다. 부른 쪽의 LaunchedEffect가 끝나면(화면을 떠나면) 멈춘다.
  */
 internal suspend fun idleRipple(logo: SoftBlobState, drop: SoftBlobState, cx: () -> Float, cy: () -> Float, logoS: Float) {
-    val rnd = kotlin.random.Random(System.nanoTime())
+    val rnd = Random(System.nanoTime())
     while (true) {
         delay(3000L + rnd.nextLong(3000L))
         val a = rnd.nextFloat() * 2f * PI.toFloat()

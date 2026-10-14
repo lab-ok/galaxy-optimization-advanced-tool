@@ -1,6 +1,7 @@
 package com.labok.goat.data.tweaks
 
 import android.content.Context
+import android.provider.Settings
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -151,7 +152,7 @@ object Gos {
     }
 
     /** 부팅 횟수(Settings.Global.BOOT_COUNT). 없는 기기면 null(그때는 연결될 때마다 확인한다). */
-    private fun bootCount(context: Context): Int? = runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
+    private fun bootCount(context: Context): Int? = runCatching { Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT) }.getOrNull()
 
     private val binder = Shizuku.OnBinderReceivedListener { reapplyAsync?.invoke() }
 

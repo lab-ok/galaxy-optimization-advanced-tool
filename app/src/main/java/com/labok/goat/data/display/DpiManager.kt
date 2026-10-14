@@ -15,6 +15,7 @@ import com.labok.goat.domain.ScreenInfo
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 /**
@@ -276,7 +277,7 @@ class DpiManager(context: Context) : DpiController {
             val diag = Math.hypot(w / xdpi.toDouble(), h / ydpi.toDouble()).toFloat()
             val scale = if (w > 0) logicalShort.toFloat() / w else 1f
             // 1% 안쪽 차이(반올림)는 해상도를 바꾸지 않은 것으로 본다
-            return ScreenInfo("${w}x$h", ppi, diag, if (kotlin.math.abs(scale - 1f) < 0.01f) 1f else scale)
+            return ScreenInfo("${w}x$h", ppi, diag, if (abs(scale - 1f) < 0.01f) 1f else scale)
         }
 
         private val methods = mutableMapOf<String, Method>()

@@ -2,7 +2,9 @@ package com.labok.goat.data.tweaks
 
 import android.app.UiModeManager
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Build
+import android.provider.Settings
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,8 +42,8 @@ object ForceDark {
         return when (ui?.nightMode) {
             UiModeManager.MODE_NIGHT_YES -> true
             UiModeManager.MODE_NIGHT_NO -> false
-            else -> (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                android.content.res.Configuration.UI_MODE_NIGHT_YES
+            else -> (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
         }
     }
 
@@ -132,7 +134,7 @@ object ForceDark {
     }
 
     /** 부팅 횟수(Settings.Global.BOOT_COUNT). 없는 기기면 null. */
-    private fun bootCount(context: Context): Int? = runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT) }.getOrNull()
+    private fun bootCount(context: Context): Int? = runCatching { Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT) }.getOrNull()
 
     private val binder = Shizuku.OnBinderReceivedListener { reapplyAsync?.invoke() }
 

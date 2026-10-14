@@ -2,6 +2,7 @@ package com.labok.goat.data.lab
 
 import com.labok.goat.data.shizuku.ShizukuAccess
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.util.zip.ZipInputStream
 
 /**
@@ -26,7 +27,7 @@ object DexStrings {
         val size = ShizukuAccess.shell("stat -c %s '$path'")?.out?.trim()?.toLongOrNull() ?: 0L
         val p = ShizukuAccess.stream("cat '$path'") ?: return null
         p.inputStream.use { input ->
-            val out = java.io.ByteArrayOutputStream()
+            val out = ByteArrayOutputStream()
             val buf = ByteArray(1 shl 16)
             var total = 0L
             while (true) {

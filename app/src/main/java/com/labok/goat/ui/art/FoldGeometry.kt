@@ -1,5 +1,7 @@
 package com.labok.goat.ui.art
 
+import androidx.compose.runtime.staticCompositionLocalOf
+
 /**
  * 그림에 쓰는 기기 비율. 사용자 기기 SM-F971N(Galaxy Z Fold8)의 실제 화면 해상도에서 가져왔다.
  * - 외부(커버) 1248 × 1972: 세로로 긴 화면
@@ -24,4 +26,4 @@ object FoldGeometry {
 data class DeviceShape(val cover: Float = FoldGeometry.COVER_ASPECT, val inner: Float = FoldGeometry.INNER_ASPECT)
 
 /** 모든 그림이 읽는 현재 기기 비율. 홈 화면이 학습한 해상도로 채워 넣고, 모르면 폴드8 비율. */
-val LocalDeviceShape = androidx.compose.runtime.staticCompositionLocalOf { DeviceShape() }
+val LocalDeviceShape = staticCompositionLocalOf { DeviceShape() }

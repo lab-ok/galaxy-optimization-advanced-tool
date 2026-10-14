@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -69,6 +70,8 @@ import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.ResolutionState
+import com.labok.goat.data.lab.AirplaneRadios
+import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.tweaks.AnimationSpeed
@@ -110,7 +113,7 @@ import kotlinx.coroutines.withContext
  * 메인 화면: 권한·Shizuku 상태 한 줄과, 기능마다 아이콘·이름·지금 상태를 보여 주는 카드. 카드를 누르면 그 기능으로 간다.
  * 카드는 사이드바와 같은 묶음 순서로 놓고, 넓은 화면에서는 한 줄에 더 많이 놓는다.
  */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun Dashboard(
     contentPadding: PaddingValues,
@@ -197,15 +200,15 @@ internal fun Dashboard(
                     if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
                 }
             }
-            NavItem.STATUS_ICONS -> com.labok.goat.data.lab.IconBlacklist.setting.read(context).let { raw ->
-                com.labok.goat.data.lab.IconBlacklist.Slot.entries.count { com.labok.goat.data.lab.IconBlacklist.hidden(raw, it) }
+            NavItem.STATUS_ICONS -> IconBlacklist.setting.read(context).let { raw ->
+                IconBlacklist.Slot.entries.count { IconBlacklist.hidden(raw, it) }
             }.let { if (it == 0) Copy.ICONS_DASH_NONE else Copy.iconsDash(it) }
             // 기기마다 기본값이 달라(NFC가 원래 빠진 기기 등) GOAT로 바꾼 적이 없으면 '기본 설정'으로 둔다
-            NavItem.AIRPLANE -> if (!com.labok.goat.data.lab.AirplaneRadios.setting.changed(context)) {
+            NavItem.AIRPLANE -> if (!AirplaneRadios.setting.changed(context)) {
                 Copy.AIRPLANE_DASH_DEFAULT
             } else {
-                com.labok.goat.data.lab.AirplaneRadios.setting.read(context).let { raw ->
-                    com.labok.goat.data.lab.AirplaneRadios.Radio.entries.filter { com.labok.goat.data.lab.AirplaneRadios.kept(raw, it) }.map { it.label }
+                AirplaneRadios.setting.read(context).let { raw ->
+                    AirplaneRadios.Radio.entries.filter { AirplaneRadios.kept(raw, it) }.map { it.label }
                 }.let { if (it.isEmpty()) Copy.AIRPLANE_DASH_NONE else Copy.airplaneDash(it) }
             }
             else -> ""
@@ -226,12 +229,12 @@ internal fun Dashboard(
             NavItem.DOZE -> doze == Doze.State.OFF || (doze == Doze.State.UNKNOWN && Doze.wanted(context))
             NavItem.RESOLUTION -> ResolutionState.base(context) != null
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
-            NavItem.STATUS_ICONS -> com.labok.goat.data.lab.IconBlacklist.setting.read(context).let { raw ->
-                com.labok.goat.data.lab.IconBlacklist.Slot.entries.any { com.labok.goat.data.lab.IconBlacklist.hidden(raw, it) }
+            NavItem.STATUS_ICONS -> IconBlacklist.setting.read(context).let { raw ->
+                IconBlacklist.Slot.entries.any { IconBlacklist.hidden(raw, it) }
             }
-            NavItem.AIRPLANE -> com.labok.goat.data.lab.AirplaneRadios.setting.changed(context) &&
-                com.labok.goat.data.lab.AirplaneRadios.setting.read(context).let { raw ->
-                    com.labok.goat.data.lab.AirplaneRadios.Radio.entries.any { com.labok.goat.data.lab.AirplaneRadios.kept(raw, it) }
+            NavItem.AIRPLANE -> AirplaneRadios.setting.changed(context) &&
+                AirplaneRadios.setting.read(context).let { raw ->
+                    AirplaneRadios.Radio.entries.any { AirplaneRadios.kept(raw, it) }
                 }
             else -> false
         }
@@ -472,7 +475,7 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
         val h = box.height.toFloat()
         if (animateIn) {
             body.moveTo(w / 2, h / 2, w * 0.3f, w * 0.3f, animate = false)
-            kotlinx.coroutines.delay(60L * order)
+            delay(60L * order)
         }
         // 큰 카드라 출렁임이 커 보인다: 처음 값(1.4·1.0, 너무 낭창)과 단단한 값(2.2·2.4) 사이로 살짝만 출렁이게 한다
         body.blob.gain = 1.7f

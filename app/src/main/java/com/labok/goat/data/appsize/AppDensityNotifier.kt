@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import com.labok.goat.R
 import com.labok.goat.background.ExternalChangeNotifier
 import com.labok.goat.background.GoatService
+import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.ui.MainActivity
@@ -67,7 +68,7 @@ object AppDensityNotifier {
     fun cancel(context: Context) = context.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
 
     /** 흔들어서 화면 회전도 켜져 있으면 같은 알림에 한 줄로 알린다(알림을 따로 띄우지 않는다). */
-    fun shakeNote(context: Context) = listOfNotNull("흔들기 회전 켜짐".takeIf { ShakeRotate.enabled(context) }, "자동 플렉스 켜짐".takeIf { com.labok.goat.data.lab.AutoFlex.enabled(context) }).joinToString(" · ").ifBlank { null }
+    fun shakeNote(context: Context) = listOfNotNull("흔들기 회전 켜짐".takeIf { ShakeRotate.enabled(context) }, "자동 플렉스 켜짐".takeIf { AutoFlex.enabled(context) }).joinToString(" · ").ifBlank { null }
 
     fun build(context: Context, status: String? = null, extra: String? = null): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)

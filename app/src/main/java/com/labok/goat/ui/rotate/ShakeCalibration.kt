@@ -69,6 +69,8 @@ import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.ui.liquid.goo
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.text.Copy
+import kotlin.math.ceil
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -225,7 +227,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
         count = 0
         left = CALIBRATE_SECONDS
         time.snapTo(1f)
-        kotlinx.coroutines.coroutineScope {
+        coroutineScope {
             launch { time.animateTo(0f, tween(CALIBRATE_SECONDS * 1000, easing = LinearEasing)) }
             while (left > 0) {
                 delay(1000)
@@ -257,7 +259,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
             if (!sim.ready) continue
             // 한 걸음은 반 프레임 이하로 나눈다: 프레임이 밀려 한 번에 크게 적분하면 점성·표면장력이 강한 액체가 터진다.
             // 너무 밀리면(4걸음 넘게) 그만큼 느리게 움직이게 둔다.
-            val sub = kotlin.math.ceil(f / MAX_STEP).toInt().coerceIn(1, 4)
+            val sub = ceil(f / MAX_STEP).toInt().coerceIn(1, 4)
             val dt = (f / sub).coerceAtMost(MAX_STEP)
             repeat(sub) { sim.step(dt, force[0], force[1], 0f, look.pull, look.cohesion) }
             frame++

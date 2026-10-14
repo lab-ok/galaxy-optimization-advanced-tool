@@ -2,11 +2,15 @@ package com.labok.goat.ui.shizuku
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -114,7 +118,7 @@ internal fun ShizukuGuide(
                 }
             })
             LiquidButton("Wi-Fi 설정", modifier = Modifier.weight(1f), primary = false, onClick = {
-                runCatching { context.startActivity(settingsIntent(android.provider.Settings.ACTION_WIFI_SETTINGS)) }
+                runCatching { context.startActivity(settingsIntent(Settings.ACTION_WIFI_SETTINGS)) }
             })
         }
     }
@@ -186,11 +190,11 @@ private fun Step(no: Int, title: String, done: Boolean, active: Boolean, body: @
  * 설정 메뉴 위치 길: "설정 › 개발자 옵션 › 디버깅 › 무선 디버깅"처럼 어디로 들어가야 하는지 칩으로 보여 준다.
  * 마지막 칸(누를 곳)은 잉크로 채워 눈에 띄게 하고, 폭이 모자라면 다음 줄로 넘긴다.
  */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SettingsPath(vararg steps: String) {
     val c = LocalLiquid.current
-    androidx.compose.foundation.layout.FlowRow(
+    FlowRow(
         Modifier.fillMaxWidth().padding(bottom = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(Gap.Tight),
         verticalArrangement = Arrangement.spacedBy(Gap.Tight)
@@ -227,8 +231,8 @@ private fun Action(label: String, onClick: () -> Unit) {
 }
 
 private fun openStore(context: Context) {
-    val market = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=${ShizukuAccess.PACKAGE}"))
-    val web = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://shizuku.rikka.app/download/"))
+    val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${ShizukuAccess.PACKAGE}"))
+    val web = Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/"))
     runCatching { context.startActivity(market) }.onFailure { runCatching { context.startActivity(web) } }
 }
 
@@ -237,10 +241,10 @@ private fun openShizuku(context: Context) {
 }
 
 /** 개발자 옵션이 켜져 있는지(빌드 번호를 7번 눌러 켬). */
-private fun developerOptionsOn(context: Context) = android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
+private fun developerOptionsOn(context: Context) = Settings.Global.getInt(context.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
 
 /** 휴대전화 정보 화면(여기서 '소프트웨어 정보' → '빌드 번호')을 연다. 없으면 설정 첫 화면. */
 private fun openPhoneInfo(context: Context) {
-    runCatching { context.startActivity(settingsIntent(android.provider.Settings.ACTION_DEVICE_INFO_SETTINGS)) }
-        .onFailure { runCatching { context.startActivity(Intent(android.provider.Settings.ACTION_SETTINGS)) } }
+    runCatching { context.startActivity(settingsIntent(Settings.ACTION_DEVICE_INFO_SETTINGS)) }
+        .onFailure { runCatching { context.startActivity(Intent(Settings.ACTION_SETTINGS)) } }
 }

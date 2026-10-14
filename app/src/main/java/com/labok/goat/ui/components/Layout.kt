@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,9 +25,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 
@@ -46,7 +49,7 @@ internal fun featurePadding(inner: PaddingValues) = PaddingValues(
 internal fun SheetColumn(
     modifier: Modifier = Modifier,
     title: String? = null,
-    horizontalAlignment: androidx.compose.ui.Alignment.Horizontal = androidx.compose.ui.Alignment.Start,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
@@ -67,7 +70,7 @@ internal fun SheetColumn(
 
 /** 되돌리기 어려운 동작을 한 번 더 묻는 빨간 상자: "⚠ [message]", 설명([note]), 그 아래 버튼 줄([actions]). */
 @Composable
-internal fun DangerConfirmBox(message: String, note: String? = null, actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
+internal fun DangerConfirmBox(message: String, note: String? = null, actions: @Composable RowScope.() -> Unit) {
     val c = LocalLiquid.current
     val shape = RoundedCornerShape(14.dp)
     Column(
@@ -114,7 +117,7 @@ internal fun openDeveloperOptions(context: Context) {
 @Composable
 internal fun HelpTopic(title: String, body: String, art: (@Composable () -> Unit)? = null) {
     val c = LocalLiquid.current
-    com.labok.goat.ui.liquid.GlassCard {
+    GlassCard {
         Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
         if (art != null) {
             Spacer(Modifier.height(Gap.Item))

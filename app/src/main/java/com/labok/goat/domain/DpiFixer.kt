@@ -3,6 +3,7 @@ package com.labok.goat.domain
 import android.content.Context
 import com.labok.goat.data.display.DpiController
 import com.labok.goat.data.display.DpiManager
+import com.labok.goat.data.display.DpiState
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.settings.LastApply
 import com.labok.goat.data.settings.SettingsRepository
@@ -144,7 +145,7 @@ class DpiFixer(
         reason: String,
         screen: ScreenInfo,
         effective: ScreenPolicy.Target?,
-        state: com.labok.goat.data.display.DpiState?,
+        state: DpiState?,
         physicalIsReset: Boolean,
         now: Long
     ): ExternalChange? {

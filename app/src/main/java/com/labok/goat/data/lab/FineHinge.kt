@@ -2,6 +2,7 @@ package com.labok.goat.data.lab
 
 import com.labok.goat.data.shizuku.ShizukuAccess
 import kotlin.concurrent.thread
+import kotlin.math.abs
 
 /**
  * 폴드8의 세밀한 힌지 각도. 일반 앱이 받는 힌지 센서는 0°·90°·180° 세 단계뿐이지만, 삼성 센서 부품은 실제 각도를
@@ -59,7 +60,7 @@ class FineHinge(private val onAngle: (Float) -> Unit) {
                 else -> raw
             }
             if (v == shown) return null
-            if (!shown.isNaN() && kotlin.math.abs(v - shown) < 1.5f && v != 180f && v != 0f) return null
+            if (!shown.isNaN() && abs(v - shown) < 1.5f && v != 180f && v != 0f) return null
             shown = v
             return v
         }

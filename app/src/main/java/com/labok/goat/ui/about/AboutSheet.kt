@@ -40,6 +40,7 @@ import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Springs
 import com.labok.goat.ui.liquid.Text
+import kotlinx.coroutines.delay
 
 /** 앱 정보: 사이드바처럼 리퀴드로 반응하는 로고·제목([AboutHeader]), 버전과 문의 메일, 필요 권한. */
 @Composable
@@ -97,7 +98,7 @@ private fun PermissionRow(item: AppPermissions.Item, granted: Boolean, index: In
     val reduce = LocalReduceMotion.current
     val pop = remember { Animatable(if (reduce) 1f else 0f) }
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(80L * index)
+        delay(80L * index)
         pop.animateTo(1f, Springs.pop(reduce))
     }
     Row(verticalAlignment = Alignment.Top) {

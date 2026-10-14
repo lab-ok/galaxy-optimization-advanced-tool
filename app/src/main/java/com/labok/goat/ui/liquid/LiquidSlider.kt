@@ -38,7 +38,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 /**
@@ -80,7 +82,7 @@ fun LiquidSlider(
     val bubbleLift = remember { Animatable(0f) }
 
     LaunchedEffect(active) {
-        kotlinx.coroutines.coroutineScope {
+        coroutineScope {
             launch { bubbleSize.animateTo(if (active) 46f else 10f, Springs.water(reduce)) }
             launch { bubbleLift.animateTo(if (active) 1f else 0f, Springs.water(reduce)) }
         }
@@ -158,8 +160,8 @@ fun LiquidSlider(
                         if (ch.isConsumed) return@awaitEachGesture
                         val dx = ch.position.x - down.position.x
                         val dy = ch.position.y - down.position.y
-                        if (kotlin.math.abs(dy) > touchSlop && kotlin.math.abs(dy) >= kotlin.math.abs(dx)) return@awaitEachGesture
-                        if (kotlin.math.abs(dx) > touchSlop) {
+                        if (abs(dy) > touchSlop && abs(dy) >= abs(dx)) return@awaitEachGesture
+                        if (abs(dx) > touchSlop) {
                             ch.consume()
                             break
                         }
@@ -210,7 +212,7 @@ fun LiquidSlider(
                         upAt = ch.uptimeMillis
                         if (!ch.pressed) break
                         val x = ch.position.x
-                        if (kotlin.math.abs(x - stillX) > slop) {
+                        if (abs(x - stillX) > slop) {
                             stillX = x
                             stillSince = ch.uptimeMillis
                         } else if (ch.uptimeMillis - stillSince >= FINE_HOLD_MS) {
@@ -230,7 +232,7 @@ fun LiquidSlider(
                         }
                         ch.consume()
                     }
-                    if (v != stable && kotlin.math.abs(v - stable) == 1 && upAt - changedAt < LIFT_JITTER_MS) change(stable)
+                    if (v != stable && abs(v - stable) == 1 && upAt - changedAt < LIFT_JITTER_MS) change(stable)
                     fineBase = null
                     active = false
                     dragX = -1f

@@ -10,6 +10,7 @@ import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.art.artPill
+import com.labok.goat.ui.text.Copy
 import kotlin.math.hypot
 
 private fun ease(x: Float) = x * x * (3 - 2 * x)
@@ -47,7 +48,7 @@ internal fun ResolutionArt(percent: Int) {
                 }
             }
             drawRoundRect(if (on) c.ink else c.line, Offset(left, top), Size(box, box), CornerRadius(12.dp.toPx()), style = Stroke(1.5f.dp.toPx()))
-            artPill(tm, c, if (i == 0) "점 100%" else "점 ${com.labok.goat.ui.text.Copy.resPoints(percent)}%", Offset(left + box / 2, top + box + 16.dp.toPx()), filled = on)
+            artPill(tm, c, if (i == 0) "점 100%" else "점 ${Copy.resPoints(percent)}%", Offset(left + box / 2, top + box + 16.dp.toPx()), filled = on)
             artLabel(tm, if (i == 0) "원래 해상도" else "낮춘 해상도", Offset(left + box / 2, top + box + 36.dp.toPx()), if (on) c.ink else c.muted, bold = on)
         }
     }

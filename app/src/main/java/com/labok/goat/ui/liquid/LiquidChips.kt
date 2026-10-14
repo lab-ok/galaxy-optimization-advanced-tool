@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.liquid.Text
+import kotlin.math.abs
 
 /**
  * 액체 칩 선택: 고른 칩 아래의 방울이 연체 물리([SoftBlob])로 옮겨 간다. 이동 방향 앞쪽이 먼저 끌려가 길쭉해졌다가
@@ -101,7 +102,7 @@ fun <T> LiquidChips(
                 } else if (!blob.blob.ready || widths[i] <= 0f) {
                     (if (isSel) 1f else 0f)
                 } else {
-                    (1f - kotlin.math.abs(blob.blob.cx - (lefts[i] + widths[i] / 2)) / widths[i]).coerceIn(0f, 1f)
+                    (1f - abs(blob.blob.cx - (lefts[i] + widths[i] / 2)) / widths[i]).coerceIn(0f, 1f)
                 }
                 val textColor = lerp(c.ink, c.onInk, cover)
                 val interaction = remember { MutableInteractionSource() }

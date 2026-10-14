@@ -5,11 +5,13 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
+import com.labok.goat.ui.liquid.LiquidColors
 import kotlin.math.min
 
 /*
@@ -18,7 +20,7 @@ import kotlin.math.min
  */
 
 /** 손가락: [from]에서 [to]로 다가가 누르고(작아짐) 다시 물러난다. [t]는 0~1. */
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.finger(c: com.labok.goat.ui.liquid.LiquidColors, from: Offset, to: Offset, t: Float) {
+private fun DrawScope.finger(c: LiquidColors, from: Offset, to: Offset, t: Float) {
     val k = when {
         t < 0.4f -> t / 0.4f
         t < 0.65f -> 1f

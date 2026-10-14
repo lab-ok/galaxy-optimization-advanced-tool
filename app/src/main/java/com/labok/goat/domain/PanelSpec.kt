@@ -1,6 +1,7 @@
 package com.labok.goat.domain
 
 import com.labok.goat.data.settings.SettingsRepository
+import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.roundToInt
 
@@ -81,7 +82,7 @@ object PanelSpec {
         val known = all.filter(ScreenPolicy::isPlausible).distinctBy { it.key }
         if (known.size < 2) return false
         val first = known.first().ppi
-        return known.all { kotlin.math.abs(it.ppi - first) < 0.5f }
+        return known.all { abs(it.ppi - first) < 0.5f }
     }
 }
 

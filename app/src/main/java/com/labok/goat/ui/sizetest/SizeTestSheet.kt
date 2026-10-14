@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.labok.goat.domain.PanelSpec
 import com.labok.goat.domain.ScreenGeometry
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.components.Gap
@@ -191,7 +192,7 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
  * 칸 폭을 실물에 맞추면 그 화면의 실제 PPI를 얻는다. 저장한 값은 mm 눈금과 예상 실측에만 쓴다(DPI 계산에는 쓰지 않음).
  */
 @Composable
-private fun RulerCard(state: UiState, current: com.labok.goat.domain.PanelSpec.Resolved?, onCalibrate: (String, Float?) -> Unit) {
+private fun RulerCard(state: UiState, current: PanelSpec.Resolved?, onCalibrate: (String, Float?) -> Unit) {
     val c = LocalLiquid.current
     GlassCard {
         Text("실제 길이 확인", fontWeight = FontWeight.SemiBold, color = c.ink)

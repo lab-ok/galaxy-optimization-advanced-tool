@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.display.DisplayManager
 import android.provider.Settings
+import android.util.DisplayMetrics
 import android.view.Display
 import androidx.core.app.NotificationCompat
 import com.labok.goat.R
@@ -17,6 +18,7 @@ import com.labok.goat.background.GoatService
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.ShakeRotatePolicy
 import com.labok.goat.ui.MainActivity
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * 흔들어서 화면 회전의 설정과 회전 잠금 쓰기.
@@ -64,9 +66,9 @@ object ShakeRotate {
     /** 지금 기본 화면이 큰 화면인지: 짧은 변이 [LARGE_DP] 이상(폴드 내부 화면·태블릿). */
     @Suppress("DEPRECATION")
     fun isLargeScreen(context: Context): Boolean {
-        val m = android.util.DisplayMetrics()
-        context.getSystemService(android.hardware.display.DisplayManager::class.java)
-            .getDisplay(android.view.Display.DEFAULT_DISPLAY).getRealMetrics(m)
+        val m = DisplayMetrics()
+        context.getSystemService(DisplayManager::class.java)
+            .getDisplay(Display.DEFAULT_DISPLAY).getRealMetrics(m)
         return ShakeRotatePolicy.isLarge(minOf(m.widthPixels, m.heightPixels), m.densityDpi)
     }
 
@@ -99,7 +101,7 @@ object ShakeRotate {
     private const val DEFAULT_TURN = 4
 
     /** 설정이 바뀔 때마다 늘어난다(자동 맞추기 시트에서 바꿔도 화면이 바로 따라 바뀌게). */
-    val changed = kotlinx.coroutines.flow.MutableStateFlow(0)
+    val changed = MutableStateFlow(0)
 
     /** 돌릴 때 진동 세기(0=끔, 1~[ShakeHaptics.MAX_STRENGTH]). */
     fun vibration(context: Context): Int = prefs(context).getInt("vibration", ShakeHaptics.DEFAULT_STRENGTH).coerceIn(0, ShakeHaptics.MAX_STRENGTH)

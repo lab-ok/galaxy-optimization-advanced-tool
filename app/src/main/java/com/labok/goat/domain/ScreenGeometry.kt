@@ -1,5 +1,7 @@
 package com.labok.goat.domain
 
+import kotlin.math.abs
+
 /**
  * 화면 크기 계산(순수 함수). 화면 방향, 한 화면에 들어가는 줄 수, dp의 실제 길이.
  * UI는 이 결과를 그리기만 한다.
@@ -19,7 +21,7 @@ object ScreenGeometry {
         val (s, l) = PanelSpec.pixels(key)?.let { it.first.toFloat() to it.second.toFloat() } ?: return null
         if (!isInner) return s to l
         val coverH = coverKey?.let(PanelSpec::pixels)?.second?.toFloat() ?: DEFAULT_COVER_HEIGHT
-        return if (kotlin.math.abs(s - coverH) < kotlin.math.abs(l - coverH)) l to s else s to l
+        return if (abs(s - coverH) < abs(l - coverH)) l to s else s to l
     }
 
     /** 줄 세기에 쓰는 한 줄 높이(dp). 목록 한 줄(48dp)과 같다. */
