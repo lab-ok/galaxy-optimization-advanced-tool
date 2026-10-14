@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import com.labok.goat.data.lab.AirplaneRadios
 import com.labok.goat.data.lab.ApiProbe
+import com.labok.goat.data.lab.FlexPanel
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.LabSetting
 import com.labok.goat.data.lab.ScreenMode
@@ -170,6 +171,95 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { setting.changed(context) }
         LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(setting) })
+    }
+}
+
+/**
+ * 플렉스 모드 패널 시험(폴드8처럼 설정 항목이 숨겨진 기기에서 직접 시험): 기능 스위치, 앱별 등록(Shizuku), 처음대로,
+ * 진단 파일 보내기. 켜지더라도 힌지가 중간 각도에서 멈추지 않는 기기는 손이나 거치대로 각도를 잡아야 한다고 안내한다.
+ */
+@Composable
+internal fun LabFlexScreen(contentPadding: PaddingValues) {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val w = rememberLabWriter()
+    var appsVersion by remember { mutableIntStateOf(0) }
+    var running by remember { mutableStateOf(false) }
+    var summary by remember { mutableStateOf("") }
+    val apps = remember { FlexPanel.launchableApps(context) }
+    LazyColumn(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        contentPadding = featurePadding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(Gap.Card),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        item(key = "switch") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    val raw = remember(w.version) { FlexPanel.setting.read(context) }
+                    Text(Copy.LAB_FLEX_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.LAB_FLEX_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidSwitchRow(Copy.LAB_FLEX_SWITCH, "${FlexPanel.setting.key} = ${raw ?: "(없음)"}", raw == "1", true) { on ->
+                        w.write(FlexPanel.setting, if (on) "1" else "0")
+                    }
+                    Spacer(Modifier.height(Gap.Section))
+                    val changed = remember(w.version) { FlexPanel.setting.changed(context) }
+                    LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(FlexPanel.setting) })
+                }
+            }
+        }
+        item(key = "apps") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    val mine = remember(appsVersion) { FlexPanel.registered(context) }
+                    Text(Copy.LAB_FLEX_APPS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.LAB_FLEX_APPS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    apps.forEach { (pkg, label) ->
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidSwitchRow(label, pkg, pkg in mine, true) { on ->
+                            scope.launch {
+                                val err = withContext(Dispatchers.IO) { FlexPanel.setApp(context, pkg, on) }
+                                appsVersion++
+                                if (err != null) Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(Gap.Section))
+                    LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = mine.isNotEmpty(), modifier = Modifier.fillMaxWidth(), onClick = {
+                        scope.launch {
+                            val failed = withContext(Dispatchers.IO) { FlexPanel.restoreApps(context) }
+                            appsVersion++
+                            Toast.makeText(context, if (failed == 0) Copy.LAB_RESTORED else Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+                        }
+                    })
+                }
+            }
+        }
+        item(key = "diagnose") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.LAB_FLEX_DIAG_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.LAB_FLEX_DIAG_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidButton(if (running) Copy.LAB_PROBE_RUNNING else Copy.LAB_PROBE_RUN, enabled = !running, modifier = Modifier.fillMaxWidth(), onClick = {
+                        running = true
+                        scope.launch {
+                            val text = withContext(Dispatchers.IO) { FlexPanel.diagnose(context) }
+                            val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-flex"), text) }
+                            summary = text.lineSequence().first()
+                            running = false
+                            uri?.let { share(context, it) }
+                        }
+                    })
+                    if (summary.isNotEmpty()) {
+                        Spacer(Modifier.height(Gap.Item))
+                        Text(summary, color = c.ink, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -106,6 +106,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     LAB_AIRPLANE(Copy.FEATURE_LAB_AIRPLANE, NavIcon.AIRPLANE),
     LAB_ICONS(Copy.FEATURE_LAB_ICONS, NavIcon.EYE_OFF),
     LAB_SCREEN(Copy.FEATURE_LAB_SCREEN, NavIcon.PALETTE),
+    LAB_FLEX(Copy.FEATURE_LAB_FLEX, NavIcon.FOLD),
     LAB_PROBE(Copy.FEATURE_LAB_PROBE, NavIcon.FLASK),
 
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
@@ -117,7 +118,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_AIRPLANE, LAB_ICONS, LAB_SCREEN, LAB_PROBE, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_AIRPLANE, LAB_ICONS, LAB_SCREEN, LAB_FLEX, LAB_PROBE, LAB_TOOLS)
     }
 }
 
