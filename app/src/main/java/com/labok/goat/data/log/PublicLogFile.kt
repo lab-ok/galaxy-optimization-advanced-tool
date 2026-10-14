@@ -84,6 +84,11 @@ object PublicLogFile {
     /** "goat-<kind>-yyMMdd-HHmmss.txt"처럼 시각을 붙인 새 파일 이름. */
     fun timestampedName(kind: String): String = "goat-$kind-${java.text.SimpleDateFormat("yyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date())}.txt"
 
+    /** [saveNew]로 만든 파일 끝에 [text]를 덧붙인다(실시간 기록용). 실패하면 false. */
+    fun appendTo(context: Context, uri: Uri, text: String): Boolean = synchronized(lock) {
+        runCatching { context.applicationContext.contentResolver.openOutputStream(uri, "wa")?.use { it.write(text.toByteArray()) } != null }.getOrDefault(false)
+    }
+
     /** Download/GOAT에 새 파일로 저장하고 Uri를 돌려준다. */
     fun saveNew(context: Context, name: String, text: String): Uri? = synchronized(lock) {
         val values = ContentValues().apply {

@@ -142,7 +142,9 @@ object FlexPanel {
      * 직접 열고 패널 신호를 보낸다. 패널 화면이 왜 닫히는지 시스템 로그를 함께 남긴다. 패널이 뜨는지 사용자가 볼 수 있게 10초 동안 그대로 두었다가 접힘 상태를 원래대로 돌린다.
      * 한 일과 결과를 줄마다 돌려준다. 작업 스레드에서 부른다.
      */
-    fun revive(context: Context): String = buildString {
+    fun revive(context: Context, emit: (String) -> Unit) {
+        // 한 줄씩 바로 내보낸다(화면이 다시 만들어지거나 중간에 끊겨도 그때까지의 결과가 파일에 남게)
+        fun appendLine(text: String = "") = emit(text + "\n")
         fun sh(cmd: String) = ShizukuAccess.shell(cmd)?.let { r -> (if (r.ok) "성공" else "실패") + r.out.ifBlank { r.err }.trim().take(200).let { if (it.isEmpty()) "" else " · $it" } } ?: "Shizuku 연결 안 됨"
         appendLine("패널 설정 켜기 → ${sh("settings put global flex_mode_panel_enabled 1")}")
         listOf("global", "secure", "system").forEach { t ->
@@ -171,14 +173,21 @@ object FlexPanel {
             Regex("""Task\{[0-9a-f]+ #(\d+)[^}]*$pkg""").find(ShizukuAccess.shell("dumpsys activity activities")?.out.orEmpty())?.groupValues?.get(1)
         }
         appendLine("앞에 있는 앱 작업 번호 = ${task ?: "(못 찾음)"}")
+        // 6차: 화면을 잠시 가로로 고정해 분할이 위아래가 되게 하고(5차는 세로라 좌우로 나뉨), 크롬을 위 칸에 넣은 뒤
+        // 패널을 '옆 칸으로 열기'(FLAG_ACTIVITY_LAUNCH_ADJACENT) 플래그로 열어 아래 칸에 들어가는지 본다. 끝나면 회전 설정을 되돌린다
+        val autoRot = ShizukuAccess.shell("settings get system accelerometer_rotation")?.out?.trim()
+        val userRot = ShizukuAccess.shell("settings get system user_rotation")?.out?.trim()
+        appendLine("회전 잠시 가로로 고정 → ${sh("settings put system accelerometer_rotation 0 && settings put system user_rotation 1")}")
+        Thread.sleep(1500)
         ShizukuAccess.shell("logcat -b all -c")
         if (task != null) {
             appendLine("시도 1: ${app}을 분할 위 칸으로 옮기기 → ${sh("dumpsys activity service SystemUIService WMShell splitscreen moveToSideStage $task 0 2>&1 | tail -3")}")
             Thread.sleep(1500)
         }
-        appendLine("시도 1: 이어서 패널 열기 → ${sh("am start -n '$PANEL_ACTIVITY'")}")
-        panelLog("시도 1(분할 먼저)")
+        appendLine("시도 1: 패널을 옆(아래) 칸으로 열기 → ${sh("am start -f 0x18001000 -n '$PANEL_ACTIVITY'")}")
+        panelLog("시도 1(가로·분할·옆 칸)")
         if (task != null) appendLine("분할 풀기 → ${sh("dumpsys activity service SystemUIService WMShell splitscreen exitSplitScreen $task 2>&1 | tail -3")}")
+        appendLine("회전 설정 되돌리기 → ${sh("settings put system accelerometer_rotation ${autoRot?.takeIf { it != "null" } ?: "1"} && settings put system user_rotation ${userRot?.takeIf { it != "null" } ?: "0"}")}")
         Thread.sleep(1500)
         ShizukuAccess.shell("logcat -b all -c")
         appendLine("시도 2: 멀티 창 모드로 패널 열기 → ${sh("am start --windowingMode 6 -n '$PANEL_ACTIVITY'")}")

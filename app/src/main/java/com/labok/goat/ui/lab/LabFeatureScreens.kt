@@ -300,9 +300,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var gesturesOpen by remember { mutableStateOf(false) }
     var diagProgress by remember { mutableStateOf<Float?>(null) }
     var diagStatus by remember { mutableStateOf("") }
-    var reviving by remember { mutableStateOf(false) }
-    var reviveResult by remember { mutableStateOf("") }
-    var reviveUri by remember { mutableStateOf<Uri?>(null) }
     var wheel by remember { mutableStateOf(AutoFlex.wheel.read(context)) }
     // 이 설정 화면을 보는 동안에는 자동 플렉스를 멈춰 화면이 바뀌지 않게 한다. 시험은 [플렉스 모드 테스트하기]가 여는
     // 시험 화면(FlexTestActivity)에서만 하므로, 이 화면이 앞에 있을 때(RESUMED)만 멈춘다
@@ -517,24 +514,19 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     Text(Copy.LAB_FLEX_DIAG_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.LAB_FLEX_DIAG_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(if (reviving) Copy.LAB_FLEX_REVIVE_RUNNING else Copy.LAB_FLEX_REVIVE, enabled = !reviving && shizuku == ShizukuAccess.State.READY, modifier = Modifier.fillMaxWidth(), onClick = {
-                        reviving = true
-                        scope.launch {
-                            reviveResult = withContext(Dispatchers.IO) { com.labok.goat.data.lab.FlexPanel.revive(context) }
-                            // 패널 화면 로그가 길어 화면으로는 다 볼 수 없으니 결과 전체를 파일로 남겨 공유할 수 있게 한다
-                            reviveUri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("flex-revive"), reviveResult) }
-                            reviving = false
-                        }
+                    // 시도는 앱 전체 범위에서 돌고(ReviveRunner) 결과는 실시간으로 파일에 쌓인다: 화면이 다시 만들어져도 진행·결과·공유 버튼이 그대로 보인다
+                    val revive by com.labok.goat.data.lab.ReviveRunner.state.collectAsStateWithLifecycle()
+                    LiquidButton(if (revive.running) Copy.LAB_FLEX_REVIVE_RUNNING else Copy.LAB_FLEX_REVIVE, enabled = !revive.running && shizuku == ShizukuAccess.State.READY, modifier = Modifier.fillMaxWidth(), onClick = {
+                        com.labok.goat.data.lab.ReviveRunner.start(context)
                     })
-                    if (reviveResult.isNotEmpty()) {
+                    if (revive.head.isNotEmpty()) {
                         Spacer(Modifier.height(Gap.Item))
-                        // 화면에는 한 일만 짧게(로그 앞까지) 보여 주고, 로그를 포함한 전체는 파일로 공유한다
-                        val head = reviveResult.substringBefore("── 패널 화면 로그 ──").trim().lines().take(10).joinToString("\n")
-                        Text(head, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                        reviveUri?.let { uri ->
-                            Spacer(Modifier.height(Gap.Item))
-                            LiquidButton(Copy.LAB_FLEX_REVIVE_SHARE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { share(context, uri) })
-                        }
+                        Text(revive.head.trim(), color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    }
+                    val lastFile = remember(revive.running) { com.labok.goat.data.lab.ReviveRunner.lastFile(context) }
+                    lastFile?.let { uri ->
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.LAB_FLEX_REVIVE_SHARE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { share(context, uri) })
                     }
                     Spacer(Modifier.height(Gap.Item))
                     // 진단은 1~3분 걸려, 업데이트 진행 통처럼 버튼 안에 물이 차오르며 지금 하는 일과 퍼센트를 보여 준다

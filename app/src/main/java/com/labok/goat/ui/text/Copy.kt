@@ -203,7 +203,7 @@ object Copy {
     const val LAB_FLEX_DIAG_TITLE = "삼성 터치패널 살리기"
     const val LAB_FLEX_DIAG_BODY = "폰을 노트북처럼 가로로 반쯤 접은 채 누르세요. 크롬을 열고 삼성 패널을 불러 본 뒤 로그를 남깁니다."
     const val LAB_FLEX_REVIVE = "살리기 시도"
-    const val LAB_FLEX_REVIVE_SHARE = "결과 파일 공유(로그 포함)"
+    const val LAB_FLEX_REVIVE_SHARE = "마지막 결과 파일 공유(로그 포함)"
     const val LAB_FLEX_REVIVE_RUNNING = "시도하는 중…"
     const val LAB_FLEX_DIAG_RUN = "진단 파일 만들기"
     const val LAB_FLEX_DIAG_RUNNING = "모으는 중…"
