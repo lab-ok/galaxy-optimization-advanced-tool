@@ -230,6 +230,15 @@ object ShizukuAccess {
         ShellResult(p.waitFor() == 0, out, err)
     }.getOrNull()
 
+    /**
+     * Shizuku 셸로 [command]를 띄우고 끝나지 않는 출력을 그대로 넘겨준다(예: `logcat`을 계속 읽기). 끝내려면 [Process.destroy].
+     * Shizuku가 준비되지 않았으면 null.
+     */
+    fun stream(command: String): Process? = runCatching {
+        if (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return null
+        newProcess(command)
+    }.getOrNull()
+
     /** Shizuku API에 공개 함수가 없어 리플렉션으로 부른다. */
     private fun newProcess(command: String): Process {
         val m = Shizuku::class.java.getDeclaredMethod("newProcess", Array<String>::class.java, Array<String>::class.java, String::class.java)

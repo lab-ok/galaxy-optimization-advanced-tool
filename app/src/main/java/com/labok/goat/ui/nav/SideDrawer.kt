@@ -622,37 +622,34 @@ private fun DrawScope.palette(c: Color, s: Stroke) {
  * 세운 화면은 뒤로 살짝 기운 사각형이고 두 면이 아래 힌지에서 만난다. 세운 화면 안에 재생 삼각형, 바닥 화면에 조작 점 둘.
  */
 private fun DrawScope.flex(c: Color, s: Stroke) {
-    // 세운 위 화면(뒤로 기움)
+    // 비스듬히 본 반쯤 접힌 폰: 세운 위 화면과 아래 화면이 힌지에서 만난다.
     val top = Path().apply {
-        moveTo(u(5f), u(14.5f))
-        lineTo(u(7.5f), u(3.5f))
-        lineTo(u(19.5f), u(3.5f))
-        lineTo(u(17f), u(14.5f))
+        moveTo(u(8f), u(13.5f))
+        lineTo(u(20.3f), u(16.7f))
+        lineTo(u(21.3f), u(7.7f))
+        lineTo(u(9f), u(4.5f))
         close()
     }
     drawPath(top, c, style = s)
-    // 바닥 화면(원근: 앞쪽이 넓다)
     val base = Path().apply {
-        moveTo(u(5f), u(14.5f))
-        lineTo(u(17f), u(14.5f))
-        lineTo(u(21f), u(20.5f))
-        lineTo(u(3f), u(20.5f))
+        moveTo(u(8f), u(13.5f))
+        lineTo(u(20.3f), u(16.7f))
+        lineTo(u(15f), u(19.6f))
+        lineTo(u(2.7f), u(16.3f))
         close()
     }
     drawPath(base, c, style = s)
     // 힌지 선을 조금 굵게: 접힌 곳
-    drawLine(c, p(5f, 14.5f), p(17f, 14.5f), s.width * 1.4f, StrokeCap.Round)
-    // 위 화면의 재생 삼각형
-    val play = Path().apply {
-        moveTo(u(11.3f), u(6.6f))
-        lineTo(u(14.4f), u(9f))
-        lineTo(u(10.8f), u(11.4f))
+    drawLine(c, p(8f, 13.5f), p(20.3f, 16.7f), s.width * 1.4f, StrokeCap.Round)
+    // 아래 화면의 터치패드
+    val pad = Path().apply {
+        moveTo(u(9.5f), u(15.15f))
+        lineTo(u(15.65f), u(16.75f))
+        lineTo(u(13f), u(18.2f))
+        lineTo(u(6.85f), u(16.6f))
         close()
     }
-    drawPath(play, c)
-    // 바닥 화면의 조작 점(패널)
-    drawCircle(c, u(0.9f), p(9.5f, 17.6f))
-    drawCircle(c, u(0.9f), p(14.5f, 17.6f))
+    drawPath(pad, c)
 }
 
 /** 덮이는 서랍·시트의 불투명도: 흐려진 뒤 화면이 살짝 비친다. */

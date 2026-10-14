@@ -501,50 +501,73 @@ private val FLEX_GESTURES = listOf(
     "네 손가락으로 누르기" to "최근 앱 화면을 엽니다."
 )
 
-/** 플렉스 모드 그림: 반쯤 접은 폴드의 위 화면에는 영상, 아래 화면에는 조작 패널. 힌지가 천천히 접혔다 펴진다. */
+/**
+ * 플렉스 모드 그림: 두께 있는 폴드를 비스듬히 내려다본 모습. 힌지가 천천히 접혔다 펴지고, 플렉스 범위(115° 아래)로 들어오면
+ * 아래 화면에 조작 패널이, 위 화면에 영상이 스며들듯 켜진다.
+ */
 @Composable
 private fun FlexPanelArt() {
     val c = LocalLiquid.current
     val t = com.labok.goat.ui.art.artLoop(3200)
     androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(120.dp)) {
-        val k = (1 - kotlin.math.cos(t * 2 * Math.PI).toFloat()) / 2 // 0..1 접힘 정도
-        val w = size.width * 0.5f
-        val h = size.height * 0.36f
-        val cx = size.width / 2
-        val hingeY = size.height * 0.62f
-        // 아래 화면(바닥): 원근감 있게 납작한 사각형
-        val bottom = androidx.compose.ui.graphics.Path().apply {
-            moveTo(cx - w / 2, hingeY)
-            lineTo(cx + w / 2, hingeY)
-            lineTo(cx + w / 2 + w * 0.12f, hingeY + h * 0.55f)
-            lineTo(cx - w / 2 - w * 0.12f, hingeY + h * 0.55f)
+        val p = (1 - kotlin.math.cos(t * 2 * Math.PI).toFloat()) / 2
+        val k = p * p * (3 - 2 * p) // 0..1 접힘 정도(부드럽게)
+        val theta = 180f - 80f * k // 180° 펼침 → 100°
+        val sc = size.height / 220f * 170f
+        val ox = size.width / 2
+        val oy = size.height * 150f / 220f
+        val yaw = Math.toRadians(-35.0)
+        val pitch = Math.toRadians(28.0)
+        fun pt(x: Float, y: Float, z: Float): androidx.compose.ui.geometry.Offset {
+            val x1 = x * kotlin.math.cos(yaw) + z * kotlin.math.sin(yaw)
+            val z1 = -x * kotlin.math.sin(yaw) + z * kotlin.math.cos(yaw)
+            val y1 = y * kotlin.math.cos(pitch) - z1 * kotlin.math.sin(pitch)
+            return androidx.compose.ui.geometry.Offset(ox + (x1 * sc).toFloat(), oy - (y1 * sc).toFloat())
+        }
+        fun quad(q: List<androidx.compose.ui.geometry.Offset>) = androidx.compose.ui.graphics.Path().apply {
+            moveTo(q[0].x, q[0].y)
+            for (i in 1..3) lineTo(q[i].x, q[i].y)
             close()
         }
-        drawPath(bottom, c.surface)
-        drawPath(bottom, c.ink, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
-        // 조작 패널: 재생 막대와 버튼 세 개
-        drawLine(c.ink, androidx.compose.ui.geometry.Offset(cx - w * 0.35f, hingeY + h * 0.18f), androidx.compose.ui.geometry.Offset(cx + w * 0.35f, hingeY + h * 0.18f), 2.dp.toPx())
-        for (i in -1..1) drawCircle(c.ink, 4.dp.toPx(), androidx.compose.ui.geometry.Offset(cx + i * w * 0.18f, hingeY + h * 0.38f))
-        // 위 화면: 접힌 정도만큼 세워진다(0이면 거의 펼침, 1이면 직각)
-        val rise = h * (0.55f + 0.45f * k)
-        val lean = w * 0.08f * (1 - k)
-        val top = androidx.compose.ui.graphics.Path().apply {
-            moveTo(cx - w / 2, hingeY)
-            lineTo(cx + w / 2, hingeY)
-            lineTo(cx + w / 2 - lean, hingeY - rise)
-            lineTo(cx - w / 2 + lean, hingeY - rise)
-            close()
+
+        // q = [힌지 왼쪽, 힌지 오른쪽, 먼 오른쪽, 먼 왼쪽] 안의 (u: 가로, v: 힌지→먼 쪽) 지점
+        fun at(q: List<androidx.compose.ui.geometry.Offset>, u: Float, v: Float): androidx.compose.ui.geometry.Offset {
+            val a = q[0] + (q[1] - q[0]) * u
+            val b = q[3] + (q[2] - q[3]) * u
+            return a + (b - a) * v
         }
-        drawPath(top, c.ink)
-        // 위 화면 속 영상(재생 삼각형)
-        val pc = androidx.compose.ui.geometry.Offset(cx, hingeY - rise / 2)
-        val tri = androidx.compose.ui.graphics.Path().apply {
-            moveTo(pc.x - 6.dp.toPx(), pc.y - 8.dp.toPx())
-            lineTo(pc.x + 9.dp.toPx(), pc.y)
-            lineTo(pc.x - 6.dp.toPx(), pc.y + 8.dp.toPx())
-            close()
+        val w = 0.5f
+        val h = 0.62f
+        val r = Math.toRadians(180.0 - theta)
+        val ty = (h * kotlin.math.sin(r)).toFloat()
+        val tz = (-h * kotlin.math.cos(r)).toFloat()
+        val bottom = listOf(pt(-w, 0f, 0f), pt(w, 0f, 0f), pt(w, 0f, h), pt(-w, 0f, h))
+        val top = listOf(pt(-w, 0f, 0f), pt(w, 0f, 0f), pt(w, ty, tz), pt(-w, ty, tz))
+        val line = 2.dp.toPx()
+        // 아래 화면의 두께(앞 옆면)
+        val thick = 12f / 220f * size.height
+        val down = androidx.compose.ui.geometry.Offset(0f, thick)
+        drawPath(quad(listOf(bottom[3], bottom[2], bottom[2] + down, bottom[3] + down)), c.muted)
+        drawPath(quad(bottom), c.surface)
+        drawPath(quad(bottom), c.ink, style = androidx.compose.ui.graphics.drawscope.Stroke(line, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+        // 플렉스 범위에 들어오면 패널과 영상이 서서히 켜진다(125°→110°)
+        val on = ((125f - theta) / 15f).coerceIn(0f, 1f).let { it * it * (3 - 2 * it) }
+        if (on > 0f) {
+            drawPath(quad(listOf(at(bottom, 0.2f, 0.25f), at(bottom, 0.8f, 0.25f), at(bottom, 0.8f, 0.8f), at(bottom, 0.2f, 0.8f))), c.line.copy(alpha = on))
         }
-        drawPath(tri, c.onInk)
+        drawPath(quad(top), c.ink)
+        drawLine(c.ink, bottom[0], bottom[1], 3.dp.toPx(), androidx.compose.ui.graphics.StrokeCap.Round)
+        if (on > 0f) {
+            val pc = at(top, 0.5f, 0.55f)
+            val rr = 7.dp.toPx() * (0.7f + 0.3f * on)
+            val tri = androidx.compose.ui.graphics.Path().apply {
+                moveTo(pc.x - rr * 0.7f, pc.y - rr)
+                lineTo(pc.x + rr, pc.y)
+                lineTo(pc.x - rr * 0.7f, pc.y + rr)
+                close()
+            }
+            drawPath(tri, c.onInk.copy(alpha = on))
+        }
     }
 }
 
@@ -556,18 +579,26 @@ private fun FlexPanelArt() {
 private fun FlexCalibrator(onStart: (Int) -> Unit, onEnd: (Int) -> Unit, min: Int, max: Int) {
     val c = LocalLiquid.current
     val context = LocalContext.current
-    var angle by remember { mutableStateOf<Float?>(null) }
+    var coarse by remember { mutableStateOf<Float?>(null) }
+    var fineAngle by remember { mutableStateOf<Float?>(null) }
+    val angle = fineAngle ?: coarse
     androidx.compose.runtime.DisposableEffect(Unit) {
         val sm = context.getSystemService(android.hardware.SensorManager::class.java)
         val hinge = sm?.getDefaultSensor(android.hardware.Sensor.TYPE_HINGE_ANGLE)
         val l = object : android.hardware.SensorEventListener {
             override fun onSensorChanged(e: android.hardware.SensorEvent) {
-                angle = e.values[0]
+                coarse = e.values[0]
             }
             override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) = Unit
         }
         if (hinge != null) sm.registerListener(l, hinge, android.hardware.SensorManager.SENSOR_DELAY_UI)
-        onDispose { sm?.unregisterListener(l) }
+        // 세밀한 각도(Shizuku로 시스템 로그): 오면 거친 센서 값(0·90·180) 대신 이 값을 쓴다
+        val fine = com.labok.goat.data.lab.FineHinge { v -> fineAngle = v }
+        fine.start()
+        onDispose {
+            sm?.unregisterListener(l)
+            fine.stop()
+        }
     }
     val now = angle?.toInt()
     val inside = now != null && now in min..max

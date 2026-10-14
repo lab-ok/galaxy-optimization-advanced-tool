@@ -136,6 +136,13 @@ object AutoFlex {
         private var want = false
         private val apply = Runnable { set(want) }
 
+        // 세밀한 각도(시스템 로그). 최근 1초 안에 값이 왔으면 거친 센서 값(0·90·180)은 무시한다
+        @Volatile private var fineAt = 0L
+        private val fine = FineHinge { a ->
+            fineAt = android.os.SystemClock.elapsedRealtime()
+            worker.post { onAngle(a) }
+        }
+
         private val screen = object : BroadcastReceiver() {
             override fun onReceive(c: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_SCREEN_ON) {
@@ -178,17 +185,23 @@ object AutoFlex {
             val sm = context.getSystemService(SensorManager::class.java)
             val hinge = sm.getDefaultSensor(Sensor.TYPE_HINGE_ANGLE) ?: return
             listening = sm.registerListener(this, hinge, SensorManager.SENSOR_DELAY_UI, worker)
+            fine.start()
         }
 
         private fun stopListening() {
             if (!listening) return
             context.getSystemService(SensorManager::class.java).unregisterListener(this)
+            fine.stop()
             listening = false
             angleFlow.value = null
         }
 
         override fun onSensorChanged(event: SensorEvent) {
-            val a = event.values[0]
+            if (android.os.SystemClock.elapsedRealtime() - fineAt < 1000) return
+            onAngle(event.values[0])
+        }
+
+        private fun onAngle(a: Float) {
             angleFlow.value = a
             val next = inRange(a, min(context), max(context))
             if (next == want && worker.hasCallbacks(apply)) return

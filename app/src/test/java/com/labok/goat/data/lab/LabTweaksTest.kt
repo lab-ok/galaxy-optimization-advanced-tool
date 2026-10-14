@@ -35,4 +35,11 @@ class LabTweaksTest {
         assertFalse(AutoFlex.inRange(74.9f, 75, 115))
         assertFalse(AutoFlex.inRange(180f, 75, 115))
     }
+
+    @Test
+    fun fineHingeParsesVendorLogLine() {
+        assertEquals(47f, FineHinge.parse("I/sensors-hal( 812): handle_sns_client_event:197, [0]lid_angle_fusion ts=123456 ns value [1/ 47/2]")!!, 0f)
+        assertNull(FineHinge.parse("I/sensors-hal( 812): something else"))
+        assertNull("범위 밖은 버린다", FineHinge.parse("lid_angle_fusion ts=1 ns value [1/ 400/2]"))
+    }
 }

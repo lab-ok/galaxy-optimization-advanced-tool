@@ -210,9 +210,9 @@ private fun DrawScope.liquid(t: Float, orbit: Float, arrow: Float, tank: Float, 
             drawPath(path, ink)
         }
         // 앞면에서 튀어 오르는 물방울: 받는 속도가 빠를수록 많이·높이
-        val drops = (1 + (rate * 5).toInt()) * if (fill in 0.02f..0.98f) 1 else 0
+        val drops = (1 + (rate * 2).toInt()) * if (fill in 0.02f..0.98f) 1 else 0
         for (i in 0 until drops) {
-            val k = ((t * (0.9f + 0.6f * rate) + i * 0.37f) % 1f)
+            val k = ((t * (0.45f + 0.25f * rate) + i * 0.37f) % 1f)
             val arc = 4f * k * (1f - k)
             drawCircle(
                 ink,
@@ -234,8 +234,9 @@ private fun DrawScope.liquid(t: Float, orbit: Float, arrow: Float, tank: Float, 
 
 /** 통 안 물의 모양: 왼쪽부터 [front]까지, 앞면은 받는 속도([rate])만큼 출렁인다. 물 그림과 퍼센트 글자 반전이 같은 모양을 쓴다. */
 private fun DrawScope.waterPath(left: Float, top: Float, h: Float, front: Float, rate: Float, swirl: Float, t: Float): Path {
-    val amp = u(3f) + u(7f) * rate.coerceIn(0f, 1f) * (1f - swirl)
-    val speed = 4f + 8f * rate
+    // 얌전한 물결: 출렁임 폭과 빠르기를 작게 두고, 받는 속도가 빨라도 조금만 커진다
+    val amp = u(1.8f) + u(2.4f) * rate.coerceIn(0f, 1f) * (1f - swirl)
+    val speed = 1.6f + 1.8f * rate
     return Path().apply {
         moveTo(left, top)
         var y = top
