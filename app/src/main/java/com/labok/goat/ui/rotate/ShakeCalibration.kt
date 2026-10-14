@@ -6,6 +6,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
@@ -95,7 +96,8 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
     var tune by remember { mutableStateOf(LiquidTune.read(context)) }
     var tuning by remember { mutableStateOf(false) }
     // 제목은 다른 시트처럼 왼쪽, 본문(물방울·결과)은 가운데
-    SheetColumn(title = Copy.SHAKE_CALIBRATE) {
+    // 시작하면 안내 줄이 빠져 시트가 짧아진다: 한 번에 튀지 않게 높이 변화를 부드럽게 잇는다
+    SheetColumn(modifier = Modifier.animateContentSize(), title = Copy.SHAKE_CALIBRATE) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 when {

@@ -347,7 +347,7 @@ internal fun ResetSheet(
         }
         GlassCard {
             Text(Copy.RESET_DEFAULT, fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(Copy.RESET_DEFAULT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text(if (foldable) Copy.RESET_DEFAULT_BODY else Copy.RESET_DEFAULT_BODY_SINGLE, color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             LiquidButton(Copy.RESET_DEFAULT, modifier = Modifier.fillMaxWidth(), onClick = onDefault, primary = false, enabled = canReset)
         }

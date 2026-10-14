@@ -140,7 +140,7 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                         LiquidSwitch(keep, { on ->
                             keep = on
                             CameraMute.setKeep(context, on)
-                        }, label = Copy.CAMERA_KEEP_TITLE)
+                        }, enabled = state != CameraMute.State.NONE, label = Copy.CAMERA_KEEP_TITLE)
                     }
                 }
             }

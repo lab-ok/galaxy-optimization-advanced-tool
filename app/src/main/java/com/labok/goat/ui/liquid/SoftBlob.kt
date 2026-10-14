@@ -60,6 +60,18 @@ class SoftBlob(private val n: Int = N) {
     var cy = 0f
         private set
 
+    /** 지금 모양의 가로 범위 [왼쪽, 오른쪽]([out]에 담는다). 칩 글자가 방울에 얼마나 덮였는지 셀 때 쓴다. */
+    fun spanX(out: FloatArray) {
+        var lo = Float.MAX_VALUE
+        var hi = -Float.MAX_VALUE
+        for (i in 0 until n) {
+            if (px[i] < lo) lo = px[i]
+            if (px[i] > hi) hi = px[i]
+        }
+        out[0] = lo
+        out[1] = hi
+    }
+
     /**
      * 폭 [w]·높이 [hh], 모서리 반지름 [corner]인 둥근 사각형을 중심 ([x], [y])에 쉬는 상태로 놓는다.
      * [corner]가 음수면 짧은 변의 절반, 곧 알약(또는 원)이다.

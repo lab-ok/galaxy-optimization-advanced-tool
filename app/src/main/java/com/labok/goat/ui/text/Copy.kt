@@ -288,6 +288,7 @@ object Copy {
     const val CONTINUE = "계속"
     const val CANCEL = "취소"
     const val RESET_DEFAULT_BODY = "두 화면을 기기 기본 DPI로 되돌리고 자동 적용을 끕니다."
+    const val RESET_DEFAULT_BODY_SINGLE = "화면을 기기 기본 DPI로 되돌리고 자동 적용을 끕니다."
 
     // 알림(토스트)
     const val TOAST_APPLIED = "적용했습니다"
@@ -364,7 +365,7 @@ object Copy {
     const val AIRPLANE_DASH_NONE = "비행기 모드 때 모두 끔"
     const val AIRPLANE_DASH_DEFAULT = "기본 설정"
     fun airplaneDash(kept: List<String>) = "${kept.joinToString("·")} 켜 둠"
-    const val LAB_PRIVACY_DOT_BLOCKED = "이 Android 버전은 시스템이 막아 두어 바꿀 수 없습니다"
+    const val LAB_PRIVACY_DOT_BLOCKED = "이 Android 버전은 시스템이 막아 두어 바꿀 수 없습니다."
     const val REFRESH_UNSUPPORTED_SHORT = "바꿀 수 없는 화면"
     const val REFRESH_TOAST_EXTERNAL = "GOAT가 바꾼 값이 아니라 그대로 둡니다. 삼성 설정에서 바꿔 주세요"
     const val REFRESH_CAUTION_BODY = "높은 주사율은 배터리를 더 씁니다. 절전 모드와 일부 게임에서는 시스템이 잠시 주사율을 낮춥니다."
@@ -397,8 +398,8 @@ object Copy {
     const val DOZE_NEED_SHIZUKU = "잠자기 모드는 시스템 설정이라 Shizuku 셸 권한으로만 끄고 켤 수 있습니다."
     const val DOZE_CONNECT = "Shizuku 연결하기"
     const val DOZE_SWITCH_TITLE = "잠자기 모드 끄기"
-    const val DOZE_STATE_OFF = "꺼져 있습니다. 재부팅해도 Shizuku가 연결되면 다시 끕니다."
-    const val DOZE_STATE_ON = "켜져 있습니다. 화면이 꺼진 동안 알림이 늦게 올 수 있습니다."
+    const val DOZE_STATE_OFF = "잠자기 모드가 꺼져 있습니다. 재부팅해도 Shizuku가 연결되면 다시 끕니다."
+    const val DOZE_STATE_ON = "잠자기 모드가 켜져 있습니다(기본). 화면이 꺼진 동안 알림이 늦게 올 수 있습니다."
     const val DOZE_STATE_UNKNOWN = "Shizuku가 연결되면 지금 상태를 읽습니다."
     const val DOZE_CAUTION_TITLE = "알아 두세요"
     const val DOZE_CAUTION_BODY = "화면이 꺼진 동안에도 앱이 계속 깨어 있어 대기 배터리 소모가 꽤 늘어납니다."

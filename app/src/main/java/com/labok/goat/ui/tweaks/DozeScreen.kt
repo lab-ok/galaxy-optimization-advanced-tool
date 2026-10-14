@@ -60,6 +60,8 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     val state by Doze.status.collectAsStateWithLifecycle()
     val ready = shizuku == ShizukuAccess.State.READY
     var busy by remember { mutableStateOf(false) }
+    // 누른 쪽으로 스위치를 바로 옮겨 두는 값(셸 명령이 끝나고 상태를 다시 읽을 때까지). 끝나면 읽은 상태를 따른다
+    var pending by remember { mutableStateOf<Boolean?>(null) }
     var confirm by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     LifecycleResumeEffect(ready) {
@@ -69,9 +71,11 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
 
     fun apply(off: Boolean) {
         busy = true
+        pending = off
         scope.launch {
             val ok = withContext(Dispatchers.IO) { Doze.set(context, off, "스위치") }
             busy = false
+            pending = null
             Toast.makeText(context, if (ok) (if (off) Copy.DOZE_TOAST_OFF else Copy.DOZE_TOAST_ON) else Copy.GOS_TOAST_FAILED, Toast.LENGTH_SHORT).show()
         }
     }
@@ -121,7 +125,7 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                             )
                         }
                         Spacer(Modifier.width(12.dp))
-                        LiquidSwitch(state == Doze.State.OFF, { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Doze.State.UNKNOWN, label = Copy.DOZE_SWITCH_TITLE)
+                        LiquidSwitch(pending ?: (state == Doze.State.OFF), { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Doze.State.UNKNOWN, label = Copy.DOZE_SWITCH_TITLE)
                     }
                 }
             }

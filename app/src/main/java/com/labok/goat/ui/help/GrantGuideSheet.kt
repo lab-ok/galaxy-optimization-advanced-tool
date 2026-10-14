@@ -103,7 +103,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
     }
 
     SheetColumn(modifier = Modifier.animateContentSize()) {
-        Text("권한 설정", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("권한 설정", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = LocalLiquid.current.ink)
         Text(
             "한 번만 받으면 재부팅 후에도 유지됩니다.",
             style = MaterialTheme.typography.bodyMedium,

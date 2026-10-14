@@ -34,7 +34,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.liquid.Text
-import kotlin.math.abs
 
 /**
  * 액체 칩 선택: 고른 칩 아래의 방울이 연체 물리([SoftBlob])로 옮겨 간다. 이동 방향 앞쪽이 먼저 끌려가 길쭉해졌다가
@@ -53,6 +52,7 @@ fun <T> LiquidChips(
     val reduce = LocalReduceMotion.current
     val lefts = remember(options) { mutableStateListOf<Float>().apply { repeat(options.size) { add(0f) } } }
     val widths = remember(options) { mutableStateListOf<Float>().apply { repeat(options.size) { add(0f) } } }
+    val span = remember { FloatArray(2) }
     // 고른 값이 목록에 없으면(예: 직접 맞춘 값) 방울을 그리지 않는다
     val none = selected !in options
     val index = options.indexOf(selected).coerceAtLeast(0)
@@ -102,7 +102,12 @@ fun <T> LiquidChips(
                 } else if (!blob.blob.ready || widths[i] <= 0f) {
                     (if (isSel) 1f else 0f)
                 } else {
-                    (1f - abs(blob.blob.cx - (lefts[i] + widths[i] / 2)) / widths[i]).coerceIn(0f, 1f)
+                    // 방울 가로 범위가 칩 가운데 절반(글자 자리)을 덮은 비율. 중심 거리로 재면 방울 가장자리가
+                    // 이미 글자를 덮었는데도 글자가 잉크색으로 남아 방울과 같은 색이 되어 사라져 보였다
+                    blob.blob.spanX(span)
+                    val l = lefts[i] + widths[i] / 4
+                    val r = lefts[i] + widths[i] * 3 / 4
+                    ((minOf(span[1], r) - maxOf(span[0], l)) / (r - l)).coerceIn(0f, 1f)
                 }
                 val textColor = lerp(c.ink, c.onInk, cover)
                 val interaction = remember { MutableInteractionSource() }

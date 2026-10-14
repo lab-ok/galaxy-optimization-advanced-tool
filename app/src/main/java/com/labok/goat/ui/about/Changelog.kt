@@ -6,6 +6,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,11 +14,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +36,7 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
+import kotlinx.coroutines.delay
 
 /** 변경 기록 한 판. [sections]는 (묶음 이름, 바뀐 점들). */
 internal data class Release(val version: String, val date: String, val summary: String, val sections: List<Pair<String, List<String>>>)
@@ -680,14 +685,27 @@ internal fun ChangelogSheet() {
 }
 
 /** 판 하나(아코디언 한 칸). */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ReleaseCard(r: Release, initiallyOpen: Boolean) {
     val c = LocalLiquid.current
     var open by remember { mutableStateOf(initiallyOpen) }
+    // 펼친 내용이 화면 아래로 숨지 않게, 펼침이 끝날 무렵 카드 전체가 보이도록 목록을 굴린다
+    val bring = remember { BringIntoViewRequester() }
+    var touched by remember { mutableStateOf(false) }
+    LaunchedEffect(open) {
+        if (open && touched) {
+            delay(320)
+            bring.bringIntoView()
+        }
+    }
     // 누름 물결이 카드 가장자리까지 꽉 차도록 카드 안쪽 여백을 없애고, 여백은 머리 줄·본문이 각자 갖는다
-    GlassCard(padding = Gap.Flush) {
+    GlassCard(modifier = Modifier.bringIntoViewRequester(bring), padding = Gap.Flush) {
         Row(
-            Modifier.fillMaxWidth().clickable { open = !open }.padding(Gap.CardPadding),
+            Modifier.fillMaxWidth().clickable {
+                touched = true
+                open = !open
+            }.padding(Gap.CardPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
