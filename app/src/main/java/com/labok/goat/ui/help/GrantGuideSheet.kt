@@ -110,7 +110,8 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(Gap.Card))
-        ConnectionIllustration(wireless = connection == GrantGuideContent.Connection.WIRELESS, done = hasPermission)
+        // PC와 폰 그림은 PC로 할 때만 보인다(Shizuku는 PC 없이 폰만으로 하므로 PC 그림이 오히려 헷갈렸다)
+        if (!viaShizuku || hasPermission) ConnectionIllustration(wireless = connection == GrantGuideContent.Connection.WIRELESS, done = hasPermission)
 
         AnimatedVisibility(visible = hasPermission, enter = fadeIn() + scaleIn(initialScale = 0.9f)) {
             Column {

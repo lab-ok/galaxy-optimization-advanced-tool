@@ -92,10 +92,17 @@ internal fun copyText(context: Context, text: String, label: String = "GOAT"): B
     return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
 }
 
+/**
+ * 설정 화면을 여는 인텐트. 설정 앱은 따로 작업(task)에서 열리는데, 이미 열려 있던 설정 작업에 덧붙으면 뒤로 가기가
+ * GOAT가 아니라 홈 화면으로 가 버렸다(에뮬레이터에서 확인). 매번 새 작업으로 열어(CLEAR_TASK) 할 일을 마치고
+ * 뒤로 가기를 누르면 GOAT로 돌아오게 한다.
+ */
+internal fun settingsIntent(action: String) = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+
 /** 개발자 옵션 화면을 연다. 개발자 옵션이 꺼져 있으면 켜는 곳(휴대전화 정보)으로 보낸다. */
 internal fun openDeveloperOptions(context: Context) {
     val devOn = Settings.Global.getInt(context.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
-    val intent = Intent(if (devOn) Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS else Settings.ACTION_DEVICE_INFO_SETTINGS)
+    val intent = settingsIntent(if (devOn) Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS else Settings.ACTION_DEVICE_INFO_SETTINGS)
     try {
         context.startActivity(intent)
     } catch (e: ActivityNotFoundException) {

@@ -11,6 +11,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -84,6 +85,7 @@ import com.labok.goat.ui.about.worthShowing
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidShape
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -110,7 +112,16 @@ import kotlinx.coroutines.withContext
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: List<NavSection>, onOpen: (NavItem, Offset) -> Unit) {
+internal fun Dashboard(
+    contentPadding: PaddingValues,
+    state: UiState,
+    sections: List<NavSection>,
+    onOpen: (NavItem, Offset) -> Unit,
+    /** 시스템 설정 권한 안내(시작하기)를 연다. */
+    onSetup: () -> Unit = {},
+    /** Shizuku 연결 안내를 연다. */
+    onConnect: () -> Unit = {}
+) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
@@ -251,8 +262,9 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
             val pills: @Composable () -> Unit = {
                 // 폭이 모자라면 다음 줄로 넘긴다
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Gap.Tight * 2), verticalArrangement = Arrangement.spacedBy(Gap.Tight * 2)) {
-                    StatusPill(Copy.HOME_PERMISSION, state.hasPermission)
-                    StatusPill(Copy.HOME_SHIZUKU, shizuku == ShizukuAccess.State.READY)
+                    // 아직 안 된 알약을 누르면 그 안내로 바로 간다
+                    StatusPill(Copy.HOME_PERMISSION, state.hasPermission, onSetup)
+                    StatusPill(Copy.HOME_SHIZUKU, shizuku == ShizukuAccess.State.READY, onConnect)
                 }
             }
             BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = Gap.Tight, vertical = Gap.Item)) {
@@ -298,6 +310,17 @@ internal fun Dashboard(contentPadding: PaddingValues, state: UiState, sections: 
         }
         // 새 버전이 있으면 홈 머리 바로 아래에 업데이트 카드(바로 내려받아 설치)
         if (update.worthShowing()) item(key = "update", span = { GridItemSpan(maxLineSpan) }) { UpdateCard(manual = false) }
+        // 권한이 없으면(처음 쓰는 사람) 머리 바로 아래에 시작하기 카드: 첫 안내 창을 닫아도 여기서 다시 연다
+        if (!state.loading && !state.hasPermission) {
+            item(key = "setup", span = { GridItemSpan(maxLineSpan) }) {
+                GlassCard(accent = c.ink) {
+                    Text(Copy.HOME_SETUP_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.HOME_SETUP_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidButton(Copy.HOME_SETUP_ACTION, modifier = Modifier.fillMaxWidth(), onClick = onSetup)
+                }
+            }
+        }
         item(key = "view", span = { GridItemSpan(maxLineSpan) }) {
             // 머리와 전환 사이, 전환과 타일 사이 여백을 같게 둔다(머리 아래 여백 Gap.Item + 칸 간격 Gap.Card)
             Box(Modifier.fillMaxWidth().padding(bottom = Gap.Item)) {
@@ -383,12 +406,16 @@ private fun ActiveRing(on: Int, total: Int, diameter: Dp) {
 
 /** 상태 알약: 되어 있으면 잉크 점이 통 차오르고, 아니면 빈 고리와 '필요'. */
 @Composable
-private fun StatusPill(label: String, on: Boolean) {
+private fun StatusPill(label: String, on: Boolean, onClick: () -> Unit = {}) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val k by animateFloatAsState(if (on) 1f else 0f, Springs.pop(reduce), label = "pill")
     Row(
-        Modifier.border(1.dp, if (c.dark) c.muted.copy(alpha = 0.5f) else c.line, CircleShape).padding(horizontal = 10.dp, vertical = 4.dp),
+        Modifier
+            .clip(CircleShape)
+            .then(if (on) Modifier else Modifier.clickable(onClick = onClick))
+            .border(1.dp, if (c.dark) c.muted.copy(alpha = 0.5f) else c.line, CircleShape)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Canvas(Modifier.size(8.dp)) {

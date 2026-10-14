@@ -246,6 +246,14 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
             }
         }
     }
+    // 처음 열었는데 권한이 없으면 시작하기(권한 설정) 안내를 한 번 바로 연다. 닫으면 다시 자동으로 열지 않는다
+    // (홈 맨 위 '준비하기' 카드로 언제든 다시 열 수 있다).
+    val firstRunPrefs = remember { context.getSharedPreferences("first_run", android.content.Context.MODE_PRIVATE) }
+    LaunchedEffect(state.hasPermission, state.loading) {
+        if (state.loading || state.hasPermission || firstRunPrefs.getBoolean("setup_shown", false)) return@LaunchedEffect
+        firstRunPrefs.edit().putBoolean("setup_shown", true).apply()
+        sheet = Sheet.GUIDE
+    }
     // 권한 초기화 뒤 PC에서 회수되면 시트를 닫고 알린다(이후 권한 설정 안내가 맨 위에 뜬다).
     var hadPermission by remember { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(state.hasPermission, state.loading) {
@@ -503,7 +511,7 @@ internal fun HomeScreen(vm: HomeViewModel = viewModel()) {
                                 revealFrom = at
                                 feature = item
                                 shown = item
-                            })
+                            }, onSetup = { sheet = Sheet.GUIDE }, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.ANIMATION -> AnimationScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.APP_CLEANUP -> BloatScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.REFRESH -> RefreshScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })

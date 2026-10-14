@@ -65,6 +65,8 @@ internal fun WirelessStepArt() {
         drawRoundRect(c.surface, rowTl, Size(rowW, rowH), CornerRadius(rowH / 2))
         drawRoundRect(c.line, rowTl, Size(rowW, rowH), CornerRadius(rowH / 2), style = Stroke(1.dp.toPx()))
         artLabel(tm, "무선 디버깅", Offset(rowTl.x + rowW * 0.3f, rowTl.y + rowH / 2), c.ink, 12, bold = true)
+        // 이 줄이 개발자 옵션 안 '디버깅' 묶음에 있다는 것을 위에 적는다
+        artLabel(tm, "개발자 옵션 › 디버깅", Offset(rowTl.x + rowW * 0.22f, rowTl.y - 10.dp.toPx()), c.muted, 10)
         val sw = Size(40.dp.toPx(), 22.dp.toPx())
         val sc = Offset(rowTl.x + rowW - 34.dp.toPx(), rowTl.y + rowH / 2)
         drawRoundRect(if (on) c.ink else c.line, Offset(sc.x - sw.width / 2, sc.y - sw.height / 2), sw, CornerRadius(sw.height / 2))
@@ -134,5 +136,47 @@ internal fun AllowStepArt() {
         artLabel(tm, "항상 허용", Offset(size.width / 2, b1.y + h * 0.11f), if (pressed) c.onInk else c.ink, 11, bold = true)
         artLabel(tm, "거부", Offset(size.width / 2, tl.y + h * 0.82f), c.muted, 10)
         finger(c, Offset(size.width * 0.8f, size.height), Offset(size.width / 2 + w * 0.2f, b1.y + h * 0.11f), t)
+    }
+}
+
+/**
+ * 0. 개발자 옵션 켜기: '소프트웨어 정보'의 '빌드 번호' 줄을 손가락이 연달아 7번 두드리고, 횟수 방울이 1부터 7까지 차오른 뒤
+ * "개발자 모드를 켰습니다" 안내가 뜬다. 처음 해 보는 사람이 '몇 번, 어디를' 누르는지 알 수 있게 한다.
+ */
+@Composable
+internal fun DevOptionsStepArt() {
+    val t = artLoop(4200)
+    ArtCanvas(120.dp) { c, tm ->
+        val rowTl = Offset(size.width * 0.06f, size.height * 0.1f)
+        val rowW = size.width * 0.88f
+        val rowH = size.height * 0.24f
+        // 위 줄: 소프트웨어 정보 화면의 다른 항목(흐리게)
+        drawRoundRect(c.surface, rowTl, Size(rowW, rowH), CornerRadius(rowH / 2))
+        artLabel(tm, "소프트웨어 정보", Offset(rowTl.x + rowW * 0.3f, rowTl.y + rowH / 2), c.muted, 11)
+        // 누를 줄: 빌드 번호
+        val bTl = Offset(rowTl.x, rowTl.y + rowH + 8.dp.toPx())
+        drawRoundRect(c.surface, bTl, Size(rowW, rowH), CornerRadius(rowH / 2))
+        drawRoundRect(c.ink, bTl, Size(rowW, rowH), CornerRadius(rowH / 2), style = Stroke(1.5.dp.toPx()))
+        artLabel(tm, "빌드 번호", Offset(bTl.x + rowW * 0.24f, bTl.y + rowH / 2), c.ink, 12, bold = true)
+        // 7번 두드리기: 앞 70% 동안 0.1마다 한 번
+        val taps = if (t < 0.7f) (t / 0.1f).toInt() + 1 else 7
+        val local = if (t < 0.7f) (t % 0.1f) / 0.1f else 1f
+        val target = Offset(bTl.x + rowW * 0.62f, bTl.y + rowH / 2)
+        if (t < 0.7f) {
+            val press = if (local < 0.5f) 1f - local * 0.6f else 0.7f + (local - 0.5f) * 0.6f
+            drawCircle(c.ink.copy(alpha = 0.22f), 15.dp.toPx() * press, target)
+            drawCircle(c.ink.copy(alpha = 0.55f), 10.dp.toPx() * press, target)
+        }
+        // 횟수 방울
+        val badge = Offset(bTl.x + rowW - 22.dp.toPx(), bTl.y + rowH / 2)
+        drawCircle(c.ink, 13.dp.toPx(), badge)
+        artLabel(tm, "$taps", badge, c.onInk, 12, bold = true)
+        // 끝: 켜졌다는 안내
+        if (t >= 0.72f) {
+            val y = bTl.y + rowH + 18.dp.toPx()
+            artLabel(tm, "✓ 개발자 모드를 켰습니다", Offset(size.width / 2, y), c.ink, 11, bold = true)
+        } else {
+            artLabel(tm, "빠르게 7번 누르기", Offset(size.width / 2, bTl.y + rowH + 18.dp.toPx()), c.muted, 11)
+        }
     }
 }
