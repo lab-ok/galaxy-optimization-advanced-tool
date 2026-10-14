@@ -303,7 +303,7 @@ internal fun HomeScreen(
             add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE)))
             add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.DOZE)))
             // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구는 lab 빌드에서만 함께 둔다.
-            val lab = (if (LabUnlock.unlocked) listOf(NavItem.LAB_AIRPLANE, NavItem.LAB_ICONS, NavItem.LAB_SCREEN, NavItem.LAB_FLEX, NavItem.LAB_PROBE) else emptyList()) +
+            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_AIRPLANE, NavItem.LAB_ICONS, NavItem.LAB_SCREEN, NavItem.LAB_FLEX.takeIf { com.labok.goat.data.lab.AutoFlex.supported() }, NavItem.LAB_PROBE) else emptyList()) +
                 listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB })
             if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }

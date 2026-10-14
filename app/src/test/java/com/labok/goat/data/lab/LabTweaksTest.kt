@@ -27,4 +27,12 @@ class LabTweaksTest {
         assertNull("다 지우면 키를 지운다", IconBlacklist.edit("alarm_clock", alarm, hide = false))
         assertEquals("같은 것을 두 번 넣지 않는다", "alarm_clock", IconBlacklist.edit("alarm_clock", alarm, hide = true))
     }
+
+    @Test
+    fun autoFlexRangeIsInclusive() {
+        assertTrue(AutoFlex.inRange(75f, 75, 115))
+        assertTrue(AutoFlex.inRange(115f, 75, 115))
+        assertFalse(AutoFlex.inRange(74.9f, 75, 115))
+        assertFalse(AutoFlex.inRange(180f, 75, 115))
+    }
 }

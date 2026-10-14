@@ -106,7 +106,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     LAB_AIRPLANE(Copy.FEATURE_LAB_AIRPLANE, NavIcon.AIRPLANE),
     LAB_ICONS(Copy.FEATURE_LAB_ICONS, NavIcon.EYE_OFF),
     LAB_SCREEN(Copy.FEATURE_LAB_SCREEN, NavIcon.PALETTE),
-    LAB_FLEX(Copy.FEATURE_LAB_FLEX, NavIcon.FOLD),
+    LAB_FLEX(Copy.FEATURE_LAB_FLEX, NavIcon.FLEX),
     LAB_PROBE(Copy.FEATURE_LAB_PROBE, NavIcon.FLASK),
 
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
@@ -122,7 +122,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, INFO, GEAR }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, INFO, GEAR }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -331,6 +331,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.AIRPLANE -> airplane(color, s)
             NavIcon.EYE_OFF -> eyeOff(color, s)
             NavIcon.PALETTE -> palette(color, s)
+            NavIcon.FLEX -> flex(color, s)
             NavIcon.INFO -> info(color, s)
             NavIcon.GEAR -> gear(color, s)
         }
@@ -614,6 +615,44 @@ private fun DrawScope.palette(c: Color, s: Stroke) {
     drawLine(c, p(9f, 20.5f), p(15f, 20.5f), s.width, StrokeCap.Round)
     drawCircle(c, u(3.6f), p(12f, 11f), style = s)
     drawArc(c, 90f, 180f, true, p(8.4f, 7.4f), Size(u(7.2f), u(7.2f)))
+}
+
+/**
+ * 자동 플렉스 모드: 노트북처럼 반쯤 접어 세운 폴드를 비스듬히 본 입체 그림. 바닥 화면은 원근으로 납작한 평행사변형,
+ * 세운 화면은 뒤로 살짝 기운 사각형이고 두 면이 아래 힌지에서 만난다. 세운 화면 안에 재생 삼각형, 바닥 화면에 조작 점 둘.
+ */
+private fun DrawScope.flex(c: Color, s: Stroke) {
+    // 세운 위 화면(뒤로 기움)
+    val top = Path().apply {
+        moveTo(u(5f), u(14.5f))
+        lineTo(u(7.5f), u(3.5f))
+        lineTo(u(19.5f), u(3.5f))
+        lineTo(u(17f), u(14.5f))
+        close()
+    }
+    drawPath(top, c, style = s)
+    // 바닥 화면(원근: 앞쪽이 넓다)
+    val base = Path().apply {
+        moveTo(u(5f), u(14.5f))
+        lineTo(u(17f), u(14.5f))
+        lineTo(u(21f), u(20.5f))
+        lineTo(u(3f), u(20.5f))
+        close()
+    }
+    drawPath(base, c, style = s)
+    // 힌지 선을 조금 굵게: 접힌 곳
+    drawLine(c, p(5f, 14.5f), p(17f, 14.5f), s.width * 1.4f, StrokeCap.Round)
+    // 위 화면의 재생 삼각형
+    val play = Path().apply {
+        moveTo(u(11.3f), u(6.6f))
+        lineTo(u(14.4f), u(9f))
+        lineTo(u(10.8f), u(11.4f))
+        close()
+    }
+    drawPath(play, c)
+    // 바닥 화면의 조작 점(패널)
+    drawCircle(c, u(0.9f), p(9.5f, 17.6f))
+    drawCircle(c, u(0.9f), p(14.5f, 17.6f))
 }
 
 /** 덮이는 서랍·시트의 불투명도: 흐려진 뒤 화면이 살짝 비친다. */
