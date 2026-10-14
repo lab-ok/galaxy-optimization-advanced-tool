@@ -186,10 +186,40 @@ object FlexPanel {
         appendLine("──")
         if (help.contains("base-state")) {
             val half = Regex("identifier=(\\d+), name='HALF_OPENED'").find(ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty())?.groupValues?.get(1) ?: "2"
-            ShizukuAccess.shell("logcat -b all -c")
-            appendLine("시도 0: 물리 상태를 반쯤 접힘으로 → ${sh("cmd device_state base-state $half")}")
-            panelLog("시도 0(물리 반쯤 접힘·자동 실행 기다림)")
-            appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
+            // 9차: 8차에서 isTableMode=true까지 됐고 남은 조건은 회전 하나(isSupportRotation=false)였다.
+            // 회전을 0·1·2·3으로 하나씩 고정한 채 반쯤 접힘을 걸어, 자동 실행 장치가 패널을 띄우는 방향을 찾는다
+            val autoRot0 = ShizukuAccess.shell("settings get system accelerometer_rotation")?.out?.trim()
+            val userRot0 = ShizukuAccess.shell("settings get system user_rotation")?.out?.trim()
+            for (rot in 0..3) {
+                appendLine("시도 0-$rot: 회전 ${rot * 90}°로 고정 → ${sh("settings put system accelerometer_rotation 0 && settings put system user_rotation $rot")}")
+                Thread.sleep(1500)
+                ShizukuAccess.shell("logcat -b all -c")
+                appendLine("시도 0-$rot: 물리 상태를 반쯤 접힘으로 → ${sh("cmd device_state base-state $half")}")
+                Thread.sleep(3000)
+                val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -E 'FlexPanelStartController|FlexPanelActivity' | grep -v -E 'at (com|android|java|dalvik)\\.' | head -40")?.out?.trim().orEmpty()
+                appendLine("── 시도 0-$rot 로그 ──")
+                appendLine(log.ifBlank { "(로그 없음)" })
+                appendLine("──")
+                val opened = log.contains("wm_create_activity") && !log.contains("wm_finish_activity")
+                appendLine(
+                    "시도 0-$rot 결과: ${if (opened) {
+                        "패널이 떠서 유지됨"
+                    } else if (log.contains("wm_create_activity")) {
+                        "패널이 떴다가 닫힘"
+                    } else {
+                        "패널이 뜨지 않음"
+                    }}"
+                )
+                if (opened) {
+                    appendLine("패널을 10초 동안 그대로 둡니다. 화면을 눌러 보세요")
+                    Thread.sleep(10_000)
+                }
+                appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
+                Thread.sleep(1000)
+                if (opened) break
+            }
+            appendLine("회전 설정 되돌리기 → ${sh("settings put system accelerometer_rotation ${autoRot0?.takeIf { it != "null" } ?: "1"} && settings put system user_rotation ${userRot0?.takeIf { it != "null" } ?: "0"}")}")
+            Thread.sleep(1500)
         } else {
             appendLine("시도 0: 이 기기는 물리 상태 덮어쓰기(base-state)를 지원하지 않아 건너뜀")
         }

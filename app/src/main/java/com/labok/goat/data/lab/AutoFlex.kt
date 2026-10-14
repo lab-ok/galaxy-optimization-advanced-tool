@@ -124,8 +124,12 @@ object AutoFlex {
         engine?.recheck()
     }
 
-    /** 까딱 판정: 완전히 펼친 상태([OPEN]° 이상)에서 [DIP_LOW]~[DIP_HIGH]°까지 접었다가 [CLICK_MS] 안에 다시 완전히 펴면 한 번. */
+    /**
+     * 까딱 판정: 완전히 펼친 상태([OPEN]° 이상)에서 [DIP_LOW]~[DIP_HIGH]°까지 접었다가 [CLICK_MS] 안에 다시 펴면([REOPEN]° 이상) 한 번.
+     * 다 펴도 센서가 잠깐 167~170°에 머무를 때가 있어, 되펴는 기준은 [OPEN]보다 낮춘다.
+     */
     internal const val OPEN = 175f
+    internal const val REOPEN = 165f
     internal const val DIP_LOW = 130f
     internal const val DIP_HIGH = 160f
     internal const val CLICK_MS = 3000L
@@ -141,7 +145,8 @@ object AutoFlex {
 
         /** 까딱이 끝난 순간 true. */
         fun feed(angle: Float, now: Long): Boolean {
-            if (angle >= OPEN) {
+            val dipped = leftAt >= 0 && lowest <= DIP_HIGH
+            if (angle >= OPEN || (dipped && angle >= REOPEN)) {
                 val hit = open && leftAt >= 0 && now - leftAt <= CLICK_MS && lowest in DIP_LOW..DIP_HIGH
                 open = true
                 leftAt = -1

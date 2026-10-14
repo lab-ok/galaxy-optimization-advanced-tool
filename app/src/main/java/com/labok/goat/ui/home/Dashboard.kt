@@ -507,9 +507,9 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
             body.frame
             if (!body.blob.ready) return@Canvas
             body.blob.path(bodyPath)
-            // 꺼짐: 유리판(표면 + 얇은 테두리) / 켜짐: 같은 유리판에 잉크색 굵은 테두리(바탕은 채우지 않는다)
+            // 꺼짐·켜짐 모두 같은 굵기(3dp) 테두리. 켜짐은 잉크색 쪽으로 연하게 물든다(바탕은 채우지 않는다)
             drawPath(bodyPath, c.surface)
-            drawPath(bodyPath, lerp(c.line, c.ink, fill), style = Stroke((1f + 2f * fill).dp.toPx()))
+            drawPath(bodyPath, lerp(c.line, c.ink, 0.5f * fill), style = Stroke(3.dp.toPx()))
         }
         val fg = c.ink
         val sub = c.muted

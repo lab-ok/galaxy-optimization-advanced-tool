@@ -59,7 +59,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.AirplaneRadios
-import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.LabSetting
@@ -95,7 +94,7 @@ import kotlinx.coroutines.withContext
 
 /*
  * 실험실 기능(염소를 열 번 눌러 연다). 사이드바 '실험실' 묶음에 기능마다 한 메뉴로 둔다:
- * 비행기 모드 무선, 상태 표시줄 아이콘, 화면 모드, 숨은 기능 찾기. 설정을 바꾸는 기능은 처음 값을 남겨 [처음대로]로 되돌린다.
+ * 비행기 모드 무선, 상태 표시줄 아이콘, 화면 모드. 설정을 바꾸는 기능은 처음 값을 남겨 [처음대로]로 되돌린다.
  */
 
 /** 실험실 설정 쓰기: 작업 스레드에서 쓰고 [version]을 올려 화면이 값을 다시 읽게 한다. */
@@ -1337,40 +1336,11 @@ private const val GAUGE_FINE = 10
 /** 이 시간(ms) 동안 거의 움직이지 않고 붙들고 있으면 게이지 세밀 조절을 연다(기본 조절바와 같다). */
 private const val GAUGE_FINE_HOLD_MS = 750L
 
-/** 숨은 기능 찾기: 앱별 글자 크기와 관련 있어 보이는 시스템 함수·설정 키를 찾아 파일로 보낸다(읽기만 한다). */
-@Composable
-internal fun LabProbeScreen(contentPadding: PaddingValues) {
-    val c = LocalLiquid.current
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var running by remember { mutableStateOf(false) }
-    var summary by remember { mutableStateOf("") }
-    LabPage(contentPadding) {
-        Text(Copy.LAB_PROBE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text(Copy.LAB_PROBE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(Gap.Item))
-        LiquidButton(if (running) Copy.LAB_PROBE_RUNNING else Copy.LAB_PROBE_RUN, enabled = !running, modifier = Modifier.fillMaxWidth(), onClick = {
-            running = true
-            scope.launch {
-                val text = withContext(Dispatchers.IO) { ApiProbe.findFontScale(context) }
-                val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-font"), text) }
-                summary = text.lineSequence().first()
-                running = false
-                uri?.let { share(context, it) }
-            }
-        })
-        if (summary.isNotEmpty()) {
-            Spacer(Modifier.height(Gap.Item))
-            Text(summary, color = c.ink, style = MaterialTheme.typography.bodySmall)
-        }
-    }
-}
-
 private fun share(context: Context, uri: Uri) {
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    context.startActivity(Intent.createChooser(send, Copy.LAB_PROBE_SHARE))
+    context.startActivity(Intent.createChooser(send, Copy.LAB_SHARE))
 }

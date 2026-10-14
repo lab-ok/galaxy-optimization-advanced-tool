@@ -78,6 +78,16 @@ class LabTweaksTest {
     }
 
     @Test
+    fun kkaddakCountsReopenAt165() {
+        // 다 폈는데 센서가 잠깐 168°에 머물러도 바로 까딱이다
+        val d = AutoFlex.ClickDetector()
+        assertFalse(d.feed(180f, 0))
+        assertFalse(d.feed(170f, 100))
+        assertFalse(d.feed(150f, 300))
+        assertTrue(d.feed(168f, 700))
+    }
+
+    @Test
     fun hingeHorizontalOnlyWhenAxisFlat() {
         // 힌지 축이 Y: 세워 든 책 모양(중력이 Y)은 세로, 옆으로 돌리면(중력이 X) 가로, 바닥에 눕히면(중력이 Z) 가로
         assertFalse(AutoFlex.isHorizontal(0f, 9.8f, 0f, alongY = true))
