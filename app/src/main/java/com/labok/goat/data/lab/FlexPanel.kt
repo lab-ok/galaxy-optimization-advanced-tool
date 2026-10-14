@@ -157,21 +157,32 @@ object FlexPanel {
         }
         appendLine("반쯤 접힘 걸기 → ${forceHalfOpened(context) ?: "성공"}")
         Thread.sleep(1000)
-        // 패널은 화면 분할의 아래 칸('controlpanel')이 아니면 스스로 닫혔다(2차 로그: "controlpanel is not top child").
-        // 이번에는 멀티 창(분할) 모드로 띄워 보고, 시도마다 시스템 로그를 따로 남긴다
+        // 패널은 화면 분할의 아래 칸('controlpanel')이 아니면 스스로 닫혔다(4차: 다 그리고 터치패드 창까지 만든 뒤 닫힘).
+        // 5차: 크롬을 먼저 분할 칸으로 옮긴 뒤 패널을 열어 아래 칸으로 들어가는지 본다. 로그는 패널이 열린 때부터 빠짐없이 남긴다
+        val logFilter = "flexpanel|controlpanel|touchpad|split|stage|wm_finish_activity|wm_create_activity|AndroidRuntime|FATAL"
         fun panelLog(title: String) {
-            Thread.sleep(2500)
-            val log = ShizukuAccess.shell("logcat -d -b main,system,events -v time | grep -i -E 'flex|controlpanel|tabletop|split|stage|wm_finish_activity' | tail -150")?.out?.trim().orEmpty()
+            Thread.sleep(3000)
+            val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -i -E '$logFilter' | grep -v -E 'SurfaceFlinger|BLASTBufferQueue|SurfaceControlRegistry' | head -600")?.out?.trim().orEmpty()
             appendLine("── $title 로그 ──")
             appendLine(log.ifBlank { "(로그 없음)" })
             appendLine("──")
         }
+        val task = app?.let { pkg ->
+            Regex("""Task\{[0-9a-f]+ #(\d+)[^}]*$pkg""").find(ShizukuAccess.shell("dumpsys activity activities")?.out.orEmpty())?.groupValues?.get(1)
+        }
+        appendLine("앞에 있는 앱 작업 번호 = ${task ?: "(못 찾음)"}")
         ShizukuAccess.shell("logcat -b all -c")
-        appendLine("시도 1: 멀티 창 모드로 패널 열기 → ${sh("am start --windowingMode 6 -n '$PANEL_ACTIVITY'")}")
-        panelLog("시도 1")
+        if (task != null) {
+            appendLine("시도 1: ${app}을 분할 위 칸으로 옮기기 → ${sh("dumpsys activity service SystemUIService WMShell splitscreen moveToSideStage $task 0 2>&1 | tail -3")}")
+            Thread.sleep(1500)
+        }
+        appendLine("시도 1: 이어서 패널 열기 → ${sh("am start -n '$PANEL_ACTIVITY'")}")
+        panelLog("시도 1(분할 먼저)")
+        if (task != null) appendLine("분할 풀기 → ${sh("dumpsys activity service SystemUIService WMShell splitscreen exitSplitScreen $task 2>&1 | tail -3")}")
+        Thread.sleep(1500)
         ShizukuAccess.shell("logcat -b all -c")
-        appendLine("시도 2: 그냥 열기(비교용) → ${sh("am start -n '$PANEL_ACTIVITY'")}")
-        panelLog("시도 2")
+        appendLine("시도 2: 멀티 창 모드로 패널 열기 → ${sh("am start --windowingMode 6 -n '$PANEL_ACTIVITY'")}")
+        panelLog("시도 2(멀티 창)")
         PANEL_ACTIONS.forEach { appendLine("${it.substringAfterLast('.')} 신호 → ${sh("am broadcast -a $it")}") }
         appendLine("지금 맨 앞 화면 → ${sh("dumpsys activity activities | grep -m1 -E 'topResumedActivity|mResumedActivity'")}")
         // 패널이 떴는지 볼 시간을 준 뒤 접힘 상태를 되돌린다
