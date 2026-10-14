@@ -13,8 +13,8 @@ android {
         // Android 12 이상(방울 효과에 RenderEffect 필요). Android 11은 지원하지 않는다(사용자 결정).
         minSdk = 31
         targetSdk = 35
-        versionCode = 28
-        versionName = "1.7.2"
+        versionCode = 29
+        versionName = "1.7.3"
         // 실험실 기능은 lab 빌드에만 켠다. 공개 release·debug에는 들어가지 않는다.
         buildConfigField("boolean", "LAB", "false")
     }
@@ -86,6 +86,8 @@ dependencies {
     // 부팅 뒤 지연 재확인
     implementation(libs.androidx.work.runtime.ktx)
     // IWindowManager 숨은 API 접근
+    // 반쯤 접힘(플렉스) 자세 감지: 실험실 플렉스 모드 시험 화면이 위아래로 나뉜다
+    implementation(libs.androidx.window)
     implementation(libs.hiddenapibypass)
     // Shizuku: PC 없이 셸 권한 호출(기본 권한 받기, 앱마다 크기 따로)
     implementation(libs.shizuku.api)

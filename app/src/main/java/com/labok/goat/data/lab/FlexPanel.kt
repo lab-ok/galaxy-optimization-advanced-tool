@@ -47,6 +47,46 @@ object FlexPanel {
         return err
     }
 
+    /** [pkg]가 지금 플렉스 패널 대상인지(시스템에 물어본다). 물어볼 수 없으면 null. */
+    fun isRegistered(pkg: String): Boolean? = runCatching {
+        if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return null
+        val m = wm().javaClass.methods.firstOrNull { it.name == "getSupportsFlexPanel" && it.parameterTypes.size == 2 } ?: return null
+        m.invoke(wm(), UserId.current(), pkg) as? Boolean
+    }.getOrNull()
+
+    /** 지금 접힘 상태 이름(CLOSED·HALF_OPENED·OPENED 등). 읽을 수 없으면 null. */
+    fun postureNow(): String? {
+        val r = ShizukuAccess.shell("cmd device_state state") ?: return null
+        return Regex("name='([A-Z_]+)'").findAll(r.out).lastOrNull()?.groupValues?.get(1)
+    }
+
+    /** 반쯤 접힘 강제 중인지(GOAT가 건 것). 재부팅하면 시스템이 풀어 주므로 메모리에만 둔다. */
+    @Volatile
+    var forced = false
+        private set
+
+    /** 시스템에 반쯤 접힘(HALF_OPENED) 상태를 강제로 알린다. 성공하면 null, 실패하면 이유. [reset]으로 되돌린다. */
+    fun forceHalfOpened(context: Context): String? {
+        // 상태 번호는 기기마다 다르므로(폴드8은 2) 목록에서 HALF_OPENED의 번호를 찾아 쓴다
+        val states = ShizukuAccess.shell("cmd device_state print-states") ?: return "Shizuku 연결이 필요합니다."
+        val id = Regex("identifier=(\\d+), name='HALF_OPENED'").find(states.out)?.groupValues?.get(1)
+            ?: return "이 기기에는 반쯤 접힘 상태가 없습니다."
+        val r = ShizukuAccess.shell("cmd device_state state $id") ?: return "Shizuku 연결이 필요합니다."
+        val err = if (r.ok) null else r.err.ifBlank { r.out }.trim().take(120).ifBlank { "실패" }
+        if (err == null) forced = true
+        LogRepository.from(context).add("실험실 플렉스: 반쯤 접힘 강제" + (err?.let { " 실패($it)" } ?: ""))
+        return err
+    }
+
+    /** 강제한 접힘 상태를 풀어 실제 힌지 상태로 돌아간다. */
+    fun resetPosture(context: Context): String? {
+        val r = ShizukuAccess.shell("cmd device_state state reset") ?: return "Shizuku 연결이 필요합니다."
+        val err = if (r.ok) null else r.err.ifBlank { r.out }.trim().take(120).ifBlank { "실패" }
+        if (err == null) forced = false
+        LogRepository.from(context).add("실험실 플렉스: 접힘 상태 원래대로" + (err?.let { " 실패($it)" } ?: ""))
+        return err
+    }
+
     /** GOAT로 등록해 둔 앱. */
     fun registered(context: Context): Set<String> = prefs(context).getStringSet("apps", emptySet()).orEmpty()
 

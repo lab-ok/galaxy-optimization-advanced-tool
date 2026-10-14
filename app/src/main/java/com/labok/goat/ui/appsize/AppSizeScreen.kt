@@ -92,7 +92,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private class AppEntry(val label: String, val pkg: String, val icon: ImageBitmap?, val lastUsed: Long)
+internal class AppEntry(val label: String, val pkg: String, val icon: ImageBitmap?, val lastUsed: Long)
 
 /**
  * 앱별 화면 배율 설정: 삼성 '앱 화면 크게/작게'와 같은 설정을 GOAT에서 바꾼다.
@@ -388,7 +388,7 @@ private fun Appear(key: String, order: Int, shown: MutableSet<String>, content: 
 }
 
 @Composable
-private fun Section(title: String, modifier: Modifier = Modifier, action: (@Composable () -> Unit)? = null) {
+internal fun Section(title: String, modifier: Modifier = Modifier, action: (@Composable () -> Unit)? = null) {
     val c = LocalLiquid.current
     // 섹션 제목은 카드 안 글자와 같은 선에서 시작한다
     Row(modifier.widthIn(max = ContentMaxWidth).fillMaxWidth().padding(start = Gap.CardPadding, top = Gap.Tight), verticalAlignment = Alignment.CenterVertically) {
@@ -472,7 +472,8 @@ private fun AppRow(
     }
 }
 
-private fun loadApps(context: Context): List<AppEntry> {
+/** 홈 화면에 아이콘이 있는 앱(GOAT 제외)과 아이콘·마지막 사용 시각. 최근 사용 순(같으면 이름 순). 실험실 플렉스 화면도 쓴다. */
+internal fun loadApps(context: Context): List<AppEntry> {
     val pm = context.packageManager
     val used = AppUsage.lastUsed(context)
     val size = (38 * context.resources.displayMetrics.density).toInt().coerceAtLeast(48)
@@ -485,7 +486,7 @@ private fun loadApps(context: Context): List<AppEntry> {
         .sortedWith(compareByDescending<AppEntry> { it.lastUsed }.thenBy { it.label })
 }
 
-private fun ago(t: Long): String {
+internal fun ago(t: Long): String {
     val m = (System.currentTimeMillis() - t) / 60_000
     return when {
         m < 1 -> "방금 사용"

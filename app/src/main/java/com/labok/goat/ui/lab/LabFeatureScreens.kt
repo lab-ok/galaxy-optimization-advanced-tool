@@ -4,19 +4,33 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -25,8 +39,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.labok.goat.data.lab.AirplaneRadios
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.FlexPanel
@@ -34,13 +52,21 @@ import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.LabSetting
 import com.labok.goat.data.lab.ScreenMode
 import com.labok.goat.data.log.PublicLogFile
+import com.labok.goat.ui.appsize.AppEntry
+import com.labok.goat.ui.appsize.Section
+import com.labok.goat.ui.appsize.ago
+import com.labok.goat.ui.appsize.loadApps
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.InfoRow
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
+import com.labok.goat.ui.liquid.LiquidLoader
+import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidSwitchRow
+import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
@@ -175,8 +201,10 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
 }
 
 /**
- * 플렉스 모드 패널 시험(폴드8처럼 설정 항목이 숨겨진 기기에서 직접 시험): 기능 스위치, 앱별 등록(Shizuku), 처음대로,
- * 진단 파일 보내기. 켜지더라도 힌지가 중간 각도에서 멈추지 않는 기기는 손이나 거치대로 각도를 잡아야 한다고 안내한다.
+ * 플렉스 모드 패널 시험(폴드8처럼 설정 항목이 숨겨진 기기에서 직접 시험).
+ * - 접힘 상태: 시스템 상태(Shizuku로 0.7초마다)와 앱이 받는 상태(Jetpack)를 함께 보여 주고, 반쯤 접힘을 강제·해제한다.
+ * - 이 화면 자체가 플렉스 모드를 지원한다: 앱이 '반쯤 접힘'을 받으면 접는 선 위는 상태, 아래는 조작으로 나뉜다.
+ * - 패널 스위치, 패널을 띄울 앱(앱별 화면 배율 설정과 같은 목록: 검색·켠 앱·최근 사용 순·아이콘), 진단 파일.
  */
 @Composable
 internal fun LabFlexScreen(contentPadding: PaddingValues) {
@@ -184,16 +212,65 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val w = rememberLabWriter()
-    var appsVersion by remember { mutableIntStateOf(0) }
+    val flex by rememberFlexInfo()
     var running by remember { mutableStateOf(false) }
     var summary by remember { mutableStateOf("") }
-    val apps = remember { FlexPanel.launchableApps(context) }
-    LazyColumn(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        contentPadding = featurePadding(contentPadding),
-        verticalArrangement = Arrangement.spacedBy(Gap.Card),
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    var query by remember { mutableStateOf("") }
+    var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
+    var on by remember { mutableStateOf(emptySet<String>()) }
+    var posture by remember { mutableStateOf<String?>(null) }
+    var forced by remember { mutableStateOf(FlexPanel.forced) }
+    LaunchedEffect(Unit) {
+        apps = withContext(Dispatchers.IO) { loadApps(context) }
+        // 시스템이 아는 등록 상태를 읽고, 물어볼 수 없으면 GOAT가 기억한 목록을 쓴다
+        on = withContext(Dispatchers.IO) {
+            val mine = FlexPanel.registered(context)
+            apps.orEmpty().mapNotNull { a -> a.pkg.takeIf { FlexPanel.isRegistered(it) ?: (it in mine) } }.toSet()
+        }
+    }
+    // 화면이 보이는 동안 시스템 접힘 상태를 따라 읽는다
+    LaunchedEffect(Unit) {
+        while (true) {
+            posture = withContext(Dispatchers.IO) { FlexPanel.postureNow() }
+            kotlinx.coroutines.delay(700)
+        }
+    }
+
+    fun toggle(app: AppEntry, want: Boolean) = scope.launch {
+        val err = withContext(Dispatchers.IO) { FlexPanel.setApp(context, app.pkg, want) }
+        if (err == null) on = if (want) on + app.pkg else on - app.pkg else Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+    }
+
+    // 접힘 상태 카드(플렉스일 때 위 칸)
+    val postureCard: @Composable () -> Unit = {
+        GlassCard {
+            Text(Copy.LAB_FLEX_POSTURE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(Copy.LAB_FLEX_POSTURE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(Gap.Item))
+            InfoRow(Copy.LAB_FLEX_POSTURE_SYSTEM, posture?.let { postureLabel(it) } ?: "Shizuku 연결 필요", emphasize = posture == "HALF_OPENED")
+            InfoRow(Copy.LAB_FLEX_POSTURE_APP, flex.state + if (flex.tabletop) " · 위아래로 나눔" else "", emphasize = flex.tabletop)
+            Spacer(Modifier.height(Gap.Item))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LiquidButton(Copy.LAB_FLEX_FORCE, modifier = Modifier.weight(1f), onClick = {
+                    scope.launch {
+                        val err = withContext(Dispatchers.IO) { FlexPanel.forceHalfOpened(context) }
+                        forced = FlexPanel.forced
+                        if (err != null) Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+                    }
+                })
+                LiquidButton(Copy.LAB_FLEX_RESET, modifier = Modifier.weight(1f), primary = false, enabled = forced, onClick = {
+                    scope.launch {
+                        val err = withContext(Dispatchers.IO) { FlexPanel.resetPosture(context) }
+                        forced = FlexPanel.forced
+                        if (err != null) Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+                    }
+                })
+            }
+        }
+    }
+
+    val list: LazyListScope.() -> Unit = {
+        if (!flex.tabletop) item(key = "posture") { Box(Modifier.widthIn(max = ContentMaxWidth)) { postureCard() } }
         item(key = "switch") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
@@ -201,39 +278,12 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     Text(Copy.LAB_FLEX_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.LAB_FLEX_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidSwitchRow(Copy.LAB_FLEX_SWITCH, "${FlexPanel.setting.key} = ${raw ?: "(없음)"}", raw == "1", true) { on ->
-                        w.write(FlexPanel.setting, if (on) "1" else "0")
+                    LiquidSwitchRow(Copy.LAB_FLEX_SWITCH, "${FlexPanel.setting.key} = ${raw ?: "(없음)"}", raw == "1", true) { v ->
+                        w.write(FlexPanel.setting, if (v) "1" else "0")
                     }
                     Spacer(Modifier.height(Gap.Section))
                     val changed = remember(w.version) { FlexPanel.setting.changed(context) }
                     LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(FlexPanel.setting) })
-                }
-            }
-        }
-        item(key = "apps") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    val mine = remember(appsVersion) { FlexPanel.registered(context) }
-                    Text(Copy.LAB_FLEX_APPS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.LAB_FLEX_APPS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    apps.forEach { (pkg, label) ->
-                        Spacer(Modifier.height(Gap.Item))
-                        LiquidSwitchRow(label, pkg, pkg in mine, true) { on ->
-                            scope.launch {
-                                val err = withContext(Dispatchers.IO) { FlexPanel.setApp(context, pkg, on) }
-                                appsVersion++
-                                if (err != null) Toast.makeText(context, err, Toast.LENGTH_LONG).show()
-                            }
-                        }
-                    }
-                    Spacer(Modifier.height(Gap.Section))
-                    LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = mine.isNotEmpty(), modifier = Modifier.fillMaxWidth(), onClick = {
-                        scope.launch {
-                            val failed = withContext(Dispatchers.IO) { FlexPanel.restoreApps(context) }
-                            appsVersion++
-                            Toast.makeText(context, if (failed == 0) Copy.LAB_RESTORED else Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
-                        }
-                    })
                 }
             }
         }
@@ -260,6 +310,90 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                 }
             }
         }
+        // 패널을 띄울 앱: 앱별 화면 배율 설정과 같은 목록
+        item(key = "search") {
+            Column(Modifier.widthIn(max = ContentMaxWidth)) {
+                Text(Copy.LAB_FLEX_APPS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = Gap.CardPadding))
+                Spacer(Modifier.height(Gap.Item))
+                LiquidTextField(
+                    query,
+                    { query = it },
+                    "앱 이름 검색",
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) }
+                )
+            }
+        }
+        val q = query.trim()
+        val all = apps.orEmpty().filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) || it.pkg.contains(q, ignoreCase = true) }
+        val chosen = all.filter { it.pkg in on }
+        val rest = all.filter { it.pkg !in on }
+        if (apps == null) item(key = "loading") { LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp)) }
+        if (chosen.isNotEmpty()) {
+            item(key = "h-on") { Section("패널을 켠 앱 ${chosen.size}") }
+            items(chosen, key = { "on-" + it.pkg }) { app -> FlexAppRow(app, true) { toggle(app, it) } }
+        }
+        item(key = "h-rest") { Section(Copy.LAB_FLEX_APPS_REST) }
+        items(rest, key = { it.pkg }) { app -> FlexAppRow(app, false) { toggle(app, it) } }
+    }
+
+    if (flex.tabletop) {
+        // 플렉스 모드: 접는 선 위는 접힘 상태, 아래는 스크롤되는 조작
+        val hingeDp = with(androidx.compose.ui.platform.LocalDensity.current) { flex.hingeTop.toDp() }
+        Column(Modifier.fillMaxWidth()) {
+            Box(Modifier.fillMaxWidth().height(hingeDp).padding(top = contentPadding.calculateTopPadding()).padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.widthIn(max = ContentMaxWidth)) { postureCard() }
+            }
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = Gap.Card, bottom = contentPadding.calculateBottomPadding() + 24.dp),
+                verticalArrangement = Arrangement.spacedBy(Gap.Card),
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                content = list
+            )
+        }
+    } else {
+        LazyColumn(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = featurePadding(contentPadding),
+            verticalArrangement = Arrangement.spacedBy(Gap.Card),
+            modifier = Modifier.fillMaxWidth(),
+            content = list
+        )
+    }
+}
+
+private fun postureLabel(name: String) = when (name) {
+    "HALF_OPENED" -> "반쯤 접힘"
+    "OPENED" -> "펼침"
+    "CLOSED" -> "접힘"
+    "TENT" -> "텐트"
+    else -> name
+} + " ($name)"
+
+/** 패널 앱 한 줄: 앱별 화면 배율 설정 목록과 같은 모양(아이콘·이름·마지막 사용)에 오른쪽 스위치. */
+@Composable
+private fun FlexAppRow(app: AppEntry, on: Boolean, onChange: (Boolean) -> Unit) {
+    val c = LocalLiquid.current
+    val shape = RoundedCornerShape(20.dp)
+    Row(
+        Modifier
+            .widthIn(max = ContentMaxWidth)
+            .fillMaxWidth()
+            .clip(shape)
+            .background(c.surface)
+            .border(1.dp, if (on) c.ink.copy(alpha = 0.5f) else c.line, shape)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
+        }
+        Spacer(Modifier.width(8.dp))
+        LiquidSwitch(on, onChange, label = app.label)
     }
 }
 

@@ -1,6 +1,7 @@
 package com.labok.goat.ui.about
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,8 +25,15 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.labok.goat.data.update.Updater
+import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Springs
@@ -128,6 +136,27 @@ internal fun LiquidUpdateArt(state: Updater.State, progress: Float, rate: Float,
         Canvas(Modifier.fillMaxWidth().height(84.dp)) {
             marks(c.ink, c.onInk, time, check.value, arrow.value, tank.value, swirl.value, sad.value, pop.value)
         }
+        // 3층: 내려받는 동안 통 가운데 퍼센트. 물이 덮은 부분은 글자를 바탕색으로 바꿔 물 위에서도 읽히게 한다
+        val tm = rememberTextMeasurer()
+        val showPercent = state is Updater.State.Downloading
+        val percentAlpha by animateFloatAsState(if (showPercent) 1f else 0f, label = "percent")
+        if (percentAlpha > 0.01f) {
+            val label = "${(progress.coerceIn(0f, 1f) * 100).toInt()}%"
+            val style = TextStyle(fontFamily = GalaxyFont, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Canvas(Modifier.fillMaxWidth().height(84.dp).graphicsLayer { alpha = percentAlpha }) {
+                val layout = tm.measure(label, style)
+                val cx = size.width / 2
+                val cy = size.height / 2
+                val tl = Offset(cx - layout.size.width / 2f, cy - layout.size.height / 2f)
+                drawText(layout, color = c.ink, topLeft = tl)
+                // 물과 똑같은 출렁이는 앞면으로 잘라야 글자가 물 경계에서 어긋나지 않는다(직선으로 자르면 50% 근처에서 숫자가 깨져 보였다)
+                val left = cx - u(130f) * tank.value
+                val front = left + u(260f) * tank.value * fill
+                clipPath(waterPath(left, cy - u(14f), u(28f), front, rate, swirl.value, time)) {
+                    drawText(layout, color = c.onInk, topLeft = tl)
+                }
+            }
+        }
     }
 }
 
@@ -176,20 +205,7 @@ private fun DrawScope.liquid(t: Float, orbit: Float, arrow: Float, tank: Float, 
         val top = cy - u(14f)
         val h = u(28f)
         val front = left + width * fill
-        val amp = u(3f) + u(7f) * rate.coerceIn(0f, 1f) * (1f - swirl)
-        val speed = 4f + 8f * rate
-        val path = Path().apply {
-            moveTo(left, top)
-            var y = top
-            lineTo(front, top)
-            while (y <= top + h) {
-                val x = front + amp * sin(y / u(6f) + t * speed)
-                lineTo(x.coerceAtLeast(left), y)
-                y += u(2f)
-            }
-            lineTo(left, top + h)
-            close()
-        }
+        val path = waterPath(left, top, h, front, rate, swirl, t)
         clipPath(Path().apply { addRoundRect(androidx.compose.ui.geometry.RoundRect(left, top, left + width, top + h, CornerRadius(h / 2))) }) {
             drawPath(path, ink)
         }
@@ -213,6 +229,24 @@ private fun DrawScope.liquid(t: Float, orbit: Float, arrow: Float, tank: Float, 
             }
             drawCircle(ink, u(16f) * swirl * (1f + 0.08f * sin(t * 5f)), Offset(cx, cy))
         }
+    }
+}
+
+/** 통 안 물의 모양: 왼쪽부터 [front]까지, 앞면은 받는 속도([rate])만큼 출렁인다. 물 그림과 퍼센트 글자 반전이 같은 모양을 쓴다. */
+private fun DrawScope.waterPath(left: Float, top: Float, h: Float, front: Float, rate: Float, swirl: Float, t: Float): Path {
+    val amp = u(3f) + u(7f) * rate.coerceIn(0f, 1f) * (1f - swirl)
+    val speed = 4f + 8f * rate
+    return Path().apply {
+        moveTo(left, top)
+        var y = top
+        lineTo(front, top)
+        while (y <= top + h) {
+            val x = front + amp * sin(y / u(6f) + t * speed)
+            lineTo(x.coerceAtLeast(left), y)
+            y += u(2f)
+        }
+        lineTo(left, top + h)
+        close()
     }
 }
 
