@@ -118,7 +118,7 @@ private fun PermissionRow(item: AppPermissions.Item, granted: Boolean, index: In
                 drawLine(c.onInk, Offset(center.x - k, center.y), Offset(center.x - k * 0.2f, center.y + k * 0.7f), 2.dp.toPx(), StrokeCap.Round)
                 drawLine(c.onInk, Offset(center.x - k * 0.2f, center.y + k * 0.7f), Offset(center.x + k, center.y - k * 0.6f), 2.dp.toPx(), StrokeCap.Round)
             } else {
-                drawCircle(c.danger, r - 1.dp.toPx(), style = Stroke(2.dp.toPx()))
+                drawCircle(if (item.optional) c.muted else c.danger, r - 1.dp.toPx(), style = Stroke(2.dp.toPx()))
             }
         }
         Spacer(Modifier.width(12.dp))
@@ -129,9 +129,10 @@ private fun PermissionRow(item: AppPermissions.Item, granted: Boolean, index: In
                     when {
                         !item.applies -> "해당 없음"
                         granted -> "허용됨"
+                        item.optional -> "선택"
                         else -> "필요함"
                     },
-                    strong = item.applies && !granted
+                    strong = item.applies && !granted && !item.optional
                 )
             }
             Text(

@@ -563,8 +563,13 @@ internal fun HomeScreen(
 
         if (counting) {
             RowCountOverlay(onClose = {
-                counting = false
+                // 시트(별도 창)를 먼저 다시 띄워 줄 화면 위로 올라오게 하고, 다 올라온 뒤 줄 화면을 거둔다.
+                // 순서를 바꾸면 그사이 홈 화면이 몇 프레임 비쳐 깜빡여 보인다
                 sheet = Sheet.TEST
+                scope.launch {
+                    delay(450)
+                    counting = false
+                }
             })
         }
 

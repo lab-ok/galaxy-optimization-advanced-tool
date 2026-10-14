@@ -22,7 +22,9 @@ internal object AppPermissions {
         val why: String,
         val how: How,
         /** 이 기기에서 쓰이지 않는 권한(예: Android 12의 알림 권한)이면 false. */
-        val applies: Boolean = true
+        val applies: Boolean = true,
+        /** 없어도 다른 길로 되는 권한(예: Shizuku가 있으면 필요 없는 앱 설치). 없을 때 '필요함' 대신 '선택'으로 보인다. */
+        val optional: Boolean = false
     )
 
     /** Shizuku API를 쓰는 권한(Shizuku 라이브러리가 매니페스트에 넣는다). Shizuku의 허용 창에서 받는다. */
@@ -91,7 +93,8 @@ internal object AppPermissions {
             Manifest.permission.REQUEST_INSTALL_PACKAGES,
             "앱 설치",
             "Shizuku가 없을 때 새 버전을 시스템 설치 창으로 설치합니다. 처음 한 번 'GOAT의 앱 설치 허용'을 켜야 합니다.",
-            How.USER
+            How.USER,
+            optional = true
         ),
         Item(
             Manifest.permission.WAKE_LOCK,

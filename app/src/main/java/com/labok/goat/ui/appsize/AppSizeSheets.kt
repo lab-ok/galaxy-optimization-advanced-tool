@@ -122,7 +122,7 @@ internal fun AppSizeGuideSheet() {
                     if (shell != null) {
                         "PC 셸 도우미로 연결되어 있습니다. GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다."
                     } else {
-                        "Shizuku로 연결되어 있습니다. 이 창을 닫고 앱을 고르면 됩니다."
+                        "Shizuku 권한을 받았습니다. 이 창을 닫고 계속하면 됩니다."
                     },
                     color = c.muted,
                     style = MaterialTheme.typography.bodySmall

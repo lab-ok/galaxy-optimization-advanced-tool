@@ -215,7 +215,8 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
         val setting = remember(w.version) { ScreenMode.active(context) }
         val now = remember(w.version) { setting?.read(context) }
         Text(Copy.LAB_SCREEN_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text(Copy.LAB_SCREEN_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        // 쓸 수 없는 기기에서는 [처음대로]를 말하는 안내 대신 쓸 수 없다는 줄만 보인다
+        if (setting != null) Text(Copy.LAB_SCREEN_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Item))
         if (setting == null) {
             Text(Copy.LAB_SCREEN_NONE, color = c.muted, style = MaterialTheme.typography.bodySmall)
@@ -278,13 +279,13 @@ internal fun StatusIconsHelpSheet() {
         )
         HelpTopic(
             "2. 필요한 권한",
-            "안드로이드 시스템 UI 튜너가 쓰는 설정(icon_blacklist)을 바꿔서, 고급 화면 배율 설정과 같은 시스템 설정 권한이 필요합니다. " +
-                "점 세 개 메뉴의 '권한 설정'에서 켜는 방법을 볼 수 있습니다."
+            "Android 시스템 UI 튜너가 쓰는 설정을 바꾸므로 고급 화면 배율 설정과 같은 시스템 설정 권한이 필요합니다. " +
+                "점 세 개 메뉴의 '권한 설정'에서 받는 방법을 볼 수 있습니다."
         )
         HelpTopic(
             "3. 안 숨겨지는 아이콘",
             "One UI 버전에 따라 일부 아이콘은 이름이 달라 숨겨지지 않을 수 있습니다. 마이크·카메라 사용 표시(초록 점)는 Android 13 이하에서만 " +
-                "바꿀 수 있고, 그 위 버전은 시스템이 막아 두어 스위치가 잠깁니다."
+                "바꿀 수 있고, Android 14 이상은 시스템이 막아 두어 스위치가 잠깁니다."
         )
         HelpTopic("4. 되돌리기", "[처음대로]를 누르면 GOAT가 바꾸기 전 값으로 돌아갑니다.")
     }
@@ -296,8 +297,8 @@ internal fun AirplaneHelpSheet() {
     SheetColumn(title = "사용 방법") {
         HelpTopic(
             "1. 무엇을 하나요",
-            "비행기 모드를 켜면 보통 와이파이·블루투스·NFC까지 함께 꺼집니다. 여기서 고른 무선은 비행기 모드를 켜도 끄지 않고 그대로 둡니다. " +
-                "모바일 데이터(통신)는 비행기 모드의 뜻이라 늘 꺼집니다."
+            "비행기 모드를 켜면 보통 Wi-Fi·블루투스·NFC까지 함께 꺼집니다. 여기서 고른 무선은 비행기 모드를 켜도 끄지 않고 그대로 둡니다. " +
+                "모바일 데이터(통신)는 비행기 모드에서 항상 꺼집니다."
         )
         HelpTopic(
             "2. 언제 바뀌나요",
@@ -305,7 +306,7 @@ internal fun AirplaneHelpSheet() {
         )
         HelpTopic(
             "3. 필요한 권한",
-            "시스템 설정(airplane_mode_radios)을 바꿔서 시스템 설정 권한이 필요합니다. 점 세 개 메뉴의 '권한 설정'에서 켜는 방법을 볼 수 있습니다."
+            "비행기 모드 설정을 바꾸므로 시스템 설정 권한이 필요합니다. 점 세 개 메뉴의 '권한 설정'에서 받는 방법을 볼 수 있습니다."
         )
         HelpTopic("4. 되돌리기", "[처음대로]를 누르면 GOAT가 바꾸기 전 값으로 돌아갑니다.")
     }

@@ -78,7 +78,7 @@ internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
                 InfoRow("마지막 적용", "${if (it.success) "성공" else "실패"} · ${SimpleDateFormat("MM-dd HH:mm:ss", Locale.US).format(Date(it.timeMs))}")
                 InfoRow("내용", it.text)
             } ?: Text("기록 없음", color = c.muted)
-            InfoRow("내부 화면 보정", "${if (state.adjust > 0) "+" else ""}${state.adjust}")
+            if (state.foldable) InfoRow("내부 화면 보정", "${if (state.adjust > 0) "+" else ""}${state.adjust}")
         }
         Spacer(Modifier.height(Gap.Item))
         GlassCard {
@@ -150,7 +150,8 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    "${role?.let { if (it.name == "OUTER") "외부" else "내부" } ?: "미확인"} 화면${if (active) " · 사용 중" else ""}",
+                    // 화면이 하나뿐인 기기는 외부·내부 구분이 없으니 그냥 '화면'이라고 쓴다
+                    "${role?.let { if (it.name == "OUTER") "외부 " else "내부 " } ?: if (state.foldable) "미확인 " else ""}화면${if (active) " · 사용 중" else ""}",
                     fontWeight = FontWeight.SemiBold,
                     color = c.ink
                 )

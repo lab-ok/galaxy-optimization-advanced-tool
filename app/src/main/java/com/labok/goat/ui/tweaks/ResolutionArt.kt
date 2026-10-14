@@ -48,7 +48,7 @@ internal fun ResolutionArt(percent: Int) {
                 }
             }
             drawRoundRect(if (on) c.ink else c.line, Offset(left, top), Size(box, box), CornerRadius(12.dp.toPx()), style = Stroke(1.5f.dp.toPx()))
-            artPill(tm, c, if (i == 0) "점 100%" else "점 ${Copy.resPoints(percent)}%", Offset(left + box / 2, top + box + 16.dp.toPx()), filled = on)
+            artPill(tm, c, if (i == 0) "화소 100%" else "화소 ${Copy.resPoints(percent)}%", Offset(left + box / 2, top + box + 16.dp.toPx()), filled = on)
             artLabel(tm, if (i == 0) "원래 해상도" else "낮춘 해상도", Offset(left + box / 2, top + box + 36.dp.toPx()), if (on) c.ink else c.muted, bold = on)
         }
     }

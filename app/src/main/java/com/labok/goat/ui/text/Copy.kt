@@ -109,6 +109,7 @@ object Copy {
     const val CAMERA_STATE_UNKNOWN = "Shizuku가 연결되면 지금 상태를 읽습니다."
     const val CAMERA_KEEP_TITLE = "다시 켜지면 자동으로 끄기"
     const val CAMERA_KEEP_BODY = "업데이트·재부팅 뒤 다시 켜지면 Shizuku가 연결될 때 다시 끕니다."
+    const val TOAST_LOGS_CLEARED = "앱 내부 로그를 지웠습니다"
     const val CAMERA_TOAST_MUTED = "촬영음 강제를 껐습니다"
     const val CAMERA_TOAST_RESTORED = "촬영음 강제를 되돌렸습니다"
     const val CAMERA_TOAST_FAILED = "바꾸지 못했습니다. Shizuku 연결을 확인해 주세요"
@@ -215,7 +216,7 @@ object Copy {
     const val LAB_FLEX_APPS_REST = "최근 사용 순"
     const val LAB_FLEX_APPS_BODY = "자동 플렉스를 켜면 모든 앱에 조작 패널이 뜹니다. 패널이 필요 없는 앱만 끄세요."
     const val LAB_FLEX_UNSUPPORTED_TITLE = "폴드8 전용 기능입니다"
-    const val LAB_FLEX_UNSUPPORTED_BODY = "다른 기기는 이미 플렉스 모드를 지원하거나 접는 화면이 없어 쓸 수 없습니다."
+    const val LAB_FLEX_UNSUPPORTED_BODY = "다른 폴드는 시스템이 플렉스 모드를 이미 지원하고, 접는 화면이 없는 기기에서는 쓸 수 없습니다."
     const val LAB_SHARE = "찾은 결과 보내기"
     const val LAB_RESTORE = "처음대로"
     const val LAB_RESTORED = "처음 값으로 되돌렸습니다."
@@ -278,11 +279,11 @@ object Copy {
     const val RESET_RELEARN_BODY = "학습한 해상도·PPI 정보를 지우고 다시 수집합니다. 설정한 DPI는 유지됩니다."
     const val RESET_DEFAULT = "기본 DPI로 복원"
     const val RESET_PERMISSION = "권한 초기화"
-    const val RESET_PERMISSION_BODY = "adb로 부여한 WRITE_SECURE_SETTINGS 권한과 앱의 적용 기록을 초기화합니다."
-    const val RESET_PERMISSION_WARN = "자동 적용이 중지되고 적용 기록이 삭제됩니다. 다시 쓰려면 PC에서 권한을 다시 부여해야 합니다."
+    const val RESET_PERMISSION_BODY = "앱의 적용 기록과 설정을 지우고, PC 명령 한 줄로 권한을 회수하도록 안내합니다."
+    const val RESET_PERMISSION_WARN = "자동 적용이 중지되고 적용 기록이 삭제됩니다. 권한을 회수한 뒤 다시 쓰려면 권한을 다시 받아야 합니다."
     const val RESET_PERMISSION_CONFIRM = "정말 권한을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다."
     const val RESET_PERMISSION_KEEP = "현재 적용된 DPI는 그대로 유지됩니다."
-    const val RESET_PERMISSION_LIMIT = "Android는 앱이 이 권한을 스스로 회수하지 못하게 막아 두어, 마지막 회수는 PC 명령 한 줄로 합니다."
+    const val RESET_PERMISSION_LIMIT = "Android는 앱이 이 권한을 스스로 내려놓지 못하게 막아 두어, 권한 회수는 PC 명령으로 합니다."
     const val RESET_PERMISSION_STEP = "PC에서 아래 명령을 실행하면 권한이 제거되고, 앱이 자동으로 권한 설정 화면을 띄웁니다."
     const val RESET_PERMISSION_WAITING = "권한 회수 대기 중"
     const val CONTINUE = "계속"
@@ -492,12 +493,12 @@ object Copy {
     fun resNow(w: Int, h: Int, bw: Int, bh: Int) = if (w == bw && h == bh) "지금 $w × $h" else "지금 $w × $h · 원래 $bw × $bh"
 
     /** 해상도 선택지 이름. [percent]는 변 비율이고, 화면에는 그리는 점(넓이) 비율로 적는다. */
-    fun resOption(name: String?, w: Int, h: Int, percent: Int) = if (percent >= 100) "원래대로 $w × $h" else listOfNotNull(name, "$w × $h").joinToString(" ") + " · 점 ${resPoints(percent)}%"
+    fun resOption(name: String?, w: Int, h: Int, percent: Int) = if (percent >= 100) "원래대로 $w × $h" else listOfNotNull(name, "$w × $h").joinToString(" ") + " · 화소 ${resPoints(percent)}%"
     fun resOptionDesc(percent: Int) = "그리는 점이 약 ${100 - resPoints(percent)}% 줄어듭니다."
 
     /** 변 비율 [percent]%일 때 그리는 점 수 비율(%). */
     fun resPoints(percent: Int) = percent * percent / 100
     fun resAppsBody(n: Int) = "앱 ${n}개는 정해진 단계로만 배율을 바꿀 수 있어, 해상도를 낮추는 동안 그 앱들이 조금 커 보입니다."
     fun resConfirmBody(left: Int) = "${left}초 안에 '유지'를 누르지 않으면 원래 해상도로 되돌립니다."
-    fun resDash(w: Int, percent: Int) = "$w · 점 ${resPoints(percent)}%"
+    fun resDash(w: Int, percent: Int) = "$w · 화소 ${resPoints(percent)}%"
 }

@@ -48,7 +48,10 @@ fun Text(
     )
 }
 
-/** 한글 글자 사이에 WORD JOINER를 넣어 어절 안에서 줄이 끊기지 않게 한다. */
+/**
+ * 한글 글자 사이에 WORD JOINER를 넣어 어절 안에서 줄이 끊기지 않게 한다.
+ * 영문·숫자나 닫는 따옴표·괄호 바로 뒤에 붙은 한글(조사)도 붙여, 'GPL-3.0' / '으로'처럼 조사만 다음 줄로 떨어지지 않게 한다.
+ */
 internal fun keepAll(s: String): String {
     if (s.none { it.isHangul() }) return s
     val b = StringBuilder(s.length + s.length / 2)
@@ -56,9 +59,12 @@ internal fun keepAll(s: String): String {
         val ch = s[i]
         b.append(ch)
         val next = s.getOrNull(i + 1) ?: continue
-        if (ch.isHangul() && next.isHangul()) b.append('⁠')
+        if (next.isHangul() && (ch.isHangul() || ch.isLetterOrDigit() || ch in CLOSERS)) b.append('⁠')
     }
     return b.toString()
 }
+
+/** 바로 뒤 조사와 떨어지면 어색한 닫는 기호. */
+private const val CLOSERS = ")]'\"’”%"
 
 private fun Char.isHangul() = this in '가'..'힣' || this in 'ᄀ'..'ᇿ' || this in '㄰'..'㆏'

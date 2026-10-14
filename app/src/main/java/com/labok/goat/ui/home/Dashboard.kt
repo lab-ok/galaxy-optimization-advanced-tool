@@ -58,12 +58,12 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -194,7 +194,8 @@ internal fun Dashboard(
             }
             NavItem.RESOLUTION -> when {
                 !Resolution.supported(context) -> Copy.RES_DASH_FOLD
-                ResolutionState.base(context) == null -> Copy.RES_DASH_ORIGINAL
+                // 저장된 원래 해상도가 남아 있어도 지금 해상도가 원래와 같으면(밖에서 되돌린 경우) 원래 해상도다
+                ResolutionState.base(context) == null || Resolution.current(context) == Resolution.base(context) -> Copy.RES_DASH_ORIGINAL
                 else -> Resolution.current(context).first.let { Copy.resDash(it, it * 100 / Resolution.base(context).first) }
             }
             NavItem.REFRESH -> if (!RefreshRate.supported(context)) {
@@ -231,7 +232,7 @@ internal fun Dashboard(
             NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))
             NavItem.DARK -> dark.forced == true
             NavItem.DOZE -> doze == Doze.State.OFF || (doze == Doze.State.UNKNOWN && Doze.wanted(context))
-            NavItem.RESOLUTION -> ResolutionState.base(context) != null
+            NavItem.RESOLUTION -> ResolutionState.base(context) != null && Resolution.current(context) != Resolution.base(context)
             NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             NavItem.STATUS_ICONS -> IconBlacklist.setting.read(context).let { raw ->
                 IconBlacklist.Slot.entries.any { IconBlacklist.hidden(raw, it) }

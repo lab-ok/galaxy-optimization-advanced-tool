@@ -161,7 +161,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
             }
             Spacer(Modifier.height(Gap.Item))
             LiquidButton(Copy.FLUID_TUNE, modifier = Modifier.fillMaxWidth(), primary = false, onClick = { tuning = !tuning })
-            AnimatedVisibility(tuning, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+            AnimatedVisibility(tuning, enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 FluidTuner(tune, onChange = { tune = it })
             }
         }
