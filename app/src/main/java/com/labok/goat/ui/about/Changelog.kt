@@ -715,7 +715,7 @@ private fun ReleaseCard(r: Release, initiallyOpen: Boolean) {
             val turn by animateFloatAsState(if (open) 180f else 0f, label = "chevron")
             Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
         }
-        AnimatedVisibility(open, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+        AnimatedVisibility(open, enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(), exit = shrinkVertically() + fadeOut()) {
             Column(Modifier.padding(start = Gap.CardPadding, end = Gap.CardPadding, bottom = Gap.CardPadding)) {
                 r.sections.forEachIndexed { i, (title, items) ->
                     // 첫 묶음은 머리 줄의 아래 여백이 위 간격을 대신한다

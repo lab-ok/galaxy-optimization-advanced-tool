@@ -238,7 +238,7 @@ internal fun ResolutionHelpSheet() {
         HelpTopic(
             "5. 되돌리기",
             "'원래대로'를 고르면 GOAT가 바꾸기 전 해상도(삼성 설정에서 FHD+로 줄여 두었으면 그 크기)로 돌아갑니다. " +
-                "화면을 쓸 수 없을 만큼 문제가 생기면 PC에서 '${Resolution.PC_UNDO}'를 실행하세요."
+                "화면을 쓸 수 없을 만큼 문제가 생기면 PC에서 '${Resolution.PC_UNDO}'을 실행하세요."
         )
     }
 }

@@ -14,6 +14,7 @@ object Copy {
     const val STATUS_OK = "두 화면 표시 크기 일치"
     const val STATUS_OK_SINGLE = "설정한 DPI로 표시 중"
     const val STATUS_FIXING = "DPI 적용 중"
+    const val STATUS_NOT_APPLIED = "설정한 DPI와 다름"
     const val STATUS_NEED_SETUP = "권한 설정 필요"
     const val STATUS_NO_TARGET = "외부 화면 DPI 설정 필요"
     const val STATUS_NO_TARGET_SINGLE = "DPI 설정 필요"

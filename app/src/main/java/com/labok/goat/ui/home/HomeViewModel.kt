@@ -245,7 +245,6 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             CrashRecorder.clear(getApplication())
         }
         refresh()
-        say(Copy.TOAST_LOGS_CLEARED)
     }
 
     private fun snapshot(): UiState {

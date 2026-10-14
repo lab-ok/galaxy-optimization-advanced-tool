@@ -72,8 +72,8 @@ object GrantGuideContent {
                     Trouble(
                         "무선 연결이 안 될 때",
                         "protocol fault (couldn't read status message)",
-                        "① 폰의 VPN을 끕니다(켜져 있으면 같은 와이파이에서도 서로 찾지 못합니다).\n" +
-                            "② 폰과 PC가 같은 와이파이인지 확인합니다.\n" +
+                        "① 폰의 VPN을 끕니다(켜져 있으면 같은 Wi-Fi에서도 서로 찾지 못합니다).\n" +
+                            "② 폰과 PC가 같은 Wi-Fi인지 확인합니다.\n" +
                             "③ adb를 다시 시작하고, 그래도 안 되면 폰과 PC를 재시작합니다.\n" +
                             "④ Windows 방화벽이 adb 허용을 물으면 허용합니다.",
                         listOf("$adb kill-server", "$adb start-server")

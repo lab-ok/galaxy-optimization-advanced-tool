@@ -82,7 +82,7 @@ object AirplaneRadios {
     val setting = LabSetting("global", "airplane_mode_radios", "비행기 모드 무선")
 
     /** 사용자가 고를 수 있는 무선(셀룰러는 비행기 모드의 뜻이라 늘 끈다). */
-    enum class Radio(val id: String, val label: String) { WIFI("wifi", "와이파이"), BLUETOOTH("bluetooth", "블루투스"), NFC("nfc", "NFC") }
+    enum class Radio(val id: String, val label: String) { WIFI("wifi", "Wi-Fi"), BLUETOOTH("bluetooth", "블루투스"), NFC("nfc", "NFC") }
 
     fun list(raw: String?): List<String> = (raw ?: DEFAULT).split(',').map { it.trim() }.filter { it.isNotEmpty() }
 

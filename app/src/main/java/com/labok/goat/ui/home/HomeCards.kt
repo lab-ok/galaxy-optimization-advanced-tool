@@ -66,6 +66,8 @@ internal fun StatusCard(state: UiState) {
         state.status == UiState.Status.BLOCKED -> Copy.STATUS_HOLD
         state.foldable && state.rows.size < 2 -> Copy.STATUS_NEED_OTHER
         state.status == UiState.Status.OK -> if (state.foldable) Copy.STATUS_OK else Copy.STATUS_OK_SINGLE
+        // 자동 적용이 꺼져 있으면 GOAT가 적용하고 있는 것이 아니다: 설정값과 다르다고만 알린다
+        !state.auto -> Copy.STATUS_NOT_APPLIED
         else -> Copy.STATUS_FIXING
     }
     GlassCard {

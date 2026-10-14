@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.hardware.display.DisplayManager
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -591,7 +592,11 @@ internal fun HomeScreen(
                         sheet = null
                         counting = true
                     }, onCalibrate = vm::setRulerPpi)
-                    Sheet.ADVANCED -> AdvancedSheet(state, onClearLogs = vm::clearDiagnostics)
+                    Sheet.ADVANCED -> AdvancedSheet(state, onClearLogs = {
+                        vm.clearDiagnostics()
+                        // 앱 안 알림(스낵바)은 시트 창 아래에 깔려 보이지 않으므로 시스템 토스트로 알린다
+                        Toast.makeText(context, Copy.TOAST_LOGS_CLEARED, Toast.LENGTH_SHORT).show()
+                    })
                     Sheet.RESET -> ResetSheet(
                         canReset = state.hasPermission,
                         foldable = state.foldable,

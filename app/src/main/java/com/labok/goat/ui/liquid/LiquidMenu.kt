@@ -22,9 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -96,7 +94,8 @@ fun LiquidMenu(
         launch { snapshotFlow { pw.value to ph.value }.collect { shape(true) } }
         launch { pw.animateTo(1f, spring(dampingRatio = 1f, stiffness = 520f)) }
         launch { ph.animateTo(1f, spring(dampingRatio = 1f, stiffness = 330f)) }
-        items0.animateTo(items.size.toFloat(), tween(80 + 45 * items.size, delayMillis = 110))
+        // 방울이 거의 다 펼쳐진 뒤 글자가 나오게 늦춘다(일찍 나오면 글자가 방울 밖 뒤 화면 위에 떠 보였다)
+        items0.animateTo(items.size.toFloat(), tween(80 + 45 * items.size, delayMillis = 200))
     }
     val close: (() -> Unit) -> Unit = { after ->
         haptics.close()
@@ -131,13 +130,6 @@ fun LiquidMenu(
                     .padding(top = 12.dp, end = 8.dp)
                     .width(menuW)
                     .align(Alignment.TopEnd)
-                    // 펼쳐지는 동안 글자가 방울 밖으로 삐져나와 뒤 화면 위에 떠 보이지 않게, 방울 모양으로 자른다
-                    // (이 줄의 원점은 방울 캔버스보다 오른쪽 위 여백만큼 안쪽: 가로 8dp, 세로 12dp)
-                    .drawWithContent {
-                        translate(-8.dp.toPx(), -12.dp.toPx()) {
-                            clipPath(path) { translate(8.dp.toPx(), 12.dp.toPx()) { this@drawWithContent.drawContent() } }
-                        }
-                    }
             ) {
                 items.forEachIndexed { i, (label, action) ->
                     val interaction = remember { MutableInteractionSource() }
