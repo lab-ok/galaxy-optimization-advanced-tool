@@ -17,15 +17,22 @@ android {
         versionName = "1.8.7"
         // 실험실 기능은 lab 빌드에만 켠다. 공개 release·debug에는 들어가지 않는다.
         buildConfigField("boolean", "LAB", "false")
+        // 대상 기기(갤럭시 폴드)는 모두 arm64다. 라이브러리가 넣는 다른 ABI의 .so는 싣지 않는다.
+        ndk { abiFilters += "arm64-v8a" }
+        // 앱 문구는 한국어뿐이다(Copy.kt). 라이브러리 번역 중 한국어만 남긴다(기본 영어는 그대로 남는다).
+        resourceConfigurations += "ko"
     }
 
     buildTypes {
         release {
-            // 숨은 API를 reflection으로 부르므로 축소·난독화를 켜지 않는다.
-            isMinifyEnabled = false
+            // 축소·최적화(R8)를 켠다. 숨은 API는 프레임워크 클래스라 지워지지 않고,
+            // 리플렉션으로 부르는 앱·라이브러리 코드와 이름 유지(난독화 끔)는 proguard-rules.pro에 둔다.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("debug")
         }
-        // 개발자 본인용 실험실 빌드: release와 같고 실험실 메뉴만 켠다(같은 서명이라 덮어 설치된다).
+        // 개발자 본인용 실험실 빌드: release와 같고(R8 설정 포함) 실험실 메뉴만 켠다(같은 서명이라 덮어 설치된다).
         create("lab") {
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
