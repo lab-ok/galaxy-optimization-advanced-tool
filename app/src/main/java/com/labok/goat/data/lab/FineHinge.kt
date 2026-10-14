@@ -44,25 +44,22 @@ class FineHinge(private val onAngle: (Float) -> Unit) {
     }
 
     /**
-     * 센서 부품이 합쳐 낸 각도는 펼쳐 둬도 176~179°처럼 몇 도씩 흔들린다. 최근 세 값의 가운데 값으로 튀는 값을 버리고,
-     * 끝에 가까우면 끝으로 붙이고(175° 이상은 180°, 5° 이하는 0°), 1° 넘게 바뀔 때만 새 값을 낸다(시험할 수 있게 뗐다).
+     * 센서 부품이 합쳐 낸 각도는 펼쳐 둬도 176~179°처럼 몇 도씩 흔들린다. 끝에 가까우면 끝으로 붙이고(175° 이상은 180°, 5° 이하는 0°),
+     * 1.5° 넘게 바뀔 때만 새 값을 낸다(시험할 수 있게 뗐다). 최근 값들의 가운데 값을 쓰면 빨리 펼친 뒤 로그가 멈출 때
+     * 마지막 값이 버려져 163°처럼 중간에 멈춰 보였다. 그래서 들어온 값을 늦추지 않고 그대로 쓴다.
      */
     internal class Smoother {
-        private val recent = ArrayDeque<Float>()
         private var shown = Float.NaN
 
         /** 새로 보여 줄 각도, 바뀌지 않았으면 null. */
         fun feed(raw: Float): Float? {
-            recent.addLast(raw)
-            if (recent.size > 3) recent.removeFirst()
-            val mid = recent.sorted()[recent.size / 2]
             val v = when {
-                mid >= 175f -> 180f
-                mid <= 5f -> 0f
-                else -> mid
+                raw >= 175f -> 180f
+                raw <= 5f -> 0f
+                else -> raw
             }
-            if (!shown.isNaN() && kotlin.math.abs(v - shown) < 1.5f && v != 180f && v != 0f) return null
             if (v == shown) return null
+            if (!shown.isNaN() && kotlin.math.abs(v - shown) < 1.5f && v != 180f && v != 0f) return null
             shown = v
             return v
         }

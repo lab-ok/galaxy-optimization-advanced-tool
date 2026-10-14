@@ -256,6 +256,8 @@ object AutoFlex {
         private val fine = FineHinge { a ->
             fineAt = android.os.SystemClock.elapsedRealtime()
             worker.post { onAngle(a) }
+            worker.removeCallbacks(coarseFallback)
+            worker.postDelayed(coarseFallback, 1100)
         }
 
         private val screen = object : BroadcastReceiver() {
@@ -321,8 +323,20 @@ object AutoFlex {
             angleFlow.value = null
         }
 
+        // 기본 센서의 마지막 값. 세밀한 값이 1초 넘게 끊기면(빨리 펴거나 닫아 로그가 멈춘 때) 끝값(0°·180°)이면 그걸 믿는다
+        @Volatile private var coarseLast: Float? = null
+        private val coarseFallback = Runnable {
+            val c = coarseLast ?: return@Runnable
+            if (android.os.SystemClock.elapsedRealtime() - fineAt >= 1000 && (c <= 0f || c >= 180f) && c != last) onAngle(c)
+        }
+
         override fun onSensorChanged(event: SensorEvent) {
-            if (android.os.SystemClock.elapsedRealtime() - fineAt < 1000) return
+            coarseLast = event.values[0]
+            if (android.os.SystemClock.elapsedRealtime() - fineAt < 1000) {
+                worker.removeCallbacks(coarseFallback)
+                worker.postDelayed(coarseFallback, 1100)
+                return
+            }
             onAngle(event.values[0])
         }
 

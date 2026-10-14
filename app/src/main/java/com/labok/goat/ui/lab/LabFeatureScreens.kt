@@ -248,17 +248,26 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var appsOpen by remember { mutableStateOf(false) }
     var gesturesOpen by remember { mutableStateOf(false) }
     var wheel by remember { mutableStateOf(AutoFlex.wheel.read(context)) }
-    // 이 설정 화면을 보는 동안에는 자동 플렉스를 멈춰 화면이 바뀌지 않게 하고, 시험은 [플렉스 모드 테스트하기] 화면에서만 한다
-    var testing by remember { mutableStateOf(false) }
-    androidx.compose.runtime.DisposableEffect(testing) {
-        AutoFlex.setPaused("screen", !testing)
-        onDispose { AutoFlex.setPaused("screen", false) }
+    // 이 설정 화면을 보는 동안에는 자동 플렉스를 멈춰 화면이 바뀌지 않게 한다. 시험은 [플렉스 모드 테스트하기]가 여는
+    // 시험 화면(FlexTestActivity)에서만 하므로, 이 화면이 앞에 있을 때(RESUMED)만 멈춘다
+    var resumed by remember { mutableStateOf(true) }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    androidx.compose.runtime.DisposableEffect(lifecycle) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, _ ->
+            resumed = lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+            AutoFlex.setPaused("screen", resumed)
+        }
+        lifecycle.addObserver(obs)
+        onDispose {
+            lifecycle.removeObserver(obs)
+            AutoFlex.setPaused("screen", false)
+        }
     }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     // 설정 화면에서는 자동 플렉스를 멈춰 두지만, 각도가 범위에 들어오고 나가는 것은 진동으로 느끼게 한다(서비스와 같은 진동).
     // 범위를 끌어 바꿀 때가 아니라 폰을 접고 펼 때만 울리도록 각도가 바뀔 때만 본다. 시험 화면에서는 서비스가 울린다
     val rangeNow by androidx.compose.runtime.rememberUpdatedState(min to max)
-    val testingNow by androidx.compose.runtime.rememberUpdatedState(testing)
+    val resumedNow by androidx.compose.runtime.rememberUpdatedState(resumed)
     val angleNow by androidx.compose.runtime.rememberUpdatedState(angle)
     LaunchedEffect(supported) {
         if (!supported) return@LaunchedEffect
@@ -266,7 +275,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         androidx.compose.runtime.snapshotFlow { angleNow }.collect { a ->
             if (a == null) return@collect
             val inside = AutoFlex.inRange(a, rangeNow.first, rangeNow.second)
-            if (was != null && inside != was && !testingNow) AutoFlex.rangeBuzz(context, inside)
+            if (was != null && inside != was && resumedNow) AutoFlex.rangeBuzz(context, inside)
             was = inside
         }
     }
@@ -362,7 +371,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     Text(Copy.LAB_FLEX_BODY2, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     if (!enabled) Text(Copy.LAB_FLEX_TEST_OFF, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.LAB_FLEX_TEST, modifier = Modifier.fillMaxWidth(), enabled = enabled, onClick = { testing = true })
+                    LiquidButton(Copy.LAB_FLEX_TEST, modifier = Modifier.fillMaxWidth(), enabled = enabled, onClick = { context.startActivity(Intent(context, FlexTestActivity::class.java)) })
                 }
             }
         }
@@ -480,7 +489,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         modifier = Modifier.fillMaxWidth(),
         content = list
     )
-    if (testing) FlexTestDialog(angle, min, max, active, latched, onClose = { testing = false })
 }
 
 /** "YouTube, 전화 외 6개"처럼 패널을 띄우는 앱을 최근 사용 순으로 두 개까지 적고 나머지는 개수로. */
@@ -623,108 +631,111 @@ private fun FlexPanelArt() {
 }
 
 /**
- * 플렉스 모드 테스트: 화면 전체를 덮는 시험 화면. 펼쳐 있을 때는 게이지와 "천천히 접어 보세요" 안내를 보여 주고,
+ * 플렉스 모드 테스트([FlexTestActivity]가 띄우는 화면 전체). 펼쳐 있을 때는 범위와 지금 각도, "천천히 접어 보세요" 안내만 보여 주고,
  * 자동 플렉스가 플렉스 모드를 걸면 화면이 위(앱 자리)·아래(조작 패널 자리)로 갈라져 처음 쓰는 사람도 무엇이 바뀌는지 바로 본다.
- * 이 화면을 여는 동안만 설정 화면의 멈춤을 풀어 실제로 플렉스 모드가 걸린다.
+ * 설정 화면이 뒤로 가 있는 동안이라 자동 플렉스가 실제로 걸린다.
  */
 @Composable
-private fun FlexTestDialog(angle: Float?, min: Int, max: Int, active: Boolean, latched: Boolean, onClose: () -> Unit) {
+internal fun FlexTestScreen(onClose: () -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
-    androidx.compose.ui.window.Dialog(
-        onDismissRequest = onClose,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
-    ) {
-        // 갈라지는 정도: 0 한 화면, 1 위아래 두 칸
-        val split by androidx.compose.animation.core.animateFloatAsState(if (active) 1f else 0f, Springs.water(reduce), label = "flexTestSplit")
-        Column(Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(16.dp)) {
-            // 위 칸: 펼쳐 있을 때는 게이지와 안내, 플렉스 모드면 진한 '앱 화면'
+    val context = LocalContext.current
+    val engineAngle by AutoFlex.angle.collectAsStateWithLifecycle()
+    val active by AutoFlex.active.collectAsStateWithLifecycle()
+    val latched by AutoFlex.latched.collectAsStateWithLifecycle()
+    val localAngle = rememberHingeAngle(engineAngle == null)
+    val angle = engineAngle ?: localAngle
+    val min = remember { AutoFlex.min(context) }
+    val max = remember { AutoFlex.max(context) }
+    // 갈라지는 정도: 0 한 화면, 1 위아래 두 칸
+    val split by androidx.compose.animation.core.animateFloatAsState(if (active) 1f else 0f, Springs.water(reduce), label = "flexTestSplit")
+    Column(Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(16.dp)) {
+        // 위 칸: 펼쳐 있을 때는 게이지와 안내, 플렉스 모드면 진한 '앱 화면'
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .clip(RoundedCornerShape(28.dp))
+                .background(androidx.compose.ui.graphics.lerp(c.bg, c.ink, split)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (split < 0.5f) {
+                Column(Modifier.padding(Gap.CardPadding).graphicsLayer { alpha = 1 - split * 2 }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(Copy.LAB_FLEX_TEST_TITLE, color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(Copy.LAB_FLEX_TEST_HOW, color = c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Text("$min~$max°", color = c.ink, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(Gap.Section))
+                    // 시험만 한다: 조절바 없이 지금 각도만 크게
+                    Text(angle?.let { "${it.roundToInt()}°" } ?: "—", color = c.ink, fontSize = 64.sp, lineHeight = 68.sp, fontWeight = FontWeight.Bold)
+                }
+            } else {
+                Column(Modifier.padding(Gap.CardPadding).graphicsLayer { alpha = (split - 0.5f) * 2 }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    androidx.compose.foundation.Canvas(Modifier.size(56.dp)) {
+                        drawPath(
+                            androidx.compose.ui.graphics.Path().apply {
+                                moveTo(size.width * 0.28f, size.height * 0.18f)
+                                lineTo(size.width * 0.82f, size.height / 2)
+                                lineTo(size.width * 0.28f, size.height * 0.82f)
+                                close()
+                            },
+                            c.onInk
+                        )
+                    }
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(Copy.LAB_FLEX_ON_TITLE, color = c.onInk, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
+                    Text(if (latched) Copy.LAB_FLEX_ON_BODY_CLICK else Copy.LAB_FLEX_ON_BODY, color = c.onInk.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                }
+            }
+        }
+        // 아래 칸: 플렉스 모드면 물방울처럼 부풀어 '조작 패널' 자리가 된다
+        if (split > 0.01f) {
+            Spacer(Modifier.height(Gap.Card * split))
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(split.coerceAtLeast(0.01f))
                     .clip(RoundedCornerShape(28.dp))
-                    .background(androidx.compose.ui.graphics.lerp(c.bg, c.ink, split)),
+                    .background(c.surface)
+                    .graphicsLayer { alpha = split },
                 contentAlignment = Alignment.Center
             ) {
-                if (split < 0.5f) {
-                    Column(Modifier.padding(Gap.CardPadding).graphicsLayer { alpha = 1 - split * 2 }, horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(Copy.LAB_FLEX_TEST_TITLE, color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
-                        Spacer(Modifier.height(Gap.Item))
-                        Text(Copy.LAB_FLEX_TEST_HOW, color = c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                        Text("$min~$max°", color = c.ink, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Spacer(Modifier.height(Gap.Section))
-                        // 시험만 한다: 조절바 없이 지금 각도만 크게
-                        Text(angle?.let { "${it.roundToInt()}°" } ?: "—", color = c.ink, fontSize = 64.sp, lineHeight = 68.sp, fontWeight = FontWeight.Bold)
-                    }
-                } else {
-                    Column(Modifier.padding(Gap.CardPadding).graphicsLayer { alpha = (split - 0.5f) * 2 }, horizontalAlignment = Alignment.CenterHorizontally) {
-                        androidx.compose.foundation.Canvas(Modifier.size(56.dp)) {
-                            drawPath(
-                                androidx.compose.ui.graphics.Path().apply {
-                                    moveTo(size.width * 0.28f, size.height * 0.18f)
-                                    lineTo(size.width * 0.82f, size.height / 2)
-                                    lineTo(size.width * 0.28f, size.height * 0.82f)
-                                    close()
-                                },
-                                c.onInk
-                            )
-                        }
-                        Spacer(Modifier.height(Gap.Item))
-                        Text(Copy.LAB_FLEX_ON_TITLE, color = c.onInk, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
-                        Text(if (latched) Copy.LAB_FLEX_ON_BODY_CLICK else Copy.LAB_FLEX_ON_BODY, color = c.onInk.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                    }
-                }
-            }
-            // 아래 칸: 플렉스 모드면 물방울처럼 부풀어 '조작 패널' 자리가 된다
-            if (split > 0.01f) {
-                Spacer(Modifier.height(Gap.Card * split))
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(split.coerceAtLeast(0.01f))
-                        .clip(RoundedCornerShape(28.dp))
-                        .background(c.surface)
-                        .graphicsLayer { alpha = split },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(Modifier.padding(Gap.CardPadding), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            // 뒤로·재생·앞으로(삼각형으로 직접 그린다)
-                            for (i in 0..2) {
-                                val tint = if (i == 1) c.onInk else c.ink
-                                Box(Modifier.size(if (i == 1) 56.dp else 44.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (i == 1) c.ink else c.line), contentAlignment = Alignment.Center) {
-                                    androidx.compose.foundation.Canvas(Modifier.size(20.dp)) {
-                                        fun tri(x0: Float, dir: Float) = androidx.compose.ui.graphics.Path().apply {
-                                            moveTo(x0, size.height * 0.15f)
-                                            lineTo(x0 + dir * size.width * 0.45f, size.height / 2)
-                                            lineTo(x0, size.height * 0.85f)
-                                            close()
+                Column(Modifier.padding(Gap.CardPadding), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        // 뒤로·재생·앞으로(삼각형으로 직접 그린다)
+                        for (i in 0..2) {
+                            val tint = if (i == 1) c.onInk else c.ink
+                            Box(Modifier.size(if (i == 1) 56.dp else 44.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (i == 1) c.ink else c.line), contentAlignment = Alignment.Center) {
+                                androidx.compose.foundation.Canvas(Modifier.size(20.dp)) {
+                                    fun tri(x0: Float, dir: Float) = androidx.compose.ui.graphics.Path().apply {
+                                        moveTo(x0, size.height * 0.15f)
+                                        lineTo(x0 + dir * size.width * 0.45f, size.height / 2)
+                                        lineTo(x0, size.height * 0.85f)
+                                        close()
+                                    }
+                                    when (i) {
+                                        0 -> {
+                                            drawPath(tri(size.width * 0.5f, -1f), tint)
+                                            drawPath(tri(size.width * 0.95f, -1f), tint)
                                         }
-                                        when (i) {
-                                            0 -> {
-                                                drawPath(tri(size.width * 0.5f, -1f), tint)
-                                                drawPath(tri(size.width * 0.95f, -1f), tint)
-                                            }
-                                            1 -> drawPath(tri(size.width * 0.25f, 1.6f), tint)
-                                            else -> {
-                                                drawPath(tri(size.width * 0.05f, 1f), tint)
-                                                drawPath(tri(size.width * 0.5f, 1f), tint)
-                                            }
+                                        1 -> drawPath(tri(size.width * 0.25f, 1.6f), tint)
+                                        else -> {
+                                            drawPath(tri(size.width * 0.05f, 1f), tint)
+                                            drawPath(tri(size.width * 0.5f, 1f), tint)
                                         }
                                     }
                                 }
                             }
                         }
-                        Spacer(Modifier.height(Gap.Item))
-                        Text(Copy.LAB_FLEX_TEST_BOTTOM, color = c.ink, style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                        Text(Copy.LAB_FLEX_TEST_UNFOLD, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(Copy.LAB_FLEX_TEST_BOTTOM, color = c.ink, style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Text(Copy.LAB_FLEX_TEST_UNFOLD, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            Spacer(Modifier.height(Gap.Card))
-            LiquidButton(Copy.LAB_FLEX_TEST_CLOSE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = onClose)
         }
+        Spacer(Modifier.height(Gap.Card))
+        LiquidButton(Copy.LAB_FLEX_TEST_CLOSE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = onClose)
     }
 }
 
@@ -733,10 +744,19 @@ private fun FlexTestDialog(angle: Float?, min: Int, max: Int, active: Boolean, l
  * 세밀한 값이 오면 그걸 쓴다.
  */
 @Composable
-private fun rememberHingeAngle(on: Boolean): Float? {
+internal fun rememberHingeAngle(on: Boolean): Float? {
     val context = LocalContext.current
     var coarse by remember { mutableStateOf<Float?>(null) }
     var fineAngle by remember { mutableStateOf<Float?>(null) }
+    var fineAt by remember { mutableStateOf(0L) }
+    // 세밀한 값이 끊겼는지 다시 보려고 0.5초마다 한 번 깨운다
+    var tick by remember { mutableStateOf(0) }
+    LaunchedEffect(on) {
+        while (on) {
+            kotlinx.coroutines.delay(500)
+            tick++
+        }
+    }
     androidx.compose.runtime.DisposableEffect(on) {
         if (!on) {
             coarse = null
@@ -752,14 +772,21 @@ private fun rememberHingeAngle(on: Boolean): Float? {
             override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) = Unit
         }
         if (hinge != null) sm.registerListener(l, hinge, android.hardware.SensorManager.SENSOR_DELAY_UI)
-        val fine = com.labok.goat.data.lab.FineHinge { v -> fineAngle = v }
+        val fine = com.labok.goat.data.lab.FineHinge { v ->
+            fineAngle = v
+            fineAt = android.os.SystemClock.elapsedRealtime()
+        }
         fine.start()
         onDispose {
             sm?.unregisterListener(l)
             fine.stop()
         }
     }
-    return fineAngle ?: coarse
+    // 빨리 펴거나 닫으면 세밀한 로그가 중간 값에서 멈출 수 있다. 1초 넘게 끊겼고 기본 센서가 끝값(0°·180°)이면 기본 센서를 믿는다
+    tick
+    val c = coarse
+    val stale = android.os.SystemClock.elapsedRealtime() - fineAt >= 1000
+    return if (c != null && stale && (c <= 0f || c >= 180f)) c else fineAngle ?: c
 }
 
 /** 패널 앱 한 줄: 앱별 화면 배율 설정 목록과 같은 모양(아이콘·이름·마지막 사용)에 오른쪽 스위치. 켜고 끌 때 테두리가 물들고 줄이 살짝 출렁인다. */

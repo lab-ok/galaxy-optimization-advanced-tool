@@ -47,12 +47,13 @@ class LabTweaksTest {
     fun fineHingeSnapsFlatAndDropsJitter() {
         val s = FineHinge.Smoother()
         assertEquals(172f, s.feed(172f)!!, 0f)
-        assertEquals(180f, s.feed(179f)!!, 0f) // 가운데 값 179 → 펼침으로 붙인다
+        assertEquals(180f, s.feed(179f)!!, 0f) // 175° 이상은 펼침으로 붙인다
         assertNull(s.feed(177f)) // 그대로 180
         val f = FineHinge.Smoother()
         f.feed(100f)
         assertNull(f.feed(101f)) // 1° 흔들림은 무시
-        assertNull(f.feed(140f)) // 한 번 튄 값은 가운데 값(101)으로 걸러진다
-        assertEquals(140f, f.feed(140f)!!, 0f)
+        // 빨리 펼친 뒤 로그가 멈춰도 마지막 값이 바로 반영된다(가운데 값으로 늦추지 않는다)
+        assertEquals(150f, f.feed(150f)!!, 0f)
+        assertEquals(180f, f.feed(178f)!!, 0f)
     }
 }
