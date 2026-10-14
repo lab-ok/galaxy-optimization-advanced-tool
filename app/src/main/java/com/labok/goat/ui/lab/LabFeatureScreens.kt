@@ -253,18 +253,49 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
         }
         Text("${setting.key} = ${now ?: "-"}", color = c.ink, style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.height(Gap.Item))
-        val values = if (setting === ScreenMode.samsung) ScreenMode.SAMSUNG_VALUES.map { it to it } else ScreenMode.AOSP_VALUES
+        val samsung = setting === ScreenMode.samsung
+        val values = if (samsung) ScreenMode.SAMSUNG_VALUES.map { it to (SAMSUNG_MODE_NAMES[it] ?: it) } else ScreenMode.AOSP_VALUES
         LiquidChips(
             options = values.map { it.first },
             selected = now ?: "",
             label = { v -> values.first { it.first == v }.second },
             onSelect = { w.write(setting, it) }
         )
+        if (samsung) {
+            Spacer(Modifier.height(Gap.Item))
+            SAMSUNG_MODE_DESCS[now]?.let { Text(it, color = c.ink, style = MaterialTheme.typography.bodySmall) }
+            Text(Copy.LAB_SCREEN_TRY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        }
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { setting.changed(context) }
         LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(setting) })
+        if (samsung) {
+            Spacer(Modifier.height(Gap.Section))
+            Text(Copy.LAB_SCREEN_WHY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+            listOf(Copy.LAB_SCREEN_WHY_1, Copy.LAB_SCREEN_WHY_2, Copy.LAB_SCREEN_WHY_3).forEach {
+                Text("· $it", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            }
+        }
     }
 }
+
+/** 삼성 화면 모드 값별 이름과 설명([ScreenMode.SAMSUNG_VALUES]). */
+private val SAMSUNG_MODE_NAMES = mapOf(
+    "0" to Copy.LAB_SCREEN_MODE_0,
+    "1" to Copy.LAB_SCREEN_MODE_1,
+    "2" to Copy.LAB_SCREEN_MODE_2,
+    "3" to Copy.LAB_SCREEN_MODE_3,
+    "4" to Copy.LAB_SCREEN_MODE_4,
+    "5" to Copy.LAB_SCREEN_MODE_5
+)
+private val SAMSUNG_MODE_DESCS = mapOf(
+    "0" to Copy.LAB_SCREEN_DESC_0,
+    "1" to Copy.LAB_SCREEN_DESC_1,
+    "2" to Copy.LAB_SCREEN_DESC_2,
+    "3" to Copy.LAB_SCREEN_DESC_3,
+    "4" to Copy.LAB_SCREEN_DESC_4,
+    "5" to Copy.LAB_SCREEN_DESC_5
+)
 
 /**
  * 자동 플렉스 모드(폴드8 전용). 폴드8은 반쯤 접어도 시스템이 '반쯤 접힘'을 내지 않아 플렉스 모드가 뜨지 않는다.

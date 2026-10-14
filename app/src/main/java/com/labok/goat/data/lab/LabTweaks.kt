@@ -150,8 +150,11 @@ object ScreenMode {
     val samsung = LabSetting("system", "screen_mode_setting", "화면 모드(삼성)")
     val aosp = LabSetting("secure", "display_color_mode", "화면 색 모드")
 
-    /** 고를 수 있는 값. 삼성은 뜻을 모르므로 숫자로만 보여 준다. */
-    val SAMSUNG_VALUES = listOf("0", "1", "2", "3", "4")
+    /**
+     * 고를 수 있는 값. 삼성 값의 뜻은 삼성 프레임워크 SemMdnieManager 상수에서 확인했다:
+     * 0 AMOLED 시네마, 1 AMOLED 사진, 2 기본, 3 자연, 4 적응형(설정 앱의 '선명한 화면'), 5 읽기.
+     */
+    val SAMSUNG_VALUES = listOf("4", "3", "0", "1", "2", "5")
     val AOSP_VALUES = listOf("0" to "자연", "1" to "향상", "2" to "채도", "3" to "자동")
 
     /** 이 기기에서 쓸 설정: 삼성 키가 있으면 삼성, 아니면 공통 키. 둘 다 없으면 null. */
