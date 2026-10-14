@@ -380,9 +380,10 @@ internal fun HomeScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 // 고정 카드에도 키를 둬, 위에 할 일 카드가 생기거나 없어져도 카드 상태(스위치·슬라이더 방울)가 유지되게 한다.
-                item(key = "card:status") { Box(Modifier.widthIn(max = ContentMaxWidth)) { StatusCard(state) } }
+                // 할 일 카드가 끼어들거나 빠질 때 아래 카드가 한 번에 튀지 않고 미끄러지게 animateItem을 둔다.
+                item(key = "card:status") { Box(Modifier.animateItem().widthIn(max = ContentMaxWidth)) { StatusCard(state) } }
                 items(todosOf(state), key = { it.key }) { todo ->
-                    Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                    Box(Modifier.animateItem().widthIn(max = ContentMaxWidth)) {
                         TodoCard(todo) { action ->
                             when (action) {
                                 TodoAction.SETUP -> sheet = Sheet.GUIDE
@@ -396,9 +397,9 @@ internal fun HomeScreen(
                         }
                     }
                 }
-                item(key = "card:size") { Box(Modifier.widthIn(max = ContentMaxWidth)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
+                item(key = "card:size") { Box(Modifier.animateItem().widthIn(max = ContentMaxWidth)) { SizeCard(state, vm, onTest = { sheet = Sheet.TEST }) } }
                 item(key = "card:auto") {
-                    Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                    Box(Modifier.animateItem().widthIn(max = ContentMaxWidth)) {
                         AutoCard(state.auto) { on ->
                             if (on && !ExternalChangeNotifier.canNotify(context)) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)

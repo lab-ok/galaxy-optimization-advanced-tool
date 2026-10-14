@@ -60,6 +60,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -488,6 +492,14 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
             .fillMaxWidth()
             .onSizeChanged { box = it }
             .onGloballyPositioned { origin = it.positionInRoot() }
+            // 손가락 대신 TalkBack 등 접근성 서비스로도 누를 수 있게 버튼으로 알린다(카드 가운데에서 번진다)
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                onClick {
+                    onClick(origin + Offset(box.width / 2f, box.height / 2f))
+                    true
+                }
+            }
             .pointerInput(reduce) {
                 detectTapGestures(onPress = { pos ->
                     if (!reduce && body.blob.ready) {
