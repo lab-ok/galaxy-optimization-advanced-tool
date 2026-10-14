@@ -546,6 +546,8 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     Spacer(Modifier.height(Gap.Item))
                     // 시도는 앱 전체 범위에서 돌고(ReviveRunner) 결과는 실시간으로 파일에 쌓인다: 화면이 다시 만들어져도 진행·결과·공유 버튼이 그대로 보인다
                     val revive by com.labok.goat.data.lab.ReviveRunner.state.collectAsStateWithLifecycle()
+                    Text(Copy.LAB_FLEX_REVIVE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
                     LiquidButton(if (revive.running) Copy.LAB_FLEX_REVIVE_RUNNING else Copy.LAB_FLEX_REVIVE, enabled = !revive.running && shizuku == ShizukuAccess.State.READY, modifier = Modifier.fillMaxWidth(), onClick = {
                         com.labok.goat.data.lab.ReviveRunner.start(context)
                     })

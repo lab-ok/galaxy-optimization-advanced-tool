@@ -204,6 +204,7 @@ object Copy {
     const val LAB_FLEX_REVIVE = "살리기 시도"
     const val LAB_FLEX_REVIVE_SHARE = "마지막 결과 파일 공유(로그 포함)"
     const val LAB_FLEX_REVIVE_RUNNING = "시도하는 중…"
+    const val LAB_FLEX_REVIVE_NOTE = "시도 중에 시스템 UI가 다시 시작되어 화면이 몇 초 깜빡입니다."
     const val LAB_FLEX_DIAG_RUN = "진단 파일 만들기"
     const val LAB_FLEX_DIAG_RUNNING = "모으는 중…"
     const val LAB_FLEX_ON_TITLE = "지금 플렉스 모드입니다"
