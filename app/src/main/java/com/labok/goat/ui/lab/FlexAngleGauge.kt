@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -72,7 +74,7 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
     // 센서 값은 쉬지 않고 들어오므로 스프링을 매번 새로 걸지 않고(걸면 시작하기도 전에 취소돼 바늘이 멈춰 있었다),
     // 프레임마다 목표 쪽으로 물처럼 따라간다(감쇠 있는 용수철: 살짝 지나쳤다 돌아온다)
     val target by rememberUpdatedState(angle)
-    var pos by remember { mutableStateOf(angle ?: 180f) }
+    var pos by remember { mutableFloatStateOf(angle ?: 180f) }
     LaunchedEffect(reduce) {
         var vel = 0f
         var last = 0L
@@ -92,7 +94,7 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
         }
     }
     // 잡은 손잡이: 0 없음, 1 범위 끝(min), 2 범위 시작(max). 잡으면 손잡이가 부풀어 오른다
-    var held by remember { mutableStateOf(0) }
+    var held by remember { mutableIntStateOf(0) }
     // 세밀 조절: 펼쳐진 동안의 가운데 값(반원 꼭대기)
     var fineBase by remember { mutableStateOf<Int?>(null) }
     val fineK by animateFloatAsState(if (fineBase != null) 1f else 0f, Springs.water(reduce), label = "gaugeFine")

@@ -130,12 +130,7 @@ object ShakeRotatePolicy {
         val dur: Long = 40,
         val jerk: Float = 0f,
         val gyro: Float = 0f
-    ) {
-        /** 두 휘두름이 반대쪽으로 움직였으면 true(왕복). */
-        fun opposes(o: Peak) = x * o.x + y * o.y + z * o.z < 0f
-    }
-
-    private const val G = 9.81f
+    )
 
     /**
      * 가속도 센서 값으로 흔들기를 판정한다.

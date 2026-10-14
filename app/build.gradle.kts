@@ -92,9 +92,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     // 부팅 뒤 지연 재확인
     implementation(libs.androidx.work.runtime.ktx)
-    // IWindowManager 숨은 API 접근
     // 반쯤 접힘(플렉스) 자세 감지: 실험실 플렉스 모드 시험 화면이 위아래로 나뉜다
     implementation(libs.androidx.window)
+    // IWindowManager 숨은 API 접근
     implementation(libs.hiddenapibypass)
     // Shizuku: PC 없이 셸 권한 호출(기본 권한 받기, 앱마다 크기 따로)
     implementation(libs.shizuku.api)

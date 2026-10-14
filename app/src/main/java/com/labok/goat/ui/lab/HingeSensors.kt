@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,9 +69,9 @@ internal fun rememberHingeAngle(on: Boolean): Float? {
     val context = LocalContext.current
     var coarse by remember { mutableStateOf<Float?>(null) }
     var fineAngle by remember { mutableStateOf<Float?>(null) }
-    var fineAt by remember { mutableStateOf(0L) }
+    var fineAt by remember { mutableLongStateOf(0L) }
     // 세밀한 값이 끊겼는지 다시 보려고 0.5초마다 한 번 깨운다
-    var tick by remember { mutableStateOf(0) }
+    var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(on) {
         while (on) {
             delay(500)

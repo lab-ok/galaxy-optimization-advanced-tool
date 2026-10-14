@@ -138,9 +138,6 @@ object GrantGuideContent {
     const val PACKAGE = "com.labok.goat"
     const val PERMISSION = "android.permission.WRITE_SECURE_SETTINGS"
 
-    /** 운영체제와 무관한 기본 형태(권한 카드에 표시). */
-    const val GRANT_COMMAND = "adb shell pm grant $PACKAGE $PERMISSION"
-
     /** 운영체제별 adb 실행 방식. Windows는 platform-tools 폴더에서 .\adb 로 실행한다. */
     fun adb(os: PcOs): String = if (os == PcOs.WINDOWS) ".\\adb" else "adb"
 
