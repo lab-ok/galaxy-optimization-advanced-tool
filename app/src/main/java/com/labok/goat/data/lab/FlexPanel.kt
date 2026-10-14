@@ -176,6 +176,23 @@ object FlexPanel {
             appendLine(log.ifBlank { "(로그 없음)" })
             appendLine("──")
         }
+        // 8차: 7차 로그에서 삼성 자동 실행 장치(FlexPanelStartController)가 폴드8에서도 살아 있었고
+        // "OnDeviceStateChanged: isTableMode=false"를 찍었다. 탁자 모드는 '물리' 접힘 상태의 속성으로 판정하는데, 지금까지는
+        // 덮어쓰는 상태(state)만 바꿨다. 기기가 물리 상태(base-state) 덮어쓰기를 지원하면 반쯤 접힘으로 바꿔 자동 실행을 기다린다
+        val help = ShizukuAccess.shell("cmd device_state help 2>&1")?.out.orEmpty()
+        appendLine("── 접힘 상태 명령·속성 ──")
+        appendLine(help.trim().ifBlank { "(없음)" })
+        appendLine(ShizukuAccess.shell("dumpsys device_state 2>&1 | head -60")?.out?.trim()?.ifBlank { "(없음)" } ?: "Shizuku 연결 안 됨")
+        appendLine("──")
+        if (help.contains("base-state")) {
+            val half = Regex("identifier=(\\d+), name='HALF_OPENED'").find(ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty())?.groupValues?.get(1) ?: "2"
+            ShizukuAccess.shell("logcat -b all -c")
+            appendLine("시도 0: 물리 상태를 반쯤 접힘으로 → ${sh("cmd device_state base-state $half")}")
+            panelLog("시도 0(물리 반쯤 접힘·자동 실행 기다림)")
+            appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
+        } else {
+            appendLine("시도 0: 이 기기는 물리 상태 덮어쓰기(base-state)를 지원하지 않아 건너뜀")
+        }
         val task = app?.let { pkg ->
             Regex("""Task\{[0-9a-f]+ #(\d+)[^}]*$pkg""").find(ShizukuAccess.shell("dumpsys activity activities")?.out.orEmpty())?.groupValues?.get(1)
         }
