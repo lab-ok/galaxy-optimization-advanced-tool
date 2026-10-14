@@ -245,14 +245,14 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var max by remember { mutableIntStateOf(AutoFlex.max(context)) }
     var query by remember { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
-    // 플렉스 화면 지원 앱(설치 파일을 읽어 추정, 처음 한 번은 시간이 걸린다). null이면 찾는 중
-    var aware by remember { mutableStateOf<Set<String>?>(null) }
     val horizontal = rememberHingeHorizontal(supported)
     // 패널을 끈 앱(예외). 나머지는 모두 켜져 있다
     var off by remember { mutableStateOf(AutoFlex.excluded(context)) }
     var appsOpen by remember { mutableStateOf(false) }
     var gesturesOpen by remember { mutableStateOf(false) }
     var diagRunning by remember { mutableStateOf(false) }
+    var reviving by remember { mutableStateOf(false) }
+    var reviveResult by remember { mutableStateOf("") }
     var wheel by remember { mutableStateOf(AutoFlex.wheel.read(context)) }
     // 이 설정 화면을 보는 동안에는 자동 플렉스를 멈춰 화면이 바뀌지 않게 한다. 시험은 [플렉스 모드 테스트하기]가 여는
     // 시험 화면(FlexTestActivity)에서만 하므로, 이 화면이 앞에 있을 때(RESUMED)만 멈춘다
@@ -288,9 +288,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     }
     LaunchedEffect(supported) {
         if (!supported) return@LaunchedEffect
-        val list = withContext(Dispatchers.IO) { loadApps(context) }
-        apps = list
-        aware = withContext(Dispatchers.IO) { list.filter { com.labok.goat.data.lab.FlexAppScan.supports(context, it.pkg) }.map { it.pkg }.toSet() }
+        apps = withContext(Dispatchers.IO) { loadApps(context) }
     }
 
     // 스위치는 누르자마자 바뀌고(물방울 손잡이가 먼저 출렁인다), 줄은 손잡이가 자리 잡은 뒤 물처럼 흘러 다른 묶음으로 옮겨 간다
@@ -426,27 +424,17 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                 }
             }
             val excluded = all.filter { it.pkg in off }
-            val known = aware
-            // 켜 둔 앱은 플렉스 화면 지원 앱과 그 밖의 앱으로 나눠 모은다(지원 앱을 찾는 동안은 한데 둔다)
-            val awareApps = if (known == null) emptyList() else all.filter { it.pkg !in off && it.pkg in known }
-            val rest = all.filter { it.pkg !in off && (known == null || it.pkg !in known) }
+            val rest = all.filter { it.pkg !in off }
             if (apps == null) item(key = "loading") { LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp)) }
             // 같은 키를 두 묶음에서 그대로 써서, 켜고 끌 때 줄이 사라졌다 생기지 않고 새 자리로 흘러간다
             val anim = Modifier
             if (excluded.isNotEmpty()) {
                 item(key = "h-off") { Section("패널을 끈 앱 ${excluded.size}", anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
                 items(excluded, key = { it.pkg }) { app ->
-                    FlexAppRow(app, pending[app.pkg] ?: false, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade), aware = aware?.contains(app.pkg) == true) { toggle(app, it) }
+                    FlexAppRow(app, pending[app.pkg] ?: false, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) { toggle(app, it) }
                 }
             }
-            if (apps != null && known == null) item(key = "scanning") { LiquidLoader(Copy.LAB_FLEX_APPS_SCANNING, Modifier.padding(vertical = 12.dp)) }
-            if (awareApps.isNotEmpty()) {
-                item(key = "h-aware") { Section("${Copy.LAB_FLEX_APPS_AWARE} ${awareApps.size}", anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
-                items(awareApps, key = { it.pkg }) { app ->
-                    FlexAppRow(app, pending[app.pkg] ?: true, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade), aware = true) { toggle(app, it) }
-                }
-            }
-            item(key = "h-rest") { Section(if (known == null) Copy.LAB_FLEX_APPS_REST else Copy.LAB_FLEX_APPS_OTHER, anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
+            item(key = "h-rest") { Section(Copy.LAB_FLEX_APPS_REST, anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
             items(rest, key = { it.pkg }) { app ->
                 FlexAppRow(app, pending[app.pkg] ?: true, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) { toggle(app, it) }
             }
@@ -478,6 +466,18 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                 GlassCard {
                     Text(Copy.LAB_FLEX_DIAG_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.LAB_FLEX_DIAG_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidButton(if (reviving) Copy.LAB_FLEX_REVIVE_RUNNING else Copy.LAB_FLEX_REVIVE, enabled = !reviving && shizuku == ShizukuAccess.State.READY, modifier = Modifier.fillMaxWidth(), onClick = {
+                        reviving = true
+                        scope.launch {
+                            reviveResult = withContext(Dispatchers.IO) { com.labok.goat.data.lab.FlexPanel.revive(context) }
+                            reviving = false
+                        }
+                    })
+                    if (reviveResult.isNotEmpty()) {
+                        Spacer(Modifier.height(Gap.Item))
+                        Text(reviveResult.trim(), color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    }
                     Spacer(Modifier.height(Gap.Item))
                     LiquidButton(if (diagRunning) Copy.LAB_FLEX_DIAG_RUNNING else Copy.LAB_FLEX_DIAG_RUN, primary = false, enabled = !diagRunning && shizuku == ShizukuAccess.State.READY, modifier = Modifier.fillMaxWidth(), onClick = {
                         diagRunning = true
@@ -843,8 +843,8 @@ internal fun FlexHelpSheet() {
         )
         com.labok.goat.ui.components.HelpTopic(
             "6. 앱마다 다른 점",
-            "'플렉스 화면 지원 앱'은 유튜브·카메라처럼 접으면 스스로 위아래로 나뉘는 앱입니다(설치 파일을 읽어 추정). " +
-                "그 밖의 앱은 다른 폴드처럼 아래 화면에 터치패널이 뜨지 않을 수 있습니다. 왜 그런지 '터치패널 진단'으로 확인할 수 있습니다."
+            "갤러리·유튜브·카메라처럼 플렉스 화면을 직접 지원하는 앱은 접으면 스스로 위아래로 나뉩니다. " +
+                "그 밖의 앱은 폴드8에서 삼성 터치패널이 뜨지 않아, 'GOAT 터치패널'을 켜 두면 아래 화면에 GOAT가 만든 터치패널이 나옵니다."
         )
         com.labok.goat.ui.components.HelpTopic(
             "7. 끄기·되돌리기",
@@ -905,7 +905,7 @@ internal fun rememberHingeAngle(on: Boolean): Float? {
 
 /** 패널 앱 한 줄: 앱별 화면 배율 설정 목록과 같은 모양(아이콘·이름·마지막 사용)에 오른쪽 스위치. 켜고 끌 때 테두리가 물들고 줄이 살짝 출렁인다. */
 @Composable
-private fun FlexAppRow(app: AppEntry, on: Boolean, modifier: Modifier = Modifier, aware: Boolean = false, onChange: (Boolean) -> Unit) {
+private fun FlexAppRow(app: AppEntry, on: Boolean, modifier: Modifier = Modifier, onChange: (Boolean) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val shape = RoundedCornerShape(20.dp)
@@ -934,8 +934,7 @@ private fun FlexAppRow(app: AppEntry, on: Boolean, modifier: Modifier = Modifier
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            val sub = listOfNotNull(Copy.LAB_FLEX_AWARE_TAG.takeIf { aware }, app.lastUsed.takeIf { it > 0 }?.let { ago(it) }).joinToString(" · ")
-            if (sub.isNotEmpty()) Text(sub, color = c.muted, style = MaterialTheme.typography.labelSmall)
+            if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
         }
         Spacer(Modifier.width(8.dp))
         LiquidSwitch(on, onChange, label = app.label)

@@ -78,20 +78,32 @@ class LabTweaksTest {
     }
 
     @Test
-    fun flexScanFindsMarkerAcrossChunks() {
-        val marker = "androidx/window/extensions".toByteArray()
-        // 64KB 덩어리 경계에 걸치게 둔다
-        val data = ByteArray((1 shl 16) - 5) + marker + ByteArray(100)
-        assertTrue(FlexAppScan.contains(data.inputStream(), listOf(marker)))
-        assertFalse(FlexAppScan.contains(ByteArray(200_000).inputStream(), listOf(marker)))
-    }
-
-    @Test
     fun hingeHorizontalOnlyWhenAxisFlat() {
         // 힌지 축이 Y: 세워 든 책 모양(중력이 Y)은 세로, 옆으로 돌리면(중력이 X) 가로, 바닥에 눕히면(중력이 Z) 가로
         assertFalse(AutoFlex.isHorizontal(0f, 9.8f, 0f, alongY = true))
         assertTrue(AutoFlex.isHorizontal(9.8f, 0f, 0f, alongY = true))
         assertTrue(AutoFlex.isHorizontal(0f, 1f, 9.7f, alongY = true))
         assertFalse(AutoFlex.isHorizontal(9.8f, 0f, 0f, alongY = false))
+    }
+
+    @Test
+    fun dexStringTableIsRead() {
+        val b = ByteArray(0x90)
+        "dex\n035".toByteArray().copyInto(b, 0)
+        fun put(i: Int, v: Int) {
+            for (k in 0..3) b[i + k] = (v shr (8 * k)).toByte()
+        }
+        put(0x38, 2)
+        put(0x3C, 0x70)
+        put(0x70, 0x78)
+        put(0x74, 0x80)
+        b[0x78] = 3
+        "abc".toByteArray().copyInto(b, 0x79)
+        b[0x80] = 9
+        "FlexPanel".toByteArray().copyInto(b, 0x81)
+        assertEquals(listOf(0), DexStrings.dexOffsets(b))
+        val got = mutableListOf<String>()
+        DexStrings.strings(b, 0) { got.add(it) }
+        assertEquals(listOf("abc", "FlexPanel"), got)
     }
 }

@@ -47,64 +47,53 @@ object FlexPanel {
         m.invoke(wm(), UserId.current(), pkg)
     }.getOrNull()
 
+    /** 패널과 관련 있어 보이는 이름(flex panel·flex mode·flexible table·tabletop). 일반 touchpad·tablet 이름은 너무 많아 뺀다. */
+    private val PANEL_WORDS = Regex("(?i)flex.?panel|flex_?mode|flexible.?table|flex.?table|tabletop")
+
+    /** 시스템 UI 구성요소(화면·서비스·수신기) 중 이름이 [PANEL_WORDS]나 flex에 맞는 것. */
+    private fun panelComponents(): List<String> {
+        val sysui = ShizukuAccess.shell("pm dump com.android.systemui")?.out.orEmpty()
+        val all = ShizukuAccess.shell("dumpsys package | grep -i -E 'flex|tabletop'")?.out.orEmpty()
+        return Regex("""[a-zA-Z][\w.]*/[\w.$]+""").findAll(sysui + "\n" + all).map { it.value }
+            .filter { PANEL_WORDS.containsMatchIn(it) || it.contains("flex", ignoreCase = true) }.distinct().take(80).toList()
+    }
+
     /**
-     * 터치패널 진단: 폴드8에서 플렉스를 지원하지 않는 앱에 시스템 터치패널을 띄울 수 있는지 가리는 데 필요한 것을 모은다(읽기만 하고,
-     * 마지막에 터치패널 화면을 한 번 열어 본다). 시스템 UI에 패널 화면이 남아 있는지, 앱마다 시스템이 주는 패널 값, 관련 설정·기능 표.
+     * 터치패널 진단(3차): 폴드8 시스템에 삼성 플렉스 패널 코드가 남아 있는지 본다. 시스템 UI·설정 앱·멀티 창·시스템 서비스 파일의
+     * 코드 이름에서 패널 흔적을 찾고, 패널 관련 구성요소·앱별 패널 값·설정·접힘 상태를 함께 모은다(읽기만 한다).
      */
     fun diagnose(context: Context): String = buildString {
         val flex = Regex("(?i)flex")
         fun sh(cmd: String) = ShizukuAccess.shell(cmd)?.let { it.out.ifBlank { it.err } }?.trim()?.ifBlank { "(없음)" } ?: "Shizuku 연결 안 됨"
-        val sysui = ShizukuAccess.shell("pm dump com.android.systemui")?.out.orEmpty()
-        // 시스템 UI뿐 아니라 모든 패키지에서 이름에 flex가 든 화면·서비스를 찾는다(폴드8 시스템 UI에는 없었다)
-        val all = ShizukuAccess.shell("dumpsys package | grep -i flex")?.out.orEmpty()
-        val comps = Regex("""[a-zA-Z][\w.]*/[\w.$]*[Ff]lex[\w.$]*""").findAll(sysui + "\n" + all).map { it.value }.distinct().take(80).toList()
-        appendLine("요약: 플렉스 구성요소(전체 패키지) ${comps.size}개 · 창 관리자 패널 함수 ${if (hasAppApi()) "있음" else "없음"}")
+        val comps = panelComponents()
+        val files = listOf("com.android.systemui", "com.android.settings", "com.samsung.android.multistar")
+            .flatMap { pkg -> ShizukuAccess.shell("pm path $pkg")?.out.orEmpty().lines().map { it.removePrefix("package:").trim() }.filter { it.isNotEmpty() } } +
+            listOf("/system/framework/services.jar", "/system/framework/framework.jar") +
+            ShizukuAccess.shell("ls /system/framework/oat/arm64/")?.out.orEmpty().lines().map { it.trim() }
+                .filter { it.endsWith(".vdex") && (it.startsWith("services") || it.startsWith("framework")) }.map { "/system/framework/oat/arm64/$it" }
+        val traces = files.associateWith { DexStrings.find(it, PANEL_WORDS) }
+        val hit = traces.count { (_, v) -> v.none { it.startsWith("(") } }
+        appendLine("요약: 패널 관련 구성요소 ${comps.size}개 · 패널 코드 흔적이 있는 파일 $hit/${files.size}개 · 창 관리자 패널 함수 ${if (hasAppApi()) "있음" else "없음"}")
         appendLine()
         appendLine("기기: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (SDK ${android.os.Build.VERSION.SDK_INT}) · ${android.os.Build.DISPLAY}")
         appendLine("Shizuku: ${ShizukuAccess.status.value}")
         appendLine()
-        appendLine("== 이름에 flex가 든 구성요소(전체 패키지) ==")
+        appendLine("== 패널 관련 구성요소(시스템 UI·전체 패키지) ==")
         appendLine(comps.joinToString("\n").ifBlank { "(없음)" })
         appendLine()
-        appendLine("== 시스템 UI 정보 중 flex 줄과 앞뒤 ==")
-        // 'FeatureName=flexModeApp, Size=74'처럼 삼성이 둔 플렉스 앱 목록이 있으면 그 내용까지 보이게 앞뒤 줄을 함께 싣는다
-        val lines = sysui.lines()
-        val shown = sortedSetOf<Int>()
-        lines.forEachIndexed { i, l -> if (flex.containsMatchIn(l)) (maxOf(0, i - 15)..minOf(lines.size - 1, i + 90)).forEach { shown.add(it) } }
-        appendLine(shown.take(400).joinToString("\n") { lines[it] }.ifBlank { "(없음)" })
-        appendLine()
-        appendLine("== 멀티 창(multistar) 정보 중 flex 줄 ==")
-        appendLine(sh("pm dump com.samsung.android.multistar | grep -i -B3 -A3 flex | head -80"))
+        appendLine("== 시스템 파일 속 패널 코드 이름 ==")
+        traces.forEach { (file, names) ->
+            appendLine("[$file]")
+            names.forEach { appendLine("  $it") }
+        }
         appendLine()
         appendLine("== 창 관리자 함수(flex) ==")
         appendLine(runCatching { wm().javaClass.methods.filter { flex.containsMatchIn(it.name) }.map { "${it.name}(${it.parameterTypes.joinToString { p -> p.simpleName }}): ${it.returnType.simpleName}" }.distinct().sorted().joinToString("\n") }.getOrElse { "(읽지 못함: ${HiddenApi.describe(it)})" })
         appendLine()
         appendLine("== 앱별 패널 값(getSupportsFlexPanel) ==")
-        val apps = (listOf("com.google.android.youtube", "com.android.chrome", "com.sec.android.app.camera", "com.sec.android.gallery3d", "com.android.settings") + com.labok.goat.data.appsize.AppList.launcherApps(context).map { it.pkg }.take(20)).distinct()
-        apps.forEach { pkg ->
+        listOf("com.google.android.youtube", "com.android.chrome", "com.sec.android.app.camera", "com.sec.android.gallery3d", "com.android.settings").forEach { pkg ->
             val v = rawSupport(pkg)
-            val hex = (v as? Int)?.let { " (0x${Integer.toHexString(it)})" }.orEmpty()
-            appendLine("$pkg = ${v ?: "(못 읽음)"}$hex · 플렉스 화면 앱 추정 ${if (FlexAppScan.supports(context, pkg)) "예" else "아니오"}")
-        }
-        appendLine()
-        // 플렉스 전용 화면이 되는 앱(갤러리·유튜브·카메라)과 잘못 '지원'으로 나온 앱을 나란히 놓고, 설치 파일 흔적·메타데이터·크기 조절 여부를 비교한다
-        appendLine("== 앱 비교(설치 파일 흔적·메타데이터) ==")
-        val compare = listOf(
-            "com.sec.android.gallery3d",
-            "com.google.android.youtube",
-            "com.sec.android.app.camera",
-            "com.android.settings",
-            "com.microsoft.office.excel",
-            "com.adguard.android",
-            "co.kr.cgv.cjcgv",
-            "com.android.chrome"
-        )
-        compare.forEach { pkg -> appendLine("$pkg: ${FlexAppScan.inspect(context, pkg)}") }
-        appendLine()
-        appendLine("== 앱 비교(시스템이 아는 크기 조절·플렉스 정보) ==")
-        compare.forEach { pkg ->
-            appendLine("[$pkg]")
-            appendLine(sh("dumpsys package $pkg | grep -i -E 'resiz|flex|fold|samsung' | head -12"))
+            appendLine("$pkg = ${v ?: "(못 읽음)"}${(v as? Int)?.let { " (0x${Integer.toHexString(it)})" }.orEmpty()}")
         }
         appendLine()
         appendLine("== 설정 키(flex) ==")
@@ -113,22 +102,30 @@ object FlexPanel {
             if (r == null) appendLine("[$table] Shizuku 연결 안 됨") else r.out.lineSequence().filter { flex.containsMatchIn(it.substringBefore('=')) }.forEach { appendLine("[$table] $it") }
         }
         appendLine()
-        appendLine("== 삼성 기능 표(flex) ==")
-        appendLine(sh("grep -i flex /system/etc/floating_feature.xml"))
-        appendLine()
-        appendLine("== 시스템 속성(flex) ==")
-        appendLine(sh("getprop | grep -i flex"))
-        appendLine()
         appendLine("== 접힘 상태 ==")
         appendLine(sh("cmd device_state print-states"))
         appendLine()
-        appendLine("== 창 정보 중 flex 줄 ==")
-        appendLine(sh("dumpsys window | grep -i flex | head -40"))
-        appendLine()
-        // 패널 화면을 셸에서 직접 열어 본다: 열리면 시스템에 패널이 살아 있다는 뜻이다
-        appendLine("== 터치패널 화면 직접 열어 보기 ==")
-        val panel = comps.firstOrNull { it.contains("Panel", ignoreCase = true) && it.contains("Activity") } ?: comps.firstOrNull { it.contains("Activity") }
-        appendLine(if (panel == null) "(열 화면을 찾지 못함)" else "$panel → ${sh("am start -n $panel")}")
+        appendLine("== 설정 앱의 플렉스 패널 화면 정보 ==")
+        appendLine(sh("dumpsys package com.android.settings | grep -i -A6 'FlexModePanel' | head -60"))
+    }
+
+    /**
+     * 삼성 터치패널 살리기 시도: 패널 설정을 켜고, 설정 앱에 숨어 있는 '플렉스 모드 패널' 화면을 연다.
+     * 패널 관련 시스템 UI 화면이 있으면 반쯤 접힘을 건 채 한 번씩 띄워 본다. 한 일과 결과를 줄마다 돌려준다. 작업 스레드에서 부른다.
+     */
+    fun revive(context: Context): String = buildString {
+        fun sh(cmd: String) = ShizukuAccess.shell(cmd)?.let { r -> (if (r.ok) "성공" else "실패") + r.out.ifBlank { r.err }.trim().take(160).let { if (it.isEmpty()) "" else " · $it" } } ?: "Shizuku 연결 안 됨"
+        appendLine("패널 설정 켜기 → ${sh("settings put global flex_mode_panel_enabled 1")}")
+        // 이름에 $가 있어 작은따옴표로 감싼다(셸이 변수로 읽지 않게)
+        appendLine("숨은 '플렉스 모드 패널' 설정 화면 열기 → ${sh("am start -n 'com.android.settings/.Settings\$FlexModePanelSettingsActivity'")}")
+        val panels = panelComponents().filter { it.startsWith("com.android.systemui/") && Regex("(?i)activity|panel").containsMatchIn(it.substringAfter('/')) }
+        if (panels.isEmpty()) {
+            appendLine("시스템 UI에 패널 화면이 없어 직접 띄우기는 건너뜀")
+        } else {
+            appendLine("반쯤 접힘 걸기 → ${forceHalfOpened(context) ?: "성공"}")
+            panels.forEach { appendLine("$it 띄우기 → ${sh("am start -n '$it'")}") }
+        }
+        LogRepository.from(context).add("실험실 플렉스: 삼성 터치패널 살리기 시도")
     }
 
     /** 반쯤 접힘 강제 중인지(GOAT가 건 것). 재부팅하면 시스템이 풀어 주므로 메모리에만 둔다. */
