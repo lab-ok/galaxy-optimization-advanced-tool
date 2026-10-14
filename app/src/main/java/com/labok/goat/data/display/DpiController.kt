@@ -49,4 +49,7 @@ interface DpiController {
 
     /** 특정 디스플레이 번호에 적용(`wm density <dpi> -d <id>`와 같음). */
     fun applyTo(displayId: Int, dpi: Int): ApplyResult = ApplyResult(false, "-", "지원하지 않음")
+
+    /** 접는 폰(외부·내부 두 화면)인지. 아니면 해상도가 바뀌어도 화면은 하나다([DeviceKind]). */
+    fun foldable(): Boolean = true
 }

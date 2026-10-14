@@ -41,7 +41,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val logRepo = LogRepository.from(app)
     private val dpi = DpiManager(app)
     private val fixer = DpiFixer(dpi, settings, logRepo::add)
-    private val learner = ScreenLearner(settings, logRepo::add)
+    private val learner = ScreenLearner(settings, logRepo::add, singleScreen = { !dpi.foldable() })
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
@@ -153,6 +153,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         val r = dpi.reset()
         logRepo.add(if (r.success) "기본 크기 복원 성공 (${r.method}) ${r.detail}, 자동 적용 끔" else "기본 크기 복원 실패: ${r.detail}")
         settings.externalChange = null
+        // 기본값은 사용자가 고른 값이다. 앱이 적용했던 값을 남겨 두면 앱을 열 때 '다른 설정에서 바뀜'으로 잘못 묻는다.
+        if (r.success) settings.appliedDpi = emptyMap()
         FoldWatchService.syncWithSettings(getApplication())
         DensityWatchWorker.sync(getApplication())
         if (r.success) Copy.TOAST_RESET else Copy.TOAST_FAILED

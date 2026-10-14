@@ -18,7 +18,7 @@ class DpiFixer(
     private val log: (String) -> Unit,
     private val clock: () -> Long = System::currentTimeMillis
 ) {
-    private val learner = ScreenLearner(settings, log, clock)
+    private val learner = ScreenLearner(settings, log, clock) { !controller.foldable() }
 
     /**
      * @param physicalIsReset 기본값으로 돌아간 것을 시스템 초기화로 볼지(부팅·접기 경로는 true).
@@ -157,8 +157,11 @@ class DpiFixer(
             settings.externalChange = null
             log("[$reason] 외부 변경이 해소됨(현재 $current)")
         }
+        // 외부·내부를 정할 수 없는 화면(화면이 하나인 폰, 반대쪽을 아직 못 본 폴드)은 보정 없이 기준 DPI를 목표로 쓰므로
+        // 기준 화면으로 보고 외부 변경을 확인한다. 역할이 없다고 건너뛰면 감시가 시스템 설정에서 바꾼 값을 묻지 않고 되돌린다.
+        val role = effective?.role ?: effective?.let { settings.reference }
         val found = ExternalChange.detect(
-            key, effective?.role, current, state?.physical, effective?.dpi,
+            key, role, current, state?.physical, effective?.dpi,
             settings.appliedDpi[key], physicalIsReset, now,
             otherApplied = settings.appliedDpi.filterKeys { it != key }.values,
             scale = screen.scale

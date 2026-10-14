@@ -38,7 +38,8 @@ class FakeController(
     /** true면 apply가 호출돼도 값이 바뀌지 않는다(계속 덮어쓰는 단말). */
     var stubborn: Boolean = false,
     var screen: ScreenInfo? = null,
-    var others: MutableList<DisplayDensity> = mutableListOf()
+    var others: MutableList<DisplayDensity> = mutableListOf(),
+    var foldable: Boolean = true
 ) : DpiController {
     val applyToCalls = mutableListOf<Pair<Int, Int>>()
     override fun displays(): List<DisplayDensity> = others
@@ -61,6 +62,7 @@ class FakeController(
         return ApplyResult(true, "fake", "")
     }
     override fun currentScreen() = screen
+    override fun foldable() = foldable
 }
 
 class DpiFixerTest {
