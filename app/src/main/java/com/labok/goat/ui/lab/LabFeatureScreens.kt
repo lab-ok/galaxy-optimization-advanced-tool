@@ -185,6 +185,25 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { IconBlacklist.setting.changed(context) }
         LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(IconBlacklist.setting) })
+        // 마이크·카메라 사용 표시(초록 점): 상태 표시줄 아이콘과 같은 자리라 이 화면에 함께 둔다(기기 설정 값이라 Shizuku로 바꾼다)
+        Spacer(Modifier.height(Gap.Section))
+        Text(Copy.LAB_PRIVACY_DOT_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+        Text(Copy.LAB_PRIVACY_DOT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
+        val scope = rememberCoroutineScope()
+        var dotHidden by remember { mutableStateOf<Boolean?>(null) }
+        LaunchedEffect(shizuku) { dotHidden = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.hidden() } }
+        LiquidSwitchRow(Copy.LAB_PRIVACY_DOT_SWITCH, "privacy/camera_mic_icons_enabled", dotHidden == true, dotHidden != null) { hide ->
+            dotHidden = hide
+            scope.launch {
+                val ok = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.set(context, hide) }
+                if (!ok) {
+                    dotHidden = withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.hidden() }
+                    Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 }
 
