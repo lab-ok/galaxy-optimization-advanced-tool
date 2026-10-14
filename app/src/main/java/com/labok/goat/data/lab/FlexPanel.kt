@@ -3,6 +3,11 @@ package com.labok.goat.data.lab
 import android.content.Context
 import android.content.res.Resources
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.VibrationEffect
+import android.os.VibratorManager
+import android.widget.Toast
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.log.LogRepository
@@ -144,6 +149,32 @@ object FlexPanel {
      * 직접 열고 패널 신호를 보낸다. 패널 화면이 왜 닫히는지 시스템 로그를 함께 남긴다. 패널이 뜨는지 사용자가 볼 수 있게 10초 동안 그대로 두었다가 접힘 상태를 원래대로 돌린다.
      * 한 일과 결과를 줄마다 돌려준다. 작업 스레드에서 부른다.
      */
+    /**
+     * 삼성 자동 실행 장치의 'not support state' 로그 줄에서 자동 실행을 막은 조건만 골라 한 줄로 만든다
+     * (값이 있어야 할 쪽과 반대인 것). 시험할 수 있게 뗐다.
+     */
+    internal fun panelBlockers(log: String): String {
+        val line = log.lineSequence().lastOrNull { "not support state" in it } ?: return "판단 로그 없음"
+        val good = mapOf(
+            "mMwEnabled" to "true", "mIsTableMode" to "true", "mDesktopMode" to "false", "mFlexModePanelEnabled" to "true",
+            "mIsImeShowing" to "false", "mIsQuickPanelShowing" to "false", "mIsTaskBarAppsEnabled" to "false",
+            "mIsGlobalActionVisible" to "false", "mOnRecentsAnimation" to "false", "isSupportRotation" to "true",
+            "mIsKeyguardVisible" to "false", "mIsInFixedRotation" to "false"
+        )
+        val bad = Regex("(\\w+)=(true|false)").findAll(line).map { it.groupValues[1] to it.groupValues[2] }
+            .filter { (k, v) -> good[k] != null && good[k] != v }.map { (k, v) -> "$k=$v" }.toList()
+        return if (bad.isEmpty()) "막은 조건 없음(다른 이유)" else "막은 조건: ${bad.joinToString(", ")}"
+    }
+
+    /** 살리기 시도 중 사용자에게 할 일을 알린다(진동 두 번 + 토스트). 작업 스레드에서 불러도 된다. */
+    private fun notice(context: Context, text: String) {
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(context.applicationContext, text, Toast.LENGTH_LONG).show()
+        }
+        val v = context.getSystemService(VibratorManager::class.java)?.defaultVibrator ?: return
+        if (v.hasVibrator()) v.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 120, 120, 120), -1))
+    }
+
     fun revive(context: Context, emit: (String) -> Unit) {
         // 한 줄씩 바로 내보낸다(화면이 다시 만들어지거나 중간에 끊겨도 그때까지의 결과가 파일에 남게)
         fun appendLine(text: String = "") = emit(text + "\n")
@@ -188,19 +219,59 @@ object FlexPanel {
         appendLine("──")
         if (help.contains("base-state")) {
             val half = Regex("identifier=(\\d+), name='HALF_OPENED'").find(ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty())?.groupValues?.get(1) ?: "2"
-            // 10차: 9차에서 회전을 0~3 어느 쪽으로 고정해도 isSupportRotation=false였다. 삼성 코드(디컴파일 덤프)에서 이 값은
-            // 시스템 UI가 처음 뜰 때의 회전을 한 번만 읽어 두는 final 필드다(mRotation, 덤프 기준 0·2만 허용).
-            // 11차: 10차에서 회전 0으로 고정한 채 시스템 UI를 다시 띄워도 false였다. 폴드8 빌드는 덤프와 기준이 다를 수 있어
-            // (폴드8 로그에는 덤프에 없는 mIsInFixedRotation이 찍힌다), 회전 0·1·2·3마다 시스템 UI를 다시 띄워 어느 방향에서 통과하는지 본다.
-            // 패널이 뜨면 그 방향에서 멈춘다. 방향마다 화면이 몇 초 깜빡이고 상태 표시줄이 다시 그려진다
+            // 9~10차: 탁자 모드(isTableMode=true)까지는 되는데 회전 조건(isSupportRotation)만 계속 false였다.
+            // 11차: 회전 조건에 대한 가능성을 모두 차례로 시험한다. 패널이 뜨면 그 자리에서 멈춘다.
+            //  가. 회전 정보 수집: 창 관리자·디스플레이·시스템 UI가 보는 회전 값
+            //  나. 시스템 UI를 다시 띄우지 않고 회전 0~3 고정(cmd window user-rotation으로 확실히 고정) → 반쯤 접힘
+            //      (폴드8 빌드가 회전을 바뀔 때마다 다시 읽는다면 여기서 통과한다)
+            //  다. 회전 0~3마다 시스템 UI를 다시 띄운 뒤 반쯤 접힘(덤프처럼 처음 한 번만 읽는다면 여기서 통과한다.
+            //      폴드8 안쪽 화면의 기본 방향이 가로라면 90°·270°에서만 통과할 수 있다)
+            //  라. 덮어쓰기 없이 실제로: 자동 회전을 켜고, 사용자가 폰을 노트북처럼 가로로 반쯤 접어 세워 두는 동안
+            //      시스템이 직접 판단하는 로그를 20초 동안 본다(센서 기준 회전·실제 접힘 상태)
+            // 각 시험마다 자동 실행을 막은 조건을 한 줄로 요약한다
             val autoRot0 = ShizukuAccess.shell("settings get system accelerometer_rotation")?.out?.trim()
             val userRot0 = ShizukuAccess.shell("settings get system user_rotation")?.out?.trim()
-            for (rot in 0..3) {
-                appendLine("시도 0-$rot: 회전 ${rot * 90}°로 고정 → ${sh("settings put system accelerometer_rotation 0 && settings put system user_rotation $rot")}")
-                Thread.sleep(2000)
-                appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
+            val watch = "FlexPanelStartController|FlexPanelActivity|FlexPanelTouchPad"
+            fun rotationInfo(title: String) {
+                appendLine("── $title: 회전 정보 ──")
+                appendLine(ShizukuAccess.shell("dumpsys window displays | grep -E -i 'mRotation=|mFixedRotation|mDisplayRotation|mUserRotation|mLastOrientation|isFixedToUserRotation' | head -12")?.out?.trim()?.ifBlank { "(없음)" } ?: "Shizuku 연결 안 됨")
+                appendLine(ShizukuAccess.shell("cmd window user-rotation 2>&1 | head -3")?.out?.trim()?.ifBlank { "(없음)" } ?: "")
+                appendLine(ShizukuAccess.shell("dumpsys activity service SystemUIService 2>/dev/null | grep -i -E 'flexpanel|tablemode|isSupportRotation|mRotation' | head -20")?.out?.trim()?.ifBlank { "(시스템 UI 덤프에 관련 줄 없음)" } ?: "")
+                appendLine("──")
+            }
+
+            // 반쯤 접힘을 걸고(또는 실제 접힘을 기다리고) [wait]ms 뒤 로그를 읽어 결과를 남긴다. 패널이 떠 있으면 true
+            fun tryOnce(name: String, override: Boolean, wait: Long): Boolean {
+                ShizukuAccess.shell("logcat -b all -c")
+                if (override) appendLine("$name: 물리 상태를 반쯤 접힘으로 → ${sh("cmd device_state base-state $half")}")
+                Thread.sleep(wait)
+                val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -E '$watch' | grep -v -E 'at (com|android|java|dalvik)\\.' | head -60")?.out?.trim().orEmpty()
+                appendLine("── $name 로그 ──")
+                appendLine(log.ifBlank { "(로그 없음)" })
+                appendLine("──")
+                val opened = log.contains("wm_create_activity") && !log.contains("wm_finish_activity")
+                val result = if (opened) {
+                    "패널이 떠서 유지됨"
+                } else if (log.contains("wm_create_activity")) {
+                    "패널이 떴다가 닫힘"
+                } else {
+                    "패널이 뜨지 않음"
+                }
+                appendLine("$name 결과: $result · ${panelBlockers(log)}")
+                if (opened) {
+                    appendLine("패널을 10초 동안 그대로 둡니다. 화면을 눌러 보세요")
+                    Thread.sleep(10_000)
+                }
+                if (override) {
+                    appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
+                    Thread.sleep(1000)
+                }
+                return opened
+            }
+            fun lock(rot: Int) = sh("settings put system accelerometer_rotation 0 && settings put system user_rotation $rot && cmd window user-rotation lock $rot")
+            fun restartSystemUi(name: String) {
                 val before = ShizukuAccess.shell("pidof com.android.systemui")?.out?.trim()
-                appendLine("시도 0-$rot: 시스템 UI 다시 띄우기 → ${sh("am crash com.android.systemui 2>&1 || am force-stop com.android.systemui 2>&1")}")
+                appendLine("$name: 시스템 UI 다시 띄우기 → ${sh("am crash com.android.systemui 2>&1 || am force-stop com.android.systemui 2>&1")}")
                 var after: String? = null
                 for (i in 0 until 20) {
                     Thread.sleep(1000)
@@ -209,31 +280,37 @@ object FlexPanel {
                 }
                 appendLine("시스템 UI 프로세스 ${before ?: "-"} → ${after ?: "(바뀌지 않음)"}")
                 Thread.sleep(6000)
-                ShizukuAccess.shell("logcat -b all -c")
-                appendLine("시도 0-$rot: 물리 상태를 반쯤 접힘으로 → ${sh("cmd device_state base-state $half")}")
-                Thread.sleep(3000)
-                val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -E 'FlexPanelStartController|FlexPanelActivity' | grep -v -E 'at (com|android|java|dalvik)\\.' | head -40")?.out?.trim().orEmpty()
-                appendLine("── 시도 0-$rot 로그 ──")
-                appendLine(log.ifBlank { "(로그 없음)" })
-                appendLine("──")
-                val opened = log.contains("wm_create_activity") && !log.contains("wm_finish_activity")
-                appendLine(
-                    "시도 0-$rot 결과: ${if (opened) {
-                        "패널이 떠서 유지됨"
-                    } else if (log.contains("wm_create_activity")) {
-                        "패널이 떴다가 닫힘"
-                    } else {
-                        "패널이 뜨지 않음"
-                    }}"
-                )
-                if (opened) {
-                    appendLine("패널을 10초 동안 그대로 둡니다. 화면을 눌러 보세요")
-                    Thread.sleep(10_000)
-                }
-                appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
-                Thread.sleep(1000)
-                if (opened) break
             }
+            rotationInfo("시작")
+            var done = false
+            // 나. 다시 띄우지 않고 회전만
+            for (rot in 0..3) {
+                if (done) break
+                appendLine("시도 0-나-$rot: 회전 ${rot * 90}°로 고정 → ${lock(rot)}")
+                Thread.sleep(2000)
+                appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
+                done = tryOnce("시도 0-나-$rot", override = true, wait = 3000)
+            }
+            // 다. 회전마다 시스템 UI를 다시 띄운 뒤
+            for (rot in 0..3) {
+                if (done) break
+                appendLine("시도 0-다-$rot: 회전 ${rot * 90}°로 고정 → ${lock(rot)}")
+                Thread.sleep(2000)
+                appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
+                restartSystemUi("시도 0-다-$rot")
+                if (rot == 0 || rot == 1) rotationInfo("시도 0-다-$rot 뒤")
+                done = tryOnce("시도 0-다-$rot", override = true, wait = 3000)
+            }
+            // 라. 덮어쓰기 없이 실제 자세로
+            if (!done) {
+                appendLine("시도 0-라: 회전 고정 풀기 → ${sh("cmd window user-rotation free && settings put system accelerometer_rotation 1")}")
+                notice(context, "지금 폰을 노트북처럼 가로로 반쯤 접어 20초 동안 세워 두세요")
+                appendLine("시도 0-라: 사용자에게 노트북 자세로 20초 세워 두라고 알림(진동·토스트)")
+                done = tryOnce("시도 0-라(실제 자세)", override = false, wait = 20_000)
+                rotationInfo("시도 0-라 끝")
+                notice(context, "이제 폰을 원래대로 펴도 됩니다")
+            }
+            appendLine("회전 고정 풀기 → ${sh("cmd window user-rotation free")}")
             appendLine("회전 설정 되돌리기 → ${sh("settings put system accelerometer_rotation ${autoRot0?.takeIf { it != "null" } ?: "1"} && settings put system user_rotation ${userRot0?.takeIf { it != "null" } ?: "0"}")}")
             Thread.sleep(1500)
         } else {

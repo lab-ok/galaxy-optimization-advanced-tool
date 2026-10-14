@@ -123,4 +123,24 @@ class LabTweaksTest {
         assertEquals("SecurityException: Permission denial: writing to settings requires:android.permission.WRITE_DEVICE_CONFIG", PrivacyDot.reason(err))
         assertEquals("뭔가 실패", PrivacyDot.reason("뭔가 실패"))
     }
+
+    @Test
+    fun flexPanelBlockersPicksFailingConditions() {
+        val log = "10-15 07:33:09.162 D/FlexPanelStartController( 1560): not support state, mMwEnabled=true, mIsTableMode=true, " +
+            "mDesktopMode=false, mFlexModePanelEnabled=true, mIsImeShowing=false, mIsQuickPanelShowing=false, mIsTaskBarAppsEnabled=false, " +
+            "mIsGlobalActionVisible=false, mOnRecentsAnimation=false, isSupportRotation=false, mIsKeyguardVisible=false, mIsInFixedRotation=false"
+        assertEquals("막은 조건: isSupportRotation=false", FlexPanel.panelBlockers(log))
+        assertEquals("판단 로그 없음", FlexPanel.panelBlockers("OnDeviceStateChanged: isTableMode=true"))
+    }
+
+    @Test
+    fun coarseHingeOnlyOverridesNearTheEnds() {
+        // 반쯤 접어 가만히 들고 있을 때(세밀 110°) 기본 센서가 180°로 남아 있어도 끄지 않는다
+        assertFalse(AutoFlex.coarseOverride(180f, 110f))
+        assertFalse(AutoFlex.coarseOverride(0f, 90f))
+        // 빨리 펴거나 닫아 로그가 멈춘 경우(마지막 값이 이미 끝 가까이)는 끝값을 믿는다
+        assertTrue(AutoFlex.coarseOverride(180f, 150f))
+        assertTrue(AutoFlex.coarseOverride(0f, 30f))
+        assertFalse(AutoFlex.coarseOverride(90f, 100f))
+    }
 }

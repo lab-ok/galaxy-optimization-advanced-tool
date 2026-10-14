@@ -245,6 +245,18 @@ object AutoFlex {
      * 접는 선 방향: 플렉스 모드는 노트북처럼 접는 선이 가로로 놓일 때만 쓴다. 중력 중 접는 선(힌지 축) 방향 성분이 작으면
      * (축이 바닥과 거의 나란하면) 가로로 본다. 폴드의 힌지 축은 기본 방향에서 세로(Y)지만, 화면이 알려 준 방향으로 고쳐 둘 수 있다([setHingeAlongY]).
      */
+    /**
+     * 세밀한 값이 끊겼을 때 기본 센서 값 [coarse]로 바꿔 믿을지. 끝값(0°·180°)이고, 마지막 세밀한 값 [lastFine]도
+     * 그쪽 끝 가까이(45° 이하·135° 이상)였을 때만 믿는다. 빨리 펴거나 닫아 로그가 멈춘 경우는 마지막 값이 이미 끝 가까이다.
+     */
+    internal fun coarseOverride(coarse: Float, lastFine: Float?): Boolean = when {
+        lastFine == null -> coarse <= 0f || coarse >= 180f
+        coarse == lastFine -> false
+        coarse <= 0f -> lastFine <= 45f
+        coarse >= 180f -> lastFine >= 135f
+        else -> false
+    }
+
     internal fun isHorizontal(gx: Float, gy: Float, gz: Float, alongY: Boolean): Boolean {
         val g = sqrt(gx * gx + gy * gy + gz * gz)
         if (g < 1f) return true
@@ -425,11 +437,13 @@ object AutoFlex {
             angleFlow.value = null
         }
 
-        // 기본 센서의 마지막 값. 세밀한 값이 1초 넘게 끊기면(빨리 펴거나 닫아 로그가 멈춘 때) 끝값(0°·180°)이면 그걸 믿는다
+        // 기본 센서의 마지막 값. 세밀한 값이 1초 넘게 끊기면(빨리 펴거나 닫아 로그가 멈춘 때) 끝값(0°·180°)이면 그걸 믿는다.
+        // 다만 세밀한 값도 그 끝 가까이에 있었을 때만 믿는다([coarseOverride]): 반쯤 접어 가만히 들고 있으면 세밀한 값이
+        // 멈추는데(1.5° 안 움직이면 새 값이 없다), 기본 센서는 반쯤 접혀도 180°로 남아 있을 수 있어 범위로 켠 플렉스가 1초 만에 꺼졌다
         @Volatile private var coarseLast: Float? = null
         private val coarseFallback = Runnable {
             val c = coarseLast ?: return@Runnable
-            if (SystemClock.elapsedRealtime() - fineAt >= 1000 && (c <= 0f || c >= 180f) && c != last) onAngle(c)
+            if (SystemClock.elapsedRealtime() - fineAt >= 1000 && coarseOverride(c, last)) onAngle(c)
         }
 
         override fun onSensorChanged(event: SensorEvent) {
@@ -506,7 +520,11 @@ object AutoFlex {
             val err = if (on) FlexPanel.forceHalfOpened(context) else FlexPanel.resetPosture(context)
             if (err == null) {
                 activeFlow.value = on
-                if (on) LogRepository.from(context).add("자동 플렉스 켬: 각도 ${last?.toInt()}° · 기본 센서 ${coarseLast?.toInt()}° · ${if (latchedFlow.value) "까딱" else "범위"}")
+                // 켜고 끈 까닭을 남긴다(범위·까딱, 그때 각도와 기본 센서 값, 가로 여부): 안 켜지거나 바로 꺼질 때 원인을 볼 수 있게
+                LogRepository.from(context).add(
+                    "자동 플렉스 ${if (on) "켬" else "끔"}: 각도 ${last?.toInt()}° · 기본 센서 ${coarseLast?.toInt()}° · " +
+                        "${if (latchedFlow.value) "까딱" else "범위"} · ${if (horizontalFlow.value) "가로" else "세로"}"
+                )
                 // 실사용에서는 들어올 때만 울린다(펴거나 닫으며 빠져나갈 때마다 울리면 거슬린다). 설정 화면은 따로 둘 다 울린다
                 if (!quiet && on) rangeBuzz(context, true)
             }
