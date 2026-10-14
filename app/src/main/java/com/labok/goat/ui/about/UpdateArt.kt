@@ -49,6 +49,9 @@ import kotlinx.coroutines.launch
  * - 실패: 방울이 납작하게 주저앉고 아래로 물방울이 떨어진다. 가운데에 느낌표.
  * 동작 줄이기면 시간을 멈추고 상태별 모양만 보여 준다.
  */
+/** 프레임을 계속 돌려야 하는지: 물 높이가 아직 목표에 닿지 않았거나 목표가 0이 아니면(통이 보이는 동안) 돈다. */
+private fun isActive(target: Float, fill: Float) = abs(target - fill) > 0.002f || target > 0f
+
 @Composable
 internal fun LiquidUpdateArt(state: Updater.State, progress: Float, rate: Float, modifier: Modifier = Modifier) {
     val c = LocalLiquid.current
@@ -64,19 +67,26 @@ internal fun LiquidUpdateArt(state: Updater.State, progress: Float, rate: Float,
     }
     val target by rememberUpdatedState(fillTarget)
     var fill by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(reduce) {
-        if (reduce) {
+    // 배터리: 쉬는 중·최신처럼 움직일 것이 없으면 프레임을 돌리지 않는다(앱 설정을 열어 두어도 그리지 않음).
+    // 확인 중·새 버전·내려받기·설치·실패 동안만, 그리고 물 높이가 목표에 닿을 때까지만 돈다.
+    val animating = state !is Updater.State.Idle && state !is Updater.State.UpToDate
+    val stillAnimating by rememberUpdatedState(animating)
+    val moving = !reduce && (animating || abs(fillTarget - fill) > 0.002f)
+    LaunchedEffect(moving, reduce) {
+        if (!moving) {
             snapshotFlow { target }.collect { fill = it }
             return@LaunchedEffect
         }
-        val start = withFrameNanos { it }
-        var last = start
+        val start = withFrameNanos { it } - (time * 1e9f).toLong()
+        var last = withFrameNanos { it }
         while (true) {
             val now = withFrameNanos { it }
             time = (now - start) / 1e9f
             val dt = ((now - last) / 1e9f).coerceIn(0f, 0.1f)
             last = now
             fill += (target - fill) * (1f - exp(-dt * 7f))
+            // 쉬는 상태로 돌아와 물도 다 빠졌으면 멈춘다
+            if (!stillAnimating && !isActive(target, fill)) break
         }
     }
     // 상태별 무게(0~1). 상태가 바뀌면 각 무게가 스프링으로 옮겨 가 모양이 섞이며 넘어간다

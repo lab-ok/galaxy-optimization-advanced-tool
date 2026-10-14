@@ -182,7 +182,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                             Spacer(Modifier.width(12.dp))
                             LiquidSwitch(!off, { on ->
                                 if (!on && app.risk == Bloat.Risk.CARE) confirm = app else apply(app, off = !on)
-                            }, enabled = ready && busy == null)
+                            }, enabled = ready && busy == null, label = app.name)
                         }
                     }
                 }

@@ -249,7 +249,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                         notify = on
                                         AppDensityNotifier.setEnabled(context, on)
                                     }
-                                })
+                                }, label = Copy.APP_SIZE_NOTIFY_TITLE)
                             }
                             // 켜기 전에는 알림창 조절이 어떻게 동작하는지 그림으로 보여 준다
                             AnimatedVisibility(!notify) {

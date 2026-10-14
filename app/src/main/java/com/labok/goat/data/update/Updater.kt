@@ -162,9 +162,17 @@ object Updater {
         }
         state.value = State.Installing(release)
         log.add("업데이트 ${release.version}: 내려받음, 설치 시작(${if (ShizukuAccess.status.value == ShizukuAccess.State.READY) "Shizuku" else "시스템 설치 창"})")
+        // 설치가 끝난 뒤 '업데이트됨 · 눌러서 열기' 알림을 띄울 수 있게, GOAT가 시작한 업데이트라고 표시해 둔다
+        UpdateNotice.expect(context, release.version)
         // Shizuku가 있으면 묻지 않고 설치한다. 설치가 끝나면 시스템이 GOAT를 닫으므로 아래 줄은 실패했을 때만 이어진다.
+        // 설치가 끝나면 GOAT를 다시 연다. Shizuku는 GOAT가 닫힐 때 GOAT가 띄운 셸도 함께 끝내므로, 설치 명령 뒤에
+        // 이어 붙이면 실행되지 않는다(에뮬레이터에서 확인). 그래서 설치 전에 세션을 떼어 낸(setsid) 감시 셸을 먼저 띄워,
+        // 새 버전이 깔린 것을 확인하면 GOAT를 연다. 60초 안에 바뀌지 않으면(설치 실패) 그냥 끝난다.
         if (ShizukuAccess.status.value == ShizukuAccess.State.READY) {
-            val r = ShizukuAccess.shellWithInput("pm install -r -S ${file.length()}", file.inputStream())
+            val r = ShizukuAccess.shellWithInput(
+                relaunchAfter(context.packageName, release.version) + "pm install -r -S ${file.length()}",
+                file.inputStream()
+            )
             if (r?.ok == true && r.out.contains("Success")) return
             log.add("업데이트 ${release.version}: Shizuku 설치 실패(${(r?.err ?: r?.out).orEmpty().take(80)}), 시스템 설치 창으로")
         }
@@ -172,6 +180,14 @@ object Updater {
             state.value = State.Failed("설치 창을 열지 못했습니다.", release)
             log.add("업데이트 ${release.version}: 설치 창 실패(${it.message?.take(80)})")
         }
+    }
+
+    /** 새 버전([version])이 깔리면 [pkg]를 여는 떼어 낸 감시 셸(뒤에 설치 명령을 이어 붙인다). 시험할 수 있게 문자열만 만든다. */
+    internal fun relaunchAfter(pkg: String, version: String): String {
+        // 감시 스크립트는 작은따옴표로 감싸 바깥 셸이 $(seq 60)을 미리 풀지 않게 한다(미리 풀면 줄바꿈 때문에 for 문이 깨졌다)
+        val watch = "for i in \$(seq 60); do sleep 1; " +
+            "dumpsys package $pkg | grep -q \"versionName=$version\$\" && { am start -n $pkg/.ui.MainActivity; exit 0; }; done"
+        return "setsid sh -c '$watch' </dev/null >/dev/null 2>&1 & "
     }
 
     /** 시스템 설치 창(PackageInstaller 세션). 사용자가 [설치]를 누르면 설치된다. */
@@ -204,10 +220,13 @@ object Updater {
                 }
                 PackageInstaller.STATUS_SUCCESS -> Unit
                 else -> {
+                    val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
                     val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE).orEmpty()
                     val r = (state.value as? State.Installing)?.release
-                    state.value = State.Failed("설치하지 못했습니다. $msg".trim(), r)
-                    LogRepository.from(context).add("업데이트 설치 실패: ${msg.take(80)}")
+                    // 영어 코드 대신 이유와 해결 방법을 한국어로 보여 준다
+                    state.value = State.Failed(InstallFailure.explain(status, msg), r)
+                    UpdateNotice.consume(context)
+                    LogRepository.from(context).add("업데이트 설치 실패($status): ${msg.take(80)}")
                 }
             }
         }

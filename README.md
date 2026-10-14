@@ -112,7 +112,7 @@
 
 #### 앱 내 업데이트
 
-- <sub>홈을 열거나 홈으로 복귀할 때(앱을 새로 실행하면 즉시, 이후에는 30분 간격으로) GitHub 릴리스의 최신 버전(`releases/latest`)을 확인하고, 현재 앱보다 최신이면 홈 상단에 [지금 업데이트] 카드를 표시합니다. 앱 설정 → 업데이트에서 직접 확인할 수도 있습니다.</sub>
+- <sub>홈을 열거나 홈으로 복귀할 때(앱을 새로 실행하면 즉시, 이후에는 30분 간격으로) GitHub 릴리스의 최신 버전(`releases/latest`)을 확인하고, 현재 앱보다 최신이면 홈 상단에 [지금 업데이트] 카드를 표시합니다. Shizuku로 설치하면 끝난 뒤 GOAT가 다시 열리고, 시스템 설치 창으로 설치하면 완료 알림을 띄웁니다. 설치에 실패하면 이유와 해결 방법을 한국어로 안내합니다. 앱 설정 → 업데이트에서 직접 확인할 수도 있습니다.</sub>
 - <sub>APK를 앱 캐시에 내려받아 크기와 릴리스 노트의 SHA-256이 일치할 때만 설치합니다. Shizuku가 연결되어 있으면 `pm install -r`로 별도 확인 없이 설치하며(완료 후 GOAT가 재시작됩니다), 연결되어 있지 않으면 시스템 설치 창을 표시합니다(최초 1회 'GOAT의 앱 설치 허용' 필요).</sub>
 - <sub>동일한 키로 서명된 버전만 설치되므로, 출처가 다른 APK로 대체되지 않습니다.</sub>
 
@@ -330,7 +330,7 @@ app/src/main/java/com/labok/goat/
 
 #### 테스트
 
-- <sub>단위 테스트(117개): DPI 계산·PPI 결정·화면 학습·외부 변경 판정·반복 방지·화면 방향·흔들기 판정·주사율·해상도 비율·염소 표정·문구 및 간격 규칙 등을 검증합니다. `./gradlew testDebugUnitTest`</sub>
+- <sub>단위 테스트(120개): DPI 계산·PPI 결정·화면 학습·외부 변경 판정·반복 방지·화면 방향·흔들기 판정·주사율·해상도 비율·염소 표정·문구 및 간격 규칙 등을 검증합니다. `./gradlew testDebugUnitTest`</sub>
 - <sub>화면 캡처: `./screenshots.sh`가 Robolectric과 Roborazzi를 사용하여 주요 화면을 PNG로 생성합니다(`app/build/outputs/roborazzi`).</sub>
 - <sub>코드 스타일: Android 공식 Kotlin 스타일(ktlint `android_studio`)을 따르며 기준은 `.editorconfig`에 있습니다. Android lint 예외는 `app/lint.xml`에 이유와 함께 적습니다.</sub>
 - <sub>에뮬레이터 확인: 64비트 Android 컨테이너(redroid 등)에 설치하여 `adb shell wm size`/`wm density`로 접기·펼치기와 외부 변경을 시뮬레이션할 수 있습니다.</sub>

@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 
@@ -26,7 +28,14 @@ import androidx.compose.ui.unit.dp
  * 도착하면 표면장력으로 다시 동그랗게 모이며 한 번 출렁인다.
  */
 @Composable
-fun LiquidSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+fun LiquidSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    /** 화면 읽기(TalkBack)가 읽을 이름(보통 옆 제목). 없으면 '스위치'만 읽혀 무엇을 켜는지 알 수 없다. */
+    label: String? = null
+) {
     val haptics = rememberLiquidHaptics()
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
@@ -48,6 +57,7 @@ fun LiquidSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier:
             .size(56.dp, 32.dp)
             .onSizeChanged { box = it }
             .liquidPress(interaction, releaseHaptic = false)
+            .semantics { if (label != null) contentDescription = label }
             .toggleable(checked, interaction, null, enabled, Role.Switch) { on ->
                 haptics.toggle(on)
                 onCheckedChange(on)

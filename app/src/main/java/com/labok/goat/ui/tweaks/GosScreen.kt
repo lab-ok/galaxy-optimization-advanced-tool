@@ -132,7 +132,7 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                                 )
                             }
                             Spacer(Modifier.width(12.dp))
-                            LiquidSwitch(state == Gos.State.OFF, { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Gos.State.UNKNOWN)
+                            LiquidSwitch(state == Gos.State.OFF, { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Gos.State.UNKNOWN, label = Copy.GOS_SWITCH_TITLE)
                         }
                         Spacer(Modifier.height(Gap.Section))
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -144,7 +144,7 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                             LiquidSwitch(keep, { on ->
                                 keep = on
                                 Gos.setKeep(context, on)
-                            })
+                            }, label = Copy.GOS_KEEP_TITLE)
                         }
                     }
                 }

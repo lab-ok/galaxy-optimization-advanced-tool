@@ -121,7 +121,7 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                             )
                         }
                         Spacer(Modifier.width(12.dp))
-                        LiquidSwitch(state == Doze.State.OFF, { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Doze.State.UNKNOWN)
+                        LiquidSwitch(state == Doze.State.OFF, { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Doze.State.UNKNOWN, label = Copy.DOZE_SWITCH_TITLE)
                     }
                 }
             }

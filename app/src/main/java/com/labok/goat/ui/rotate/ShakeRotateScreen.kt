@@ -159,7 +159,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 }
                                 else -> turnOn()
                             }
-                        }, enabled = permitted)
+                        }, enabled = permitted, label = Copy.FEATURE_SHAKE_ROTATE)
                     }
                     AnimatedVisibility(message.isNotEmpty()) {
                         Column {
@@ -302,7 +302,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 LiquidSwitch(taps, { on ->
                                     taps = on
                                     ShakeRotate.setAdvanced(context, rejectTaps = on, how = "스위치")
-                                })
+                                }, label = Copy.SHAKE_TAPS_TITLE)
                             }
                             Spacer(Modifier.height(Gap.Item))
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -314,7 +314,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 LiquidSwitch(largeOnly, { on ->
                                     largeOnly = on
                                     ShakeRotate.setAdvanced(context, largeOnly = on, how = "스위치")
-                                })
+                                }, label = Copy.SHAKE_LARGE_TITLE)
                             }
                             Spacer(Modifier.height(Gap.Item))
                             LiquidButton(Copy.SHAKE_ADVANCED_RESET, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { ShakeRotate.resetAdvanced(context) })

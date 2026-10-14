@@ -25,6 +25,6 @@ fun LiquidSwitchRow(title: String, desc: String?, checked: Boolean, enabled: Boo
             desc?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
         }
         Spacer(Modifier.width(12.dp))
-        LiquidSwitch(checked, onChange, enabled = enabled)
+        LiquidSwitch(checked, onChange, enabled = enabled, label = title)
     }
 }

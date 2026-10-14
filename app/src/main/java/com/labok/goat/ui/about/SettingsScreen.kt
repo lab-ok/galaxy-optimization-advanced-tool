@@ -86,7 +86,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                     var demo by remember { mutableStateOf(false) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(Copy.MOTION_PREVIEW, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                        LiquidSwitch(demo, { demo = it })
+                        LiquidSwitch(demo, { demo = it }, label = Copy.MOTION_PREVIEW)
                     }
                 }
             }

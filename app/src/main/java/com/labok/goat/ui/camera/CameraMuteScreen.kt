@@ -128,7 +128,7 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                                 busy = false
                                 Toast.makeText(context, if (ok) (if (want) Copy.CAMERA_TOAST_MUTED else Copy.CAMERA_TOAST_RESTORED) else Copy.CAMERA_TOAST_FAILED, Toast.LENGTH_SHORT).show()
                             }
-                        }, enabled = ready && !busy && state != CameraMute.State.NONE)
+                        }, enabled = ready && !busy && state != CameraMute.State.NONE, label = Copy.FEATURE_CAMERA_MUTE)
                     }
                     Spacer(Modifier.height(Gap.Section))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -140,7 +140,7 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                         LiquidSwitch(keep, { on ->
                             keep = on
                             CameraMute.setKeep(context, on)
-                        })
+                        }, label = Copy.CAMERA_KEEP_TITLE)
                     }
                 }
             }

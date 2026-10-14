@@ -857,7 +857,7 @@ private fun AutoCard(on: Boolean, onChange: (Boolean) -> Unit) {
                 Text(Copy.AUTO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.width(12.dp))
-            LiquidSwitch(on, onChange)
+            LiquidSwitch(on, onChange, label = Copy.AUTO_TITLE)
         }
     }
 }
