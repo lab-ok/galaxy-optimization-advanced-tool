@@ -838,7 +838,7 @@ internal fun FlexHelpSheet() {
         )
         com.labok.goat.ui.components.HelpTopic(
             "5. 까딱으로 플렉스 모드",
-            "켜 두면 완전히 편 채 130~160°까지 살짝 접었다 1초 안에 다시 펴는 것(까딱)으로 플렉스 모드를 켜고 끕니다. " +
+            "켜 두면 완전히 편 채 130~160°까지 살짝 접었다 3초 안에 다시 펴는 것(까딱)으로 플렉스 모드를 켜고 끕니다. " +
                 "켜 둔 동안은 펼친 채로도 플렉스 모드처럼 씁니다. 닫거나 화면을 끄면 꺼집니다."
         )
         com.labok.goat.ui.components.HelpTopic(

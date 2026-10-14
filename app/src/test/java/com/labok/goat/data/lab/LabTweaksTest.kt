@@ -63,7 +63,7 @@ class LabTweaksTest {
         assertFalse(d.feed(180f, 0))
         assertFalse(d.feed(165f, 100))
         assertFalse(d.feed(150f, 250))
-        assertTrue("1초 안에 150°까지 접었다 펴면 까딱", d.feed(180f, 700))
+        assertTrue("3초 안에 150°까지 접었다 펴면 까딱", d.feed(180f, 700))
         // 덜 접은 흔들림(165°까지)은 아니다
         assertFalse(d.feed(165f, 1000))
         assertFalse(d.feed(180f, 1300))
@@ -71,10 +71,10 @@ class LabTweaksTest {
         assertFalse(d.feed(150f, 1500))
         assertFalse(d.feed(120f, 1700))
         assertFalse(d.feed(180f, 2100))
-        // 1초를 넘기면 아니다
+        // 3초를 넘기면 아니다
         assertFalse(d.feed(150f, 3000))
-        assertFalse(d.feed(150f, 3900))
-        assertFalse(d.feed(180f, 4100))
+        assertFalse(d.feed(150f, 5900))
+        assertFalse(d.feed(180f, 6100))
     }
 
     @Test

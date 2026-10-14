@@ -55,17 +55,26 @@ object FlexPanel {
         val flex = Regex("(?i)flex")
         fun sh(cmd: String) = ShizukuAccess.shell(cmd)?.let { it.out.ifBlank { it.err } }?.trim()?.ifBlank { "(없음)" } ?: "Shizuku 연결 안 됨"
         val sysui = ShizukuAccess.shell("pm dump com.android.systemui")?.out.orEmpty()
-        val comps = Regex("""com\.android\.systemui/[\w.$]*[Ff]lex[\w.$]*""").findAll(sysui).map { it.value }.distinct().toList()
-        appendLine("요약: 시스템 UI 플렉스 구성요소 ${comps.size}개 · 창 관리자 패널 함수 ${if (hasAppApi()) "있음" else "없음"}")
+        // 시스템 UI뿐 아니라 모든 패키지에서 이름에 flex가 든 화면·서비스를 찾는다(폴드8 시스템 UI에는 없었다)
+        val all = ShizukuAccess.shell("dumpsys package | grep -i flex")?.out.orEmpty()
+        val comps = Regex("""[a-zA-Z][\w.]*/[\w.$]*[Ff]lex[\w.$]*""").findAll(sysui + "\n" + all).map { it.value }.distinct().take(80).toList()
+        appendLine("요약: 플렉스 구성요소(전체 패키지) ${comps.size}개 · 창 관리자 패널 함수 ${if (hasAppApi()) "있음" else "없음"}")
         appendLine()
         appendLine("기기: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (SDK ${android.os.Build.VERSION.SDK_INT}) · ${android.os.Build.DISPLAY}")
         appendLine("Shizuku: ${ShizukuAccess.status.value}")
         appendLine()
-        appendLine("== 시스템 UI의 플렉스 구성요소 ==")
+        appendLine("== 이름에 flex가 든 구성요소(전체 패키지) ==")
         appendLine(comps.joinToString("\n").ifBlank { "(없음)" })
         appendLine()
-        appendLine("== 시스템 UI 정보 중 flex 줄 ==")
-        appendLine(sysui.lineSequence().filter { flex.containsMatchIn(it) }.take(80).joinToString("\n").ifBlank { "(없음)" })
+        appendLine("== 시스템 UI 정보 중 flex 줄과 앞뒤 ==")
+        // 'FeatureName=flexModeApp, Size=74'처럼 삼성이 둔 플렉스 앱 목록이 있으면 그 내용까지 보이게 앞뒤 줄을 함께 싣는다
+        val lines = sysui.lines()
+        val shown = sortedSetOf<Int>()
+        lines.forEachIndexed { i, l -> if (flex.containsMatchIn(l)) (maxOf(0, i - 15)..minOf(lines.size - 1, i + 90)).forEach { shown.add(it) } }
+        appendLine(shown.take(400).joinToString("\n") { lines[it] }.ifBlank { "(없음)" })
+        appendLine()
+        appendLine("== 멀티 창(multistar) 정보 중 flex 줄 ==")
+        appendLine(sh("pm dump com.samsung.android.multistar | grep -i -B3 -A3 flex | head -80"))
         appendLine()
         appendLine("== 창 관리자 함수(flex) ==")
         appendLine(runCatching { wm().javaClass.methods.filter { flex.containsMatchIn(it.name) }.map { "${it.name}(${it.parameterTypes.joinToString { p -> p.simpleName }}): ${it.returnType.simpleName}" }.distinct().sorted().joinToString("\n") }.getOrElse { "(읽지 못함: ${HiddenApi.describe(it)})" })
@@ -76,6 +85,26 @@ object FlexPanel {
             val v = rawSupport(pkg)
             val hex = (v as? Int)?.let { " (0x${Integer.toHexString(it)})" }.orEmpty()
             appendLine("$pkg = ${v ?: "(못 읽음)"}$hex · 플렉스 화면 앱 추정 ${if (FlexAppScan.supports(context, pkg)) "예" else "아니오"}")
+        }
+        appendLine()
+        // 플렉스 전용 화면이 되는 앱(갤러리·유튜브·카메라)과 잘못 '지원'으로 나온 앱을 나란히 놓고, 설치 파일 흔적·메타데이터·크기 조절 여부를 비교한다
+        appendLine("== 앱 비교(설치 파일 흔적·메타데이터) ==")
+        val compare = listOf(
+            "com.sec.android.gallery3d",
+            "com.google.android.youtube",
+            "com.sec.android.app.camera",
+            "com.android.settings",
+            "com.microsoft.office.excel",
+            "com.adguard.android",
+            "co.kr.cgv.cjcgv",
+            "com.android.chrome"
+        )
+        compare.forEach { pkg -> appendLine("$pkg: ${FlexAppScan.inspect(context, pkg)}") }
+        appendLine()
+        appendLine("== 앱 비교(시스템이 아는 크기 조절·플렉스 정보) ==")
+        compare.forEach { pkg ->
+            appendLine("[$pkg]")
+            appendLine(sh("dumpsys package $pkg | grep -i -E 'resiz|flex|fold|samsung' | head -12"))
         }
         appendLine()
         appendLine("== 설정 키(flex) ==")

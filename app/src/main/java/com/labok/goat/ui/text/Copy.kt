@@ -212,7 +212,7 @@ object Copy {
     const val LAB_FLEX_ON_BODY = "위 화면에는 쓰던 앱이, 아래 화면에는 조작 패널이 나옵니다. 범위를 벗어나면 꺼집니다."
     const val LAB_FLEX_ON_BODY_CLICK = "까딱으로 켰습니다. 펼친 채로도 플렉스 모드로 씁니다. 한 번 더 까딱하면 꺼집니다."
     const val LAB_FLEX_CLICK = "까딱으로 플렉스 모드"
-    const val LAB_FLEX_CLICK_BODY = "완전히 편 채 130~160°까지 살짝 접었다 1초 안에 다시 펴면(까딱) 켜지고, 한 번 더 하면 꺼집니다."
+    const val LAB_FLEX_CLICK_BODY = "완전히 편 채 130~160°까지 살짝 접었다 3초 안에 다시 펴면(까딱) 켜지고, 한 번 더 하면 꺼집니다."
     const val LAB_FLEX_APPS_TITLE = "접으면 패널 자동 표시"
     const val LAB_FLEX_APPS_REST = "최근 사용 순"
     const val LAB_FLEX_APPS_BODY = "자동 플렉스를 켜면 모든 앱에 조작 패널이 뜹니다. 패널이 필요 없는 앱만 끄세요."

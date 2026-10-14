@@ -109,7 +109,7 @@ object AutoFlex {
     }
 
     /**
-     * 까딱으로 켜기: 완전히 펼친 채 130~160°까지 살짝 접었다가(까딱) 1초 안에 다시 펴면 플렉스 모드를 켜고, 한 번 더 하면 끈다.
+     * 까딱으로 켜기: 완전히 펼친 채 130~160°까지 살짝 접었다가(까딱) 3초 안에 다시 펴면 플렉스 모드를 켜고, 한 번 더 하면 끈다.
      * 켜 두는 동안은 펼친 채로도 플렉스 모드처럼 쓴다(위 화면에 앱, 아래 화면에 패널).
      */
     fun click(context: Context) = prefs(context).getBoolean("click", false)
@@ -124,10 +124,10 @@ object AutoFlex {
     internal const val OPEN = 175f
     internal const val DIP_LOW = 130f
     internal const val DIP_HIGH = 160f
-    internal const val CLICK_MS = 1000L
+    internal const val CLICK_MS = 3000L
 
     /**
-     * 펼침→살짝 접힘→펼침 흐름을 보고 까딱인지 가린다(시험할 수 있게 뗐다). 펼침을 벗어난 때부터 다시 펼 때까지 1초 안이어야 하고,
+     * 펼침→살짝 접힘→펼침 흐름을 보고 까딱인지 가린다(시험할 수 있게 뗐다). 펼침을 벗어난 때부터 다시 펼 때까지 3초 안이어야 하고,
      * 그사이 가장 많이 접은 각도가 130~160° 안이어야 한다(덜 접었으면 흔들림, 더 접었으면 진짜로 접는 것).
      */
     internal class ClickDetector {

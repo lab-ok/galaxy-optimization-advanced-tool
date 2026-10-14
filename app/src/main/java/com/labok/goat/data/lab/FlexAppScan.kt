@@ -34,6 +34,44 @@ object FlexAppScan {
         return yes
     }
 
+    /** 조사용 후보 표지: 플렉스 전용 화면을 가진 앱(갤러리·유튜브·카메라)만 가진 흔적을 찾으려고 진단에서 앱마다 비교한다. */
+    internal val CANDIDATES = listOf(
+        "androidx/window/layout/FoldingFeature",
+        "androidx/window/layout/WindowInfoTracker",
+        "androidx/window/extensions",
+        "androidx/window/sidecar",
+        "HALF_OPENED",
+        "isTableTop",
+        "TABLETOP",
+        "FlexMode",
+        "flexmode",
+        "flex_mode",
+        "FLEX_MODE",
+        "semIsFlex",
+        "FoldStateListener",
+        "SemWindowManager",
+        "com/samsung/android/sdk"
+    )
+
+    /** [pkg] 설치 파일에 [CANDIDATES] 중 무엇이 들어 있는지와 삼성·플렉스 관련 메타데이터(진단용, 작업 스레드에서 부른다). */
+    fun inspect(context: Context, pkg: String): String {
+        val app = runCatching { context.packageManager.getApplicationInfo(pkg, PackageManager.GET_META_DATA) }.getOrNull() ?: return "(설치 안 됨)"
+        val files = listOfNotNull(app.sourceDir) + app.splitSourceDirs.orEmpty()
+        val found = sortedSetOf<String>()
+        files.forEach { path ->
+            runCatching {
+                ZipFile(File(path)).use { zip ->
+                    zip.entries().asSequence().filter { it.name.startsWith("classes") && it.name.endsWith(".dex") }.forEach { e ->
+                        val bytes = zip.getInputStream(e).use { it.readBytes() }
+                        CANDIDATES.forEach { m -> if (m !in found && indexOf(bytes, bytes.size, m.toByteArray()) >= 0) found.add(m) }
+                    }
+                }
+            }
+        }
+        val meta = app.metaData?.keySet()?.filter { Regex("(?i)samsung|flex|fold|window|resiz").containsMatchIn(it) }?.joinToString { "$it=${app.metaData?.get(it)}" }.orEmpty()
+        return "표지[${found.joinToString()}] 메타[${meta.ifBlank { "-" }}]"
+    }
+
     private fun hasMarker(apk: File): Boolean = runCatching {
         ZipFile(apk).use { zip ->
             zip.entries().asSequence()
