@@ -59,6 +59,10 @@ object AutoFlex {
 
     internal const val DIM_ANGLE = 50f
 
+    /** 범위에서 이만큼(ms) 각도가 [STABLE_DEG]° 넘게 움직이지 않아야 플렉스 모드를 켠다. */
+    internal const val STABLE_MS = 600L
+    internal const val STABLE_DEG = 5f
+
     fun setEnabled(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("on", on).apply()
         LogRepository.from(context).add("자동 플렉스 모드 ${if (on) "켜짐" else "꺼짐"}")
@@ -288,6 +292,9 @@ object AutoFlex {
         private val apply = Runnable { set(want) }
         private val clicks = ClickDetector()
 
+        // 켜기를 기다리기 시작한 각도(멈춰 있는지 보려고)
+        private var dwellAngle = 0f
+
         // 밝기 고정: GOAT가 자동 밝기를 꺼 둔 상태인지
         private var dimmed = false
 
@@ -320,7 +327,9 @@ object AutoFlex {
         @Volatile private var fineAt = 0L
         private val fine = FineHinge { a ->
             fineAt = android.os.SystemClock.elapsedRealtime()
-            worker.post { onAngle(a) }
+            // 시스템이 '닫힘'(기본 센서 0°)이라고 하면 세밀한 값은 믿지 않는다: 접은 채 움직이면 센서 부품이 엉뚱한 각도를 낼 수 있어,
+            // 커버 화면이 켜진 채(접혀서 서비스가 계속 듣는 동안) 범위에 든 것으로 잘못 보고 플렉스·진동이 켜질 수 있었다
+            worker.post { onAngle(if (coarseLast == 0f) 0f else a) }
             worker.removeCallbacks(coarseFallback)
             worker.postDelayed(coarseFallback, 1100)
         }
@@ -440,17 +449,9 @@ object AutoFlex {
                 hit = true
             }
             if (hit) quiet = true
-            // 까딱은 바로, 각도 범위는 잠깐 머문 뒤에 바꾼다(까딱을 쓰면 도중에 범위를 지나쳐도 깜빡이지 않게 더 오래)
-            decide(
-                a,
-                if (hit || latchedFlow.value) {
-                    0L
-                } else if (click) {
-                    700L
-                } else {
-                    250L
-                }
-            )
+            // 까딱은 바로 바꾼다. 각도 범위는 그 안에서 멈춰 있을 때만(STABLE_MS 동안 STABLE_DEG 넘게 움직이지 않음) 켠다:
+            // 펴거나 닫는 도중에 범위를 지나칠 때는 각도가 계속 움직이므로 켜지지도, 울리지도 않는다
+            decide(a, if (hit || latchedFlow.value) 0L else STABLE_MS)
         }
 
         private fun decide(a: Float?, delay: Long) {
@@ -461,10 +462,20 @@ object AutoFlex {
                 a == null -> false
                 else -> inRange(a, min(context), max(context)) && horizontalFlow.value
             }
-            if (next == want && worker.hasCallbacks(apply)) return
+            if (next == want && worker.hasCallbacks(apply)) {
+                // 켜기를 기다리는 동안 각도가 크게 움직이면(펴거나 닫는 중) 기다림을 처음부터 다시 센다
+                if (next && a != null && kotlin.math.abs(a - dwellAngle) > STABLE_DEG) {
+                    dwellAngle = a
+                    worker.removeCallbacks(apply)
+                    worker.postDelayed(apply, delay)
+                }
+                return
+            }
             want = next
+            if (a != null) dwellAngle = a
             worker.removeCallbacks(apply)
-            if (next != activeFlow.value) worker.postDelayed(apply, delay) else quiet = false
+            // 끌 때는 기다리지 않아도 된다(빨리 원래대로): 켤 때만 멈춰 있는지 기다린다
+            if (next != activeFlow.value) worker.postDelayed(apply, if (next) delay else minOf(delay, 250L)) else quiet = false
         }
 
         /** 멈춤·까딱 설정이 바뀌었을 때 지금 각도로 다시 정한다. */
@@ -484,6 +495,7 @@ object AutoFlex {
             val err = if (on) FlexPanel.forceHalfOpened(context) else FlexPanel.resetPosture(context)
             if (err == null) {
                 activeFlow.value = on
+                if (on) LogRepository.from(context).add("자동 플렉스 켬: 각도 ${last?.toInt()}° · 기본 센서 ${coarseLast?.toInt()}° · ${if (latchedFlow.value) "까딱" else "범위"}")
                 // 실사용에서는 들어올 때만 울린다(펴거나 닫으며 빠져나갈 때마다 울리면 거슬린다). 설정 화면은 따로 둘 다 울린다
                 if (!quiet && on) rangeBuzz(context, true)
             }
