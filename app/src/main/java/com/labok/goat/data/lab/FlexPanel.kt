@@ -40,12 +40,67 @@ object FlexPanel {
         return err
     }
 
-    /** [pkg]가 지금 플렉스 패널 대상인지(시스템에 물어본다). 물어볼 수 없으면 null. */
-    fun isRegistered(pkg: String): Boolean? = runCatching {
+    /** 시스템이 [pkg]에 대해 돌려주는 플렉스 패널 값 그대로(정수 비트 또는 참/거짓). 물어볼 수 없으면 null. */
+    fun rawSupport(pkg: String): Any? = runCatching {
         if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return null
         val m = wm().javaClass.methods.firstOrNull { it.name == "getSupportsFlexPanel" && it.parameterTypes.size == 2 } ?: return null
-        m.invoke(wm(), UserId.current(), pkg) as? Boolean
+        m.invoke(wm(), UserId.current(), pkg)
     }.getOrNull()
+
+    /**
+     * 터치패널 진단: 폴드8에서 플렉스를 지원하지 않는 앱에 시스템 터치패널을 띄울 수 있는지 가리는 데 필요한 것을 모은다(읽기만 하고,
+     * 마지막에 터치패널 화면을 한 번 열어 본다). 시스템 UI에 패널 화면이 남아 있는지, 앱마다 시스템이 주는 패널 값, 관련 설정·기능 표.
+     */
+    fun diagnose(context: Context): String = buildString {
+        val flex = Regex("(?i)flex")
+        fun sh(cmd: String) = ShizukuAccess.shell(cmd)?.let { it.out.ifBlank { it.err } }?.trim()?.ifBlank { "(없음)" } ?: "Shizuku 연결 안 됨"
+        val sysui = ShizukuAccess.shell("pm dump com.android.systemui")?.out.orEmpty()
+        val comps = Regex("""com\.android\.systemui/[\w.$]*[Ff]lex[\w.$]*""").findAll(sysui).map { it.value }.distinct().toList()
+        appendLine("요약: 시스템 UI 플렉스 구성요소 ${comps.size}개 · 창 관리자 패널 함수 ${if (hasAppApi()) "있음" else "없음"}")
+        appendLine()
+        appendLine("기기: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (SDK ${android.os.Build.VERSION.SDK_INT}) · ${android.os.Build.DISPLAY}")
+        appendLine("Shizuku: ${ShizukuAccess.status.value}")
+        appendLine()
+        appendLine("== 시스템 UI의 플렉스 구성요소 ==")
+        appendLine(comps.joinToString("\n").ifBlank { "(없음)" })
+        appendLine()
+        appendLine("== 시스템 UI 정보 중 flex 줄 ==")
+        appendLine(sysui.lineSequence().filter { flex.containsMatchIn(it) }.take(80).joinToString("\n").ifBlank { "(없음)" })
+        appendLine()
+        appendLine("== 창 관리자 함수(flex) ==")
+        appendLine(runCatching { wm().javaClass.methods.filter { flex.containsMatchIn(it.name) }.map { "${it.name}(${it.parameterTypes.joinToString { p -> p.simpleName }}): ${it.returnType.simpleName}" }.distinct().sorted().joinToString("\n") }.getOrElse { "(읽지 못함: ${HiddenApi.describe(it)})" })
+        appendLine()
+        appendLine("== 앱별 패널 값(getSupportsFlexPanel) ==")
+        val apps = (listOf("com.google.android.youtube", "com.android.chrome", "com.sec.android.app.camera", "com.sec.android.gallery3d", "com.android.settings") + com.labok.goat.data.appsize.AppList.launcherApps(context).map { it.pkg }.take(20)).distinct()
+        apps.forEach { pkg ->
+            val v = rawSupport(pkg)
+            val hex = (v as? Int)?.let { " (0x${Integer.toHexString(it)})" }.orEmpty()
+            appendLine("$pkg = ${v ?: "(못 읽음)"}$hex · 플렉스 화면 앱 추정 ${if (FlexAppScan.supports(context, pkg)) "예" else "아니오"}")
+        }
+        appendLine()
+        appendLine("== 설정 키(flex) ==")
+        listOf("system", "secure", "global").forEach { table ->
+            val r = ShizukuAccess.shell("settings list $table")
+            if (r == null) appendLine("[$table] Shizuku 연결 안 됨") else r.out.lineSequence().filter { flex.containsMatchIn(it.substringBefore('=')) }.forEach { appendLine("[$table] $it") }
+        }
+        appendLine()
+        appendLine("== 삼성 기능 표(flex) ==")
+        appendLine(sh("grep -i flex /system/etc/floating_feature.xml"))
+        appendLine()
+        appendLine("== 시스템 속성(flex) ==")
+        appendLine(sh("getprop | grep -i flex"))
+        appendLine()
+        appendLine("== 접힘 상태 ==")
+        appendLine(sh("cmd device_state print-states"))
+        appendLine()
+        appendLine("== 창 정보 중 flex 줄 ==")
+        appendLine(sh("dumpsys window | grep -i flex | head -40"))
+        appendLine()
+        // 패널 화면을 셸에서 직접 열어 본다: 열리면 시스템에 패널이 살아 있다는 뜻이다
+        appendLine("== 터치패널 화면 직접 열어 보기 ==")
+        val panel = comps.firstOrNull { it.contains("Panel", ignoreCase = true) && it.contains("Activity") } ?: comps.firstOrNull { it.contains("Activity") }
+        appendLine(if (panel == null) "(열 화면을 찾지 못함)" else "$panel → ${sh("am start -n $panel")}")
+    }
 
     /** 반쯤 접힘 강제 중인지(GOAT가 건 것). 재부팅하면 시스템이 풀어 주므로 메모리에만 둔다. */
     @Volatile

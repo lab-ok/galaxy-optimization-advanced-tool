@@ -177,7 +177,7 @@ import kotlinx.coroutines.launch
 /** 이 너비(dp) 이상이면 사이드바를 늘 펼쳐 둔다(폴드 내부 화면·태블릿). */
 private const val WIDE_DP = 600
 
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -371,7 +371,13 @@ internal fun HomeScreen(
                 Copy.MENU_REPORT to report
             )
             NavItem.HOME -> listOf(Copy.MENU_REPORT to report)
-            NavItem.LAB_AIRPLANE, NavItem.LAB_ICONS, NavItem.LAB_SCREEN, NavItem.LAB_FLEX, NavItem.LAB_PROBE, NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
+            // 자동 플렉스는 Shizuku가 필요해 Shizuku 연결 안내(앱별 화면 배율 설정과 같은 시트)를 연다
+            NavItem.LAB_FLEX -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.FLEX_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
+                Copy.MENU_REPORT to report
+            )
+            NavItem.LAB_AIRPLANE, NavItem.LAB_ICONS, NavItem.LAB_SCREEN, NavItem.LAB_PROBE, NavItem.LAB_TOOLS -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -615,6 +621,7 @@ internal fun HomeScreen(
                     Sheet.SHAKE_HELP -> ShakeRotateHelpSheet()
                     Sheet.SHAKE_CALIBRATE -> ShakeCalibrationSheet(onClose = { sheet = null })
                     Sheet.CAMERA_HELP -> CameraMuteHelpSheet()
+                    Sheet.FLEX_HELP -> com.labok.goat.ui.lab.FlexHelpSheet()
                     Sheet.ANIM_HELP -> AnimationHelpSheet()
                     Sheet.BLOAT_HELP -> BloatHelpSheet()
                     Sheet.REFRESH_HELP -> RefreshHelpSheet()

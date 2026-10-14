@@ -39,7 +39,7 @@ class GoatService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val apps = AppDensityNotifier.enabled(this)
         val rotate = ShakeRotate.enabled(this) && ShakeRotate.canWrite(this)
-        val autoFlex = AutoFlex.enabled(this)
+        val autoFlex = AutoFlex.engineNeeded(this)
         if (!apps && !rotate && !autoFlex) {
             stopSelf()
             return START_NOT_STICKY
@@ -121,7 +121,7 @@ class GoatService : Service() {
     companion object {
         /** 켜진 기능이 하나라도 있으면 서비스를 띄우거나 설정을 다시 읽게 하고, 없으면 멈춘다. */
         fun sync(context: Context) {
-            val any = AppDensityNotifier.enabled(context) || (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) || AutoFlex.enabled(context)
+            val any = AppDensityNotifier.enabled(context) || (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) || AutoFlex.engineNeeded(context)
             val intent = Intent(context, GoatService::class.java)
             if (any) {
                 runCatching { context.startForegroundService(intent) }

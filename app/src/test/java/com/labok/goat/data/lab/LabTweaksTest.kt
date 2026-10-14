@@ -56,4 +56,42 @@ class LabTweaksTest {
         assertEquals(150f, f.feed(150f)!!, 0f)
         assertEquals(180f, f.feed(178f)!!, 0f)
     }
+
+    @Test
+    fun kkaddakNeedsQuickDipInto130to160() {
+        val d = AutoFlex.ClickDetector()
+        assertFalse(d.feed(180f, 0))
+        assertFalse(d.feed(165f, 100))
+        assertFalse(d.feed(150f, 250))
+        assertTrue("1초 안에 150°까지 접었다 펴면 까딱", d.feed(180f, 700))
+        // 덜 접은 흔들림(165°까지)은 아니다
+        assertFalse(d.feed(165f, 1000))
+        assertFalse(d.feed(180f, 1300))
+        // 더 접은 것(120°까지)은 아니다
+        assertFalse(d.feed(150f, 1500))
+        assertFalse(d.feed(120f, 1700))
+        assertFalse(d.feed(180f, 2100))
+        // 1초를 넘기면 아니다
+        assertFalse(d.feed(150f, 3000))
+        assertFalse(d.feed(150f, 3900))
+        assertFalse(d.feed(180f, 4100))
+    }
+
+    @Test
+    fun flexScanFindsMarkerAcrossChunks() {
+        val marker = "androidx/window/extensions".toByteArray()
+        // 64KB 덩어리 경계에 걸치게 둔다
+        val data = ByteArray((1 shl 16) - 5) + marker + ByteArray(100)
+        assertTrue(FlexAppScan.contains(data.inputStream(), listOf(marker)))
+        assertFalse(FlexAppScan.contains(ByteArray(200_000).inputStream(), listOf(marker)))
+    }
+
+    @Test
+    fun hingeHorizontalOnlyWhenAxisFlat() {
+        // 힌지 축이 Y: 세워 든 책 모양(중력이 Y)은 세로, 옆으로 돌리면(중력이 X) 가로, 바닥에 눕히면(중력이 Z) 가로
+        assertFalse(AutoFlex.isHorizontal(0f, 9.8f, 0f, alongY = true))
+        assertTrue(AutoFlex.isHorizontal(9.8f, 0f, 0f, alongY = true))
+        assertTrue(AutoFlex.isHorizontal(0f, 1f, 9.7f, alongY = true))
+        assertFalse(AutoFlex.isHorizontal(9.8f, 0f, 0f, alongY = false))
+    }
 }

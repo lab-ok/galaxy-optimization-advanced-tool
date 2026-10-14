@@ -43,6 +43,22 @@ object AutoFlex {
 
     fun enabled(context: Context) = supported() && prefs(context).getBoolean("on", false)
 
+    /**
+     * 가까이 접으면 밝기 고정: [DIM_ANGLE]° 안쪽으로 접으면 두 화면이 마주 보며 서로의 빛을 밝기 센서가 받아 화면이 밝아진다.
+     * 그 안에서는 자동 밝기를 잠시 끄고 지금 밝기에 묶었다가, 다시 펴면 자동 밝기로 돌린다(Shizuku 셸로 설정을 바꾼다).
+     */
+    fun dimLock(context: Context) = supported() && prefs(context).getBoolean("dimLock", false)
+
+    fun setDimLock(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("dimLock", on).apply()
+        LogRepository.from(context).add("가까이 접으면 밝기 고정 ${if (on) "켜짐" else "꺼짐"}")
+    }
+
+    /** 상주 서비스가 힌지를 들어야 하는지(자동 플렉스나 밝기 고정 중 하나라도 켜짐). */
+    fun engineNeeded(context: Context) = enabled(context) || dimLock(context)
+
+    internal const val DIM_ANGLE = 50f
+
     fun setEnabled(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("on", on).apply()
         LogRepository.from(context).add("자동 플렉스 모드 ${if (on) "켜짐" else "꺼짐"}")
@@ -93,40 +109,44 @@ object AutoFlex {
     }
 
     /**
-     * 딸깍으로 켜기: 펼친 채 화면을 살짝 접었다가(딸깍) 곧바로 다시 펴면 플렉스 모드를 켜고, 한 번 더 하면 끈다.
+     * 까딱으로 켜기: 완전히 펼친 채 130~160°까지 살짝 접었다가(까딱) 1초 안에 다시 펴면 플렉스 모드를 켜고, 한 번 더 하면 끈다.
      * 켜 두는 동안은 펼친 채로도 플렉스 모드처럼 쓴다(위 화면에 앱, 아래 화면에 패널).
      */
     fun click(context: Context) = prefs(context).getBoolean("click", false)
 
     fun setClick(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("click", on).apply()
-        LogRepository.from(context).add("딸깍으로 플렉스 모드 ${if (on) "켜짐" else "꺼짐"}")
+        LogRepository.from(context).add("까딱으로 플렉스 모드 ${if (on) "켜짐" else "꺼짐"}")
         engine?.recheck()
     }
 
-    /** 딸깍 판정: [OPEN]도 이상으로 펼친 상태에서 [DIP]도 아래로 접었다가 [CLICK_MS] 안에 다시 펴면 한 번. */
-    internal const val OPEN = 165f
-    internal const val DIP = 150f
-    internal const val CLICK_MS = 1500L
+    /** 까딱 판정: 완전히 펼친 상태([OPEN]° 이상)에서 [DIP_LOW]~[DIP_HIGH]°까지 접었다가 [CLICK_MS] 안에 다시 완전히 펴면 한 번. */
+    internal const val OPEN = 175f
+    internal const val DIP_LOW = 130f
+    internal const val DIP_HIGH = 160f
+    internal const val CLICK_MS = 1000L
 
-    /** 펼침→살짝 접힘→펼침 흐름을 보고 딸깍인지 가린다(시험할 수 있게 뗐다). 너무 깊이 접었다 편 것([ANGLE_LOW] 아래)은 딸깍이 아니다. */
+    /**
+     * 펼침→살짝 접힘→펼침 흐름을 보고 까딱인지 가린다(시험할 수 있게 뗐다). 펼침을 벗어난 때부터 다시 펼 때까지 1초 안이어야 하고,
+     * 그사이 가장 많이 접은 각도가 130~160° 안이어야 한다(덜 접었으면 흔들림, 더 접었으면 진짜로 접는 것).
+     */
     internal class ClickDetector {
         private var open = false
-        private var dipAt = -1L
+        private var leftAt = -1L
         private var lowest = 180f
 
-        /** 딸깍이 끝난 순간 true. */
+        /** 까딱이 끝난 순간 true. */
         fun feed(angle: Float, now: Long): Boolean {
             if (angle >= OPEN) {
-                val hit = open && dipAt >= 0 && now - dipAt <= CLICK_MS && lowest >= ANGLE_LOW
+                val hit = open && leftAt >= 0 && now - leftAt <= CLICK_MS && lowest in DIP_LOW..DIP_HIGH
                 open = true
-                dipAt = -1
+                leftAt = -1
                 lowest = 180f
                 return hit
             }
-            if (angle < DIP && open && dipAt < 0) dipAt = now
-            if (dipAt >= 0) lowest = minOf(lowest, angle)
-            if (dipAt >= 0 && now - dipAt > CLICK_MS) open = false
+            if (open && leftAt < 0) leftAt = now
+            if (leftAt >= 0) lowest = minOf(lowest, angle)
+            if (leftAt >= 0 && now - leftAt > CLICK_MS) open = false
             return false
         }
     }
@@ -149,7 +169,7 @@ object AutoFlex {
     @Volatile private var engine: Engine? = null
 
     /**
-     * 딸깍 진동: 접었다 편 손놀림을 그대로 되짚는다. 켤 때는 접힘(가벼운 틱)→펴짐(딸깍)→켜짐(딸깍) 세 박,
+     * 까딱 진동: 접었다 편 손놀림을 그대로 되짚는다. 켤 때는 접힘(가벼운 틱)→펴짐(까딱)→켜짐(까딱) 세 박,
      * 끌 때는 힘이 빠지듯 내려가는 틱 한 번. 효과 조합을 못 쓰는 기기는 짧은 진동 길이로 같은 박자를 낸다.
      */
     private fun buzz(context: Context, on: Boolean) {
@@ -206,9 +226,30 @@ object AutoFlex {
 
     private val activeFlow = MutableStateFlow(false)
 
+    /**
+     * 접는 선 방향: 플렉스 모드는 노트북처럼 접는 선이 가로로 놓일 때만 쓴다. 중력 중 접는 선(힌지 축) 방향 성분이 작으면
+     * (축이 바닥과 거의 나란하면) 가로로 본다. 폴드의 힌지 축은 기본 방향에서 세로(Y)지만, 화면이 알려 준 방향으로 고쳐 둘 수 있다([setHingeAlongY]).
+     */
+    internal fun isHorizontal(gx: Float, gy: Float, gz: Float, alongY: Boolean): Boolean {
+        val g = kotlin.math.sqrt(gx * gx + gy * gy + gz * gz)
+        if (g < 1f) return true
+        return kotlin.math.abs(if (alongY) gy else gx) < 0.5f * g
+    }
+
+    fun hingeAlongY(context: Context) = prefs(context).getBoolean("hingeY", true)
+
+    fun setHingeAlongY(context: Context, alongY: Boolean) {
+        if (hingeAlongY(context) != alongY) prefs(context).edit().putBoolean("hingeY", alongY).apply()
+    }
+
+    private val horizontalFlow = MutableStateFlow(true)
+
+    /** 지금 접는 선이 가로로 놓였는지(서비스가 듣는 동안). */
+    val horizontal: StateFlow<Boolean> = horizontalFlow.asStateFlow()
+
     private val latchedFlow = MutableStateFlow(false)
 
-    /** 딸깍으로 켜 둔 상태인지. */
+    /** 까딱으로 켜 둔 상태인지. */
     val latched: StateFlow<Boolean> = latchedFlow.asStateFlow()
 
     /** 지금 반쯤 접힘을 걸어 둔 상태인지. */
@@ -222,8 +263,8 @@ object AutoFlex {
         val open = PendingIntent.getActivity(context, 21, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
-            .setContentTitle("자동 플렉스 모드")
-            .setContentText("반쯤 접으면 플렉스 모드로 바뀝니다")
+            .setContentTitle(if (enabled(context)) "자동 플렉스 모드" else "가까이 접으면 밝기 고정")
+            .setContentText(if (enabled(context)) "반쯤 접으면 플렉스 모드로 바뀝니다" else "50° 안쪽으로 접으면 밝기를 고정합니다")
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
@@ -235,7 +276,7 @@ object AutoFlex {
 
     /**
      * 상주 서비스 안에서 도는 감시. 화면이 켜진 동안만 힌지 각도를 듣고, 범위에 0.25초 머물면 걸고/벗어나면 푼다.
-     * 딸깍으로 켜기를 쓰면 딸깍마다 켜고 끄며, 켜 둔 동안은 각도와 상관없이 걸어 둔다(딸깍 도중 범위를 지나쳐도 깜빡이지 않게 머무는 시간을 늘린다).
+     * 까딱으로 켜기를 쓰면 까딱마다 켜고 끄며, 켜 둔 동안은 각도와 상관없이 걸어 둔다(까딱 도중 범위를 지나쳐도 깜빡이지 않게 머무는 시간을 늘린다).
      * 셸 명령은 따로 만든 스레드에서 부른다(센서 스레드를 막지 않게).
      */
     class Engine(private val context: Context) : SensorEventListener {
@@ -247,7 +288,31 @@ object AutoFlex {
         private val apply = Runnable { set(want) }
         private val clicks = ClickDetector()
 
-        // 다음 바뀜은 진동 없이(딸깍은 따로 울리고, 멈춤·설정 바뀜은 손놀림이 아니라서)
+        // 밝기 고정: GOAT가 자동 밝기를 꺼 둔 상태인지
+        private var dimmed = false
+
+        private fun dimCheck(a: Float) {
+            if (!dimLock(context) && !dimmed) return
+            val want = dimLock(context) && a < DIM_ANGLE
+            // 경계에서 깜빡이지 않게 풀 때는 2° 더 펴야 한다
+            if (want && !dimmed) {
+                val mode = ShizukuAccess.shell("settings get system screen_brightness_mode")?.out?.trim()
+                if (mode == "1" && ShizukuAccess.shell("settings put system screen_brightness_mode 0")?.ok == true) {
+                    dimmed = true
+                    LogRepository.from(context).add("가까이 접어 밝기 고정")
+                }
+            } else if (dimmed && (!dimLock(context) || a >= DIM_ANGLE + 2)) {
+                undim()
+            }
+        }
+
+        private fun undim() {
+            if (!dimmed) return
+            ShizukuAccess.shell("settings put system screen_brightness_mode 1")
+            dimmed = false
+        }
+
+        // 다음 바뀜은 진동 없이(까딱은 따로 울리고, 멈춤·설정 바뀜은 손놀림이 아니라서)
         @Volatile private var quiet = false
         private var last: Float? = null
 
@@ -267,7 +332,8 @@ object AutoFlex {
                     if (syncDue(context)) worker.post { syncApps(context) }
                 } else {
                     stopListening()
-                    // 화면을 끄면 딸깍으로 켠 플렉스 모드도 끈다
+                    worker.post { undim() }
+                    // 화면을 끄면 까딱으로 켠 플렉스 모드도 끈다
                     worker.post {
                         if (latchedFlow.value) {
                             latchedFlow.value = false
@@ -302,9 +368,21 @@ object AutoFlex {
             stopListening()
             worker.removeCallbacksAndMessages(null)
             worker.post {
+                undim()
                 set(false)
                 thread.quitSafely()
             }
+        }
+
+        // 접는 선 방향: 세로로 접힌 채(책처럼)는 플렉스 모드를 걸지 않는다. 방향이 바뀌면 지금 각도로 다시 정한다
+        private val gravity = object : SensorEventListener {
+            override fun onSensorChanged(e: SensorEvent) {
+                val h = isHorizontal(e.values[0], e.values[1], e.values[2], hingeAlongY(context))
+                if (h == horizontalFlow.value) return
+                horizontalFlow.value = h
+                decide(last, 300L)
+            }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
         }
 
         private fun listen() {
@@ -312,12 +390,16 @@ object AutoFlex {
             val sm = context.getSystemService(SensorManager::class.java)
             val hinge = sm.getDefaultSensor(Sensor.TYPE_HINGE_ANGLE) ?: return
             listening = sm.registerListener(this, hinge, SensorManager.SENSOR_DELAY_UI, worker)
+            (sm.getDefaultSensor(Sensor.TYPE_GRAVITY) ?: sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER))?.let {
+                sm.registerListener(gravity, it, SensorManager.SENSOR_DELAY_NORMAL, worker)
+            }
             fine.start()
         }
 
         private fun stopListening() {
             if (!listening) return
             context.getSystemService(SensorManager::class.java).unregisterListener(this)
+            context.getSystemService(SensorManager::class.java).unregisterListener(gravity)
             fine.stop()
             listening = false
             angleFlow.value = null
@@ -343,20 +425,22 @@ object AutoFlex {
         private fun onAngle(a: Float) {
             angleFlow.value = a
             last = a
+            dimCheck(a)
+            if (!enabled(context)) return
             val click = click(context)
             var hit = false
-            if (click && !pausedFlow.value && clicks.feed(a, android.os.SystemClock.elapsedRealtime())) {
+            if (click && !pausedFlow.value && clicks.feed(a, android.os.SystemClock.elapsedRealtime()) && horizontalFlow.value) {
                 latchedFlow.value = !latchedFlow.value
                 hit = true
-                LogRepository.from(context).add("딸깍: 플렉스 모드 ${if (latchedFlow.value) "켬" else "끔"}")
+                LogRepository.from(context).add("까딱: 플렉스 모드 ${if (latchedFlow.value) "켬" else "끔"}")
                 buzz(context, latchedFlow.value)
             }
             if (a < ANGLE_LOW && latchedFlow.value) {
-                latchedFlow.value = false // 닫으면 딸깍으로 켠 것도 끈다
+                latchedFlow.value = false // 닫으면 까딱으로 켠 것도 끈다
                 hit = true
             }
             if (hit) quiet = true
-            // 딸깍은 바로, 각도 범위는 잠깐 머문 뒤에 바꾼다(딸깍을 쓰면 도중에 범위를 지나쳐도 깜빡이지 않게 더 오래)
+            // 까딱은 바로, 각도 범위는 잠깐 머문 뒤에 바꾼다(까딱을 쓰면 도중에 범위를 지나쳐도 깜빡이지 않게 더 오래)
             decide(
                 a,
                 if (hit || latchedFlow.value) {
@@ -371,10 +455,11 @@ object AutoFlex {
 
         private fun decide(a: Float?, delay: Long) {
             val next = when {
+                !enabled(context) -> false
                 pausedFlow.value -> false
                 latchedFlow.value -> true
                 a == null -> false
-                else -> inRange(a, min(context), max(context))
+                else -> inRange(a, min(context), max(context)) && horizontalFlow.value
             }
             if (next == want && worker.hasCallbacks(apply)) return
             want = next
@@ -382,7 +467,7 @@ object AutoFlex {
             if (next != activeFlow.value) worker.postDelayed(apply, delay) else quiet = false
         }
 
-        /** 멈춤·딸깍 설정이 바뀌었을 때 지금 각도로 다시 정한다. */
+        /** 멈춤·까딱 설정이 바뀌었을 때 지금 각도로 다시 정한다. */
         fun recheck() {
             worker.post {
                 if (!click(context)) latchedFlow.value = false
@@ -399,7 +484,8 @@ object AutoFlex {
             val err = if (on) FlexPanel.forceHalfOpened(context) else FlexPanel.resetPosture(context)
             if (err == null) {
                 activeFlow.value = on
-                if (!quiet) rangeBuzz(context, on)
+                // 실사용에서는 들어올 때만 울린다(펴거나 닫으며 빠져나갈 때마다 울리면 거슬린다). 설정 화면은 따로 둘 다 울린다
+                if (!quiet && on) rangeBuzz(context, true)
             }
             quiet = false
         }

@@ -89,6 +89,7 @@ import com.labok.goat.ui.liquid.goo
 import com.labok.goat.ui.text.Copy
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -234,6 +235,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     val active by AutoFlex.active.collectAsStateWithLifecycle()
     val latched by AutoFlex.latched.collectAsStateWithLifecycle()
     var click by remember { mutableStateOf(AutoFlex.click(context)) }
+    var dim by remember { mutableStateOf(AutoFlex.dimLock(context)) }
     val supported = remember { AutoFlex.supported() && AutoFlex.hasHingeSensor(context) }
     // 자동 플렉스가 꺼져 있어도 게이지에 지금 각도가 보이게 화면에서 직접 읽는다(켜져 있으면 서비스가 읽은 값을 쓴다)
     val localAngle = rememberHingeAngle(supported && engineAngle == null)
@@ -243,10 +245,14 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var max by remember { mutableIntStateOf(AutoFlex.max(context)) }
     var query by remember { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
+    // 플렉스 화면 지원 앱(설치 파일을 읽어 추정, 처음 한 번은 시간이 걸린다). null이면 찾는 중
+    var aware by remember { mutableStateOf<Set<String>?>(null) }
+    val horizontal = rememberHingeHorizontal(supported)
     // 패널을 끈 앱(예외). 나머지는 모두 켜져 있다
     var off by remember { mutableStateOf(AutoFlex.excluded(context)) }
     var appsOpen by remember { mutableStateOf(false) }
     var gesturesOpen by remember { mutableStateOf(false) }
+    var diagRunning by remember { mutableStateOf(false) }
     var wheel by remember { mutableStateOf(AutoFlex.wheel.read(context)) }
     // 이 설정 화면을 보는 동안에는 자동 플렉스를 멈춰 화면이 바뀌지 않게 한다. 시험은 [플렉스 모드 테스트하기]가 여는
     // 시험 화면(FlexTestActivity)에서만 하므로, 이 화면이 앞에 있을 때(RESUMED)만 멈춘다
@@ -268,6 +274,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     // 범위를 끌어 바꿀 때가 아니라 폰을 접고 펼 때만 울리도록 각도가 바뀔 때만 본다. 시험 화면에서는 서비스가 울린다
     val rangeNow by androidx.compose.runtime.rememberUpdatedState(min to max)
     val resumedNow by androidx.compose.runtime.rememberUpdatedState(resumed)
+    val horizontalNow by androidx.compose.runtime.rememberUpdatedState(horizontal)
     val angleNow by androidx.compose.runtime.rememberUpdatedState(angle)
     LaunchedEffect(supported) {
         if (!supported) return@LaunchedEffect
@@ -275,12 +282,15 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         androidx.compose.runtime.snapshotFlow { angleNow }.collect { a ->
             if (a == null) return@collect
             val inside = AutoFlex.inRange(a, rangeNow.first, rangeNow.second)
-            if (was != null && inside != was && resumedNow) AutoFlex.rangeBuzz(context, inside)
+            if (was != null && inside != was && resumedNow && horizontalNow) AutoFlex.rangeBuzz(context, inside)
             was = inside
         }
     }
     LaunchedEffect(supported) {
-        if (supported) apps = withContext(Dispatchers.IO) { loadApps(context) }
+        if (!supported) return@LaunchedEffect
+        val list = withContext(Dispatchers.IO) { loadApps(context) }
+        apps = list
+        aware = withContext(Dispatchers.IO) { list.filter { com.labok.goat.data.lab.FlexAppScan.supports(context, it.pkg) }.map { it.pkg }.toSet() }
     }
 
     // 스위치는 누르자마자 바뀌고(물방울 손잡이가 먼저 출렁인다), 줄은 손잡이가 자리 잡은 뒤 물처럼 흘러 다른 묶음으로 옮겨 간다
@@ -303,8 +313,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         GlassCard {
             Text(Copy.LAB_FLEX_RANGE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(Copy.LAB_FLEX_RANGE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Text(Copy.LAB_FLEX_RANGE_HINGE, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Text(Copy.LAB_FLEX_RANGE_HINGE2, color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             FlexAngleGauge(
                 angle,
@@ -319,21 +327,8 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
             )
             Spacer(Modifier.height(Gap.Item))
             Text(Copy.LAB_FLEX_RANGE_HOW, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Text(Copy.LAB_FLEX_RANGE_HOW2, color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
-            val now = angle?.toInt()
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LiquidButton(Copy.LAB_FLEX_CAL_START, modifier = Modifier.weight(1f), enabled = now != null, onClick = {
-                    now?.let { max = it.coerceAtLeast(min + 10).coerceAtMost(AutoFlex.ANGLE_HIGH) }
-                    AutoFlex.setRange(context, min, max)
-                })
-                LiquidButton(Copy.LAB_FLEX_CAL_END, modifier = Modifier.weight(1f), enabled = now != null, onClick = {
-                    now?.let { min = it.coerceAtMost(max - 10).coerceAtLeast(AutoFlex.ANGLE_LOW) }
-                    AutoFlex.setRange(context, min, max)
-                })
-            }
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton(Copy.LAB_FLEX_RANGE_RESET, primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
+            LiquidButton(Copy.LAB_FLEX_RANGE_RESET, modifier = Modifier.fillMaxWidth(), onClick = {
                 min = AutoFlex.DEFAULT_MIN
                 max = AutoFlex.DEFAULT_MAX
                 AutoFlex.setRange(context, min, max)
@@ -385,6 +380,18 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                 }
             }
         }
+        // 가까이 접으면 밝기 고정: 자동 플렉스와 따로 켜고 끈다(둘 중 하나라도 켜지면 상주 서비스가 힌지를 듣는다)
+        item(key = "dim") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    LiquidSwitchRow(Copy.LAB_FLEX_DIM, if (shizuku == ShizukuAccess.State.READY) Copy.LAB_FLEX_DIM_BODY else Copy.LAB_FLEX_NEED_SHIZUKU, dim, shizuku == ShizukuAccess.State.READY || dim) { v ->
+                        dim = v
+                        AutoFlex.setDimLock(context, v)
+                        GoatService.sync(context)
+                    }
+                }
+            }
+        }
         item(key = "range") { Box(Modifier.widthIn(max = ContentMaxWidth)) { rangeCard() } }
         // 접으면 패널 자동 표시(공식 화면과 같은 이름): 요약 줄을 누르면 앱 목록이 펼쳐진다
         val q = query.trim()
@@ -419,17 +426,27 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                 }
             }
             val excluded = all.filter { it.pkg in off }
-            val rest = all.filter { it.pkg !in off }
+            val known = aware
+            // 켜 둔 앱은 플렉스 화면 지원 앱과 그 밖의 앱으로 나눠 모은다(지원 앱을 찾는 동안은 한데 둔다)
+            val awareApps = if (known == null) emptyList() else all.filter { it.pkg !in off && it.pkg in known }
+            val rest = all.filter { it.pkg !in off && (known == null || it.pkg !in known) }
             if (apps == null) item(key = "loading") { LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp)) }
             // 같은 키를 두 묶음에서 그대로 써서, 켜고 끌 때 줄이 사라졌다 생기지 않고 새 자리로 흘러간다
             val anim = Modifier
             if (excluded.isNotEmpty()) {
                 item(key = "h-off") { Section("패널을 끈 앱 ${excluded.size}", anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
                 items(excluded, key = { it.pkg }) { app ->
-                    FlexAppRow(app, pending[app.pkg] ?: false, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) { toggle(app, it) }
+                    FlexAppRow(app, pending[app.pkg] ?: false, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade), aware = aware?.contains(app.pkg) == true) { toggle(app, it) }
                 }
             }
-            item(key = "h-rest") { Section(Copy.LAB_FLEX_APPS_REST, anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
+            if (apps != null && known == null) item(key = "scanning") { LiquidLoader(Copy.LAB_FLEX_APPS_SCANNING, Modifier.padding(vertical = 12.dp)) }
+            if (awareApps.isNotEmpty()) {
+                item(key = "h-aware") { Section("${Copy.LAB_FLEX_APPS_AWARE} ${awareApps.size}", anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
+                items(awareApps, key = { it.pkg }) { app ->
+                    FlexAppRow(app, pending[app.pkg] ?: true, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade), aware = true) { toggle(app, it) }
+                }
+            }
+            item(key = "h-rest") { Section(if (known == null) Copy.LAB_FLEX_APPS_REST else Copy.LAB_FLEX_APPS_OTHER, anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
             items(rest, key = { it.pkg }) { app ->
                 FlexAppRow(app, pending[app.pkg] ?: true, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) { toggle(app, it) }
             }
@@ -452,6 +469,25 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                             }
                         }
                     )
+                }
+            }
+        }
+        // 터치패널 진단: 일반 앱에 시스템 터치패널을 띄울 수 있는지 가릴 정보를 모아 파일로 보낸다
+        item(key = "diag") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.LAB_FLEX_DIAG_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.LAB_FLEX_DIAG_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidButton(if (diagRunning) Copy.LAB_FLEX_DIAG_RUNNING else Copy.LAB_FLEX_DIAG_RUN, primary = false, enabled = !diagRunning && shizuku == ShizukuAccess.State.READY, modifier = Modifier.fillMaxWidth(), onClick = {
+                        diagRunning = true
+                        scope.launch {
+                            val text = withContext(Dispatchers.IO) { com.labok.goat.data.lab.FlexPanel.diagnose(context) }
+                            val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("flex-panel"), text) }
+                            diagRunning = false
+                            uri?.let { share(context, it) }
+                        }
+                    })
                 }
             }
         }
@@ -516,7 +552,7 @@ private val FLEX_GESTURES = listOf(
  * 위 화면에 영상이 스며들듯 켜진다.
  */
 @Composable
-private fun FlexPanelArt() {
+internal fun FlexPanelArt() {
     val c = LocalLiquid.current
     val t = com.labok.goat.ui.art.artLoop(3200)
     androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(120.dp)) {
@@ -647,6 +683,7 @@ internal fun FlexTestScreen(onClose: () -> Unit) {
     val angle = engineAngle ?: localAngle
     val min = remember { AutoFlex.min(context) }
     val max = remember { AutoFlex.max(context) }
+    val horizontal = rememberHingeHorizontal(true)
     // 갈라지는 정도: 0 한 화면, 1 위아래 두 칸
     val split by androidx.compose.animation.core.animateFloatAsState(if (active) 1f else 0f, Springs.water(reduce), label = "flexTestSplit")
     Column(Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(16.dp)) {
@@ -663,7 +700,8 @@ internal fun FlexTestScreen(onClose: () -> Unit) {
                 Column(Modifier.padding(Gap.CardPadding).graphicsLayer { alpha = 1 - split * 2 }, horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(Copy.LAB_FLEX_TEST_TITLE, color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
                     Spacer(Modifier.height(Gap.Item))
-                    Text(Copy.LAB_FLEX_TEST_HOW, color = c.muted, style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    // 세로로 접힌 채(책처럼)면 플렉스 모드가 걸리지 않으니 먼저 돌려 달라고 안내한다
+                    Text(if (horizontal) Copy.LAB_FLEX_TEST_HOW else Copy.LAB_FLEX_TEST_TURN, color = if (horizontal) c.muted else c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = if (horizontal) FontWeight.Normal else FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     Text("$min~$max°", color = c.ink, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(Gap.Section))
                     // 시험만 한다: 조절바 없이 지금 각도만 크게
@@ -740,6 +778,82 @@ internal fun FlexTestScreen(onClose: () -> Unit) {
 }
 
 /**
+ * 지금 접는 선이 가로로 놓였는지(화면에서 직접 중력을 읽는다, [on]일 때만). 판정은 서비스와 같다([AutoFlex.isHorizontal]).
+ * 처음 한 번 창이 알려 주는 접는 선 방향과 화면 회전으로 힌지 축(기본 방향에서 세로인지 가로인지)을 확인해 저장해 둔다.
+ */
+@Composable
+internal fun rememberHingeHorizontal(on: Boolean): Boolean {
+    val context = LocalContext.current
+    var horizontal by remember { mutableStateOf(true) }
+    val activity = remember(context) { generateSequence(context) { (it as? android.content.ContextWrapper)?.baseContext }.filterIsInstance<android.app.Activity>().firstOrNull() }
+    LaunchedEffect(activity, on) {
+        if (!on || activity == null) return@LaunchedEffect
+        val info = androidx.window.layout.WindowInfoTracker.getOrCreate(activity).windowLayoutInfo(activity).first()
+        val fold = info.displayFeatures.filterIsInstance<androidx.window.layout.FoldingFeature>().firstOrNull() ?: return@LaunchedEffect
+
+        @Suppress("DEPRECATION")
+        val rot = activity.windowManager.defaultDisplay.rotation
+        val upright = rot == android.view.Surface.ROTATION_0 || rot == android.view.Surface.ROTATION_180
+        AutoFlex.setHingeAlongY(context, (fold.orientation == androidx.window.layout.FoldingFeature.Orientation.VERTICAL) == upright)
+    }
+    androidx.compose.runtime.DisposableEffect(on) {
+        if (!on) return@DisposableEffect onDispose { }
+        val sm = context.getSystemService(android.hardware.SensorManager::class.java)
+        val sensor = sm?.getDefaultSensor(android.hardware.Sensor.TYPE_GRAVITY) ?: sm?.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)
+        val l = object : android.hardware.SensorEventListener {
+            override fun onSensorChanged(e: android.hardware.SensorEvent) {
+                horizontal = AutoFlex.isHorizontal(e.values[0], e.values[1], e.values[2], AutoFlex.hingeAlongY(context))
+            }
+            override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) = Unit
+        }
+        if (sensor != null) sm.registerListener(l, sensor, android.hardware.SensorManager.SENSOR_DELAY_NORMAL)
+        onDispose { sm?.unregisterListener(l) }
+    }
+    return horizontal
+}
+
+/** 자동 플렉스 모드 사용 방법(점 세 개 메뉴 → 사용 방법). */
+@Composable
+internal fun FlexHelpSheet() {
+    com.labok.goat.ui.components.SheetColumn(title = "사용 방법") {
+        com.labok.goat.ui.components.HelpTopic(
+            "1. 무엇을 하나요",
+            "폴드8은 반쯤 접어 세워도 플렉스 모드로 바뀌지 않습니다. 자동 플렉스 모드를 켜 두면 가로로 접어 정한 각도에 들어올 때 " +
+                "GOAT가 대신 플렉스 모드로 바꿔 줍니다. 위 화면에는 쓰던 앱이, 아래 화면에는 조작 화면이 나옵니다."
+        ) { FlexPanelArt() }
+        com.labok.goat.ui.components.HelpTopic(
+            "2. 먼저 Shizuku 연결",
+            "플렉스 모드로 바꾸는 명령은 셸 권한이 있어야 해서 Shizuku가 필요합니다. 점 세 개 메뉴의 '권한 설정'에서 연결 방법을 볼 수 있습니다. " +
+                "Shizuku가 연결되면 이 화면의 스위치를 켤 수 있습니다."
+        )
+        com.labok.goat.ui.components.HelpTopic(
+            "3. 켜고 쓰기",
+            "'사용 중'을 켠 뒤 폰을 옆으로 돌려 접는 선이 가로로 놓이게 하고, 노트북처럼 천천히 접습니다. 각도가 범위에 들어오면 진동과 함께 " +
+                "플렉스 모드가 켜지고, 펴거나 닫아 범위를 벗어나면 원래대로 돌아옵니다. 책처럼 세로로 접을 때는 켜지지 않습니다."
+        )
+        com.labok.goat.ui.components.HelpTopic(
+            "4. 각도 범위 맞추기",
+            "폴드8 힌지는 원하는 각도에서 저절로 멈추지 않아 손이나 거치대로 각도를 잡습니다. 게이지의 두 손잡이를 끌어 내 습관에 맞는 범위를 정하고, " +
+                "손잡이를 꾹 누르고 있으면 1도씩 세밀하게 맞출 수 있습니다. [플렉스 모드 테스트하기]로 바로 시험해 보세요."
+        )
+        com.labok.goat.ui.components.HelpTopic(
+            "5. 까딱으로 플렉스 모드",
+            "켜 두면 완전히 편 채 130~160°까지 살짝 접었다 1초 안에 다시 펴는 것(까딱)으로 플렉스 모드를 켜고 끕니다. " +
+                "켜 둔 동안은 펼친 채로도 플렉스 모드처럼 씁니다. 닫거나 화면을 끄면 꺼집니다."
+        )
+        com.labok.goat.ui.components.HelpTopic(
+            "6. 앱마다 다른 점",
+            "'플렉스 화면 지원 앱'은 유튜브·카메라처럼 접으면 스스로 위아래로 나뉘는 앱입니다(설치 파일을 읽어 추정). " +
+                "그 밖의 앱은 다른 폴드처럼 아래 화면에 터치패널이 뜨지 않을 수 있습니다. 왜 그런지 '터치패널 진단'으로 확인할 수 있습니다."
+        )
+        com.labok.goat.ui.components.HelpTopic(
+            "7. 끄기·되돌리기",
+            "'사용 중'을 끄면 GOAT가 켠 패널 설정을 모두 풀고 접힘 상태도 원래대로 돌립니다. 재부팅해도 원래대로 돌아옵니다."
+        )
+    }
+}
+
+/**
  * 화면에서 직접 읽는 힌지 각도([on]일 때만): 기본 센서(0·90·180)와 Shizuku 세밀한 각도([com.labok.goat.data.lab.FineHinge]).
  * 세밀한 값이 오면 그걸 쓴다.
  */
@@ -791,7 +905,7 @@ internal fun rememberHingeAngle(on: Boolean): Float? {
 
 /** 패널 앱 한 줄: 앱별 화면 배율 설정 목록과 같은 모양(아이콘·이름·마지막 사용)에 오른쪽 스위치. 켜고 끌 때 테두리가 물들고 줄이 살짝 출렁인다. */
 @Composable
-private fun FlexAppRow(app: AppEntry, on: Boolean, modifier: Modifier = Modifier, onChange: (Boolean) -> Unit) {
+private fun FlexAppRow(app: AppEntry, on: Boolean, modifier: Modifier = Modifier, aware: Boolean = false, onChange: (Boolean) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val shape = RoundedCornerShape(20.dp)
@@ -820,7 +934,8 @@ private fun FlexAppRow(app: AppEntry, on: Boolean, modifier: Modifier = Modifier
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
+            val sub = listOfNotNull(Copy.LAB_FLEX_AWARE_TAG.takeIf { aware }, app.lastUsed.takeIf { it > 0 }?.let { ago(it) }).joinToString(" · ")
+            if (sub.isNotEmpty()) Text(sub, color = c.muted, style = MaterialTheme.typography.labelSmall)
         }
         Spacer(Modifier.width(8.dp))
         LiquidSwitch(on, onChange, label = app.label)
@@ -884,7 +999,8 @@ private fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, e
     val handleStyle = androidx.compose.ui.text.TextStyle(fontFamily = com.labok.goat.ui.liquid.GalaxyFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)
 
     fun geo(w: Float, h: Float, density: Float): Pair<androidx.compose.ui.geometry.Offset, Float> {
-        val r = minOf(w / 2 - 34 * density, h - 30 * density)
+        // 잡으면 값 방울이 반원 바깥으로 떠오르므로(GAUGE_LIFT) 위·양옆에 그만큼 자리를 둔다
+        val r = minOf(w / 2 - 58 * density, h - 72 * density)
         return androidx.compose.ui.geometry.Offset(w / 2, h - 12 * density) to r
     }
 
@@ -908,10 +1024,18 @@ private fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, e
         return if (held == i + 1) v + (fineDeg(base, v) - v) * fineK else v.toFloat()
     }
 
+    // 물방울 손잡이: 손가락(값)을 용수철로 늦게 따라가고, 빨리 움직일수록 반원을 따라 길게 늘어났다가 멈추면 출렁이며 돌아온다
+    val springs = remember { listOf(androidx.compose.animation.core.Animatable(min.toFloat()), androidx.compose.animation.core.Animatable(max.toFloat())) }
+    listOf(min, max).forEachIndexed { i, v ->
+        val goal = shownDeg(i, v)
+        LaunchedEffect(goal, reduce) {
+            if (reduce) springs[i].snapTo(goal) else springs[i].animateTo(goal, androidx.compose.animation.core.spring(UiMotion.ratio(0.5f), UiMotion.stiffness(700f, 0.5f)))
+        }
+    }
     Box(
         Modifier
             .fillMaxWidth()
-            .height(190.dp)
+            .height(230.dp)
             .pointerInput(editable) {
                 if (!editable) return@pointerInput
                 awaitEachGesture {
@@ -986,52 +1110,73 @@ private fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, e
                 }
             }
     ) {
-        // 바탕 반원(선)과 세밀 조절 눈금(앞뒤 GAUGE_FINE칸, 5°마다 길게)
+        // 바탕 반원(선)
         androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
             val (center, r) = geo(size.width, size.height, density)
             drawArc(c.line, 180f, 180f, false, androidx.compose.ui.geometry.Offset(center.x - r, center.y - r), androidx.compose.ui.geometry.Size(2 * r, 2 * r), style = androidx.compose.ui.graphics.drawscope.Stroke(6.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round))
-            val base = fineBase ?: return@Canvas
-            for (i in -GAUGE_FINE..GAUGE_FINE) {
-                val v = base + i
-                val d = fineDeg(base, v)
-                val long = v % 5 == 0
-                val len = (if (long) 12 else 6).dp.toPx() * fineK
-                val inner = at(center, r - 10.dp.toPx(), d)
-                val outer = at(center, r - 10.dp.toPx() - len, d)
-                drawLine(c.ink.copy(alpha = 0.7f * fineK), inner, outer, 1.5.dp.toPx(), androidx.compose.ui.graphics.StrokeCap.Round)
-            }
         }
         // 범위 띠·손잡이·바늘(goo로 이어 붙는다). 세밀 조절 중에는 띠와 다른 손잡이가 잦아든다
         androidx.compose.foundation.Canvas(Modifier.matchParentSize().goo(c.ink, 5.dp)) {
             val (center, r) = geo(size.width, size.height, density)
             val band = (8 + 4 * glow).dp.toPx() * (1 - fineK)
             if (band > 0.5f) {
-                drawArc(c.ink, 180f + min, (max - min).toFloat(), false, androidx.compose.ui.geometry.Offset(center.x - r, center.y - r), androidx.compose.ui.geometry.Size(2 * r, 2 * r), style = androidx.compose.ui.graphics.drawscope.Stroke(band, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+                drawArc(c.ink, 180f + springs[0].value, springs[1].value - springs[0].value, false, androidx.compose.ui.geometry.Offset(center.x - r, center.y - r), androidx.compose.ui.geometry.Size(2 * r, 2 * r), style = androidx.compose.ui.graphics.drawscope.Stroke(band, cap = androidx.compose.ui.graphics.StrokeCap.Round))
             }
             listOf(min, max).forEachIndexed { i, v ->
                 val shrink = if (fineBase != null && held != i + 1) 1 - fineK else 1f
                 if (shrink < 0.05f) return@forEachIndexed
-                val d = shownDeg(i, v)
+                val d = springs[i].value
                 val p = at(center, r, d)
                 val g = grow[i].value
                 val tw = measurer.measure("$v°", handleStyle).size.width
-                val w = (tw + (22 + 8 * g).dp.toPx()) * shrink
-                val h = (28 + 6 * g).dp.toPx() * shrink
+                // 늘어남: 각속도(°/초)에 비례해 반원 방향으로 길어지고 두께는 조금 얇아진다
+                val stretch = (kotlin.math.abs(springs[i].velocity) / 400f).coerceAtMost(0.6f)
+                // 기본 조절바와 같다: 잡으면 손잡이가 납작하고 넓어지고(30→24dp), 값 방울이 반원 바깥으로 떠올라 큰 글자로 값을 보여 준다
+                val w = (tw + (22 + 8 * g).dp.toPx()) * shrink * (1 + stretch)
+                val h = (28 - 4 * g).dp.toPx() * shrink * (1 - stretch * 0.3f)
                 // 손잡이는 반원을 따라 눕는다(꼭대기 90°에서 수평, 양 끝으로 갈수록 세워진다)
                 rotate(d - 90f, p) {
                     drawRoundRect(c.ink, androidx.compose.ui.geometry.Offset(p.x - w / 2, p.y - h / 2), androidx.compose.ui.geometry.Size(w, h), androidx.compose.ui.geometry.CornerRadius(h / 2))
                 }
+                if (g > 0.01f) {
+                    val bs = (10 + 36 * g).dp.toPx()
+                    val lift = measurer.measure("$v°", handleStyle.copy(fontSize = 17.sp)).size.width
+                    val bw = maxOf(bs, (lift + 20.dp.toPx()) * (bs / 46.dp.toPx()))
+                    val q = at(center, r + g * GAUGE_LIFT.dp.toPx(), d)
+                    rotate(d - 90f, q) {
+                        drawRoundRect(c.ink, androidx.compose.ui.geometry.Offset(q.x - bw / 2, q.y - bs / 2), androidx.compose.ui.geometry.Size(bw, bs), androidx.compose.ui.geometry.CornerRadius(bs / 2))
+                    }
+                }
+            }
+            // 세밀 조절 패널: 기본 조절바처럼 손잡이 자리에서 반원을 따라 양옆으로 퍼져 반원 전체를 덮는 잉크 띠(goo라 손잡이와 이어진다)
+            if (fineK > 0.01f) {
+                val fromDeg = listOf(min, max).getOrNull(held - 1)?.toFloat() ?: 90f
+                val mid = fromDeg + (90f - fromDeg) * fineK
+                val sweep = 12f + (180f - 12f) * fineK
+                drawArc(c.ink, 180f + mid - sweep / 2, sweep, false, androidx.compose.ui.geometry.Offset(center.x - r, center.y - r), androidx.compose.ui.geometry.Size(2 * r, 2 * r), style = androidx.compose.ui.graphics.drawscope.Stroke(22.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round))
             }
             if (angle != null && fineBase == null) drawCircle(c.ink, (8 + 3 * glow).dp.toPx(), at(center, r, pos))
         }
-        // 손잡이 값 글자(반전)
+        // 세밀 조절 눈금(패널 위, 반전색): 앞뒤 GAUGE_FINE칸, 5°마다 길게. 그 위에 손잡이 값 글자(반전)
         androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
             val (center, r) = geo(size.width, size.height, density)
+            val base = fineBase
+            if (base != null && fineK > 0.01f) {
+                for (i in -GAUGE_FINE..GAUGE_FINE) {
+                    val v = base + i
+                    val long = v % 5 == 0
+                    val len = (if (long) 10 else 5).dp.toPx() * fineK
+                    val d = fineDeg(base, v)
+                    drawLine(c.onInk.copy(alpha = 0.75f * fineK), at(center, r - len / 2, d), at(center, r + len / 2, d), 1.5.dp.toPx(), androidx.compose.ui.graphics.StrokeCap.Round)
+                }
+            }
             listOf(min, max).forEachIndexed { i, v ->
                 if (fineBase != null && held != i + 1 && fineK > 0.5f) return@forEachIndexed
-                val d = shownDeg(i, v)
-                val p = at(center, r, d)
-                val layout = measurer.measure("$v°", handleStyle.copy(color = c.onInk, fontSize = (12 + 2 * grow[i].value).sp))
+                val d = springs[i].value
+                // 글자는 떠오른 값 방울을 따라 올라가며 커진다
+                val g = grow[i].value
+                val p = at(center, r + g * GAUGE_LIFT.dp.toPx(), d)
+                val layout = measurer.measure("$v°", handleStyle.copy(color = c.onInk, fontSize = (12 + 5 * g).sp))
                 rotate(d - 90f, p) {
                     drawText(layout, topLeft = androidx.compose.ui.geometry.Offset(p.x - layout.size.width / 2f, p.y - layout.size.height / 2f))
                 }
@@ -1044,6 +1189,9 @@ private fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, e
         }
     }
 }
+
+/** 잡았을 때 값 방울이 반원 바깥으로 떠오르는 거리(dp, 기본 조절바와 같다). */
+private const val GAUGE_LIFT = 26
 
 /** 게이지 세밀 조절이 보여 주는 앞뒤 칸(°). */
 private const val GAUGE_FINE = 10
