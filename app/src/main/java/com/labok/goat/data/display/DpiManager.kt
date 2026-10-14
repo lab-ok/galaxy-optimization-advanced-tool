@@ -31,6 +31,8 @@ class DpiManager(context: Context) : DpiController {
 
     private val appContext = context.applicationContext
 
+    override fun foldable(): Boolean = DeviceKind.isFoldable(appContext)
+
     override fun hasPermission(): Boolean = appContext.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) ==
         PackageManager.PERMISSION_GRANTED
 

@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.labok.goat.R
+import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.DpiFixer
 import com.labok.goat.domain.ExternalChange
@@ -23,10 +24,12 @@ object ExternalChangeNotifier {
     const val ACTION_ADOPT = "com.labok.goat.EXTERNAL_ADOPT"
     const val ACTION_RESTORE = "com.labok.goat.EXTERNAL_RESTORE"
 
-    fun text(change: ExternalChange) = "다른 설정에서 ${change.role.label} 화면 DPI가 ${change.from}에서 ${change.to}(으)로 변경되었습니다."
+    /** 화면이 하나인 폰([foldable]이 false)에는 외부·내부 구분을 붙이지 않는다(앱 안 카드와 같은 문구). */
+    fun text(change: ExternalChange, foldable: Boolean = true) = "다른 설정에서 ${if (foldable) "${change.role.label} 화면 " else ""}DPI가 ${change.from}에서 ${change.to}(으)로 변경되었습니다."
 
     fun show(context: Context, change: ExternalChange) {
         if (!canNotify(context)) return
+        val body = text(change, DeviceKind.isFoldable(context))
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "외부 DPI 변경", NotificationManager.IMPORTANCE_DEFAULT))
         fun action(a: String, code: Int) = PendingIntent.getBroadcast(
@@ -39,8 +42,8 @@ object ExternalChangeNotifier {
         val n = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setContentTitle("화면 배율이 다른 곳에서 바뀌었습니다")
-            .setContentText(text(change))
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text(change) + " 이 값을 기준으로 할지, 앱 설정으로 복원할지 선택하세요."))
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$body 이 값을 기준으로 할지, 앱 설정으로 복원할지 선택하세요."))
             .setContentIntent(open)
             .setAutoCancel(true)
             .addAction(0, "${change.to} 기준으로 설정", action(ACTION_ADOPT, 1))
