@@ -157,19 +157,37 @@ object FlexPanel {
         }
         appendLine("반쯤 접힘 걸기 → ${forceHalfOpened(context) ?: "성공"}")
         Thread.sleep(1000)
-        // 패널 화면이 열렸다가 스스로 닫히므로(실기 녹화), 왜 닫히는지 시스템 로그로 남긴다
-        ShizukuAccess.shell("logcat -c")
-        appendLine("삼성 패널 화면 직접 열기 → ${sh("am start -n '$PANEL_ACTIVITY'")}")
-        Thread.sleep(2500)
-        val log = ShizukuAccess.shell("logcat -d -b main,system,events -v time | grep -i -E 'flex|controlpanel|tabletop|wm_finish_activity|wm_set_resumed' | tail -300")?.out?.trim().orEmpty()
-        appendLine("── 패널 화면 로그 ──")
-        appendLine(log.ifBlank { "(로그 없음)" })
-        appendLine("──")
+        // 패널은 화면 분할의 아래 칸('controlpanel')이 아니면 스스로 닫혔다(2차 로그: "controlpanel is not top child").
+        // 이번에는 멀티 창(분할) 모드로 띄워 보고, 시도마다 시스템 로그를 따로 남긴다
+        fun panelLog(title: String) {
+            Thread.sleep(2500)
+            val log = ShizukuAccess.shell("logcat -d -b main,system,events -v time | grep -i -E 'flex|controlpanel|tabletop|split|stage|wm_finish_activity' | tail -150")?.out?.trim().orEmpty()
+            appendLine("── $title 로그 ──")
+            appendLine(log.ifBlank { "(로그 없음)" })
+            appendLine("──")
+        }
+        ShizukuAccess.shell("logcat -b all -c")
+        appendLine("시도 1: 멀티 창 모드로 패널 열기 → ${sh("am start --windowingMode 6 -n '$PANEL_ACTIVITY'")}")
+        panelLog("시도 1")
+        ShizukuAccess.shell("logcat -b all -c")
+        appendLine("시도 2: 그냥 열기(비교용) → ${sh("am start -n '$PANEL_ACTIVITY'")}")
+        panelLog("시도 2")
         PANEL_ACTIONS.forEach { appendLine("${it.substringAfterLast('.')} 신호 → ${sh("am broadcast -a $it")}") }
         appendLine("지금 맨 앞 화면 → ${sh("dumpsys activity activities | grep -m1 -E 'topResumedActivity|mResumedActivity'")}")
         // 패널이 떴는지 볼 시간을 준 뒤 접힘 상태를 되돌린다
         Thread.sleep(10_000)
         appendLine("접힘 상태 되돌리기 → ${resetPosture(context) ?: "성공"}")
+        // 다음 시도를 고르려고, 시스템이 화면 분할·패널을 다룰 때 쓰는 명령과 함수 이름을 모은다
+        appendLine()
+        appendLine("── WMShell 명령 목록 ──")
+        appendLine(ShizukuAccess.shell("dumpsys activity service SystemUIService WMShell help 2>&1 | head -200")?.out?.trim()?.ifBlank { "(없음)" } ?: "Shizuku 연결 안 됨")
+        appendLine("──")
+        val sysui = ShizukuAccess.shell("pm path com.android.systemui")?.out.orEmpty().lines().map { it.removePrefix("package:").trim() }.firstOrNull { it.isNotEmpty() }
+        if (sysui != null) {
+            appendLine("── 시스템 UI 속 패널·분할 함수 이름 ──")
+            DexStrings.find(sysui, Regex("(?i)controlpanel|flexpanel|flex_panel|startflex|launchflex|showflex|flexmode"), limit = 300).forEach { appendLine(it) }
+            appendLine("──")
+        }
         LogRepository.from(context).add("실험실 플렉스: 삼성 터치패널 살리기 시도")
     }
 

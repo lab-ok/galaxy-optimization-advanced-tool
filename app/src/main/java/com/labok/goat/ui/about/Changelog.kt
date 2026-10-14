@@ -39,6 +39,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.8.1",
+        "2026-10-14",
+        "상태 표시줄 아이콘 화면을 정리했습니다.",
+        listOf(
+            "변경" to listOf(
+                "마이크·카메라 사용 표시 숨기기를 다른 아이콘과 같은 목록에 넣고, [처음대로]를 맨 아래로 옮겼습니다. [처음대로]는 초록 점도 함께 되돌립니다.",
+                "숨은 기능을 다듬었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.8.0",
         "2026-10-14",
         "상태 표시줄 아이콘 숨기기와 비행기 모드 무선이 정식 기능이 되었습니다.",

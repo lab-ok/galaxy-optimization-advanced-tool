@@ -182,12 +182,8 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
                 }
             }
         }
+        // 마이크·카메라 사용 표시(초록 점)도 상태 표시줄 아이콘이라 목록 맨 끝에 같은 모양·간격으로 둔다(기기 설정 값이라 Shizuku로 바꾼다)
         Spacer(Modifier.height(Gap.Item))
-        val changed = remember(w.version) { IconBlacklist.setting.changed(context) }
-        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(IconBlacklist.setting) })
-        // 마이크·카메라 사용 표시(초록 점): 상태 표시줄 아이콘과 같은 자리라 이 화면에 함께 둔다(기기 설정 값이라 Shizuku로 바꾼다)
-        // 제목·스위치를 따로 두지 않고 아이콘 줄 하나로 묶는다(위 아이콘 목록과 같은 모양)
-        Spacer(Modifier.height(Gap.Section))
         val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
         var dotHidden by remember { mutableStateOf<Boolean?>(null) }
@@ -211,6 +207,16 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
                 }
             }
         }
+        // [처음대로]는 맨 아래: 아이콘 목록과 초록 점을 함께 GOAT가 바꾸기 전으로 되돌린다
+        Spacer(Modifier.height(Gap.Item))
+        val changed = remember(w.version) { IconBlacklist.setting.changed(context) }
+        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed || dotHidden == true, modifier = Modifier.fillMaxWidth(), onClick = {
+            if (changed) w.restore(IconBlacklist.setting)
+            if (dotHidden == true) {
+                dotHidden = false
+                scope.launch { withContext(Dispatchers.IO) { com.labok.goat.data.lab.PrivacyDot.set(context, false) } }
+            }
+        })
     }
 }
 
