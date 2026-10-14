@@ -147,6 +147,13 @@ object FlexPanel {
         fun appendLine(text: String = "") = emit(text + "\n")
         fun sh(cmd: String) = ShizukuAccess.shell(cmd)?.let { r -> (if (r.ok) "성공" else "실패") + r.out.ifBlank { r.err }.trim().take(200).let { if (it.isEmpty()) "" else " · $it" } } ?: "Shizuku 연결 안 됨"
         appendLine("패널 설정 켜기 → ${sh("settings put global flex_mode_panel_enabled 1")}")
+        // 시스템 리소스에 삼성이 넣어 둔 '플렉스 화면 앱' 목록이 있으면(다른 기종 framework-res에서 확인된 이름) 읽어 둔다.
+        // 있으면 GOAT가 플렉스 지원 앱을 구분하는 데 그대로 쓸 수 있다
+        listOf("flex_mode_app_list", "flex_panel_default_list", "flex_panel_default_app_list", "flex_mode_panel_default_list").forEach { name ->
+            val id = android.content.res.Resources.getSystem().getIdentifier(name, "array", "android")
+            val items = if (id == 0) null else runCatching { android.content.res.Resources.getSystem().getStringArray(id).toList() }.getOrNull()
+            appendLine("시스템 목록 $name → ${items?.let { "${it.size}개: ${it.joinToString(" | ").take(1500)}" } ?: "(없음)"}")
+        }
         listOf("global", "secure", "system").forEach { t ->
             val v = ShizukuAccess.shell("settings get $t flex_mode_apps_to_show_flex_mode_panel_automatically")?.out?.trim()
             if (!v.isNullOrBlank() && v != "null") appendLine("자동 표시 앱 목록($t) = ${v.take(200)}")
@@ -192,6 +199,12 @@ object FlexPanel {
         ShizukuAccess.shell("logcat -b all -c")
         appendLine("시도 2: 멀티 창 모드로 패널 열기 → ${sh("am start --windowingMode 6 -n '$PANEL_ACTIVITY'")}")
         panelLog("시도 2(멀티 창)")
+        // 7차: 삼성 시스템이 자동으로 띄울 때와 같은 모양으로 연다(FlexPanelStartController 디컴파일: AUTORUN_FLEX_PANEL 동작,
+        // 플래그 0x14241000(새 작업·위 정리·옆 칸 포함), 기본 화면 0번)
+        Thread.sleep(1500)
+        ShizukuAccess.shell("logcat -b all -c")
+        appendLine("시도 3: 시스템과 같은 방식(AUTORUN)으로 열기 → ${sh("am start -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 -n '$PANEL_ACTIVITY'")}")
+        panelLog("시도 3(AUTORUN)")
         PANEL_ACTIONS.forEach { appendLine("${it.substringAfterLast('.')} 신호 → ${sh("am broadcast -a $it")}") }
         appendLine("지금 맨 앞 화면 → ${sh("dumpsys activity activities | grep -m1 -E 'topResumedActivity|mResumedActivity'")}")
         // 패널이 떴는지 볼 시간을 준 뒤 접힘 상태를 되돌린다
