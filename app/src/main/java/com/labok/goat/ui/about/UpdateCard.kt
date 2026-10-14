@@ -95,7 +95,8 @@ internal fun UpdateCard(manual: Boolean) {
                     Text(Copy.UPDATE_INSTALLING, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
                 is Updater.State.Failed -> {
-                    Text(Copy.UPDATE_FAILED_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    // 받을 판(release)이 없으면 확인 단계에서 실패한 것이다: 업데이트를 못 한 것이 아니라 확인을 못 한 것
+                    Text(if (s.release == null) Copy.UPDATE_CHECK_FAILED_TITLE else Copy.UPDATE_FAILED_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(s.message, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     LiquidButton(Copy.UPDATE_RETRY, modifier = Modifier.fillMaxWidth(), primary = false, onClick = {

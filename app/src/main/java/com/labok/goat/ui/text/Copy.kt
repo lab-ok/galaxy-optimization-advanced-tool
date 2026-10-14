@@ -387,6 +387,7 @@ object Copy {
     }
     const val UPDATE_INSTALLING = "설치하는 중… 끝나면 GOAT가 다시 시작됩니다"
     const val UPDATE_FAILED_TITLE = "업데이트하지 못했습니다"
+    const val UPDATE_CHECK_FAILED_TITLE = "새 버전을 확인하지 못했습니다"
     const val UPDATE_RETRY = "다시 시도"
     fun updateTitle(v: String) = "새 버전 $v 업데이트가 있습니다"
     fun updateLatest(v: String) = "지금 쓰는 $v 버전이 최신입니다."

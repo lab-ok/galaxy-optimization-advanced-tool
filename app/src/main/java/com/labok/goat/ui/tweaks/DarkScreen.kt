@@ -1,6 +1,5 @@
 package com.labok.goat.ui.tweaks
 
-import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +31,7 @@ import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
+import com.labok.goat.ui.components.settingsIntent
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidSwitchRow
@@ -130,7 +130,7 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     Spacer(Modifier.height(Gap.Item))
                     // 강제 다크를 켰는데 다크 모드가 꺼져 있을 때만 강조한다(다크 모드를 원하지 않는 사람에게 권하지 않게)
                     LiquidButton(Copy.DARK_NIGHT_OPEN, primary = state.forced == true && !state.night, modifier = Modifier.fillMaxWidth(), onClick = {
-                        runCatching { context.startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                        runCatching { context.startActivity(settingsIntent(Settings.ACTION_DISPLAY_SETTINGS)) }
                             .onFailure { Toast.makeText(context, Copy.DARK_TOAST_NO_SETTINGS, Toast.LENGTH_SHORT).show() }
                     })
                 }

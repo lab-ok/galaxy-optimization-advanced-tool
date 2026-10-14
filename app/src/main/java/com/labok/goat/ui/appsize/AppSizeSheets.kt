@@ -133,7 +133,7 @@ internal fun AppSizeGuideSheet() {
         GlassCard {
             ShizukuGuide(
                 shizuku,
-                intro = "앱별 크기를 바꾸려면 무료 앱 Shizuku로 시스템 권한을 빌려야 합니다. 아래 순서대로 버튼만 누르면 되고, 처음 한 번만 하면 됩니다."
+                intro = "이 기능은 무료 앱 Shizuku로 시스템 권한을 빌려 씁니다. 아래 순서대로 버튼만 누르면 되고, 처음 한 번만 하면 됩니다."
             )
         }
         Spacer(Modifier.height(Gap.Card))
