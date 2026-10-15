@@ -57,6 +57,7 @@ import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import kotlin.math.abs
+import com.labok.goat.ui.text.Copy
 
 /** 기준 도형 한 변(dp). 런처 아이콘 크기와 같다. */
 private const val REF_DP = 48
@@ -238,8 +239,8 @@ private fun RulerCard(state: UiState, current: PanelSpec.Resolved?, onCalibrate:
         )
         Spacer(Modifier.height(Gap.Item))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            LiquidButton("이 폭으로 저장", modifier = Modifier.weight(1f), enabled = pct != 0, onClick = { onCalibrate(key, ppi) })
-            LiquidButton("기기 값으로", modifier = Modifier.weight(1f), primary = false, enabled = saved != null, onClick = { onCalibrate(key, null) })
+            LiquidButton("이 폭으로 저장", modifier = Modifier.weight(1f), enabled = pct != 0, disabledHint = Copy.DISABLED_SIZE_UNCHANGED, onClick = { onCalibrate(key, ppi) })
+            LiquidButton("기기 값으로", modifier = Modifier.weight(1f), primary = false, enabled = saved != null, disabledHint = Copy.DISABLED_SIZE_DEFAULT, onClick = { onCalibrate(key, null) })
         }
         Spacer(Modifier.height(Gap.Section))
         val px = with(LocalDensity.current) { REF_DP.dp.toPx() }

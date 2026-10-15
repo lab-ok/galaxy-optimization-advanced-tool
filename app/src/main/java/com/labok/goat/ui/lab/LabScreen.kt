@@ -39,6 +39,7 @@ import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.labok.goat.ui.text.Copy
 
 /**
  * 실험실 '조사 도구'. 기능을 만들 때 기기 설정과 시스템 함수를 살펴보는 시험 화면이다.
@@ -91,7 +92,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                         status = "저장했습니다 · " + snap.entries.joinToString(" · ") { "${it.key} ${it.value.size}개" }
                     }
                 })
-                LiquidButton("바꾼 뒤 비교", modifier = Modifier.weight(1f), primary = false, enabled = hasBefore, onClick = {
+                LiquidButton("바꾼 뒤 비교", modifier = Modifier.weight(1f), primary = false, enabled = hasBefore, disabledHint = Copy.DISABLED_NO_BEFORE, onClick = {
                     scope.launch {
                         val (diff, uri) = withContext(Dispatchers.IO) {
                             val before = SettingsSnapshot.parse(beforeFile.readText())

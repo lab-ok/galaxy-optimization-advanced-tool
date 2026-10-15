@@ -2,6 +2,7 @@ package com.labok.goat.ui.liquid
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
@@ -54,6 +56,7 @@ import kotlinx.coroutines.launch
  *   버튼 중심선으로 기어 와 서로 붙으며 다시 몸통이 된다. 터진 자리에는 그림자와 물 자국이 남았다 마른다.
  *   다 뭉치면 한 번 출렁인다(0.92×1.12 → 1).
  * - 사용할 수 없는 버튼: 잉크 대신 평평한 회색, 눌러도 부풀지 않고 좌우로 짧게 흔들려 거절을 알린다.
+ *   [disabledHint]가 있으면 왜 못 쓰는지·어떻게 하면 쓸 수 있는지 토스트로 함께 알린다.
  * [primary]가 false면 테두리 버튼(같은 눌림·흔들림, 터짐 없음). [danger]는 빨간색.
  */
 @Composable
@@ -65,12 +68,15 @@ fun LiquidButton(
     enabled: Boolean = true,
     burst: Boolean = primary,
     /** 되돌리기 어려운 동작(권한 초기화 등)은 빨간색으로 표시한다. */
-    danger: Boolean = false
+    danger: Boolean = false,
+    /** 사용할 수 없을 때 누르면 보여 줄 안내(꺼진 이유와 켜는 방법). null이면 흔들림만. */
+    disabledHint: String? = null
 ) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val haptics = rememberLiquidHaptics()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
 
@@ -105,6 +111,7 @@ fun LiquidButton(
             .clickable(interaction, null, role = Role.Button) {
                 if (!enabled) {
                     haptics.press()
+                    disabledHint?.let { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
                     if (!reduce) {
                         scope.launch {
                             shake.snapTo(0f)

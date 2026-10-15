@@ -186,6 +186,7 @@ object Copy {
     const val LAB_FLEX_GESTURES_TITLE = "터치패드 제스처 도움말"
     const val LAB_FLEX_SWITCH_BODY = "화면이 켜져 있는 동안 힌지 각도를 봅니다. 펴거나 닫으면 원래대로 돌아옵니다."
     const val LAB_FLEX_NEED_SHIZUKU = "Shizuku 연결이 필요합니다."
+    const val LAB_FLEX_TEST_NEED_ON = "위의 사용 스위치를 먼저 켜 주세요."
     const val LAB_FLEX_RANGE_TITLE = "플렉스 모드가 켜지는 각도 범위"
     const val LAB_FLEX_RANGE_BODY = "가로로 접어 이 범위에 들어오면 플렉스 모드가 켜집니다."
     const val LAB_FLEX_RANGE_HOW = "손잡이를 끌어 범위를 정하고, 꾹 누르면 세밀하게 맞춥니다."
@@ -503,4 +504,13 @@ object Copy {
     fun resAppsBody(n: Int) = "앱 ${n}개는 정해진 단계로만 배율을 바꿀 수 있어, 해상도를 낮추는 동안 그 앱들이 조금 커 보입니다."
     fun resConfirmBody(left: Int) = "${left}초 안에 '유지'를 누르지 않으면 원래 해상도로 되돌립니다."
     fun resDash(w: Int, percent: Int) = "$w · 화소 ${resPoints(percent)}%"
+
+    // 꺼진 버튼을 눌렀을 때 보여 주는 안내(왜 꺼졌는지, 어떻게 하면 켜지는지)
+    const val DISABLED_SHIZUKU = "Shizuku가 연결되지 않아 지금은 쓸 수 없습니다. Shizuku 앱에서 서비스를 시작한 뒤 다시 눌러 주세요."
+    const val DISABLED_NO_PERMISSION = "GOAT에 설정 권한이 없어 지금은 쓸 수 없습니다. 홈에서 권한을 먼저 받아 주세요."
+    const val DISABLED_NOTHING_CHANGED = "바꾼 설정이 없어 되돌릴 것이 없습니다."
+    const val DISABLED_NO_SIZED_APPS = "크기를 정해 둔 앱이 없어 되돌릴 것이 없습니다."
+    const val DISABLED_NO_BEFORE = "먼저 [바꾸기 전 저장]을 눌러 주세요."
+    const val DISABLED_SIZE_UNCHANGED = "폭을 바꾼 뒤에 저장할 수 있습니다."
+    const val DISABLED_SIZE_DEFAULT = "이미 기기 값을 쓰고 있습니다."
 }

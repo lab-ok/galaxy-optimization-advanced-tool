@@ -28,6 +28,16 @@ object FlexPanel {
 
     private fun wm(): Any = HiddenApi.asInterface("android.view.IWindowManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("window")))
 
+    /**
+     * 작업 하나를 닫는다(IActivityTaskManager.removeTask, Shizuku). 셸의 'am stack remove'·'cmd activity task remove'는
+     * 폴드8에 없어 18차에서 시험이 만든 창이 남았다. 성공하면 "성공", 아니면 이유.
+     */
+    private fun removeTask(id: String): String = runCatching {
+        val atm = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
+        val m = atm.javaClass.methods.first { it.name == "removeTask" && it.parameterTypes.size == 1 }
+        if (m.invoke(atm, id.toInt()) == false) "실패(작업 없음)" else "성공"
+    }.getOrElse { "실패(${HiddenApi.describe(it)})" }
+
     /** 이 기기 창 관리자에 앱별 등록 함수가 있는지(Shizuku 연결 필요). */
     fun hasAppApi(): Boolean = runCatching { setter() != null }.getOrDefault(false)
 
@@ -397,14 +407,21 @@ object FlexPanel {
             // 16차: 15차는 'wm size'(회전 전 기본 크기 2448x1848)를 써서 세로 화면(1848x2448)에서 패널이 가운데 띠에 놓였다.
             // 17차: 16차는 dumpsys의 첫 cur= 값을 썼는데 그게 커버 화면(1972x1248)이었다. 기본 디스플레이(0번)의 지금 크기를
             // 시스템에서 바로 읽는다(회전 반영)
-            val real = Point().also {
-                @Suppress("DEPRECATION")
-                context.getSystemService(DisplayManager::class.java).getDisplay(0)?.getRealSize(it)
+            // 18차: 시작할 때 한 번만 읽었더니 회전이 아직 덜 바뀐 때 읽혀 가로 크기(2448x1848)가 잡혔고, 패널이 가운데 띠에 놓였다.
+            // 그래서 배치할 때마다 다시 읽는다
+            var dw = 1848
+            var dh = 2448
+            var mid = dh / 2
+            fun measure(tag: String) {
+                val real = Point().also {
+                    @Suppress("DEPRECATION")
+                    context.getSystemService(DisplayManager::class.java).getDisplay(0)?.getRealSize(it)
+                }
+                dw = real.x.takeIf { it > 0 } ?: 1848
+                dh = real.y.takeIf { it > 0 } ?: 2448
+                mid = dh / 2
+                appendLine("시도 $tag: 화면 ${dw}x$dh, 접는 선 y=$mid")
             }
-            val dw = real.x.takeIf { it > 0 } ?: 1848
-            val dh = real.y.takeIf { it > 0 } ?: 2448
-            val mid = dh / 2
-            appendLine("시도 15: 화면 ${dw}x$dh, 접는 선 y=$mid")
             fun resizePanel(): String = panelTask()?.let { sh("am task resize $it 0 $mid $dw $dh 2>&1 | tail -2") } ?: "패널 작업 없음"
             val appComponent = app?.let { pm.getLaunchIntentForPackage(it)?.component?.flattenToShortString() }
             // 18차: 17차 15-3에서 패널은 아래 절반, 앱은 위 절반에 제대로 놓였고 터치패드·버튼도 동작했다(사용자 확인).
@@ -441,6 +458,7 @@ object FlexPanel {
                 ShizukuAccess.shell("logcat -b all -c")
                 appendLine("$name: 물리 상태를 반쯤 접힘으로(유지) → ${sh("cmd device_state base-state $half")}")
                 Thread.sleep(1500)
+                measure(tag)
                 appendLine("$name: 쓰던 앱 작업 #$before 을 팝업으로 → ${toPopup(before)}")
                 Thread.sleep(1500)
                 // 새 작업으로 열린 경우(18-5·18-6)는 그 새 작업을 대상으로 삼는다
@@ -465,7 +483,7 @@ object FlexPanel {
                 }
                 // 패널을 닫고, 쓰던 앱을 전체 화면으로 되돌린 뒤 결과를 남긴다
                 ShizukuAccess.shell("am broadcast -a android.intent.action.COLLAPSE_FLEX_PANEL -p com.android.systemui")
-                panelTask()?.let { ShizukuAccess.shell("am stack remove $it 2>/dev/null; cmd activity task remove $it 2>/dev/null") }
+                panelTask()?.let { appendLine("$name: 패널 작업 #$it 닫기 → ${removeTask(it)}") }
                 appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
                 Thread.sleep(1000)
                 appendLine("$name: 앱을 전체 화면으로 되돌리기 → ${back(target)}")
@@ -480,7 +498,7 @@ object FlexPanel {
                 appendLine("$name 되돌린 뒤 앱 작업 → ${taskLine()} · ${if (restored) "전체 화면 복귀" else "전체 화면 아님"}")
                 appendLine("$name 되돌린 화면 캡처 → ${sh("screencap -p $shotDir/goat-flex-$tag-back.png && echo $shotDir/goat-flex-$tag-back.png")}")
                 // 시험이 새로 만든 작업(빈 새 창)은 닫아 다음 시험과 쓰던 앱에 남지 않게 한다
-                if (target != before) appendLine("$name: 시험이 만든 새 작업 #$target 닫기 → ${sh("am stack remove $target 2>/dev/null; cmd activity task remove $target 2>&1 | tail -1")}")
+                if (target != before) appendLine("$name: 시험이 만든 새 작업 #$target 닫기 → ${removeTask(target)}")
                 return ok && restored
             }
             // 사용자 요청으로 가능성 있는 방법을 모두 넣는다(하나가 성공해도 끝까지 시험한다)

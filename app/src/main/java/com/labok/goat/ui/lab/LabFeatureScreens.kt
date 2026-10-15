@@ -124,7 +124,7 @@ internal fun LabAirplaneScreen(contentPadding: PaddingValues) {
         }
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { AirplaneRadios.setting.changed(context) }
-        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(AirplaneRadios.setting) })
+        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(AirplaneRadios.setting) })
     }
 }
 
@@ -179,7 +179,7 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         // [처음대로]는 맨 아래: 아이콘 목록과 초록 점을 함께 GOAT가 바꾸기 전으로 되돌린다
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { IconBlacklist.setting.changed(context) }
-        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed || dotHidden == true, modifier = Modifier.fillMaxWidth(), onClick = {
+        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed || dotHidden == true, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = {
             if (changed) w.restore(IconBlacklist.setting)
             if (dotHidden == true) {
                 dotHidden = false
@@ -239,7 +239,7 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
         }
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { setting.changed(context) }
-        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(setting) })
+        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(setting) })
         if (samsung) {
             Spacer(Modifier.height(Gap.Section))
             Text(Copy.LAB_SCREEN_WHY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)

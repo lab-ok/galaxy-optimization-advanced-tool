@@ -46,10 +46,11 @@ fun LiquidProgressButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    primary: Boolean = false
+    primary: Boolean = false,
+    disabledHint: String? = null
 ) {
     if (progress == null) {
-        LiquidButton(text, onClick = onClick, modifier = modifier, primary = primary, enabled = enabled)
+        LiquidButton(text, onClick = onClick, modifier = modifier, primary = primary, enabled = enabled, disabledHint = disabledHint)
         return
     }
     val c = LocalLiquid.current

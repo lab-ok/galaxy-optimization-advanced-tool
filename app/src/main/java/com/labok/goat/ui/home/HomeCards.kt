@@ -351,7 +351,7 @@ internal fun ResetSheet(
             Text(Copy.RESET_DEFAULT, fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(if (foldable) Copy.RESET_DEFAULT_BODY else Copy.RESET_DEFAULT_BODY_SINGLE, color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
-            LiquidButton(Copy.RESET_DEFAULT, modifier = Modifier.fillMaxWidth(), onClick = onDefault, primary = false, enabled = canReset)
+            LiquidButton(Copy.RESET_DEFAULT, modifier = Modifier.fillMaxWidth(), onClick = onDefault, primary = false, enabled = canReset, disabledHint = Copy.DISABLED_NO_PERMISSION)
         }
         Spacer(Modifier.height(Gap.Card))
         GlassCard(accent = if (step > 0) c.danger else null) {
@@ -361,7 +361,7 @@ internal fun ResetSheet(
             Spacer(Modifier.height(Gap.Item))
             AnimatedContent(step, label = "revoke") { s ->
                 when (s) {
-                    0 -> LiquidButton(Copy.RESET_PERMISSION, modifier = Modifier.fillMaxWidth(), onClick = { step = 1 }, primary = false, enabled = canReset, danger = true)
+                    0 -> LiquidButton(Copy.RESET_PERMISSION, modifier = Modifier.fillMaxWidth(), onClick = { step = 1 }, primary = false, enabled = canReset, danger = true, disabledHint = Copy.DISABLED_NO_PERMISSION)
                     3 -> Column(Modifier.fillMaxWidth()) {
                         Text(Copy.RESET_PERMISSION_STEP, color = c.ink, style = MaterialTheme.typography.bodyMedium)
                         Spacer(Modifier.height(Gap.Item))

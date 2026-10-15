@@ -44,6 +44,19 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.9.0",
+        "2026-10-15",
+        "꺼진 버튼을 누르면 왜 쓸 수 없는지 알려 줍니다.",
+        listOf(
+            "새 기능" to listOf(
+                "꺼진 버튼을 누르면 쓸 수 없는 이유와 켜는 방법을 알려 줍니다(Shizuku 연결, 권한, 되돌릴 설정 없음 등)."
+            ),
+            "변경" to listOf(
+                "숨은 기능을 다듬었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.8.16",
         "2026-10-15",
         "숨은 기능을 다듬었습니다.",

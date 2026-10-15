@@ -247,7 +247,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     Text(Copy.LAB_FLEX_BODY2, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     if (!enabled) Text(Copy.LAB_FLEX_TEST_OFF, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.LAB_FLEX_TEST, modifier = Modifier.fillMaxWidth(), enabled = enabled, onClick = { context.startActivity(Intent(context, FlexTestActivity::class.java)) })
+                    LiquidButton(Copy.LAB_FLEX_TEST, modifier = Modifier.fillMaxWidth(), enabled = enabled, disabledHint = Copy.LAB_FLEX_TEST_NEED_ON, onClick = { context.startActivity(Intent(context, FlexTestActivity::class.java)) })
                 }
             }
         }
@@ -356,7 +356,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     val revive by ReviveRunner.state.collectAsStateWithLifecycle()
                     Text(Copy.LAB_FLEX_REVIVE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(if (revive.running) Copy.LAB_FLEX_REVIVE_RUNNING else Copy.LAB_FLEX_REVIVE, enabled = !revive.running && shizuku == ShizukuAccess.State.READY, modifier = Modifier.fillMaxWidth(), onClick = {
+                    LiquidButton(if (revive.running) Copy.LAB_FLEX_REVIVE_RUNNING else Copy.LAB_FLEX_REVIVE, enabled = !revive.running && shizuku == ShizukuAccess.State.READY, disabledHint = if (revive.running) null else Copy.DISABLED_SHIZUKU, modifier = Modifier.fillMaxWidth(), onClick = {
                         ReviveRunner.start(context)
                     })
                     if (revive.head.isNotEmpty()) {
@@ -375,6 +375,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                         progress = diagProgress,
                         status = diagStatus,
                         enabled = shizuku == ShizukuAccess.State.READY,
+                        disabledHint = Copy.DISABLED_SHIZUKU,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             if (diagProgress != null) return@LiquidProgressButton

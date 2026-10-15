@@ -194,6 +194,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                         primary = false,
                         danger = true,
                         enabled = ready && (count ?: 0) > 0,
+                        disabledHint = if (!ready) Copy.DISABLED_SHIZUKU else if (count == 0) Copy.DISABLED_NO_SIZED_APPS else null,
                         onClick = { step = 1 }
                     )
                     1 -> DangerConfirmBox(Copy.APP_SIZE_RESET_WARN) {
