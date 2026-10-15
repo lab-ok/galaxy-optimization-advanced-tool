@@ -495,10 +495,15 @@ object AutoFlex {
             val click = click(context)
             var hit = false
             if (click && !pausedFlow.value && clicks.feed(a, SystemClock.elapsedRealtime()) && horizontalFlow.value) {
-                latchedFlow.value = !latchedFlow.value
-                hit = true
-                LogRepository.from(context).add("까딱: 플렉스 모드 ${if (latchedFlow.value) "켬" else "끔"}")
-                buzz(context, latchedFlow.value)
+                // '사용 안 함'으로 둔 앱에서는 까딱해도 켜지 않고 울리지도 않는다(켜 둔 것을 끄는 까딱은 그대로 받는다)
+                if (!latchedFlow.value && FlexPanel.frontIsOff(context)) {
+                    LogRepository.from(context).add("까딱: 사용 안 함 앱이라 무시")
+                } else {
+                    latchedFlow.value = !latchedFlow.value
+                    hit = true
+                    LogRepository.from(context).add("까딱: 플렉스 모드 ${if (latchedFlow.value) "켬" else "끔"}")
+                    buzz(context, latchedFlow.value)
+                }
             }
             if (a < ANGLE_LOW && latchedFlow.value) {
                 latchedFlow.value = false // 닫으면 까딱으로 켠 것도 끈다
@@ -548,6 +553,14 @@ object AutoFlex {
         private fun set(on: Boolean) {
             if (on == activeFlow.value) return
             if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return
+            // '사용 안 함'으로 둔 앱: 반쯤 접힘을 걸지 않고 울리지도 않는다. 켜진 것으로만 두어 알림에서 다른 모드로 바꿀 수 있게 한다
+            if (on && FlexPanel.frontIsOff(context)) {
+                activeFlow.value = true
+                FlexPanel.apply(context)
+                LogRepository.from(context).add("자동 플렉스: 사용 안 함 앱이라 반쯤 접힘·진동 없이 둠")
+                quiet = false
+                return
+            }
             val err = if (on) FlexPanel.forceHalfOpened(context) else FlexPanel.resetPosture(context)
             if (err == null) {
                 activeFlow.value = on

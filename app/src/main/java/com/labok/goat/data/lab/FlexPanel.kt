@@ -624,6 +624,10 @@ object FlexPanel {
             .map { it.groupValues[1] to it.groupValues[2] }
             .firstOrNull { (_, pkg) -> pkg != "com.android.systemui" && !pkg.startsWith(context.packageName) }
 
+    /** 지금 앞에 있는 앱을 '사용 안 함'으로 두었는지(자동 플렉스가 켜기·진동 전에 본다). */
+    fun frontIsOff(context: Context): Boolean =
+        ShizukuAccess.status.value == ShizukuAccess.State.READY && frontTask(context)?.second?.let { AutoFlex.mode(context, it) == AutoFlex.MODE_OFF } == true
+
     /** [pkg]의 보이는 작업 중 전체 화면이 아닌 것(멀티 창으로 다시 부른 뒤 찾는다). */
     private fun windowedTask(pkg: String): String? =
         Regex("""Task\{[0-9a-f]+ #(\d+)[^\n]*A=\d+:${Regex.escape(pkg)}[^\n]*visible=true[^\n]*mode=(\w+)""")
@@ -740,15 +744,30 @@ object FlexPanel {
     fun pickBottom(context: Context, pkg: String) = splitQueue.execute {
         val s = split?.takeIf { it.mode == AutoFlex.MODE_SPLIT } ?: return@execute
         val component = context.packageManager.getLaunchIntentForPackage(pkg)?.component?.flattenToShortString() ?: return@execute
+        // 고른 앱을 띄워 작업 번호를 얻은 뒤, 쓰던 앱과 함께 분할로 다시 연다(앱 고르기 칸을 그 앱으로 바꾼다)
         ShizukuAccess.shell("am start -f 0x10000000 -n $component")
         val task = waitTask { visibleTask(pkg) }
-        Thread.sleep(300)
-        val log = LogRepository.from(context)
-        val before = task?.let { modeOf(it) }
-        if (task != null && before == "fullscreen") ShizukuAccess.shell("$SPLIT_CMD moveToSideStage $task 1")
+        val how = task?.let { openSplit(s.original, it) } ?: "앱 작업을 찾지 못함"
         (s.picker ?: pickerTask())?.let { removeTask(it) }
         split = s.copy(picker = null, bottom = task, bottomComponent = component)
-        log.add("자동 플렉스 분할 화면: 다른 칸 $pkg(#${task ?: "-"}) · 열린 뒤 ${before ?: "-"} → 지금 ${task?.let { modeOf(it) } ?: "-"} · 쓰던 앱 ${modeOf(s.original) ?: "-"}")
+        LogRepository.from(context).add("자동 플렉스 분할 화면: 다른 칸 $pkg(#${task ?: "-"}) · $how")
+    }
+
+    /**
+     * 삼성 공식 화면 분할로 두 작업을 반반 연다. 셸 도움말에는 없지만 삼성 WMShell에 있는 명령을 차례로 쓴다(삼성 SystemUI 디컴파일
+     * SplitScreenShellCommandHandler 근거): startTasks → startSplitTasks(비율 0.5). moveToSideStage는 반대 칸이 비어 실패했다(1.10.3 영상).
+     * 두 작업이 모두 분할(multi-window)이 되면 그 방법을, 아니면 마지막 상태와 실패 로그를 돌려준다.
+     */
+    private fun openSplit(first: String, second: String): String {
+        fun bothSplit() = modeOf(first)?.startsWith("multi") == true && modeOf(second)?.startsWith("multi") == true
+        ShizukuAccess.shell("logcat -c")
+        for (cmd in listOf("startTasks $first $second", "startSplitTasks $first $second 0.5")) {
+            ShizukuAccess.shell("$SPLIT_CMD $cmd")
+            Thread.sleep(700)
+            if (bothSplit()) return "${cmd.substringBefore(' ')} 성공"
+        }
+        val fail = ShizukuAccess.shell("logcat -d -s StageCoordinator SplitScreenController | grep -i -E 'fail|non resizable|not found|didn' | tail -2")?.out?.trim().orEmpty()
+        return "분할 안 됨(#$first ${modeOf(first) ?: "-"}, #$second ${modeOf(second) ?: "-"})" + (if (fail.isNotEmpty()) " · $fail" else "")
     }
 
     private fun applyNow(context: Context) {
@@ -779,13 +798,20 @@ object FlexPanel {
             return
         }
         if (mode == AutoFlex.MODE_SPLIT) {
-            // 삼성 공식 화면 분할: 쓰던 앱을 분할 첫 칸으로 옮기고, 다른 칸에 GOAT 앱 고르기를 '옆 칸으로 열기'로 띄운다
-            ShizukuAccess.shell("$SPLIT_CMD moveToSideStage ${front.first} 0")
-            Thread.sleep(600)
-            ShizukuAccess.shell("am start -f 0x10001000 -n $PICK_ACTIVITY")
-            val picker = waitTask { pickerTask() }
+            // 삼성 공식 화면 분할: GOAT 앱 고르기를 띄워 작업 번호를 얻고, 쓰던 앱과 함께 분할로 연다.
+            // 안 되면 삼성 순정 앱 목록과 함께 여는 명령(startTaskWithAllApps)을 쓴다(그때는 GOAT 앱 고르기를 닫는다)
+            ShizukuAccess.shell("am start -f 0x10000000 -n $PICK_ACTIVITY")
+            var picker = waitTask { pickerTask() }
+            var how = picker?.let { openSplit(front.first, it) } ?: "앱 고르기 작업을 찾지 못함"
+            if (!how.endsWith("성공")) {
+                picker?.let { removeTask(it) }
+                picker = null
+                ShizukuAccess.shell("$SPLIT_CMD startTaskWithAllApps ${front.first}")
+                Thread.sleep(800)
+                how += " → 삼성 앱 목록과 열기: 쓰던 앱 ${modeOf(front.first) ?: "-"}"
+            }
             split = Split(mode, front.second, label, component, front.first, picker = picker).also { notifyMode(context, it) }
-            log.add("자동 플렉스 분할 화면(공식): ${front.second}(#${front.first}, 지금 ${modeOf(front.first) ?: "-"}) · 앱 고르기(#${picker ?: "-"}, 지금 ${picker?.let { modeOf(it) } ?: "-"})")
+            log.add("자동 플렉스 분할 화면(공식): ${front.second}(#${front.first}) · $how")
             return
         }
         val (w, h) = real.x to real.y
