@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
@@ -133,6 +134,9 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     // 앱별 모드(기본값 플렉스 모드가 아닌 앱만)
     var modes by remember { mutableStateOf(AutoFlex.modes(context)) }
     var appsOpen by remember { mutableStateOf(false) }
+    // 앱 목록에서 보고 있는 모드 탭과, 모드 고르기를 열어 둔 줄
+    var filter by remember { mutableIntStateOf(AutoFlex.MODE_FLEX) }
+    var openRow by remember { mutableStateOf<String?>(null) }
     var gesturesOpen by remember { mutableStateOf(false) }
     var diagProgress by remember { mutableStateOf<Float?>(null) }
     var diagStatus by remember { mutableStateOf("") }
@@ -272,17 +276,22 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
             }
         }
         item(key = "range") { Box(Modifier.widthIn(max = ContentMaxWidth)) { rangeCard() } }
-        // 접으면 패널 자동 표시(공식 화면과 같은 이름): 요약 줄을 누르면 앱 목록이 펼쳐진다
+        // 앱별로 접었을 때 동작: 요약 줄(모드별 앱 수)을 누르면 펼쳐진다. 펼치면 위쪽 탭으로 모드를 골라 그 모드의 앱만 보고,
+        // 줄을 누르면 그 줄 아래에 모드 고르기가 열린다(한 번에 한 줄만)
         val q = query.trim()
-        val all = apps.orEmpty().filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) || it.pkg.contains(q, ignoreCase = true) }
-        val shownApps = apps.orEmpty().filter { it.pkg in modes }
+        fun modeOf(app: AppEntry) = modes[app.pkg] ?: AutoFlex.MODE_FLEX
+        val counts = AutoFlex.MODES.associateWith { m -> apps.orEmpty().count { modeOf(it) == m } }
         item(key = "apps") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard(padding = Gap.Flush) {
                     Row(Modifier.fillMaxWidth().clickable { appsOpen = !appsOpen }.padding(Gap.CardPadding), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(Copy.LAB_FLEX_APPS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                            Text(if (shownApps.isEmpty()) Copy.LAB_FLEX_APPS_ALL_FLEX else appsSummary(shownApps), color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                if (apps == null) "앱 목록을 불러오는 중…" else AutoFlex.MODES.filter { counts[it]!! > 0 }.joinToString(" · ") { "${AutoFlex.modeLabel(it)} ${counts[it]}" },
+                                color = c.muted,
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                         val turn by animateFloatAsState(if (appsOpen) 180f else 0f, Springs.pop(), label = "appsChevron")
                         Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
@@ -291,9 +300,19 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
             }
         }
         if (appsOpen) {
-            item(key = "search") {
+            item(key = "filter") {
                 Column(Modifier.widthIn(max = ContentMaxWidth).animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) {
                     Text(Copy.LAB_FLEX_APPS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = Gap.CardPadding))
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidChips(
+                        options = AutoFlex.MODES,
+                        selected = filter,
+                        label = { "${AutoFlex.modeLabel(it)} ${counts[it]}" },
+                        onSelect = {
+                            filter = it
+                            openRow = null
+                        }
+                    )
                     Spacer(Modifier.height(Gap.Item))
                     LiquidTextField(
                         query,
@@ -305,17 +324,29 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                 }
             }
             if (apps == null) item(key = "loading") { LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp)) }
-            // 같은 키를 여러 묶음에서 그대로 써서, 모드를 바꿀 때 줄이 사라졌다 생기지 않고 새 자리로 흘러간다.
-            // 터치패널·분할 화면을 고른 앱을 위에 모으고, 나머지(플렉스 모드)는 최근 사용 순으로 둔다
-            val anim = Modifier
-            fun modeOf(app: AppEntry) = modes[app.pkg] ?: AutoFlex.MODE_FLEX
-            listOf(AutoFlex.MODE_PANEL, AutoFlex.MODE_SPLIT, AutoFlex.MODE_FLEX).forEach { m ->
-                val group = all.filter { modeOf(it) == m }
-                if (group.isEmpty() && m != AutoFlex.MODE_FLEX) return@forEach
-                val title = if (m == AutoFlex.MODE_FLEX) Copy.LAB_FLEX_APPS_REST else "${AutoFlex.modeLabel(m)} ${group.size}"
-                item(key = "h-$m") { Section(title, anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
-                items(group, key = { it.pkg }) { app ->
-                    FlexAppRow(app, pending[app.pkg] ?: m, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) { choose(app, it) }
+            // 고른 모드의 앱만, 최근 사용 순. 모드를 바꾸면 그 줄은 물처럼 빠져나가 다른 탭으로 옮겨 간다
+            val shown = apps.orEmpty().filter { (pending[it.pkg] ?: modeOf(it)) == filter }
+                .filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) || it.pkg.contains(q, ignoreCase = true) }
+            if (apps != null && shown.isEmpty()) {
+                item(key = "empty") {
+                    Text(
+                        if (q.isEmpty()) "${AutoFlex.modeLabel(filter)}인 앱이 없습니다." else "찾는 앱이 없습니다.",
+                        color = c.muted,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.widthIn(max = ContentMaxWidth).padding(horizontal = Gap.CardPadding).animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)
+                    )
+                }
+            }
+            items(shown, key = { it.pkg }) { app ->
+                FlexAppRow(
+                    app,
+                    pending[app.pkg] ?: modeOf(app),
+                    open = openRow == app.pkg,
+                    onToggle = { openRow = if (openRow == app.pkg) null else app.pkg },
+                    modifier = Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)
+                ) {
+                    openRow = null
+                    choose(app, it)
                 }
             }
         }
@@ -460,12 +491,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
 }
 
 /** "YouTube, 전화 외 6개"처럼 패널을 띄우는 앱을 최근 사용 순으로 두 개까지 적고 나머지는 개수로. */
-private fun appsSummary(apps: List<AppEntry>): String = when {
-    apps.isEmpty() -> "없음"
-    apps.size <= 2 -> apps.joinToString(", ") { it.label }
-    else -> apps.take(2).joinToString(", ") { it.label } + " 외 ${apps.size - 2}개"
-}
-
 /** 터치패드 제스처(삼성 공식 '터치패드 제스처 도움말'과 같은 내용). */
 private val FLEX_GESTURES = listOf(
     "누르기" to "마우스 왼쪽 클릭처럼 고르기, 앱 열기, 버튼 누르기를 합니다.",
@@ -521,14 +546,13 @@ internal fun FlexHelpSheet() {
 
 /** 패널 앱 한 줄: 앱별 화면 배율 설정 목록과 같은 모양(아이콘·이름·마지막 사용)에 오른쪽 스위치. 켜고 끌 때 테두리가 물들고 줄이 살짝 출렁인다. */
 @Composable
-private fun FlexAppRow(app: AppEntry, mode: Int, modifier: Modifier = Modifier, onChange: (Int) -> Unit) {
+private fun FlexAppRow(app: AppEntry, mode: Int, open: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier, onChange: (Int) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val shape = RoundedCornerShape(20.dp)
-    val chosen = mode != AutoFlex.MODE_FLEX
-    val border by animateColorAsState(if (chosen) c.ink.copy(alpha = 0.5f) else c.line, Springs.calm(reduce), label = "flexRowBorder")
+    val border by animateColorAsState(if (open) c.ink.copy(alpha = 0.5f) else c.line, Springs.calm(reduce), label = "flexRowBorder")
     val squash = remember { Animatable(1f) }
-    LaunchedEffect(mode) {
+    LaunchedEffect(open) {
         if (reduce || squash.value != 1f) return@LaunchedEffect
         squash.snapTo(0.97f)
         squash.animateTo(1f, Springs.pop(reduce))
@@ -544,7 +568,9 @@ private fun FlexAppRow(app: AppEntry, mode: Int, modifier: Modifier = Modifier, 
             .clip(shape)
             .background(c.surface)
             .border(1.dp, border, shape)
+            .clickable(onClick = onToggle)
             .padding(horizontal = 12.dp, vertical = 10.dp)
+            .animateContentSize(spring(UiMotion.ratio(0.62f), UiMotion.stiffness(260f, 0.62f)))
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
@@ -553,9 +579,13 @@ private fun FlexAppRow(app: AppEntry, mode: Int, modifier: Modifier = Modifier, 
                 Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
             }
+            Spacer(Modifier.width(8.dp))
+            Text(AutoFlex.modeLabel(mode), color = c.muted, style = MaterialTheme.typography.labelMedium)
         }
-        Spacer(Modifier.height(Gap.Item))
-        LiquidChips(options = AutoFlex.MODES, selected = mode, label = { AutoFlex.modeLabel(it) }, onSelect = onChange)
+        if (open) {
+            Spacer(Modifier.height(Gap.Item))
+            LiquidChips(options = AutoFlex.MODES, selected = mode, label = { AutoFlex.modeLabel(it) }, onSelect = onChange)
+        }
     }
 }
 

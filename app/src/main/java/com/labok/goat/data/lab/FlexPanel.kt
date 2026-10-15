@@ -731,18 +731,24 @@ object FlexPanel {
         applyNow(context)
     }
 
-    /** 분할 화면에서 아래 칸에 [pkg]를 띄운다(앱 고르기 화면이 부른다). */
+    private const val SPLIT_CMD = "dumpsys activity service SystemUIService WMShell splitscreen"
+
+    /**
+     * 분할 화면(삼성 공식 화면 분할)에서 앱 고르기 칸에 [pkg]를 띄운다(앱 고르기 화면이 부른다).
+     * 고르기 화면이 있는 칸에서 앱을 열면 보통 같은 칸에 열린다. 분할이 풀리면 그 앱을 분할 다른 칸으로 다시 넣는다.
+     */
     fun pickBottom(context: Context, pkg: String) = splitQueue.execute {
         val s = split?.takeIf { it.mode == AutoFlex.MODE_SPLIT } ?: return@execute
         val component = context.packageManager.getLaunchIntentForPackage(pkg)?.component?.flattenToShortString() ?: return@execute
-        val real = displaySize(context)
-        val bottom = android.graphics.Rect(0, real.y / 2, real.x, real.y)
-        ShizukuAccess.shell("am start --windowingMode 6 -f 0x10000000 -n $component")
+        ShizukuAccess.shell("am start -f 0x10000000 -n $component")
         val task = waitTask { visibleTask(pkg) }
-        task?.let { if (moveTask(it, 6, bottom) != null) ShizukuAccess.shell("am task resize $it 0 ${bottom.top} ${bottom.right} ${bottom.bottom}") }
+        Thread.sleep(300)
+        val log = LogRepository.from(context)
+        val before = task?.let { modeOf(it) }
+        if (task != null && before == "fullscreen") ShizukuAccess.shell("$SPLIT_CMD moveToSideStage $task 1")
         (s.picker ?: pickerTask())?.let { removeTask(it) }
         split = s.copy(picker = null, bottom = task, bottomComponent = component)
-        LogRepository.from(context).add("자동 플렉스 분할 화면: 아래 칸 $pkg(#${task ?: "-"})")
+        log.add("자동 플렉스 분할 화면: 다른 칸 $pkg(#${task ?: "-"}) · 열린 뒤 ${before ?: "-"} → 지금 ${task?.let { modeOf(it) } ?: "-"} · 쓰던 앱 ${modeOf(s.original) ?: "-"}")
     }
 
     private fun applyNow(context: Context) {
@@ -757,11 +763,29 @@ object FlexPanel {
         val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(front.second, 0)).toString() }.getOrDefault(front.second)
         val component = pm.getLaunchIntentForPackage(front.second)?.component?.flattenToShortString().orEmpty()
         val mode = AutoFlex.mode(context, front.second)
+        // 사용 안 함: 걸어 둔 반쯤 접힘을 풀어 이 앱에서는 아무것도 바뀌지 않게 한다(알림으로 다른 모드로 바꿀 수 있게 알림은 남긴다).
+        // 다른 모드는 알림으로 바꿔 들어온 경우를 위해 반쯤 접힘을 다시 건다
+        if (mode == AutoFlex.MODE_OFF) {
+            resetPosture(context)
+            split = Split(mode, front.second, label, component, front.first).also { notifyMode(context, it) }
+            return
+        }
+        if (!forced) forceHalfOpened(context)
         val real = displaySize(context)
         // 화면을 나누는 모드는 접는 선이 가로(화면이 세로로 긴 때)이고 다시 열 수 있는 앱일 때만 쓴다
         if (mode == AutoFlex.MODE_FLEX || real.x <= 0 || real.x >= real.y || component.isEmpty()) {
             if (mode != AutoFlex.MODE_FLEX) log.add("자동 플렉스: ${front.second} 화면을 나눌 수 없어 플렉스 모드만 켬(${real.x}x${real.y})")
             split = Split(AutoFlex.MODE_FLEX, front.second, label, component, front.first).also { notifyMode(context, it) }
+            return
+        }
+        if (mode == AutoFlex.MODE_SPLIT) {
+            // 삼성 공식 화면 분할: 쓰던 앱을 분할 첫 칸으로 옮기고, 다른 칸에 GOAT 앱 고르기를 '옆 칸으로 열기'로 띄운다
+            ShizukuAccess.shell("$SPLIT_CMD moveToSideStage ${front.first} 0")
+            Thread.sleep(600)
+            ShizukuAccess.shell("am start -f 0x10001000 -n $PICK_ACTIVITY")
+            val picker = waitTask { pickerTask() }
+            split = Split(mode, front.second, label, component, front.first, picker = picker).also { notifyMode(context, it) }
+            log.add("자동 플렉스 분할 화면(공식): ${front.second}(#${front.first}, 지금 ${modeOf(front.first) ?: "-"}) · 앱 고르기(#${picker ?: "-"}, 지금 ${picker?.let { modeOf(it) } ?: "-"})")
             return
         }
         val (w, h) = real.x to real.y
@@ -780,39 +804,33 @@ object FlexPanel {
             windowedTask(front.second)?.also { ShizukuAccess.shell("am task resize $it 0 0 $w $mid") }
         }
         val how = if (app == front.first) "쓰던 창 그대로" else "다시 불러옴 · 옮기기 실패(${moveErr ?: "모드 그대로"})"
-        if (mode == AutoFlex.MODE_PANEL) {
-            val half = Regex("identifier=(\\d+), name='HALF_OPENED'").find(ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty())?.groupValues?.get(1) ?: "2"
-            ShizukuAccess.shell("cmd device_state base-state $half")
-            ShizukuAccess.shell("am start --windowingMode 6 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 -n '$PANEL_ACTIVITY'")
-            // 패널은 처음에 화면 전체로 뜨므로, 작업이 보이자마자 아래 절반으로 줄여 깜빡이는 시간을 줄인다
-            val panel = waitTask { panelTaskId() }
-            panel?.let { if (moveTask(it, 6, bottom) != null) ShizukuAccess.shell("am task resize $it 0 $mid $w $h") }
-            split = Split(mode, front.second, label, component, front.first, app = app, panel = panel, freeform0 = freeform0)
-            log.add("자동 플렉스 터치패널: ${front.second} 위(#${app ?: "-"}, $how) · 패널 아래(#${panel ?: "-"})")
-        } else {
-            ShizukuAccess.shell("am start --windowingMode 6 -f 0x10000000 -n $PICK_ACTIVITY")
-            val picker = waitTask { pickerTask() }
-            picker?.let { if (moveTask(it, 6, bottom) != null) ShizukuAccess.shell("am task resize $it 0 $mid $w $h") }
-            split = Split(mode, front.second, label, component, front.first, app = app, picker = picker, freeform0 = freeform0)
-            log.add("자동 플렉스 분할 화면: ${front.second} 위(#${app ?: "-"}, $how) · 앱 고르기 아래(#${picker ?: "-"})")
-        }
-        split?.let { notifyMode(context, it) }
+        val half = Regex("identifier=(\\d+), name='HALF_OPENED'").find(ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty())?.groupValues?.get(1) ?: "2"
+        ShizukuAccess.shell("cmd device_state base-state $half")
+        ShizukuAccess.shell("am start --windowingMode 6 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 -n '$PANEL_ACTIVITY'")
+        // 패널은 처음에 화면 전체로 뜨므로, 작업이 보이자마자 아래 절반으로 줄여 깜빡이는 시간을 줄인다
+        val panel = waitTask { panelTaskId() }
+        panel?.let { if (moveTask(it, 6, bottom) != null) ShizukuAccess.shell("am task resize $it 0 $mid $w $h") }
+        split = Split(mode, front.second, label, component, front.first, app = app, panel = panel, freeform0 = freeform0)
+        log.add("자동 플렉스 터치패널: ${front.second} 위(#${app ?: "-"}, $how) · 패널 아래(#${panel ?: "-"})")
+        notifyMode(context, split!!)
     }
 
     private fun releaseNow(context: Context) {
         val s = split ?: return
         split = null
         context.getSystemService(android.app.NotificationManager::class.java).cancel(MODE_NOTIFICATION)
-        if (s.mode == AutoFlex.MODE_FLEX) return
+        if (s.mode == AutoFlex.MODE_FLEX || s.mode == AutoFlex.MODE_OFF) return
         val log = LogRepository.from(context)
         if (s.mode == AutoFlex.MODE_PANEL) {
             ShizukuAccess.shell("am broadcast -a android.intent.action.COLLAPSE_FLEX_PANEL -p com.android.systemui")
             (s.panel ?: panelTaskId())?.let { removeTask(it) }
             ShizukuAccess.shell("cmd device_state base-state reset")
         } else {
+            // 공식 분할을 풀고 쓰던 앱을 위에 남긴다. 다른 칸에 연 앱은 닫지 않고 뒤에 둔다
             (s.picker ?: pickerTask())?.let { removeTask(it) }
-            // 아래 칸에 띄운 앱은 닫지 않고 전체 화면으로 돌려 뒤에 둔다
-            s.bottom?.let { b -> log.add("자동 플렉스 분할 화면 아래 칸 되돌리기(#$b): ${restoreFull(context, b, s.bottomComponent ?: s.component)}") }
+            ShizukuAccess.shell("$SPLIT_CMD exitSplitScreen ${s.original}")
+            Thread.sleep(300)
+            log.add("자동 플렉스 분할 화면 풀기: 쓰던 앱 지금 ${modeOf(s.original) ?: "-"}")
         }
         if (s.app != null && s.app != s.original) {
             // 새로 생긴 창(크롬 등)은 닫는다. 뒤에 있던 원래 창이 전체 화면으로 남는다
@@ -839,14 +857,15 @@ object FlexPanel {
             .setOngoing(true)
             .setSilent(true)
             .setOnlyAlertOnce(true)
-        AutoFlex.MODES.forEach { m ->
+        // 알림 버튼은 세 개까지 보이므로 지금 모드를 뺀 나머지 셋을 둔다(지금 모드는 제목에 보인다)
+        AutoFlex.MODES.filter { it != s.mode }.forEach { m ->
             val pi = android.app.PendingIntent.getBroadcast(
                 context,
                 m,
                 android.content.Intent(context, FlexModeReceiver::class.java).putExtra(FlexModeReceiver.EXTRA_MODE, m),
                 android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
             )
-            b.addAction(0, (if (m == s.mode) "✓ " else "") + AutoFlex.modeLabel(m), pi)
+            b.addAction(0, AutoFlex.modeLabel(m), pi)
         }
         runCatching { nm.notify(MODE_NOTIFICATION, b.build()) }
     }

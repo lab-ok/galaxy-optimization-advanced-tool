@@ -34,6 +34,7 @@ import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidProgressButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import java.io.File
@@ -57,7 +58,11 @@ internal fun LabScreen(contentPadding: PaddingValues) {
     var status by remember { mutableStateOf(if (beforeFile.exists()) "이전에 저장한 '바꾸기 전' 기록이 있습니다." else "") }
     var preview by remember { mutableStateOf("") }
     var hasBefore by remember { mutableStateOf(beforeFile.exists()) }
-    var probing by remember { mutableStateOf(false) }
+    // 탐색·진단은 오래 걸려, 버튼 안에 물이 차오르며 지금 하는 일과 퍼센트를 보여 준다(null이면 쉬는 중)
+    var apiProgress by remember { mutableStateOf<Float?>(null) }
+    var apiStatus by remember { mutableStateOf("") }
+    var shareProgress by remember { mutableStateOf<Float?>(null) }
+    var shareStatus by remember { mutableStateOf("") }
 
     Column(
         Modifier
@@ -126,11 +131,18 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
-            LiquidButton(if (probing) "탐색 중…" else "탐색하고 파일로 보내기", modifier = Modifier.fillMaxWidth(), enabled = !probing, onClick = {
-                probing = true
+            LiquidProgressButton("탐색하고 파일로 보내기", progress = apiProgress, status = apiStatus, modifier = Modifier.fillMaxWidth(), onClick = {
+                if (apiProgress != null) return@LiquidProgressButton
+                apiProgress = 0f
+                apiStatus = "탐색 시작"
                 scope.launch {
-                    val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-api"), ApiProbe.run(context)) }
-                    probing = false
+                    val text = withContext(Dispatchers.IO) {
+                        ApiProbe.run(context) { p, what -> scope.launch { apiProgress = p; apiStatus = what } }
+                    }
+                    apiProgress = 1f
+                    apiStatus = "파일 저장 중"
+                    val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-api"), text) }
+                    apiProgress = null
                     uri?.let { share(context, it) }
                 }
             })
@@ -144,11 +156,18 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
-            LiquidButton(if (probing) "진단 중…" else "진단하고 파일로 보내기", modifier = Modifier.fillMaxWidth(), enabled = !probing, onClick = {
-                probing = true
+            LiquidProgressButton("진단하고 파일로 보내기", progress = shareProgress, status = shareStatus, modifier = Modifier.fillMaxWidth(), onClick = {
+                if (shareProgress != null) return@LiquidProgressButton
+                shareProgress = 0f
+                shareStatus = "진단 시작"
                 scope.launch {
-                    val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-share"), ShareProbe.run(context)) }
-                    probing = false
+                    val text = withContext(Dispatchers.IO) {
+                        ShareProbe.run(context) { p, what -> scope.launch { shareProgress = p; shareStatus = what } }
+                    }
+                    shareProgress = 1f
+                    shareStatus = "파일 저장 중"
+                    val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-share"), text) }
+                    shareProgress = null
                     uri?.let { share(context, it) }
                 }
             })

@@ -27,7 +27,8 @@ object ApiProbe {
 
     // 숨은 시스템 서비스 목록을 훑는 조사 도구라 일부러 숨은 API를 부른다
     @SuppressLint("PrivateApi")
-    fun run(context: Context, keywords: Regex = DENSITY_KEYWORDS): String = buildString {
+    /** [progress]는 진행률(0~1)과 지금 하는 일을 알린다(작업 스레드에서 불린다). */
+    fun run(context: Context, keywords: Regex = DENSITY_KEYWORDS, progress: (Float, String) -> Unit = { _, _ -> }): String = buildString {
         appendLine("기기: ${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT}) · ${Build.DISPLAY}")
         HiddenApi.exemptAll()
         val sm = runCatching { Class.forName("android.os.ServiceManager") }.getOrNull()
@@ -35,13 +36,15 @@ object ApiProbe {
         appendLine("서비스 ${names.size}개")
         appendLine()
         var hits = 0
-        names.filterIsInstance<String>().sorted().forEach { name ->
+        val list = names.filterIsInstance<String>().sorted()
+        list.forEachIndexed { i, name ->
+            progress(0.95f * i / list.size.coerceAtLeast(1), "서비스 ${i + 1}/${list.size} $name 읽는 중")
             val binder = runCatching { sm!!.getMethod("checkService", String::class.java).invoke(null, name) as? IBinder }.getOrNull()
-            val descriptor = runCatching { binder?.interfaceDescriptor }.getOrNull() ?: return@forEach
+            val descriptor = runCatching { binder?.interfaceDescriptor }.getOrNull() ?: return@forEachIndexed
             val cls = runCatching { Class.forName(descriptor) }.getOrNull()
             if (cls == null) {
                 if (keywords.containsMatchIn(descriptor)) appendLine("[$name] $descriptor (클래스를 찾지 못함)")
-                return@forEach
+                return@forEachIndexed
             }
             val matched = cls.declaredMethods.filter { keywords.containsMatchIn(it.name) }.sortedBy { it.name }
             if (matched.isNotEmpty()) {
@@ -53,6 +56,7 @@ object ApiProbe {
             }
         }
         appendLine()
+        progress(0.95f, "추가 클래스 읽는 중")
         appendLine("== 추가 클래스 ==")
         EXTRA_CLASSES.forEach { n ->
             val cls = runCatching { Class.forName(n) }.getOrNull()
