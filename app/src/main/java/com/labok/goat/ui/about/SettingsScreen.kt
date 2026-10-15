@@ -1,10 +1,10 @@
 package com.labok.goat.ui.about
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,18 +25,26 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -53,10 +61,15 @@ import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.UiHaptics
 import com.labok.goat.ui.liquid.UiInk
 import com.labok.goat.ui.liquid.UiMotion
+import com.labok.goat.ui.liquid.liquidPress
+import com.labok.goat.ui.liquid.moveTo
+import com.labok.goat.ui.liquid.rememberLiquidHaptics
+import com.labok.goat.ui.liquid.rememberSoftBlob
 import com.labok.goat.ui.text.Copy
 
 /**
@@ -237,29 +250,61 @@ private fun InfoLink(label: String, detail: String, onClick: () -> Unit) {
     }
 }
 
-/** 갤럭시 색상 팔레트에서 잉크 색 고르기: 강조색마다 진하게·중간 두 칸. 고른 칸은 바깥 고리로 표시한다. */
+/**
+ * 갤럭시 색상 팔레트에서 잉크 색 고르기: 강조색마다 진하게·중간 두 칸을 가운데 정렬로 놓는다.
+ * 고른 칸 뒤에는 그 색의 물방울(칩과 같은 [rememberSoftBlob])이 깔리고, 다른 칸을 고르면 출렁이며 미끄러져 간다.
+ */
 @Composable
 private fun InkTones() {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val dark = isSystemInDarkTheme()
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Gap.Item)) {
-        UiInk.Tone.ALL.forEach { t ->
-            val color = colorResource(t.colorRes(dark))
-            val picked = UiInk.tone == t
-            val ring by animateColorAsState(if (picked) c.ink else Color.Transparent, label = "inkTone")
-            Box(
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .border(2.dp, ring, CircleShape)
-                    .padding(5.dp)
-                    .clip(CircleShape)
-                    .background(color)
-                    .clickable { UiInk.setTone(context, t) }
-                    .semantics { contentDescription = "${Copy.INK_TONE} 강조색 ${t.accent} ${if (t.deep) "진하게" else "중간"}" }
-            )
+    val reduce = LocalReduceMotion.current
+    val haptics = rememberLiquidHaptics()
+    val tones = UiInk.Tone.ALL
+    val index = tones.indexOf(UiInk.tone).coerceAtLeast(0)
+    val centers = remember { mutableStateListOf<Float>().apply { repeat(tones.size) { add(0f) } } }
+    val blob = rememberSoftBlob()
+    val path = remember { Path() }
+    var rowH by remember { mutableFloatStateOf(0f) }
+    var placed by remember { mutableIntStateOf(-1) }
+    val halo = with(LocalDensity.current) { 46.dp.toPx() }
+    val cx = centers[index]
+    LaunchedEffect(index, cx, rowH) {
+        if (cx <= 0f || rowH <= 0f) return@LaunchedEffect
+        blob.moveTo(cx, rowH / 2, halo, halo, animate = placed != -1 && placed != index && !reduce)
+        placed = index
+    }
+    Box(Modifier.fillMaxWidth().height(52.dp)) {
+        Canvas(Modifier.matchParentSize().onSizeChanged { rowH = it.height.toFloat() }) {
+            blob.frame // 프레임마다 다시 그리기
+            if (blob.blob.ready) drawPath(blob.blob.path(path), c.ink.copy(alpha = 0.35f))
+        }
+        Row(
+            Modifier.matchParentSize(),
+            horizontalArrangement = Arrangement.spacedBy(Gap.Item, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            tones.forEachIndexed { i, t ->
+                val color = colorResource(t.colorRes(dark))
+                val interaction = remember { MutableInteractionSource() }
+                Box(
+                    Modifier
+                        .size(34.dp)
+                        .onGloballyPositioned { centers[i] = it.positionInParent().x + it.size.width / 2f }
+                        .liquidPress(interaction, releaseHaptic = false)
+                        .clip(CircleShape)
+                        .background(color)
+                        .clickable(interaction, indication = null) {
+                            if (i != index) haptics.segment()
+                            UiInk.setTone(context, t)
+                        }
+                        .semantics {
+                            selected = i == index
+                            contentDescription = "${Copy.INK_TONE} 강조색 ${t.accent} ${if (t.deep) "진하게" else "중간"}"
+                        }
+                )
+            }
         }
     }
 }
-

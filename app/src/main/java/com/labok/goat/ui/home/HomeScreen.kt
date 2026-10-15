@@ -297,9 +297,10 @@ internal fun HomeScreen(
             add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, NavItem.STATUS_ICONS)))
             add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE, NavItem.AIRPLANE)))
             add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.DOZE)))
-            // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구는 lab 빌드에서만 함께 둔다.
+            // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구도 함께 둔다(공유 화면 진단·설정 비교를 공개 빌드에서도 쓰려고).
+            // lab 빌드는 잠금과 상관없이 조사 도구를 보인다
             val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_SCREEN, NavItem.LAB_FLEX.takeIf { AutoFlex.supported() }) else emptyList()) +
-                listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB })
+                listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || LabUnlock.unlocked })
             if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.

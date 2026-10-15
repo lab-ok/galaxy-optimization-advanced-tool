@@ -80,7 +80,8 @@ fun LiquidTheme(content: @Composable () -> Unit) {
     val plain = if (dark) DarkLiquid else LightLiquid
     // 잉크 색을 갤럭시 테마로 고르면 팔레트에서 고른 색(기본은 강조색 1의 가장 진한, 다크는 가장 밝은 단계)을 쓴다
     val themeInk = colorResource(UiInk.tone.colorRes(dark))
-    val themeLogo = colorResource(android.R.color.system_accent1_900)
+    // 염소 아이콘 상자도 고른 색을 따른다. 흰 염소가 보이도록 다크 모드에서도 라이트 쪽(진한) 단계를 쓴다
+    val themeLogo = colorResource(UiInk.tone.colorRes(dark = false))
     val c = if (UiInk.mode == UiInk.Mode.THEME) plain.copy(ink = themeInk, logo = themeLogo) else plain
     val context = LocalContext.current
     val reduce = remember {

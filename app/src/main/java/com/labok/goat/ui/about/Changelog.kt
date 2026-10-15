@@ -44,6 +44,18 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.10.2",
+        "2026-10-15",
+        "갤럭시 테마 색 고르기를 다듬었습니다.",
+        listOf(
+            "변경" to listOf(
+                "팔레트 색 고르기를 가운데에 놓고, 고른 색 뒤에 물방울이 따라 움직이게 했습니다.",
+                "갤럭시 테마일 때 염소 아이콘 상자도 고른 색을 따릅니다.",
+                "숨은 기능을 다듬었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.10.1",
         "2026-10-15",
         "숨은 기능을 다듬었습니다.",
