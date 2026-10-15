@@ -43,6 +43,7 @@ import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.LabSetting
 import com.labok.goat.data.lab.PrivacyDot
 import com.labok.goat.data.lab.ScreenMode
+import com.labok.goat.data.lab.StatusBarHider
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.Section
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -176,6 +177,16 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
                 }
             }
         }
+        // 상단바 숨기기(실험): 아이콘만이 아니라 상단바 자리까지 숨겨 앱이 그 자리까지 쓰게 한다(포커스 창 방식, [StatusBarHider])
+        Spacer(Modifier.height(Gap.Section))
+        val hiding by StatusBarHider.on.collectAsStateWithLifecycle()
+        LiquidSwitchRow(Copy.LAB_STATUS_HIDE, Copy.LAB_STATUS_HIDE_BODY, hiding, true) { want ->
+            scope.launch {
+                val err = withContext(Dispatchers.IO) { if (want) StatusBarHider.start(context) else StatusBarHider.stop(context).let { null } }
+                if (err != null) Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+            }
+        }
+        Text(Copy.LAB_STATUS_HIDE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
         // [처음대로]는 맨 아래: 아이콘 목록과 초록 점을 함께 GOAT가 바꾸기 전으로 되돌린다
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { IconBlacklist.setting.changed(context) }

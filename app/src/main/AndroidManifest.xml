@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 실험실 상단바 숨기기: 포커스를 받는 1px 투명 창을 다른 앱 위에 띄운다(권한은 Shizuku appops로 준다) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- 흔들어서 화면 회전: 돌렸을 때 짧게 진동으로 알린다 -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- 앱 안 업데이트: GitHub 릴리스에서 새 버전을 확인하고 APK를 내려받는다(그 밖의 통신은 하지 않는다) -->
@@ -170,6 +172,10 @@
             android:taskAffinity="com.labok.goat.flexpick"
             android:resizeableActivity="true"
             android:configChanges="density|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden" />
+        <!-- 상단바 숨기기 알림의 [다시 숨기기]·[끄기] -->
+        <receiver
+            android:name=".data.lab.StatusBarHider$Receiver"
+            android:exported="false" />
         <!-- 자동 플렉스가 켜져 있는 동안 알림에서 앱별 모드를 바꾸는 버튼 -->
         <receiver
             android:name=".data.lab.FlexModeReceiver"
