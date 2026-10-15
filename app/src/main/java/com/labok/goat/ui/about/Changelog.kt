@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.11.1",
+        "2026-10-16",
+        "상단바 숨기기 카드의 글자 간격을 맞췄습니다.",
+        listOf(
+            "변경" to listOf(
+                "상단바 숨기기 카드의 설명과 주의 문구 사이 간격을 다른 카드와 같게 맞췄습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.11.0",
         "2026-10-16",
         "상단바를 숨길 수 있고, 새 기능에는 점이 찍힙니다.",

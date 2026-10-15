@@ -156,8 +156,8 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
                 if (err != null) Toast.makeText(context, err, Toast.LENGTH_LONG).show()
             }
         }
-        Spacer(Modifier.height(Gap.Item))
-        Text(Copy.LAB_STATUS_HIDE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        // 주의 문구는 설명 바로 아래에 붙인다(다른 카드처럼 설명 줄과 같은 간격)
+        Text(Copy.LAB_STATUS_HIDE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(end = 72.dp))
     }
     // 마이크·카메라 사용 표시(초록 점): 기기 설정 값이라 Shizuku로 바꾼다. 아이콘 카드 아래에 따로 둔다
     val dotCard: @Composable ColumnScope.() -> Unit = {
