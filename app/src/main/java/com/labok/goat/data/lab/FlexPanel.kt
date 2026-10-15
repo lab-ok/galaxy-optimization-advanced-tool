@@ -754,14 +754,16 @@ object FlexPanel {
     }
 
     /**
-     * 삼성 공식 화면 분할로 두 작업을 반반 연다. 셸 도움말에는 없지만 삼성 WMShell에 있는 명령을 차례로 쓴다(삼성 SystemUI 디컴파일
+     * 삼성 공식 화면 분할로 두 작업을 반반 연다([first]는 위 칸, [second]는 아래 칸). 셸 도움말에는 없지만 삼성 WMShell에 있는 명령을 차례로 쓴다(삼성 SystemUI 디컴파일
      * SplitScreenShellCommandHandler 근거): startTasks → startSplitTasks(비율 0.5). moveToSideStage는 반대 칸이 비어 실패했다(1.10.3 영상).
      * 두 작업이 모두 분할(multi-window)이 되면 그 방법을, 아니면 마지막 상태와 실패 로그를 돌려준다.
      */
     private fun openSplit(first: String, second: String): String {
         fun bothSplit() = modeOf(first)?.startsWith("multi") == true && modeOf(second)?.startsWith("multi") == true
         ShizukuAccess.shell("logcat -c")
-        for (cmd in listOf("startTasks $first $second", "startSplitTasks $first $second 0.5")) {
+        // 1.10.4 영상: startTasks A B는 B를 위 칸에 놓았다(고르기가 위, 쓰던 앱이 아래). 그래서 위에 둘 작업을 뒤에 넘긴다.
+        // startSplitTasks는 소스상 (왼쪽·위, 오른쪽·아래) 순서다
+        for (cmd in listOf("startTasks $second $first", "startSplitTasks $first $second 0.5")) {
             ShizukuAccess.shell("$SPLIT_CMD $cmd")
             Thread.sleep(700)
             if (bothSplit()) return "${cmd.substringBefore(' ')} 성공"
