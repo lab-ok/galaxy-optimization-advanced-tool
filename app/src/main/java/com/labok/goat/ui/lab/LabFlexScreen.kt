@@ -130,8 +130,8 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var query by remember { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
     val horizontal = rememberHingeHorizontal(supported)
-    // 패널을 끈 앱(예외). 나머지는 모두 켜져 있다
-    var off by remember { mutableStateOf(AutoFlex.excluded(context)) }
+    // 앱별 모드(기본값 플렉스 모드가 아닌 앱만)
+    var modes by remember { mutableStateOf(AutoFlex.modes(context)) }
     var appsOpen by remember { mutableStateOf(false) }
     var gesturesOpen by remember { mutableStateOf(false) }
     var diagProgress by remember { mutableStateOf<Float?>(null) }
@@ -174,17 +174,13 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         apps = withContext(Dispatchers.IO) { loadApps(context) }
     }
 
-    // 스위치는 누르자마자 바뀌고(물방울 손잡이가 먼저 출렁인다), 줄은 손잡이가 자리 잡은 뒤 물처럼 흘러 다른 묶음으로 옮겨 간다
-    val pending = remember { mutableStateMapOf<String, Boolean>() }
-    fun toggle(app: AppEntry, want: Boolean) = scope.launch {
-        pending[app.pkg] = want
-        val err = withContext(Dispatchers.IO) { AutoFlex.setAppPanel(context, app.pkg, want) }
-        if (err == null) {
-            delay(360)
-            off = AutoFlex.excluded(context)
-        } else {
-            Toast.makeText(context, err, Toast.LENGTH_LONG).show()
-        }
+    // 칩은 누르자마자 바뀌고(물방울이 먼저 옮겨 간다), 줄은 방울이 자리 잡은 뒤 물처럼 흘러 다른 묶음으로 옮겨 간다
+    val pending = remember { mutableStateMapOf<String, Int>() }
+    fun choose(app: AppEntry, mode: Int) = scope.launch {
+        pending[app.pkg] = mode
+        AutoFlex.setMode(context, app.pkg, mode)
+        delay(360)
+        modes = AutoFlex.modes(context)
         pending.remove(app.pkg)
     }
 
@@ -279,14 +275,14 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         // 접으면 패널 자동 표시(공식 화면과 같은 이름): 요약 줄을 누르면 앱 목록이 펼쳐진다
         val q = query.trim()
         val all = apps.orEmpty().filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) || it.pkg.contains(q, ignoreCase = true) }
-        val shownApps = apps.orEmpty().filter { it.pkg !in off }
+        val shownApps = apps.orEmpty().filter { it.pkg in modes }
         item(key = "apps") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard(padding = Gap.Flush) {
                     Row(Modifier.fillMaxWidth().clickable { appsOpen = !appsOpen }.padding(Gap.CardPadding), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(Copy.LAB_FLEX_APPS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                            Text(appsSummary(shownApps), color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            Text(if (shownApps.isEmpty()) Copy.LAB_FLEX_APPS_ALL_FLEX else appsSummary(shownApps), color = c.muted, style = MaterialTheme.typography.bodySmall)
                         }
                         val turn by animateFloatAsState(if (appsOpen) 180f else 0f, Springs.pop(), label = "appsChevron")
                         Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
@@ -308,20 +304,19 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     )
                 }
             }
-            val excluded = all.filter { it.pkg in off }
-            val rest = all.filter { it.pkg !in off }
             if (apps == null) item(key = "loading") { LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp)) }
-            // 같은 키를 두 묶음에서 그대로 써서, 켜고 끌 때 줄이 사라졌다 생기지 않고 새 자리로 흘러간다
+            // 같은 키를 여러 묶음에서 그대로 써서, 모드를 바꿀 때 줄이 사라졌다 생기지 않고 새 자리로 흘러간다.
+            // 터치패널·분할 화면을 고른 앱을 위에 모으고, 나머지(플렉스 모드)는 최근 사용 순으로 둔다
             val anim = Modifier
-            if (excluded.isNotEmpty()) {
-                item(key = "h-off") { Section("패널을 끈 앱 ${excluded.size}", anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
-                items(excluded, key = { it.pkg }) { app ->
-                    FlexAppRow(app, pending[app.pkg] ?: false, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) { toggle(app, it) }
+            fun modeOf(app: AppEntry) = modes[app.pkg] ?: AutoFlex.MODE_FLEX
+            listOf(AutoFlex.MODE_PANEL, AutoFlex.MODE_SPLIT, AutoFlex.MODE_FLEX).forEach { m ->
+                val group = all.filter { modeOf(it) == m }
+                if (group.isEmpty() && m != AutoFlex.MODE_FLEX) return@forEach
+                val title = if (m == AutoFlex.MODE_FLEX) Copy.LAB_FLEX_APPS_REST else "${AutoFlex.modeLabel(m)} ${group.size}"
+                item(key = "h-$m") { Section(title, anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
+                items(group, key = { it.pkg }) { app ->
+                    FlexAppRow(app, pending[app.pkg] ?: m, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) { choose(app, it) }
                 }
-            }
-            item(key = "h-rest") { Section(Copy.LAB_FLEX_APPS_REST, anim.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) }
-            items(rest, key = { it.pkg }) { app ->
-                FlexAppRow(app, pending[app.pkg] ?: true, Modifier.animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)) { toggle(app, it) }
             }
         }
         // 스크롤 휠 위치(공식 설정과 같은 값): 패널 옆 스크롤 휠을 왼쪽·오른쪽 중 어디에 둘지
@@ -526,18 +521,19 @@ internal fun FlexHelpSheet() {
 
 /** 패널 앱 한 줄: 앱별 화면 배율 설정 목록과 같은 모양(아이콘·이름·마지막 사용)에 오른쪽 스위치. 켜고 끌 때 테두리가 물들고 줄이 살짝 출렁인다. */
 @Composable
-private fun FlexAppRow(app: AppEntry, on: Boolean, modifier: Modifier = Modifier, onChange: (Boolean) -> Unit) {
+private fun FlexAppRow(app: AppEntry, mode: Int, modifier: Modifier = Modifier, onChange: (Int) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val shape = RoundedCornerShape(20.dp)
-    val border by animateColorAsState(if (on) c.ink.copy(alpha = 0.5f) else c.line, Springs.calm(reduce), label = "flexRowBorder")
+    val chosen = mode != AutoFlex.MODE_FLEX
+    val border by animateColorAsState(if (chosen) c.ink.copy(alpha = 0.5f) else c.line, Springs.calm(reduce), label = "flexRowBorder")
     val squash = remember { Animatable(1f) }
-    LaunchedEffect(on) {
+    LaunchedEffect(mode) {
         if (reduce || squash.value != 1f) return@LaunchedEffect
         squash.snapTo(0.97f)
         squash.animateTo(1f, Springs.pop(reduce))
     }
-    Row(
+    Column(
         modifier
             .widthIn(max = ContentMaxWidth)
             .fillMaxWidth()
@@ -548,17 +544,18 @@ private fun FlexAppRow(app: AppEntry, on: Boolean, modifier: Modifier = Modifier
             .clip(shape)
             .background(c.surface)
             .border(1.dp, border, shape)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
-        Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
+            }
         }
-        Spacer(Modifier.width(8.dp))
-        LiquidSwitch(on, onChange, label = app.label)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidChips(options = AutoFlex.MODES, selected = mode, label = { AutoFlex.modeLabel(it) }, onSelect = onChange)
     }
 }
 

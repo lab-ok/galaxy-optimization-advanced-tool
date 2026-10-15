@@ -74,6 +74,34 @@ object AutoFlex {
         LogRepository.from(context).add("자동 플렉스 모드 ${if (on) "켜짐" else "꺼짐"}")
     }
 
+    /**
+     * 앱별로 접었을 때 할 일. 기본은 [MODE_FLEX](반쯤 접힘만 알려 앱에 들어 있는 플렉스 모드를 쓴다).
+     * [MODE_PANEL]은 앱을 위 절반, 삼성 터치패널을 아래 절반에, [MODE_SPLIT]은 앱을 위 절반, 고른 앱을 아래 절반에 띄운다.
+     */
+    const val MODE_FLEX = 0
+    const val MODE_PANEL = 1
+    const val MODE_SPLIT = 2
+    val MODES = listOf(MODE_FLEX, MODE_PANEL, MODE_SPLIT)
+
+    fun modeLabel(mode: Int) = when (mode) {
+        MODE_PANEL -> "터치패널"
+        MODE_SPLIT -> "분할 화면"
+        else -> "플렉스 모드"
+    }
+
+    fun mode(context: Context, pkg: String): Int = prefs(context).getInt("mode:$pkg", MODE_FLEX)
+
+    /** 기본값이 아닌 모드를 고른 앱(패키지 → 모드). */
+    fun modes(context: Context): Map<String, Int> = prefs(context).all
+        .filterKeys { it.startsWith("mode:") }
+        .mapNotNull { (k, v) -> (v as? Int)?.takeIf { it != MODE_FLEX }?.let { k.removePrefix("mode:") to it } }
+        .toMap()
+
+    fun setMode(context: Context, pkg: String, mode: Int) {
+        prefs(context).edit().apply { if (mode == MODE_FLEX) remove("mode:$pkg") else putInt("mode:$pkg", mode) }.apply()
+        LogRepository.from(context).add("자동 플렉스: $pkg 접으면 ${modeLabel(mode)}")
+    }
+
     /** 패널을 띄우지 않을 앱(사용자가 끈 앱). 나머지 앱은 모두 패널을 띄운다. */
     fun excluded(context: Context): Set<String> = prefs(context).getStringSet("excluded", emptySet()).orEmpty()
 
@@ -520,8 +548,8 @@ object AutoFlex {
             val err = if (on) FlexPanel.forceHalfOpened(context) else FlexPanel.resetPosture(context)
             if (err == null) {
                 activeFlow.value = on
-                // 앞 앱은 위 절반, 삼성 패널은 아래 절반으로 나누고, 끄면 원래대로 돌린다(따로 한 줄로 돈다)
-                if (on) FlexPanel.openSplit(context) else FlexPanel.closeSplit(context)
+                // 앞 앱에 고른 모드(플렉스 모드·터치패널·분할 화면)를 적용하고, 끄면 원래대로 돌린다(따로 한 줄로 돈다)
+                if (on) FlexPanel.apply(context) else FlexPanel.release(context)
                 // 켜고 끈 까닭을 남긴다(범위·까딱, 그때 각도와 기본 센서 값, 가로 여부): 안 켜지거나 바로 꺼질 때 원인을 볼 수 있게
                 LogRepository.from(context).add(
                     "자동 플렉스 ${if (on) "켬" else "끔"}: 각도 ${last?.toInt()}° · 기본 센서 ${coarseLast?.toInt()}° · " +
