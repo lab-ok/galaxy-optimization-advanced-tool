@@ -520,6 +520,8 @@ object AutoFlex {
             val err = if (on) FlexPanel.forceHalfOpened(context) else FlexPanel.resetPosture(context)
             if (err == null) {
                 activeFlow.value = on
+                // 앞 앱은 위 절반, 삼성 패널은 아래 절반으로 나누고, 끄면 원래대로 돌린다(따로 한 줄로 돈다)
+                if (on) FlexPanel.openSplit(context) else FlexPanel.closeSplit(context)
                 // 켜고 끈 까닭을 남긴다(범위·까딱, 그때 각도와 기본 센서 값, 가로 여부): 안 켜지거나 바로 꺼질 때 원인을 볼 수 있게
                 LogRepository.from(context).add(
                     "자동 플렉스 ${if (on) "켬" else "끔"}: 각도 ${last?.toInt()}° · 기본 센서 ${coarseLast?.toInt()}° · " +

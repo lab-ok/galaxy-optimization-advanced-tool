@@ -589,6 +589,94 @@ object FlexPanel {
         LogRepository.from(context).add("실험실 플렉스: 삼성 터치패널 살리기 시도")
     }
 
+    /**
+     * 자동 플렉스 분할(살리기 시도 18-2에서 실기 확인): 앞에 있는 앱을 멀티 창으로 다시 불러 위 절반에, 삼성 패널을 멀티 창으로 띄워
+     * 아래 절반에 놓는다. 패널은 물리 상태가 반쯤 접힘(탁자 모드)이어야 유지되므로 물리 상태도 덮어쓴다.
+     * 크롬처럼 창을 여러 개 여는 앱은 새 작업이 생긴다(보던 탭은 그대로 보임). 닫을 때 새 작업이면 닫고, 같은 작업이면 전체 화면으로 되돌린다.
+     * 셸 명령이 몇 초 걸려 센서 스레드를 막지 않게 따로 한 줄로 돌린다(열기·닫기 순서는 지킨다).
+     */
+    private data class Split(val pkg: String, val component: String, val original: String, val app: String?, val panel: String?, val freeform0: String?)
+
+    @Volatile private var split: Split? = null
+    private val splitQueue = java.util.concurrent.Executors.newSingleThreadExecutor()
+
+    /** 화면에 보이는 전체 화면 일반 앱 작업(번호, 패키지). 시스템 UI·GOAT·홈은 뺀다. */
+    private fun frontTask(context: Context): Pair<String, String>? =
+        Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)[^\n]*visible=true[^\n]*mode=fullscreen""")
+            .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
+            .map { it.groupValues[1] to it.groupValues[2] }
+            .firstOrNull { (_, pkg) -> pkg != "com.android.systemui" && pkg != context.packageName }
+
+    /** [pkg]의 보이는 작업 중 전체 화면이 아닌 것(멀티 창으로 다시 부른 뒤 찾는다). */
+    private fun windowedTask(pkg: String): String? =
+        Regex("""Task\{[0-9a-f]+ #(\d+)[^\n]*A=\d+:${Regex.escape(pkg)}[^\n]*visible=true[^\n]*mode=(\w+)""")
+            .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
+            .firstOrNull { it.groupValues[2] != "fullscreen" }?.groupValues?.get(1)
+
+    private fun panelTaskId(): String? = Regex("""Task\{[0-9a-f]+ #(\d+)[^}]*com\.android\.systemui[^}]*""").find(
+        ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{.*FlexPanelActivity|Task\\{[^}]*A=[0-9]+:com.android.systemui'")?.out.orEmpty()
+    )?.groupValues?.get(1)
+
+    /** 앞 앱을 위 절반, 패널을 아래 절반에 놓는다(이미 열려 있으면 그대로). */
+    fun openSplit(context: Context) = splitQueue.execute {
+        if (split != null || ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
+        val log = LogRepository.from(context)
+        val real = Point().also {
+            @Suppress("DEPRECATION")
+            context.getSystemService(DisplayManager::class.java).getDisplay(0)?.getRealSize(it)
+        }
+        // 접는 선이 가로(화면이 세로로 긴 때)일 때만 위아래로 나눈다
+        if (real.x <= 0 || real.x >= real.y) {
+            log.add("자동 플렉스 분할: 화면이 가로라 건너뜀(${real.x}x${real.y})")
+            return@execute
+        }
+        val (w, h) = real.x to real.y
+        val mid = h / 2
+        val front = frontTask(context)
+        if (front == null || front.second in AutoFlex.excluded(context)) {
+            log.add("자동 플렉스 분할: 앞에 앱이 없거나 패널을 끈 앱이라 건너뜀(${front?.second ?: "-"})")
+            return@execute
+        }
+        val component = context.packageManager.getLaunchIntentForPackage(front.second)?.component?.flattenToShortString()
+        if (component == null) {
+            log.add("자동 플렉스 분할: ${front.second}은 다시 열 수 없어 건너뜀")
+            return@execute
+        }
+        val half = Regex("identifier=(\\d+), name='HALF_OPENED'").find(ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty())?.groupValues?.get(1) ?: "2"
+        ShizukuAccess.shell("cmd device_state base-state $half")
+        val freeform0 = ShizukuAccess.shell("settings get global enable_freeform_support")?.out?.trim()
+        ShizukuAccess.shell("settings put global enable_freeform_support 1")
+        ShizukuAccess.shell("am start --windowingMode 6 -f 0x10000000 -n $component")
+        Thread.sleep(800)
+        val app = windowedTask(front.second)
+        app?.let { ShizukuAccess.shell("am task resize $it 0 0 $w $mid") }
+        ShizukuAccess.shell("am start --windowingMode 6 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 -n '$PANEL_ACTIVITY'")
+        Thread.sleep(800)
+        val panel = panelTaskId()
+        panel?.let { ShizukuAccess.shell("am task resize $it 0 $mid $w $h") }
+        split = Split(front.second, component, front.first, app, panel, freeform0)
+        log.add("자동 플렉스 분할: ${front.second} 위(#${app ?: "-"}) · 패널 아래(#${panel ?: "-"})")
+    }
+
+    /** [openSplit]으로 나눈 화면을 원래대로 돌린다. */
+    fun closeSplit(context: Context) = splitQueue.execute {
+        val s = split ?: return@execute
+        split = null
+        ShizukuAccess.shell("am broadcast -a android.intent.action.COLLAPSE_FLEX_PANEL -p com.android.systemui")
+        (s.panel ?: panelTaskId())?.let { removeTask(it) }
+        ShizukuAccess.shell("cmd device_state base-state reset")
+        if (s.app != null && s.app != s.original) {
+            // 새로 생긴 창(크롬 등)은 닫는다. 뒤에 있던 원래 창이 전체 화면으로 남는다
+            removeTask(s.app)
+        } else {
+            ShizukuAccess.shell("am start --windowingMode 1 -f 0x10000000 -n ${s.component}")
+        }
+        ShizukuAccess.shell(
+            if (s.freeform0 == null || s.freeform0 == "null") "settings delete global enable_freeform_support" else "settings put global enable_freeform_support ${s.freeform0}"
+        )
+        LogRepository.from(context).add("자동 플렉스 분할 풀기: ${s.pkg}")
+    }
+
     /** 반쯤 접힘 강제 중인지(GOAT가 건 것). 재부팅하면 시스템이 풀어 주므로 메모리에만 둔다. */
     @Volatile
     var forced = false
