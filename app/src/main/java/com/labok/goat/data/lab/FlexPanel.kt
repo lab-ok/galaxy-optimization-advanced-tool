@@ -2,6 +2,8 @@ package com.labok.goat.data.lab
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Point
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -392,11 +394,15 @@ object FlexPanel {
             // 패널은 멀티 창이면 늘 화면 전체를 덮었다. 그래서 창 크기를 직접 정한다: 패널을 팝업(자유 창)이나 멀티 창으로 띄운 뒤
             // 작업 크기를 화면 아래 절반으로 줄인다(am task resize). 앱은 뒤에 그대로 있어 위 절반에 보인다.
             // 앱까지 팝업으로 위 절반에 놓는 경우도 시험한다. 모두 시험하고(중간에 멈추지 않는다) 화면 캡처로 비교한다
-            // 16차: 15차는 'wm size'(회전 전 기본 크기 2448x1848)를 써서, 세로로 돌아간 화면(1848x2448)에서 패널이 아래 절반이 아니라
-            // 가운데 띠(924~1848)에 놓였다. 지금 회전이 반영된 크기(dumpsys window displays의 cur=)를 쓴다
-            val size = Regex("cur=(\\d+)x(\\d+)").find(ShizukuAccess.shell("dumpsys window displays | grep -m1 -o 'cur=[0-9]*x[0-9]*'")?.out.orEmpty())
-            val dw = size?.groupValues?.get(1)?.toIntOrNull() ?: 1848
-            val dh = size?.groupValues?.get(2)?.toIntOrNull() ?: 2448
+            // 16차: 15차는 'wm size'(회전 전 기본 크기 2448x1848)를 써서 세로 화면(1848x2448)에서 패널이 가운데 띠에 놓였다.
+            // 17차: 16차는 dumpsys의 첫 cur= 값을 썼는데 그게 커버 화면(1972x1248)이었다. 기본 디스플레이(0번)의 지금 크기를
+            // 시스템에서 바로 읽는다(회전 반영)
+            val real = Point().also {
+                @Suppress("DEPRECATION")
+                context.getSystemService(DisplayManager::class.java).getDisplay(0)?.getRealSize(it)
+            }
+            val dw = real.x.takeIf { it > 0 } ?: 1848
+            val dh = real.y.takeIf { it > 0 } ?: 2448
             val mid = dh / 2
             appendLine("시도 15: 화면 ${dw}x$dh, 접는 선 y=$mid")
             fun resizePanel(): String = panelTask()?.let { sh("am task resize $it 0 $mid $dw $dh 2>&1 | tail -2") } ?: "패널 작업 없음"
