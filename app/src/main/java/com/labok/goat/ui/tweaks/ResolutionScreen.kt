@@ -107,7 +107,7 @@ internal fun ResolutionScreen(contentPadding: PaddingValues, permitted: Boolean,
                     Text(Copy.RES_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.RES_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    ResolutionArt(percent = selected?.percent?.takeIf { it < 100 } ?: options.getOrNull(1)?.percent ?: 75)
+                    ResolutionArt(percent = artPercent(options, selected))
                 }
             }
         }
@@ -212,15 +212,25 @@ fun ResolutionConfirm() {
     )
 }
 
+/** 그림에 보일 낮춘 해상도(변 %): 지금 낮춰 쓰는 단계, 아니면 이 기기의 첫 낮춤 단계. 화면과 도움말이 같은 값을 보인다. */
+private fun artPercent(options: List<Resolution.Option>, selected: Resolution.Option?): Int = selected?.percent?.takeIf { it < 100 } ?: options.getOrNull(1)?.percent ?: 75
+
 /** 사용 방법. */
 @Composable
 internal fun ResolutionHelpSheet() {
+    val context = LocalContext.current
+    // 고정 예시(75 → 화소 56%)는 고를 수 있는 단계와 맞지 않아, 화면 그림과 같은 이 기기의 실제 단계로 그린다
+    val percent = remember {
+        val now = Resolution.current(context)
+        val options = Resolution.optionsFor(Resolution.base(context))
+        artPercent(options, options.minByOrNull { abs(it.short - now.first) })
+    }
     SheetColumn(title = "사용 방법") {
         HelpTopic(
             "1. 무엇을 하나요",
             "화면이 그리는 점(픽셀)의 수를 줄입니다. 글자·아이콘 크기는 그대로 두고 선명도만 조금 낮춰, 게임에서 프레임이 오르거나 " +
                 "배터리 부담이 줄 수 있습니다. 효과는 기기와 앱마다 다릅니다."
-        ) { ResolutionArt(75) }
+        ) { ResolutionArt(percent) }
         HelpTopic(
             "2. 바꾼 뒤 확인",
             "바꾸면 화면이 잠깐 깜빡이고 ${Resolution.CONFIRM_MS / 1000}초 동안 '이 해상도를 유지할까요?'를 묻습니다. '유지'를 누르지 않으면 " +

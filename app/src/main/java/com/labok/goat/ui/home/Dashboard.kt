@@ -472,6 +472,19 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
     val animateIn = intro && !reduce
     val text = remember { Animatable(if (animateIn) 0f else 1f) }
     val corner = with(d) { LiquidShape.card.toPx() }
+    // 눌러서 다음 화면이 누른 자리에서 물방울로 번지기 시작하면, 처음 몇 프레임 작은 방울이 글자 일부만 덮어 글자가 깨져 보인다.
+    // 번지기 시작하는 순간 카드 글자를 먼저 거둬 방울이 빈 카드 위로 번지게 한다. 곧바로 홈으로 돌아와도 글자가 남게 잠시 뒤 되살린다.
+    var leaving by remember { mutableStateOf(false) }
+    LaunchedEffect(leaving) {
+        if (leaving) {
+            delay(LEAVE_RESET_MS)
+            leaving = false
+        }
+    }
+    val openAt: (Offset) -> Unit = { at ->
+        if (!reduce) leaving = true
+        onClick(at)
+    }
 
     // 등장: 작은 방울 → 카드 모양(차례로)
     LaunchedEffect(box) {
@@ -497,7 +510,7 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
             .semantics(mergeDescendants = true) {
                 role = Role.Button
                 onClick {
-                    onClick(origin + Offset(box.width / 2f, box.height / 2f))
+                    openAt(origin + Offset(box.width / 2f, box.height / 2f))
                     true
                 }
             }
@@ -515,7 +528,7 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
                     }
                     val released = tryAwaitRelease()
                     if (!reduce) haptics.release()
-                    if (released) onClick(origin + pos)
+                    if (released) openAt(origin + pos)
                 })
             }
     ) {
@@ -535,7 +548,7 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
             Modifier
                 .padding(Gap.CardPadding)
                 .graphicsLayer {
-                    alpha = text.value
+                    alpha = if (leaving) 0f else text.value
                     translationY = (1f - text.value) * 8.dp.toPx()
                 },
             verticalAlignment = Alignment.CenterVertically
@@ -552,6 +565,9 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
         }
     }
 }
+
+/** 카드를 눌러 글자를 거둔 뒤 되살리기까지(ms). 번짐 전환(약 0.64초)이 홈을 다 덮은 뒤다. */
+private const val LEAVE_RESET_MS = 1000L
 
 /** 홈이 처음 보인 뒤 이 시간 안에 나타난 카드만 등장 애니메이션을 한다(ms). */
 private const val INTRO_MS = 1200L
