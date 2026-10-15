@@ -1,6 +1,11 @@
 package com.labok.goat.ui.about
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +15,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
@@ -26,7 +33,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.BuildConfig
@@ -125,6 +136,13 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                         label = { if (it == UiInk.Mode.THEME) Copy.INK_THEME else Copy.INK_DEFAULT },
                         onSelect = { UiInk.set(context, it) }
                     )
+                    // 갤럭시 테마일 때: 색상 팔레트의 강조색 1~3을 진하게·중간 두 단계로 보여 주고 하나를 고른다
+                    AnimatedVisibility(UiInk.mode == UiInk.Mode.THEME) {
+                        Column {
+                            Spacer(Modifier.height(Gap.Item))
+                            InkTones()
+                        }
+                    }
                 }
             }
         }
@@ -218,3 +236,30 @@ private fun InfoLink(label: String, detail: String, onClick: () -> Unit) {
         Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = c.muted)
     }
 }
+
+/** 갤럭시 색상 팔레트에서 잉크 색 고르기: 강조색마다 진하게·중간 두 칸. 고른 칸은 바깥 고리로 표시한다. */
+@Composable
+private fun InkTones() {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    val dark = isSystemInDarkTheme()
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Gap.Item)) {
+        UiInk.Tone.ALL.forEach { t ->
+            val color = colorResource(t.colorRes(dark))
+            val picked = UiInk.tone == t
+            val ring by animateColorAsState(if (picked) c.ink else Color.Transparent, label = "inkTone")
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, ring, CircleShape)
+                    .padding(5.dp)
+                    .clip(CircleShape)
+                    .background(color)
+                    .clickable { UiInk.setTone(context, t) }
+                    .semantics { contentDescription = "${Copy.INK_TONE} 강조색 ${t.accent} ${if (t.deep) "진하게" else "중간"}" }
+            )
+        }
+    }
+}
+
