@@ -1,19 +1,28 @@
 package com.labok.goat.data.lab
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Point
+import android.graphics.Rect
 import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Handler
+import android.os.IInterface
 import android.os.Looper
 import android.os.VibrationEffect
 import android.os.VibratorManager
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
+import com.labok.goat.R
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import java.util.concurrent.Executors
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
 
@@ -281,18 +290,6 @@ object FlexPanel {
                 return opened
             }
             fun lock(rot: Int) = sh("settings put system accelerometer_rotation 0 && settings put system user_rotation $rot && cmd window user-rotation lock $rot")
-            fun restartSystemUi(name: String) {
-                val before = ShizukuAccess.shell("pidof com.android.systemui")?.out?.trim()
-                appendLine("$name: 시스템 UI 다시 띄우기 → ${sh("am crash com.android.systemui 2>&1 || am force-stop com.android.systemui 2>&1")}")
-                var after: String? = null
-                for (i in 0 until 20) {
-                    Thread.sleep(1000)
-                    after = ShizukuAccess.shell("pidof com.android.systemui")?.out?.trim()?.takeIf { it.isNotBlank() && it != before }
-                    if (after != null) break
-                }
-                appendLine("시스템 UI 프로세스 ${before ?: "-"} → ${after ?: "(바뀌지 않음)"}")
-                Thread.sleep(6000)
-            }
             rotationInfo("시작")
             appendLine("상태 표시줄 관리자 서비스 → ${sh("service check sem_statusbar; service list | grep -i -E 'statusbar' | head -5")}")
             var done = false
@@ -309,43 +306,7 @@ object FlexPanel {
             fun panelTask(): String? = Regex("""Task\{[0-9a-f]+ #(\d+)[^}]*com\.android\.systemui[^}]*""").find(
                 ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{.*FlexPanelActivity|Task\\{[^}]*A=[0-9]+:com.android.systemui'")?.out.orEmpty()
             )?.groupValues?.get(1)
-            val wmshell = "dumpsys activity service SystemUIService WMShell splitscreen"
 
-            // 시험 하나: [prepare]로 분할 등을 준비하고 [cmd]로 패널을 연 뒤, 필요하면 [after]로 패널 작업을 옮기고 결과를 남긴다
-            fun launch(name: String, title: String, cmd: String, prepare: (() -> Unit)? = null, after: (() -> Unit)? = null): Boolean {
-                prepare?.invoke()
-                ShizukuAccess.shell("logcat -b all -c")
-                appendLine("$name: 반쯤 접힌 채 $title → ${sh(cmd)}")
-                Thread.sleep(800)
-                after?.invoke()
-                Thread.sleep(2500)
-                val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -i -E '$logFilter|FlexPanelActivity|not top child|dismissSplit' | grep -v -E 'SurfaceFlinger|BLASTBufferQueue|SurfaceControlRegistry|InsetsController|AppCompatDelegate' | head -200")?.out?.trim().orEmpty()
-                appendLine("── $name $title 로그 ──")
-                appendLine(log.ifBlank { "(로그 없음)" })
-                appendLine("──")
-                val created = log.contains("wm_create_activity") && log.contains("FlexPanelActivity")
-                val finished = Regex("wm_finish_activity[^\\n]*FlexPanelActivity").containsMatchIn(log)
-                val alive = ShizukuAccess.shell("dumpsys activity activities | grep -c 'FlexPanelActivity'")?.out?.trim()?.toIntOrNull() ?: 0
-                val kept = created && !finished && alive > 0
-                val result = if (kept) {
-                    "패널이 떠서 유지됨"
-                } else if (created) {
-                    "패널이 떴다가 닫힘"
-                } else {
-                    "패널이 뜨지 않음"
-                }
-                appendLine("$name $title 결과: $result")
-                if (kept) {
-                    appendLine("패널을 20초 동안 그대로 둡니다. 화면 아래쪽 패널을 눌러 보세요")
-                    notice(context, "패널이 떴습니다. 아래쪽 패널을 눌러 보세요(20초)")
-                    Thread.sleep(20_000)
-                } else {
-                    // 다음 시험을 위해 이번에 만든 분할을 푼다
-                    appTask()?.let { ShizukuAccess.shell("$wmshell exitSplitScreen $it") }
-                    Thread.sleep(800)
-                }
-                return kept
-            }
             // 14차: 13차 '가'(반쯤 접힘 유지 + 멀티 창으로 AUTORUN)에서 패널이 떠서 유지됐다(터치패드 창까지).
             // 다만 패널이 화면 전체를 덮고 앱이 사라졌다(실기 캡처: 홈 배경 위에 터치패드·버튼만). 삼성 플렉스 모드처럼
             // 앱은 위 칸, 패널은 아래 칸에 놓이도록 배치 방법을 모두 시험한다. 시험마다 화면을 캡처해 Download/GOAT에 남긴다.
@@ -361,45 +322,9 @@ object FlexPanel {
             }
             fun alive() = (ShizukuAccess.shell("dumpsys activity activities | grep -c 'FlexPanelActivity'")?.out?.trim()?.toIntOrNull() ?: 0) > 0
 
-            // 앱 작업이 실제로 보이는지(visible=true). 14차는 창 목록에 이름만 있어도 보인다고 잘못 셌다
-            fun appVisible(): Boolean = app != null && ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{.*$app.*visible=true' | head -1")?.out?.isNotBlank() == true
             appendLine("시도 14: 회전 세로로 고정 → ${lock(3)}")
             Thread.sleep(2000)
             appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
-            // 배치 하나: 앱을 앞으로 가져오고 반쯤 접힘을 건 뒤 [steps]를 차례로 실행하고 결과를 남긴다
-            fun arrange(tag: String, title: String, steps: List<Pair<String, () -> String>>): Boolean {
-                val name = "시도 $tag"
-                if (app != null) ShizukuAccess.shell("monkey -p $app -c android.intent.category.LAUNCHER 1")
-                Thread.sleep(1500)
-                ShizukuAccess.shell("logcat -b all -c")
-                appendLine("$name($title): 물리 상태를 반쯤 접힘으로(유지) → ${sh("cmd device_state base-state $half")}")
-                Thread.sleep(1500)
-                for ((what, run) in steps) {
-                    appendLine("$name: $what → ${run()}")
-                    Thread.sleep(1500)
-                }
-                Thread.sleep(1500)
-                val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -i -E 'wm_create_activity|wm_finish_activity|FlexPanelActivity|ShellSplitScreen|not top child|dismissSplit' | grep -v -E 'InsetsController|AppCompatDelegate' | head -120")?.out?.trim().orEmpty()
-                appendLine("── $name 로그 ──")
-                appendLine(log.ifBlank { "(로그 없음)" })
-                appendLine("──")
-                state(name, tag)
-                val panel = alive()
-                val shown = appVisible()
-                val ok = panel && shown
-                appendLine("$name 결과: 패널 ${if (panel) "유지" else "닫힘"} · 앱 ${if (shown) "보임" else "안 보임"}${if (ok) " → 성공 후보" else ""}")
-                if (panel) {
-                    notice(context, if (ok) "패널과 앱이 함께 보이는지 확인하고 눌러 보세요(15초)" else "패널만 떠 있습니다. 15초 동안 눌러 보세요")
-                    Thread.sleep(15_000)
-                }
-                // 다음 배치를 위해 패널을 닫고 분할을 풀고 접힘을 되돌린다
-                ShizukuAccess.shell("am broadcast -a android.intent.action.COLLAPSE_FLEX_PANEL -p com.android.systemui")
-                appTask()?.let { ShizukuAccess.shell("$wmshell exitSplitScreen $it") }
-                panelTask()?.let { ShizukuAccess.shell("am stack remove $it 2>/dev/null; cmd activity task remove $it 2>/dev/null") }
-                appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
-                Thread.sleep(1500)
-                return ok
-            }
             // 15차: 14차에서 이 기기의 화면 분할은 좌우로만 나뉘어(세로 화면에서도 918px | 917px) 앱 위·패널 아래가 되지 않았고,
             // 패널은 멀티 창이면 늘 화면 전체를 덮었다. 그래서 창 크기를 직접 정한다: 패널을 팝업(자유 창)이나 멀티 창으로 띄운 뒤
             // 작업 크기를 화면 아래 절반으로 줄인다(am task resize). 앱은 뒤에 그대로 있어 위 절반에 보인다.
@@ -424,6 +349,7 @@ object FlexPanel {
             }
             fun resizePanel(): String = panelTask()?.let { sh("am task resize $it 0 $mid $dw $dh 2>&1 | tail -2") } ?: "패널 작업 없음"
             val appComponent = app?.let { pm.getLaunchIntentForPackage(it)?.component?.flattenToShortString() }
+
             // 18차: 17차 15-3에서 패널은 아래 절반, 앱은 위 절반에 제대로 놓였고 터치패드·버튼도 동작했다(사용자 확인).
             // 다만 15-3은 앱을 '새 작업'으로 다시 열어서 크롬이 쓰던 창이 아니라 새 창(새 탭)이 위에 떴다.
             // 그래서 쓰던 앱 창(같은 작업)을 팝업으로 바꿔 위 절반에 놓고, 패널을 닫은 뒤 다시 전체 화면으로 되돌리는 방법을 시험한다.
@@ -444,6 +370,7 @@ object FlexPanel {
                 "데스크에서 빼기" to { id -> sh("$desk moveTaskOutOfDesk $id 2>&1 | tail -3") },
                 "작업을 앞으로 옮기기" to { id -> sh("am task move-to-front $id 2>&1 | tail -2; cmd activity task move-to-front $id 2>&1 | tail -2") }
             )
+
             // [toPopup]으로 쓰던 앱 작업을 팝업으로 바꾸고, [back]으로 전체 화면으로 되돌린다. 둘 다 작업 번호를 받는다
             fun cycle(tag: String, title: String, toPopup: (String) -> String, back: (String) -> String): Boolean {
                 val name = "시도 $tag"
@@ -507,11 +434,13 @@ object FlexPanel {
                 Triple("18-1", "같은 앱을 팝업 모드로 다시 앞에 불러오기(새 작업 없이)", { _: String -> relaunch(5, "0x10000000") } to back1),
                 Triple("18-2", "같은 앱을 멀티 창 모드로 다시 앞에 불러오기(창 손잡이 없이)", { _: String -> relaunch(6, "0x10000000") } to back1),
                 Triple(
-                    "18-3", "WMShell 데스크로 옮기기",
+                    "18-3",
+                    "WMShell 데스크로 옮기기",
                     { id: String -> sh("$desk moveTaskToDesk $id 0 2>&1 | tail -3") } to { id: String -> sh("$desk moveTaskOutOfDesk $id 2>&1 | tail -3") }
                 ),
                 Triple(
-                    "18-4", "전체 화면 앱 작업을 그대로 크기만 줄이기",
+                    "18-4",
+                    "전체 화면 앱 작업을 그대로 크기만 줄이기",
                     { id: String -> sh("am task resizeable $id 3 2>&1 | tail -1") } to { id: String -> sh("am task resize $id 0 0 $dw $dh 2>&1 | tail -2") }
                 ),
                 Triple("18-5", "앱을 멀티 창 모드 새 작업으로 다시 열기(15-3을 멀티 창으로)", { _: String -> relaunch(6, "0x10008000") } to back1),
@@ -612,27 +541,24 @@ object FlexPanel {
     )
 
     @Volatile private var split: Split? = null
-    private val splitQueue = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private val splitQueue = Executors.newSingleThreadExecutor()
     private const val PICK_ACTIVITY = "com.labok.goat/.ui.lab.FlexPickActivity"
     private const val MODE_CHANNEL = "auto_flex_mode"
     private const val MODE_NOTIFICATION = 3101
 
     /** 화면에 보이는 전체 화면 일반 앱 작업(번호, 패키지). 시스템 UI·GOAT·홈은 뺀다. */
-    private fun frontTask(context: Context): Pair<String, String>? =
-        Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)[^\n]*visible=true[^\n]*mode=fullscreen""")
-            .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
-            .map { it.groupValues[1] to it.groupValues[2] }
-            .firstOrNull { (_, pkg) -> pkg != "com.android.systemui" && !pkg.startsWith(context.packageName) }
+    private fun frontTask(context: Context): Pair<String, String>? = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)[^\n]*visible=true[^\n]*mode=fullscreen""")
+        .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
+        .map { it.groupValues[1] to it.groupValues[2] }
+        .firstOrNull { (_, pkg) -> pkg != "com.android.systemui" && !pkg.startsWith(context.packageName) }
 
     /** 지금 앞에 있는 앱을 '사용 안 함'으로 두었는지(자동 플렉스가 켜기·진동 전에 본다). */
-    fun frontIsOff(context: Context): Boolean =
-        ShizukuAccess.status.value == ShizukuAccess.State.READY && frontTask(context)?.second?.let { AutoFlex.mode(context, it) == AutoFlex.MODE_OFF } == true
+    fun frontIsOff(context: Context): Boolean = ShizukuAccess.status.value == ShizukuAccess.State.READY && frontTask(context)?.second?.let { AutoFlex.mode(context, it) == AutoFlex.MODE_OFF } == true
 
     /** [pkg]의 보이는 작업 중 전체 화면이 아닌 것(멀티 창으로 다시 부른 뒤 찾는다). */
-    private fun windowedTask(pkg: String): String? =
-        Regex("""Task\{[0-9a-f]+ #(\d+)[^\n]*A=\d+:${Regex.escape(pkg)}[^\n]*visible=true[^\n]*mode=(\w+)""")
-            .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
-            .firstOrNull { it.groupValues[2] != "fullscreen" }?.groupValues?.get(1)
+    private fun windowedTask(pkg: String): String? = Regex("""Task\{[0-9a-f]+ #(\d+)[^\n]*A=\d+:${Regex.escape(pkg)}[^\n]*visible=true[^\n]*mode=(\w+)""")
+        .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
+        .firstOrNull { it.groupValues[2] != "fullscreen" }?.groupValues?.get(1)
 
     private fun panelTaskId(): String? = Regex("""Task\{[0-9a-f]+ #(\d+)[^}]*com\.android\.systemui[^}]*""").find(
         ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{.*FlexPanelActivity|Task\\{[^}]*A=[0-9]+:com.android.systemui'")?.out.orEmpty()
@@ -645,7 +571,7 @@ object FlexPanel {
      * 같은 창이 그대로 옮겨지고 중간에 전체 화면으로 깜빡이지 않는다. [bounds]가 빈 Rect면 크기 지정을 푼다. 성공하면 null, 실패하면 이유.
      * 영상(1.9.1): 다시 띄우는 방식은 크롬이 빈 새 창으로 열렸고, 메시지 앱은 펴도 위 절반에 남았다.
      */
-    private fun moveTask(id: String, mode: Int, bounds: android.graphics.Rect): String? = runCatching {
+    private fun moveTask(id: String, mode: Int, bounds: Rect): String? = runCatching {
         val atm = atm()
         val getTasks = atm.javaClass.methods.filter { it.name == "getTasks" }.maxByOrNull { it.parameterTypes.size }!!
         val args: Array<Any> = when (getTasks.parameterTypes.size) {
@@ -659,7 +585,7 @@ object FlexPanel {
         val wct = Class.forName("android.window.WindowContainerTransaction").getConstructor().newInstance()
         wct.javaClass.methods.first { it.name == "setWindowingMode" && it.parameterTypes.size == 2 }.invoke(wct, token, mode)
         wct.javaClass.methods.first { it.name == "setBounds" && it.parameterTypes.size == 2 }.invoke(wct, token, bounds)
-        val org = atm.javaClass.methods.first { it.name == "getWindowOrganizerController" }.invoke(atm) as android.os.IInterface
+        val org = atm.javaClass.methods.first { it.name == "getWindowOrganizerController" }.invoke(atm) as IInterface
         val ctl = HiddenApi.asInterface("android.window.IWindowOrganizerController", ShizukuBinderWrapper(org.asBinder()))
         ctl.javaClass.methods.first { it.name == "applyTransaction" && it.parameterTypes.size == 1 }.invoke(ctl, wct)
         null
@@ -675,9 +601,8 @@ object FlexPanel {
     }
 
     /** [pkg]의 가장 위에 있는 보이는 작업 번호. */
-    private fun visibleTask(pkg: String): String? =
-        Regex("""Task\{[0-9a-f]+ #(\d+)[^\n]*A=\d+:${Regex.escape(pkg)}[^\n]*visible=true""")
-            .find(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())?.groupValues?.get(1)
+    private fun visibleTask(pkg: String): String? = Regex("""Task\{[0-9a-f]+ #(\d+)[^\n]*A=\d+:${Regex.escape(pkg)}[^\n]*visible=true""")
+        .find(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())?.groupValues?.get(1)
 
     /** 앱 고르기 화면의 작업(따로 둔 작업 이름 com.labok.goat.flexpick). */
     private fun pickerTask(): String? = Regex("""Task\{[0-9a-f]+ #(\d+)[^\n]*A=\d+:com\.labok\.goat\.flexpick""")
@@ -704,7 +629,7 @@ object FlexPanel {
     /** 작업 [id]를 전체 화면으로 되돌린다. 차례로 시도하고 무엇이 됐는지 돌려준다. */
     private fun restoreFull(context: Context, id: String, component: String): String {
         val done = mutableListOf<String>()
-        moveTask(id, 1, android.graphics.Rect()).let { done += "옮기기 ${it ?: "성공"}" }
+        moveTask(id, 1, Rect()).let { done += "옮기기 ${it ?: "성공"}" }
         if (modeOf(id) != "fullscreen") {
             ShizukuAccess.shell("am start --windowingMode 1 -f 0x10000000 -n $component")
             Thread.sleep(500)
@@ -760,6 +685,7 @@ object FlexPanel {
      */
     private fun openSplit(first: String, second: String): String {
         fun bothSplit() = modeOf(first)?.startsWith("multi") == true && modeOf(second)?.startsWith("multi") == true
+
         // 분할이 자리 잡을 때까지 0.25초마다 2.5초 동안 본다(바로 보고 다음 명령을 겹쳐 보내면 열리던 분할이 닫혔다, 1.11.0 영상)
         fun waitSplit(): Boolean {
             repeat(10) {
@@ -826,8 +752,8 @@ object FlexPanel {
         }
         val (w, h) = real.x to real.y
         val mid = h / 2
-        val top = android.graphics.Rect(0, 0, w, mid)
-        val bottom = android.graphics.Rect(0, mid, w, h)
+        val top = Rect(0, 0, w, mid)
+        val bottom = Rect(0, mid, w, h)
         val freeform0 = ShizukuAccess.shell("settings get global enable_freeform_support")?.out?.trim()
         ShizukuAccess.shell("settings put global enable_freeform_support 1")
         // 쓰던 창을 그대로 위 절반으로 옮긴다. 안 되면 18-2처럼 멀티 창으로 다시 불러 크기를 줄인다
@@ -854,7 +780,7 @@ object FlexPanel {
     private fun releaseNow(context: Context) {
         val s = split ?: return
         split = null
-        context.getSystemService(android.app.NotificationManager::class.java).cancel(MODE_NOTIFICATION)
+        context.getSystemService(NotificationManager::class.java).cancel(MODE_NOTIFICATION)
         if (s.mode == AutoFlex.MODE_FLEX || s.mode == AutoFlex.MODE_OFF) return
         val log = LogRepository.from(context)
         if (s.mode == AutoFlex.MODE_PANEL) {
@@ -884,10 +810,10 @@ object FlexPanel {
 
     /** 켜져 있는 동안 지금 앱·모드를 보여 주고, 알림 버튼으로 모드를 바꿀 수 있게 한다. */
     private fun notifyMode(context: Context, s: Split) {
-        val nm = context.getSystemService(android.app.NotificationManager::class.java)
-        nm.createNotificationChannel(android.app.NotificationChannel(MODE_CHANNEL, "자동 플렉스 모드 바꾸기", android.app.NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
-        val b = androidx.core.app.NotificationCompat.Builder(context, MODE_CHANNEL)
-            .setSmallIcon(com.labok.goat.R.drawable.ic_stat_goat)
+        val nm = context.getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(NotificationChannel(MODE_CHANNEL, "자동 플렉스 모드 바꾸기", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
+        val b = NotificationCompat.Builder(context, MODE_CHANNEL)
+            .setSmallIcon(R.drawable.ic_stat_goat)
             .setContentTitle("${s.label} · ${AutoFlex.modeLabel(s.mode)}")
             .setContentText("접은 동안 이 앱에서 쓸 방식을 바꿀 수 있습니다")
             .setOngoing(true)
@@ -895,11 +821,11 @@ object FlexPanel {
             .setOnlyAlertOnce(true)
         // 알림 버튼은 세 개까지 보이므로 지금 모드를 뺀 나머지 셋을 둔다(지금 모드는 제목에 보인다)
         AutoFlex.MODES.filter { it != s.mode }.forEach { m ->
-            val pi = android.app.PendingIntent.getBroadcast(
+            val pi = PendingIntent.getBroadcast(
                 context,
                 m,
-                android.content.Intent(context, FlexModeReceiver::class.java).putExtra(FlexModeReceiver.EXTRA_MODE, m),
-                android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+                Intent(context, FlexModeReceiver::class.java).putExtra(FlexModeReceiver.EXTRA_MODE, m),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
             b.addAction(0, AutoFlex.modeLabel(m), pi)
         }

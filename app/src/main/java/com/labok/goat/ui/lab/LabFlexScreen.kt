@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
@@ -89,7 +90,6 @@ import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LiquidProgressButton
-import com.labok.goat.ui.liquid.LiquidSwitch
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -493,7 +493,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                         Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
                     }
                     // 전체 이름으로 부른다: 그냥 부르면 ColumnScope 확장판이 잡혀 지금과 다른 함수가 된다
-                    androidx.compose.animation.AnimatedVisibility(
+                    AnimatedVisibility(
                         gesturesOpen,
                         enter = expandVertically(spring(UiMotion.ratio(0.75f), UiMotion.stiffness(300f, 0.75f))) + fadeIn(),
                         exit = shrinkVertically(spring(UiMotion.ratio(0.9f), UiMotion.stiffness(420f, 0.9f))) + fadeOut()

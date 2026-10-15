@@ -272,7 +272,7 @@ private class SceneKit(
         val ctrl = Offset((a.x + b.x) / 2, size.height * 1.02f)
         val path = Path().apply {
             moveTo(a.x, a.y)
-            quadraticBezierTo(ctrl.x, ctrl.y, b.x, b.y)
+            quadraticTo(ctrl.x, ctrl.y, b.x, b.y)
         }
         drawPath(path, c.ink.copy(alpha = 0.5f * plug), style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round))
         drawRoundRect(c.ink.copy(alpha = plug), Offset(b.x - 5.dp.toPx(), b.y - 3.dp.toPx() + (1 - plug) * 6.dp.toPx()), Size(10.dp.toPx(), 6.dp.toPx()), CornerRadius(2.dp.toPx()))

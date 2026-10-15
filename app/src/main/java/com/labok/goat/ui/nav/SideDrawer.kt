@@ -415,13 +415,13 @@ private fun DrawScope.camera(c: Color, s: Stroke) {
         lineTo(u(14.5f), u(5.5f))
         lineTo(u(16f), u(8f))
         lineTo(u(19.5f), u(8f))
-        quadraticBezierTo(u(21f), u(8f), u(21f), u(9.5f))
+        quadraticTo(u(21f), u(8f), u(21f), u(9.5f))
         lineTo(u(21f), u(17.5f))
-        quadraticBezierTo(u(21f), u(19f), u(19.5f), u(19f))
+        quadraticTo(u(21f), u(19f), u(19.5f), u(19f))
         lineTo(u(4.5f), u(19f))
-        quadraticBezierTo(u(3f), u(19f), u(3f), u(17.5f))
+        quadraticTo(u(3f), u(19f), u(3f), u(17.5f))
         lineTo(u(3f), u(9.5f))
-        quadraticBezierTo(u(3f), u(8f), u(4.5f), u(8f))
+        quadraticTo(u(3f), u(8f), u(4.5f), u(8f))
         close()
     }
     drawPath(body, c, style = s)
@@ -437,9 +437,9 @@ private fun DrawScope.home(c: Color, s: Stroke) {
         lineTo(u(20.5f), u(11f))
         moveTo(u(5.5f), u(9.5f))
         lineTo(u(5.5f), u(18.5f))
-        quadraticBezierTo(u(5.5f), u(20f), u(7f), u(20f))
+        quadraticTo(u(5.5f), u(20f), u(7f), u(20f))
         lineTo(u(17f), u(20f))
-        quadraticBezierTo(u(18.5f), u(20f), u(18.5f), u(18.5f))
+        quadraticTo(u(18.5f), u(20f), u(18.5f), u(18.5f))
         lineTo(u(18.5f), u(9.5f))
     }
     drawPath(path, c, style = s)
@@ -567,9 +567,9 @@ private fun DrawScope.flask(c: Color, s: Stroke) {
         moveTo(u(9.5f), u(3.5f))
         lineTo(u(9.5f), u(9.2f))
         lineTo(u(4.6f), u(17.8f))
-        quadraticBezierTo(u(3.9f), u(20.5f), u(6.6f), u(20.5f))
+        quadraticTo(u(3.9f), u(20.5f), u(6.6f), u(20.5f))
         lineTo(u(17.4f), u(20.5f))
-        quadraticBezierTo(u(20.1f), u(20.5f), u(19.4f), u(17.8f))
+        quadraticTo(u(20.1f), u(20.5f), u(19.4f), u(17.8f))
         lineTo(u(14.5f), u(9.2f))
         lineTo(u(14.5f), u(3.5f))
     }
@@ -584,7 +584,7 @@ private fun DrawScope.flask(c: Color, s: Stroke) {
 private fun DrawScope.airplane(c: Color, s: Stroke) {
     val path = Path().apply {
         moveTo(u(12f), u(2.8f))
-        quadraticBezierTo(u(13.4f), u(2.8f), u(13.4f), u(5f))
+        quadraticTo(u(13.4f), u(2.8f), u(13.4f), u(5f))
         lineTo(u(13.4f), u(9.6f))
         lineTo(u(20.6f), u(13.6f))
         lineTo(u(20.6f), u(15.6f))
@@ -601,7 +601,7 @@ private fun DrawScope.airplane(c: Color, s: Stroke) {
         lineTo(u(3.4f), u(13.6f))
         lineTo(u(10.6f), u(9.6f))
         lineTo(u(10.6f), u(5f))
-        quadraticBezierTo(u(10.6f), u(2.8f), u(12f), u(2.8f))
+        quadraticTo(u(10.6f), u(2.8f), u(12f), u(2.8f))
         close()
     }
     drawPath(path, c, style = s)
@@ -611,8 +611,8 @@ private fun DrawScope.airplane(c: Color, s: Stroke) {
 private fun DrawScope.eyeOff(c: Color, s: Stroke) {
     val eye = Path().apply {
         moveTo(u(2.6f), u(12f))
-        quadraticBezierTo(u(12f), u(2.4f), u(21.4f), u(12f))
-        quadraticBezierTo(u(12f), u(21.6f), u(2.6f), u(12f))
+        quadraticTo(u(12f), u(2.4f), u(21.4f), u(12f))
+        quadraticTo(u(12f), u(21.6f), u(2.6f), u(12f))
         close()
     }
     drawPath(eye, c, style = s)

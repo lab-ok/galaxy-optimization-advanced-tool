@@ -108,16 +108,6 @@ object AutoFlex {
     /** 패널을 띄우지 않을 앱(사용자가 끈 앱). 나머지 앱은 모두 패널을 띄운다. */
     fun excluded(context: Context): Set<String> = prefs(context).getStringSet("excluded", emptySet()).orEmpty()
 
-    /** [pkg]의 패널을 켜거나 끈다(끄면 예외 목록에 넣는다). 성공하면 null. 작업 스레드에서 부른다. */
-    fun setAppPanel(context: Context, pkg: String, on: Boolean): String? {
-        val err = FlexPanel.setApp(context, pkg, on)
-        if (err == null) {
-            val set = excluded(context).toMutableSet().apply { if (on) remove(pkg) else add(pkg) }
-            prefs(context).edit().putStringSet("excluded", set).apply()
-        }
-        return err
-    }
-
     /**
      * 모든 앱(예외 제외)을 패널 대상에 맞춘다: 켜져 있으면 등록, 꺼지면 GOAT가 등록한 앱을 모두 푼다.
      * 새로 설치한 앱도 잡히도록 서비스가 시작될 때와 화면이 켜질 때(한 시간에 한 번) 부른다. 작업 스레드에서 부른다.

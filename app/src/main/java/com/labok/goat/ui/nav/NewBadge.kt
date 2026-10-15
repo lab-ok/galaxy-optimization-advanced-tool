@@ -2,6 +2,7 @@ package com.labok.goat.ui.nav
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
@@ -69,7 +70,7 @@ object NewBadge {
 @Composable
 fun NewDot(modifier: Modifier = Modifier) {
     val c = LocalLiquid.current
-    androidx.compose.foundation.layout.Box(modifier.size(8.dp).clip(CircleShape).background(c.danger))
+    Box(modifier.size(8.dp).clip(CircleShape).background(c.danger))
 }
 
 /** 카드 위 '새 기능' 표시. 아직 보지 않은 기능일 때만 보인다. */

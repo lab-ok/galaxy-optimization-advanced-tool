@@ -17,6 +17,7 @@ import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.ui.liquid.UiHaptics
 import com.labok.goat.ui.liquid.UiInk
 import com.labok.goat.ui.liquid.UiMotion
+import com.labok.goat.ui.nav.NewBadge
 
 class App : Application() {
     override fun onCreate() {
@@ -26,7 +27,7 @@ class App : Application() {
         UiMotion.load(this)
         UiHaptics.load(this)
         UiInk.load(this)
-        com.labok.goat.ui.nav.NewBadge.load(this)
+        NewBadge.load(this)
         LabUnlock.load(this)
         DpiManager.exemptHiddenApis()
         // Shizuku가 켜지며(재부팅 뒤 자동 시작 포함) GOAT에 바인더를 건네면, 옵션에 따라 무선 디버깅을 끈다

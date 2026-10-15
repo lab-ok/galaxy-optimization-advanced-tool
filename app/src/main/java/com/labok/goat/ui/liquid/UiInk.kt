@@ -1,5 +1,6 @@
 package com.labok.goat.ui.liquid
 
+import android.R
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,12 +35,12 @@ object UiInk {
             val ALL = listOf(1, 2, 3).flatMap { a -> listOf(Tone(a, true), Tone(a, false)) }
 
             private val RES = mapOf(
-                (1 to 100) to android.R.color.system_accent1_100, (1 to 300) to android.R.color.system_accent1_300,
-                (1 to 600) to android.R.color.system_accent1_600, (1 to 900) to android.R.color.system_accent1_900,
-                (2 to 100) to android.R.color.system_accent2_100, (2 to 300) to android.R.color.system_accent2_300,
-                (2 to 600) to android.R.color.system_accent2_600, (2 to 900) to android.R.color.system_accent2_900,
-                (3 to 100) to android.R.color.system_accent3_100, (3 to 300) to android.R.color.system_accent3_300,
-                (3 to 600) to android.R.color.system_accent3_600, (3 to 900) to android.R.color.system_accent3_900
+                (1 to 100) to R.color.system_accent1_100, (1 to 300) to R.color.system_accent1_300,
+                (1 to 600) to R.color.system_accent1_600, (1 to 900) to R.color.system_accent1_900,
+                (2 to 100) to R.color.system_accent2_100, (2 to 300) to R.color.system_accent2_300,
+                (2 to 600) to R.color.system_accent2_600, (2 to 900) to R.color.system_accent2_900,
+                (3 to 100) to R.color.system_accent3_100, (3 to 300) to R.color.system_accent3_300,
+                (3 to 600) to R.color.system_accent3_600, (3 to 900) to R.color.system_accent3_900
             )
 
             fun of(key: String?): Tone = ALL.firstOrNull { it.key == key } ?: DEFAULT

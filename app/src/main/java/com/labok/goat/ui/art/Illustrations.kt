@@ -91,7 +91,7 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
             val ctrl = Offset((a.x + b.x) / 2, h * 1.02f)
             val path = Path().apply {
                 moveTo(a.x, a.y)
-                quadraticBezierTo(ctrl.x, ctrl.y, b.x, b.y)
+                quadraticTo(ctrl.x, ctrl.y, b.x, b.y)
             }
             drawPath(path, c.ink.copy(alpha = 0.55f), style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round))
             // 단자
