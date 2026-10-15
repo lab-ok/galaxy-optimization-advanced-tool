@@ -334,69 +334,77 @@ object FlexPanel {
                 }
                 return kept
             }
-            for (rot in listOf(3, 1)) {
-                if (done) break
-                val name = "시도 13-$rot"
-                appendLine("$name: 회전 ${rot * 90}°로 고정 → ${lock(rot)}")
-                Thread.sleep(2000)
-                appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
-                restartSystemUi(name)
-                if (app != null) {
-                    appendLine("$app 앞으로 → ${sh("monkey -p $app -c android.intent.category.LAUNCHER 1")}")
+            // 14차: 13차 '가'(반쯤 접힘 유지 + 멀티 창으로 AUTORUN)에서 패널이 떠서 유지됐다(터치패드 창까지).
+            // 다만 패널이 화면 전체를 덮고 앱이 사라졌다(실기 캡처: 홈 배경 위에 터치패드·버튼만). 삼성 플렉스 모드처럼
+            // 앱은 위 칸, 패널은 아래 칸에 놓이도록 배치 방법을 모두 시험한다. 시험마다 화면을 캡처해 Download/GOAT에 남긴다.
+            // 자동 실행 장치 조건은 직접 띄우기에 필요 없어(13차는 시스템 UI 재시작 없이 성공) 회전만 세로(접는 선 가로)로 고정한다
+            val p = "-n '$PANEL_ACTIVITY'"
+            val openPanel = "am start --windowingMode 6 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 $p"
+            val shotDir = "/sdcard/Download/GOAT"
+            fun state(name: String, tag: String) {
+                appendLine("── $name 배치 상태 ──")
+                appendLine(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{|mBounds=|windowingMode=' | grep -v 'mBounds=Rect\\(0, 0 - 0, 0\\)' | head -30")?.out?.trim()?.ifBlank { "(없음)" } ?: "")
+                appendLine("──")
+                appendLine("$name 화면 캡처 → ${sh("screencap -p $shotDir/goat-flex14-$tag.png && echo $shotDir/goat-flex14-$tag.png")}")
+            }
+            fun alive() = (ShizukuAccess.shell("dumpsys activity activities | grep -c 'FlexPanelActivity'")?.out?.trim()?.toIntOrNull() ?: 0) > 0
+            fun appVisible(): Boolean = app != null && ShizukuAccess.shell("dumpsys window visible-apps 2>/dev/null | grep -c '$app'")?.out?.trim()?.toIntOrNull()?.let { it > 0 } == true
+            appendLine("시도 14: 회전 세로로 고정 → ${lock(3)}")
+            Thread.sleep(2000)
+            appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
+            // 배치 하나: 앱을 앞으로 가져오고 반쯤 접힘을 건 뒤 [steps]를 차례로 실행하고 결과를 남긴다
+            fun arrange(tag: String, title: String, steps: List<Pair<String, () -> String>>): Boolean {
+                val name = "시도 14-$tag"
+                if (app != null) ShizukuAccess.shell("monkey -p $app -c android.intent.category.LAUNCHER 1")
+                Thread.sleep(1500)
+                ShizukuAccess.shell("logcat -b all -c")
+                appendLine("$name($title): 물리 상태를 반쯤 접힘으로(유지) → ${sh("cmd device_state base-state $half")}")
+                Thread.sleep(1500)
+                for ((what, run) in steps) {
+                    appendLine("$name: $what → ${run()}")
                     Thread.sleep(1500)
                 }
-                ShizukuAccess.shell("logcat -b all -c")
-                appendLine("$name: 물리 상태를 반쯤 접힘으로(유지) → ${sh("cmd device_state base-state $half")}")
-                Thread.sleep(2500)
-                val judged = ShizukuAccess.shell("logcat -d -b main -v time | grep -E 'FlexPanelStartController' | grep -v -E 'at (com|android|java|dalvik)\\.' | head -20")?.out?.trim().orEmpty()
-                appendLine("── $name 자동 실행 판단 ──")
-                appendLine(judged.ifBlank { "(로그 없음)" })
-                appendLine("── 판단 요약: ${panelBlockers(judged)}")
-                val p = "-n '$PANEL_ACTIVITY'"
-                val tries = listOf<Pair<String, () -> Boolean>>(
-                    "가. 멀티 창(분할 모드)으로 자동 실행 명령" to { launch(name, "가. 멀티 창 + AUTORUN", "am start --windowingMode 6 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 $p") },
-                    "나. 멀티 창으로 펼치기 명령" to { launch(name, "나. 멀티 창 + EXPAND", "am start --windowingMode 6 -a android.intent.action.EXPAND_FLEX_PANEL -f 0x14241000 --display 0 $p") },
-                    "다. 멀티 창으로 그냥 열기" to { launch(name, "다. 멀티 창", "am start --windowingMode 6 $p") },
-                    "라. 팝업 창(자유 창)으로 열기" to { launch(name, "라. 팝업 창", "am start --windowingMode 5 -a android.intent.action.AUTORUN_FLEX_PANEL $p") },
-                    "마. 앱을 위 칸에 넣고 패널을 옆 칸으로" to {
-                        launch(
-                            name,
-                            "마. 앱 위 칸 + 패널 옆 칸(AUTORUN)",
-                            "am start -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 $p",
-                            prepare = {
-                                appTask()?.let { appendLine("$name: 앱을 위 칸으로 → ${sh("$wmshell moveToSideStage $it 0 2>&1 | tail -2")}") }
-                                Thread.sleep(1500)
-                            }
-                        )
-                    },
-                    "바. 앱을 아래 칸에 넣고 패널을 옆 칸으로" to {
-                        launch(
-                            name,
-                            "바. 앱 아래 칸 + 패널 옆 칸(AUTORUN)",
-                            "am start -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 $p",
-                            prepare = {
-                                appTask()?.let { appendLine("$name: 앱을 아래 칸으로 → ${sh("$wmshell moveToSideStage $it 1 2>&1 | tail -2")}") }
-                                Thread.sleep(1500)
-                            }
-                        )
-                    },
-                    "사. 멀티 창으로 연 패널을 분할 아래 칸으로 옮기기" to {
-                        launch(
-                            name,
-                            "사. 멀티 창 패널 → 분할 아래 칸",
-                            "am start --windowingMode 6 -a android.intent.action.AUTORUN_FLEX_PANEL $p",
-                            after = { panelTask()?.let { appendLine("$name: 패널 작업 $it 을 아래 칸으로 → ${sh("$wmshell moveToSideStage $it 1 2>&1 | tail -2")}") } }
-                        )
-                    }
-                )
-                for ((_, run) in tries) {
-                    if (run()) {
-                        done = true
-                        break
-                    }
+                Thread.sleep(1500)
+                val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -i -E 'wm_create_activity|wm_finish_activity|FlexPanelActivity|ShellSplitScreen|not top child|dismissSplit' | grep -v -E 'InsetsController|AppCompatDelegate' | head -120")?.out?.trim().orEmpty()
+                appendLine("── $name 로그 ──")
+                appendLine(log.ifBlank { "(로그 없음)" })
+                appendLine("──")
+                state(name, tag)
+                val panel = alive()
+                val shown = appVisible()
+                val ok = panel && shown
+                appendLine("$name 결과: 패널 ${if (panel) "유지" else "닫힘"} · 앱 ${if (shown) "보임" else "안 보임"}${if (ok) " → 성공 후보" else ""}")
+                if (panel) {
+                    notice(context, if (ok) "패널과 앱이 함께 보이는지 확인하고 눌러 보세요(15초)" else "패널만 떠 있습니다. 15초 동안 눌러 보세요")
+                    Thread.sleep(15_000)
                 }
+                // 다음 배치를 위해 패널을 닫고 분할을 풀고 접힘을 되돌린다
+                ShizukuAccess.shell("am broadcast -a android.intent.action.COLLAPSE_FLEX_PANEL -p com.android.systemui")
+                appTask()?.let { ShizukuAccess.shell("$wmshell exitSplitScreen $it") }
+                panelTask()?.let { ShizukuAccess.shell("am stack remove $it 2>/dev/null; cmd activity task remove $it 2>/dev/null") }
                 appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
-                Thread.sleep(1000)
+                Thread.sleep(1500)
+                return ok
+            }
+            val arrangements = listOf<Triple<String, String, List<Pair<String, () -> String>>>>(
+                Triple("A", "패널을 띄운 뒤 앱을 위 칸으로", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "앱을 위 칸으로" to { appTask()?.let { sh("$wmshell moveToSideStage $it 0 2>&1 | tail -2") } ?: "앱 작업 없음" })),
+                Triple("B", "앱을 위 칸에 넣은 뒤 패널을 옆 칸 + 멀티 창으로", listOf("앱을 위 칸으로" to { appTask()?.let { sh("$wmshell moveToSideStage $it 0 2>&1 | tail -2") } ?: "앱 작업 없음" }, "패널 띄우기(옆 칸·멀티 창)" to { sh(openPanel) })),
+                Triple("C", "패널을 띄운 뒤 패널을 아래 칸으로", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "패널을 아래 칸으로" to { panelTask()?.let { sh("$wmshell moveToSideStage $it 1 2>&1 | tail -2") } ?: "패널 작업 없음" })),
+                Triple("D", "패널을 띄운 뒤 앱을 옆 칸으로 열기", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "앱을 옆 칸으로 열기" to { app?.let { pkg -> pm.getLaunchIntentForPackage(pkg)?.component?.flattenToShortString()?.let { sh("am start -f 0x18001000 -n $it") } } ?: "앱 없음" })),
+                Triple(
+                    "E",
+                    "앱을 아래 칸에 넣은 뒤 패널을 멀티 창으로, 패널을 위 칸으로 옮기고 다시 아래로",
+                    listOf(
+                        "앱을 아래 칸으로" to { appTask()?.let { sh("$wmshell moveToSideStage $it 1 2>&1 | tail -2") } ?: "앱 작업 없음" },
+                        "패널 띄우기(옆 칸·멀티 창)" to { sh(openPanel) },
+                        "분할 위치 바꾸기" to { sh("$wmshell switchSplitPosition 2>&1 | tail -2") }
+                    )
+                ),
+                Triple("F", "패널을 띄운 뒤 패널 크기를 아래 절반으로", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "패널 작업을 아래 절반으로" to { panelTask()?.let { sh("am task resize $it 0 1224 1848 2448 2>&1 | tail -2") } ?: "패널 작업 없음" }))
+            )
+            for ((tag, title, steps) in arrangements) {
+                if (done) break
+                done = arrange(tag, title, steps)
             }
             // 라. 덮어쓰기 없이 실제 자세로
             if (!done) {
