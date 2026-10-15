@@ -70,6 +70,8 @@ import com.labok.goat.ui.liquid.liquidPress
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.liquid.rememberSoftBlob
+import com.labok.goat.ui.nav.NewBadge
+import com.labok.goat.ui.nav.NewTag
 import com.labok.goat.ui.text.Copy
 
 /**
@@ -140,6 +142,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
         item(key = "ink") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
+                    NewTag(NewBadge.INK_TONES, Modifier.padding(bottom = Gap.Item))
                     Text(Copy.INK_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.INK_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))

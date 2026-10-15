@@ -312,6 +312,11 @@ private fun DrawerRow(
         NavGlyph(item.icon, fg)
         Spacer(Modifier.width(14.dp))
         Text(item.label, color = fg, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
+        // 새 기능이 들어온 항목은 이름 옆에 점을 찍는다(그 화면을 보고 나가면 사라진다)
+        if (NewBadge.navNew(item)) {
+            Spacer(Modifier.width(8.dp))
+            NewDot()
+        }
     }
 }
 

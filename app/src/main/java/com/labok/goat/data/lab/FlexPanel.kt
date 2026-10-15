@@ -761,13 +761,19 @@ object FlexPanel {
     private fun openSplit(first: String, second: String): String {
         fun bothSplit() = modeOf(first)?.startsWith("multi") == true && modeOf(second)?.startsWith("multi") == true
         ShizukuAccess.shell("logcat -c")
-        // 1.10.4 영상: startTasks A B는 B를 위 칸에 놓았다(고르기가 위, 쓰던 앱이 아래). 그래서 위에 둘 작업을 뒤에 넘긴다.
-        // startSplitTasks는 소스상 (왼쪽·위, 오른쪽·아래) 순서다
-        for (cmd in listOf("startTasks $second $first", "startSplitTasks $first $second 0.5")) {
-            ShizukuAccess.shell("$SPLIT_CMD $cmd")
-            Thread.sleep(700)
-            if (bothSplit()) return "${cmd.substringBefore(' ')} 성공"
+        // 1.10.4 영상: startTasks A B는 열렸지만 B를 위 칸에 놓았다. 1.10.6에서 순서를 바꿔 넘기자(startTasks B A) 분할이 열리지 않고
+        // "앱이 화면 분할을 지원하지 않습니다"가 떴다. 그래서 열리는 순서(A B) 그대로 연 뒤 switchSplitPosition으로 위아래를 바꾼다.
+        // startSplitTasks는 소스상 (왼쪽·위, 오른쪽·아래) 순서라 바꾸지 않는다
+        ShizukuAccess.shell("$SPLIT_CMD startTasks $first $second")
+        Thread.sleep(700)
+        if (bothSplit()) {
+            ShizukuAccess.shell("$SPLIT_CMD switchSplitPosition")
+            Thread.sleep(400)
+            return "startTasks 성공 · 위아래 바꿈"
         }
+        ShizukuAccess.shell("$SPLIT_CMD startSplitTasks $first $second 0.5")
+        Thread.sleep(700)
+        if (bothSplit()) return "startSplitTasks 성공"
         val fail = ShizukuAccess.shell("logcat -d -s StageCoordinator SplitScreenController | grep -i -E 'fail|non resizable|not found|didn' | tail -2")?.out?.trim().orEmpty()
         return "분할 안 됨(#$first ${modeOf(first) ?: "-"}, #$second ${modeOf(second) ?: "-"})" + (if (fail.isNotEmpty()) " · $fail" else "")
     }

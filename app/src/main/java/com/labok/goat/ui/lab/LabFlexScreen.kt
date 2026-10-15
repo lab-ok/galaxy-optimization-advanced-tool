@@ -96,6 +96,8 @@ import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Springs
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.UiMotion
+import com.labok.goat.ui.nav.NewBadge
+import com.labok.goat.ui.nav.NewTag
 import com.labok.goat.ui.text.Copy
 import kotlin.math.exp
 import kotlinx.coroutines.Dispatchers
@@ -286,6 +288,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                 GlassCard(padding = Gap.Flush) {
                     Row(Modifier.fillMaxWidth().clickable { appsOpen = !appsOpen }.padding(Gap.CardPadding), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
+                            NewTag(NewBadge.FLEX_APP_MODES, Modifier.padding(bottom = Gap.Item))
                             Text(Copy.LAB_FLEX_APPS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                             Text(
                                 if (apps == null) "앱 목록을 불러오는 중…" else AutoFlex.MODES.filter { counts[it]!! > 0 }.joinToString(" · ") { "${AutoFlex.modeLabel(it)} ${counts[it]}" },

@@ -175,7 +175,7 @@ object Copy {
     const val HOME_VIEW_EMPTY_OFF_TITLE = "모든 기능이 켜져 있습니다"
     const val HOME_VIEW_EMPTY_OFF_BODY = "꺼 둔 기능이 생기면 여기에 모입니다."
     const val FEATURE_AIRPLANE = "비행기 모드 무선"
-    const val FEATURE_STATUS_ICONS = "상태 표시줄 아이콘"
+    const val FEATURE_STATUS_ICONS = "상태 표시줄"
     const val FEATURE_LAB_SCREEN = "화면 모드"
     const val LAB_OPENED = "실험실이 열렸습니다. 사이드바에서 찾을 수 있습니다."
     const val FEATURE_LAB_FLEX = "자동 플렉스 모드"

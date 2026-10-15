@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -57,6 +58,8 @@ import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.nav.NewBadge
+import com.labok.goat.ui.nav.NewTag
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -92,16 +95,23 @@ private fun rememberLabWriter(): LabWriter {
     return remember { LabWriter(context) { block -> scope.launch { block() } } }
 }
 
-/** 실험실 화면 골격: 카드 하나를 가운데 폭으로 둔다. */
+/** 실험실 화면 골격: 카드를 가운데 폭으로 둔다. 기능이 둘 이상이면 [more]로 카드를 아래에 더한다. */
 @Composable
-private fun LabPage(contentPadding: PaddingValues, card: @Composable ColumnScope.() -> Unit) {
+private fun LabPage(
+    contentPadding: PaddingValues,
+    before: List<@Composable ColumnScope.() -> Unit> = emptyList(),
+    more: List<@Composable ColumnScope.() -> Unit> = emptyList(),
+    card: @Composable ColumnScope.() -> Unit
+) {
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = featurePadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
         modifier = Modifier.fillMaxWidth()
     ) {
+        before.forEachIndexed { i, extra -> item(key = "before$i") { Box(Modifier.widthIn(max = ContentMaxWidth)) { GlassCard(content = extra) } } }
         item(key = "card") { Box(Modifier.widthIn(max = ContentMaxWidth)) { GlassCard(content = card) } }
+        more.forEachIndexed { i, extra -> item(key = "more$i") { Box(Modifier.widthIn(max = ContentMaxWidth)) { GlassCard(content = extra) } } }
     }
 }
 
@@ -135,25 +145,22 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val w = rememberLabWriter()
-    LabPage(contentPadding) {
-        val raw = remember(w.version) { IconBlacklist.setting.read(context) }
-        Text(Copy.LAB_ICONS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text(Copy.LAB_ICONS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        IconBlacklist.Slot.entries.forEach { slot ->
-            Spacer(Modifier.height(Gap.Item))
-            // 줄 앞에 상태 표시줄에서 보이는 모양을 그려 어떤 아이콘인지 바로 알아보게 한다
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                StatusBarGlyph(slot, c.ink)
-                Spacer(Modifier.width(Gap.Card))
-                Box(Modifier.weight(1f)) {
-                    LiquidSwitchRow("${slot.label} 숨기기", slot.id, IconBlacklist.hidden(raw, slot), true) { hide ->
-                        w.write(IconBlacklist.setting, IconBlacklist.edit(raw, slot, hide))
-                    }
-                }
+    // 상단바 숨기기(실험)는 아이콘 카드와 따로 둔 카드: 아이콘만이 아니라 상단바 자리까지 숨겨 앱이 그 자리까지 쓰게 한다(포커스 창 방식, [StatusBarHider])
+    val hideCard: @Composable ColumnScope.() -> Unit = {
+        NewTag(NewBadge.STATUS_BAR_HIDE, Modifier.padding(bottom = Gap.Item))
+        val scope = rememberCoroutineScope()
+        val hiding by StatusBarHider.on.collectAsStateWithLifecycle()
+        LiquidSwitchRow(Copy.LAB_STATUS_HIDE, Copy.LAB_STATUS_HIDE_BODY, hiding, true) { want ->
+            scope.launch {
+                val err = withContext(Dispatchers.IO) { if (want) StatusBarHider.start(context) else StatusBarHider.stop(context).let { null } }
+                if (err != null) Toast.makeText(context, err, Toast.LENGTH_LONG).show()
             }
         }
-        // 마이크·카메라 사용 표시(초록 점)도 상태 표시줄 아이콘이라 목록 맨 끝에 같은 모양·간격으로 둔다(기기 설정 값이라 Shizuku로 바꾼다)
         Spacer(Modifier.height(Gap.Item))
+        Text(Copy.LAB_STATUS_HIDE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
+    }
+    // 마이크·카메라 사용 표시(초록 점): 기기 설정 값이라 Shizuku로 바꾼다. 아이콘 카드 아래에 따로 둔다
+    val dotCard: @Composable ColumnScope.() -> Unit = {
         val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
         var dotHidden by remember { mutableStateOf<Boolean?>(null) }
@@ -177,26 +184,29 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
                 }
             }
         }
-        // 상단바 숨기기(실험): 아이콘만이 아니라 상단바 자리까지 숨겨 앱이 그 자리까지 쓰게 한다(포커스 창 방식, [StatusBarHider])
-        Spacer(Modifier.height(Gap.Section))
-        val hiding by StatusBarHider.on.collectAsStateWithLifecycle()
-        LiquidSwitchRow(Copy.LAB_STATUS_HIDE, Copy.LAB_STATUS_HIDE_BODY, hiding, true) { want ->
-            scope.launch {
-                val err = withContext(Dispatchers.IO) { if (want) StatusBarHider.start(context) else StatusBarHider.stop(context).let { null } }
-                if (err != null) Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+    }
+    // 순서: 상단바 숨기기(가장 크게 바뀜) → 아이콘 숨기기 → 초록 점
+    LabPage(contentPadding, before = listOf(hideCard), more = listOf(dotCard)) {
+        val raw = remember(w.version) { IconBlacklist.setting.read(context) }
+        Text(Copy.LAB_ICONS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+        Text(Copy.LAB_ICONS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        IconBlacklist.Slot.entries.forEach { slot ->
+            Spacer(Modifier.height(Gap.Item))
+            // 줄 앞에 상태 표시줄에서 보이는 모양을 그려 어떤 아이콘인지 바로 알아보게 한다
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                StatusBarGlyph(slot, c.ink)
+                Spacer(Modifier.width(Gap.Card))
+                Box(Modifier.weight(1f)) {
+                    LiquidSwitchRow("${slot.label} 숨기기", slot.id, IconBlacklist.hidden(raw, slot), true) { hide ->
+                        w.write(IconBlacklist.setting, IconBlacklist.edit(raw, slot, hide))
+                    }
+                }
             }
         }
-        Text(Copy.LAB_STATUS_HIDE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        // [처음대로]는 맨 아래: 아이콘 목록과 초록 점을 함께 GOAT가 바꾸기 전으로 되돌린다
+        // [처음대로]는 아이콘 카드 맨 아래: 아이콘 목록을 GOAT가 바꾸기 전으로 되돌린다(초록 점은 따로 둔 카드의 스위치로 되돌린다)
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { IconBlacklist.setting.changed(context) }
-        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed || dotHidden == true, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = {
-            if (changed) w.restore(IconBlacklist.setting)
-            if (dotHidden == true) {
-                dotHidden = false
-                scope.launch { withContext(Dispatchers.IO) { PrivacyDot.set(context, false) } }
-            }
-        })
+        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(IconBlacklist.setting) })
     }
 }
 

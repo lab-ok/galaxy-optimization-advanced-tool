@@ -37,11 +37,13 @@ import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidProgressButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.nav.NewBadge
+import com.labok.goat.ui.nav.NewTag
+import com.labok.goat.ui.text.Copy
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.labok.goat.ui.text.Copy
 
 /**
  * 실험실 '조사 도구'. 기능을 만들 때 기기 설정과 시스템 함수를 살펴보는 시험 화면이다.
@@ -149,6 +151,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
         }
         Spacer(Modifier.height(Gap.Card))
         GlassCard {
+            NewTag(NewBadge.SHARE_PROBE, Modifier.padding(bottom = Gap.Item))
             Text("공유 화면 진단", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "삼성 공유 화면의 다이렉트 공유·즐겨찾기·앱 숨기기를 GOAT가 바꿀 수 있는지 볼 정보를 파일로 만듭니다. 읽기만 합니다.",

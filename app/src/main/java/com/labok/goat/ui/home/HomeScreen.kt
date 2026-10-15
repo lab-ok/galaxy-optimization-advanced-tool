@@ -127,6 +127,7 @@ import com.labok.goat.ui.nav.GLASS_ALPHA
 import com.labok.goat.ui.nav.NavGlyph
 import com.labok.goat.ui.nav.NavItem
 import com.labok.goat.ui.nav.NavSection
+import com.labok.goat.ui.nav.NewBadge
 import com.labok.goat.ui.nav.SideDrawerContent
 import com.labok.goat.ui.rotate.ShakeCalibrationSheet
 import com.labok.goat.ui.rotate.ShakeRotateHelpSheet
@@ -196,6 +197,12 @@ internal fun HomeScreen(
     var menu by remember { mutableStateOf(false) }
     // 사이드바에서 고른 기능(화면). 기능 안의 세부 설정은 점 세 개 메뉴에 있다.
     var feature by rememberSaveable { mutableStateOf(NavItem.HOME) }
+    // 새 기능 점: 화면을 보고 나가면 그 화면의 새 기능을 본 것으로 둔다(보는 동안은 카드에 '새 기능'이 보인다)
+    val badgeContext = LocalContext.current
+    DisposableEffect(feature) {
+        val shown = feature
+        onDispose { NewBadge.markSeen(badgeContext, shown) }
+    }
     // 화면에 보이는 기능. 사이드바에서 고르면 방울 이동을 보여 준 뒤 사이드바가 닫히면서 바뀐다(물방울 번짐 전환).
     var shown by rememberSaveable { mutableStateOf(NavItem.HOME) }
     // 점검 도구용 진입: 이름이 맞을 때만 그 화면·시트를 연다(실험실 항목은 열린 경우에만)
@@ -295,11 +302,13 @@ internal fun HomeScreen(
             add(NavSection(Copy.MENU_SECTION_SCREEN, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
             // 화면 표시: 크기(해상도) → 움직임(주사율·애니메이션) → 색(다크) 순. 해상도는 화면 배율 바로 뒤라 이어서 읽힌다.
             add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, NavItem.STATUS_ICONS)))
-            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.CAMERA_MUTE, NavItem.AIRPLANE)))
-            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.APP_CLEANUP, NavItem.GOS, NavItem.DOZE)))
+            // 편의 기능: 화면(회전) → 연결(비행기 모드 무선) → 소리(촬영음) 순. 시스템: 성능(GOS) → 배터리(잠자기) → 정리(기본 앱) 순
+            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.AIRPLANE, NavItem.CAMERA_MUTE)))
+            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.GOS, NavItem.DOZE, NavItem.APP_CLEANUP)))
             // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구도 함께 둔다(공유 화면 진단·설정 비교를 공개 빌드에서도 쓰려고).
             // lab 빌드는 잠금과 상관없이 조사 도구를 보인다
-            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_SCREEN, NavItem.LAB_FLEX.takeIf { AutoFlex.supported() }) else emptyList()) +
+            // 실험실은 자주 쓰는 자동 플렉스를 맨 앞에 둔다
+            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_FLEX.takeIf { AutoFlex.supported() }, NavItem.LAB_SCREEN) else emptyList()) +
                 listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || LabUnlock.unlocked })
             if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }
