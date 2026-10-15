@@ -617,6 +617,37 @@ object FlexPanel {
         ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{.*FlexPanelActivity|Task\\{[^}]*A=[0-9]+:com.android.systemui'")?.out.orEmpty()
     )?.groupValues?.get(1)
 
+    private fun atm(): Any = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
+
+    /**
+     * 작업 [id]의 창 모드와 크기를 한 번에 바꾼다(WindowContainerTransaction, Shizuku 셸 권한). 앱을 다시 띄우지 않으므로
+     * 같은 창이 그대로 옮겨지고 중간에 전체 화면으로 깜빡이지 않는다. [bounds]가 빈 Rect면 크기 지정을 푼다. 성공하면 null, 실패하면 이유.
+     * 영상(1.9.1): 다시 띄우는 방식은 크롬이 빈 새 창으로 열렸고, 메시지 앱은 펴도 위 절반에 남았다.
+     */
+    private fun moveTask(id: String, mode: Int, bounds: android.graphics.Rect): String? = runCatching {
+        val atm = atm()
+        val getTasks = atm.javaClass.methods.filter { it.name == "getTasks" }.maxByOrNull { it.parameterTypes.size }!!
+        val args: Array<Any> = when (getTasks.parameterTypes.size) {
+            1 -> arrayOf(50)
+            3 -> arrayOf(50, false, false)
+            else -> arrayOf(50, false, false, -1)
+        }
+        val info = (getTasks.invoke(atm, *args) as List<*>).firstOrNull { t -> t!!.javaClass.getField("taskId").getInt(t).toString() == id }
+            ?: return "작업 #$id 없음"
+        val token = info.javaClass.getField("token").get(info)
+        val wct = Class.forName("android.window.WindowContainerTransaction").getConstructor().newInstance()
+        wct.javaClass.methods.first { it.name == "setWindowingMode" && it.parameterTypes.size == 2 }.invoke(wct, token, mode)
+        wct.javaClass.methods.first { it.name == "setBounds" && it.parameterTypes.size == 2 }.invoke(wct, token, bounds)
+        val org = atm.javaClass.methods.first { it.name == "getWindowOrganizerController" }.invoke(atm) as android.os.IInterface
+        val ctl = HiddenApi.asInterface("android.window.IWindowOrganizerController", ShizukuBinderWrapper(org.asBinder()))
+        ctl.javaClass.methods.first { it.name == "applyTransaction" && it.parameterTypes.size == 1 }.invoke(ctl, wct)
+        null
+    }.getOrElse { HiddenApi.describe(it) }
+
+    /** 작업 [id]의 지금 창 모드(fullscreen·multi·freeform 등). */
+    private fun modeOf(id: String): String? = Regex("""Task\{[0-9a-f]+ #$id [^\n]*mode=(\w+)""")
+        .find(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())?.groupValues?.get(1)
+
     /** 앞 앱을 위 절반, 패널을 아래 절반에 놓는다(이미 열려 있으면 그대로). */
     fun openSplit(context: Context) = splitQueue.execute {
         if (split != null || ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
@@ -646,16 +677,31 @@ object FlexPanel {
         ShizukuAccess.shell("cmd device_state base-state $half")
         val freeform0 = ShizukuAccess.shell("settings get global enable_freeform_support")?.out?.trim()
         ShizukuAccess.shell("settings put global enable_freeform_support 1")
-        ShizukuAccess.shell("am start --windowingMode 6 -f 0x10000000 -n $component")
-        Thread.sleep(800)
-        val app = windowedTask(front.second)
-        app?.let { ShizukuAccess.shell("am task resize $it 0 0 $w $mid") }
+        val top = android.graphics.Rect(0, 0, w, mid)
+        val bottom = android.graphics.Rect(0, mid, w, h)
+        // 쓰던 창을 그대로 위 절반으로 옮긴다. 안 되면 18-2처럼 멀티 창으로 다시 불러 크기를 줄인다
+        val moveErr = moveTask(front.first, 6, top)
+        val app = if (moveErr == null && modeOf(front.first) != "fullscreen") {
+            front.first
+        } else {
+            ShizukuAccess.shell("am start --windowingMode 6 -f 0x10000000 -n $component")
+            Thread.sleep(800)
+            windowedTask(front.second)?.also { ShizukuAccess.shell("am task resize $it 0 0 $w $mid") }
+        }
         ShizukuAccess.shell("am start --windowingMode 6 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 -n '$PANEL_ACTIVITY'")
-        Thread.sleep(800)
-        val panel = panelTaskId()
-        panel?.let { ShizukuAccess.shell("am task resize $it 0 $mid $w $h") }
+        // 패널은 처음에 화면 전체로 뜨므로, 작업이 보이자마자 아래 절반으로 줄여 깜빡이는 시간을 줄인다
+        var panel: String? = null
+        for (i in 0 until 40) {
+            panel = panelTaskId()
+            if (panel != null) break
+            Thread.sleep(50)
+        }
+        panel?.let { if (moveTask(it, 6, bottom) != null) ShizukuAccess.shell("am task resize $it 0 $mid $w $h") }
         split = Split(front.second, component, front.first, app, panel, freeform0)
-        log.add("자동 플렉스 분할: ${front.second} 위(#${app ?: "-"}) · 패널 아래(#${panel ?: "-"})")
+        log.add(
+            "자동 플렉스 분할: ${front.second} 위(#${app ?: "-"}, " +
+                (if (app == front.first) "쓰던 창 그대로" else "다시 불러옴 · 옮기기 실패(${moveErr ?: "모드 그대로"})") + ") · 패널 아래(#${panel ?: "-"})"
+        )
     }
 
     /** [openSplit]으로 나눈 화면을 원래대로 돌린다. */
@@ -668,8 +714,25 @@ object FlexPanel {
         if (s.app != null && s.app != s.original) {
             // 새로 생긴 창(크롬 등)은 닫는다. 뒤에 있던 원래 창이 전체 화면으로 남는다
             removeTask(s.app)
-        } else {
-            ShizukuAccess.shell("am start --windowingMode 1 -f 0x10000000 -n ${s.component}")
+        } else if (s.app != null) {
+            // 같은 창이면 전체 화면으로 되돌린다. 영상(1.9.1)에서 다시 띄우기만으로는 위 절반에 남아 차례로 시도하고 무엇이 됐는지 남긴다
+            val done = mutableListOf<String>()
+            moveTask(s.app, 1, android.graphics.Rect()).let { done += "옮기기 ${it ?: "성공"}" }
+            if (modeOf(s.app) != "fullscreen") {
+                ShizukuAccess.shell("am start --windowingMode 1 -f 0x10000000 -n ${s.component}")
+                Thread.sleep(500)
+                done += "다시 불러오기"
+            }
+            if (modeOf(s.app) != "fullscreen") {
+                // 모드가 안 바뀌어도 화면 전체 크기로는 키운다(아래가 홈 화면으로 비어 보이지 않게)
+                val real = Point().also {
+                    @Suppress("DEPRECATION")
+                    context.getSystemService(DisplayManager::class.java).getDisplay(0)?.getRealSize(it)
+                }
+                ShizukuAccess.shell("am task resize ${s.app} 0 0 ${real.x} ${real.y}")
+                done += "전체 크기로 키우기"
+            }
+            LogRepository.from(context).add("자동 플렉스 분할 되돌리기(#${s.app}): ${done.joinToString(" → ")} · 지금 ${modeOf(s.app) ?: "-"}")
         }
         ShizukuAccess.shell(
             if (s.freeform0 == null || s.freeform0 == "null") "settings delete global enable_freeform_support" else "settings put global enable_freeform_support ${s.freeform0}"
