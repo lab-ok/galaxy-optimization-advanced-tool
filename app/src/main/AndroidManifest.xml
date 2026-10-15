@@ -74,6 +74,11 @@
             <action android:name="android.intent.action.SEND" />
             <data android:mimeType="text/plain" />
         </intent>
+        <!-- 공유 받기 화면 전체(실험실 공유 화면 진단) -->
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.SEND_MULTIPLE" />
             <data android:mimeType="text/plain" />

@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.SettingsSnapshot
+import com.labok.goat.data.lab.ShareProbe
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
@@ -129,6 +130,24 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                 probing = true
                 scope.launch {
                     val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-api"), ApiProbe.run(context)) }
+                    probing = false
+                    uri?.let { share(context, it) }
+                }
+            })
+        }
+        Spacer(Modifier.height(Gap.Card))
+        GlassCard {
+            Text("공유 화면 진단", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(
+                "삼성 공유 화면의 다이렉트 공유·즐겨찾기·앱 숨기기를 GOAT가 바꿀 수 있는지 볼 정보를 파일로 만듭니다. 읽기만 합니다.",
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton(if (probing) "진단 중…" else "진단하고 파일로 보내기", modifier = Modifier.fillMaxWidth(), enabled = !probing, onClick = {
+                probing = true
+                scope.launch {
+                    val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-share"), ShareProbe.run(context)) }
                     probing = false
                     uri?.let { share(context, it) }
                 }
