@@ -407,25 +407,103 @@ object FlexPanel {
             appendLine("시도 15: 화면 ${dw}x$dh, 접는 선 y=$mid")
             fun resizePanel(): String = panelTask()?.let { sh("am task resize $it 0 $mid $dw $dh 2>&1 | tail -2") } ?: "패널 작업 없음"
             val appComponent = app?.let { pm.getLaunchIntentForPackage(it)?.component?.flattenToShortString() }
-            val arrangements = listOf<Triple<String, String, List<Pair<String, () -> String>>>>(
-                Triple("15-1", "팝업 패널을 아래 절반으로", listOf("패널 띄우기(팝업)" to { sh("am start --windowingMode 5 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 $p") }, "패널을 아래 절반으로" to { resizePanel() })),
-                Triple("15-2", "멀티 창 패널을 아래 절반으로", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "패널을 아래 절반으로" to { resizePanel() })),
+            // 18차: 17차 15-3에서 패널은 아래 절반, 앱은 위 절반에 제대로 놓였고 터치패드·버튼도 동작했다(사용자 확인).
+            // 다만 15-3은 앱을 '새 작업'으로 다시 열어서 크롬이 쓰던 창이 아니라 새 창(새 탭)이 위에 떴다.
+            // 그래서 쓰던 앱 창(같은 작업)을 팝업으로 바꿔 위 절반에 놓고, 패널을 닫은 뒤 다시 전체 화면으로 되돌리는 방법을 시험한다.
+            // 패널은 창 손잡이가 없는 15-2 방식으로 띄운다. 각 방법마다 작업 번호가 그대로인지·창 모드·보임 여부를 남기고, 놓은 뒤와 되돌린 뒤를 캡처한다
+            fun tasks(): List<Triple<String, String, Boolean>> = app?.let { pkg ->
+                Regex("""Task\{[0-9a-f]+ #(\d+)[^\n]*A=\d+:${Regex.escape(pkg)}[^\n]*visible=(true|false)[^\n]*mode=(\w+)""")
+                    .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
+                    .map { Triple(it.groupValues[1], it.groupValues[3], it.groupValues[2] == "true") }.toList()
+            }.orEmpty()
+            fun taskLine() = tasks().joinToString(", ") { "#${it.first} ${it.second}${if (it.third) " 보임" else ""}" }.ifBlank { "(앱 작업 없음)" }
+            fun modeOf(id: String) = tasks().firstOrNull { it.first == id }?.second
+            appendLine("시도 18 참고: am 명령 중 작업·창 모드 관련 → ${ShizukuAccess.shell("am help 2>&1 | grep -i -E 'windowing|task (resize|move|set)' | head -12")?.out?.trim()?.ifBlank { "(없음)" } ?: "-"}")
+
+            val desk = "dumpsys activity service SystemUIService WMShell desktopmode"
+            fun relaunch(mode: Int, flags: String) = appComponent?.let { sh("am start --windowingMode $mode -f $flags -n $it") } ?: "앱 없음"
+            val restores = listOf<Pair<String, (String) -> String>>(
+                "전체 화면 모드로 다시 앞에 불러오기" to { _ -> relaunch(1, "0x10000000") },
+                "데스크에서 빼기" to { id -> sh("$desk moveTaskOutOfDesk $id 2>&1 | tail -3") },
+                "작업을 앞으로 옮기기" to { id -> sh("am task move-to-front $id 2>&1 | tail -2; cmd activity task move-to-front $id 2>&1 | tail -2") }
+            )
+            // [toPopup]으로 쓰던 앱 작업을 팝업으로 바꾸고, [back]으로 전체 화면으로 되돌린다. 둘 다 작업 번호를 받는다
+            fun cycle(tag: String, title: String, toPopup: (String) -> String, back: (String) -> String): Boolean {
+                val name = "시도 $tag"
+                if (app != null) ShizukuAccess.shell("monkey -p $app -c android.intent.category.LAUNCHER 1")
+                Thread.sleep(1500)
+                val before = appTask()
+                appendLine("$name($title): 시작 전 앱 작업 → ${taskLine()}")
+                if (before == null) {
+                    appendLine("$name 결과: 앱 작업을 찾지 못해 건너뜀")
+                    return false
+                }
+                ShizukuAccess.shell("logcat -b all -c")
+                appendLine("$name: 물리 상태를 반쯤 접힘으로(유지) → ${sh("cmd device_state base-state $half")}")
+                Thread.sleep(1500)
+                appendLine("$name: 쓰던 앱 작업 #$before 을 팝업으로 → ${toPopup(before)}")
+                Thread.sleep(1500)
+                // 새 작업으로 열린 경우(18-5·18-6)는 그 새 작업을 대상으로 삼는다
+                val target = tasks().firstOrNull { it.third && it.second != "fullscreen" }?.first ?: before
+                val same = modeOf(target)
+                appendLine("$name: 바꾼 뒤 앱 작업 → ${taskLine()} · 대상 #$target${if (target == before) "(쓰던 작업)" else "(새 작업)"}")
+                appendLine("$name: 앱을 위 절반으로 → ${sh("am task resize $target 0 0 $dw $mid 2>&1 | tail -2")}")
+                Thread.sleep(1000)
+                // 패널은 15-2(멀티 창)처럼 띄운다: 팝업과 달리 창 손잡이가 없어 가장 깔끔했다(사용자 의견)
+                appendLine("$name: 패널 띄우기(15-2 방식) → ${sh(openPanel)}")
+                Thread.sleep(1500)
+                appendLine("$name: 패널을 아래 절반으로 → ${resizePanel()}")
+                Thread.sleep(1500)
+                state(name, tag)
+                val panel = alive()
+                val kept = target == before && same != null && same != "fullscreen" && tasks().any { it.first == before && it.third }
+                val ok = panel && kept
+                appendLine("$name 결과: 패널 ${if (panel) "유지" else "닫힘"} · 쓰던 앱 작업 ${if (kept) "$same 창으로 보임" else "그대로 아님(모드 ${same ?: "없음"})"}${if (ok) " → 성공 후보" else ""}")
+                if (panel) {
+                    notice(context, if (ok) "쓰던 앱 화면이 위에 그대로 있는지 확인하고 패널을 눌러 보세요(15초)" else "패널만 떠 있습니다. 15초 동안 눌러 보세요")
+                    Thread.sleep(15_000)
+                }
+                // 패널을 닫고, 쓰던 앱을 전체 화면으로 되돌린 뒤 결과를 남긴다
+                ShizukuAccess.shell("am broadcast -a android.intent.action.COLLAPSE_FLEX_PANEL -p com.android.systemui")
+                panelTask()?.let { ShizukuAccess.shell("am stack remove $it 2>/dev/null; cmd activity task remove $it 2>/dev/null") }
+                appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
+                Thread.sleep(1000)
+                appendLine("$name: 앱을 전체 화면으로 되돌리기 → ${back(target)}")
+                Thread.sleep(1500)
+                // 이 방법의 되돌리기가 안 먹으면 다른 되돌리기를 차례로 써 보고 어느 것이 됐는지 남긴다
+                for ((what, run) in restores) {
+                    if (modeOf(target) == "fullscreen") break
+                    appendLine("$name: 아직 전체 화면 아님 → $what → ${run(target)}")
+                    Thread.sleep(1500)
+                }
+                val restored = modeOf(target) == "fullscreen"
+                appendLine("$name 되돌린 뒤 앱 작업 → ${taskLine()} · ${if (restored) "전체 화면 복귀" else "전체 화면 아님"}")
+                appendLine("$name 되돌린 화면 캡처 → ${sh("screencap -p $shotDir/goat-flex-$tag-back.png && echo $shotDir/goat-flex-$tag-back.png")}")
+                // 시험이 새로 만든 작업(빈 새 창)은 닫아 다음 시험과 쓰던 앱에 남지 않게 한다
+                if (target != before) appendLine("$name: 시험이 만든 새 작업 #$target 닫기 → ${sh("am stack remove $target 2>/dev/null; cmd activity task remove $target 2>&1 | tail -1")}")
+                return ok && restored
+            }
+            // 사용자 요청으로 가능성 있는 방법을 모두 넣는다(하나가 성공해도 끝까지 시험한다)
+            val back1: (String) -> String = { _ -> relaunch(1, "0x10000000") }
+            val cycles = listOf<Triple<String, String, Pair<(String) -> String, (String) -> String>>>(
+                Triple("18-1", "같은 앱을 팝업 모드로 다시 앞에 불러오기(새 작업 없이)", { _: String -> relaunch(5, "0x10000000") } to back1),
+                Triple("18-2", "같은 앱을 멀티 창 모드로 다시 앞에 불러오기(창 손잡이 없이)", { _: String -> relaunch(6, "0x10000000") } to back1),
                 Triple(
-                    "15-3",
-                    "앱도 팝업으로 위 절반, 패널은 팝업으로 아래 절반",
-                    listOf(
-                        "앱을 팝업으로 다시 열기" to { appComponent?.let { sh("am start --windowingMode 5 -f 0x10008000 -n $it") } ?: "앱 없음" },
-                        "앱을 위 절반으로" to { appTask()?.let { sh("am task resize $it 0 0 $dw $mid 2>&1 | tail -2") } ?: "앱 작업 없음" },
-                        "패널 띄우기(팝업)" to { sh("am start --windowingMode 5 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 $p") },
-                        "패널을 아래 절반으로" to { resizePanel() }
-                    )
-                )
+                    "18-3", "WMShell 데스크로 옮기기",
+                    { id: String -> sh("$desk moveTaskToDesk $id 0 2>&1 | tail -3") } to { id: String -> sh("$desk moveTaskOutOfDesk $id 2>&1 | tail -3") }
+                ),
+                Triple(
+                    "18-4", "전체 화면 앱 작업을 그대로 크기만 줄이기",
+                    { id: String -> sh("am task resizeable $id 3 2>&1 | tail -1") } to { id: String -> sh("am task resize $id 0 0 $dw $dh 2>&1 | tail -2") }
+                ),
+                Triple("18-5", "앱을 멀티 창 모드 새 작업으로 다시 열기(15-3을 멀티 창으로)", { _: String -> relaunch(6, "0x10008000") } to back1),
+                Triple("18-6", "앱을 팝업 새 작업으로 다시 열기(15-3 그대로, 비교용)", { _: String -> relaunch(5, "0x10008000") } to back1)
             )
             // 팝업(자유 창)이 꺼진 기기에서도 시험되게 잠시 켠다(에뮬레이터에서 이 설정 없이는 팝업으로 열리지 않음을 확인). 끝나면 되돌린다
             val freeform0 = ShizukuAccess.shell("settings get global enable_freeform_support")?.out?.trim()
-            appendLine("시도 15: 팝업 창 허용 → ${sh("settings put global enable_freeform_support 1")} (원래 값 ${freeform0 ?: "-"})")
-            for ((tag, title, steps) in arrangements) {
-                if (arrange(tag, title, steps)) done = true
+            appendLine("시도 18: 팝업 창 허용 → ${sh("settings put global enable_freeform_support 1")} (원래 값 ${freeform0 ?: "-"})")
+            for ((tag, title, ways) in cycles) {
+                if (cycle(tag, title, ways.first, ways.second)) done = true
             }
             appendLine(
                 "팝업 창 설정 되돌리기 → ${sh(if (freeform0 == null || freeform0 == "null") "settings delete global enable_freeform_support" else "settings put global enable_freeform_support $freeform0")}"
