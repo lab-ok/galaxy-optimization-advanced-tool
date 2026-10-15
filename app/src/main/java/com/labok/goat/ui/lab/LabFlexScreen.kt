@@ -72,6 +72,7 @@ import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.FlexPanel
 import com.labok.goat.data.lab.ReviveRunner
+import com.labok.goat.data.lab.SplitTest
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.AppEntry
@@ -375,6 +376,32 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
             }
         }
         // 터치패널 진단: 일반 앱에 시스템 터치패널을 띄울 수 있는지 가릴 정보를 모아 파일로 보낸다
+        // 화면 분할 시험: 공식 화면 분할을 여는 방법 11가지 × 접힘 상태 3가지를 차례로 돌려 결과 파일과 캡처를 남긴다
+        item(key = "split-test") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.LAB_SPLIT_TEST_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.LAB_SPLIT_TEST_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(Copy.LAB_SPLIT_TEST_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    val test by SplitTest.state.collectAsStateWithLifecycle()
+                    LiquidProgressButton(
+                        Copy.LAB_SPLIT_TEST_RUN,
+                        progress = if (test.running) test.progress ?: 0f else null,
+                        status = test.status,
+                        enabled = shizuku == ShizukuAccess.State.READY,
+                        disabledHint = Copy.DISABLED_SHIZUKU,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { if (!test.running) SplitTest.start(context) }
+                    )
+                    val last = remember(test.running) { SplitTest.lastFile(context) }
+                    last?.let { uri ->
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.LAB_SPLIT_TEST_SHARE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { share(context, uri) })
+                    }
+                }
+            }
+        }
         item(key = "diag") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {

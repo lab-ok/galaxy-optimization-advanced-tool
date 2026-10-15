@@ -85,6 +85,7 @@ import com.labok.goat.background.ExternalChangeNotifier
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.data.lab.ReviveRunner
+import com.labok.goat.data.lab.SplitTest
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.about.AboutSheet
 import com.labok.goat.ui.about.ChangelogSheet
@@ -181,6 +182,18 @@ internal fun HomeScreen(
     LaunchedEffect(revive.shareReady) {
         val uri = revive.shareReady ?: return@LaunchedEffect
         ReviveRunner.consumeShare()
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        runCatching { context.startActivity(Intent.createChooser(send, Copy.LAB_SHARE)) }
+    }
+    // 화면 분할 시험도 끝나면 결과 파일 공유 창을 바로 띄운다
+    val splitTest by SplitTest.state.collectAsStateWithLifecycle()
+    LaunchedEffect(splitTest.shareReady) {
+        val uri = splitTest.shareReady ?: return@LaunchedEffect
+        SplitTest.consumeShare()
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_STREAM, uri)

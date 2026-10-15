@@ -32,7 +32,7 @@ object FlexPanel {
      * 작업 하나를 닫는다(IActivityTaskManager.removeTask, Shizuku). 셸의 'am stack remove'·'cmd activity task remove'는
      * 폴드8에 없어 18차에서 시험이 만든 창이 남았다. 성공하면 "성공", 아니면 이유.
      */
-    private fun removeTask(id: String): String = runCatching {
+    internal fun removeTask(id: String): String = runCatching {
         val atm = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
         val m = atm.javaClass.methods.first { it.name == "removeTask" && it.parameterTypes.size == 1 }
         if (m.invoke(atm, id.toInt()) == false) "실패(작업 없음)" else "성공"

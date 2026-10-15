@@ -13,8 +13,8 @@ android {
         // Android 12 이상(방울 효과에 RenderEffect 필요). Android 11은 지원하지 않는다(사용자 결정).
         minSdk = 31
         targetSdk = 35
-        versionCode = 72
-        versionName = "1.11.1"
+        versionCode = 73
+        versionName = "1.11.2"
         // 실험실 기능은 lab 빌드에만 켠다. 공개 release·debug에는 들어가지 않는다.
         buildConfigField("boolean", "LAB", "false")
         // 대상 기기(갤럭시 폴드)는 모두 arm64다. 라이브러리가 넣는 다른 ABI의 .so는 싣지 않는다.
