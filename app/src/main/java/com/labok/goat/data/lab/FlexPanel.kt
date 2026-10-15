@@ -760,21 +760,25 @@ object FlexPanel {
      */
     private fun openSplit(first: String, second: String): String {
         fun bothSplit() = modeOf(first)?.startsWith("multi") == true && modeOf(second)?.startsWith("multi") == true
-        ShizukuAccess.shell("logcat -c")
-        // 1.10.4 영상: startTasks A B는 열렸지만 B를 위 칸에 놓았다. 1.10.6에서 순서를 바꿔 넘기자(startTasks B A) 분할이 열리지 않고
-        // "앱이 화면 분할을 지원하지 않습니다"가 떴다. 그래서 열리는 순서(A B) 그대로 연 뒤 switchSplitPosition으로 위아래를 바꾼다.
-        // startSplitTasks는 소스상 (왼쪽·위, 오른쪽·아래) 순서라 바꾸지 않는다
-        ShizukuAccess.shell("$SPLIT_CMD startTasks $first $second")
-        Thread.sleep(700)
-        if (bothSplit()) {
-            ShizukuAccess.shell("$SPLIT_CMD switchSplitPosition")
-            Thread.sleep(400)
-            return "startTasks 성공 · 위아래 바꿈"
+        // 분할이 자리 잡을 때까지 0.25초마다 2.5초 동안 본다(바로 보고 다음 명령을 겹쳐 보내면 열리던 분할이 닫혔다, 1.11.0 영상)
+        fun waitSplit(): Boolean {
+            repeat(10) {
+                Thread.sleep(250)
+                if (bothSplit()) return true
+            }
+            return false
         }
+        ShizukuAccess.shell("logcat -c")
+        // 화면 분할 시험(1.11.2, 폴드8) 결과: startSplitTasks A B는 덮어쓰기 없음·state 반쯤 접힘에서 A를 앞 칸(세로 화면이면 위)에 놓았다.
+        // startTasks A B는 B를 앞 칸에 놓아, 안 될 때만 A B로 연 뒤 위치를 바꾼다. startTaskWithAllApps 등 나머지는 모두 열리지 않았다
         ShizukuAccess.shell("$SPLIT_CMD startSplitTasks $first $second 0.5")
-        Thread.sleep(700)
-        if (bothSplit()) return "startSplitTasks 성공"
-        val fail = ShizukuAccess.shell("logcat -d -s StageCoordinator SplitScreenController | grep -i -E 'fail|non resizable|not found|didn' | tail -2")?.out?.trim().orEmpty()
+        if (waitSplit()) return "startSplitTasks 성공"
+        ShizukuAccess.shell("$SPLIT_CMD startTasks $first $second")
+        if (waitSplit()) {
+            ShizukuAccess.shell("$SPLIT_CMD switchSplitPosition")
+            return "startTasks 성공 · 자리 바꿈"
+        }
+        val fail = ShizukuAccess.shell("logcat -d -s StageCoordinator SplitScreenController | grep -i -E 'fail|non resizable|not found|didn|abort' | tail -2")?.out?.trim().orEmpty()
         return "분할 안 됨(#$first ${modeOf(first) ?: "-"}, #$second ${modeOf(second) ?: "-"})" + (if (fail.isNotEmpty()) " · $fail" else "")
     }
 
@@ -806,17 +810,15 @@ object FlexPanel {
             return
         }
         if (mode == AutoFlex.MODE_SPLIT) {
-            // 삼성 공식 화면 분할: GOAT 앱 고르기를 띄워 작업 번호를 얻고, 쓰던 앱과 함께 분할로 연다.
-            // 안 되면 삼성 순정 앱 목록과 함께 여는 명령(startTaskWithAllApps)을 쓴다(그때는 GOAT 앱 고르기를 닫는다)
+            // 삼성 공식 화면 분할: GOAT 앱 고르기를 띄워 작업 번호를 얻고, 쓰던 앱을 앞 칸에 두고 함께 분할로 연다
             ShizukuAccess.shell("am start -f 0x10000000 -n $PICK_ACTIVITY")
             var picker = waitTask { pickerTask() }
             var how = picker?.let { openSplit(front.first, it) } ?: "앱 고르기 작업을 찾지 못함"
-            if (!how.endsWith("성공")) {
+            // 분할이 안 되면 앱 고르기를 닫아 쓰던 앱이 그대로 보이게 한다(startTaskWithAllApps는 시험에서 한 번도 열리지 않았다)
+            if (!how.startsWith("start")) {
                 picker?.let { removeTask(it) }
                 picker = null
-                ShizukuAccess.shell("$SPLIT_CMD startTaskWithAllApps ${front.first}")
-                Thread.sleep(800)
-                how += " → 삼성 앱 목록과 열기: 쓰던 앱 ${modeOf(front.first) ?: "-"}"
+                bringToFront(front.first, component)
             }
             split = Split(mode, front.second, label, component, front.first, picker = picker).also { notifyMode(context, it) }
             log.add("자동 플렉스 분할 화면(공식): ${front.second}(#${front.first}) · $how")
