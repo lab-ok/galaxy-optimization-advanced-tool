@@ -3,6 +3,7 @@ package com.labok.goat.data.lab
 import android.content.Context
 import android.net.Uri
 import com.labok.goat.data.log.PublicLogFile
+import com.labok.goat.data.shizuku.ShizukuAccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,10 +21,16 @@ object ReviveRunner {
     private const val PREF = "flex_revive"
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    data class State(val running: Boolean = false, val head: String = "")
+    /** [shareReady]: 방금 끝난 시도의 결과 파일. 앱 화면이 받아 공유 창을 한 번 띄우고 [consumeShare]로 지운다. */
+    data class State(val running: Boolean = false, val head: String = "", val shareReady: Uri? = null)
 
     private val stateFlow = MutableStateFlow(State())
     val state: StateFlow<State> = stateFlow.asStateFlow()
+
+    /** 자동 공유를 띄웠으면 지운다(같은 결과로 두 번 띄우지 않게). */
+    fun consumeShare() {
+        stateFlow.value = stateFlow.value.copy(shareReady = null)
+    }
 
     /** 마지막 결과 파일(없으면 null). */
     fun lastFile(context: Context): Uri? = context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getString("uri", null)?.let(Uri::parse)
@@ -51,7 +58,10 @@ object ReviveRunner {
                     }
                 }
             }.onFailure { e -> uri?.let { PublicLogFile.appendTo(app, it, "\n(중단: ${e.message})\n") } }
-            stateFlow.value = State(running = false, head = head.toString())
+            stateFlow.value = State(running = false, head = head.toString(), shareReady = uri)
+            // 시도 중 앞에 띄운 다른 앱(크롬 등) 위로 GOAT를 다시 올려, 끝나자마자 결과 공유 창이 뜨게 한다
+            // (뒤에 있는 앱은 직접 창을 띄울 수 없어 셸로 GOAT를 앞으로 가져온다)
+            if (uri != null) ShizukuAccess.shell("am start -n ${app.packageName}/.ui.MainActivity -f 0x20000000")
         }
     }
 }

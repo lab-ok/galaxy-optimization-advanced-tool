@@ -258,6 +258,8 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                         click = v
                         AutoFlex.setClick(context, v)
                     }
+                    Spacer(Modifier.height(Gap.Item))
+                    FlexPanelArt(kkaddak = true)
                 }
             }
         }

@@ -27,15 +27,30 @@ import kotlin.math.sin
  * 플렉스 모드 그림: 두께 있는 폴드를 비스듬히 내려다본 모습. 두 화면을 얇은 판(위·아래·옆면)으로 그려 두께감을 내고,
  * 모서리는 모두 둥글린다. 힌지가 천천히 접혔다 펴지고, 플렉스 범위(115° 아래)로 들어오면 아래 화면에 조작 패널이,
  * 위 화면에 영상이 스며들듯 켜진다.
+ * [kkaddak]이면 까딱 그림: 다 편 채 살짝(145°) 접었다 곧바로 펴면 힌지에서 물결이 퍼지며 펼친 채로 플렉스 모드가 켜지고,
+ * 한 번 더 까딱하면 꺼진다.
  */
 @Composable
-internal fun FlexPanelArt() {
+internal fun FlexPanelArt(kkaddak: Boolean = false) {
     val c = LocalLiquid.current
-    val t = artLoop(3200)
+    val t = artLoop(if (kkaddak) 4400 else 3200)
     Canvas(Modifier.fillMaxWidth().height(120.dp)) {
-        val p = (1 - cos(t * 2 * Math.PI).toFloat()) / 2
-        val k = p * p * (3 - 2 * p) // 0..1 접힘 정도(부드럽게)
-        val theta = 180f - 80f * k // 180° 펼침 → 100°
+        fun ease(x: Float) = x.coerceIn(0f, 1f).let { it * it * (3 - 2 * it) }
+
+        // 까딱 한 번: [start]부터 0.1 동안 145°까지 접고, 다음 0.1 동안 다시 편다
+        fun dip(start: Float) = when {
+            t < start || t > start + 0.2f -> 0f
+            t < start + 0.1f -> ease((t - start) / 0.1f)
+            else -> 1f - ease((t - start - 0.1f) / 0.1f)
+        }
+        val theta = if (kkaddak) {
+            180f - 35f * (dip(0.1f) + dip(0.6f))
+        } else {
+            val p = (1 - cos(t * 2 * Math.PI).toFloat()) / 2
+            180f - 80f * (p * p * (3 - 2 * p)) // 180° 펼침 → 100°
+        }
+        // 까딱 그림의 켜짐 정도: 첫 까딱을 마치면 켜지고(0.3~0.4), 두 번째 까딱을 마치면 꺼진다(0.8~0.88)
+        val kOn = if (kkaddak) ease((t - 0.3f) / 0.1f) * (1f - ease((t - 0.8f) / 0.08f)) else 0f
         val sc = size.height / 220f * 170f
         val ox = size.width / 2
         val oy = size.height * 150f / 220f
@@ -126,8 +141,19 @@ internal fun FlexPanelArt() {
         // 둥근 힌지: 두 판이 만나는 곳을 굵고 둥근 선으로 감싼다
         drawLine(c.ink, bottom[0], bottom[1], 3.6.dp.toPx(), StrokeCap.Round)
 
-        // 플렉스 범위에 들어오면 패널과 영상이 서서히 켜진다(125°→110°)
-        val on = ((125f - theta) / 15f).coerceIn(0f, 1f).let { it * it * (3 - 2 * it) }
+        // 까딱을 마친 순간 힌지에서 물결이 한 번 퍼진다(손놀림을 알아챘다는 표시)
+        if (kkaddak) {
+            for (at0 in listOf(0.3f, 0.8f)) {
+                val q = (t - at0) / 0.12f
+                if (q in 0f..1f) {
+                    val mid = (bottom[0] + bottom[1]) / 2f
+                    drawCircle(c.ink.copy(alpha = 0.5f * (1f - q)), (8f + 46f * q).dp.toPx(), mid, style = Stroke(2.dp.toPx()))
+                }
+            }
+        }
+
+        // 플렉스 범위에 들어오면 패널과 영상이 서서히 켜진다(125°→110°). 까딱 그림은 펼친 채 까딱으로 켜고 끈다
+        val on = if (kkaddak) kOn else ((125f - theta) / 15f).coerceIn(0f, 1f).let { it * it * (3 - 2 * it) }
         if (on > 0f) {
             val pad = listOf(at(bottom, 0.2f, 0.25f), at(bottom, 0.8f, 0.25f), at(bottom, 0.8f, 0.8f), at(bottom, 0.2f, 0.8f))
             drawPath(round(pad, radius * 0.8f), c.line.copy(alpha = on))

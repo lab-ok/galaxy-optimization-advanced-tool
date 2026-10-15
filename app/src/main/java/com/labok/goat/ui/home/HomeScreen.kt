@@ -2,6 +2,7 @@ package com.labok.goat.ui.home
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.os.Build
 import android.widget.Toast
@@ -83,6 +84,7 @@ import com.labok.goat.BuildConfig
 import com.labok.goat.background.ExternalChangeNotifier
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.LabUnlock
+import com.labok.goat.data.lab.ReviveRunner
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.about.AboutSheet
 import com.labok.goat.ui.about.ChangelogSheet
@@ -173,6 +175,18 @@ internal fun HomeScreen(
     val message by vm.messages.collectAsStateWithLifecycle()
     val toast = remember { SnackbarHostState() }
     val context = LocalContext.current
+    // 실험실 살리기 시도가 끝나면 결과 파일 공유 창을 바로 띄운다(앱이 앞에 있을 때만 받아 한 번만 띄운다)
+    val revive by ReviveRunner.state.collectAsStateWithLifecycle()
+    LaunchedEffect(revive.shareReady) {
+        val uri = revive.shareReady ?: return@LaunchedEffect
+        ReviveRunner.consumeShare()
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        runCatching { context.startActivity(Intent.createChooser(send, Copy.LAB_SHARE)) }
+    }
     val scope = rememberCoroutineScope()
     val c = LocalLiquid.current
     var sheet by remember { mutableStateOf<Sheet?>(null) }

@@ -218,7 +218,7 @@ object Copy {
     const val LAB_FLEX_APPS_BODY = "자동 플렉스를 켜면 모든 앱에 조작 패널이 뜹니다. 패널이 필요 없는 앱만 끄세요."
     const val LAB_FLEX_UNSUPPORTED_TITLE = "폴드8 전용 기능입니다"
     const val LAB_FLEX_UNSUPPORTED_BODY = "다른 폴드는 시스템이 플렉스 모드를 이미 지원하고, 접는 화면이 없는 기기에서는 쓸 수 없습니다."
-    const val LAB_SHARE = "찾은 결과 보내기"
+    const val LAB_SHARE = "결과 파일 보내기"
     const val LAB_RESTORE = "처음대로"
     const val LAB_RESTORED = "처음 값으로 되돌렸습니다."
     const val LAB_WRITE_FAILED = "바꾸지 못했습니다. 권한이나 Shizuku 연결을 확인하세요."
