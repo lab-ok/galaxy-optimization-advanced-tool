@@ -345,16 +345,18 @@ object FlexPanel {
                 appendLine("── $name 배치 상태 ──")
                 appendLine(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{|mBounds=|windowingMode=' | grep -v 'mBounds=Rect\\(0, 0 - 0, 0\\)' | head -30")?.out?.trim()?.ifBlank { "(없음)" } ?: "")
                 appendLine("──")
-                appendLine("$name 화면 캡처 → ${sh("screencap -p $shotDir/goat-flex14-$tag.png && echo $shotDir/goat-flex14-$tag.png")}")
+                appendLine("$name 화면 캡처 → ${sh("screencap -p $shotDir/goat-flex-$tag.png && echo $shotDir/goat-flex-$tag.png")}")
             }
             fun alive() = (ShizukuAccess.shell("dumpsys activity activities | grep -c 'FlexPanelActivity'")?.out?.trim()?.toIntOrNull() ?: 0) > 0
-            fun appVisible(): Boolean = app != null && ShizukuAccess.shell("dumpsys window visible-apps 2>/dev/null | grep -c '$app'")?.out?.trim()?.toIntOrNull()?.let { it > 0 } == true
+
+            // 앱 작업이 실제로 보이는지(visible=true). 14차는 창 목록에 이름만 있어도 보인다고 잘못 셌다
+            fun appVisible(): Boolean = app != null && ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{.*$app.*visible=true' | head -1")?.out?.isNotBlank() == true
             appendLine("시도 14: 회전 세로로 고정 → ${lock(3)}")
             Thread.sleep(2000)
             appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
             // 배치 하나: 앱을 앞으로 가져오고 반쯤 접힘을 건 뒤 [steps]를 차례로 실행하고 결과를 남긴다
             fun arrange(tag: String, title: String, steps: List<Pair<String, () -> String>>): Boolean {
-                val name = "시도 14-$tag"
+                val name = "시도 $tag"
                 if (app != null) ShizukuAccess.shell("monkey -p $app -c android.intent.category.LAUNCHER 1")
                 Thread.sleep(1500)
                 ShizukuAccess.shell("logcat -b all -c")
@@ -386,26 +388,40 @@ object FlexPanel {
                 Thread.sleep(1500)
                 return ok
             }
+            // 15차: 14차에서 이 기기의 화면 분할은 좌우로만 나뉘어(세로 화면에서도 918px | 917px) 앱 위·패널 아래가 되지 않았고,
+            // 패널은 멀티 창이면 늘 화면 전체를 덮었다. 그래서 창 크기를 직접 정한다: 패널을 팝업(자유 창)이나 멀티 창으로 띄운 뒤
+            // 작업 크기를 화면 아래 절반으로 줄인다(am task resize). 앱은 뒤에 그대로 있어 위 절반에 보인다.
+            // 앱까지 팝업으로 위 절반에 놓는 경우도 시험한다. 모두 시험하고(중간에 멈추지 않는다) 화면 캡처로 비교한다
+            val size = Regex("(\\d+)x(\\d+)").find(ShizukuAccess.shell("wm size")?.out?.lineSequence()?.lastOrNull { "size" in it }.orEmpty())
+            val dw = size?.groupValues?.get(1)?.toIntOrNull() ?: 1848
+            val dh = size?.groupValues?.get(2)?.toIntOrNull() ?: 2448
+            val mid = dh / 2
+            appendLine("시도 15: 화면 ${dw}x$dh, 접는 선 y=$mid")
+            fun resizePanel(): String = panelTask()?.let { sh("am task resize $it 0 $mid $dw $dh 2>&1 | tail -2") } ?: "패널 작업 없음"
+            val appComponent = app?.let { pm.getLaunchIntentForPackage(it)?.component?.flattenToShortString() }
             val arrangements = listOf<Triple<String, String, List<Pair<String, () -> String>>>>(
-                Triple("A", "패널을 띄운 뒤 앱을 위 칸으로", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "앱을 위 칸으로" to { appTask()?.let { sh("$wmshell moveToSideStage $it 0 2>&1 | tail -2") } ?: "앱 작업 없음" })),
-                Triple("B", "앱을 위 칸에 넣은 뒤 패널을 옆 칸 + 멀티 창으로", listOf("앱을 위 칸으로" to { appTask()?.let { sh("$wmshell moveToSideStage $it 0 2>&1 | tail -2") } ?: "앱 작업 없음" }, "패널 띄우기(옆 칸·멀티 창)" to { sh(openPanel) })),
-                Triple("C", "패널을 띄운 뒤 패널을 아래 칸으로", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "패널을 아래 칸으로" to { panelTask()?.let { sh("$wmshell moveToSideStage $it 1 2>&1 | tail -2") } ?: "패널 작업 없음" })),
-                Triple("D", "패널을 띄운 뒤 앱을 옆 칸으로 열기", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "앱을 옆 칸으로 열기" to { app?.let { pkg -> pm.getLaunchIntentForPackage(pkg)?.component?.flattenToShortString()?.let { sh("am start -f 0x18001000 -n $it") } } ?: "앱 없음" })),
+                Triple("15-1", "팝업 패널을 아래 절반으로", listOf("패널 띄우기(팝업)" to { sh("am start --windowingMode 5 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 $p") }, "패널을 아래 절반으로" to { resizePanel() })),
+                Triple("15-2", "멀티 창 패널을 아래 절반으로", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "패널을 아래 절반으로" to { resizePanel() })),
                 Triple(
-                    "E",
-                    "앱을 아래 칸에 넣은 뒤 패널을 멀티 창으로, 패널을 위 칸으로 옮기고 다시 아래로",
+                    "15-3",
+                    "앱도 팝업으로 위 절반, 패널은 팝업으로 아래 절반",
                     listOf(
-                        "앱을 아래 칸으로" to { appTask()?.let { sh("$wmshell moveToSideStage $it 1 2>&1 | tail -2") } ?: "앱 작업 없음" },
-                        "패널 띄우기(옆 칸·멀티 창)" to { sh(openPanel) },
-                        "분할 위치 바꾸기" to { sh("$wmshell switchSplitPosition 2>&1 | tail -2") }
+                        "앱을 팝업으로 다시 열기" to { appComponent?.let { sh("am start --windowingMode 5 -f 0x10008000 -n $it") } ?: "앱 없음" },
+                        "앱을 위 절반으로" to { appTask()?.let { sh("am task resize $it 0 0 $dw $mid 2>&1 | tail -2") } ?: "앱 작업 없음" },
+                        "패널 띄우기(팝업)" to { sh("am start --windowingMode 5 -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 $p") },
+                        "패널을 아래 절반으로" to { resizePanel() }
                     )
-                ),
-                Triple("F", "패널을 띄운 뒤 패널 크기를 아래 절반으로", listOf("패널 띄우기(13차 가)" to { sh(openPanel) }, "패널 작업을 아래 절반으로" to { panelTask()?.let { sh("am task resize $it 0 1224 1848 2448 2>&1 | tail -2") } ?: "패널 작업 없음" }))
+                )
             )
+            // 팝업(자유 창)이 꺼진 기기에서도 시험되게 잠시 켠다(에뮬레이터에서 이 설정 없이는 팝업으로 열리지 않음을 확인). 끝나면 되돌린다
+            val freeform0 = ShizukuAccess.shell("settings get global enable_freeform_support")?.out?.trim()
+            appendLine("시도 15: 팝업 창 허용 → ${sh("settings put global enable_freeform_support 1")} (원래 값 ${freeform0 ?: "-"})")
             for ((tag, title, steps) in arrangements) {
-                if (done) break
-                done = arrange(tag, title, steps)
+                if (arrange(tag, title, steps)) done = true
             }
+            appendLine(
+                "팝업 창 설정 되돌리기 → ${sh(if (freeform0 == null || freeform0 == "null") "settings delete global enable_freeform_support" else "settings put global enable_freeform_support $freeform0")}"
+            )
             // 라. 덮어쓰기 없이 실제 자세로
             if (!done) {
                 appendLine("시도 0-라: 회전 고정 풀기 → ${sh("cmd window user-rotation free && settings put system accelerometer_rotation 1")}")
