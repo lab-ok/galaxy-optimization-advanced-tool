@@ -35,6 +35,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -75,17 +78,30 @@ import kotlinx.coroutines.withContext
 private class LabWriter(private val context: Context, private val launch: (suspend () -> Unit) -> Unit) {
     var version by mutableIntStateOf(0)
 
+    /** [처음대로] 결과 한 줄([RestoreNotice]). 다시 바꾸면 지운다. */
+    var notice by mutableStateOf<String?>(null)
+
     fun write(setting: LabSetting, value: String?) = launch {
+        notice = null
         val ok = withContext(Dispatchers.IO) { setting.write(context, value) }
         version++
         if (!ok) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
     }
 
+    // 시스템 토스트는 화면 아래에 떠서 긴 화면 맨 아래의 [처음대로] 버튼을 가리므로, 결과는 버튼 바로 아래 글로 알린다
     fun restore(setting: LabSetting) = launch {
         val ok = withContext(Dispatchers.IO) { setting.restore(context) }
         version++
-        Toast.makeText(context, if (ok) Copy.LAB_RESTORED else Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+        notice = if (ok) Copy.LAB_RESTORED else Copy.LAB_WRITE_FAILED
     }
+}
+
+/** [처음대로] 버튼 바로 아래의 결과 줄. 화면 읽기 프로그램이 토스트처럼 읽어 주게 알림 영역으로 둔다. */
+@Composable
+private fun RestoreNotice(w: LabWriter) {
+    val notice = w.notice ?: return
+    Spacer(Modifier.height(Gap.Item))
+    Text(notice, color = LocalLiquid.current.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
 }
 
 @Composable
@@ -136,6 +152,7 @@ internal fun LabAirplaneScreen(contentPadding: PaddingValues) {
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { AirplaneRadios.setting.changed(context) }
         LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(AirplaneRadios.setting) })
+        RestoreNotice(w)
     }
 }
 
@@ -207,6 +224,7 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { IconBlacklist.setting.changed(context) }
         LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(IconBlacklist.setting) })
+        RestoreNotice(w)
     }
 }
 
@@ -261,6 +279,7 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
         Spacer(Modifier.height(Gap.Item))
         val changed = remember(w.version) { setting.changed(context) }
         LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(setting) })
+        RestoreNotice(w)
         if (samsung) {
             Spacer(Modifier.height(Gap.Section))
             Text(Copy.LAB_SCREEN_WHY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)

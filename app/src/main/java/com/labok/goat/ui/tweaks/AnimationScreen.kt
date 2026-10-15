@@ -79,7 +79,8 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
                     Text(Copy.ANIM_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.ANIM_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    SpeedArt(same ?: 1f)
+                    // 셋을 따로 맞췄으면 기본(1배)으로 그리지 않고, 그림이 보여 주는 앱 열기에 걸리는 화면 전환 배율을 그린다
+                    SpeedArt(same ?: values.getValue(AnimationSpeed.Kind.TRANSITION))
                 }
             }
         }

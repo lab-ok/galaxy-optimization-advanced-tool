@@ -521,4 +521,7 @@ object Copy {
     const val DISABLED_NO_BEFORE = "먼저 [바꾸기 전 저장]을 눌러 주세요."
     const val DISABLED_SIZE_UNCHANGED = "폭을 바꾼 뒤에 저장할 수 있습니다."
     const val DISABLED_SIZE_DEFAULT = "이미 기기 값을 쓰고 있습니다."
+
+    /** 시트 끌기 손잡이의 화면 읽기 이름. */
+    const val SHEET_HANDLE = "시트 손잡이. 아래로 끌면 닫힙니다"
 }

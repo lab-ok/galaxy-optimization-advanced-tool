@@ -38,6 +38,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -71,6 +72,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -619,6 +622,8 @@ internal fun HomeScreen(
             ModalBottomSheet(
                 onDismissRequest = { sheet = null },
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                // 기본 손잡이는 화면 읽기에서 이름 없는 요소로 잡혀, 모양은 그대로 두고 우리말 이름만 붙인다(닫기·펼치기 동작은 시트가 붙인다)
+                dragHandle = { Box(Modifier.clearAndSetSemantics { contentDescription = Copy.SHEET_HANDLE }) { BottomSheetDefaults.DragHandle() } },
                 containerColor = c.bg.copy(alpha = GLASS_ALPHA),
                 scrimColor = c.ink.copy(alpha = 0.16f)
             ) {
