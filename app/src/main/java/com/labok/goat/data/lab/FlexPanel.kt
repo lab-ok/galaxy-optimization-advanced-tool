@@ -220,7 +220,7 @@ object FlexPanel {
         if (help.contains("base-state")) {
             val half = Regex("identifier=(\\d+), name='HALF_OPENED'").find(ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty())?.groupValues?.get(1) ?: "2"
             // 9~10차: 탁자 모드(isTableMode=true)까지는 되는데 회전 조건(isSupportRotation)만 계속 false였다.
-            // 11차: 회전 조건에 대한 가능성을 모두 차례로 시험한다. 패널이 뜨면 그 자리에서 멈춘다.
+            // 11차: 회전 조건에 대한 가능성을 차례로 시험했다(아래 도구들). 12차는 그중 통과한 방법(90°·270° 재시작)만 쓴다.
             //  가. 회전 정보 수집: 창 관리자·디스플레이·시스템 UI가 보는 회전 값
             //  나. 시스템 UI를 다시 띄우지 않고 회전 0~3 고정(cmd window user-rotation으로 확실히 고정) → 반쯤 접힘
             //      (폴드8 빌드가 회전을 바뀔 때마다 다시 읽는다면 여기서 통과한다)
@@ -282,24 +282,60 @@ object FlexPanel {
                 Thread.sleep(6000)
             }
             rotationInfo("시작")
+            appendLine("상태 표시줄 관리자 서비스 → ${sh("service check sem_statusbar; service list | grep -i -E 'statusbar' | head -5")}")
             var done = false
-            // 나. 다시 띄우지 않고 회전만
-            for (rot in 0..3) {
+            // 12차: 11차에서 회전 90°·270°(폴드8 안쪽 화면은 기본 방향이 가로)로 고정한 채 시스템 UI를 다시 띄우면
+            // 자동 실행 조건이 모두 통과했다('not support state' 없음). 그런데 바로 다음 삼성 코드 안에서 상태 표시줄 관리자가
+            // 비어 있어 NullPointerException이 나 패널을 띄우는 명령(AUTORUN_FLEX_PANEL)까지 가지 못했다.
+            // 그래서 조건을 그대로 맞춘 상태(반쯤 접힘 유지)에서 삼성이 보내려던 명령을 GOAT가 직접 보낸다.
+            // 지금까지 직접 연 패널이 바로 닫힌 것은 늘 반쯤 접힘을 풀어 둔 뒤였기 때문일 수 있다
+            for (rot in listOf(1, 3)) {
                 if (done) break
-                appendLine("시도 0-나-$rot: 회전 ${rot * 90}°로 고정 → ${lock(rot)}")
+                val name = "시도 12-$rot"
+                appendLine("$name: 회전 ${rot * 90}°로 고정 → ${lock(rot)}")
                 Thread.sleep(2000)
                 appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
-                done = tryOnce("시도 0-나-$rot", override = true, wait = 3000)
-            }
-            // 다. 회전마다 시스템 UI를 다시 띄운 뒤
-            for (rot in 0..3) {
-                if (done) break
-                appendLine("시도 0-다-$rot: 회전 ${rot * 90}°로 고정 → ${lock(rot)}")
-                Thread.sleep(2000)
-                appendLine("지금 화면 회전 → ${sh("dumpsys window displays | grep -m1 -o 'mRotation=[A-Z_0-9]*'")}")
-                restartSystemUi("시도 0-다-$rot")
-                if (rot == 0 || rot == 1) rotationInfo("시도 0-다-$rot 뒤")
-                done = tryOnce("시도 0-다-$rot", override = true, wait = 3000)
+                restartSystemUi(name)
+                ShizukuAccess.shell("logcat -b all -c")
+                appendLine("$name: 물리 상태를 반쯤 접힘으로(유지) → ${sh("cmd device_state base-state $half")}")
+                Thread.sleep(2500)
+                val judged = ShizukuAccess.shell("logcat -d -b main -v time | grep -E 'FlexPanelStartController' | grep -v -E 'at (com|android|java|dalvik)\\.' | head -20")?.out?.trim().orEmpty()
+                appendLine("── $name 자동 실행 판단 ──")
+                appendLine(judged.ifBlank { "(로그 없음)" })
+                appendLine("── 판단 요약: ${panelBlockers(judged)}")
+                val launches = listOf(
+                    "자동 실행과 같은 명령(AUTORUN)" to "am start -a android.intent.action.AUTORUN_FLEX_PANEL -f 0x14241000 --display 0 -n '$PANEL_ACTIVITY'",
+                    "펼치기 명령(EXPAND)" to "am start -a android.intent.action.EXPAND_FLEX_PANEL -f 0x14241000 --display 0 -n '$PANEL_ACTIVITY'",
+                    "옆 칸으로 열기" to "am start -f 0x18001000 -n '$PANEL_ACTIVITY'"
+                )
+                for ((title, cmd) in launches) {
+                    ShizukuAccess.shell("logcat -b all -c")
+                    appendLine("$name: 반쯤 접힌 채 $title → ${sh(cmd)}")
+                    Thread.sleep(3000)
+                    val log = ShizukuAccess.shell("logcat -d -b main,system,events,crash -v time | grep -i -E '$logFilter' | grep -v -E 'SurfaceFlinger|BLASTBufferQueue|SurfaceControlRegistry' | head -300")?.out?.trim().orEmpty()
+                    appendLine("── $name $title 로그 ──")
+                    appendLine(log.ifBlank { "(로그 없음)" })
+                    appendLine("──")
+                    val created = log.contains("wm_create_activity") && log.contains("FlexPanelActivity")
+                    val finished = Regex("wm_finish_activity[^\\n]*FlexPanelActivity").containsMatchIn(log)
+                    val result = if (created && !finished) {
+                        "패널이 떠서 유지됨"
+                    } else if (created) {
+                        "패널이 떴다가 닫힘"
+                    } else {
+                        "패널이 뜨지 않음"
+                    }
+                    appendLine("$name $title 결과: $result")
+                    if (created && !finished) {
+                        appendLine("패널을 15초 동안 그대로 둡니다. 화면 아래쪽 패널을 눌러 보세요")
+                        notice(context, "패널이 떴는지 보고 아래쪽을 눌러 보세요(15초)")
+                        Thread.sleep(15_000)
+                        done = true
+                        break
+                    }
+                }
+                appendLine("물리 상태 되돌리기 → ${sh("cmd device_state base-state reset")}")
+                Thread.sleep(1000)
             }
             // 라. 덮어쓰기 없이 실제 자세로
             if (!done) {
