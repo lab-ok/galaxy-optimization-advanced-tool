@@ -97,40 +97,10 @@ class LabTweaksTest {
     }
 
     @Test
-    fun dexStringTableIsRead() {
-        val b = ByteArray(0x90)
-        "dex\n035".toByteArray().copyInto(b, 0)
-        fun put(i: Int, v: Int) {
-            for (k in 0..3) b[i + k] = (v shr (8 * k)).toByte()
-        }
-        put(0x38, 2)
-        put(0x3C, 0x70)
-        put(0x70, 0x78)
-        put(0x74, 0x80)
-        b[0x78] = 3
-        "abc".toByteArray().copyInto(b, 0x79)
-        b[0x80] = 9
-        "FlexPanel".toByteArray().copyInto(b, 0x81)
-        assertEquals(listOf(0), DexStrings.dexOffsets(b))
-        val got = mutableListOf<String>()
-        DexStrings.strings(b, 0) { got.add(it) }
-        assertEquals(listOf("abc", "FlexPanel"), got)
-    }
-
-    @Test
     fun privacyDotErrorShowsRealReason() {
         val err = "Exception occurred while executing 'put':\njava.lang.SecurityException: Permission denial: writing to settings requires:android.permission.WRITE_DEVICE_CONFIG\n\tat android.os.Parcel"
         assertEquals("SecurityException: Permission denial: writing to settings requires:android.permission.WRITE_DEVICE_CONFIG", PrivacyDot.reason(err))
         assertEquals("뭔가 실패", PrivacyDot.reason("뭔가 실패"))
-    }
-
-    @Test
-    fun flexPanelBlockersPicksFailingConditions() {
-        val log = "10-15 07:33:09.162 D/FlexPanelStartController( 1560): not support state, mMwEnabled=true, mIsTableMode=true, " +
-            "mDesktopMode=false, mFlexModePanelEnabled=true, mIsImeShowing=false, mIsQuickPanelShowing=false, mIsTaskBarAppsEnabled=false, " +
-            "mIsGlobalActionVisible=false, mOnRecentsAnimation=false, isSupportRotation=false, mIsKeyguardVisible=false, mIsInFixedRotation=false"
-        assertEquals("막은 조건: isSupportRotation=false", FlexPanel.panelBlockers(log))
-        assertEquals("판단 로그 없음", FlexPanel.panelBlockers("OnDeviceStateChanged: isTableMode=true"))
     }
 
     @Test

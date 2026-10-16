@@ -2,9 +2,6 @@ package com.labok.goat.ui.lab
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -72,9 +69,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.FlexPanel
-import com.labok.goat.data.lab.ReviveRunner
-import com.labok.goat.data.lab.SplitTest
-import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.AppEntry
 import com.labok.goat.ui.appsize.Section
@@ -89,7 +83,6 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
-import com.labok.goat.ui.liquid.LiquidProgressButton
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -100,7 +93,6 @@ import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.ui.nav.NewBadge
 import com.labok.goat.ui.nav.NewTag
 import com.labok.goat.ui.text.Copy
-import kotlin.math.exp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -123,6 +115,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     val active by AutoFlex.active.collectAsStateWithLifecycle()
     val latched by AutoFlex.latched.collectAsStateWithLifecycle()
     var click by remember { mutableStateOf(AutoFlex.click(context)) }
+    var sideClick by remember { mutableStateOf(AutoFlex.sideClick(context)) }
     var dim by remember { mutableStateOf(AutoFlex.dimLock(context)) }
     val supported = remember { AutoFlex.supported() && AutoFlex.hasHingeSensor(context) }
     // 자동 플렉스가 꺼져 있어도 게이지에 지금 각도가 보이게 화면에서 직접 읽는다(켜져 있으면 서비스가 읽은 값을 쓴다)
@@ -141,8 +134,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var filter by remember { mutableIntStateOf(AutoFlex.MODE_FLEX) }
     var openRow by remember { mutableStateOf<String?>(null) }
     var gesturesOpen by remember { mutableStateOf(false) }
-    var diagProgress by remember { mutableStateOf<Float?>(null) }
-    var diagStatus by remember { mutableStateOf("") }
     var wheel by remember { mutableStateOf(AutoFlex.wheel.read(context)) }
     // 이 설정 화면을 보는 동안에는 자동 플렉스를 멈춰 화면이 바뀌지 않게 한다. 시험은 [플렉스 모드 테스트하기]가 여는
     // 시험 화면(FlexTestActivity)에서만 하므로, 이 화면이 앞에 있을 때(RESUMED)만 멈춘다
@@ -263,6 +254,11 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     }
                     Spacer(Modifier.height(Gap.Item))
                     FlexPanelArt(kkaddak = true)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidSwitchRow(Copy.LAB_FLEX_SIDE_CLICK, Copy.LAB_FLEX_SIDE_CLICK_BODY, sideClick, enabled) { v ->
+                        sideClick = v
+                        AutoFlex.setSideClick(context, v)
+                    }
                 }
             }
         }
@@ -369,114 +365,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                             scope.launch {
                                 val ok = withContext(Dispatchers.IO) { AutoFlex.wheel.write(context, v) }
                                 if (ok) wheel = v else Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    )
-                }
-            }
-        }
-        // 터치패널 진단: 일반 앱에 시스템 터치패널을 띄울 수 있는지 가릴 정보를 모아 파일로 보낸다
-        // 화면 분할 시험: 공식 화면 분할을 여는 방법 11가지 × 접힘 상태 3가지를 차례로 돌려 결과 파일과 캡처를 남긴다
-        item(key = "split-test") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.LAB_SPLIT_TEST_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.LAB_SPLIT_TEST_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Text(Copy.LAB_SPLIT_TEST_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    val test by SplitTest.state.collectAsStateWithLifecycle()
-                    LiquidProgressButton(
-                        Copy.LAB_SPLIT_TEST_RUN,
-                        progress = if (test.running) test.progress ?: 0f else null,
-                        status = test.status,
-                        enabled = shizuku == ShizukuAccess.State.READY,
-                        disabledHint = Copy.DISABLED_SHIZUKU,
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { if (!test.running) SplitTest.start(context) }
-                    )
-                    val last = remember(test.running) { SplitTest.lastFile(context) }
-                    last?.let { uri ->
-                        Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.LAB_SPLIT_TEST_SHARE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { share(context, uri) })
-                    }
-                }
-            }
-        }
-        item(key = "diag") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.LAB_FLEX_DIAG_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.LAB_FLEX_DIAG_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    // 시도는 앱 전체 범위에서 돌고(ReviveRunner) 결과는 실시간으로 파일에 쌓인다: 화면이 다시 만들어져도 진행·결과·공유 버튼이 그대로 보인다
-                    val revive by ReviveRunner.state.collectAsStateWithLifecycle()
-                    Text(Copy.LAB_FLEX_REVIVE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(if (revive.running) Copy.LAB_FLEX_REVIVE_RUNNING else Copy.LAB_FLEX_REVIVE, enabled = !revive.running && shizuku == ShizukuAccess.State.READY, disabledHint = if (revive.running) null else Copy.DISABLED_SHIZUKU, modifier = Modifier.fillMaxWidth(), onClick = {
-                        ReviveRunner.start(context)
-                    })
-                    if (revive.head.isNotEmpty()) {
-                        Spacer(Modifier.height(Gap.Item))
-                        Text(revive.head.trim(), color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    }
-                    val lastFile = remember(revive.running) { ReviveRunner.lastFile(context) }
-                    lastFile?.let { uri ->
-                        Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.LAB_FLEX_REVIVE_SHARE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { share(context, uri) })
-                    }
-                    Spacer(Modifier.height(Gap.Item))
-                    // 진단은 1~3분 걸려, 업데이트 진행 통처럼 버튼 안에 물이 차오르며 지금 하는 일과 퍼센트를 보여 준다
-                    LiquidProgressButton(
-                        Copy.LAB_FLEX_DIAG_RUN,
-                        progress = diagProgress,
-                        status = diagStatus,
-                        enabled = shizuku == ShizukuAccess.State.READY,
-                        disabledHint = Copy.DISABLED_SHIZUKU,
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            if (diagProgress != null) return@LiquidProgressButton
-                            diagProgress = 0f
-                            diagStatus = Copy.LAB_FLEX_DIAG_RUNNING
-                            scope.launch {
-                                // 진단은 다른 스레드에서 단계를 알리고, 화면은 0.2초마다 그 단계 구간 안에서 진행률과 경과 시간을 다시 그린다.
-                                // 파일 읽기처럼 얼마나 했는지 알 수 있으면 그만큼, 모르면 시간이 갈수록 구간 끝으로 천천히 다가간다(멈춰 보이지 않게)
-                                val main = Handler(Looper.getMainLooper())
-                                var from = 0f
-                                var to = 0.02f
-                                var label = Copy.LAB_FLEX_DIAG_RUNNING
-                                var startedAt = System.currentTimeMillis()
-                                var inner: Float? = null
-                                val ticker = launch {
-                                    while (true) {
-                                        val sec = (System.currentTimeMillis() - startedAt) / 1000f
-                                        val k = inner ?: (0.9f * (1f - exp(-sec / 15f)))
-                                        diagProgress = from + (to - from) * k.coerceIn(0f, 1f)
-                                        diagStatus = "$label · ${sec.toInt()}초"
-                                        delay(200)
-                                    }
-                                }
-                                val progress = FlexPanel.Progress(
-                                    step = { f, t, l ->
-                                        main.post {
-                                            from = f
-                                            to = t
-                                            label = l
-                                            inner = null
-                                            startedAt = System.currentTimeMillis()
-                                        }
-                                    },
-                                    inner = { k -> main.post { inner = k } }
-                                )
-                                val text = withContext(Dispatchers.IO) { FlexPanel.diagnose(context, progress) }
-                                ticker.cancel()
-                                diagProgress = 0.97f
-                                diagStatus = "파일 저장 중"
-                                val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("flex-panel"), text) }
-                                diagProgress = 1f
-                                diagStatus = "완료"
-                                delay(600)
-                                diagProgress = null
-                                uri?.let { share(context, it) }
                             }
                         }
                     )
@@ -624,12 +512,3 @@ private val liquidPlace: FiniteAnimationSpec<IntOffset>
     get() = spring(UiMotion.ratio(0.62f), UiMotion.stiffness(260f, 0.62f))
 private val liquidFade: FiniteAnimationSpec<Float>
     get() = spring(1f, UiMotion.stiffness(400f, 1f))
-
-private fun share(context: Context, uri: Uri) {
-    val send = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_STREAM, uri)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-    context.startActivity(Intent.createChooser(send, Copy.LAB_SHARE))
-}
