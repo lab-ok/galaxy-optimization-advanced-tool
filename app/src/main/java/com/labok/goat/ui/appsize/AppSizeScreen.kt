@@ -224,6 +224,10 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                     }
                 }
             }
+            // 지원 여부를 확인하는 동안에는 불러오는 표시만 둔다(지원 기기용 카드가 잠깐 보였다가 '쓸 수 없습니다'로 바뀌던 깜빡임)
+            supported == null -> item(key = "loading") {
+                LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp))
+            }
             supported == false -> item(key = "unsupported") {
                 Appear("unsupported", 1, shown) {
                     GlassCard {

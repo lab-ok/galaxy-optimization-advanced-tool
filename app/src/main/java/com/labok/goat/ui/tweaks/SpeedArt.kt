@@ -23,7 +23,7 @@ private fun ease(x: Float) = x * x * (3 - 2 * x)
  * 왼쪽은 기본(1배), 오른쪽은 고른 값([scale])이라 더 빨리(또는 0이면 바로) 다 열린다. 아래 알약에 걸린 시간을 적는다.
  */
 @Composable
-internal fun SpeedArt(scale: Float) {
+internal fun SpeedArt(scale: Float, name: String? = null) {
     // 시스템 애니메이션 배율이 이 그림에도 걸리면 고른 배율이 두 번 적용돼 보이므로 실제 시간으로 움직인다
     val t = realTimeLoop(2600)
     val aspect = LocalDeviceShape.current.cover
@@ -51,7 +51,7 @@ internal fun SpeedArt(scale: Float) {
             if (t >= 0.12f && close < 1f) window(c, screen, open * (1 - close))
             val ms = (300 * s).toInt()
             artPill(tm, c, if (s <= 0f) "바로" else "${ms}ms", Offset(screen.center.x, top + h + 16.dp.toPx()), filled = i == 1)
-            artLabel(tm, if (i == 0) "기본" else AnimationSpeed.label(s), Offset(screen.center.x, top + h + 36.dp.toPx()), if (i == 1) c.ink else c.muted, bold = i == 1)
+            artLabel(tm, if (i == 0) "기본" else listOfNotNull(name, AnimationSpeed.label(s)).joinToString(" "), Offset(screen.center.x, top + h + 36.dp.toPx()), if (i == 1) c.ink else c.muted, bold = i == 1)
         }
     }
 }

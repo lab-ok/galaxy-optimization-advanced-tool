@@ -10,6 +10,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
@@ -29,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -59,11 +63,13 @@ import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
+import kotlinx.coroutines.delay
 
 /**
  * 흔들어서 화면 회전: 켜기 스위치, 민감도, 그림 설명. 회전 잠금은 고급 화면 배율 설정과 같은 시스템 설정 권한을 쓴다.
  * @param onGuide 권한이 없을 때 권한 설정 방법을 연다.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Unit, onCalibrate: () -> Unit) {
     val c = LocalLiquid.current
@@ -79,6 +85,14 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
     var taps by remember(version) { mutableStateOf(ShakeRotate.rejectTaps(context)) }
     var largeOnly by remember(version) { mutableStateOf(ShakeRotate.largeOnly(context)) }
     var advanced by remember { mutableStateOf(false) }
+    // 고급 설정은 맨 아래 카드라 펼친 조절바가 내비게이션 막대 밑으로 숨었다(QA 1차). 펼침이 끝날 무렵 카드 전체가 보이도록 굴린다
+    val bringAdvanced = remember { BringIntoViewRequester() }
+    LaunchedEffect(advanced) {
+        if (advanced) {
+            delay(320)
+            bringAdvanced.bringIntoView()
+        }
+    }
     var message by remember { mutableStateOf("") }
     var vibration by remember { mutableIntStateOf(ShakeRotate.vibration(context)) }
     var autoOn by remember { mutableStateOf(ShakeRotate.autoRotateOn(context)) }
@@ -251,7 +265,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
         }
         item(key = "advanced") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
+                GlassCard(modifier = Modifier.bringIntoViewRequester(bringAdvanced)) {
                     // 고급 설정(접었다 펴기): 흔들기를 알아보는 세부값(횟수·빠르기·손목 회전·탭 거르기)만 맨 아래에 접어 둔다. 자동 맞추기가 앞의 셋을 함께 맞춘다
                     Row(
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { advanced = !advanced },

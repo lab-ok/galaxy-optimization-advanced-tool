@@ -154,6 +154,8 @@ internal fun Dashboard(
             cleaned = withContext(Dispatchers.IO) {
                 Gos.read()
                 Doze.read()
+                // 촬영음도 실제 값을 읽는다(안 읽으면 '읽지 못함'에 머물러 설정 없는 기기에서도 '꺼 두기로 함'이 떴다)
+                CameraMute.read()
                 ForceDark.read(context)
                 Bloat.scan()?.count { it.value }
             }

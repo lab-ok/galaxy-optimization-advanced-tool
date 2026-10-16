@@ -80,7 +80,8 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
                     Text(Copy.ANIM_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     // 셋을 따로 맞췄으면 기본(1배)으로 그리지 않고, 그림이 보여 주는 앱 열기에 걸리는 화면 전환 배율을 그린다
-                    SpeedArt(same ?: values.getValue(AnimationSpeed.Kind.TRANSITION))
+                    // 이때 그림 아래에 「전환」 이름을 붙여, 창 값만 바꾼 사용자가 반영이 안 된 줄 알지 않게 한다
+                    SpeedArt(same ?: values.getValue(AnimationSpeed.Kind.TRANSITION), name = if (same == null) AnimationSpeed.Kind.TRANSITION.short else null)
                 }
             }
         }
