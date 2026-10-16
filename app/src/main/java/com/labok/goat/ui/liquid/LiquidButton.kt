@@ -1,8 +1,8 @@
 package com.labok.goat.ui.liquid
 
+import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
-import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +36,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -104,7 +106,8 @@ fun LiquidButton(
 
     Box(
         modifier
-            .height(LiquidShape.control + 4.dp)
+            // 높이를 고정하면 좁은 폭·큰 글자에서 두 줄로 꺾인 라벨의 둘째 줄이 버튼 밖으로 잘렸다(조합 점검). 최소 높이만 둔다
+            .heightIn(min = LiquidShape.control + 4.dp)
             .defaultMinSize(minWidth = 96.dp)
             .graphicsLayer { translationX = shake.value }
             .semantics { if (!enabled) disabled() }
@@ -207,8 +210,9 @@ fun LiquidButton(
             text,
             color = fg,
             fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
             modifier = Modifier
-                .padding(horizontal = 22.dp)
+                .padding(horizontal = 22.dp, vertical = 6.dp)
                 .graphicsLayer { alpha = if (running) ((gather - 0.8f) / 0.2f).coerceIn(0f, 1f) else 1f }
         )
     }

@@ -15,10 +15,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.IconBlacklist.Slot
 import com.labok.goat.ui.liquid.Text
 
@@ -30,7 +30,8 @@ import com.labok.goat.ui.liquid.Text
 internal fun StatusBarGlyph(slot: Slot, color: Color, size: Dp = 22.dp) {
     if (slot == Slot.VOLTE) {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-            Text("VoLTE", color = color, fontSize = 8.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            // 글자 크기 배율을 따르면 큰 글자에서 22dp 칸을 넘어 'VoL'까지만 보였다(조합 점검). 아이콘처럼 칸 크기에 맞춰 고정한다
+            Text("VoLTE", color = color, fontSize = with(LocalDensity.current) { (size * 0.36f).toSp() }, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
         }
         return
     }

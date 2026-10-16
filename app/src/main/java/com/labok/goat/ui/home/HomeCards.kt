@@ -101,7 +101,8 @@ internal fun StatusCard(state: UiState) {
                         color = c.ink
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text("dpi", color = c.muted, modifier = Modifier.padding(bottom = 10.dp))
+                    // 좁은 폭에서 'dp'·'i'로 쪼개져 '360 dp'처럼 읽혔다(조합 점검). 단위는 한 줄로 둔다
+                    Text("dpi", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(bottom = 10.dp))
                 }
                 Text(line, color = c.ink, style = MaterialTheme.typography.bodyMedium)
             }
