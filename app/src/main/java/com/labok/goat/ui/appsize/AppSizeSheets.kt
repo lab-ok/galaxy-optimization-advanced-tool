@@ -97,7 +97,7 @@ internal fun AppSizeHelpSheet(foldable: Boolean = true, onConnect: () -> Unit) {
         )
         HelpTopic(
             "${n()}. 되돌리기",
-            "앱을 눌러 '기본'을 고르면 그 앱만, ⋮ → 초기화에서는 모든 앱을 기본 크기로 되돌립니다. " +
+            "앱을 눌러 '기본'을 고르면 그 앱만, ⋮ → 초기화에서는 모든 앱을 기본 배율로 되돌립니다. " +
                 "삼성 설정의 '앱 화면 크게/작게'에서 되돌려도 됩니다.",
             art = { ResetArt() }
         )
@@ -159,7 +159,7 @@ internal fun AppSizeGuideSheet() {
     }
 }
 
-/** 초기화: 크기를 정해 둔 앱을 모두 기본으로. 빨간 경고 뒤 한 번 더 확인한다. */
+/** 초기화: 배율을 바꾼 앱을 모두 기본으로. 빨간 경고 뒤 한 번 더 확인한다. */
 @Composable
 internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
     val c = LocalLiquid.current
@@ -179,8 +179,10 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
             Text(
                 when {
                     !ready -> "Shizuku가 연결되어 있지 않아 지금은 되돌릴 수 없습니다."
-                    count == null -> "정해 둔 앱을 세는 중…"
-                    else -> "지금 크기를 정해 둔 앱: ${count}개"
+                    count == null -> "배율을 바꾼 앱을 세는 중…"
+                    // 되돌릴 앱이 없으면 꺼진 버튼 대신 여기서 알린다(꺼진 버튼을 누르면 뜨는 토스트가 시트 맨 아래 버튼을 가렸다, QA 1차)
+                    count == 0 -> Copy.DISABLED_NO_SIZED_APPS
+                    else -> "지금 배율을 바꾼 앱: ${count}개"
                 },
                 color = c.ink,
                 style = MaterialTheme.typography.bodySmall
@@ -194,7 +196,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                         primary = false,
                         danger = true,
                         enabled = ready && (count ?: 0) > 0,
-                        disabledHint = if (!ready) Copy.DISABLED_SHIZUKU else if (count == 0) Copy.DISABLED_NO_SIZED_APPS else null,
+                        disabledHint = if (!ready) Copy.DISABLED_SHIZUKU else null,
                         onClick = { step = 1 }
                     )
                     1 -> DangerConfirmBox(Copy.APP_SIZE_RESET_WARN) {
@@ -203,7 +205,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                             step = 2
                             scope.launch {
                                 val n = withContext(Dispatchers.IO) { DensityShell.resetAll(context) }
-                                onDone("${n}개 앱을 기본 크기로 되돌렸습니다.")
+                                onDone("${n}개 앱을 기본 배율로 되돌렸습니다.")
                             }
                         })
                     }

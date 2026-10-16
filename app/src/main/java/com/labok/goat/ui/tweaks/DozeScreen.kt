@@ -173,7 +173,7 @@ internal fun DozeHelpSheet() {
         )
         HelpTopic(
             "3. 재부팅 뒤",
-            "이 설정은 재부팅하면 다시 켜집니다. 꺼 두었다면 부팅마다 한 번, Shizuku가 연결될 때 GOAT가 다시 끕니다. " +
+            "잠자기 모드는 재부팅하면 다시 켜집니다. 꺼 두었다면 부팅마다 한 번, Shizuku가 연결될 때 GOAT가 다시 끕니다. " +
                 "같은 부팅 안에서 PC 등으로 직접 다시 켠 것은 그대로 둡니다."
         )
         HelpTopic(

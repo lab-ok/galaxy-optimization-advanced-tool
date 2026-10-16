@@ -21,6 +21,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -90,6 +93,7 @@ private const val SLOTS = 6
  * 흔들어서 자동으로 맞추기(팝업 시트). 열면 물방울이 폰 움직임을 따라 출렁이며 놀 수 있고, [시작]을 누르면
  * [CALIBRATE_SECONDS]초 동안 휘두름을 모은다. 끝나면 그 세기에 맞는 민감도를 저장해 결과를 보여 준다.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
     val c = LocalLiquid.current
@@ -100,6 +104,14 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
     var failed by remember { mutableStateOf(false) }
     var tune by remember { mutableStateOf(LiquidTune.read(context)) }
     var tuning by remember { mutableStateOf(false) }
+    // 물방울 조절을 펼치면 조절바 대부분이 시트 아래로 숨었다(QA 1차). 펼침이 끝날 무렵 펼친 내용이 보이도록 굴린다
+    val bringTuner = remember { BringIntoViewRequester() }
+    LaunchedEffect(tuning) {
+        if (tuning) {
+            delay(320)
+            bringTuner.bringIntoView()
+        }
+    }
     // 제목은 다른 시트처럼 왼쪽, 본문(물방울·결과)은 가운데
     // 시작하면 안내 줄이 빠져 시트가 짧아진다: 한 번에 튀지 않게 높이 변화를 부드럽게 잇는다
     SheetColumn(modifier = Modifier.animateContentSize(), title = Copy.SHAKE_CALIBRATE) {
@@ -183,7 +195,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
             Spacer(Modifier.height(Gap.Item))
             LiquidButton(Copy.FLUID_TUNE, modifier = Modifier.fillMaxWidth(), primary = false, onClick = { tuning = !tuning })
             AnimatedVisibility(tuning, enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-                FluidTuner(tune, onChange = { tune = it })
+                Box(Modifier.bringIntoViewRequester(bringTuner)) { FluidTuner(tune, onChange = { tune = it }) }
             }
         }
     }
