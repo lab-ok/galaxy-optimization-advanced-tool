@@ -17,6 +17,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -120,6 +121,8 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                     color = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     shape = MaterialTheme.shapes.medium,
+                    // 다크 테마에서는 primaryContainer가 시트 바탕과 거의 같아 카드가 묻혔다(조합 점검). 다른 카드처럼 테두리를 둔다
+                    border = BorderStroke(1.dp, LocalLiquid.current.line),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {

@@ -21,7 +21,8 @@ fun LiquidSwitchRow(title: String, desc: String?, checked: Boolean, enabled: Boo
     val c = LocalLiquid.current
     Row(Modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
+            // 쓸 수 없는 줄은 제목도 흐리게 한다(스위치만 흐려져 쓸 수 있는 것처럼 보였다, 조합 점검)
+            Text(title, fontWeight = FontWeight.SemiBold, color = if (enabled) c.ink else c.muted)
             desc?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
         }
         Spacer(Modifier.width(12.dp))
