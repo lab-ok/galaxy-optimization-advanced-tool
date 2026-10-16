@@ -118,17 +118,23 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 
+    /** 실험실: 앱마다 펼친 화면·접은 화면의 앱별 배율을 따로 둔다(접고 펼 때 바꿔 건다). */
+    LAB_FOLD_SCALE(Copy.FEATURE_LAB_FOLD_SCALE, NavIcon.FOLD),
+
+    /** 실험실: 배터리 상태와 15분 기록(잔량 그래프·시간당 소모량). */
+    LAB_BATTERY(Copy.FEATURE_LAB_BATTERY, NavIcon.BATTERY),
+
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */
     SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR)
     ;
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_FOLD_SCALE, LAB_BATTERY, LAB_TOOLS)
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, INFO, GEAR }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, INFO, GEAR }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -343,6 +349,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.EYE_OFF -> eyeOff(color, s)
             NavIcon.PALETTE -> palette(color, s)
             NavIcon.FLEX -> flex(color, s)
+            NavIcon.BATTERY -> battery(color, s)
             NavIcon.INFO -> info(color, s)
             NavIcon.GEAR -> gear(color, s)
         }
@@ -562,6 +569,14 @@ private fun DrawScope.gear(c: Color, s: Stroke) {
 }
 
 /** 조사 도구: 플라스크, 안에 액체 선과 기포 둘. */
+/** 배터리 모니터링: 세운 배터리(위에 단자)와 안의 잔량 칸 두 개. */
+private fun DrawScope.battery(c: Color, s: Stroke) {
+    drawRoundRect(c, p(7f, 4.5f), Size(u(10f), u(16.5f)), CornerRadius(u(2.2f)), style = s)
+    drawLine(c, p(10f, 2.6f), p(14f, 2.6f), s.width, StrokeCap.Round)
+    drawLine(c, p(10f, 16.5f), p(14f, 16.5f), s.width * 1.4f, StrokeCap.Round)
+    drawLine(c, p(10f, 13f), p(14f, 13f), s.width * 1.4f, StrokeCap.Round)
+}
+
 private fun DrawScope.flask(c: Color, s: Stroke) {
     val path = Path().apply {
         moveTo(u(9.5f), u(3.5f))

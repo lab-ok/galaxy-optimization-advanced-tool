@@ -10,6 +10,7 @@ import androidx.core.app.ServiceCompat
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.ForegroundWatcher
 import com.labok.goat.data.lab.AutoFlex
+import com.labok.goat.data.lab.FoldAppScale
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeEngine
 import com.labok.goat.data.rotate.ShakeRotate
@@ -28,6 +29,7 @@ class GoatService : Service() {
     private val permission = Shizuku.OnRequestPermissionResultListener { _, _ -> watchApps() }
     private var shake: ShakeEngine? = null
     private var flex: AutoFlex.Engine? = null
+    private var foldScale: FoldAppScale.Engine? = null
     private var shizukuHooked = false
     private var lastRunning: String? = null
 
@@ -40,11 +42,12 @@ class GoatService : Service() {
         val apps = AppDensityNotifier.enabled(this)
         val rotate = ShakeRotate.enabled(this) && ShakeRotate.canWrite(this)
         val autoFlex = AutoFlex.engineNeeded(this)
-        if (!apps && !rotate && !autoFlex) {
+        val scale = FoldAppScale.engineNeeded(this)
+        if (!apps && !rotate && !autoFlex && !scale) {
             stopSelf()
             return START_NOT_STICKY
         }
-        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "자동 플렉스 모드".takeIf { autoFlex }).joinToString("·")
+        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "자동 플렉스 모드".takeIf { autoFlex }, "접힘별 앱 배율".takeIf { scale }).joinToString("·")
         if (running != lastRunning) {
             LogRepository.from(this).add("GOAT 상주 서비스: $running")
             lastRunning = running
@@ -52,8 +55,8 @@ class GoatService : Service() {
         // 켜진 기능에 맞는 알림으로 바꾼다(같은 번호라 알림은 하나로 남는다)
         startForegroundNow()
 
-        // 자동 플렉스는 반쯤 접힘을 Shizuku로 걸어서, Shizuku 연결을 지켜본다
-        if (apps || autoFlex) {
+        // 자동 플렉스·접힘별 앱 배율은 Shizuku로 걸어서, Shizuku 연결을 지켜본다
+        if (apps || autoFlex || scale) {
             if (!shizukuHooked) {
                 ShizukuAccess.watch(this)
                 Shizuku.addBinderReceivedListenerSticky(binderReceived)
@@ -70,6 +73,14 @@ class GoatService : Service() {
         } else {
             flex?.stop()
             flex = null
+        }
+
+        // 접힘별 앱 배율(실험실): 접고 펼 때 고른 앱의 앱별 배율을 그 화면용 값으로 건다
+        if (scale) {
+            if (foldScale == null) foldScale = FoldAppScale.Engine(this).also { it.start() }
+        } else {
+            foldScale?.stop()
+            foldScale = null
         }
 
         if (rotate) {
@@ -111,6 +122,8 @@ class GoatService : Service() {
         shake = null
         flex?.stop()
         flex = null
+        foldScale?.stop()
+        foldScale = null
         unhookShizuku()
         AppDensityNotifier.cancel(this)
         super.onDestroy()
@@ -121,7 +134,10 @@ class GoatService : Service() {
     companion object {
         /** 켜진 기능이 하나라도 있으면 서비스를 띄우거나 설정을 다시 읽게 하고, 없으면 멈춘다. */
         fun sync(context: Context) {
-            val any = AppDensityNotifier.enabled(context) || (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) || AutoFlex.engineNeeded(context)
+            val any = AppDensityNotifier.enabled(context) ||
+                (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) ||
+                AutoFlex.engineNeeded(context) ||
+                FoldAppScale.engineNeeded(context)
             val intent = Intent(context, GoatService::class.java)
             if (any) {
                 runCatching { context.startForegroundService(intent) }
@@ -135,8 +151,10 @@ class GoatService : Service() {
             AppDensityNotifier.build(context, AppDensityNotifier.describe(context, null), AppDensityNotifier.shakeNote(context))
         } else if (ShakeRotate.enabled(context)) {
             ShakeRotate.buildNotification(context)
-        } else {
+        } else if (AutoFlex.engineNeeded(context)) {
             AutoFlex.buildNotification(context)
+        } else {
+            FoldAppScale.buildNotification(context)
         }
     }
 }
