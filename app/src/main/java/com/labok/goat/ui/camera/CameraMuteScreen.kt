@@ -172,7 +172,7 @@ internal fun CameraMuteHelpSheet() {
         )
         HelpTopic(
             "3. Shizuku가 필요한 이유",
-            "촬영음 강제는 삼성이 숨겨 둔 시스템 설정이라, 일반 앱은 화면 배율 권한이 있어도 읽거나 바꿀 수 없습니다. " +
+            "촬영음 강제는 삼성이 숨겨 둔 시스템 설정이라, 일반 앱은 시스템 설정 권한이 있어도 읽거나 바꿀 수 없습니다. " +
                 "Shizuku가 빌려 주는 셸 권한으로 'settings put system ${CameraMute.KEY} 0'을 실행합니다. " +
                 "Shizuku가 없으면 PC에서 같은 명령을 한 번 실행해도 됩니다."
         )

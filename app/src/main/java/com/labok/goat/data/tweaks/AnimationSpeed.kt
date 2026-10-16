@@ -10,10 +10,10 @@ import com.labok.goat.data.log.LogRepository
  */
 object AnimationSpeed {
     /** 바꾸는 세 설정과 화면 이름. */
-    enum class Kind(val key: String, val label: String) {
-        WINDOW(Settings.Global.WINDOW_ANIMATION_SCALE, "창 애니메이션"),
-        TRANSITION(Settings.Global.TRANSITION_ANIMATION_SCALE, "화면 전환 애니메이션"),
-        ANIMATOR(Settings.Global.ANIMATOR_DURATION_SCALE, "앱 안 움직임 길이")
+    enum class Kind(val key: String, val label: String, val short: String) {
+        WINDOW(Settings.Global.WINDOW_ANIMATION_SCALE, "창 애니메이션", "창"),
+        TRANSITION(Settings.Global.TRANSITION_ANIMATION_SCALE, "화면 전환 애니메이션", "전환"),
+        ANIMATOR(Settings.Global.ANIMATOR_DURATION_SCALE, "앱 안 움직임 길이", "움직임")
     }
 
     fun read(context: Context, kind: Kind): Float = runCatching { Settings.Global.getFloat(context.contentResolver, kind.key, 1f) }.getOrDefault(1f)

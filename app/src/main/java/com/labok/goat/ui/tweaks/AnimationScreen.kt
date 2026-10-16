@@ -102,7 +102,8 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
                     Text(Copy.ANIM_PRESET_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(
                         if (same == null) {
-                            "지금: 직접 맞춤(${AnimationSpeed.Kind.entries.joinToString(" · ") { AnimationSpeed.label(values.getValue(it)) }})"
+                            // 셋을 따로 맞춘 때는 어느 값이 어느 항목인지 짧은 이름을 붙인다(창·전환·움직임)
+                            "지금: 직접 맞춤(${AnimationSpeed.Kind.entries.joinToString(" · ") { "${it.short} ${AnimationSpeed.label(values.getValue(it))}" }})"
                         } else {
                             "지금: ${AnimationSpeed.label(same)}"
                         },

@@ -6,17 +6,20 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -121,7 +124,13 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                 }
             })
             Spacer(Modifier.height(Gap.Item))
-            AnimatedContent(Triple(running, result, failed), label = "calibrate") { (run, level, fail) ->
+            // 높이 변화는 바깥 시트(animateContentSize) 한 곳에서만 잇는다. AnimatedContent도 기본으로 크기를 따로 움직여
+            // 두 애니메이션이 겹치면서 [시작]을 누를 때 내용이 위로 튀었다가 내려왔다(QA 1차). 여기서는 크기를 바로 맞추고 글자만 바꿔 보인다
+            AnimatedContent(
+                Triple(running, result, failed),
+                transitionSpec = { (fadeIn() togetherWith fadeOut()).using(SizeTransform(clip = false) { _, _ -> snap() }) },
+                label = "calibrate"
+            ) { (run, level, fail) ->
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     when {
                         run -> LiquidButton("흔드는 중…", modifier = Modifier.fillMaxWidth(), enabled = false, onClick = {})
