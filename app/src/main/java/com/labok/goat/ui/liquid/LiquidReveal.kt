@@ -65,11 +65,16 @@ fun Modifier.liquidReveal(active: Boolean, origin: (Size) -> Offset): Modifier {
             blob.frame
             when {
                 done -> drawContent()
-                blob.blob.ready -> clipPath(blob.blob.path(path)) {
-                    this@drawWithContent.drawContent()
-                    // 방울이 작을 때는 새 화면 글자가 조각으로 비쳐 깨져 보인다. 처음엔 바탕색으로 채웠다가 방울이 화면의 40%쯤 커지는 동안 걷는다(1/4로는 한 프레임 비쳤다, QA 2차)
-                    val veil = 1f - (r.value / (far * REVEAL_VEIL)).coerceIn(0f, 1f)
-                    if (veil > 0f) drawRect(bg.copy(alpha = veil))
+                blob.blob.ready -> {
+                    val shape = blob.blob.path(path)
+                    clipPath(shape) {
+                        this@drawWithContent.drawContent()
+                        // 방울이 작을 때는 새 화면 글자가 조각으로 비쳐 깨져 보인다. 처음엔 바탕색으로 채웠다가 방울이 화면의 40%쯤 커지는 동안 걷는다.
+                        // 시간 값(r)이 아니라 실제로 그린 방울 크기로 잰다: 방울은 힘으로 뒤따라와 r보다 작아서, r로 재면 작은 방울에서 가림이 먼저 걷혔다(QA 3차)
+                        val drawn = shape.getBounds().let { maxOf(it.width, it.height) } / 2
+                        val veil = 1f - (drawn / (far * REVEAL_VEIL)).coerceIn(0f, 1f)
+                        if (veil > 0f) drawRect(bg.copy(alpha = veil))
+                    }
                 }
             }
         }
