@@ -118,9 +118,6 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 
-    /** 실험실: 앱마다 펼친 화면·접은 화면의 앱별 배율을 따로 둔다(접고 펼 때 바꿔 건다). */
-    LAB_FOLD_SCALE(Copy.FEATURE_LAB_FOLD_SCALE, NavIcon.FOLD),
-
     /** 실험실: 배터리 상태와 15분 기록(잔량 그래프·시간당 소모량). */
     LAB_BATTERY(Copy.FEATURE_LAB_BATTERY, NavIcon.BATTERY),
 
@@ -130,7 +127,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_FOLD_SCALE, LAB_BATTERY, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_BATTERY, LAB_TOOLS)
     }
 }
 

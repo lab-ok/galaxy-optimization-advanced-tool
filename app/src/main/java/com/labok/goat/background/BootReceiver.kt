@@ -6,7 +6,6 @@ import android.content.Intent
 import android.os.UserManager
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.lab.AutoFlex
-import com.labok.goat.data.lab.FoldAppScale
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.settings.SettingsRepository
@@ -31,7 +30,7 @@ class BootReceiver : BroadcastReceiver() {
         if (action != Intent.ACTION_LOCKED_BOOT_COMPLETED) {
             ShakeRotate.start(context)
             // 자동 플렉스(폴드8)도 같은 상주 서비스에서 돈다
-            if (AutoFlex.engineNeeded(context) || FoldAppScale.engineNeeded(context)) GoatService.sync(context)
+            if (AutoFlex.engineNeeded(context)) GoatService.sync(context)
         }
         // 해상도 낮추기: 확인하지 않은 채 재부팅됐으면 잠금을 풀기 전에도 원래 해상도로 되돌린다(기록은 기기 보호 저장소)
         Resolution.revertIfPending(context, "확인 전 재부팅", force = true)

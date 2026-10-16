@@ -63,14 +63,7 @@ object Copy {
     const val FEATURE_DPI = "고급 화면 배율 설정"
     const val FEATURE_APP_SIZE = "앱별 화면 배율 설정"
     const val FEATURE_LAB_TOOLS = "조사 도구"
-    const val FEATURE_LAB_FOLD_SCALE = "접힘별 앱 배율"
     const val FEATURE_LAB_BATTERY = "배터리 모니터링"
-
-    // 실험실: 접힘별 앱 배율
-    const val LAB_FOLD_SCALE_BODY = "앱마다 펼친 화면과 접은 화면의 배율을 따로 정하면, 접고 펼 때 GOAT가 그 값으로 바꿉니다."
-    const val LAB_FOLD_SCALE_NOTE = "값이 바뀌는 순간 그 앱은 다시 시작됩니다. 앱별 화면 배율 화면에서 바꾼 값도 접고 펼 때 덮어씁니다."
-    const val LAB_FOLD_SCALE_NOT_FOLD = "접는 화면이 있는 기기에서만 쓸 수 있습니다."
-    const val LAB_FOLD_SCALE_NEED_SHELL = "Shizuku를 연결하면 쓸 수 있습니다."
 
     // 실험실: 배터리 모니터링
     const val LAB_BATTERY_BODY = "지금 배터리 상태를 2초마다 다시 읽습니다. 전류 부호와 단위는 기기마다 달라 GOAT가 맞춰 보여 줍니다."
