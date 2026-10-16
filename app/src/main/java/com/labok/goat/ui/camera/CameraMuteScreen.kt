@@ -179,7 +179,7 @@ internal fun CameraMuteHelpSheet() {
         HelpTopic(
             "4. 재부팅·업데이트 뒤",
             "기기에 따라 업데이트나 재부팅 뒤 촬영음이 다시 켜질 수 있습니다. '다시 켜지면 자동으로 끄기'를 켜 두면 " +
-                "Shizuku가 연결될 때마다(Android 13 이상은 재부팅 뒤 자동 연결) 확인해 다시 끕니다."
+                "Shizuku가 연결될 때마다(Android 13 이상은 재부팅 뒤 Wi-Fi에 연결되면 자동으로 연결) 확인해 다시 끕니다."
         )
         HelpTopic(
             "5. 되돌리기",

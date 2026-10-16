@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
 import com.labok.goat.data.appsize.AppUsage
 
 /** 앱이 쓰는 권한과 받는 방법. 최종 APK의 권한 목록(aapt2 dump permissions)과 맞춘다. */
@@ -59,6 +60,14 @@ internal object AppPermissions {
             "앱별 크기 목록을 최근 사용 순으로 정렬합니다. Shizuku가 연결되면 GOAT가 스스로 허용합니다.",
             How.USER
         ),
+        // 매니페스트에 있는데 목록에서 빠져 '권한 전체'라는 머리말과 맞지 않았다(QA 2차)
+        Item(
+            Manifest.permission.SYSTEM_ALERT_WINDOW,
+            "다른 앱 위에 표시",
+            "상태 표시줄의 상단바 숨기기(실험)가 다른 앱 위에 투명한 창을 띄워 상단바를 숨기는 데 씁니다. Shizuku가 연결되면 GOAT가 스스로 허용합니다.",
+            How.USER,
+            optional = true
+        ),
         Item(
             Manifest.permission.RECEIVE_BOOT_COMPLETED,
             "부팅 완료 알림 받기",
@@ -109,6 +118,7 @@ internal object AppPermissions {
         // 사용 기록 접근은 권한이 아니라 앱 작업(AppOps)으로 허용 여부가 정해진다
         item.permission == Manifest.permission.PACKAGE_USAGE_STATS -> AppUsage.hasAccess(context)
         item.permission == Manifest.permission.REQUEST_INSTALL_PACKAGES -> context.packageManager.canRequestPackageInstalls()
+        item.permission == Manifest.permission.SYSTEM_ALERT_WINDOW -> Settings.canDrawOverlays(context)
         else -> context.checkSelfPermission(item.permission) == PackageManager.PERMISSION_GRANTED
     }
 }

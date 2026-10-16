@@ -379,7 +379,7 @@ object Copy {
     const val LAB_PRIVACY_DOT_BLOCKED = "이 Android 버전은 시스템이 막아 두어 바꿀 수 없습니다."
     const val REFRESH_UNSUPPORTED_SHORT = "바꿀 수 없는 화면"
     const val REFRESH_TOAST_EXTERNAL = "GOAT가 바꾼 값이 아니라 그대로 둡니다. 삼성 설정에서 바꿔 주세요"
-    const val REFRESH_CAUTION_BODY = "높은 주사율은 배터리를 더 씁니다. 절전 모드와 일부 게임에서는 시스템이 잠시 주사율을 낮춥니다."
+    const val REFRESH_CAUTION_BODY = "높은 주사율은 배터리를 더 씁니다. 절전 모드·아주 낮은 밝기·일부 게임에서는 시스템이 잠시 주사율을 낮춥니다."
 
     // GOS 끄기
     const val FEATURE_GOS = "GOS 끄기"
