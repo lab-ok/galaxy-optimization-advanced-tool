@@ -154,7 +154,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             NewTag(NewBadge.SHARE_PROBE, Modifier.padding(bottom = Gap.Item))
             Text("공유 화면 진단", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
-                "삼성 공유 화면의 다이렉트 공유·즐겨찾기·앱 숨기기를 GOAT가 바꿀 수 있는지 볼 정보를 파일로 만듭니다. 읽기만 합니다.",
+                "삼성 공유 화면의 다이렉트 공유·즐겨찾기·앱 숨기기를 GOAT가 바꿀 수 있는지 확인할 정보를 파일로 만듭니다. 읽기만 합니다.",
                 color = c.muted,
                 style = MaterialTheme.typography.bodySmall
             )
