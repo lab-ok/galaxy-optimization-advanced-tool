@@ -60,8 +60,9 @@ object BatteryMonitor {
             0 -> null
             else -> "기타"
         }
-        val temp = i.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE).takeIf { it != Int.MIN_VALUE }?.let { it / 10f }
         val volt = i.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1).takeIf { it > 0 }
+        // 배터리가 없는 기기(에뮬레이터 등)는 전압 없이 온도 0을 준다. 그때는 읽지 못한 것으로 본다
+        val temp = i.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE).takeIf { it != Int.MIN_VALUE && (it != 0 || volt != null) }?.let { it / 10f }
         val health = when (i.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)) {
             BatteryManager.BATTERY_HEALTH_GOOD -> "좋음"
             BatteryManager.BATTERY_HEALTH_OVERHEAT -> "과열"
