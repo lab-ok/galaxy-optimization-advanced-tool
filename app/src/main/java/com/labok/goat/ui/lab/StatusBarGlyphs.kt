@@ -31,7 +31,7 @@ internal fun StatusBarGlyph(slot: Slot, color: Color, size: Dp = 22.dp) {
     if (slot == Slot.VOLTE) {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
             // 글자 크기 배율을 따르면 큰 글자에서 22dp 칸을 넘어 'VoL'까지만 보였다(조합 점검). 아이콘처럼 칸 크기에 맞춰 고정한다
-            Text("VoLTE", color = color, fontSize = with(LocalDensity.current) { (size * 0.36f).toSp() }, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+            Text("VoLTE", color = color, fontSize = with(LocalDensity.current) { (size * 0.32f).toSp() }, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
         }
         return
     }
