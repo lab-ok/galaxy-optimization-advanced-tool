@@ -91,7 +91,7 @@ object FlexPanel {
         if (applied != null || ShizukuAccess.status.value != ShizukuAccess.State.READY) return
         val front = frontTask(context)
         if (front == null) {
-            LogRepository.from(context).add("자동 플렉스: 앞에 앱이 없어 플렉스 모드만 켬")
+            LogRepository.from(context).add("자동 플렉스: 포그라운드 앱이 없어 플렉스 모드만 켬")
             return
         }
         val pm = context.packageManager
@@ -127,7 +127,7 @@ object FlexPanel {
         }
         val front = frontTask(context)
         if (front == null) {
-            log.add("가로 까딱: 앞에 앱이 없어 분할하지 않음")
+            log.add("가로 까딱: 포그라운드 앱이 없어 분할하지 않음")
             return@execute
         }
         val r = ShizukuAccess.shell("$SPLIT_CMD startTaskWithAllApps ${front.first}")

@@ -74,7 +74,7 @@ internal object ReportMail {
             0 -> context.startActivity(Intent.createChooser(mail, kind.label))
             1 -> open(0)
             else -> AlertDialog.Builder(context)
-                .setTitle("메일 앱 고르기")
+                .setTitle("메일 앱 선택")
                 .setItems(targets.map { it.loadLabel(pm) }.toTypedArray()) { _, i -> open(i) }
                 .show()
         }

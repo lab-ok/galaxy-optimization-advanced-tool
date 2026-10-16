@@ -146,7 +146,7 @@ internal fun AppSizeGuideSheet() {
         if (showPc) {
             Text(
                 "PC PowerShell(platform-tools 폴더)에서 아래 명령을 한 번 실행하면 GOAT 셸 도우미가 켜집니다. " +
-                    "도우미는 GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 스스로 꺼집니다.",
+                    "도우미는 GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 자동으로 꺼집니다.",
                 color = c.muted,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -179,7 +179,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
             Text(
                 when {
                     !ready -> "Shizuku가 연결되어 있지 않아 지금은 되돌릴 수 없습니다."
-                    count == null -> "배율을 바꾼 앱을 세는 중…"
+                    count == null -> "배율을 바꾼 앱을 확인하는 중…"
                     // 되돌릴 앱이 없으면 꺼진 버튼 대신 여기서 알린다(꺼진 버튼을 누르면 뜨는 토스트가 시트 맨 아래 버튼을 가렸다, QA 1차)
                     count == 0 -> Copy.DISABLED_NO_SIZED_APPS
                     else -> "현재 배율을 바꾼 앱: ${count}개"

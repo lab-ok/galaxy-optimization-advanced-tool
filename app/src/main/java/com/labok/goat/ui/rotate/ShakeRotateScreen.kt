@@ -209,7 +209,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                         value = level,
                         range = ShakeRotatePolicy.MIN_LEVEL..ShakeRotatePolicy.MAX_LEVEL,
                         onValueChange = { level = it },
-                        onValueChangeFinished = { ShakeRotate.setLevel(context, level, "조절바") },
+                        onValueChangeFinished = { ShakeRotate.setLevel(context, level, "슬라이더") },
                         valueText = { "$it" },
                         description = Copy.SHAKE_SENSITIVITY_LABEL
                     )
@@ -287,7 +287,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 value = swings,
                                 range = 2..4,
                                 onValueChange = { swings = it },
-                                onValueChangeFinished = { ShakeRotate.setAdvanced(context, swings = swings, how = "조절바") },
+                                onValueChangeFinished = { ShakeRotate.setAdvanced(context, swings = swings, how = "슬라이더") },
                                 valueText = { "${it}번" },
                                 description = Copy.SHAKE_SWINGS_TITLE
                             )
@@ -299,7 +299,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 value = pace,
                                 range = 1..ShakeRotatePolicy.MAX_PACE,
                                 onValueChange = { pace = it },
-                                onValueChangeFinished = { ShakeRotate.setAdvanced(context, pace = pace, how = "조절바") },
+                                onValueChangeFinished = { ShakeRotate.setAdvanced(context, pace = pace, how = "슬라이더") },
                                 valueText = { "$it" },
                                 description = Copy.SHAKE_PACE_TITLE
                             )
@@ -311,7 +311,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 value = turn,
                                 range = 0..ShakeRotatePolicy.MAX_TURN,
                                 onValueChange = { turn = it },
-                                onValueChangeFinished = { ShakeRotate.setAdvanced(context, turn = turn, how = "조절바") },
+                                onValueChangeFinished = { ShakeRotate.setAdvanced(context, turn = turn, how = "슬라이더") },
                                 valueText = { if (it == 0) "끔" else "$it" },
                                 description = Copy.SHAKE_TURN_TITLE
                             )
@@ -343,22 +343,22 @@ internal fun ShakeRotateHelpSheet() {
         HelpTopic(
             "2. 자동 회전 꺼 두기",
             "흔들어서 화면 회전은 자동 회전을 끈 상태에서 동작합니다. 켜면 GOAT가 자동 회전을 끄고 지금 방향으로 잠급니다. " +
-                "빠른 설정에서 자동 회전을 다시 켜면 흔들지 않아도 화면이 저절로 돌아가므로, 이 화면에 뜨는 [자동 회전 끄기]를 눌러 주세요."
+                "빠른 설정에서 자동 회전을 다시 켜면 흔들지 않아도 화면이 저절로 회전하므로, 이 화면에 뜨는 [자동 회전 끄기]를 눌러 주세요."
         )
         HelpTopic(
             "3. 누워서 볼 때",
-            "옆으로 누워 휴대폰을 보면 자동 회전은 휴대폰이 옆으로 놓인 것으로 판단해 화면을 가로로 돌립니다. " +
+            "옆으로 누워 휴대폰을 보면 자동 회전은 휴대폰이 옆으로 놓인 것으로 판단해 화면을 가로로 회전합니다. " +
                 "흔들어서 화면 회전을 켜 두면 흔들기 전까지 지금 방향이 유지됩니다."
         ) { LyingDownArt() }
         HelpTopic(
-            "4. 다시 세로로 돌리기",
-            "가로로 본 뒤에는 휴대폰을 세로로 세워 든 채 흔들면 세로로 돌아옵니다. 들기만 해서는 돌아가지 않으므로, 누운 자세에서 뒤척여도 화면은 그대로입니다."
+            "4. 다시 세로로 회전하기",
+            "가로로 본 뒤에는 휴대폰을 세로로 세워 든 채 흔들면 세로로 돌아옵니다. 들기만 해서는 회전하지 않으므로, 누운 자세에서 뒤척여도 화면은 그대로입니다."
         ) { ShakeTurnArt(toLandscape = false) }
         HelpTopic(
             "5. 민감도와 자동 맞추기",
-            "민감도는 1~${ShakeRotatePolicy.MAX_LEVEL}이고, 숫자가 클수록 살짝만 흔들어도 돌아갑니다. " +
-                "[흔들어서 자동으로 맞추기]에서 [시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 평소 돌릴 때처럼 흔들면, 그 세기보다 조금 약하게 흔들어도 돌아가도록 맞춥니다. " +
-                "걷거나 뒤척일 때 저절로 돌아가면 숫자를 낮추세요."
+            "민감도는 1~${ShakeRotatePolicy.MAX_LEVEL}이고, 숫자가 클수록 살짝만 흔들어도 회전합니다. " +
+                "[흔들어서 자동으로 맞추기]에서 [시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 평소 회전할 때처럼 흔들면, 그 세기보다 조금 약하게 흔들어도 회전하도록 맞춥니다. " +
+                "걷거나 뒤척일 때 저절로 회전하면 숫자를 낮추세요."
         )
         HelpTopic(
             "6. 배터리와 알림",

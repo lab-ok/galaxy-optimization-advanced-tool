@@ -83,10 +83,10 @@ object ShakeRotate {
         }.apply()
         LogRepository.from(context).add(
             "흔들어서 화면 회전 고급 설정($how): " + listOfNotNull(
-                pace?.let { "빠르기 $it" },
+                pace?.let { "속도 $it" },
                 turn?.let { "손목 회전 $it" },
                 swings?.let { "횟수 $it" },
-                rejectTaps?.let { "탭 거르기 $it" },
+                rejectTaps?.let { "탭 무시 $it" },
                 largeOnly?.let { "큰 화면에서만 $it" }
             ).joinToString(", ")
         )

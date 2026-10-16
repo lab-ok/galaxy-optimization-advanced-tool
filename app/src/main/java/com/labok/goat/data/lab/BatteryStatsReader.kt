@@ -152,7 +152,7 @@ object BatteryStatsReader {
     fun uidName(context: Context, uid: Int): String {
         systemUidLabel(uid)?.let { return it }
         val pm = context.packageManager
-        val pkg = pm.getPackagesForUid(uid)?.firstOrNull() ?: return "삭제한 앱"
+        val pkg = pm.getPackagesForUid(uid)?.firstOrNull() ?: return "삭제된 앱"
         return runCatching {
             @Suppress("DEPRECATION")
             pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()

@@ -127,7 +127,7 @@ internal fun PersistArt() {
         val knobX = if (on) sc.x + sw.width / 2 - sw.height / 2 else sc.x - sw.width / 2 + sw.height / 2
         drawCircle(if (on) c.onInk else c.ink, sw.height * 0.36f, Offset(knobX, sc.y))
         artLabel(tm, if (on) "Shizuku 켜짐" else "Shizuku 꺼짐", Offset(sc.x, sc.y + 30.dp.toPx()), c.ink, 11, bold = true)
-        artLabel(tm, if (on) "→ 값을 바꿀 수 있음" else "→ 바꾸기만 쉼", Offset(sc.x, sc.y + 46.dp.toPx()), c.muted, 9)
+        artLabel(tm, if (on) "→ 값을 바꿀 수 있음" else "→ 변경만 중지", Offset(sc.x, sc.y + 46.dp.toPx()), c.muted, 9)
         // 오른쪽: 앱 배율 값은 계속 유지(체크 표시)
         val h = size.height * 0.8f
         val screen = phone(c, Offset(size.width * 0.72f, size.height / 2), h, aspect)

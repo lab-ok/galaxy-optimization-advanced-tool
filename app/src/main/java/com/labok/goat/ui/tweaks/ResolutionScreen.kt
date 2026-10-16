@@ -228,7 +228,7 @@ internal fun ResolutionHelpSheet() {
     SheetColumn(title = "사용 방법") {
         HelpTopic(
             "1. 하는 일",
-            "화면이 그리는 점(픽셀)의 수를 줄입니다. 글자·아이콘 크기는 그대로 두고 선명도만 조금 낮춰, 게임에서 프레임이 오르거나 " +
+            "화면의 픽셀 수를 줄입니다. 글자·아이콘 크기는 그대로 두고 선명도만 조금 낮춰, 게임에서 프레임이 오르거나 " +
                 "배터리 소모가 줄어들 수 있습니다. 효과는 기기와 앱마다 다릅니다."
         ) { ResolutionArt(art.percent, art.points) }
         HelpTopic(

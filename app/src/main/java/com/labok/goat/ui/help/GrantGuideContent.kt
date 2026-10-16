@@ -220,7 +220,7 @@ object GrantGuideContent {
                     if (connection == Connection.USB) "Samsung USB 드라이버" to URL_SAMSUNG_DRIVER else null
                 ),
                 body =
-                "① developer.android.com/tools/releases/platform-tools 에서 'SDK Platform-Tools for Windows'를 받아 압축을 풉니다.\n" +
+                "① developer.android.com/tools/releases/platform-tools 에서 'SDK Platform-Tools for Windows'를 다운로드해 압축을 풉니다.\n" +
                     "② platform-tools 폴더의 빈 곳을 Shift+우클릭 → 'PowerShell 창 열기' 또는 '터미널에서 열기'를 누릅니다.\n" +
                     "③ 아래 단계의 명령은 이 창에서 .\\adb 로 실행합니다." +
                     (if (connection == Connection.USB) "\n휴대폰이 인식되지 않으면 Samsung 'Android USB Driver for Windows'를 설치합니다." else "") +
@@ -230,7 +230,7 @@ object GrantGuideContent {
                 "PC에 adb 설치 (Mac)",
                 links = listOf("Homebrew" to URL_HOMEBREW, "SDK Platform-Tools" to URL_PLATFORM_TOOLS),
                 body =
-                "Homebrew가 있으면 아래 명령으로 설치합니다. 없으면 위 사이트에서 'SDK Platform-Tools for Mac'을 받아 " +
+                "Homebrew가 있으면 아래 명령으로 설치합니다. 없으면 위 사이트에서 'SDK Platform-Tools for Mac'을 다운로드해 " +
                     "압축을 풀고, 그 폴더에서 adb 대신 ./adb 로 실행합니다." + pairNote,
                 commands = listOf("brew install --cask android-platform-tools")
             )
@@ -244,7 +244,7 @@ object GrantGuideContent {
                             "\nadb devices에 'no permissions'가 뜨면 Ubuntu·Debian에서는 " +
                                 "sudo apt install android-sdk-platform-tools-common 을 설치한 뒤 케이블을 다시 연결합니다."
                         } else {
-                            "\n배포판 adb가 30보다 낮으면 developer.android.com 의 'SDK Platform-Tools for Linux'를 받아 ./adb 로 실행합니다."
+                            "\n배포판 adb가 30보다 낮으면 developer.android.com 의 'SDK Platform-Tools for Linux'를 다운로드해 ./adb 로 실행합니다."
                         }
                         ) + pairNote,
                 commands = listOf("sudo apt install adb")

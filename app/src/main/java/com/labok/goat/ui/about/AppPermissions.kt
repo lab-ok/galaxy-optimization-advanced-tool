@@ -57,14 +57,14 @@ internal object AppPermissions {
         Item(
             Manifest.permission.PACKAGE_USAGE_STATS,
             "사용 기록 접근",
-            "앱별 크기 목록을 최근 사용 순으로 정렬합니다. Shizuku가 연결되면 GOAT가 스스로 허용합니다.",
+            "앱별 크기 목록을 최근 사용 순으로 정렬합니다. Shizuku가 연결되면 GOAT가 자동으로 허용합니다.",
             How.USER
         ),
         // 매니페스트에 있는데 목록에서 빠져 '권한 전체'라는 머리말과 맞지 않았다(QA 2차)
         Item(
             Manifest.permission.SYSTEM_ALERT_WINDOW,
             "다른 앱 위에 표시",
-            "상태 표시줄의 상단바 숨기기(실험)에서 다른 앱 위에 투명한 창을 띄워 상단바를 숨길 때 씁니다. Shizuku가 연결되면 GOAT가 스스로 허용합니다.",
+            "상태 표시줄의 상단바 숨기기(실험)에서 다른 앱 위에 투명한 창을 띄워 상단바를 숨길 때 씁니다. Shizuku가 연결되면 GOAT가 자동으로 허용합니다.",
             How.USER,
             optional = true
         ),
@@ -89,13 +89,13 @@ internal object AppPermissions {
         Item(
             Manifest.permission.VIBRATE,
             "진동",
-            "흔들어서 화면 회전에서 화면을 돌렸을 때 짧게 진동으로 알려 줍니다.",
+            "흔들어서 화면 회전에서 화면이 회전했을 때 짧게 진동으로 알려 줍니다.",
             How.INSTALL
         ),
         Item(
             Manifest.permission.INTERNET,
             "인터넷",
-            "업데이트 확인에만 씁니다. GitHub 릴리스에서 새 버전을 확인하고 APK를 내려받으며, 그 밖의 데이터는 보내지 않습니다.",
+            "업데이트 확인에만 씁니다. GitHub 릴리스에서 새 버전을 확인하고 APK를 다운로드하며, 그 밖의 데이터는 보내지 않습니다.",
             How.INSTALL
         ),
         Item(

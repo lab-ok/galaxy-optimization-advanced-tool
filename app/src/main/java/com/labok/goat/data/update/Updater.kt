@@ -150,18 +150,18 @@ object Updater {
             md.digest().joinToString("") { "%02x".format(it) }
         }
         val sha = downloaded.getOrElse {
-            state.value = State.Failed("내려받지 못했습니다. 인터넷 연결을 확인해 주세요.", release)
-            log.add("업데이트 ${release.version}: 내려받기 실패(${it.message?.take(80)})")
+            state.value = State.Failed("다운로드하지 못했습니다. 인터넷 연결을 확인해 주세요.", release)
+            log.add("업데이트 ${release.version}: 다운로드 실패(${it.message?.take(80)})")
             return
         }
         if ((release.size > 0 && file.length() != release.size) || (release.sha256 != null && release.sha256 != sha)) {
             file.delete()
-            state.value = State.Failed("내려받은 파일이 릴리스와 달라 설치하지 않았습니다.", release)
+            state.value = State.Failed("다운로드한 파일이 릴리스와 달라 설치하지 않았습니다.", release)
             log.add("업데이트 ${release.version}: 크기·SHA-256 불일치로 설치하지 않음")
             return
         }
         state.value = State.Installing(release)
-        log.add("업데이트 ${release.version}: 내려받음, 설치 시작(${if (ShizukuAccess.status.value == ShizukuAccess.State.READY) "Shizuku" else "시스템 설치 창"})")
+        log.add("업데이트 ${release.version}: 다운로드 완료, 설치 시작(${if (ShizukuAccess.status.value == ShizukuAccess.State.READY) "Shizuku" else "시스템 설치 창"})")
         // 설치가 끝난 뒤 '업데이트됨 · 눌러서 열기' 알림을 띄울 수 있게, GOAT가 시작한 업데이트라고 표시해 둔다
         UpdateNotice.expect(context, release.version)
         // Shizuku가 있으면 묻지 않고 설치한다. 설치가 끝나면 시스템이 GOAT를 닫으므로 아래 줄은 실패했을 때만 이어진다.

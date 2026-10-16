@@ -21,9 +21,9 @@ object InstallFailure {
             status == PackageInstaller.STATUS_FAILURE_ABORTED || has("aborted") || has("cancel") ->
                 "설치를 취소했습니다. 다시 시도하면 설치 창이 다시 열립니다."
             status == PackageInstaller.STATUS_FAILURE_BLOCKED || has("blocked") || has("VERIFICATION_FAILURE") ->
-                "기기 보안 기능(플레이 프로텍트·삼성 자동 차단)이 설치를 막았습니다. 해당 기능을 잠시 끄거나 GitHub에서 APK를 받아 직접 설치해 주세요."
+                "기기 보안 기능(Play 프로텍트·삼성 자동 차단)이 설치를 막았습니다. 해당 기능을 잠시 끄거나 GitHub에서 APK를 받아 직접 설치해 주세요."
             status == PackageInstaller.STATUS_FAILURE_INVALID || has("INVALID_APK") || has("PARSE_FAILED") ->
-                "내려받은 파일이 손상되었습니다. 다시 시도해 주세요."
+                "다운로드한 파일이 손상되었습니다. 다시 시도해 주세요."
             status == PackageInstaller.STATUS_FAILURE_CONFLICT ->
                 "같은 이름의 다른 앱과 충돌해 설치하지 못했습니다."
             status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE ->

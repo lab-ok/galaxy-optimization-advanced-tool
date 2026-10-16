@@ -167,7 +167,7 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
             ShakeRotatePolicy.rotationOf(gx, gy)?.let { r ->
                 val log = LogRepository.from(context)
                 if (r == before) {
-                    log.add("흔들어서 화면 회전(빠른 회전): 든 방향이 그대로라 ${ShakeRotate.label(r)} 유지")
+                    log.add("흔들어서 화면 회전(빠른 회전): 기기 방향이 그대로라 ${ShakeRotate.label(r)} 유지")
                     return
                 }
                 if (!ShakeRotate.lock(context, r)) return
@@ -199,7 +199,7 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
             ShakeHaptics.play(context, detector.lastPattern, ShakeRotate.vibration(context))
             log.add("흔들어서 화면 회전: ${ShakeRotate.label(before)}($before) → ${ShakeRotate.label(now)}($now)")
         } else {
-            log.add("흔들어서 화면 회전: 흔들었지만 든 방향이 그대로라 ${ShakeRotate.label(now)} 유지")
+            log.add("흔들어서 화면 회전: 흔들었지만 기기 방향이 그대로라 ${ShakeRotate.label(now)} 유지")
         }
     }
 

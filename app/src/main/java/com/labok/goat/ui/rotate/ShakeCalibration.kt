@@ -271,7 +271,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
         }
         val level = ShakeRotatePolicy.calibrate(record.peaks.map { it.force })
         LogRepository.from(context).add(
-            "흔들어서 화면 회전 자동 맞추기: 휘두름 ${record.peaks.size}번, 세기 ${record.peaks.map { "%.1f".format(it.force) }}" +
+            "흔들어서 화면 회전 자동 맞추기: 흔든 횟수 ${record.peaks.size}번, 세기 ${record.peaks.map { "%.1f".format(it.force) }}" +
                 if (level == null) " → 실패(흔들림 부족)" else " → 민감도 $level"
         )
         // 세기를 맞췄으면 그 사람의 흔들기 리듬(빠르기)과 손목 회전 기준도 함께 맞춘다
