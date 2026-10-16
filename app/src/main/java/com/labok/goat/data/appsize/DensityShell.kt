@@ -40,7 +40,7 @@ object DensityShell {
     private fun user() = UserId.current()
 
     private fun <T> tx(code: Int, write: Parcel.() -> Unit = {}, read: Parcel.() -> T): T {
-        val b = binder.value ?: throw IllegalStateException("셸 도우미가 연결돼 있지 않습니다.")
+        val b = binder.value ?: throw IllegalStateException("셸 도우미가 연결되어 있지 않습니다.")
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
         try {

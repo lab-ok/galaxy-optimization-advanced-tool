@@ -89,7 +89,7 @@ object StatusBarHider {
                 if (event.action == KeyEvent.ACTION_UP) {
                     stepAside(context, this)
                     if (event.keyCode == KeyEvent.KEYCODE_BACK) Thread { ShizukuAccess.shell("input keyevent 4") }.start()
-                    log.add("상단바 숨기기: 키(${KeyEvent.keyCodeToString(event.keyCode)})가 와서 포커스를 내려놓음")
+                    log.add("상단바 숨기기: 키(${KeyEvent.keyCodeToString(event.keyCode)}) 입력으로 포커스를 내려놓음")
                 }
                 return true
             }

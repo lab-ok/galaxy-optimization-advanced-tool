@@ -1,15 +1,11 @@
 package com.labok.goat.ui.lab
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -20,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -88,6 +83,12 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     val since = SimpleDateFormat("M월 d일 a h:mm", Locale.KOREA).format(Date(s.startClock))
     Text("${since}부터 · 배터리로 ${duration(s.onBatteryMs)}", color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
+    // 배터리 물통: 지금 잔량만큼 물이 차 있고, 마지막 충전 때 잔량까지는 쓴 만큼 옅은 물 자국이 남는다
+    if (level != null) {
+        val start = if (charging) null else (level + (s.usedPctLow + s.usedPctHigh + 1) / 2).coerceAtMost(100)
+        LiquidBatteryTank(level, start, charging)
+        Spacer(Modifier.height(Gap.Item))
+    }
     Row(verticalAlignment = Alignment.Bottom) {
         Text(if (s.usedPctLow == s.usedPctHigh) "${s.usedPctLow}" else "${s.usedPctLow}~${s.usedPctHigh}", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = c.ink)
         Text("% 사용", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
@@ -96,6 +97,17 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     Spacer(Modifier.height(Gap.Item))
     UseRow("화면 켜짐", s.screenOnMs, s.screenOnPct)
     UseRow("화면 꺼짐(대기)", s.screenOffMs, s.screenOffPct)
+    // 시간과 소모를 화면 켜짐(진한 물)·꺼짐(빈 칸) 몫으로 나눠 물 막대로 보여 준다
+    if (s.onBatteryMs > 0) {
+        Spacer(Modifier.height(Gap.Item))
+        val timeOn = s.screenOnMs.toFloat() / s.onBatteryMs
+        SplitBar("시간", timeOn)
+        val drained = s.screenOnPct + s.screenOffPct
+        if (drained > 0) {
+            Spacer(Modifier.height(Gap.Tight))
+            SplitBar("소모", s.screenOnPct.toFloat() / drained)
+        }
+    }
 
     // 이 패턴이면: 완충으로 몇 시간, 그중 화면 켜짐 몇 시간, 지금 잔량으로 몇 시간 더
     BatteryStatsReader.fullChargeMs(s)?.let { full ->
@@ -152,6 +164,9 @@ private fun PastCycles(cycles: List<BatteryCycles.Cycle>) {
         return
     }
     Text("충전할 때마다 그 전까지의 사용을 요약합니다. 완충 환산은 그 주기처럼 쓰면 100%로 가는 시간입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+    Spacer(Modifier.height(Gap.Item))
+    // 기둥 높이는 완충 환산 시간, 진한 물은 그중 화면 켜짐 몫
+    LiquidCycleColumns(cycles)
     val fmt = SimpleDateFormat("M월 d일 a h:mm", Locale.KOREA)
     cycles.forEach { cy ->
         Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
@@ -161,6 +176,16 @@ private fun PastCycles(cycles: List<BatteryCycles.Cycle>) {
             if (cy.apps.isNotEmpty()) Text(cy.apps.joinToString(" · ") { (n, share) -> "$n ${percent(share)}" }, color = c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
+}
+
+/** "시간 · 켜짐 30% · 꺼짐 70%" 한 줄과 물 막대(진한 물 = 화면 켜짐 몫). */
+@Composable
+private fun SplitBar(name: String, onShare: Float) {
+    val c = LocalLiquid.current
+    val on = (onShare * 100).roundToInt().coerceIn(0, 100)
+    Text("$name · 화면 켜짐 $on% · 꺼짐 ${100 - on}%", color = c.muted, style = MaterialTheme.typography.labelSmall)
+    Spacer(Modifier.height(Gap.Tight))
+    LiquidBar(onShare, height = 12.dp, description = "$name 중 화면 켜짐 $on%")
 }
 
 @Composable
@@ -188,9 +213,7 @@ private fun ShareRow(name: String, share: Float, detail: String) {
             Text(percent(share), color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 8.dp))
         }
         Spacer(Modifier.height(Gap.Tight))
-        Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.line)) {
-            Box(Modifier.fillMaxWidth(share).fillMaxHeight().clip(RoundedCornerShape(2.dp)).background(c.ink))
-        }
+        LiquidBar(share, height = 6.dp, description = "$name ${percent(share)}")
         if (detail.isNotEmpty()) {
             Spacer(Modifier.height(Gap.Tight))
             Text(detail, color = c.muted, style = MaterialTheme.typography.labelSmall)

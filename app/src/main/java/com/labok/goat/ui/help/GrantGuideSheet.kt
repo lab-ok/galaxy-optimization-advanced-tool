@@ -156,9 +156,9 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             Spacer(Modifier.height(Gap.Item))
             Text(
                 listOf(
-                    "PC 없이 폰만으로 합니다. 무료 앱 Shizuku와 Wi-Fi가 필요합니다.",
-                    "PC와 폰이 같은 Wi-Fi에 있으면 케이블 없이 합니다.",
-                    "USB 케이블로 PC에 연결해서 합니다. 가장 확실합니다."
+                    "PC 없이 휴대폰만으로 설정합니다. 무료 앱 Shizuku와 Wi-Fi가 필요합니다.",
+                    "PC와 휴대폰이 같은 Wi-Fi에 있으면 케이블 없이 설정합니다.",
+                    "USB 케이블로 PC에 연결해 설정합니다. 가장 확실합니다."
                 )[method],
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -168,12 +168,12 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             Spacer(Modifier.height(Gap.Section))
             ShizukuGuide(
                 shizuku,
-                intro = "무료 앱 Shizuku로 폰 안에서 권한을 받습니다. 아래 순서대로 버튼만 누르면 되고, 마지막 단계가 끝나면 GOAT가 스스로 권한을 받습니다. " +
+                intro = "무료 앱 Shizuku로 휴대폰 안에서 권한을 받습니다. 아래 순서대로 버튼만 누르면 되고, 마지막 단계가 끝나면 GOAT가 스스로 권한을 받습니다. " +
                     "권한을 받은 뒤에는 Shizuku를 꺼도 됩니다."
             )
             if (grantError) {
                 Text(
-                    "Shizuku로 권한을 받지 못했습니다. PC 무선이나 PC 유선 방법으로 해 주세요.",
+                    "Shizuku로 권한을 받지 못했습니다. PC 무선이나 PC 유선 방법을 이용해 주세요.",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )

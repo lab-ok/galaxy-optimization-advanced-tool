@@ -257,7 +257,7 @@ object ShakeRotatePolicy {
             // 방향이 뒤집혔다: 앞 휘두름이 탭·충격이었으면 빼고 새 휘두름을 연다
             if (open != null && isTap(open)) {
                 swings.removeLast()
-                lastMiss = "탭·충격으로 봄"
+                lastMiss = "탭·충격으로 판단"
             }
             // 휘두름 시작 사이가 그 사람의 리듬보다 훨씬 길면(느린 왕복) 처음부터 다시 센다
             swings.lastOrNull()?.let { if (ms - it.at > maxGap) swings.clear() }

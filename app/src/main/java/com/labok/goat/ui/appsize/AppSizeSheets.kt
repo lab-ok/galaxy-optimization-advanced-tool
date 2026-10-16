@@ -51,14 +51,14 @@ internal fun AppSizeHelpSheet(foldable: Boolean = true, onConnect: () -> Unit) {
         var no = 0
         fun n() = ++no
         HelpTopic(
-            "${n()}. 무엇을 하나요",
-            "앱마다 화면 크기를 따로 정합니다. 삼성 '설정 → 디스플레이 → 앱 화면 크게/작게'와 같은 설정이라, " +
-                "여기서 바꾸면 그 화면에도 그대로 보입니다. 바꾼 값은 재부팅해도 유지됩니다.",
+            "${n()}. 하는 일",
+            "앱마다 화면 크기를 따로 정합니다. 삼성 '설정 → 디스플레이 → 앱 화면 크게/작게'와 같은 설정이므로, " +
+                "여기서 바꾸면 그 화면에도 그대로 반영됩니다. 바꾼 값은 재부팅해도 유지됩니다.",
             art = { AppScaleArt() }
         )
         HelpTopic(
             "${n()}. 크기가 여섯 단계로 정해진 이유",
-            "삼성 시스템이 ${AppDensityPolicy.STEPS.joinToString("·")} 여섯 값만 받도록 만들어져 있습니다. 다른 값을 넣으면 시스템이 거절해, " +
+            "삼성 시스템이 ${AppDensityPolicy.STEPS.joinToString("·")} 여섯 값만 허용합니다. 다른 값을 넣으면 시스템이 거부하므로, " +
                 "1단위로 조절할 수는 없습니다. '기본'은 앱별 설정을 지우고 기기 전체 크기를 따르게 합니다.",
             art = { StepsArt() }
         )
@@ -68,7 +68,7 @@ internal fun AppSizeHelpSheet(foldable: Boolean = true, onConnect: () -> Unit) {
                 "${n()}. 접고 펼 때 크기가 달라 보이는 이유",
                 "앱별 크기는 하나의 고정된 DPI라서 외부 화면과 내부 화면에 같은 숫자가 쓰입니다. 두 화면은 픽셀 밀도(PPI)가 달라 " +
                     "같은 숫자라도 실제 크기가 다르게 보입니다. 기기 전체 크기는 '고급 화면 배율 설정'이 화면마다 맞춰 주지만, " +
-                    "앱별 크기는 시스템이 화면마다 다른 값을 둘 수 없게 되어 있습니다. 주로 쓰는 화면에 맞춰 고르세요.",
+                    "앱별 크기는 시스템상 화면마다 다른 값을 지정할 수 없습니다. 주로 쓰는 화면에 맞춰 고르세요.",
                 art = { FoldDiffArt() }
             )
         }
@@ -80,25 +80,25 @@ internal fun AppSizeHelpSheet(foldable: Boolean = true, onConnect: () -> Unit) {
         )
         HelpTopic(
             "${n()}. Shizuku가 필요한 이유",
-            "삼성은 이 설정을 바꾸는 기능에 시스템 전용 권한을 걸어 두어, 일반 앱은 직접 바꿀 수 없습니다. " +
-                "무료 앱 Shizuku는 폰의 무선 디버깅으로 그 권한을 빌려 줍니다. 처음 한 번 페어링하면 되고, " +
-                "Android 13 이상에서는 재부팅 뒤에도 Wi-Fi에 연결되면 스스로 다시 켜집니다. " +
+            "삼성은 이 설정을 바꾸는 기능에 시스템 전용 권한을 요구하므로 일반 앱은 직접 바꿀 수 없습니다. " +
+                "무료 앱 Shizuku는 휴대폰의 무선 디버깅을 이용해 그 권한을 빌려 줍니다. 처음 한 번만 페어링하면 되며, " +
+                "Android 13 이상에서는 재부팅 뒤에도 Wi-Fi에 연결되면 자동으로 다시 켜집니다. " +
                 "Shizuku가 없으면 PC에서 명령 한 번으로 GOAT 셸 도우미를 켜서 쓸 수도 있습니다.",
             art = { ShizukuBridgeArt() }
         )
         HelpTopic(
             "${n()}. Shizuku가 꺼져 있으면",
             "• 이미 정해 둔 앱 크기: Shizuku가 꺼져 있어도, 재부팅해도 그대로 유지됩니다.\n" +
-                "• 목록에서 크기 바꾸기, 알림창 [작게]·[기본]·[크게]: Shizuku가 실행 중일 때만 됩니다.\n" +
+                "• 목록에서 크기 바꾸기, 알림창 [작게]·[기본]·[크게]: Shizuku가 실행 중일 때만 사용할 수 있습니다.\n" +
                 "• 알림에 지금 보고 있는 앱 표시: Shizuku가 실행 중일 때만 실시간으로 바뀝니다.\n" +
                 "• '고급 화면 배율 설정'(기기 전체 크기): Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.\n" +
-                "• 무선 디버깅은 Shizuku를 시작할 때만 필요합니다. 'Shizuku가 켜지면 무선 디버깅 끄기'를 켜면 Shizuku가 켜진 직후 GOAT가 끕니다. 끄면 Shizuku가 멈추는 기기에서는 이 옵션을 꺼 두세요.",
+                "• 무선 디버깅은 Shizuku를 시작할 때만 필요합니다. 'Shizuku가 켜지면 무선 디버깅 끄기'를 켜면 Shizuku가 켜진 직후 GOAT가 끕니다. 무선 디버깅을 끄면 Shizuku가 멈추는 기기에서는 이 옵션을 꺼 두세요.",
             art = { PersistArt() }
         )
         HelpTopic(
             "${n()}. 되돌리기",
             "앱을 눌러 '기본'을 고르면 그 앱만, ⋮ → 초기화에서는 모든 앱을 기본 배율로 되돌립니다. " +
-                "삼성 설정의 '앱 화면 크게/작게'에서 되돌려도 됩니다.",
+                "삼성 설정의 '앱 화면 크게/작게'에서 되돌릴 수도 있습니다.",
             art = { ResetArt() }
         )
         LiquidButton("Shizuku 연결 안내 열기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = onConnect)
@@ -122,7 +122,7 @@ internal fun AppSizeGuideSheet() {
                     if (shell != null) {
                         "PC 셸 도우미로 연결되어 있습니다. GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다."
                     } else {
-                        "Shizuku 권한을 받았습니다. 이 창을 닫고 계속하면 됩니다."
+                        "Shizuku 권한을 받았습니다. 이 창을 닫고 계속 진행하세요."
                     },
                     color = c.muted,
                     style = MaterialTheme.typography.bodySmall
@@ -133,7 +133,7 @@ internal fun AppSizeGuideSheet() {
         GlassCard {
             ShizukuGuide(
                 shizuku,
-                intro = "이 기능은 무료 앱 Shizuku로 시스템 권한을 빌려 씁니다. 아래 순서대로 버튼만 누르면 되고, 처음 한 번만 하면 됩니다."
+                intro = "이 기능은 무료 앱 Shizuku로 시스템 권한을 빌려 씁니다. 아래 순서대로 버튼만 누르면 되며, 처음 한 번만 설정하면 됩니다."
             )
         }
         Spacer(Modifier.height(Gap.Card))
@@ -182,7 +182,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                     count == null -> "배율을 바꾼 앱을 세는 중…"
                     // 되돌릴 앱이 없으면 꺼진 버튼 대신 여기서 알린다(꺼진 버튼을 누르면 뜨는 토스트가 시트 맨 아래 버튼을 가렸다, QA 1차)
                     count == 0 -> Copy.DISABLED_NO_SIZED_APPS
-                    else -> "지금 배율을 바꾼 앱: ${count}개"
+                    else -> "현재 배율을 바꾼 앱: ${count}개"
                 },
                 color = c.ink,
                 style = MaterialTheme.typography.bodySmall

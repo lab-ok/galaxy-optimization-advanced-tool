@@ -173,7 +173,7 @@ internal fun Dashboard(
             NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) "켜짐 · 민감도 ${ShakeRotate.level(context)}" + (if (ShakeRotate.largeOnly(context)) " · 큰 화면만" else "") else "꺼짐"
             NavItem.CAMERA_MUTE -> when (camera) {
                 CameraMute.State.MUTED -> "촬영음 꺼 둠"
-                CameraMute.State.FORCED -> "촬영음 강제로 남"
+                CameraMute.State.FORCED -> "촬영음 강제 적용"
                 CameraMute.State.NONE -> "강제 설정 없는 기기"
                 CameraMute.State.UNKNOWN -> if (CameraMute.wanted(context)) "꺼 두기로 함" else "Shizuku로 끕니다"
             }
@@ -286,7 +286,7 @@ internal fun Dashboard(
             // 홈 머리: 카드 없이 바탕 위에 바로 놓는 요약(갤럭시 '디바이스 케어'식). 왼쪽 염소, 가운데 상태 한 문장, 오른쪽 켜진 비율 고리,
             // 아래 권한·Shizuku 상태 알약.
             val on = features.count(active)
-            val headline = if (on == 0) Copy.HOME_HERO_NONE else "기능 ${on}개가 켜져 있어요"
+            val headline = if (on == 0) Copy.HOME_HERO_NONE else "기능 ${on}개가 켜져 있습니다"
             val pills: @Composable () -> Unit = {
                 // 폭이 모자라면 다음 줄로 넘긴다
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Gap.Tight * 2), verticalArrangement = Arrangement.spacedBy(Gap.Tight * 2)) {

@@ -208,7 +208,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     confirm?.let { app ->
         AlertDialog(
             onDismissRequest = { confirm = null },
-            title = { Text("${app.name}을(를) 끌까요?") },
+            title = { Text("${app.name}을(를) 끄시겠습니까?") },
             text = { Text(app.note + " 언제든 다시 켤 수 있습니다.") },
             confirmButton = {
                 TextButton(onClick = {
@@ -226,8 +226,8 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
 internal fun BloatHelpSheet() {
     SheetColumn(title = "사용 방법") {
         HelpTopic(
-            "1. 무엇을 하나요",
-            "쓰지 않는 삼성·제휴 기본 앱을 꺼서, 앱 목록·알림·백그라운드 동작에서 빼냅니다. 커뮤니티에서 많이 끄는 앱 가운데 " +
+            "1. 하는 일",
+            "쓰지 않는 삼성·제휴 기본 앱을 꺼서 앱 목록·알림·백그라운드 동작에서 제외합니다. 커뮤니티에서 많이 끄는 앱 가운데 " +
                 "꺼도 전화·문자·설정·카메라 같은 기본 기능이 멈추지 않는 것만 골라 두었습니다."
         ) { CleanupArt() }
         HelpTopic(

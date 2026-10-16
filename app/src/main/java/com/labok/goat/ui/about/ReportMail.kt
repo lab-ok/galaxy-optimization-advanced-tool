@@ -36,7 +36,7 @@ internal object ReportMail {
     fun send(context: Context, kind: Kind, attachments: List<Uri>) {
         val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "-"
         val body = buildString {
-            appendLine(if (kind == Kind.REPORT) "어떤 문제가 있었나요? (언제, 무엇을 했을 때, 어떻게 됐는지)" else "문의 내용을 적어 주세요.")
+            appendLine(if (kind == Kind.REPORT) "어떤 문제였는지 적어 주세요. (언제, 무엇을 했을 때, 어떻게 되었는지)" else "문의 내용을 적어 주세요.")
             appendLine()
             appendLine()
             appendLine("---")

@@ -161,13 +161,13 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
 internal fun CameraMuteHelpSheet() {
     SheetColumn(title = "사용 방법") {
         HelpTopic(
-            "1. 무엇을 하나요",
+            "1. 하는 일",
             "국내 갤럭시는 무음·진동 모드여도 카메라 촬영음이 강제로 납니다. 이 강제 설정을 끄면 촬영음이 기기 소리 설정을 따라, " +
                 "무음·진동 모드에서는 소리 없이 찍히고 소리 모드에서는 그대로 납니다. 삼성 기본 카메라와 대부분의 카메라 앱에 적용됩니다."
         ) { ShutterArt() }
         HelpTopic(
             "2. 꼭 지켜 주세요",
-            "촬영음은 몰래 찍는 것을 막으려는 장치입니다. 다른 사람을 동의 없이 찍거나 몰래 찍는 것은 법으로 처벌받습니다. " +
+            "촬영음은 몰래 촬영을 막기 위한 장치입니다. 다른 사람을 동의 없이 찍거나 몰래 찍으면 법에 따라 처벌받습니다. " +
                 "조용한 곳에서 내 물건·문서·음식을 찍을 때처럼 예절을 지키는 데만 쓰세요."
         )
         HelpTopic(
@@ -183,7 +183,7 @@ internal fun CameraMuteHelpSheet() {
         )
         HelpTopic(
             "5. 되돌리기",
-            "스위치를 끄면 원래대로 촬영음이 강제로 나게 돌아갑니다. PC에서는 '${CameraMute.PC_UNDO}'로 되돌립니다. " +
+            "스위치를 끄면 촬영음이 다시 강제로 나도록 원래대로 돌아갑니다. PC에서는 '${CameraMute.PC_UNDO}'로 되돌립니다. " +
                 "'이 기기에는 강제 설정이 없음'으로 나오면 해외 모델처럼 이미 소리 설정을 따르는 기기입니다."
         )
     }

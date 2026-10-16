@@ -157,7 +157,7 @@ private fun Metric(name: String, value: String?) {
     }
 }
 
-/** 최근 24시간 잔량 꺾은선. 가로는 시간(왼쪽 24시간 전 → 오른쪽 지금), 세로는 0~100%. 충전 중 구간은 굵게 칠한다. */
+/** 최근 24시간 잔량 꺾은선과 그 아래 물. 가로는 시간(왼쪽 24시간 전 → 오른쪽 지금), 세로는 0~100%. 충전 중 구간은 굵게 칠한다. */
 @Composable
 private fun LevelGraph(list: List<BatteryMonitor.Sample>, now: Long) {
     val c = LocalLiquid.current
@@ -171,6 +171,16 @@ private fun LevelGraph(list: List<BatteryMonitor.Sample>, now: Long) {
         val sorted = list.sortedBy { it.time }
         val path = Path().apply {
             sorted.forEachIndexed { i, s -> if (i == 0) moveTo(x(s.time), y(s.level)) else lineTo(x(s.time), y(s.level)) }
+        }
+        // 잔량 선 아래를 옅은 잉크 물로 채운다(배터리에 남은 물처럼)
+        if (sorted.size >= 2) {
+            val water = Path().apply {
+                addPath(path)
+                lineTo(x(sorted.last().time), h)
+                lineTo(x(sorted.first().time), h)
+                close()
+            }
+            drawPath(water, c.ink.copy(alpha = 0.2f))
         }
         drawPath(path, c.ink, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
         sorted.zipWithNext().forEach { (a, b) ->

@@ -23,7 +23,7 @@ object GrantGuideContent {
         /** 이 단계에 보여 줄 그림 장면. */
         val scene: GuideScene
             get() = when {
-                title.startsWith("폰 준비") -> GuideScene.DEV_OPTIONS
+                title.startsWith("휴대폰 준비") -> GuideScene.DEV_OPTIONS
                 title.startsWith("PC에 adb 설치") -> GuideScene.INSTALL
                 title.startsWith("페어링") -> GuideScene.PAIR
                 title.startsWith("연결 확인") -> GuideScene.USB_CONNECT
@@ -52,7 +52,7 @@ object GrantGuideContent {
             step.commands.forEach { appendLine("   $ $it") }
         }
         appendLine()
-        appendLine("■ 안 될 때")
+        appendLine("■ 문제 해결")
         troubles(connection, os).forEach { tr ->
             appendLine()
             appendLine("- ${tr.title}" + (tr.error?.let { " ($it)" } ?: ""))
@@ -70,18 +70,18 @@ object GrantGuideContent {
             if (connection == Connection.WIRELESS) {
                 add(
                     Trouble(
-                        "무선 연결이 안 될 때",
+                        "무선 연결이 되지 않을 때",
                         "protocol fault (couldn't read status message)",
-                        "① 폰의 VPN을 끕니다(켜져 있으면 같은 Wi-Fi에서도 서로 찾지 못합니다).\n" +
-                            "② 폰과 PC가 같은 Wi-Fi인지 확인합니다.\n" +
-                            "③ adb를 다시 시작하고, 그래도 안 되면 폰과 PC를 재시작합니다.\n" +
+                        "① 휴대폰의 VPN을 끕니다(VPN이 켜져 있으면 같은 Wi-Fi에서도 서로 찾지 못합니다).\n" +
+                            "② 휴대폰과 PC가 같은 Wi-Fi인지 확인합니다.\n" +
+                            "③ adb를 다시 시작하고, 그래도 연결되지 않으면 휴대폰과 PC를 재시작합니다.\n" +
                             "④ Windows 방화벽이 adb 허용을 물으면 허용합니다.",
                         listOf("$adb kill-server", "$adb start-server")
                     )
                 )
                 add(
                     Trouble(
-                        "포트 번호가 헷갈릴 때",
+                        "포트 번호가 혼동될 때",
                         null,
                         "adb pair에는 '페어링 코드로 기기 페어링' 팝업의 IP:포트를, adb connect에는 무선 디버깅 첫 화면의 'IP 주소 및 포트'를 씁니다. 두 포트는 서로 다르고, 무선 디버깅을 껐다 켜면 바뀝니다."
                     )
@@ -91,7 +91,7 @@ object GrantGuideContent {
                 Trouble(
                     "기기가 두 개 이상이라고 나올 때",
                     "more than one device/emulator",
-                    "같은 폰이 두 번 잡힌 경우입니다(무선은 페어링 연결과 connect 연결, 또는 USB와 무선). 목록에서 상태가 device인 것 하나를 골라 -s 뒤에 그 이름을 넣어 실행합니다.",
+                    "같은 휴대폰이 두 번 인식된 경우입니다(무선은 페어링 연결과 connect 연결, 또는 USB와 무선). 목록에서 상태가 device인 항목 하나를 골라 -s 뒤에 그 이름을 넣어 실행합니다.",
                     listOf("$adb devices", "$adb -s 목록의이름 shell pm grant $PACKAGE $PERMISSION")
                 )
             )
@@ -100,12 +100,12 @@ object GrantGuideContent {
                     Trouble(
                         "unauthorized로 나올 때",
                         "unauthorized",
-                        "폰에 뜬 'USB 디버깅을 허용하시겠습니까?'에서 [허용]을 누릅니다. 창이 안 보이면 개발자 옵션 → 'USB 디버깅 권한 승인 취소' 후 케이블을 다시 꽂습니다."
+                        "휴대폰에 표시된 'USB 디버깅을 허용하시겠습니까?'에서 [허용]을 누릅니다. 창이 보이지 않으면 개발자 옵션 → 'USB 디버깅 권한 승인 취소' 후 케이블을 다시 꽂습니다."
                     )
                 )
                 add(
                     Trouble(
-                        "기기가 안 보일 때",
+                        "기기가 보이지 않을 때",
                         "no devices/emulators found",
                         "충전 전용이 아닌 데이터 케이블인지, USB 디버깅이 켜져 있는지 확인합니다." +
                             (if (os == PcOs.WINDOWS) " Windows는 Samsung USB 드라이버가 필요할 수 있습니다." else ""),
@@ -120,7 +120,7 @@ object GrantGuideContent {
                     if (os == PcOs.WINDOWS) {
                         "platform-tools 폴더에서 연 PowerShell에서 adb 앞에 .\\를 붙여 실행합니다."
                     } else {
-                        "설치하지 않았다면 위 단계로 설치하고, 압축본을 쓰면 그 폴더에서 ./adb로 실행합니다."
+                        "설치하지 않았다면 위 단계로 설치하고, 압축 파일을 사용하면 그 폴더에서 ./adb로 실행합니다."
                     }
                 )
             )
@@ -128,7 +128,7 @@ object GrantGuideContent {
                 Trouble(
                     "오래된 adb일 때",
                     null,
-                    "adb version이 30 이상이어야 무선 페어링이 됩니다. 다른 프로그램(Smart Switch 등)에 딸린 옛 adb가 먼저 실행되는지도 확인합니다.",
+                    "adb version이 30 이상이어야 무선 페어링을 할 수 있습니다. 다른 프로그램(Smart Switch 등)에 포함된 이전 adb가 먼저 실행되는지도 확인합니다.",
                     listOf("$adb version") + (if (os == PcOs.WINDOWS) listOf("where adb") else listOf("which adb"))
                 )
             )
@@ -149,16 +149,16 @@ object GrantGuideContent {
 
         list += when (connection) {
             Connection.USB -> Step(
-                "폰 준비",
+                "휴대폰 준비",
                 "① 설정 → 휴대전화 정보 → 소프트웨어 정보 → 빌드번호를 7번 눌러 개발자 옵션을 켭니다.\n" +
                     "② 개발자 옵션 → USB 디버깅을 켭니다.\n" +
                     "③ USB 케이블로 PC에 연결합니다.",
                 openDevOptions = true
             )
             Connection.WIRELESS -> Step(
-                "폰 준비",
+                "휴대폰 준비",
                 "① 설정 → 휴대전화 정보 → 소프트웨어 정보 → 빌드번호를 7번 눌러 개발자 옵션을 켭니다.\n" +
-                    "② 폰과 PC를 같은 Wi-Fi에 연결합니다.\n" +
+                    "② 휴대폰과 PC를 같은 Wi-Fi에 연결합니다.\n" +
                     "③ 개발자 옵션 → 무선 디버깅을 켭니다.",
                 openDevOptions = true
             )
@@ -170,17 +170,17 @@ object GrantGuideContent {
             Connection.USB -> {
                 list += Step(
                     "연결 확인",
-                    "아래 명령을 실행합니다. 폰에 'USB 디버깅을 허용하시겠습니까?'가 뜨면 [허용]을 누릅니다. " +
-                        "목록에 기기가 device 로 보이면 준비가 끝난 것입니다.",
+                    "아래 명령을 실행합니다. 휴대폰에 'USB 디버깅을 허용하시겠습니까?'가 표시되면 [허용]을 누릅니다. " +
+                        "목록에 기기가 device로 표시되면 준비가 끝난 것입니다.",
                     listOf("$adb devices")
                 )
             }
             Connection.WIRELESS -> {
                 list += Step(
                     "페어링 (처음 한 번)",
-                    "폰: 무선 디버깅 화면에서 '페어링 코드로 기기 페어링'을 누릅니다. 창에 나온 IP 주소:포트와 " +
+                    "휴대폰: 무선 디버깅 화면에서 '페어링 코드로 기기 페어링'을 누릅니다. 창에 표시된 IP 주소:포트와 " +
                         "6자리 코드를 확인합니다. 이 창은 페어링이 끝날 때까지 열어 둡니다.\n" +
-                        "PC: 아래 명령의 IP:포트를 바꿔 실행하고, 코드를 물으면 6자리를 입력합니다. " +
+                        "PC: 아래 명령의 IP:포트를 바꿔 실행하고, 코드를 요청하면 6자리 코드를 입력합니다. " +
                         "'Successfully paired'가 나오면 성공입니다.",
                     listOf("$adb pair 192.168.0.10:37123")
                 )
@@ -200,7 +200,7 @@ object GrantGuideContent {
         )
         list += Step(
             "마무리",
-            "이 앱으로 돌아오면 권한을 자동으로 확인합니다. 권한은 재부팅해도 유지되니, 확인되면 " +
+            "이 앱으로 돌아오면 권한을 자동으로 확인합니다. 권한은 재부팅해도 유지되므로, 확인되면 " +
                 (if (connection == Connection.USB) "USB 디버깅" else "무선 디버깅") + "은 꺼도 됩니다."
         )
         return list
@@ -208,7 +208,7 @@ object GrantGuideContent {
 
     private fun installStep(connection: Connection, os: PcOs): Step {
         val pairNote = if (connection == Connection.WIRELESS) {
-            "\n무선 페어링(adb pair)은 adb 30 이상에서만 됩니다. adb version 으로 확인하십시오."
+            "\n무선 페어링(adb pair)은 adb 30 이상에서만 지원됩니다. adb version 으로 확인하십시오."
         } else {
             ""
         }
@@ -223,7 +223,7 @@ object GrantGuideContent {
                 "① developer.android.com/tools/releases/platform-tools 에서 'SDK Platform-Tools for Windows'를 받아 압축을 풉니다.\n" +
                     "② platform-tools 폴더의 빈 곳을 Shift+우클릭 → 'PowerShell 창 열기' 또는 '터미널에서 열기'를 누릅니다.\n" +
                     "③ 아래 단계의 명령은 이 창에서 .\\adb 로 실행합니다." +
-                    (if (connection == Connection.USB) "\n폰이 인식되지 않으면 Samsung 'Android USB Driver for Windows'를 설치합니다." else "") +
+                    (if (connection == Connection.USB) "\n휴대폰이 인식되지 않으면 Samsung 'Android USB Driver for Windows'를 설치합니다." else "") +
                     pairNote
             )
             PcOs.MAC -> Step(

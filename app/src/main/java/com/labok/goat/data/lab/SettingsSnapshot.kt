@@ -67,6 +67,6 @@ object SettingsSnapshot {
                 }
             }
         }
-        if (changes == 0) appendLine("바뀐 설정 키가 없습니다. 앱 권한으로 보이지 않는 곳(삼성 내부 서비스 등)에 저장되는 것으로 보입니다.")
+        if (changes == 0) appendLine("바뀐 설정 키가 없습니다. 앱 권한으로 확인할 수 없는 곳(삼성 내부 서비스 등)에 저장되는 것으로 보입니다.")
     }
 }

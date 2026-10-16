@@ -136,7 +136,7 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
         val now = SystemClock.elapsedRealtime()
         if (now - lastMissLog < 5000) return
         lastMissLog = now
-        LogRepository.from(context).add("흔들어서 화면 회전: 흔들림은 잡혔지만 돌리지 않음 - $why")
+        LogRepository.from(context).add("흔들어서 화면 회전: 흔들림은 감지했지만 회전하지 않음 - $why")
     }
 
     // --- 흔든 순간만 자동 회전 ---

@@ -83,7 +83,7 @@ internal fun LyingDownArt() {
         phone(c, aspect, right, body, 0f, locked = true)
         artLabel(tm, "자동 회전", Offset(left.x, size.height - 12.dp.toPx()), c.muted)
         artLabel(tm, "GOAT 잠금", Offset(right.x, size.height - 12.dp.toPx()), c.ink, bold = true)
-        if (autoTurn > 0.9f) artPill(tm, c, "돌아가 버림", Offset(left.x, 14.dp.toPx()), filled = false)
+        if (autoTurn > 0.9f) artPill(tm, c, "저절로 회전", Offset(left.x, 14.dp.toPx()), filled = false)
         if (tilt > 0.9f) artPill(tm, c, "그대로", Offset(right.x, 14.dp.toPx()), filled = true)
     }
 }

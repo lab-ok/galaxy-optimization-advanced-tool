@@ -57,7 +57,7 @@ object DensityServer {
         val setM = atm?.javaClass?.methods?.firstOrNull { it.name == "setUserCustomDensity" && it.parameterTypes.size == 4 }
         log("GOAT uid=$appUid · 삼성 함수 ${if (getM != null && setM != null) "있음" else "없음"}")
 
-        val idle = Runnable { quit("${IDLE_MS / 60000}분 동안 요청이 없어 끝냅니다.") }
+        val idle = Runnable { quit("${IDLE_MS / 60000}분 동안 요청이 없어 종료합니다.") }
         val binder = object : Binder() {
             override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
                 if (code == INTERFACE_TRANSACTION) return super.onTransact(code, data, reply, flags)
@@ -97,7 +97,7 @@ object DensityServer {
                         }
                         EXIT -> {
                             reply?.writeNoException()
-                            handler.post { quit("GOAT가 끝내기를 요청했습니다.") }
+                            handler.post { quit("GOAT가 종료를 요청했습니다.") }
                         }
                         else -> return false
                     }
@@ -112,9 +112,9 @@ object DensityServer {
         // GOAT의 ShellBridgeProvider를 셸 권한으로 열어 바인더를 건넨다. GOAT가 꺼져 있으면 시스템이 띄운다.
         val provider = runCatching { openProvider() }.getOrElse { quit("GOAT에 연결하지 못했습니다: ${HiddenApi.describe(it)}") }
         runCatching { callProvider(provider, Bundle().apply { putBinder("binder", binder) }) }
-            .onFailure { quit("바인더를 건네지 못했습니다: ${HiddenApi.describe(it)}") }
+            .onFailure { quit("바인더를 전달하지 못했습니다: ${HiddenApi.describe(it)}") }
         // GOAT 프로세스가 끝나면 도우미도 함께 끝낸다.
-        (provider as IInterface).asBinder().linkToDeath({ quit("GOAT가 종료돼 함께 끝냅니다.") }, 0)
+        (provider as IInterface).asBinder().linkToDeath({ quit("GOAT가 종료되어 함께 종료합니다.") }, 0)
         handler.postDelayed(idle, IDLE_MS)
         log("연결됨")
         Looper.loop()
@@ -147,7 +147,7 @@ object DensityServer {
         val am = asInterface("activity", "android.app.IActivityManager")
         val m: Method = am.javaClass.methods.first { it.name == "getContentProviderExternal" && it.parameterTypes.size == 4 }
         val holder = m.invoke(am, AUTHORITY, 0, Binder(), "goat_shell")
-            ?: error("$AUTHORITY 제공자가 없습니다. GOAT가 설치돼 있는지 확인하세요.")
+            ?: error("$AUTHORITY 제공자가 없습니다. GOAT가 설치되어 있는지 확인하세요.")
         return holder.javaClass.getField("provider").get(holder)!!
     }
 

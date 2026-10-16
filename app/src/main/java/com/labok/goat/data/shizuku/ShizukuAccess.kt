@@ -176,7 +176,7 @@ object ShizukuAccess {
     private fun call(name: String, size: Int, vararg args: Any): Any? {
         val svc = atm()
         val m = svc.javaClass.methods.firstOrNull { it.name == name && it.parameterTypes.size == size }
-            ?: throw UnsupportedOperationException("이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.")
+            ?: throw UnsupportedOperationException("이 기기는 삼성 앱별 화면 크기 기능을 지원하지 않습니다.")
         return try {
             m.invoke(svc, *args)
         } catch (e: InvocationTargetException) {

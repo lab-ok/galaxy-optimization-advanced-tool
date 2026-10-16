@@ -51,7 +51,7 @@ internal object AppPermissions {
         Item(
             SHIZUKU_API,
             "Shizuku 사용",
-            "PC 없이 시스템 설정 권한을 받고, 앱별 화면 배율을 바꿀 때 Shizuku에 셸 권한을 빌립니다. Shizuku 창에서 허용합니다.",
+            "PC 없이 시스템 설정 권한을 받고, 앱별 화면 배율을 바꿀 때 Shizuku에서 셸 권한을 빌립니다. Shizuku 창에서 허용합니다.",
             How.USER
         ),
         Item(
@@ -64,7 +64,7 @@ internal object AppPermissions {
         Item(
             Manifest.permission.SYSTEM_ALERT_WINDOW,
             "다른 앱 위에 표시",
-            "상태 표시줄의 상단바 숨기기(실험)가 다른 앱 위에 투명한 창을 띄워 상단바를 숨기는 데 씁니다. Shizuku가 연결되면 GOAT가 스스로 허용합니다.",
+            "상태 표시줄의 상단바 숨기기(실험)에서 다른 앱 위에 투명한 창을 띄워 상단바를 숨길 때 씁니다. Shizuku가 연결되면 GOAT가 스스로 허용합니다.",
             How.USER,
             optional = true
         ),
@@ -107,7 +107,7 @@ internal object AppPermissions {
         ),
         Item(
             Manifest.permission.WAKE_LOCK,
-            "절전 모드 해제 방지",
+            "절전 모드 진입 방지",
             "백그라운드 작업(WorkManager)이 DPI 확인을 끝낼 때까지 잠깐 깨어 있게 합니다.",
             How.INSTALL
         )

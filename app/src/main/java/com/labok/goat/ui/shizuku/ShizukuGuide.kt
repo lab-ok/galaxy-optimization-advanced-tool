@@ -102,10 +102,10 @@ internal fun ShizukuGuide(
         WirelessStepArt()
         SettingsPath("설정", "개발자 옵션", "디버깅", "무선 디버깅")
         Hint("'개발자 옵션'은 1단계를 마치면 설정 맨 아래(휴대전화 정보 근처)에 새로 생깁니다. 그 안을 아래로 내리면 '디버깅' 묶음에 '무선 디버깅'이 있습니다.")
-        Hint("Shizuku가 폰 안에서 권한을 얻는 통로입니다. '이 네트워크에서 허용할까요?'가 뜨면 허용을 누르세요.")
+        Hint("Shizuku가 휴대폰 안에서 권한을 얻는 통로입니다. '이 네트워크에서 허용할까요?'가 뜨면 허용을 누르세요.")
         // 무선 디버깅은 Wi-Fi에 연결돼 있어야만 켜진다(아니면 'Wi-Fi에 연결하세요'만 뜨고 꺼진다). 연결 상태를 읽으려면
         // 네트워크 상태 권한이 필요한데 GOAT는 쓰지 않으므로(읽으려다 앱이 종료됐다), 항상 먼저 알려 주고 Wi-Fi 설정으로 가는 길을 둔다
-        Hint("Wi-Fi에 연결돼 있어야 켜집니다. 연결이 안 돼 있으면 먼저 Wi-Fi에 연결해 주세요.")
+        Hint("Wi-Fi에 연결되어 있어야 켜집니다. 연결되어 있지 않으면 먼저 Wi-Fi에 연결해 주세요.")
         if (note == 1) Hint("방금 열린 개발자 옵션 화면을 한참 아래로 내리면 '디버깅' 묶음에 '무선 디버깅'이 있습니다. 스위치를 켜고 돌아와 주세요.", warn = true)
         Spacer(Modifier.height(Gap.Item))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

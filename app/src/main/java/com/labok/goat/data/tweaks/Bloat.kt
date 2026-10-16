@@ -38,18 +38,18 @@ object Bloat {
         App("com.samsung.android.kidsinstaller", "삼성 키즈 설치", "삼성 서비스", "키즈 모드를 설치·사용할 수 없습니다."),
         App("com.sec.android.app.kidshome", "삼성 키즈 홈", "삼성 서비스", "키즈 모드를 쓸 수 없습니다."),
         App("com.samsung.android.da.daagent", "듀얼 메신저", "삼성 서비스", "메신저 앱을 두 개 쓰는 기능이 꺼집니다. 이미 만든 두 번째 앱이 있으면 끄지 마세요.", Risk.CARE),
-        App("com.sec.android.easyMover", "Smart Switch", "삼성 서비스", "다른 폰에서 데이터를 옮겨 올 때만 필요합니다. 옮길 때 다시 켜세요."),
+        App("com.sec.android.easyMover", "Smart Switch", "삼성 서비스", "다른 휴대폰에서 데이터를 옮겨 올 때만 필요합니다. 옮길 때 다시 켜세요."),
         App("com.samsung.android.app.watchmanagerstub", "갤럭시 웨어러블 설치 도우미", "삼성 서비스", "갤럭시 워치·버즈 연결 앱을 자동으로 설치하지 않습니다."),
         App("com.sec.android.app.sbrowser", "삼성 인터넷", "삼성 앱", "삼성 인터넷 브라우저를 쓸 수 없습니다. 다른 브라우저를 기본으로 정해 두세요."),
         App("com.samsung.android.email.provider", "삼성 이메일", "삼성 앱", "삼성 이메일 앱을 쓸 수 없습니다."),
-        App("com.samsung.android.spay", "삼성 월렛(페이)", "삼성 앱", "삼성페이 결제·교통카드·멤버십을 쓸 수 없습니다. 결제에 쓰면 끄지 마세요.", Risk.CARE),
+        App("com.samsung.android.spay", "삼성 월렛(페이)", "삼성 앱", "삼성페이 결제·교통카드·멤버십을 쓸 수 없습니다. 결제에 사용 중이면 끄지 마세요.", Risk.CARE),
         App("com.samsung.android.scloud", "삼성 클라우드", "삼성 앱", "삼성 클라우드 백업·동기화가 멈춥니다.", Risk.CARE),
         App("com.facebook.appmanager", "Facebook 앱 관리자", "제휴 앱", "페이스북 앱 자동 업데이트 구성 요소입니다."),
         App("com.facebook.services", "Facebook 서비스", "제휴 앱", "페이스북 백그라운드 서비스입니다."),
         App("com.facebook.system", "Facebook 앱 설치 도우미", "제휴 앱", "페이스북 앱을 미리 설치하는 구성 요소입니다."),
         App("com.microsoft.skydrive", "OneDrive", "제휴 앱", "마이크로소프트 OneDrive를 쓸 수 없습니다."),
         App("com.linkedin.android", "LinkedIn", "제휴 앱", "링크드인 앱을 쓸 수 없습니다."),
-        App("com.netflix.partner.activation", "Netflix 활성화 도우미", "제휴 앱", "넷플릭스 미리 설치 구성 요소입니다(넷플릭스 앱은 그대로).")
+        App("com.netflix.partner.activation", "Netflix 활성화 도우미", "제휴 앱", "넷플릭스 사전 설치 구성 요소입니다(넷플릭스 앱은 유지됩니다).")
     )
 
     /** 이 기기에 있는 목록 앱과 꺼져 있는지(작업 스레드). Shizuku가 없으면 null. */

@@ -183,13 +183,13 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
 internal fun GosHelpSheet() {
     SheetColumn(title = "사용 방법") {
         HelpTopic(
-            "1. GOS가 무엇인가요",
+            "1. GOS란",
             "게임 최적화 서비스(GOS)는 게임을 하는 동안 해상도·프레임·처리 성능을 낮춰 발열과 배터리 소모를 줄이는 삼성 서비스입니다. " +
                 "끄면 GOS의 조절이 멈춰 같은 게임에서 더 높은 성능을 낼 수 있습니다. 실제 차이는 기기와 게임마다 다릅니다."
         ) { GosArt(off = true) }
         HelpTopic(
             "2. 얻는 것과 잃는 것",
-            "성능 조절이 멈추는 대신 오래 하면 폰이 더 뜨거워지고 배터리가 빨리 닳을 수 있습니다. 너무 뜨거워지면 " +
+            "성능 조절이 멈추는 대신 오래 플레이하면 휴대폰이 더 뜨거워지고 배터리가 빨리 닳을 수 있습니다. 너무 뜨거워지면 " +
                 "시스템이 스스로 성능을 낮춥니다. 게임 런처와 게임 부스터는 그대로 둡니다."
         )
         HelpTopic(

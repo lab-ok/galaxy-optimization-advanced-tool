@@ -80,7 +80,7 @@ internal fun PermissionsCard() {
     val context = LocalContext.current
     GlassCard {
         Text("필요 권한", fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text("이 앱이 쓰는 권한 전체입니다. 저장소·위치 권한은 쓰지 않고, 인터넷은 업데이트 확인에만 씁니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("이 앱이 사용하는 전체 권한입니다. 저장소·위치 권한은 사용하지 않으며, 인터넷은 업데이트 확인에만 사용합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         AppPermissions.all.forEachIndexed { i, item ->
             Spacer(Modifier.height(Gap.Card))
             if (i > 0) {

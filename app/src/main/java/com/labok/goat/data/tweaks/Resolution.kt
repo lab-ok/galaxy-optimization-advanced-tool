@@ -243,7 +243,7 @@ object Resolution {
         scope.launch { dropStale(context) }
         val at = ResolutionState.deadline(context)
         if (at == 0L) return
-        scope.launch { revertIfPending(context, "앱 시작 때 확인 시간이 지남") }
+        scope.launch { revertIfPending(context, "앱 시작 시 확인 시간 초과") }
     }
 
     private fun startConfirm(context: Context) {
