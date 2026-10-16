@@ -504,14 +504,14 @@ object Copy {
     fun resNow(w: Int, h: Int, bw: Int, bh: Int) = if (w == bw && h == bh) "지금 $w × $h" else "지금 $w × $h · 원래 $bw × $bh"
 
     /** 해상도 선택지 이름. [percent]는 변 비율이고, 화면에는 그리는 점(넓이) 비율로 적는다. */
-    fun resOption(name: String?, w: Int, h: Int, percent: Int) = if (percent >= 100) "원래대로 $w × $h" else listOfNotNull(name, "$w × $h").joinToString(" ") + " · 화소 ${resPoints(percent)}%"
-    fun resOptionDesc(percent: Int) = "그리는 점이 약 ${100 - resPoints(percent)}% 줄어듭니다."
+    fun resOption(name: String?, w: Int, h: Int, percent: Int, points: Int = resPoints(percent)) = if (percent >= 100) "원래대로 $w × $h" else listOfNotNull(name, "$w × $h").joinToString(" ") + " · 화소 $points%"
+    fun resOptionDesc(percent: Int, points: Int = resPoints(percent)) = "그리는 점이 약 ${100 - points}% 줄어듭니다."
 
     /** 변 비율 [percent]%일 때 그리는 점 수 비율(%). */
     fun resPoints(percent: Int) = percent * percent / 100
     fun resAppsBody(n: Int) = "앱 ${n}개는 정해진 단계로만 배율을 바꿀 수 있어, 해상도를 낮추는 동안 그 앱들이 조금 커 보입니다."
     fun resConfirmBody(left: Int) = "${left}초 안에 '유지'를 누르지 않으면 원래 해상도로 되돌립니다."
-    fun resDash(w: Int, percent: Int) = "$w · 화소 ${resPoints(percent)}%"
+    fun resDash(w: Int, percent: Int, points: Int = resPoints(percent)) = "$w · 화소 $points%"
 
     // 꺼진 버튼을 눌렀을 때 보여 주는 안내(왜 꺼졌는지, 어떻게 하면 켜지는지)
     const val DISABLED_SHIZUKU = "Shizuku가 연결되지 않아 지금은 쓸 수 없습니다. Shizuku 앱에서 서비스를 시작한 뒤 다시 눌러 주세요."

@@ -27,4 +27,14 @@ class ResolutionTest {
         val o = Resolution.optionsFor(720 to 1600)
         assertEquals("표준 폭이 없으면 85%·75%", listOf(720, 612, 540), o.map { it.short })
     }
+
+    @Test
+    fun pointsComeFromRealSidesNotRoundedPercent() {
+        // 반올림한 변 비율(72%)의 제곱은 51%지만 실제 900 × 1422 / 1248 × 1972는 52%다(QA 1차)
+        val o = Resolution.optionsFor(1248 to 1972)
+        val nine = o.first { it.short == 900 }
+        assertEquals(72, nine.percent)
+        assertEquals(52, nine.points)
+        assertEquals(100, o.first().points)
+    }
 }

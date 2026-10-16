@@ -589,8 +589,10 @@ internal fun HomeScreen(
         val reduce = LocalReduceMotion.current
         val covered = sheet != null || (!wide && drawer.targetValue == DrawerValue.Open)
         val behind by animateDpAsState(if (covered) BEHIND_BLUR else 0.dp, if (reduce) snap() else tween(280), label = "behindBlur")
+        // 줄 세기 화면이 덮는 동안 가려진 홈 카드가 화면 읽기 초점에 잡히지 않게 한다(QA 1차)
+        val hideBehind = if (counting) Modifier.clearAndSetSemantics { } else Modifier
         if (wide) {
-            Row(Modifier.fillMaxSize().background(c.bg).blur(behind)) {
+            Row(Modifier.fillMaxSize().background(c.bg).blur(behind).then(hideBehind)) {
                 drawerItems()
                 Box(Modifier.weight(1f)) { main() }
             }
@@ -599,7 +601,7 @@ internal fun HomeScreen(
                 drawerState = drawer,
                 scrimColor = c.ink.copy(alpha = 0.16f),
                 drawerContent = drawerItems
-            ) { Box(Modifier.blur(behind)) { main() } }
+            ) { Box(Modifier.blur(behind).then(hideBehind)) { main() } }
         }
 
         if (counting) {

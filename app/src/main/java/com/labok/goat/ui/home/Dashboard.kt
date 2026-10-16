@@ -198,7 +198,7 @@ internal fun Dashboard(
                 !Resolution.supported(context) -> Copy.RES_DASH_FOLD
                 // 저장된 원래 해상도가 남아 있어도 지금 해상도가 원래와 같으면(밖에서 되돌린 경우) 원래 해상도다
                 ResolutionState.base(context) == null || Resolution.current(context) == Resolution.base(context) -> Copy.RES_DASH_ORIGINAL
-                else -> Resolution.current(context).first.let { Copy.resDash(it, it * 100 / Resolution.base(context).first) }
+                else -> Resolution.current(context).first.let { w -> Resolution.base(context).first.let { b -> Copy.resDash(w, w * 100 / b, Resolution.points(w, b)) } }
             }
             NavItem.REFRESH -> if (!RefreshRate.supported(context)) {
                 Copy.REFRESH_UNSUPPORTED_SHORT

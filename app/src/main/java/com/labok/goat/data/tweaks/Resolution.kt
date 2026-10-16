@@ -50,8 +50,11 @@ object Resolution {
     /** PC로 되돌리는 명령(화면을 쓸 수 없을 때). 고급 안내 전용이라 Copy가 아닌 여기 둔다. */
     const val PC_UNDO = "adb shell wm size reset && adb shell wm density reset"
 
-    /** 고를 수 있는 크기. [short]·[long]은 논리 해상도(짧은 변·긴 변), [percent]는 직전 크기 대비. */
-    data class Option(val short: Int, val long: Int, val name: String?, val percent: Int)
+    /** 고를 수 있는 크기. [short]·[long]은 논리 해상도(짧은 변·긴 변), [percent]는 직전 크기 대비, [points]는 그리는 점(넓이) 비율. */
+    data class Option(val short: Int, val long: Int, val name: String?, val percent: Int, val points: Int = 100)
+
+    /** 짧은 변 [short]일 때 기준 짧은 변 [base] 대비 그리는 점 비율(%). 화면비가 같으므로 변 비율의 제곱이다(반올림한 변 %로 계산하면 1%p씩 어긋났다). */
+    fun points(short: Int, base: Int): Int = (short.toDouble() / base).let { (it * it * 100).roundToInt() }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var countdown: Job? = null
@@ -99,7 +102,7 @@ object Resolution {
     internal fun optionsFor(base: Pair<Int, Int>): List<Option> {
         val (bs, bl) = base
         fun even(v: Double) = (v / 2).roundToInt() * 2
-        fun of(short: Int, name: String?) = Option(short, even(bl.toDouble() * short / bs), name, (short * 100.0 / bs).roundToInt())
+        fun of(short: Int, name: String?) = Option(short, even(bl.toDouble() * short / bs), name, (short * 100.0 / bs).roundToInt(), points(short, bs))
         val standard = listOf(1080 to "FHD+", 900 to null, 720 to "HD+")
             .filter { (s, _) -> s < bs - 20 && s >= bs * 0.55 }
             .map { (s, n) -> of(s, n) }
