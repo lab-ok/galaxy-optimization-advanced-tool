@@ -62,7 +62,13 @@ object ShizukuAccess {
     fun refresh() {
         state.value = when {
             Shizuku.pingBinder() && !Shizuku.isPreV11() ->
-                if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) State.READY else State.NEEDS_PERMISSION
+                // 앱 시작 직후 binder는 받았지만 연결(attach)이 끝나기 전이면 checkSelfPermission이 'Not an attached client'를 던져
+                // App.onCreate에서 앱이 죽었다(QA 2차, 공용 로그). 그때는 아직 연결 전으로 보고, 연결되면 binder 수신 감시가 다시 부른다
+                when (runCatching { Shizuku.checkSelfPermission() }.getOrNull()) {
+                    PackageManager.PERMISSION_GRANTED -> State.READY
+                    null -> State.NOT_RUNNING
+                    else -> State.NEEDS_PERMISSION
+                }
             installed -> State.NOT_RUNNING
             else -> State.NOT_INSTALLED
         }
@@ -162,7 +168,7 @@ object ShizukuAccess {
 
     /** Shizuku 허용 창을 띄운다(Shizuku가 켜져 있을 때만). */
     fun requestPermission() {
-        if (Shizuku.pingBinder()) Shizuku.requestPermission(REQUEST)
+        if (Shizuku.pingBinder()) runCatching { Shizuku.requestPermission(REQUEST) }
     }
 
     internal fun atm(): Any = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))

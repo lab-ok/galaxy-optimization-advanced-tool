@@ -67,7 +67,7 @@ fun Modifier.liquidReveal(active: Boolean, origin: (Size) -> Offset): Modifier {
                 done -> drawContent()
                 blob.blob.ready -> clipPath(blob.blob.path(path)) {
                     this@drawWithContent.drawContent()
-                    // 방울이 작을 때는 새 화면 글자가 조각으로 비쳐 깨져 보인다. 처음엔 바탕색으로 채웠다가 방울이 화면의 1/4쯤 커지는 동안 걷는다
+                    // 방울이 작을 때는 새 화면 글자가 조각으로 비쳐 깨져 보인다. 처음엔 바탕색으로 채웠다가 방울이 화면의 40%쯤 커지는 동안 걷는다(1/4로는 한 프레임 비쳤다, QA 2차)
                     val veil = 1f - (r.value / (far * REVEAL_VEIL)).coerceIn(0f, 1f)
                     if (veil > 0f) drawRect(bg.copy(alpha = veil))
                 }
@@ -76,4 +76,4 @@ fun Modifier.liquidReveal(active: Boolean, origin: (Size) -> Offset): Modifier {
 }
 
 /** 새 화면을 바탕색으로 가리는 구간: 가장 먼 모서리까지 거리에 대한 방울 반지름 비율. */
-private const val REVEAL_VEIL = 0.25f
+private const val REVEAL_VEIL = 0.4f
