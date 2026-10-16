@@ -160,6 +160,8 @@ object BatteryMonitor {
     class LogWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             record(applicationContext)
+            // 충전 주기 기록: 시스템 통계를 읽어 넘긴다(Shizuku가 없으면 건너뛴다)
+            BatteryStatsReader.read()?.let { s -> BatteryCycles.update(applicationContext, s) { BatteryStatsReader.uidName(applicationContext, it) } }
             return Result.success()
         }
     }

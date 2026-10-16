@@ -45,6 +45,7 @@ import kotlinx.coroutines.delay
 
 /**
  * 실험실 '배터리 모니터링'. 위: 지금 상태(잔량·충전·온도·전압·전류·전력, 2초마다 다시 읽음).
+ * 가운데: 마지막 충전 이후 쓴 양·화면 켜짐/꺼짐·이 패턴의 예상 시간·앱별 순위(시스템 배터리 통계, Shizuku).
  * 아래: 15분 기록을 켜면 최근 24시간 잔량 그래프와 시간당 소모량·남은 시간 추정.
  */
 @Composable
@@ -97,6 +98,10 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
                 Metric("전력", s.watts?.let { String.format(Locale.KOREA, "%+.1fW", it) })
                 Metric("상태", s.health)
             }
+        }
+        Spacer(Modifier.height(Gap.Card))
+        GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
+            BatterySinceCharge(now?.level, now?.charging == true)
         }
         Spacer(Modifier.height(Gap.Card))
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
