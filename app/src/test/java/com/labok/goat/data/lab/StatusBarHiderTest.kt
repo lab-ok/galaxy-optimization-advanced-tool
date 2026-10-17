@@ -23,4 +23,15 @@ class StatusBarHiderTest {
         assertEquals(false, StatusBarFocus.parse(shade).app)
         assertEquals(false, StatusBarFocus.parse("mCurrentFocus=null\nmInputShown=false").app)
     }
+
+    @Test
+    fun failedShowRequestsFromOtherAppsOnly() {
+        val out = """
+                #4458 TYPE_HIDE - STATUS_FAIL - org.chromium.webview_shell:2d2e7b5 (0ms):
+                #4558 TYPE_SHOW - STATUS_FAIL - org.chromium.webview_shell:629b5189 (1ms):
+                #4560 TYPE_SHOW - STATUS_FAIL - com.labok.goat:4e742 (0ms):
+        """.trimIndent()
+        assertEquals(4558, StatusBarFocus.lastFailedShow(out))
+        assertEquals(0, StatusBarFocus.lastFailedShow(""))
+    }
 }

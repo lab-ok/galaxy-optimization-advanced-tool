@@ -44,6 +44,10 @@ object StatusBarHider {
     private var view: View? = null
     /** 다시 숨기기 예약 세대. 끄거나 새로 예약하면 올려서 이전 예약을 무효로 만든다. */
     @Volatile private var regrabGen = 0
+    /** 마지막으로 본 '키보드 띄우기 실패' 기록 번호(ImeTracker). -1이면 아직 기준을 잡지 않았다. */
+    @Volatile private var lastImeFail = -1
+    /** 바깥 누름 확인이 돌고 있는지(누를 때마다 셸을 겹쳐 부르지 않게). */
+    @Volatile private var outsideCheck = false
     /** 포커스를 내려놓는 중에 받은 뒤로 가기. 포커스가 넘어가면 앱에 보낸다. */
     private var pendingBack = false
     /** 마지막으로 포커스를 내려놓게 한 키가 뒤로 가기였는지. */
@@ -102,6 +106,12 @@ object StatusBarHider {
                 }
             }
 
+            override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
+                // 다른 앱을 누르면 입력란이었는지 확인한다(키보드 요청이 이 창 때문에 실패했으면 포커스를 넘긴다)
+                if (event.actionMasked == android.view.MotionEvent.ACTION_OUTSIDE) onOutsideTouch(context, this)
+                return false
+            }
+
             override fun dispatchKeyEvent(event: KeyEvent): Boolean {
                 // 키는 이 창이 받으면 안 된다: 포커스를 내려놓고, 뒤로 가기는 아래 앱에 다시 보낸다
                 if (event.action == KeyEvent.ACTION_UP) {
@@ -122,7 +132,8 @@ object StatusBarHider {
             1,
             1,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -132,6 +143,8 @@ object StatusBarHider {
         runCatching { wm.addView(v, lp) }.onFailure { log.add("상단바 숨기기: 창을 띄우지 못함(${it.message})") }.onSuccess {
             view = v
             v.post { hideBars(v) }
+            // 지금까지의 키보드 요청 실패 기록은 기준으로만 둔다(이후 새로 생긴 것만 본다)
+            if (lastImeFail < 0) Thread { lastImeFail = lastFailedShowId() ?: 0 }.start()
         }
     }
 
@@ -146,6 +159,44 @@ object StatusBarHider {
         val lp = v.layoutParams as? WindowManager.LayoutParams ?: return
         lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         runCatching { context.getSystemService(WindowManager::class.java).updateViewLayout(v, lp) }
+    }
+
+    /**
+     * 이 창이 포커스를 쥐고 있으면 다른 앱의 입력란을 눌러도 키보드 요청이 실패한다(포커스 창이 아니라서).
+     * 시스템은 그 실패를 ImeTracker 기록에 'TYPE_SHOW - STATUS_FAIL'로 남긴다. 누른 뒤 잠시 기다려 새 실패가 생겼으면
+     * 포커스를 앱에 넘긴다. 앱이 포커스를 받으면 키보드가 뜨고, 키보드를 닫으면 [scheduleRegrab]이 다시 숨긴다.
+     * 입력란이 아닌 곳을 누를 때는 포커스를 넘기지 않아 상단바가 깜빡이지 않는다.
+     */
+    private fun onOutsideTouch(context: Context, v: View) {
+        if (outsideCheck || !onFlow.value || lastImeFail < 0) return
+        outsideCheck = true
+        Thread {
+            try {
+                // 키보드 요청은 손을 뗀 뒤에 온다. 짧게 두 번 본다
+                for (wait in OUTSIDE_CHECKS_MS) {
+                    Thread.sleep(wait)
+                    val id = lastFailedShowId() ?: return@Thread
+                    if (id > lastImeFail) {
+                        lastImeFail = id
+                        main.post {
+                            if (view !== v || !onFlow.value) return@post
+                            lastKeyBack = false
+                            stepAside(context, v)
+                            LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 키보드를 띄우려고 포커스 해제")
+                        }
+                        return@Thread
+                    }
+                }
+            } finally {
+                outsideCheck = false
+            }
+        }.start()
+    }
+
+    /** ImeTracker 기록 중 다른 앱의 마지막 '키보드 띄우기 실패' 번호. 셸을 쓸 수 없으면 null. */
+    private fun lastFailedShowId(): Int? {
+        val out = ShizukuAccess.shell("dumpsys input_method | grep -E '#[0-9]+ TYPE_SHOW - STATUS_FAIL'")?.out ?: return null
+        return StatusBarFocus.lastFailedShow(out)
     }
 
     private fun sendPendingBack() {
@@ -251,6 +302,7 @@ object StatusBarHider {
         val shell = ShizukuAccess.shell(
             "echo '== 포커스 =='; dumpsys window | grep -E 'mCurrentFocus|mFocusedApp|mFocusedWindow' | head -6; " +
                 "echo '== 키보드 =='; dumpsys input_method | grep -E 'mInputShown=|mIsInputViewShown=' | head -3; " +
+                "echo '== 키보드 요청 실패(최근) =='; dumpsys input_method | grep -E '#[0-9]+ TYPE_SHOW - STATUS_FAIL' | tail -5; " +
                 "echo '== 이 창 =='; dumpsys window windows | grep -A40 'GOAT status bar hider' | head -45; " +
                 "echo '== 상단바 제어 =='; dumpsys window | grep -iE 'mTopFullscreenOpaqueWindowState|statusBarControlTarget|mFocusedWindow|ControlTarget' | head -6"
         )
@@ -270,6 +322,7 @@ object StatusBarHider {
         return androidx.core.content.FileProvider.getUriForFile(app, "${app.packageName}.files", file)
     }
 
+    private val OUTSIDE_CHECKS_MS = longArrayOf(350L, 500L)
     private const val REGRAB_MS = 600L
     private const val POLL_MS = 2_000L
     private const val OFF_POLL_MS = 10_000L
@@ -298,6 +351,12 @@ internal object StatusBarFocus {
      * 'mCurrentFocus=null'이다(실기 SM-F971N, Android 17에서 이 줄이 먼저 나와 늘 시스템 창으로 잘못 읽었다).
      * 그래서 null이 아닌 줄을 쓰고, 키보드는 어느 화면이든 열려 있으면 열린 것으로 본다.
      */
+    /** ImeTracker 기록에서 GOAT가 아닌 앱의 마지막 'TYPE_SHOW - STATUS_FAIL' 번호. 없으면 0. */
+    fun lastFailedShow(out: String): Int = out.lines()
+        .filter { "TYPE_SHOW - STATUS_FAIL" in it && "com.labok.goat" !in it }
+        .mapNotNull { Regex("""#(\d+) TYPE_SHOW""").find(it)?.groupValues?.get(1)?.toIntOrNull() }
+        .maxOrNull() ?: 0
+
     fun parse(out: String): State {
         val lines = out.lines()
         val ime = lines.any { "mInputShown=true" in it }
