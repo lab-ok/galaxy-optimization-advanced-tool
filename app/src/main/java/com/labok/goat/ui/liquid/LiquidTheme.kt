@@ -28,6 +28,9 @@ import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.sp
 
 /**
@@ -63,6 +66,28 @@ val DarkLiquid = LiquidColors(
     logo = Color(0xFF2A2A2A)
 )
 
+/** [target] 색 토큰들을 [THEME_FADE_MS] 동안 부드럽게 바꿔 가며 돌려준다. */
+@Composable
+private fun animateLiquid(target: LiquidColors, reduce: Boolean): LiquidColors {
+    val spec = if (reduce) snap() else tween<Color>(THEME_FADE_MS)
+    @Composable
+    fun a(col: Color, label: String) = animateColorAsState(col, spec, label = label).value
+    return target.copy(
+        bg = a(target.bg, "bg"),
+        surface = a(target.surface, "surface"),
+        ink = a(target.ink, "ink"),
+        muted = a(target.muted, "muted"),
+        line = a(target.line, "line"),
+        tint = a(target.tint, "tint"),
+        brand = a(target.brand, "brand"),
+        danger = a(target.danger, "danger"),
+        logo = a(target.logo, "logo")
+    )
+}
+
+/** 테마 색이 바뀌는 데 걸리는 시간(ms). */
+private const val THEME_FADE_MS = 450
+
 /** 모양 토큰(원본: 컨트롤 알약 999px, 상자 12px — 모바일 터치 크기에 맞춰 키움). */
 object LiquidShape {
     val card = 22.dp
@@ -82,11 +107,13 @@ fun LiquidTheme(content: @Composable () -> Unit) {
     val themeInk = colorResource(UiInk.tone.colorRes(dark))
     // 염소 아이콘 상자도 고른 색을 따른다. 흰 염소가 보이도록 다크 모드에서도 라이트 쪽(진한) 단계를 쓴다
     val themeLogo = colorResource(UiInk.tone.colorRes(dark = false))
-    val c = if (UiInk.mode == UiInk.Mode.THEME) plain.copy(ink = themeInk, logo = themeLogo) else plain
+    val target = if (UiInk.mode == UiInk.Mode.THEME) plain.copy(ink = themeInk, logo = themeLogo) else plain
     val context = LocalContext.current
     val reduce = remember {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
     }
+    // 테마 색(잉크 색·라이트/다크)을 바꾸면 한 번에 바뀌지 않고 스르르 넘어간다. '애니메이션 제거'면 바로 바뀐다
+    val c = animateLiquid(target, reduce)
     // Material 구성요소도 같은 단색 체계를 쓰도록 맞춘다.
     val scheme = if (dark) {
         darkColorScheme(
