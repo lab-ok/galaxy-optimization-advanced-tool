@@ -51,6 +51,7 @@ import com.labok.goat.data.lab.QsGrid
 import com.labok.goat.data.lab.QsOverlay
 import com.labok.goat.data.lab.ScreenMode
 import com.labok.goat.data.lab.StatusBarHider
+import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.Section
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -330,6 +331,7 @@ private fun ColumnScope.QsGridCard(w: LabWriter) {
                 scope.launch {
                     val r = withContext(Dispatchers.IO) { QsOverlay.apply(columns, v.toInt()).onSuccess { QsGrid.restartSystemUi() } }
                     result = r.fold({ Copy.LAB_QS_GRID_APPLIED }, { "${Copy.LAB_WRITE_FAILED} ${HiddenApi.describe(it)}" })
+                    LogRepository.from(context).add("실험실 빠른 설정 격자 덮어쓰기: ${v}열 (${columns.joinToString()}) " + r.fold({ "성공" }, { "실패 ${HiddenApi.describe(it)}" }))
                     busy = false
                     w.version++
                 }
@@ -352,6 +354,7 @@ private fun ColumnScope.QsGridCard(w: LabWriter) {
                 removed && restored
             }
             result = if (ok) Copy.LAB_RESTORED else Copy.LAB_WRITE_FAILED
+            LogRepository.from(context).add("실험실 빠른 설정 격자: 처음대로" + if (ok) "" else " 실패")
             busy = false
             w.version++
         }

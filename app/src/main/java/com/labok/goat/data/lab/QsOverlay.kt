@@ -29,10 +29,21 @@ object QsOverlay {
     fun integers(context: Context, pattern: Regex = Regex("qs|tile|column|quick|panel", RegexOption.IGNORE_CASE)): List<Value> {
         val res = runCatching { context.packageManager.getResourcesForApplication(TARGET) }.getOrNull() ?: return emptyList()
         val out = mutableListOf<Value>()
-        for (pkg in intArrayOf(0x7f, 0x7e)) {
+        // 시스템 UI 리소스의 패키지 번호(AOSP 0x7f, 삼성 0x7e)를 아는 이름으로 먼저 찾는다(없는 번호를 훑으면 로그가 넘친다)
+        val known = listOf("qs_frame" to "id", "quick_settings_panel" to "id", "status_bar" to "layout")
+            .map { (n, t) -> res.getIdentifier(n, t, TARGET) }.firstOrNull { it != 0 }
+        val pkgs = known?.let { intArrayOf(it ushr 24) } ?: intArrayOf(0x7f, 0x7e)
+        for (pkg in pkgs) {
+            var missingTypes = 0
             for (type in 1..80) {
                 val base = (pkg shl 24) or (type shl 16)
-                val typeName = runCatching { res.getResourceTypeName(base) }.getOrNull() ?: continue
+                // 형식 번호는 거의 이어져 있지만 첫 항목이 빈 형식도 있어, 여러 번 연달아 없을 때만 그만 훑는다
+                val typeName = runCatching { res.getResourceTypeName(base) }.getOrNull()
+                if (typeName == null) {
+                    if (++missingTypes >= 8) break
+                    continue
+                }
+                missingTypes = 0
                 if (typeName != "integer") continue
                 var misses = 0
                 var i = 0
@@ -52,9 +63,14 @@ object QsOverlay {
         return out.distinctBy { it.name }
     }
 
-    /** 빠른 설정 열 수를 정하는 리소스로 보이는 것(이름에 column과 qs·quick·tile이 함께 들어가고 가로 화면 전용이 아닌 것). */
+    /**
+     * 빠른 설정 열 수를 정하는 리소스로 보이는 것: 이름에 column과 qs·quick·tile이 함께 들어가고, 가로 화면 전용·위쪽 작은 줄(quick_qs)이 아닌 것.
+     * 삼성 One UI 8.5 실기기에는 sec_quick_settings_num_columns(_fold·_fold_sub·_tablet·_power_saving)와
+     * quick_settings_infinite_grid_num_columns 등이 있었다(2026-10-18 진단).
+     */
     fun columnNames(values: List<Value>) = values.filter {
-        it.name.contains("column", true) && Regex("qs|quick|tile", RegexOption.IGNORE_CASE).containsMatchIn(it.name) && !it.name.contains("land", true)
+        it.name.contains("column", true) && Regex("qs|quick|tile", RegexOption.IGNORE_CASE).containsMatchIn(it.name) &&
+            !it.name.contains("land", true) && !it.name.contains("quick_qs", true)
     }.map { it.name }
 
     /** [names]의 정수 리소스를 모두 [value]로 덮어쓰는 오버레이를 등록하고 켠다. 실패하면 이유를 담은 예외. */
