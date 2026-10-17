@@ -62,6 +62,10 @@ object DiagnosticReport {
         appendLine(runCatching { com.labok.goat.data.lab.BatteryHistory.diagnose() }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
+        appendLine("## 빠른 설정 격자(실험실)")
+        appendLine(runCatching { com.labok.goat.data.lab.QsGrid.diagnose() }.getOrElse { "읽기 실패: $it" })
+        appendLine()
+
         appendLine("## 크래시 기록")
         appendLine(CrashRecorder.read(context).ifBlank { "(없음)" })
         appendLine()

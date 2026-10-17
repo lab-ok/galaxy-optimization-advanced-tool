@@ -174,4 +174,19 @@ object QsGrid {
     val row = LabSetting("secure", "qs_tile_row", "빠른 설정 타일 줄 수")
     val COLUMNS = listOf("4", "5", "6", "7")
     val ROWS = listOf("3", "4", "5", "6")
+
+    /**
+     * 진단 로그용: 시스템 UI가 격자를 어느 값에서 읽는지 찾으려고 빠른 패널과 관련된 설정 키, 시스템 UI 버전,
+     * 시스템 UI 상태(dumpsys)에서 격자·타일 줄을 모은다. Shizuku가 없으면 그렇다고만 적는다. 작업 스레드에서 부른다.
+     */
+    fun diagnose(): String {
+        val pat = "'qs|tile|quick|panel|column|grid|sysui'"
+        val dumpPat = "'column|columns|maxtiles|max_tiles|tile_size|tilesize|grid|qs_|qspanel|tilelayout|sidelabel|span'"
+        val out = ShizukuAccess.shell(
+            "for t in secure system global; do echo \"[\$t]\"; settings list \$t | grep -i -E $pat; done; " +
+                "echo '[systemui]'; dumpsys package com.android.systemui 2>/dev/null | grep -m2 -E 'versionName|versionCode'; " +
+                "echo '[dumpsys systemui]'; dumpsys activity service com.android.systemui/.SystemUIService 2>/dev/null | grep -i -E $dumpPat | head -150"
+        ) ?: return "Shizuku가 연결되지 않아 읽지 못했습니다."
+        return (out.out + if (out.err.isNotBlank()) "\n(오류) ${out.err.take(500)}" else "").ifBlank { "(빈 결과)" }
+    }
 }

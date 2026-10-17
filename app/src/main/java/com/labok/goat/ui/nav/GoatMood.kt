@@ -20,9 +20,8 @@ import kotlin.random.Random
 enum class Mood { CALM, SQUINT, CRY, ANGRY }
 
 /**
- * 염소 아이콘의 표정(사이드바 머리·앱 정보·홈 머리). 화면을 열면 편한 표정 가운데 하나로 시작하고, 누르면 당황·울음·화남
- * 그림 가운데 하나로 한 번만 바뀐 뒤 그대로 둔다(저절로 돌아오거나 연달아 바뀌지 않는다).
- * 앞 누름과 [STREAK_GAP_MS] 안에 다시 누르면 같은 누름으로 보고 그림을 바꾸지 않는다. 손을 뗐다가 다시 누르면 한 번 더 바뀐다.
+ * 염소 아이콘의 표정(사이드바 머리·앱 정보·홈 머리). 화면을 열면 편한 표정 가운데 하나로 시작하고, 누를 때마다 당황·울음·화남
+ * 그림 가운데 지금과 다른 하나로 한 번 바뀐 뒤 그대로 둔다(저절로 돌아오거나 단계별로 바뀌지 않는다).
  */
 class GoatMoodState {
     var mood by mutableStateOf(Mood.CALM)
@@ -41,13 +40,12 @@ class GoatMoodState {
     /** 지금까지 쉬지 않고 이어서 누른 횟수(실험실 열기용). */
     val streakNow get() = streak
 
-    /** 눌렀다. 이어서 누른 첫 번째일 때만 반응 그림을 새로 골라 바꾸고 true를 돌려준다. */
+    /** 눌렀다. 반응 그림을 지금과 다른 한 장으로 바꾸고 true를 돌려준다. */
     fun press(now: Long = System.currentTimeMillis()): Boolean {
         streak = if (taps.isNotEmpty() && now - taps.last() <= STREAK_GAP_MS) streak + 1 else 1
         taps.addLast(now)
         while (taps.isNotEmpty() && now - taps.first() > WINDOW_MS) taps.removeFirst()
         presses++
-        if (streak != 1) return false
         // 반응 그림 8장 가운데 지금과 다른 한 장
         val current = REACTIONS.indexOfFirst { it.first == mood && it.second == variant % faceCount(mood) }
         var pick = Random.nextInt(REACTIONS.size)
