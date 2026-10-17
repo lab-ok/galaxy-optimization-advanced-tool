@@ -32,13 +32,26 @@ object BatteryHistory {
         val afterOff: Boolean = false
     )
 
-    /** 시간대 한 칸. [usedPct]는 충전하지 않은 동안 줄어든 잔량, [screenMs]는 화면이 켜져 있던 시간. */
-    data class Bucket(val start: Long, val end: Long, val usedPct: Float, val screenMs: Long, val charging: Boolean)
+    /**
+     * 시간대 한 칸. [usedPct]는 충전하지 않은 동안 줄어든 잔량, 그중 [screenPct]는 화면이 켜져 있던 동안 줄어든 몫이다
+     * (나머지는 대기). [screenMs]는 화면이 켜져 있던 시간.
+     */
+    data class Bucket(val start: Long, val end: Long, val usedPct: Float, val screenPct: Float, val screenMs: Long, val charging: Boolean) {
+        val standbyPct: Float get() = (usedPct - screenPct).coerceAtLeast(0f)
+    }
 
-    /** 시스템 기록을 읽는다(작업 스레드). Shizuku가 없거나 읽지 못하면 null. */
-    fun read(): List<Point>? {
-        val out = ShizukuAccess.shell("dumpsys batterystats --history | grep -E '^ +(0|\\+[0-9dhms]+) \\('")?.out ?: return null
-        return parse(out).takeIf { it.isNotEmpty() }
+    /**
+     * 시스템 기록을 읽는다(작업 스레드). Shizuku가 없거나 읽지 못하면 null.
+     * 기록 전체는 수십 MB 글이 될 수 있어, 기기에서 awk로 그래프에 필요한 줄만 남긴다:
+     * 시각·꺼짐·켜짐 줄, 충전 상태·화면·깨어 있음이 바뀐 줄, 잔량이 바뀐 줄. awk가 없으면 grep으로 기록 줄만 거른다.
+     */
+    fun read(now: Long = System.currentTimeMillis()): List<Point>? {
+        val awk = "awk '/^ +(0|\\+[0-9dhms]+) \\(/{ if (\$0 ~ /TIME:|SHUTDOWN|START|status=|[+-]screen( |\$)|[+-]running( |\$)/) " +
+            "{print; last=\$3; next} if (\$3!=last) {print; last=\$3} }'"
+        val grep = "grep -E '^ +(0|\\+[0-9dhms]+) \\('"
+        val out = ShizukuAccess.shell("if command -v awk >/dev/null; then dumpsys batterystats --history | $awk; else dumpsys batterystats --history | $grep; fi")?.out
+            ?: return null
+        return parse(out, now = now).takeIf { it.isNotEmpty() }
     }
 
     private val LINE = Regex("""^\s*(0|\+[0-9dhms]+)\s+\(\d+\)\s+(.*)$""")
@@ -56,12 +69,22 @@ object BatteryHistory {
         }
     }
 
-    internal fun parse(text: String, zone: TimeZone = TimeZone.getDefault()): List<Point> {
+    /**
+     * [now]가 있으면 시각 줄(RESET:TIME·TIME)이 없는 기록도 읽는다: 오래된 기록 파일이 밀려나 시각 줄이 빠진 경우,
+     * 마지막 기록을 지금으로 보고 거꾸로 맞춘다(마지막 기록은 길어야 몇 분 전이다).
+     */
+    internal fun parse(text: String, zone: TimeZone = TimeZone.getDefault(), now: Long? = null): List<Point> {
         val fmt = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).apply { timeZone = zone }
         val out = ArrayList<Point>()
         // 실제 시각 기준점: (경과 시간, 실제 시각)
         var anchorOffset = -1L
         var anchorWall = 0L
+        if (now != null && text.lineSequence().none { LINE.find(it)?.groupValues?.get(2)?.contains("TIME:") == true }) {
+            text.lineSequence().mapNotNull { LINE.find(it) }.lastOrNull()?.let {
+                anchorOffset = offsetMs(it.groupValues[1])
+                anchorWall = now
+            }
+        }
         var level = -1
         var screen = false
         var charging = false
@@ -121,6 +144,7 @@ object BatteryHistory {
         if (points.isEmpty() || now <= from) return emptyList()
         val count = ((now - from + bucketMs - 1) / bucketMs).toInt().coerceAtLeast(1)
         val used = FloatArray(count)
+        val usedOn = FloatArray(count)
         val screen = LongArray(count)
         val charging = BooleanArray(count)
         // 마지막 시점은 지금까지 이어진다
@@ -137,26 +161,13 @@ object BatteryHistory {
                 if (overlap <= 0) continue
                 if (a.charging) charging[i] = true
                 used[i] += drop * overlap / span
-                if (a.screen) screen[i] += overlap
+                if (a.screen) {
+                    usedOn[i] += drop * overlap / span
+                    screen[i] += overlap
+                }
             }
         }
-        return List(count) { i -> Bucket(from + i * bucketMs, minOf(from + (i + 1) * bucketMs, now), used[i], screen[i], charging[i]) }
-    }
-
-    /**
-     * 마지막 충전 이후 충전하지 않은 동안의 평균 소모(%/시간). 꺼져 있던 구간은 뺀다. 쓴 시간이 30분이 안 되거나 줄어든 잔량이 없으면 null.
-     */
-    internal fun drainPerHour(points: List<Point>, now: Long): Float? {
-        if (points.isEmpty()) return null
-        var drop = 0
-        var span = 0L
-        (points.zipWithNext() + listOf(points.last() to points.last().copy(time = now, afterOff = false))).forEach { (a, b) ->
-            if (a.charging || b.afterOff || b.time <= a.time) return@forEach
-            drop += (a.level - b.level).coerceAtLeast(0)
-            span += b.time - a.time
-        }
-        if (span < 30 * 60_000L || drop <= 0) return null
-        return drop * HOUR.toFloat() / span
+        return List(count) { i -> Bucket(from + i * bucketMs, minOf(from + (i + 1) * bucketMs, now), used[i], usedOn[i], screen[i], charging[i]) }
     }
 
     /** 칸 길이: 마지막 충전 이후가 길면 칸을 넓혀 기둥이 [maxBars]개를 넘지 않게 한다(1·2·3·4·6·12시간). */

@@ -1,0 +1,47 @@
+                    0 (19) RESET:TIME: 2022-12-07-01-14-31
+                    0 (2) 100 status=discharging health=good plug=none temp=313 volt=4312 current=279 ap_temp=32 pa_temp=33 skin_temp=31 -wifi_ap -otg -high_speaker_volume txshare_event=0x0 online=1 current_event=0x40 misc_event=0x10000 charge=1670 modemRailChargemAh=0 wifiRailChargemAh=0 +running +wake_lock +wifi_radio +screen phone_signal_strength=great wifi_signal_strength=4 wifi_suppl=completed +ble_scan +cellular_high_tx_power fg=u0a321:""
+          +4m01s001ms (2) 099
+          +7m25s445ms (3) 099 -wake_lock -screen stats=0:""
+          +7m32s031ms (2) 098 charge=1653
+         +21m36s279ms (2) 097
+         +26m47s866ms (3) 097 +screen -screen_doze screenwake=u0a59:""
+         +27m05s171ms (3) 097 -screen brightness=dark stats=0:""
+         +27m16s707ms (4) 097 +wake_lock=1000:"" +screen screenwake=1000:""
+         +27m23s664ms (17) SHUTDOWN
+         +27m23s665ms (17) START
+         +27m23s665ms (19) TIME: 2022-12-07-01-42-21
+         +27m29s417ms (7) 097 status=discharging health=good plug=none temp=276 volt=4058 current=0 -wifi_ap -otg -high_speaker_volume txshare_event=0x0 online=1 current_event=0x40 misc_event=0x0 charge=1624 modemRailChargemAh=0 wifiRailChargemAh=0 +running stats=0:""
+         +27m31s504ms (4) 097 +wake_lock=-1:"" +screen brightness=bright stats=0:""
+         +28m08s397ms (2) 096 temp=287 volt=4175
+         +28m20s759ms (3) 096 -wake_lock -screen brightness=dark stats=0:""
+         +28m30s880ms (4) 096 +wake_lock=1000:"" +screen wake_reason=0:"" screenwake=1000:""
+         +28m32s973ms (3) 096 -wake_lock -screen brightness=dark stats=0:""
+         +38m41s674ms (2) 095
+         +45m37s556ms (4) 095 +wake_lock=1000:"" +screen screenwake=1000:""
+         +45m40s550ms (3) 095 -wake_lock -screen stats=0:""
+         +51m15s783ms (2) 094
+       +1h02m08s652ms (4) 094 +wake_lock=1000:"" +screen screenwake=1000:""
+       +1h02m17s427ms (3) 094 -wake_lock -screen brightness=dark stats=0:""
+       +1h03m14s344ms (4) 094 +wake_lock=1000:"" +screen screenwake=1000:""
+       +1h03m49s837ms (2) 093 temp=292 volt=4001
+       +1h04m50s151ms (2) 092 volt=3958 charge=1554
+       +1h06m50s772ms (2) 091 temp=336 volt=4130 charge=1538
+       +1h10m52s076ms (2) 090 charge=1519
+       +1h13m38s034ms (3) 090 -wake_lock -screen stats=0:""
+       +1h15m23s476ms (2) 089 volt=4141 charge=1503
+       +1h29m57s864ms (2) 088
+       +1h39m30s936ms (3) 088 +screen -screen_doze screenwake=u0a59:""
+       +1h39m45s090ms (3) 088 -screen brightness=dark stats=0:""
+       +1h42m01s622ms (2) 087 volt=4139
+       +1h56m36s016ms (2) 086
+       +2h04m59s186ms (3) 086 +screen -screen_doze screenwake=u0a59:""
+       +2h05m13s984ms (3) 086 -screen -job=u0a213:""
+       +2h09m09s845ms (2) 085
+       +2h23m43s116ms (3) 085 +screen -screen_doze screenwake=u0a59:""
+       +2h23m44s253ms (2) 084 volt=4048
+       +2h24m01s277ms (5) 084 current=-397 ap_temp=30 pa_temp=30 skin_temp=28 -wake_lock -screen stats=0:""
+       +2h29m17s471ms (4) 084 +wake_lock=1000:"" +screen screenwake=1000:""
+       +2h29m44s063ms (3) 084 -wake_lock -screen stats=0:""
+       +2h35m17s860ms (2) 083
+       +2h36m08s168ms (4) 083 +wake_lock=1000:"" +screen screenwake=1000:""
+       +2h36m34s334ms (3) 083 -screen brightness=dark stats=0:""

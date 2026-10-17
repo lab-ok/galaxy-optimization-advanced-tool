@@ -53,6 +53,9 @@ class BatteryHistoryTest {
         assertEquals(6f, b[0].usedPct, 0.01f)
         assertEquals(4f, b[1].usedPct, 0.01f)
         assertEquals(h / 2, b[0].screenMs)
+        // 첫 칸 6% 중 화면이 켜진 0~0.5h의 4%가 화면 켜짐 몫, 나머지 2%는 대기
+        assertEquals(4f, b[0].screenPct, 0.01f)
+        assertEquals(2f, b[0].standbyPct, 0.01f)
         assertEquals(true, b[2].charging)
         assertEquals(0f, b[2].usedPct, 0.01f)
     }
@@ -77,15 +80,18 @@ class BatteryHistoryTest {
     }
 
     @Test
-    fun drainSkipsChargingAndOff() {
-        val h = 3_600_000L
-        val pts = listOf(
-            BatteryHistory.Point(0, 100, screen = true, charging = false, awake = true),
-            BatteryHistory.Point(h, 90, screen = false, charging = true, awake = true),
-            BatteryHistory.Point(2 * h, 100, screen = false, charging = false, awake = false),
-            BatteryHistory.Point(5 * h, 95, screen = false, charging = false, awake = false, afterOff = true)
-        )
-        // 0~1h에 10%, 5~6h에 0% → 10%/2h(충전 1~2h, 꺼짐 2~5h는 뺀다)
-        assertEquals(5f, BatteryHistory.drainPerHour(pts, 6 * h)!!, 0.01f)
+    fun deviceFilterKeepsEveryPoint() {
+        // 기기에서 awk로 거른 출력(read()와 같은 식)으로 읽어도 결과가 같아야 한다
+        val filtered = javaClass.classLoader!!.getResource("batterystats_history_sample_filtered.txt")!!.readText()
+        assertEquals(BatteryHistory.parse(sample, utc), BatteryHistory.parse(filtered, utc))
+    }
+
+    @Test
+    fun missingTimeLinesAnchorToNow() {
+        // 오래된 기록 파일이 밀려나 시각 줄이 없으면 마지막 기록을 지금으로 본다
+        val text = "  +1h00m00s000ms (2) 090 +screen\n  +2h00m00s000ms (2) 080 -screen"
+        val p = BatteryHistory.parse(text, utc, now = 10_000_000L)
+        assertEquals(listOf(10_000_000L - 3_600_000L, 10_000_000L), p.map { it.time })
+        assertEquals(emptyList<BatteryHistory.Point>(), BatteryHistory.parse(text, utc))
     }
 }

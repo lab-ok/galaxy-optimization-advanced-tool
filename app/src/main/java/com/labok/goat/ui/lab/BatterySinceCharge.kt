@@ -56,6 +56,16 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     var showAll by remember { mutableStateOf(false) }
     var cycles by remember { mutableStateOf(BatteryCycles.cycles(context)) }
     var history by remember { mutableStateOf<List<BatteryHistory.Point>?>(null) }
+    var historyLoaded by remember { mutableStateOf(false) }
+    // 시스템 배터리 기록은 통계와 따로 읽는다(기록이 길면 오래 걸려 통계 표시를 늦추지 않게)
+    LaunchedEffect(shizuku) {
+        if (shizuku != ShizukuAccess.State.READY) return@LaunchedEffect
+        while (true) {
+            history = withContext(Dispatchers.IO) { BatteryHistory.read() }
+            historyLoaded = true
+            delay(60_000)
+        }
+    }
     LaunchedEffect(shizuku) {
         if (shizuku != ShizukuAccess.State.READY) return@LaunchedEffect
         while (true) {
@@ -66,7 +76,6 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
             }
             names = n
             cycles = BatteryCycles.cycles(context)
-            history = withContext(Dispatchers.IO) { BatteryHistory.read() }
             stats = s
             loaded = true
             delay(60_000)
@@ -97,16 +106,14 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
         Text("% 사용", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
     }
     if (charging) Text("현재 충전 중입니다. 충전기를 분리하면 시스템이 새로 집계합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-    // 마지막 충전 이후 기록 그래프(시스템 배터리 기록): 잔량 흐름과 0%까지의 예측, 충전·화면 켜짐·깨어 있음, 시간대별 사용량
-    history?.let { h ->
-        Spacer(Modifier.height(Gap.Card))
-        Text("마지막 충전 이후 기록", fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text("점선은 지금처럼 사용할 때 0%가 되는 예상 시점입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(Gap.Item))
-        // 예측은 그래프와 같은 자료(마지막 충전 이후 평균 소모)로 계산한다
-        val now = System.currentTimeMillis()
-        val remain = if (level != null && !charging) BatteryHistory.drainPerHour(h, now)?.let { (level / it * 3_600_000L).toLong() } else null
-        BatteryHistorySection(h, now, remain)
+    // 마지막 충전 이후 시간대별 사용량(시스템 배터리 기록, 시안 7): 화면 켜짐에 쓴 양과 대기에 쓴 양을 나눠 본다
+    Spacer(Modifier.height(Gap.Card))
+    Text("시간대별 사용량", fontWeight = FontWeight.SemiBold, color = c.ink)
+    Text("마지막 충전 이후 시간마다 화면을 켜고 쓴 양과 꺼진 채 줄어든 양입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+    Spacer(Modifier.height(Gap.Item))
+    when (val h = history) {
+        null -> Text(if (historyLoaded) "시스템 배터리 기록을 불러오지 못했습니다." else "시스템 배터리 기록을 불러오는 중…", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        else -> BatteryHistorySection(h, System.currentTimeMillis())
     }
     Spacer(Modifier.height(Gap.Item))
     UseRow("화면 켜짐", s.screenOnMs, s.screenOnPct)
