@@ -203,7 +203,7 @@
             android:name=".ui.lab.TxtShareTileService"
             android:enabled="false"
             android:exported="true"
-            android:icon="@drawable/ic_stat_goat"
+            android:icon="@drawable/ic_tile_txt"
             android:label="TXT로 공유"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>

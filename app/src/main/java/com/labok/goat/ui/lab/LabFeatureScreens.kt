@@ -46,6 +46,7 @@ import com.labok.goat.data.lab.AirplaneRadios
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.LabSetting
 import com.labok.goat.data.lab.PrivacyDot
+import com.labok.goat.data.lab.QsGrid
 import com.labok.goat.data.lab.ScreenMode
 import com.labok.goat.data.lab.StatusBarHider
 import com.labok.goat.data.shizuku.ShizukuAccess
@@ -250,7 +251,7 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val w = rememberLabWriter()
-    LabPage(contentPadding) {
+    LabPage(contentPadding, more = listOf { QsGridCard(w) }) {
         val setting = remember(w.version) { ScreenMode.active(context) }
         val now = remember(w.version) { setting?.read(context) }
         Text(Copy.LAB_SCREEN_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -288,6 +289,34 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
             }
         }
     }
+}
+
+/** 빠른 설정 타일 격자 바꿔 보기([QsGrid]). 기기가 이 값을 읽는지는 바꾼 뒤 빠른 패널을 내려 봐야 안다. */
+@Composable
+private fun ColumnScope.QsGridCard(w: LabWriter) {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    val column = remember(w.version) { QsGrid.column.read(context) }
+    val row = remember(w.version) { QsGrid.row.read(context) }
+    Text(Copy.LAB_QS_GRID_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+    Text(Copy.LAB_QS_GRID_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+    Spacer(Modifier.height(Gap.Item))
+    Text("${Copy.LAB_QS_GRID_COLUMN} · ${QsGrid.column.key} = ${column ?: "-"}", color = c.ink, style = MaterialTheme.typography.labelMedium)
+    Spacer(Modifier.height(Gap.Item))
+    LiquidChips(options = QsGrid.COLUMNS, selected = column ?: "", label = { "${it}개" }, onSelect = { w.write(QsGrid.column, it) })
+    Spacer(Modifier.height(Gap.Section))
+    Text("${Copy.LAB_QS_GRID_ROW} · ${QsGrid.row.key} = ${row ?: "-"}", color = c.ink, style = MaterialTheme.typography.labelMedium)
+    Spacer(Modifier.height(Gap.Item))
+    LiquidChips(options = QsGrid.ROWS, selected = row ?: "", label = { "${it}줄" }, onSelect = { w.write(QsGrid.row, it) })
+    Spacer(Modifier.height(Gap.Item))
+    Text(Copy.LAB_QS_GRID_TRY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+    Spacer(Modifier.height(Gap.Item))
+    val changed = remember(w.version) { QsGrid.column.changed(context) || QsGrid.row.changed(context) }
+    LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = {
+        w.restore(QsGrid.column)
+        w.restore(QsGrid.row)
+    })
+    RestoreNotice(w)
 }
 
 /** 삼성 화면 모드 값별 이름과 설명([ScreenMode.SAMSUNG_VALUES]). */

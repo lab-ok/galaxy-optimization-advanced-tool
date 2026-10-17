@@ -28,7 +28,6 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.labok.goat.data.lab.BatteryCycles
 import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
@@ -107,59 +106,6 @@ internal fun LiquidBar(fraction: Float, modifier: Modifier = Modifier, height: D
             val amp = (h * 0.18f).coerceAtMost(2.dp.toPx())
             if (back != null && back > 0f) drawPath(waterPath(size.width * back, h, t + 1.3f, amp, 1.5.dp.toPx()), c.ink.copy(alpha = 0.28f))
             if (fill > 0f) drawPath(waterPath(size.width * fill, h, t, amp, 1.5.dp.toPx()), c.ink)
-        }
-    }
-}
-
-/**
- * 지난 충전 주기 기둥 그래프(오래된 것 왼쪽 → 최근 오른쪽). 기둥 높이는 그 주기처럼 쓰면 완충으로 가는 시간(완충 환산),
- * 진한 물은 그중 화면 켜짐 몫, 옅은 물은 꺼짐(대기) 몫이다. 기둥은 왼쪽부터 차례로 차오른다.
- */
-@Composable
-internal fun LiquidCycleColumns(cycles: List<BatteryCycles.Cycle>, modifier: Modifier = Modifier) {
-    val c = LocalLiquid.current
-    val t = rememberWaveTime()
-    val list = cycles.filter { it.usedPct >= 3 && it.onBatteryMs > 0 }.sortedBy { it.start }
-    if (list.isEmpty()) return
-    val hours = list.map { it.onBatteryMs * 100.0 / it.usedPct / 3_600_000.0 }
-    val top = (hours.maxOrNull() ?: 1.0).coerceAtLeast(1.0)
-    val fills = list.mapIndexed { i, _ -> rememberFill((hours[i] / top).toFloat(), delayMs = 70L * i) }
-    val measurer = rememberTextMeasurer()
-    val fmt = remember { SimpleDateFormat("M/d", Locale.KOREA) }
-    val small = TextStyle(fontFamily = GalaxyFont, fontSize = 11.sp, color = c.muted)
-    val value = TextStyle(fontFamily = GalaxyFont, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = c.ink)
-    Canvas(modifier.fillMaxWidth().height(150.dp).semantics { contentDescription = "충전 주기 ${list.size}회의 완충 환산 시간 그래프" }) {
-        val labelH = 16.dp.toPx()
-        val valueH = 16.dp.toPx()
-        val chartH = size.height - labelH - valueH
-        val slot = size.width / list.size
-        val colW = (slot * 0.56f).coerceAtMost(34.dp.toPx())
-        list.forEachIndexed { i, cy ->
-            val x = slot * i + (slot - colW) / 2
-            val colH = chartH * fills[i]
-            val y0 = valueH + chartH - colH
-            val r = CornerRadius(colW / 2.6f)
-            val col = Path().apply { addRoundRect(RoundRect(x, y0, x + colW, valueH + chartH, r, r, CornerRadius.Zero, CornerRadius.Zero)) }
-            // 물기둥: 옅은 물(전체) 위에 화면 켜짐 몫만큼 진한 물이 바닥부터 찬다. 진한 물 위쪽 면이 출렁인다
-            drawPath(col, c.ink.copy(alpha = 0.28f))
-            val onShare = (cy.screenOnMs.toFloat() / cy.onBatteryMs).coerceIn(0f, 1f)
-            val surface = valueH + chartH - colH * onShare
-            val amp = 1.6.dp.toPx()
-            val dark = Path().apply {
-                moveTo(x, valueH + chartH)
-                var dx = 0f
-                while (dx <= colW) {
-                    lineTo(x + dx, surface + amp * sin(dx / (colW / 3f) + t * 2.2f + i))
-                    dx += 1.5.dp.toPx()
-                }
-                lineTo(x + colW, valueH + chartH)
-                close()
-            }
-            clipPath(col) { drawPath(dark, c.ink) }
-            val v = measurer.measure("${hours[i].roundToInt()}h", value)
-            drawText(v, topLeft = Offset(x + (colW - v.size.width) / 2, (y0 - v.size.height - 2.dp.toPx()).coerceAtLeast(0f)))
-            val d = measurer.measure(fmt.format(Date(cy.start)), small)
-            drawText(d, topLeft = Offset(x + (colW - d.size.width) / 2, size.height - d.size.height))
         }
     }
 }

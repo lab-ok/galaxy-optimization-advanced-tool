@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 'TXT로 공유' 바로가기 아이콘: 밝은 원 위에 TXT 문서(ic_tile_txt와 같은 그림). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp" android:viewportWidth="36" android:viewportHeight="36">
+    <path android:pathData="M18,0a18,18 0 1,0 0.001,0z" android:fillColor="#FFF4EEF6" />
+    <group android:translateX="6" android:translateY="6">
+        <path android:pathData="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z" android:strokeColor="#FF3A2C40" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" />
+        <path android:pathData="M14 2.5V8h5.5" android:strokeColor="#FF3A2C40" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" />
+        <path android:pathData="M6.9 12.6h3.1M8.45 12.6v5M11 12.6l2.2 5M13.2 12.6l-2.2 5M14.2 12.6h3.1M15.75 12.6v5" android:strokeColor="#FF3A2C40" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeLineJoin="round" />
+    </group>
+</vector>

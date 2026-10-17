@@ -66,7 +66,7 @@ object MemoShare {
             val shortcut = android.content.pm.ShortcutInfo.Builder(context, SHORTCUT_ID)
                 .setShortLabel("클립보드 TXT로 공유")
                 .setLongLabel("클립보드를 TXT로 공유")
-                .setIcon(android.graphics.drawable.Icon.createWithResource(context, com.labok.goat.R.drawable.ic_stat_goat))
+                .setIcon(android.graphics.drawable.Icon.createWithResource(context, com.labok.goat.R.drawable.ic_shortcut_txt))
                 .setIntent(intent)
                 .build()
             runCatching { sm.dynamicShortcuts = listOf(shortcut) }

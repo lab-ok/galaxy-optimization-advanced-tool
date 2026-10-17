@@ -3,6 +3,14 @@ package com.labok.goat.ui.lab
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.widthIn
+import android.content.Context
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.labok.goat.data.lab.BatteryCycles
 import com.labok.goat.data.lab.BatteryHistory
 import com.labok.goat.data.lab.BatteryMonitor
 import com.labok.goat.data.lab.BatteryStatsReader
@@ -60,8 +67,7 @@ private enum class RankTab(val label: String) { APPS("앱별"), PARTS("항목별
  * 1) 마지막 충전 이후: 쓴 양, 화면 켜짐·대기, 지금처럼 쓰면 얼마나 가는지
  * 2) 시간대별 사용량: 화면 켜짐·대기로 나눈 물기둥([BatteryHistorySection])
  * 3) 충전 기록: 몇 %에서 몇 %까지 얼마나 걸려 충전했는지
- * 4) 사용량 순위: 앱별·항목별 탭
- * 5) 지난 충전 주기와 자동 기록 스위치
+ * 4) 사용량 순위: 앱별(아이콘과 함께)·항목별 탭
  * 시스템 배터리 통계([BatteryStatsReader])와 기록([BatteryHistory])을 Shizuku로 읽는다. 화면을 여는 동안 1분마다 다시 읽는다.
  */
 @Composable
@@ -72,7 +78,7 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     var stats by remember { mutableStateOf<SinceCharge?>(null) }
     var names by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
     var loaded by remember { mutableStateOf(false) }
-    var cycles by remember { mutableStateOf(BatteryCycles.cycles(context)) }
+    var icons by remember { mutableStateOf<Map<Int, ImageBitmap?>>(emptyMap()) }
     var history by remember { mutableStateOf<List<BatteryHistory.Point>?>(null) }
     var historyLoaded by remember { mutableStateOf(false) }
     // 시스템 배터리 기록은 통계와 따로 읽는다(기록이 길면 오래 걸려 통계 표시를 늦추지 않게)
@@ -89,11 +95,11 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
         while (true) {
             val s = withContext(Dispatchers.IO) { BatteryStatsReader.read() }
             val n = withContext(Dispatchers.IO) { s?.apps?.associate { it.uid to BatteryStatsReader.uidName(context, it.uid) }.orEmpty() }
-            withContext(Dispatchers.IO) {
-                s?.let { BatteryCycles.update(context, it) { uid -> n[uid] ?: BatteryStatsReader.uidName(context, uid) } }
-            }
+            // 아이콘은 처음 본 앱만 새로 읽는다(1분마다 다시 읽을 때 같은 앱을 또 그리지 않게)
+            val known = icons
+            val ic = withContext(Dispatchers.IO) { s?.apps?.associate { it.uid to (if (it.uid in known) known[it.uid] else appIcon(context, it.uid)) }.orEmpty() }
             names = n
-            cycles = BatteryCycles.cycles(context)
+            icons = ic
             stats = s
             loaded = true
             delay(60_000)
@@ -137,10 +143,8 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     }
 
     if (s.apps.isNotEmpty() || s.system.isNotEmpty()) {
-        Card("사용량 순위") { UsageRanking(s, names) }
+        Card("사용량 순위") { UsageRanking(s, names, icons) }
     }
-
-    Card("지난 충전 주기") { PastCycles(cycles) }
 }
 
 /** 카드 하나: 제목, 설명(있으면), 내용. 카드 사이는 [Gap.Card]만큼 띄운다. */
@@ -203,7 +207,7 @@ private fun ChargeRow(ch: BatteryHistory.Charge) {
 
 /** 사용량 순위: 앱별·항목별 탭. 앱 막대는 진한 물이 포그라운드, 옅은 물이 백그라운드 몫(사용 시간 비율로 나눈 추정)이다. */
 @Composable
-private fun UsageRanking(s: SinceCharge, names: Map<Int, String>) {
+private fun UsageRanking(s: SinceCharge, names: Map<Int, String>, icons: Map<Int, ImageBitmap?>) {
     val c = LocalLiquid.current
     var tab by remember { mutableStateOf(if (s.apps.isNotEmpty()) RankTab.APPS else RankTab.PARTS) }
     var showAll by remember { mutableStateOf(false) }
@@ -223,7 +227,7 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>) {
                     a.frontMs.takeIf { it >= 60_000 }?.let { "포그라운드 ${duration(it)} · ${percent(share * front)}" },
                     a.backMs.takeIf { it >= 60_000 }?.let { "백그라운드 ${duration(it)} · ${percent(share * (1 - front))}" }
                 ).joinToString("  ")
-                ShareRow(names[a.uid] ?: "uid ${a.uid}", share, detail, dark = share * front)
+                ShareRow(names[a.uid] ?: "uid ${a.uid}", share, detail, dark = share * front, icon = icons[a.uid], withIcon = true)
             }
             if (s.apps.size > TOP_APPS) {
                 Spacer(Modifier.height(Gap.Item))
@@ -242,34 +246,6 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>) {
     }
 }
 
-/** 지난 충전 주기(최근 것부터): 날짜, 배터리로 쓴 시간·화면 켜짐·쓴 양, 완충 환산, 많이 쓴 앱 셋. */
-@Composable
-private fun PastCycles(cycles: List<BatteryCycles.Cycle>) {
-    val c = LocalLiquid.current
-    if (cycles.isEmpty()) {
-        Text("충전할 때마다 직전 주기가 여기에 남습니다(최근 ${BatteryCycles.KEEP}회). 다음 충전 전에 이 화면을 한 번 열면 빠짐없이 남습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-        return
-    }
-    Text("기둥 높이는 그 주기처럼 쓸 때 100%를 다 쓰는 데 걸리는 시간이고, 진한 물은 그중 화면 켜짐입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-    Spacer(Modifier.height(Gap.Item))
-    // 기둥 높이는 완충 환산 시간, 진한 물은 그중 화면 켜짐 몫
-    LiquidCycleColumns(cycles)
-    val fmt = SimpleDateFormat("M월 d일 a h:mm", Locale.KOREA)
-    // 기둥 그래프에 이미 다 보이므로 글 목록은 최근 세 번만 펼쳐 두고 나머지는 '모두 보기'로 편다
-    var all by remember { mutableStateOf(false) }
-    (if (all) cycles else cycles.take(3)).forEach { cy ->
-        Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-            Text("${fmt.format(Date(cy.start))}부터", color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-            Text("배터리 사용 ${duration(cy.onBatteryMs)} · 화면 켜짐 ${duration(cy.screenOnMs)} · ${cy.usedPct}% 사용", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            if (cy.apps.isNotEmpty()) Text(cy.apps.joinToString(" · ") { (n, share) -> "$n ${percent(share)}" }, color = c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        }
-    }
-    if (cycles.size > 3) {
-        Spacer(Modifier.height(Gap.Item))
-        LiquidButton(if (all) "최근 3번만 보기" else "모두 보기(${cycles.size}번)", modifier = Modifier.fillMaxWidth(), primary = false, onClick = { all = !all })
-    }
-}
-
 @Composable
 private fun UseRow(name: String, ms: Long, pct: Int) {
     val per = BatteryStatsReader.perHour(pct, ms)
@@ -285,11 +261,26 @@ private fun Line(name: String, value: String) {
     }
 }
 
-/** 이름·몫(%)·막대(옅은 물 = 전체 몫, 진한 물 = 그중 [dark]), 아래에 작은 설명 한 줄. */
+/** 이름·몫(%)·막대(옅은 물 = 전체 몫, 진한 물 = 그중 [dark]), 아래에 작은 설명 한 줄. [withIcon]이면 왼쪽에 앱 아이콘([icon], 없으면 빈 자리). */
 @Composable
-private fun ShareRow(name: String, share: Float, detail: String, dark: Float = share) {
+private fun ShareRow(name: String, share: Float, detail: String, dark: Float = share, icon: ImageBitmap? = null, withIcon: Boolean = false) {
     val c = LocalLiquid.current
-    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (withIcon) {
+            Box(Modifier.size(ICON_DP), contentAlignment = Alignment.Center) {
+                if (icon != null) Image(icon, contentDescription = null, modifier = Modifier.size(ICON_DP))
+                else Text(name.take(1), color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+            }
+            Spacer(Modifier.width(12.dp))
+        }
+        ShareRowBody(name, share, detail, dark, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun ShareRowBody(name: String, share: Float, detail: String, dark: Float, modifier: Modifier) {
+    val c = LocalLiquid.current
+    Column(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(name, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             Text(percent(share), color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 8.dp))
@@ -301,6 +292,16 @@ private fun ShareRow(name: String, share: Float, detail: String, dark: Float = s
             Text(detail, color = c.muted, style = MaterialTheme.typography.labelSmall)
         }
     }
+}
+
+private val ICON_DP = 32.dp
+
+/** 앱 uid의 아이콘. 시스템 묶음(uid 1000 등)은 안드로이드 시스템 아이콘, 지워진 앱은 null. 작업 스레드에서 부른다. */
+private fun appIcon(context: Context, uid: Int): ImageBitmap? {
+    val pm = context.packageManager
+    val pkg = if (BatteryStatsReader.systemUidLabel(uid) != null) "android" else pm.getPackagesForUid(uid)?.firstOrNull() ?: return null
+    val px = (32 * context.resources.displayMetrics.density).toInt().coerceAtLeast(48)
+    return runCatching { pm.getApplicationIcon(pkg).toBitmap(px, px).asImageBitmap() }.getOrNull()
 }
 
 private fun percent(share: Float): String = if (share > 0f && share < 0.01f) "1% 미만" else "${(share * 100).roundToInt()}%"

@@ -164,3 +164,14 @@ object ScreenMode {
         else -> null
     }
 }
+
+/**
+ * 빠른 설정 타일 격자(`qs_tile_column`·`qs_tile_row`, secure). 예전 One UI가 읽던 값이라 기기·버전에 따라 무시될 수 있다.
+ * 키가 없으면 시스템 기본 격자를 쓴다.
+ */
+object QsGrid {
+    val column = LabSetting("secure", "qs_tile_column", "빠른 설정 한 줄 타일 수")
+    val row = LabSetting("secure", "qs_tile_row", "빠른 설정 타일 줄 수")
+    val COLUMNS = listOf("4", "5", "6", "7")
+    val ROWS = listOf("3", "4", "5", "6")
+}
