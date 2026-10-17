@@ -44,6 +44,18 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.14.0",
+        "2026-10-18",
+        "앱 아이콘과 로고를 새 염소 캐릭터로 바꿨습니다.",
+        listOf(
+            "변경" to listOf(
+                "앱 아이콘과 로고를 새 염소 캐릭터 그림으로 바꿨습니다.",
+                "로고는 열 때마다 다른 표정으로 나오고, 툭툭 치면 놀라거나 울거나 화를 냅니다.",
+                "숨은 기능을 다듬었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.13.7",
         "2026-10-18",
         "숨은 기능을 다듬었습니다.",

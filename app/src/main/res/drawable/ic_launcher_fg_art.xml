@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 앱 아이콘 앞면: 염소 캐릭터 그림(01_happy)을 적응형 아이콘의 보이는 영역(가운데 72dp)에 꽉 차게 둔다 -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_art"
+    android:inset="16.667%" />

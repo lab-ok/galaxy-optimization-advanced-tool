@@ -176,13 +176,13 @@
             android:name=".ui.lab.FlexTestActivity"
             android:exported="false"
             android:configChanges="density|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden" />
-        <!-- 실험실: 다른 앱 공유 메뉴의 '텍스트 파일로 공유'. 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
+        <!-- 실험실: 다른 앱 공유 메뉴의 'TXT로 공유'. 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
         <activity
             android:name=".ui.lab.MemoShareActivity"
             android:enabled="false"
             android:exported="true"
             android:excludeFromRecents="true"
-            android:label="텍스트 파일로 공유"
+            android:label="TXT로 공유"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
@@ -191,7 +191,26 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-        <!-- 공유용 임시 파일(실험실 텍스트 파일로 공유) -->
+        <!-- 실험실: 클립보드 글을 TXT로 공유하는 투명 화면(빠른 설정 타일·아이콘 길게 누른 바로가기에서 연다) -->
+        <activity
+            android:name=".ui.lab.ClipShareActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <!-- 실험실: 빠른 설정 타일 'TXT로 공유'. 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
+        <service
+            android:name=".ui.lab.TxtShareTileService"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_goat"
+            android:label="TXT로 공유"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <!-- 공유용 임시 파일(실험실 TXT로 공유) -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files"

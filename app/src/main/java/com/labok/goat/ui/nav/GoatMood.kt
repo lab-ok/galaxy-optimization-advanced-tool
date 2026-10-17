@@ -8,14 +8,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.VectorPainter
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.res.painterResource
 import com.labok.goat.R
 import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.ui.text.Copy
+import kotlin.random.Random
 import kotlinx.coroutines.delay
 
 /** 염소 표정. */
@@ -28,6 +27,10 @@ enum class Mood { CALM, SQUINT, CRY, ANGRY }
  */
 class GoatMoodState {
     var mood by mutableStateOf(Mood.CALM)
+        private set
+
+    /** 지금 표정 묶음 안에서 고른 그림 번호(묶음 크기로 나눈 나머지를 쓴다). 표정이 바뀔 때마다 새로 고른다. */
+    var variant by mutableIntStateOf(Random.nextInt(1000))
         private set
     internal var presses by mutableIntStateOf(0)
         private set
@@ -49,6 +52,8 @@ class GoatMoodState {
         while (taps.isNotEmpty() && now - taps.first() > WINDOW_MS) taps.removeFirst()
         val before = mood
         mood = moodAt(streak)
+        // 표정 묶음이 바뀌면 그 묶음 안에서 그림을 새로 고른다(같은 묶음이면 그대로 둬서 깜빡이지 않게)
+        if (mood != before) variant = Random.nextInt(1000)
         presses++
         startedCrying = mood == Mood.CRY && before != Mood.CRY
         return mood == Mood.ANGRY && before != Mood.ANGRY
@@ -56,6 +61,8 @@ class GoatMoodState {
 
     internal fun calm() {
         mood = Mood.CALM
+        // 평소 얼굴도 돌아올 때마다 랜덤으로
+        variant = Random.nextInt(1000)
     }
 
     /**
@@ -109,17 +116,33 @@ fun rememberGoatMood(): GoatMoodState {
     return s
 }
 
-/** 지금 표정의 염소 그림. */
+/**
+ * 염소 캐릭터 그림 20장(2026-10-18, docs: ~/claude_workspace/goat/branding/goat_girl_icons_261018).
+ * 평소([Mood.CALM])는 편한 표정 가운데 랜덤, 툭툭 치면 당황([Mood.SQUINT])·울음([Mood.CRY])·화남([Mood.ANGRY]) 묶음에서 고른다.
+ */
+private val CALM_FACES = intArrayOf(
+    R.drawable.goat_face_01, R.drawable.goat_face_02, R.drawable.goat_face_10, R.drawable.goat_face_11, R.drawable.goat_face_12,
+    R.drawable.goat_face_13, R.drawable.goat_face_15, R.drawable.goat_face_16, R.drawable.goat_face_17, R.drawable.goat_face_18,
+    R.drawable.goat_face_19, R.drawable.goat_face_20
+)
+
+/** 당황: 놀람(03)·갸우뚱(08)·질끈(14). */
+private val STARTLED_FACES = intArrayOf(R.drawable.goat_face_03, R.drawable.goat_face_08, R.drawable.goat_face_14)
+
+/** 울음: 울먹(04)·엉엉(05). */
+private val CRY_FACES = intArrayOf(R.drawable.goat_face_04, R.drawable.goat_face_05)
+
+/** 화남: 화남(06)·삐침(07)·어지러움(09). */
+private val ANGRY_FACES = intArrayOf(R.drawable.goat_face_06, R.drawable.goat_face_07, R.drawable.goat_face_09)
+
+/** 지금 표정의 염소 그림. 정사각형 그림이라 그리는 쪽에서 로고 물방울 모양으로 잘라 그린다. */
 @Composable
-fun goatPainter(mood: Mood): VectorPainter {
-    val calm = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat))
-    val squint = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat_squint))
-    val cry = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat_cry))
-    val angry = rememberVectorPainter(ImageVector.vectorResource(R.drawable.ic_goat_angry))
-    return when (mood) {
-        Mood.CALM -> calm
-        Mood.SQUINT -> squint
-        Mood.CRY -> cry
-        Mood.ANGRY -> angry
+fun goatPainter(mood: Mood, variant: Int): Painter {
+    val faces = when (mood) {
+        Mood.CALM -> CALM_FACES
+        Mood.SQUINT -> STARTLED_FACES
+        Mood.CRY -> CRY_FACES
+        Mood.ANGRY -> ANGRY_FACES
     }
+    return painterResource(faces[variant % faces.size])
 }

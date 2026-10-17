@@ -6,7 +6,7 @@ import android.os.Bundle
 import com.labok.goat.data.lab.MemoShare
 
 /**
- * 다른 앱의 공유 메뉴에 나타나는 '텍스트 파일로 공유': 받은 글을 임시 txt 파일로 바꿔 곧바로 공유 창을 다시 연다.
+ * 다른 앱의 공유 메뉴에 나타나는 'TXT로 공유': 받은 글을 임시 txt 파일로 바꿔 곧바로 공유 창을 다시 연다.
  * 공유를 마치고 돌아오면 파일을 지우고 닫는다. 화면은 그리지 않는다(투명).
  */
 class MemoShareActivity : Activity() {

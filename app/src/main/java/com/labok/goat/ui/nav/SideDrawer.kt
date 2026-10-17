@@ -121,17 +121,20 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 배터리 상태와 15분 기록(잔량 그래프·시간당 소모량). */
     LAB_BATTERY(Copy.FEATURE_LAB_BATTERY, NavIcon.BATTERY),
 
+    /** 실험실: 긴 글을 붙여넣으면 TXT 파일로 만들어 공유한다(다른 앱 공유 메뉴의 'TXT로 공유'와 같은 일). */
+    LAB_NOTE(Copy.FEATURE_LAB_NOTE, NavIcon.NOTE),
+
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */
     SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR)
     ;
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_BATTERY, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, INFO, GEAR }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, INFO, GEAR }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -347,6 +350,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.PALETTE -> palette(color, s)
             NavIcon.FLEX -> flex(color, s)
             NavIcon.BATTERY -> battery(color, s)
+            NavIcon.NOTE -> note(color, s)
             NavIcon.INFO -> info(color, s)
             NavIcon.GEAR -> gear(color, s)
         }
@@ -572,6 +576,22 @@ private fun DrawScope.battery(c: Color, s: Stroke) {
     drawLine(c, p(10f, 2.6f), p(14f, 2.6f), s.width, StrokeCap.Round)
     drawLine(c, p(10f, 16.5f), p(14f, 16.5f), s.width * 1.4f, StrokeCap.Round)
     drawLine(c, p(10f, 13f), p(14f, 13f), s.width * 1.4f, StrokeCap.Round)
+}
+
+/** TXT로 공유: 귀퉁이가 접힌 종이와 글줄 세 개. */
+private fun DrawScope.note(c: Color, s: Stroke) {
+    val paper = Path().apply {
+        moveTo(u(6f), u(3.5f))
+        lineTo(u(14.5f), u(3.5f))
+        lineTo(u(18.5f), u(7.5f))
+        lineTo(u(18.5f), u(20.5f))
+        lineTo(u(6f), u(20.5f))
+        close()
+    }
+    drawPath(paper, c, style = s)
+    drawLine(c, p(9f, 11f), p(15.5f, 11f), s.width, StrokeCap.Round)
+    drawLine(c, p(9f, 14.2f), p(15.5f, 14.2f), s.width, StrokeCap.Round)
+    drawLine(c, p(9f, 17.4f), p(13f, 17.4f), s.width, StrokeCap.Round)
 }
 
 private fun DrawScope.flask(c: Color, s: Stroke) {

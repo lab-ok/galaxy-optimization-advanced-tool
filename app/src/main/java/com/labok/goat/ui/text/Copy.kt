@@ -64,6 +64,12 @@ object Copy {
     const val FEATURE_APP_SIZE = "앱별 화면 배율 설정"
     const val FEATURE_LAB_TOOLS = "조사 도구"
     const val FEATURE_LAB_BATTERY = "배터리 모니터링"
+    const val FEATURE_LAB_NOTE = "TXT로 공유"
+    const val LAB_NOTE_BODY = "긴 글을 TXT 파일로 만들어 공유합니다. 공유를 마치고 돌아오면 파일과 글을 지웁니다."
+    const val LAB_NOTE_PASTE_SHARE = "붙여넣고 공유"
+    const val LAB_NOTE_SHARE_MENU = "다른 앱 공유 메뉴의 'TXT로 공유', 빠른 설정 타일, GOAT 아이콘 길게 누르기로도 됩니다."
+    const val LAB_NOTE_SHARE = "파일로 공유"
+    const val LAB_NOTE_HINT = "여기에 붙여넣으면 바로 TXT 파일로 공유합니다."
 
     // 실험실: 배터리 모니터링
     const val LAB_BATTERY_NOW = "지금 배터리"

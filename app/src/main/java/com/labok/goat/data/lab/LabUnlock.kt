@@ -18,7 +18,7 @@ object LabUnlock {
 
     fun load(context: Context) {
         unlocked = prefs(context).getBoolean("unlocked", false)
-        // '텍스트 파일로 공유'는 실험실을 연 경우에만 다른 앱 공유 메뉴에 보인다
+        // 'TXT로 공유'는 실험실을 연 경우에만 다른 앱 공유 메뉴에 보인다
         runCatching { MemoShare.setShareTarget(context, unlocked) }
     }
 
