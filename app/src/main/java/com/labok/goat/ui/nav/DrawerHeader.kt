@@ -128,11 +128,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
                     }
                     inward(headX(), cy(), 1800f).let { head.poke(p.x, p.y, it.x, it.y, headH * 0.6f) }
                     if (hypot(p.x - logoX, p.y - cy()) < logoS * 0.7f) {
-                        if (mood.press()) {
-                            haptics.reject()
-                        } else if (mood.startedCrying) {
-                            haptics.snap()
-                        }
+                        if (mood.press()) haptics.snap()
                         val k = mood.impulse
                         inward(logoX, cy(), 1400f * k).let { logo.poke(p.x, p.y, it.x, it.y, logoS * 0.5f) }
                         drop.poke(logoX, cy(), (p.x - logoX) * -14f * k, (p.y - cy()) * -14f * k, logoS)

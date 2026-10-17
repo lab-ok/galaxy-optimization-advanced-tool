@@ -15,21 +15,20 @@ import com.labok.goat.R
 import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.ui.text.Copy
 import kotlin.random.Random
-import kotlinx.coroutines.delay
 
 /** 염소 표정. */
 enum class Mood { CALM, SQUINT, CRY, ANGRY }
 
 /**
- * 염소 아이콘의 표정(사이드바 머리·앱 정보·홈 머리). 누를 때마다 잠깐 찡그리고, 쉬지 않고 이어서 [CRY_AT]번 누르면 울고,
- * 계속 누르면 [CYCLE]번마다 화남(볼이 빨개짐)과 울음이 번갈아 나온다. 손을 떼고 조금 지나면 평소 얼굴로 돌아온다.
- * '이어서'는 앞 누름과 [STREAK_GAP_MS] 안에 다시 누른 것을 말한다.
+ * 염소 아이콘의 표정(사이드바 머리·앱 정보·홈 머리). 화면을 열면 편한 표정 가운데 하나로 시작하고, 누르면 당황·울음·화남
+ * 그림 가운데 하나로 한 번만 바뀐 뒤 그대로 둔다(저절로 돌아오거나 연달아 바뀌지 않는다).
+ * 앞 누름과 [STREAK_GAP_MS] 안에 다시 누르면 같은 누름으로 보고 그림을 바꾸지 않는다. 손을 뗐다가 다시 누르면 한 번 더 바뀐다.
  */
 class GoatMoodState {
     var mood by mutableStateOf(Mood.CALM)
         private set
 
-    /** 지금 표정 묶음 안에서 고른 그림 번호(묶음 크기로 나눈 나머지를 쓴다). 표정이 바뀔 때마다 새로 고른다. */
+    /** 지금 표정 묶음 안에서 고른 그림 번호(묶음 크기로 나눈 나머지를 쓴다). */
     var variant by mutableIntStateOf(Random.nextInt(1000))
         private set
     internal var presses by mutableIntStateOf(0)
@@ -42,27 +41,20 @@ class GoatMoodState {
     /** 지금까지 쉬지 않고 이어서 누른 횟수(실험실 열기용). */
     val streakNow get() = streak
 
-    /** 눌렀다. 표정을 바꾸고, 화가 난 순간이면 true(더 단단한 진동용). 울기 시작한 순간은 [startedCrying]. */
-    var startedCrying = false
-        private set
-
+    /** 눌렀다. 이어서 누른 첫 번째일 때만 반응 그림을 새로 골라 바꾸고 true를 돌려준다. */
     fun press(now: Long = System.currentTimeMillis()): Boolean {
         streak = if (taps.isNotEmpty() && now - taps.last() <= STREAK_GAP_MS) streak + 1 else 1
         taps.addLast(now)
         while (taps.isNotEmpty() && now - taps.first() > WINDOW_MS) taps.removeFirst()
-        val before = mood
-        mood = moodAt(streak)
-        // 표정 묶음이 바뀌면 그 묶음 안에서 그림을 새로 고른다(같은 묶음이면 그대로 둬서 깜빡이지 않게)
-        if (mood != before) variant = Random.nextInt(1000)
         presses++
-        startedCrying = mood == Mood.CRY && before != Mood.CRY
-        return mood == Mood.ANGRY && before != Mood.ANGRY
-    }
-
-    internal fun calm() {
-        mood = Mood.CALM
-        // 평소 얼굴도 돌아올 때마다 랜덤으로
-        variant = Random.nextInt(1000)
+        if (streak != 1) return false
+        // 반응 그림 8장 가운데 지금과 다른 한 장
+        val current = REACTIONS.indexOfFirst { it.first == mood && it.second == variant % faceCount(mood) }
+        var pick = Random.nextInt(REACTIONS.size)
+        if (pick == current) pick = (pick + 1 + Random.nextInt(REACTIONS.size - 1)) % REACTIONS.size
+        mood = REACTIONS[pick].first
+        variant = REACTIONS[pick].second
+        return true
     }
 
     /**
@@ -73,29 +65,12 @@ class GoatMoodState {
 
     companion object {
         const val WINDOW_MS = 3000L
-        const val CRY_AT = 5
-        const val ANGRY_AT = 10
-
-        /** 울음 다음부터 이만큼 누를 때마다 화남 ↔ 울음이 바뀐다. */
-        const val CYCLE = ANGRY_AT - CRY_AT
 
         /** 이 시간 안에 다시 누르면 이어서 누른 것으로 본다(ms). */
         const val STREAK_GAP_MS = 1200L
 
-        /** 이어서 [n]번째 누름의 표정: 찡그림 → 울음 → 화남 → 울음 → 화남 … */
-        fun moodAt(n: Int): Mood = when {
-            n < CRY_AT -> Mood.SQUINT
-            (n - CRY_AT) / CYCLE % 2 == 0 -> Mood.CRY
-            else -> Mood.ANGRY
-        }
-
-        /** 표정이 남아 있는 시간(ms). */
-        fun holdMs(m: Mood) = when (m) {
-            Mood.SQUINT -> 450L
-            Mood.CRY -> 1800L
-            Mood.ANGRY -> 2400L
-            Mood.CALM -> 0L
-        }
+        /** 누르면 고르는 반응 그림(표정 묶음, 묶음 안 번호). */
+        internal val REACTIONS: List<Pair<Mood, Int>> = listOf(Mood.SQUINT, Mood.CRY, Mood.ANGRY).flatMap { m -> (0 until faceCount(m)).map { m to it } }
     }
 }
 
@@ -106,12 +81,6 @@ fun rememberGoatMood(): GoatMoodState {
     // 쉬지 않고 열 번 누르면 숨은 실험실을 연다(어느 염소를 눌러도 같다)
     LaunchedEffect(s.presses) {
         if (s.streakNow >= LabUnlock.TAPS && LabUnlock.unlock(context)) Toast.makeText(context, Copy.LAB_OPENED, Toast.LENGTH_SHORT).show()
-    }
-    // 마지막으로 누른 뒤 표정 시간이 지나면 평소 얼굴로
-    LaunchedEffect(s.presses) {
-        if (s.mood == Mood.CALM) return@LaunchedEffect
-        delay(GoatMoodState.holdMs(s.mood))
-        s.calm()
     }
     return s
 }
@@ -138,11 +107,15 @@ private val ANGRY_FACES = intArrayOf(R.drawable.goat_face_06, R.drawable.goat_fa
 /** 지금 표정의 염소 그림. 정사각형 그림이라 그리는 쪽에서 로고 물방울 모양으로 잘라 그린다. */
 @Composable
 fun goatPainter(mood: Mood, variant: Int): Painter {
-    val faces = when (mood) {
-        Mood.CALM -> CALM_FACES
-        Mood.SQUINT -> STARTLED_FACES
-        Mood.CRY -> CRY_FACES
-        Mood.ANGRY -> ANGRY_FACES
-    }
+    val faces = faces(mood)
     return painterResource(faces[variant % faces.size])
 }
+
+private fun faces(mood: Mood) = when (mood) {
+    Mood.CALM -> CALM_FACES
+    Mood.SQUINT -> STARTLED_FACES
+    Mood.CRY -> CRY_FACES
+    Mood.ANGRY -> ANGRY_FACES
+}
+
+internal fun faceCount(mood: Mood) = faces(mood).size

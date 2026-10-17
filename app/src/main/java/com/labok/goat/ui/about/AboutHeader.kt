@@ -110,11 +110,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
                     val p = down.position
                     if (hypot(p.x - cx(), p.y - cy()) > logoS * 0.75f) return@awaitEachGesture
                     haptics.press()
-                    if (mood.press()) {
-                        haptics.reject()
-                    } else if (mood.startedCrying) {
-                        haptics.snap()
-                    }
+                    if (mood.press()) haptics.snap()
                     val k = mood.impulse
                     // 누른 자리를 안쪽으로 밀어 움푹 들어가게 하고, 염소 방울은 반대로 튕긴다
                     val dx = cx() - p.x
@@ -227,11 +223,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
                     val down = awaitFirstDown()
                     val p = down.position
                     haptics.press()
-                    if (mood.press()) {
-                        haptics.reject()
-                    } else if (mood.startedCrying) {
-                        haptics.snap()
-                    }
+                    if (mood.press()) haptics.snap()
                     if (reduce) return@awaitEachGesture
                     val k = mood.impulse
                     val dx = cx() - p.x
