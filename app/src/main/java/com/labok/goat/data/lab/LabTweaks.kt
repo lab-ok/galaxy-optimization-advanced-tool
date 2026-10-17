@@ -166,14 +166,27 @@ object ScreenMode {
 }
 
 /**
- * 빠른 설정 타일 격자(`qs_tile_column`·`qs_tile_row`, secure). 예전 One UI가 읽던 값이라 기기·버전에 따라 무시될 수 있다.
- * 키가 없으면 시스템 기본 격자를 쓴다.
+ * 빠른 설정 타일 격자. 예전 One UI는 `qs_tile_column`·`qs_tile_row`(secure)를 읽었지만 One UI 8.5(안드로이드 17) 실기기에서는
+ * 값을 써도 패널이 바뀌지 않았다(2026-10-18 진단). 그 기기에는 QuickStar가 쓰는 `quickstar_qs_tile_layout_custom_matrix`(켬)와
+ * `quickstar_qs_tile_layout_custom_matrix_width`가 있어, 지금은 이 너비 값을 바꿔 본다. 시스템 UI가 다시 읽어야 반영될 수 있다.
  */
 object QsGrid {
     val column = LabSetting("secure", "qs_tile_column", "빠른 설정 한 줄 타일 수")
     val row = LabSetting("secure", "qs_tile_row", "빠른 설정 타일 줄 수")
-    val COLUMNS = listOf("4", "5", "6", "7")
-    val ROWS = listOf("3", "4", "5", "6")
+    val matrix = LabSetting("secure", "quickstar_qs_tile_layout_custom_matrix", "빠른 설정 격자 직접 지정")
+    val matrixWidth = LabSetting("secure", "quickstar_qs_tile_layout_custom_matrix_width", "빠른 설정 격자 너비")
+    val WIDTHS = listOf("3", "4", "5", "6", "7", "8")
+
+    /** [처음대로]로 되돌릴 값 전부(예전 키도 바꾼 적이 있으면 함께 되돌린다). */
+    val all = listOf(matrixWidth, matrix, column, row)
+
+    /** 격자 너비를 [value]로: 직접 지정을 켜고 너비를 쓴다. 작업 스레드에서 부른다. */
+    fun writeWidth(context: android.content.Context, value: String): Boolean =
+        (matrix.read(context) == "1" || matrix.write(context, "1")) && matrixWidth.write(context, value)
+
+    /** 시스템 UI를 다시 띄워 격자 값을 다시 읽게 한다(상태 표시줄·빠른 패널이 잠깐 사라졌다 돌아온다). */
+    // force-stop은 상주 앱인 시스템 UI에 듣지 않아(에뮬레이터 확인) 강제 종료 신호로 다시 띄운다
+    fun restartSystemUi(): Boolean = ShizukuAccess.shell("am crash com.android.systemui")?.ok == true
 
     /**
      * 진단 로그용: 시스템 UI가 격자를 어느 값에서 읽는지 찾으려고 빠른 패널과 관련된 설정 키, 시스템 UI 버전,

@@ -89,6 +89,14 @@ private class LabWriter(private val context: Context, private val launch: (suspe
         if (!ok) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
     }
 
+    /** 여러 값을 한 번에 쓰는 동작([block]이 true면 성공). */
+    fun run(block: () -> Boolean) = launch {
+        notice = null
+        val ok = withContext(Dispatchers.IO) { block() }
+        version++
+        if (!ok) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+    }
+
     // 시스템 토스트는 화면 아래에 떠서 긴 화면 맨 아래의 [처음대로] 버튼을 가리므로, 결과는 버튼 바로 아래 글로 알린다
     fun restore(setting: LabSetting) = launch {
         val ok = withContext(Dispatchers.IO) { setting.restore(context) }
@@ -296,25 +304,27 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
 private fun ColumnScope.QsGridCard(w: LabWriter) {
     val c = LocalLiquid.current
     val context = LocalContext.current
-    val column = remember(w.version) { QsGrid.column.read(context) }
-    val row = remember(w.version) { QsGrid.row.read(context) }
+    val scope = rememberCoroutineScope()
+    val width = remember(w.version) { QsGrid.matrixWidth.read(context) }
     Text(Copy.LAB_QS_GRID_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
     Text(Copy.LAB_QS_GRID_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
-    Text("${Copy.LAB_QS_GRID_COLUMN} · ${QsGrid.column.key} = ${column ?: "-"}", color = c.ink, style = MaterialTheme.typography.labelMedium)
+    Text("${Copy.LAB_QS_GRID_WIDTH} · ${QsGrid.matrixWidth.key} = ${width ?: "-"}", color = c.ink, style = MaterialTheme.typography.labelMedium)
     Spacer(Modifier.height(Gap.Item))
-    LiquidChips(options = QsGrid.COLUMNS, selected = column ?: "", label = { "${it}개" }, onSelect = { w.write(QsGrid.column, it) })
-    Spacer(Modifier.height(Gap.Section))
-    Text("${Copy.LAB_QS_GRID_ROW} · ${QsGrid.row.key} = ${row ?: "-"}", color = c.ink, style = MaterialTheme.typography.labelMedium)
-    Spacer(Modifier.height(Gap.Item))
-    LiquidChips(options = QsGrid.ROWS, selected = row ?: "", label = { "${it}줄" }, onSelect = { w.write(QsGrid.row, it) })
+    LiquidChips(options = QsGrid.WIDTHS, selected = width ?: "", label = { it }, onSelect = { v -> w.run { QsGrid.writeWidth(context, v) } })
     Spacer(Modifier.height(Gap.Item))
     Text(Copy.LAB_QS_GRID_TRY, color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
-    val changed = remember(w.version) { QsGrid.column.changed(context) || QsGrid.row.changed(context) }
+    LiquidButton(Copy.LAB_QS_GRID_RESTART, modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) { QsGrid.restartSystemUi() }
+            if (!ok) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+        }
+    })
+    Spacer(Modifier.height(Gap.Item))
+    val changed = remember(w.version) { QsGrid.all.any { it.changed(context) } }
     LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = {
-        w.restore(QsGrid.column)
-        w.restore(QsGrid.row)
+        QsGrid.all.forEach { w.restore(it) }
     })
     RestoreNotice(w)
 }
