@@ -149,6 +149,16 @@
             android:exported="true"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
         <!-- 셸 도우미(DensityServer)가 셸 권한으로 바인더를 건네는 통로. 호출자 uid는 코드에서 다시 확인한다. -->
+        <!-- 공유용 파일(실험실 상단바 기록 보내기). 메신저는 긴 글을 못 받아 파일로 보낸다 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_paths" />
+        </provider>
         <provider
             android:name=".data.appsize.ShellBridgeProvider"
             android:authorities="${applicationId}.shell"

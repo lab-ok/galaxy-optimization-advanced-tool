@@ -266,14 +266,23 @@ object StatusBarHider {
         val shell = ShizukuAccess.shell(
             "echo '== 포커스 =='; dumpsys window | grep -E 'mCurrentFocus|mFocusedApp|mFocusedWindow' | head -6; " +
                 "echo '== 키보드 =='; dumpsys input_method | grep -E 'mInputShown=|mIsInputViewShown=' | head -3; " +
-                "echo '== 이 창 =='; dumpsys window windows | grep -A14 'GOAT status bar hider' | " +
-                "grep -E 'Window #|fl=|isVisible|mPolicyVisibility|mForceHide|canReceiveKeys|mHasSurface|isOnScreen' | head -16; " +
+                "echo '== 이 창 =='; dumpsys window windows | grep -A40 'GOAT status bar hider' | head -45; " +
                 "echo '== 상단바 제어 =='; dumpsys window | grep -iE 'mTopFullscreenOpaqueWindowState|statusBarControlTarget|mFocusedWindow|ControlTarget' | head -6"
         )
         appendLine(if (shell == null) "Shizuku: 연결 안 됨(셸 진단 없음)" else "Shizuku: 연결됨")
         shell?.out?.let { appendLine(it) }
         appendLine("== 최근 기록 ==")
-        LogRepository.from(app).read().filter { "상단바" in it }.takeLast(60).forEach { appendLine(it) }
+        LogRepository.from(app).read().filter { "상단바" in it }.takeLast(200).forEach { appendLine(it) }
+    }
+
+    /** [diagnostics]를 앱 캐시에 글 파일로 저장하고, 공유할 수 있는 주소를 돌려준다(작업 스레드에서 부른다). */
+    fun diagnosticsFile(context: Context): android.net.Uri {
+        val app = context.applicationContext
+        val dir = java.io.File(app.cacheDir, "share").apply { mkdirs() }
+        dir.listFiles()?.filter { it.name.startsWith("goat_statusbar_") }?.forEach { it.delete() }
+        val stamp = java.text.SimpleDateFormat("MMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
+        val file = java.io.File(dir, "goat_statusbar_$stamp.txt").apply { writeText(diagnostics(app)) }
+        return androidx.core.content.FileProvider.getUriForFile(app, "${app.packageName}.files", file)
     }
 
     private const val REGRAB_MS = 600L

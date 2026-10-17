@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 공유용 파일(실험실 상단바 기록 등). 앱 캐시의 share 폴더만 연다 -->
+<paths>
+    <cache-path name="share" path="share/" />
+</paths>

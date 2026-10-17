@@ -179,11 +179,14 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         Spacer(Modifier.height(Gap.Item))
         LiquidButton(Copy.LAB_STATUS_HIDE_SEND_LOG, primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
             scope.launch {
-                val text = withContext(Dispatchers.IO) { StatusBarHider.diagnostics(context) }
+                // 메신저(디스코드 등)는 긴 글을 공유로 받지 못해 글 파일로 저장해 첨부한다
+                val uri = withContext(Dispatchers.IO) { StatusBarHider.diagnosticsFile(context) }
                 val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(android.content.Intent.EXTRA_SUBJECT, "GOAT 상단바 숨기기 기록")
-                    putExtra(android.content.Intent.EXTRA_TEXT, text)
+                    putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                    clipData = android.content.ClipData.newRawUri("", uri)
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 context.startActivity(android.content.Intent.createChooser(send, Copy.LAB_STATUS_HIDE_SEND_LOG))
             }
