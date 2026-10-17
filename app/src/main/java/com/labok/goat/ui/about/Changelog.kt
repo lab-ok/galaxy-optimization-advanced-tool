@@ -44,6 +44,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.13.0",
+        "2026-10-17",
+        "문제 신고에서 진단 파일을 바로 공유할 수 있습니다.",
+        listOf(
+            "변경" to listOf(
+                "문제 신고에서 '메일로 보내기'와 '파일 공유(메신저 등)' 중에서 고를 수 있습니다. 파일 공유를 고르면 진단 파일과 오늘 로그를 다른 앱으로 바로 보냅니다.",
+                "숨은 기능을 다듬었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.12.1",
         "2026-10-17",
         "숨은 기능을 다듬었습니다.",

@@ -58,6 +58,10 @@ object DiagnosticReport {
         }.onFailure { appendLine("읽기 실패: $it") }
         appendLine()
 
+        appendLine("## 배터리 기록(시스템, 실험실 배터리 모니터링)")
+        appendLine(runCatching { com.labok.goat.data.lab.BatteryHistory.diagnose() }.getOrElse { "읽기 실패: $it" })
+        appendLine()
+
         appendLine("## 크래시 기록")
         appendLine(CrashRecorder.read(context).ifBlank { "(없음)" })
         appendLine()

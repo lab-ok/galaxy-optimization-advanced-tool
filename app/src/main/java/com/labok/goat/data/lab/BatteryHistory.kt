@@ -46,12 +46,39 @@ object BatteryHistory {
      * 시각·꺼짐·켜짐 줄, 충전 상태·화면·깨어 있음이 바뀐 줄, 잔량이 바뀐 줄. awk가 없으면 grep으로 기록 줄만 거른다.
      */
     fun read(now: Long = System.currentTimeMillis()): List<Point>? {
+        val out = ShizukuAccess.shell(command())?.out ?: return null
+        return parse(out, now = now).takeIf { it.isNotEmpty() }
+    }
+
+    /**
+     * 문제 신고용 진단 글(작업 스레드): 기록을 읽는 명령의 결과 크기와 앞뒤 줄, 읽은 시점 수, 거르지 않은 원래 출력의 앞부분.
+     * 실기에서 그래프가 비는 이유(셸 실패·형식 차이·시각 줄 없음)를 가리기 위한 것이다.
+     */
+    fun diagnose(now: Long = System.currentTimeMillis()): String = buildString {
+        val r = ShizukuAccess.shell(command())
+        if (r == null) {
+            appendLine("Shizuku 셸을 쓸 수 없음")
+            return@buildString
+        }
+        val lines = r.out.lines()
+        appendLine("거른 출력: ${r.out.length}자 ${lines.size}줄 · 종료 ${if (r.ok) "정상" else "실패"}${r.err.takeIf { it.isNotBlank() }?.let { " · 오류 ${it.take(300)}" } ?: ""}")
+        val points = parse(r.out, now = now)
+        appendLine("읽은 시점: ${points.size}개" + (points.firstOrNull()?.let { " · 처음 ${java.util.Date(it.time)} ${it.level}% · 마지막 ${java.util.Date(points.last().time)} ${points.last().level}%" } ?: ""))
+        appendLine("-- 거른 출력 앞 15줄")
+        lines.take(15).forEach { appendLine(it.take(200)) }
+        appendLine("-- 거른 출력 끝 5줄")
+        lines.takeLast(5).forEach { appendLine(it.take(200)) }
+        appendLine("-- 원래 출력 앞 40줄")
+        ShizukuAccess.shell("dumpsys batterystats --history | head -40")?.out?.lines()?.forEach { appendLine(it.take(200)) }
+        appendLine("-- 원래 출력에서 기록 줄 앞 10줄")
+        ShizukuAccess.shell("dumpsys batterystats --history | grep -m10 -E '\\([0-9]+\\) '")?.out?.lines()?.forEach { appendLine(it.take(200)) }
+    }
+
+    private fun command(): String {
         val awk = "awk '/^ +(0|\\+[0-9dhms]+) \\(/{ if (\$0 ~ /TIME:|SHUTDOWN|START|status=|[+-]screen( |\$)|[+-]running( |\$)/) " +
             "{print; last=\$3; next} if (\$3!=last) {print; last=\$3} }'"
         val grep = "grep -E '^ +(0|\\+[0-9dhms]+) \\('"
-        val out = ShizukuAccess.shell("if command -v awk >/dev/null; then dumpsys batterystats --history | $awk; else dumpsys batterystats --history | $grep; fi")?.out
-            ?: return null
-        return parse(out, now = now).takeIf { it.isNotEmpty() }
+        return "if command -v awk >/dev/null; then dumpsys batterystats --history | $awk; else dumpsys batterystats --history | $grep; fi"
     }
 
     private val LINE = Regex("""^\s*(0|\+[0-9dhms]+)\s+\(\d+\)\s+(.*)$""")
