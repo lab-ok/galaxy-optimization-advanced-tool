@@ -83,6 +83,9 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
             if (s == null) {
                 Text("배터리 상태를 확인하지 못했습니다.", color = c.ink)
             } else {
+                // 맨 위 그림(시안 8): 사용 중·충전 중에 따라 다른 물 막대 애니메이션
+                BatteryBarsArt(s.level, s.charging)
+                Spacer(Modifier.height(Gap.Item))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text("${s.level}", fontSize = 52.sp, fontWeight = FontWeight.Bold, color = c.ink)
                     Text("%", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
@@ -111,26 +114,28 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
 }
 
 /**
- * 배터리 수명(웨어율): 새 배터리 대비 지금 담을 수 있는 용량을 큰 숫자와 물 막대로, 아래에 충전 횟수와 삼성 건강 지수.
- * 삼성은 설정에 보여 주지 않는 값이라 Shizuku로 `dumpsys battery`에서 읽는다([BatteryHealth]).
+ * 배터리 수명: 설계 용량 대비 지금 실제로 담을 수 있는 용량(%)을 큰 숫자와 물 막대로, 아래에 실제·설계 용량(mAh), 구한 방법, 충전 횟수.
+ * 값은 Shizuku 셸과 BatteryManager로 구한다([BatteryHealth]).
  */
 @Composable
 private fun HealthCard(h: BatteryHealth.Info) {
     val c = LocalLiquid.current
     Text("배터리 수명", fontWeight = FontWeight.SemiBold, color = c.ink)
-    Text("새 배터리일 때와 비교해 지금 담을 수 있는 용량입니다. 보통 80% 아래로 내려가면 사용 시간이 눈에 띄게 줄어듭니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+    Text("설계 용량과 비교해 지금 실제로 담을 수 있는 용량입니다. 보통 80% 아래로 내려가면 사용 시간이 눈에 띄게 줄어듭니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
-    h.asoc?.let { a ->
+    h.percent?.let { p ->
         Row(verticalAlignment = Alignment.Bottom) {
-            Text("$a", fontSize = 44.sp, fontWeight = FontWeight.Bold, color = c.ink)
+            Text("$p", fontSize = 44.sp, fontWeight = FontWeight.Bold, color = c.ink)
             Text("%", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
         }
         Spacer(Modifier.height(Gap.Tight))
-        LiquidBar(a / 100f, height = 12.dp, description = "배터리 수명 $a%")
+        LiquidBar(p / 100f, height = 12.dp, description = "배터리 수명 $p%")
         Spacer(Modifier.height(Gap.Item))
     }
+    h.actualMah?.let { Metric("실제 용량", String.format(Locale.KOREA, "%,dmAh", it)) }
+    h.designMah?.let { Metric("설계 용량", String.format(Locale.KOREA, "%,dmAh", it)) }
+    h.source?.let { Metric("구한 방법", it.label) }
     h.cycles?.let { Metric("충전 횟수(완충 환산)", String.format(Locale.KOREA, "%.0f회", it)) }
-    h.bsoh?.let { Metric("삼성 건강 지수(참고)", "$it%") }
 }
 
 @Composable

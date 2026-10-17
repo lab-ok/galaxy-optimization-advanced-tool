@@ -199,3 +199,59 @@ internal fun LiquidCycleColumns(cycles: List<BatteryCycles.Cycle>, modifier: Mod
         }
     }
 }
+
+/**
+ * 배터리 화면 맨 위 그림(시안 8 '물 막대 다섯 개'): 배터리 모양 안에 물 막대 다섯 칸이 잔량만큼 찬다(한 칸 = 20%).
+ * - 사용 중: 잔량만큼 찬 막대들의 물 윗면이 저마다 천천히 오르내린다(쓰는 동안 조금씩 흔들리는 느낌).
+ * - 충전 중: 지금 잔량 위의 빈 칸들을 왼쪽부터 차례로 채워 나가는 물결을 되풀이한다.
+ * '애니메이션 제거'가 켜져 있으면 잔량만큼 찬 모습으로 멈춘다.
+ */
+@Composable
+internal fun BatteryBarsArt(level: Int, charging: Boolean, modifier: Modifier = Modifier) {
+    val c = LocalLiquid.current
+    val t = rememberWaveTime()
+    val shown = rememberFill(level.coerceIn(0, 100) / 100f)
+    Canvas(modifier.fillMaxWidth().height(120.dp).semantics { contentDescription = (if (charging) "충전 중 " else "배터리 사용 중 ") + "$level%" }) {
+        val bodyW = size.width.coerceAtMost(260.dp.toPx())
+        val bodyH = size.height * 0.86f
+        val x0 = (size.width - bodyW) / 2f - 6.dp.toPx()
+        val y0 = (size.height - bodyH) / 2f
+        val stroke = 3.dp.toPx()
+        // 배터리 몸통과 꼭지
+        drawRoundRect(c.ink.copy(alpha = 0.85f), topLeft = Offset(x0, y0), size = Size(bodyW, bodyH), cornerRadius = CornerRadius(bodyH * 0.22f), style = Stroke(stroke))
+        drawRoundRect(c.ink.copy(alpha = 0.85f), topLeft = Offset(x0 + bodyW + 5.dp.toPx(), y0 + bodyH * 0.33f), size = Size(8.dp.toPx(), bodyH * 0.34f), cornerRadius = CornerRadius(3.dp.toPx()))
+        val pad = 12.dp.toPx()
+        val gap = 8.dp.toPx()
+        val barW = (bodyW - pad * 2 - gap * 4) / 5f
+        val barH = bodyH - pad * 2
+        val levelBars = shown * 5f
+        // 충전 중 물결: 지금 잔량 칸부터 끝 칸까지 2.4초에 한 번 왼쪽부터 찬다
+        val sweep = ((t / 2.4f) % 1f) * (5f - levelBars + 0.6f) + levelBars
+        for (i in 0 until 5) {
+            val bx = x0 + pad + i * (barW + gap)
+            val by = y0 + pad
+            val r = CornerRadius(barW * 0.3f)
+            drawRoundRect(c.ink.copy(alpha = 0.12f), topLeft = Offset(bx, by), size = Size(barW, barH), cornerRadius = r)
+            val base = (levelBars - i).coerceIn(0f, 1f)
+            val f = if (charging) maxOf(base, (sweep - i).coerceIn(0f, 1f)) else {
+                // 사용 중: 찬 칸의 윗면이 저마다 살짝 오르내린다(빈 칸은 그대로)
+                if (base <= 0f) 0f else (base - 0.06f + 0.06f * sin(t * 2.2f + i * 1.3f)).coerceIn(0.04f, 1f)
+            }
+            if (f <= 0.005f) continue
+            val top = by + barH * (1f - f)
+            val amp = 1.6.dp.toPx().coerceAtMost(barH * f / 3f)
+            val bar = Path().apply { addRoundRect(RoundRect(bx, by, bx + barW, by + barH, r, r, r, r)) }
+            val water = Path().apply {
+                moveTo(bx, by + barH)
+                var dx = 0f
+                while (dx <= barW) {
+                    lineTo(bx + dx, top + amp * sin(dx / (barW / 2.2f) + t * 5f + i))
+                    dx += 1.5.dp.toPx()
+                }
+                lineTo(bx + barW, by + barH)
+                close()
+            }
+            clipPath(bar) { drawPath(water, c.ink.copy(alpha = 0.85f)) }
+        }
+    }
+}
