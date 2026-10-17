@@ -116,7 +116,7 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     if (shizuku != ShizukuAccess.State.READY || s == null) return
     val now = System.currentTimeMillis()
 
-    Card("시간대별 사용량", "마지막 충전 이후 시간마다 화면을 켜고 쓴 양과 꺼진 채 줄어든 양입니다.") {
+    Card("시간대별 사용량") {
         when (val h = history) {
             null -> if (historyLoaded) Text("시스템 배터리 기록을 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             else LiquidLoader("시스템 배터리 기록을 불러오는 중…", Modifier.padding(vertical = 8.dp))
@@ -127,7 +127,7 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     history?.let { h ->
         // 충전 기록은 기록 전체에서 찾는다(마지막 충전 이후의 시작이 된 충전도 보이게)
         val charges = remember(h, now / 60_000) { BatteryHistory.charges(h, now).takeLast(RECENT_CHARGES).reversed() }
-        Card("충전 기록", "충전기를 꽂을 때마다 몇 %에서 몇 %까지 얼마나 걸렸는지입니다.") {
+        Card("충전 기록") {
             if (charges.isEmpty()) {
                 Text("시스템 기록에 남은 충전이 아직 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             } else {
@@ -163,12 +163,6 @@ private fun ColumnScope.SinceChargeSummary(s: SinceCharge, level: Int?, charging
     val since = SimpleDateFormat("M월 d일 a h:mm", Locale.KOREA).format(Date(s.startClock))
     Text("${since}부터 · 배터리 사용 ${duration(s.onBatteryMs)}", color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
-    // 배터리 물통: 지금 잔량만큼 물이 차 있고, 마지막 충전 때 잔량까지는 쓴 만큼 옅은 물 자국이 남는다
-    if (level != null) {
-        val start = if (charging) null else (level + (s.usedPctLow + s.usedPctHigh + 1) / 2).coerceAtMost(100)
-        LiquidBatteryTank(level, start, charging)
-        Spacer(Modifier.height(Gap.Item))
-    }
     Row(verticalAlignment = Alignment.Bottom) {
         Text(if (s.usedPctLow == s.usedPctHigh) "${s.usedPctLow}" else "${s.usedPctLow}~${s.usedPctHigh}", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = c.ink)
         Text("% 사용", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
@@ -177,22 +171,12 @@ private fun ColumnScope.SinceChargeSummary(s: SinceCharge, level: Int?, charging
     Spacer(Modifier.height(Gap.Item))
     UseRow("화면 켜짐", s.screenOnMs, s.screenOnPct)
     UseRow("화면 꺼짐(대기)", s.screenOffMs, s.screenOffPct)
-    // 쓴 양을 화면 켜짐(진한 물)·대기(옅은 물)로 나눈 물 막대 하나(시간은 위 줄에 있어 막대로 다시 그리지 않는다)
-    val drained = s.screenOnPct + s.screenOffPct
-    if (drained > 0) {
-        val on = s.screenOnPct.toFloat() / drained
-        Spacer(Modifier.height(Gap.Tight))
-        LiquidBar(on, height = 12.dp, ghost = 1f, description = "쓴 양 중 화면 켜짐 ${(on * 100).roundToInt()}%")
-        Spacer(Modifier.height(Gap.Tight))
-        Text("쓴 양 중 화면 켜짐 ${(on * 100).roundToInt()}% · 대기 ${100 - (on * 100).roundToInt()}%", color = c.muted, style = MaterialTheme.typography.labelSmall)
-    }
-    // 이 패턴이면: 완충으로 몇 시간, 그중 화면 켜짐 몇 시간, 지금 잔량으로 몇 시간 더
+    // 이 패턴이면: 지금 잔량으로 몇 시간 더, 완충으로 몇 시간
     BatteryStatsReader.fullChargeMs(s)?.let { full ->
         Spacer(Modifier.height(Gap.Card))
         Text("지금처럼 사용하면", fontWeight = FontWeight.SemiBold, color = c.ink, style = MaterialTheme.typography.bodyMedium)
         if (level != null && !charging) Line("현재 잔량 $level%로", "약 ${duration(full * level / 100)} 더 사용")
         Line("완충 시", "약 ${duration(full)}")
-        if (s.onBatteryMs > 0) Line("그중 화면 켜짐", "약 ${duration(full * s.screenOnMs / s.onBatteryMs)}")
     }
 }
 
@@ -213,7 +197,7 @@ private fun ChargeRow(ch: BatteryHistory.Charge) {
         LiquidBar(ch.startLevel / 100f, height = 8.dp, ghost = ch.endLevel / 100f, description = "${ch.startLevel}%에서 ${ch.endLevel}%까지 충전")
         Spacer(Modifier.height(Gap.Tight))
         val perHour = if (ch.durationMs >= 5 * 60_000L && ch.gained > 0) String.format(Locale.KOREA, " · 시간당 +%.0f%%", ch.gained * 3_600_000f / ch.durationMs) else ""
-        Text("$range · +${ch.gained}%$perHour", color = c.muted, style = MaterialTheme.typography.labelSmall)
+        Text("$range$perHour", color = c.muted, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -227,7 +211,7 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>) {
     Spacer(Modifier.height(Gap.Item))
     when (tab) {
         RankTab.APPS -> {
-            Text("시스템이 추정한 사용량 순입니다. 막대의 진한 부분은 포그라운드, 연한 부분은 백그라운드 몫입니다(사용 시간 비율로 나눈 추정).", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text("진한 부분은 포그라운드, 연한 부분은 백그라운드입니다(사용 시간 비율로 나눈 추정).", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             val total = s.computedMah.takeIf { it > 0 } ?: s.apps.sumOf { it.mah }.coerceAtLeast(1.0)
             val list = if (showAll) s.apps else s.apps.take(TOP_APPS)
@@ -247,7 +231,7 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>) {
             }
         }
         RankTab.PARTS -> {
-            Text("기기 전체 사용량을 항목별로 나눈 값입니다. 앱 사용량도 포함됩니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text("기기 전체 사용량을 부품별로 나눈 값입니다(앱 사용량 포함).", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             val total = s.computedMah.takeIf { it > 0 } ?: s.system.values.sum()
             s.system.entries.sortedByDescending { it.value }.forEach { (k, v) ->
@@ -274,7 +258,7 @@ private fun PastCycles(cycles: List<BatteryCycles.Cycle>) {
         Text("충전 후 충전기를 분리하면 직전 주기가 여기에 기록됩니다(최근 ${BatteryCycles.KEEP}회).", color = c.muted, style = MaterialTheme.typography.bodySmall)
         return
     }
-    Text("충전할 때마다 직전까지의 사용량을 요약합니다. 완충 환산은 그 주기처럼 사용할 때 100%를 모두 쓰는 데 걸리는 시간입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+    Text("기둥 높이는 그 주기처럼 쓸 때 100%를 다 쓰는 데 걸리는 시간이고, 진한 물은 그중 화면 켜짐입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
     // 기둥 높이는 완충 환산 시간, 진한 물은 그중 화면 켜짐 몫
     LiquidCycleColumns(cycles)
@@ -284,8 +268,7 @@ private fun PastCycles(cycles: List<BatteryCycles.Cycle>) {
     (if (all) cycles else cycles.take(3)).forEach { cy ->
         Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             Text("${fmt.format(Date(cy.start))}부터", color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-            val full = if (cy.usedPct >= 3) " · 완충 환산 ${duration(cy.onBatteryMs * 100 / cy.usedPct)}" else ""
-            Text("배터리 사용 ${duration(cy.onBatteryMs)} · 화면 켜짐 ${duration(cy.screenOnMs)} · ${cy.usedPct}% 사용$full", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text("배터리 사용 ${duration(cy.onBatteryMs)} · 화면 켜짐 ${duration(cy.screenOnMs)} · ${cy.usedPct}% 사용", color = c.muted, style = MaterialTheme.typography.bodySmall)
             if (cy.apps.isNotEmpty()) Text(cy.apps.joinToString(" · ") { (n, share) -> "$n ${percent(share)}" }, color = c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }

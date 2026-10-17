@@ -80,7 +80,7 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
     val hourFmt = remember { SimpleDateFormat("a h시", Locale.KOREA) }
     val pick = selected?.let { buckets.getOrNull(it) }
     if (pick == null) {
-        Text("기둥 하나가 ${bucketMs / 3_600_000}시간입니다. 기둥을 누르면 그 시간대에 쓴 양을 볼 수 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("기둥 하나가 ${bucketMs / 3_600_000}시간입니다. 누르면 그 시간대 사용량이 나옵니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
     } else {
         val range = "${hourFmt.format(Date(pick.start))}~${hourFmt.format(Date(pick.end)).substringAfter(' ')}"
         Text("$range · ${pctText(pick.usedPct)} 사용" + if (pick.chargedPct >= 0.5f) " · 충전 +${pick.chargedPct.roundToInt()}%" else if (pick.charging) " · 충전" else "", color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)

@@ -67,7 +67,6 @@ object Copy {
 
     // 실험실: 배터리 모니터링
     const val LAB_BATTERY_NOW = "지금 배터리"
-    const val LAB_BATTERY_BODY = "2초마다 새로 고칩니다. 전류 부호와 단위는 GOAT가 기기에 맞춰 보여 줍니다."
     const val LAB_BATTERY_LOG = "충전 주기 자동 기록"
     const val LAB_BATTERY_LOG_BODY = "15분마다 시스템 통계를 확인해, 이 화면을 열지 않고 충전해도 지난 주기를 남깁니다."
     const val FEATURE_SHAKE_ROTATE = "흔들어서 화면 회전"

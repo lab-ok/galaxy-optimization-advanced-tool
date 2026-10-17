@@ -77,7 +77,6 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
     ) {
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
             Text(Copy.LAB_BATTERY_NOW, fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(Copy.LAB_BATTERY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             val s = now
             if (s == null) {
@@ -102,12 +101,11 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
                 Metric("전압", s.voltageMv?.let { String.format(Locale.KOREA, "%.2fV", it / 1000f) })
                 Metric("전류", s.currentMa?.let { "${if (it > 0) "+" else ""}$it mA" })
                 Metric("전력", s.watts?.let { String.format(Locale.KOREA, "%+.1fW", it) })
-                Metric("상태", s.health)
             }
         }
         health?.takeIf { !it.empty }?.let { h ->
             Spacer(Modifier.height(Gap.Card))
-            GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) { HealthCard(h) }
+            GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) { HealthCard(h, now?.health) }
         }
         BatterySinceCharge(now?.level, now?.charging == true)
     }
@@ -118,10 +116,10 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
  * 값은 Shizuku 셸과 BatteryManager로 구한다([BatteryHealth]).
  */
 @Composable
-private fun HealthCard(h: BatteryHealth.Info) {
+private fun HealthCard(h: BatteryHealth.Info, condition: String?) {
     val c = LocalLiquid.current
     Text("배터리 수명", fontWeight = FontWeight.SemiBold, color = c.ink)
-    Text("설계 용량과 비교해 지금 실제로 담을 수 있는 용량입니다. 보통 80% 아래로 내려가면 사용 시간이 눈에 띄게 줄어듭니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+    Text("설계 용량 대비 지금 담을 수 있는 용량입니다. 보통 80% 아래면 사용 시간이 눈에 띄게 줄어듭니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
     h.percent?.let { p ->
         Row(verticalAlignment = Alignment.Bottom) {
@@ -132,10 +130,11 @@ private fun HealthCard(h: BatteryHealth.Info) {
         LiquidBar(p / 100f, height = 12.dp, description = "배터리 수명 $p%")
         Spacer(Modifier.height(Gap.Item))
     }
-    h.actualMah?.let { Metric("실제 용량", String.format(Locale.KOREA, "%,dmAh", it)) }
-    h.designMah?.let { Metric("설계 용량", String.format(Locale.KOREA, "%,dmAh", it)) }
-    h.source?.let { Metric("구한 방법", it.label) }
+    // 용량은 한 줄(실제 / 설계), 구한 방법은 그 아래 작은 글자로만
+    if (h.actualMah != null && h.designMah != null) Metric("용량(실제 / 설계)", String.format(Locale.KOREA, "%,d / %,dmAh", h.actualMah, h.designMah))
     h.cycles?.let { Metric("충전 횟수(완충 환산)", String.format(Locale.KOREA, "%.0f회", it)) }
+    condition?.let { Metric("배터리 상태", it) }
+    h.source?.let { Text(it.label, color = c.muted, style = MaterialTheme.typography.labelSmall) }
 }
 
 @Composable

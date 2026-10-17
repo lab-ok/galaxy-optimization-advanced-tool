@@ -112,42 +112,6 @@ internal fun LiquidBar(fraction: Float, modifier: Modifier = Modifier, height: D
 }
 
 /**
- * 배터리 물통: 배터리 모양 안에 지금 잔량([level])만큼 물이 차 있고, 마지막 충전 때 잔량([startLevel])까지는
- * 쓴 만큼 옅은 물 자국으로 남는다. 가운데 글자는 물에 잠긴 부분만 반전색이 된다(물방울·거품은 그리지 않는다).
- */
-@Composable
-internal fun LiquidBatteryTank(level: Int, startLevel: Int?, charging: Boolean, modifier: Modifier = Modifier) {
-    val c = LocalLiquid.current
-    val t = rememberWaveTime()
-    val fill = rememberFill(level / 100f)
-    val ghost = startLevel?.let { rememberFill(it.coerceIn(level, 100) / 100f) }
-    val measurer = rememberTextMeasurer()
-    val label = if (charging) "충전 중 $level%" else "$level%"
-    Canvas(modifier.fillMaxWidth().height(64.dp).semantics { contentDescription = "배터리 잔량 $level%" + (startLevel?.let { ", 마지막 충전 시 $it%" } ?: "") }) {
-        val nub = 6.dp.toPx()
-        val w = size.width - nub - 3.dp.toPx()
-        val h = size.height
-        val r = CornerRadius(14.dp.toPx())
-        val body = Path().apply { addRoundRect(RoundRect(0f, 0f, w, h, r)) }
-        drawRoundRect(c.surface, size = Size(w, h), cornerRadius = r)
-        // 배터리 꼭지
-        drawRoundRect(c.line, topLeft = Offset(w + 3.dp.toPx(), h * 0.32f), size = Size(nub, h * 0.36f), cornerRadius = CornerRadius(3.dp.toPx()))
-        val water = waterPath(w * fill, h, t, 3.dp.toPx(), 2.dp.toPx())
-        clipPath(body) {
-            if (ghost != null && ghost > fill) drawPath(waterPath(w * ghost, h, t + 1.1f, 2.dp.toPx(), 2.dp.toPx()), c.ink.copy(alpha = 0.18f))
-            drawPath(water, c.ink)
-        }
-        drawRoundRect(c.line, size = Size(w, h), cornerRadius = r, style = Stroke(1.dp.toPx()))
-        val style = TextStyle(fontFamily = GalaxyFont, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        val outside = measurer.measure(label, style.copy(color = c.ink))
-        val inside = measurer.measure(label, style.copy(color = c.onInk))
-        val at = Offset((w - outside.size.width) / 2f, (h - outside.size.height) / 2f)
-        drawText(outside, topLeft = at)
-        clipPath(water) { drawText(inside, topLeft = at) }
-    }
-}
-
-/**
  * 지난 충전 주기 기둥 그래프(오래된 것 왼쪽 → 최근 오른쪽). 기둥 높이는 그 주기처럼 쓰면 완충으로 가는 시간(완충 환산),
  * 진한 물은 그중 화면 켜짐 몫, 옅은 물은 꺼짐(대기) 몫이다. 기둥은 왼쪽부터 차례로 차오른다.
  */
