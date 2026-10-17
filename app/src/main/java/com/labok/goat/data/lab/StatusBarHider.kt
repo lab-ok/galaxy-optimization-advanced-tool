@@ -254,6 +254,28 @@ object StatusBarHider {
         runCatching { nm.notify(NOTIFICATION_ID, n) }
     }
 
+    /**
+     * 실기에서 다시 숨지 않는 원인을 찾기 위한 진단 글(작업 스레드에서 부른다). 기기·버전, Shizuku 상태, 지금 포커스와 키보드,
+     * 이 창이 시스템에 어떻게 올라가 있는지(보이는지·다른 앱 위 표시가 막혔는지·키를 받을 수 있는지), 최근 상단바 숨기기 기록을 담는다.
+     */
+    fun diagnostics(context: Context): String = buildString {
+        val app = context.applicationContext
+        appendLine("GOAT ${com.labok.goat.BuildConfig.VERSION_NAME} 상단바 숨기기 기록")
+        appendLine("기기: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE}(SDK ${android.os.Build.VERSION.SDK_INT}) · ${android.os.Build.DISPLAY}")
+        appendLine("켜짐: ${onFlow.value} · 창: ${if (view != null) "있음" else "없음"} · 다른 앱 위 표시 권한: ${Settings.canDrawOverlays(app)}")
+        val shell = ShizukuAccess.shell(
+            "echo '== 포커스 =='; dumpsys window | grep -E 'mCurrentFocus|mFocusedApp|mFocusedWindow' | head -6; " +
+                "echo '== 키보드 =='; dumpsys input_method | grep -E 'mInputShown=|mIsInputViewShown=' | head -3; " +
+                "echo '== 이 창 =='; dumpsys window windows | grep -A14 'GOAT status bar hider' | " +
+                "grep -E 'Window #|fl=|isVisible|mPolicyVisibility|mForceHide|canReceiveKeys|mHasSurface|isOnScreen' | head -16; " +
+                "echo '== 상단바 제어 =='; dumpsys window | grep -iE 'mTopFullscreenOpaqueWindowState|statusBarControlTarget|mFocusedWindow|ControlTarget' | head -6"
+        )
+        appendLine(if (shell == null) "Shizuku: 연결 안 됨(셸 진단 없음)" else "Shizuku: 연결됨")
+        shell?.out?.let { appendLine(it) }
+        appendLine("== 최근 기록 ==")
+        LogRepository.from(app).read().filter { "상단바" in it }.takeLast(60).forEach { appendLine(it) }
+    }
+
     private const val REGRAB_MS = 600L
     private const val POLL_MS = 2_000L
     private const val OFF_POLL_MS = 10_000L

@@ -175,6 +175,19 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         }
         // 주의 문구는 설명 바로 아래에 붙인다(다른 카드처럼 설명 줄과 같은 간격)
         Text(Copy.LAB_STATUS_HIDE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(end = 72.dp))
+        // 실기에서 다시 숨지 않을 때 원인을 볼 수 있게 진단 글을 공유한다(메신저 등으로 바로 보냄)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidButton(Copy.LAB_STATUS_HIDE_SEND_LOG, primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
+            scope.launch {
+                val text = withContext(Dispatchers.IO) { StatusBarHider.diagnostics(context) }
+                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_SUBJECT, "GOAT 상단바 숨기기 기록")
+                    putExtra(android.content.Intent.EXTRA_TEXT, text)
+                }
+                context.startActivity(android.content.Intent.createChooser(send, Copy.LAB_STATUS_HIDE_SEND_LOG))
+            }
+        })
     }
     // 마이크·카메라 사용 표시(초록 점): 기기 설정 값이라 Shizuku로 바꾼다. 아이콘 카드 아래에 따로 둔다
     val dotCard: @Composable ColumnScope.() -> Unit = {
