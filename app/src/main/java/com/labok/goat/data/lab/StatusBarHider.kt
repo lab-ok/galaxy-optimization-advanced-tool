@@ -192,28 +192,13 @@ object StatusBarHider {
         check(REGRAB_MS)
     }
 
-    /** [app]이면 다시 숨겨도 된다. [why]는 기록용 설명(포커스 창·키보드 상태). */
-    private class FocusState(val app: Boolean, val why: String)
-
     /**
      * 지금 포커스가 일반 앱 창에 있고 키보드가 닫혀 있으면 app, 키보드가 열려 있거나 시스템 창(알림창·잠금 화면 등)이면 기다린다.
      * 셸을 쓸 수 없으면 null.
      */
-    private fun focusState(): FocusState? {
-        val out = ShizukuAccess.shell(
-            "dumpsys window | grep -m1 mCurrentFocus; dumpsys input_method | grep -m1 mInputShown="
-        )?.out ?: return null
-        // mIsInputViewShown은 키보드를 닫은 뒤에도 true로 남는 경우가 있어 mInputShown만 본다
-        val ime = out.contains("mInputShown=true")
-        // 앱 창은 'Window{… u0 패키지/액티비티}' 꼴이다. 이 창(GOAT status bar hider)이나 시스템 창은 '/'가 없다
-        val focus = out.lineSequence().firstOrNull { "mCurrentFocus" in it }.orEmpty()
-        val app = Regex("""u\d+ [\w.]+/[\w.$]+""").containsMatchIn(focus)
-        val name = focus.substringAfter("u0 ", focus.substringAfter("=")).trim().trimEnd('}').ifEmpty { "없음" }
-        return when {
-            ime -> FocusState(false, "키보드가 열려 있어 대기($name)")
-            !app -> FocusState(false, "시스템 창이 포커스를 가져 대기($name)")
-            else -> FocusState(true, "앱 창($name)으로 포커스가 넘어가 다시 숨김")
-        }
+    private fun focusState(): StatusBarFocus.State? {
+        val out = ShizukuAccess.shell("dumpsys window | grep mCurrentFocus=; dumpsys input_method | grep mInputShown=")?.out ?: return null
+        return StatusBarFocus.parse(out)
     }
 
     /**
@@ -299,6 +284,31 @@ object StatusBarHider {
                 ACTION_REHIDE -> rehide(context)
                 ACTION_STOP -> stop(context)
             }
+        }
+    }
+}
+
+/** 상단바 숨기기가 다시 숨어도 되는지, 셸 출력(포커스 창·키보드)으로 판단한다. 안드로이드 클래스를 쓰지 않아 단위 테스트로 확인한다. */
+internal object StatusBarFocus {
+    /** [app]이면 다시 숨겨도 된다. [why]는 기록용 설명(포커스 창·키보드 상태). */
+    class State(val app: Boolean, val why: String)
+
+    /**
+     * [StatusBarHider]가 얻은 셸 출력(dumpsys window·input_method)을 읽는다. 폴드처럼 화면이 둘이면 mCurrentFocus 줄이 화면마다 나오고, 쓰지 않는 화면은
+     * 'mCurrentFocus=null'이다(실기 SM-F971N, Android 17에서 이 줄이 먼저 나와 늘 시스템 창으로 잘못 읽었다).
+     * 그래서 null이 아닌 줄을 쓰고, 키보드는 어느 화면이든 열려 있으면 열린 것으로 본다.
+     */
+    fun parse(out: String): State {
+        val lines = out.lines()
+        val ime = lines.any { "mInputShown=true" in it }
+        val focus = lines.filter { "mCurrentFocus=" in it }.map { it.substringAfter("mCurrentFocus=").trim() }.firstOrNull { it != "null" && it.isNotEmpty() }
+        // 앱 창은 'Window{… u0 패키지/액티비티}' 꼴이다. 이 창(GOAT status bar hider)이나 시스템 창은 '/'가 없다
+        val app = focus != null && Regex("""u\d+ [\w.]+/[\w.$]+""").containsMatchIn(focus)
+        val name = focus?.substringAfter("u0 ", focus)?.trimEnd('}') ?: "없음"
+        return when {
+            ime -> State(false, "키보드가 열려 있어 대기($name)")
+            !app -> State(false, "시스템 창이 포커스를 가져 대기($name)")
+            else -> State(true, "앱 창($name)으로 포커스가 넘어가 다시 숨김")
         }
     }
 }
