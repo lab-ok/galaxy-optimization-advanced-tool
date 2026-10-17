@@ -46,45 +46,4 @@ class BatteryMonitorTest {
         assertEquals(5.33f, BatteryMonitor.drainPerHour(list, now)!!, 0.01f)
         assertNull("쓸 수 있는 구간이 30분 미만이면 계산하지 않는다", BatteryMonitor.drainPerHour(list.take(2), now))
     }
-
-    @Test
-    fun slotEndIsNextEvenHourInLocalTime() {
-        val seoul = java.util.TimeZone.getTimeZone("Asia/Seoul") // UTC+9
-        // 서울 13:30(UTC 04:30) → 14:00(UTC 05:00)
-        val now = 4 * HOUR_MS + HOUR_MS / 2
-        assertEquals(5 * HOUR_MS, BatteryMonitor.slotEnd(now, seoul))
-        // 서울 14:00 정각은 다음 칸(14~16시)에 들어간다
-        assertEquals(7 * HOUR_MS, BatteryMonitor.slotEnd(5 * HOUR_MS, seoul))
-    }
-
-    @Test
-    fun slotsSplitDropByTimeAndMarkCharging() {
-        val end = 100 * HOUR_MS
-        val q = HOUR_MS / 4
-        val list = listOf(
-            // 마지막 칸 바로 앞 칸(96~98h)과 마지막 칸(98~100h)에 걸친 1시간에 4% → 2%씩
-            Sample(end - 2 * HOUR_MS - 2 * q, 80, false),
-            Sample(end - 2 * HOUR_MS + 2 * q, 76, false),
-            // 마지막 칸 안에서 충전(사용량에 넣지 않음)
-            Sample(end - 3 * q, 90, true),
-            Sample(end - q, 95, true)
-        )
-        val s = BatteryMonitor.slots(list, end)
-        assertEquals(12, s.size)
-        assertEquals(end - 24 * HOUR_MS, s.first().start)
-        assertEquals(2f, s[10].usedPct, 0.01f)
-        assertEquals(2f, s[11].usedPct, 0.01f)
-        assertEquals(true, s[11].charging)
-        assertEquals(false, s[10].charging)
-        assertEquals("기록이 없는 칸", false, s[0].recorded)
-        assertEquals(true, s[10].recorded)
-    }
-
-    @Test
-    fun slotsSkipLongGaps() {
-        val end = 100 * HOUR_MS
-        // 3시간 빈 기록 사이의 감소는 어느 칸에도 넣지 않는다
-        val s = BatteryMonitor.slots(listOf(Sample(end - 4 * HOUR_MS, 80, false), Sample(end - HOUR_MS, 60, false)), end)
-        assertEquals(0f, s.sumOf { it.usedPct.toDouble() }.toFloat(), 0.001f)
-    }
 }

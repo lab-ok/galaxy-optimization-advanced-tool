@@ -18,8 +18,6 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -31,7 +29,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.BatteryCycles
-import com.labok.goat.data.lab.BatteryMonitor
 import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
@@ -50,7 +47,7 @@ import kotlin.math.sin
 
 /** 물결 시각(초). 애니메이션을 끄면 0에 멈춘다. */
 @Composable
-private fun rememberWaveTime(): Float {
+internal fun rememberWaveTime(): Float {
     val reduce = LocalReduceMotion.current
     var t by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(reduce) {
@@ -63,7 +60,7 @@ private fun rememberWaveTime(): Float {
 
 /** 0에서 [target]까지 물 스프링으로 차오르는 값. [delayMs]만큼 늦게 시작한다(기둥이 차례로 차오르게). */
 @Composable
-private fun rememberFill(target: Float, delayMs: Long = 0L): Float {
+internal fun rememberFill(target: Float, delayMs: Long = 0L): Float {
     val reduce = LocalReduceMotion.current
     val a = remember { Animatable(if (reduce) target else 0f) }
     LaunchedEffect(target, reduce) {
@@ -205,85 +202,6 @@ internal fun LiquidCycleColumns(cycles: List<BatteryCycles.Cycle>, modifier: Mod
             drawText(v, topLeft = Offset(x + (colW - v.size.width) / 2, (y0 - v.size.height - 2.dp.toPx()).coerceAtLeast(0f)))
             val d = measurer.measure(fmt.format(Date(cy.start)), small)
             drawText(d, topLeft = Offset(x + (colW - d.size.width) / 2, size.height - d.size.height))
-        }
-    }
-}
-
-/**
- * 시간대별 배터리 사용량(안드로이드 12 이후 배터리 화면처럼 2시간 칸 12개, 왼쪽이 24시간 전). 물기둥 높이는 그 칸에서 쓴 잔량이고,
- * 충전한 칸은 바닥까지 옅은 물을 깔아 표시한다. 기둥을 누르면 [onSelect]로 그 칸 번호를 넘기고(다시 누르면 null), 고른 칸만 진하게 남는다.
- */
-@Composable
-internal fun LiquidUsageColumns(slots: List<BatteryMonitor.Slot>, selected: Int?, onSelect: (Int?) -> Unit, modifier: Modifier = Modifier) {
-    val c = LocalLiquid.current
-    val t = rememberWaveTime()
-    if (slots.isEmpty()) return
-    val most = slots.maxOf { it.usedPct }
-    // 눈금 위 끝: 10% 단위로 올림(최소 10%)
-    val top = (kotlin.math.ceil(most / 10f) * 10f).coerceAtLeast(10f)
-    val fills = slots.mapIndexed { i, s -> rememberFill(s.usedPct / top, delayMs = 40L * i) }
-    val measurer = rememberTextMeasurer()
-    val hourFmt = remember { SimpleDateFormat("a h시", Locale.KOREA) }
-    val small = TextStyle(fontFamily = GalaxyFont, fontSize = 10.sp, color = c.muted)
-    Canvas(
-        modifier
-            .fillMaxWidth()
-            .height(150.dp)
-            .semantics { contentDescription = "최근 24시간 시간대별 배터리 사용량 그래프. 기둥을 누르면 그 시간대 사용량을 보여 줍니다." }
-            .pointerInput(slots.size, selected) {
-                detectTapGestures { p ->
-                    val i = (p.x / (size.width / slots.size)).toInt().coerceIn(0, slots.size - 1)
-                    onSelect(if (i == selected) null else i)
-                }
-            }
-    ) {
-        val labelH = 16.dp.toPx()
-        val axisW = 30.dp.toPx()
-        val chartH = size.height - labelH
-        val chartW = size.width - axisW
-        val slotW = chartW / slots.size
-        val colW = (slotW * 0.62f).coerceAtMost(22.dp.toPx())
-        // 가로 눈금: 위 끝과 절반, 오른쪽에 % 표시
-        listOf(1f, 0.5f).forEach { f ->
-            val y = chartH * (1f - f)
-            drawLine(c.line, Offset(0f, y), Offset(chartW, y), 1.dp.toPx())
-            val v = measurer.measure("${(top * f).roundToInt()}%", small)
-            drawText(v, topLeft = Offset(chartW + 4.dp.toPx(), (y - v.size.height / 2f).coerceAtLeast(0f)))
-        }
-        drawLine(c.line, Offset(0f, chartH), Offset(chartW, chartH), 1.dp.toPx())
-        slots.forEachIndexed { i, s ->
-            val x = slotW * i + (slotW - colW) / 2
-            val dim = selected != null && selected != i
-            val ink = if (dim) c.ink.copy(alpha = 0.3f) else c.ink
-            val r = CornerRadius(colW / 2.6f)
-            // 충전한 칸: 바닥까지 옅은 물
-            if (s.charging) {
-                drawRoundRect(c.ink.copy(alpha = if (dim) 0.05f else 0.12f), topLeft = Offset(x, 0f), size = Size(colW, chartH), cornerRadius = r)
-            }
-            val colH = chartH * fills[i].coerceIn(0f, 1f)
-            if (colH > 0.5f) {
-                val y0 = chartH - colH
-                val col = Path().apply { addRoundRect(RoundRect(x, y0 - 2.dp.toPx(), x + colW, chartH, r, r, CornerRadius.Zero, CornerRadius.Zero)) }
-                val amp = 1.4.dp.toPx().coerceAtMost(colH / 3f)
-                val water = Path().apply {
-                    moveTo(x, chartH)
-                    var dx = 0f
-                    while (dx <= colW) {
-                        lineTo(x + dx, y0 + amp * sin(dx / (colW / 3f) + t * 2.2f + i * 0.7f))
-                        dx += 1.5.dp.toPx()
-                    }
-                    lineTo(x + colW, chartH)
-                    close()
-                }
-                clipPath(col) { drawPath(water, ink) }
-            } else if (s.recorded && !s.charging) {
-                // 기록은 있지만 쓴 양이 0인 칸: 바닥에 얇은 물자국
-                drawRoundRect(ink.copy(alpha = 0.35f), topLeft = Offset(x, chartH - 2.dp.toPx()), size = Size(colW, 2.dp.toPx()), cornerRadius = CornerRadius(1.dp.toPx()))
-            }
-            if (i % 3 == 0) {
-                val d = measurer.measure(hourFmt.format(Date(s.start)), small)
-                drawText(d, topLeft = Offset((slotW * i).coerceAtMost(chartW - d.size.width), size.height - d.size.height))
-            }
         }
     }
 }

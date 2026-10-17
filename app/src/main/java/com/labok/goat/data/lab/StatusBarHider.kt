@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * 상단바 숨기기(실험): 안드로이드 11부터 시스템 전체 전체 화면 설정(policy_control)이 없어졌고, 셸은 상단바 높이 오버레이도
+ * 상단바 숨기기: 안드로이드 11부터 시스템 전체 전체 화면 설정(policy_control)이 없어졌고, 셸은 상단바 높이 오버레이도
  * 만들 수 없다(OverlayManagerService가 셸의 fabricate를 막음). 남은 방법은 '포커스를 가진 창이 상단바를 숨기게 하는 것'이다
  * (AOSP InsetsPolicy.getStatusControlTarget은 강제 표시 상황이 아니면 포커스 창을 따른다). 그래서 다른 앱 위에 1px 투명 창을
  * 포커스를 받게 띄우고 상단바를 숨긴다. 위 가장자리를 쓸어내리면 잠깐 보인다.
@@ -288,38 +288,6 @@ object StatusBarHider {
             .addAction(0, "끄기", action(ACTION_STOP, 2))
             .build()
         runCatching { nm.notify(NOTIFICATION_ID, n) }
-    }
-
-    /**
-     * 실기에서 다시 숨지 않는 원인을 찾기 위한 진단 글(작업 스레드에서 부른다). 기기·버전, Shizuku 상태, 지금 포커스와 키보드,
-     * 이 창이 시스템에 어떻게 올라가 있는지(보이는지·다른 앱 위 표시가 막혔는지·키를 받을 수 있는지), 최근 상단바 숨기기 기록을 담는다.
-     */
-    fun diagnostics(context: Context): String = buildString {
-        val app = context.applicationContext
-        appendLine("GOAT ${com.labok.goat.BuildConfig.VERSION_NAME} 상단바 숨기기 기록")
-        appendLine("기기: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE}(SDK ${android.os.Build.VERSION.SDK_INT}) · ${android.os.Build.DISPLAY}")
-        appendLine("켜짐: ${onFlow.value} · 창: ${if (view != null) "있음" else "없음"} · 다른 앱 위 표시 권한: ${Settings.canDrawOverlays(app)}")
-        val shell = ShizukuAccess.shell(
-            "echo '== 포커스 =='; dumpsys window | grep -E 'mCurrentFocus|mFocusedApp|mFocusedWindow' | head -6; " +
-                "echo '== 키보드 =='; dumpsys input_method | grep -E 'mInputShown=|mIsInputViewShown=' | head -3; " +
-                "echo '== 키보드 요청 실패(최근) =='; dumpsys input_method | grep -E '#[0-9]+ TYPE_SHOW - STATUS_FAIL' | tail -5; " +
-                "echo '== 이 창 =='; dumpsys window windows | grep -A40 'GOAT status bar hider' | head -45; " +
-                "echo '== 상단바 제어 =='; dumpsys window | grep -iE 'mTopFullscreenOpaqueWindowState|statusBarControlTarget|mFocusedWindow|ControlTarget' | head -6"
-        )
-        appendLine(if (shell == null) "Shizuku: 연결 안 됨(셸 진단 없음)" else "Shizuku: 연결됨")
-        shell?.out?.let { appendLine(it) }
-        appendLine("== 최근 기록 ==")
-        LogRepository.from(app).read().filter { "상단바" in it }.takeLast(200).forEach { appendLine(it) }
-    }
-
-    /** [diagnostics]를 앱 캐시에 글 파일로 저장하고, 공유할 수 있는 주소를 돌려준다(작업 스레드에서 부른다). */
-    fun diagnosticsFile(context: Context): android.net.Uri {
-        val app = context.applicationContext
-        val dir = java.io.File(app.cacheDir, "share").apply { mkdirs() }
-        dir.listFiles()?.filter { it.name.startsWith("goat_statusbar_") }?.forEach { it.delete() }
-        val stamp = java.text.SimpleDateFormat("MMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
-        val file = java.io.File(dir, "goat_statusbar_$stamp.txt").apply { writeText(diagnostics(app)) }
-        return androidx.core.content.FileProvider.getUriForFile(app, "${app.packageName}.files", file)
     }
 
     private val OUTSIDE_CHECKS_MS = longArrayOf(350L, 500L)

@@ -113,8 +113,6 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
             Spacer(Modifier.height(Gap.Card))
             val t = System.currentTimeMillis()
             val day = samples.filter { t - it.time <= BatteryMonitor.DAY_MS }
-            HourlyUsage(samples, t, logging)
-            Spacer(Modifier.height(Gap.Card))
             Text("최근 24시간 잔량", fontWeight = FontWeight.SemiBold, color = c.ink)
             Spacer(Modifier.height(Gap.Item))
             if (day.size < 2) {
@@ -149,39 +147,6 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
         }
     }
 }
-
-/** 시간대별 배터리 사용량: 2시간 칸 물기둥 그래프와, 고른 칸(없으면 24시간 전체)의 사용량 한 줄. */
-@Composable
-private fun HourlyUsage(samples: List<BatteryMonitor.Sample>, now: Long, logging: Boolean) {
-    val c = LocalLiquid.current
-    Text("시간대별 배터리 사용량", fontWeight = FontWeight.SemiBold, color = c.ink)
-    Spacer(Modifier.height(Gap.Item))
-    val slots = remember(samples, now / 60_000) { BatteryMonitor.slots(samples, BatteryMonitor.slotEnd(now)) }
-    if (slots.none { it.recorded }) {
-        Text(if (logging) "기록이 쌓이면 2시간 단위로 사용량이 표시됩니다(15분마다 기록)." else "기록을 켜면 2시간 단위로 배터리 사용량을 보여 줍니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-        return
-    }
-    var selected by remember { mutableStateOf<Int?>(null) }
-    LiquidUsageColumns(slots, selected, { selected = it })
-    Spacer(Modifier.height(Gap.Item))
-    val fmt = remember { java.text.SimpleDateFormat("a h시", Locale.KOREA) }
-    val pick = selected?.let { slots.getOrNull(it) }
-    val line = if (pick == null) {
-        "최근 24시간 동안 ${pct(slots.sumOf { it.usedPct.toDouble() }.toFloat())} 사용 · 기둥을 누르면 시간대별로 볼 수 있습니다."
-    } else {
-        val range = "${fmt.format(java.util.Date(pick.start))}~${fmt.format(java.util.Date(pick.end)).substringAfter(' ')}"
-        when {
-            !pick.recorded -> "$range · 기록 없음"
-            pick.charging && pick.usedPct < 0.5f -> "$range · 충전"
-            pick.charging -> "$range · ${pct(pick.usedPct)} 사용 · 충전"
-            else -> "$range · ${pct(pick.usedPct)} 사용"
-        }
-    }
-    Text(line, color = c.ink, style = MaterialTheme.typography.bodySmall)
-    Text("옅게 칠한 기둥은 충전한 시간대입니다.", color = c.muted, style = MaterialTheme.typography.labelSmall)
-}
-
-private fun pct(v: Float) = when { v <= 0f -> "0%"; v < 1f -> "1% 미만"; else -> "${v.roundToInt()}%" }
 
 @Composable
 private fun Metric(name: String, value: String?) {

@@ -1,0 +1,3483 @@
+                    0 (19) RESET:TIME: 2022-12-07-01-14-31
+                    0 (2) 100 status=discharging health=good plug=none temp=313 volt=4312 current=279 ap_temp=32 pa_temp=33 skin_temp=31 -wifi_ap -otg -high_speaker_volume txshare_event=0x0 online=1 current_event=0x40 misc_event=0x10000 charge=1670 modemRailChargemAh=0 wifiRailChargemAh=0 +running +wake_lock +wifi_radio +screen phone_signal_strength=great wifi_signal_strength=4 wifi_suppl=completed +ble_scan +cellular_high_tx_power fg=u0a321:""
+                    0 (2) 100 -cellular_high_tx_power fg=u0a9:""
+                    0 (2) 100 fg=u0a438:""
+                    0 (2) 100 fg=u0a275:""
+                    0 (2) 100 fg=u0a290:""
+                    0 (2) 100 fg=u0a289:""
+                    0 (2) 100 top=u0a453:""
+                    0 (2) 100 user=0:""
+                    0 (2) 100 user=150:""
+                    0 (2) 100 userfg=0:""
+                    0 (2) 100 tmpwhitelist=u150s2000:""
+                    0 (2) 100 tmpwhitelist=u150s5023:""
+                    0 (2) 100 tmpwhitelist=u150s5025:""
+                    0 (2) 100 tmpwhitelist=u150a59:""
+                    0 (2) 100 tmpwhitelist=u150a61:""
+                    0 (2) 100 tmpwhitelist=u150a62:""
+                    0 (2) 100 tmpwhitelist=u150a66:""
+                    0 (2) 100 tmpwhitelist=u150a69:""
+                    0 (2) 100 tmpwhitelist=u150a70:""
+                    0 (2) 100 tmpwhitelist=u150a76:""
+                    0 (2) 100 tmpwhitelist=u150a83:""
+                    0 (2) 100 tmpwhitelist=u150a85:""
+                    0 (2) 100 tmpwhitelist=u150a90:""
+                    0 (2) 100 tmpwhitelist=u150a91:""
+                    0 (2) 100 tmpwhitelist=u150a93:""
+                    0 (2) 100 tmpwhitelist=u150a94:""
+                    0 (2) 100 tmpwhitelist=u150a95:""
+                    0 (2) 100 tmpwhitelist=u150a96:""
+                    0 (2) 100 tmpwhitelist=u150a97:""
+                    0 (2) 100 tmpwhitelist=u150a105:""
+                    0 (2) 100 tmpwhitelist=u150a112:""
+                    0 (2) 100 tmpwhitelist=u150a116:""
+                    0 (2) 100 tmpwhitelist=u150a118:""
+                    0 (2) 100 tmpwhitelist=u150a119:""
+                    0 (2) 100 tmpwhitelist=u150a121:""
+                    0 (2) 100 tmpwhitelist=u150a122:""
+                    0 (2) 100 tmpwhitelist=u150a123:""
+                    0 (2) 100 tmpwhitelist=u150a125:""
+                    0 (2) 100 tmpwhitelist=u150a128:""
+                    0 (2) 100 tmpwhitelist=u150a129:""
+                    0 (2) 100 tmpwhitelist=u150a130:""
+                    0 (2) 100 tmpwhitelist=u150a134:""
+                    0 (2) 100 tmpwhitelist=u150a136:""
+                    0 (2) 100 tmpwhitelist=u150a143:""
+                    0 (2) 100 tmpwhitelist=u150a144:""
+                    0 (2) 100 tmpwhitelist=u150a145:""
+                    0 (2) 100 tmpwhitelist=u150a150:""
+                    0 (2) 100 tmpwhitelist=u150a151:""
+                    0 (2) 100 tmpwhitelist=u150a155:""
+                    0 (2) 100 tmpwhitelist=u150a162:""
+                    0 (2) 100 tmpwhitelist=u150a177:""
+                    0 (2) 100 tmpwhitelist=u150a186:""
+                    0 (2) 100 tmpwhitelist=u150a187:""
+                    0 (2) 100 tmpwhitelist=u150a201:""
+                    0 (2) 100 tmpwhitelist=u150a213:""
+                    0 (2) 100 tmpwhitelist=u150a216:""
+                    0 (2) 100 tmpwhitelist=u150a220:""
+                    0 (2) 100 tmpwhitelist=u150a221:""
+                    0 (2) 100 tmpwhitelist=u150a244:""
+                    0 (2) 100 tmpwhitelist=u150a254:""
+                    0 (2) 100 tmpwhitelist=u150a262:""
+                    0 (2) 100 tmpwhitelist=u150a268:""
+                    0 (2) 100 tmpwhitelist=u150a269:""
+                    0 (2) 100 tmpwhitelist=u150a360:""
+                    0 (2) 100 tmpwhitelist=u150a362:""
+                    0 (2) 100 tmpwhitelist=u150a103:""
+                    0 (2) 100 tmpwhitelist=u150a118:""
+                    0 (2) 100 tmpwhitelist=u150a162:""
+                    0 (2) 100 tmpwhitelist=u150a121:""
+                    0 (2) 100 tmpwhitelist=u150a130:""
+                    0 (2) 100 tmpwhitelist=u150a93:""
+                 +1ms (2) 100 +job=u0a9:""
+                +63ms (2) 100 +job=u0a370:""
+               +101ms (2) 100 stats=0:""
+               +211ms (2) 100 stats=0:""
+               +280ms (2) 100 +job=u0a9:""
+               +288ms (2) 100 +job=u0a9:""
+               +312ms (2) 100 -job=u0a9:""
+               +376ms (2) 100 stats=0:""
+               +423ms (2) 100 -job=u0a370:""
+               +484ms (2) 100 wifi_signal_strength=2 +cellular_high_tx_power -job=u0a9:""
+               +521ms (2) 100 -cellular_high_tx_power conn=1:""
+               +570ms (3) 100 brightness=medium stats=0:""
+               +753ms (3) 100 +wifi_multicast -job=u0a9:""
+               +772ms (2) 100 stats=0:""
+             +1s030ms (2) 100 +tmpwhitelist=u0a316:""
+             +1s984ms (2) 100 +job=u0a393:""
+             +2s017ms (2) 100 -job=u0a393:""
+             +2s247ms (2) 100 stats=0:""
+             +2s728ms (3) 100 +audio stats=0:""
+             +3s411ms (2) 100 wifi_signal_strength=4 +cellular_high_tx_power stats=0:""
+             +3s619ms (2) 100 +gps -cellular_high_tx_power conn=1:""
+             +3s848ms (1) 100 -gps +wifi_scan
+             +4s879ms (2) 100 -wifi_scan +tmpwhitelist=u0a103:""
+             +4s989ms (2) 100 stats=0:""
+             +5s137ms (2) 100 -top=u0a453:""
+             +5s137ms (3) 100 +gps +wifi_scan -audio +top=u0a306:""
+             +6s955ms (2) 100 +tmpwhitelist=1000:""
+             +6s957ms (2) 100 -wifi_scan +tmpwhitelist=u0a59:""
+            +11s036ms (2) 100 -gps -tmpwhitelist=u0a316:""
+            +15s102ms (3) 100 current=-389 ap_temp=36 pa_temp=35 skin_temp=32
+            +23s396ms (2) 100 +job=u0a9:""
+            +23s401ms (2) 100 +job=u0a9:""
+            +23s404ms (2) 100 +job=u0a9:""
+            +23s409ms (2) 100 -job=u0a9:""
+            +23s414ms (2) 100 -job=u0a9:""
+            +23s475ms (2) 100 stats=0:""
+            +23s600ms (2) 100 -job=u0a9:""
+            +27s592ms (2) 100 -tmpwhitelist=u0a103:""
+            +28s428ms (2) 100 +tmpwhitelist=u0a316:""
+            +29s977ms (2) 100 volt=4257
+            +38s471ms (2) 100 +wifi_scan -tmpwhitelist=u0a316:""
+            +39s051ms (2) 100 -tmpwhitelist=1000:""
+            +39s056ms (2) 100 -wifi_scan -tmpwhitelist=u0a59:""
+            +39s806ms (2) 100 +tmpwhitelist=u0a103:""
+            +45s100ms (3) 100 current=-304 ap_temp=34 pa_temp=34 skin_temp=32
+            +59s895ms (2) 100 -tmpwhitelist=u0a103:""
+          +1m09s032ms (2) 100 stats=0:""
+          +1m15s103ms (3) 100 current=-263 ap_temp=34 pa_temp=33 skin_temp=31
+          +1m28s431ms (2) 100 +tmpwhitelist=u0a316:""
+          +1m29s910ms (2) 100 +tmpwhitelist=u0a59:""
+          +1m29s914ms (2) 100 +tmpwhitelist=1000:""
+          +1m30s244ms (2) 100 volt=4221
+          +1m38s463ms (2) 100 -tmpwhitelist=u0a316:""
+          +1m45s102ms (3) 100 current=-253 ap_temp=34 pa_temp=33 skin_temp=31
+          +1m49s923ms (2) 100 -tmpwhitelist=u0a59:""
+          +1m49s927ms (2) 100 -tmpwhitelist=1000:""
+          +2m00s398ms (2) 100 volt=4254
+          +2m08s401ms (2) 100 +job=u0a9:""
+          +2m08s406ms (2) 100 +job=u0a9:""
+          +2m08s409ms (2) 100 +job=u0a9:""
+          +2m08s412ms (2) 100 -job=u0a9:""
+          +2m08s464ms (2) 100 stats=0:""
+          +2m08s581ms (2) 100 -job=u0a9:""
+          +2m08s640ms (2) 100 stats=0:""
+          +2m08s717ms (2) 100 -job=u0a9:""
+          +2m15s102ms (3) 100 current=-254 ap_temp=34 pa_temp=33 skin_temp=31
+          +2m28s431ms (2) 100 +tmpwhitelist=u0a316:""
+          +2m38s486ms (2) 100 -tmpwhitelist=u0a316:""
+          +2m45s105ms (3) 100 current=-251 ap_temp=33 pa_temp=33 skin_temp=31
+          +3m15s104ms (3) 100 current=-236 ap_temp=33 pa_temp=33 skin_temp=31
+          +3m28s435ms (2) 100 +tmpwhitelist=u0a316:""
+          +3m38s442ms (2) 100 -tmpwhitelist=u0a316:""
+          +3m45s106ms (3) 100 current=-243 ap_temp=33 pa_temp=33 skin_temp=31
+          +3m53s409ms (2) 100 +job=u0a9:""
+          +3m53s416ms (2) 100 +job=u0a9:""
+          +3m53s424ms (2) 100 +job=u0a9:""
+          +3m53s428ms (2) 100 -job=u0a9:""
+          +3m53s465ms (2) 100 stats=0:""
+          +3m53s548ms (2) 100 -job=u0a9:""
+          +3m53s580ms (2) 100 stats=0:""
+          +3m53s657ms (2) 100 -job=u0a9:""
+          +4m01s001ms (2) 099
+          +4m01s001ms (2) 099 stats=0:""
+          +4m15s106ms (3) 099 current=-252 ap_temp=33 pa_temp=33 skin_temp=31
+          +4m28s427ms (2) 099 +tmpwhitelist=u0a316:""
+          +4m31s140ms (1) 099 charge=1666
+          +4m38s455ms (2) 099 -tmpwhitelist=u0a316:""
+          +4m45s109ms (3) 099 current=-243 ap_temp=33 pa_temp=33 skin_temp=31
+          +5m01s282ms (1) 099 charge=1664
+          +5m15s111ms (3) 099 current=-239 ap_temp=33 pa_temp=33 skin_temp=31
+          +5m28s430ms (2) 099 +tmpwhitelist=u0a316:""
+          +5m31s436ms (1) 099 charge=1663
+          +5m38s417ms (2) 099 +job=u0a9:""
+          +5m38s430ms (2) 099 +job=u0a9:""
+          +5m38s433ms (2) 099 +job=u0a9:""
+          +5m38s437ms (2) 099 -job=u0a9:""
+          +5m38s451ms (2) 099 -tmpwhitelist=u0a316:""
+          +5m38s496ms (2) 099 stats=0:""
+          +5m38s589ms (2) 099 -job=u0a9:""
+          +5m38s645ms (2) 099 stats=0:""
+          +5m38s736ms (2) 099 -job=u0a9:""
+          +5m45s108ms (3) 099 current=-246 ap_temp=33 pa_temp=33 skin_temp=31
+          +6m01s576ms (1) 099 charge=1661
+          +6m15s109ms (3) 099 current=-247 ap_temp=33 pa_temp=33 skin_temp=31
+          +6m28s431ms (2) 099 +tmpwhitelist=u0a316:""
+          +6m31s727ms (1) 099 charge=1658
+          +6m35s128ms (2) 099 -wifi_multicast
+          +6m36s759ms (2) 099 +job=u0a103:""
+          +6m36s764ms (2) 099 +job=u0a103:""
+          +6m36s767ms (2) 099 +job=u0a103:""
+          +6m36s795ms (2) 099 +sync=u0a103:""
+          +6m36s852ms (2) 099 +sync=u0a103:""
+          +6m36s859ms (2) 099 +sync=u0a103:""
+          +6m36s871ms (2) 099 -job=u0a103:""
+          +6m36s874ms (2) 099 -sync=u0a103:""
+          +6m36s877ms (2) 099 -job=u0a103:""
+          +6m36s881ms (2) 099 -sync=u0a103:""
+          +6m36s883ms (2) 099 -job=u0a103:""
+          +6m36s886ms (2) 099 -sync=u0a103:""
+          +6m38s441ms (2) 099 -tmpwhitelist=u0a316:""
+          +6m39s119ms (2) 099 +job=u0a180:""
+          +6m39s135ms (2) 099 +job=u0a180:""
+          +6m39s138ms (2) 099 -job=u0a180:""
+          +6m39s142ms (2) 099 -job=u0a180:""
+          +6m39s155ms (2) 099 +job=u0a180:""
+          +6m39s209ms (2) 099 -job=u0a180:""
+          +6m39s274ms (2) 099 +job=u0a162:""
+          +6m39s393ms (2) 099 +fg=u0a103:""
+          +6m39s522ms (2) 099 -fg=u0a103:""
+          +6m39s743ms (2) 099 +job=u0a218:""
+          +6m39s768ms (2) 099 -job=u0a218:""
+          +6m41s161ms (2) 099 +job=u0a9:""
+          +6m41s178ms (2) 099 +job=u0a9:""
+          +6m41s191ms (2) 099 +job=u0a9:""
+          +6m41s202ms (2) 099 -job=u0a9:""
+          +6m41s245ms (2) 099 stats=0:""
+          +6m41s292ms (2) 099 +job=u0a121:""
+          +6m41s376ms (2) 099 +job=u0a125:""
+          +6m41s410ms (2) 099 -job=u0a121:""
+          +6m41s467ms (2) 099 -job=u0a125:""
+          +6m41s546ms (2) 099 -job=u0a9:""
+          +6m41s569ms (2) 099 stats=0:""
+          +6m41s860ms (2) 099 -job=u0a9:""
+          +6m41s929ms (2) 099 +job=u0a278:""
+          +6m42s334ms (2) 099 -job=u0a278:""
+          +6m42s947ms (2) 099 +job=u0a289:""
+          +6m43s188ms (2) 099 -job=u0a289:""
+          +6m45s110ms (3) 099 current=-255 ap_temp=42 pa_temp=34 skin_temp=33
+          +6m48s400ms (2) 099 +job=u0a304:""
+          +6m48s449ms (2) 099 -job=u0a304:""
+          +6m49s384ms (2) 099 -job=u0a162:""
+          +6m49s829ms (2) 099 +job=u0a180:""
+          +6m49s866ms (2) 099 +job=u0a180:""
+          +6m49s871ms (2) 099 +job=u0a180:""
+          +6m49s894ms (2) 099 -job=u0a180:""
+          +6m49s911ms (2) 099 -job=u0a180:""
+          +6m49s980ms (2) 099 -job=u0a180:""
+          +6m50s081ms (2) 099 +fg=u0a103:""
+          +6m50s123ms (2) 099 +job=u0a162:""
+          +6m50s198ms (2) 099 -fg=u0a103:""
+          +6m50s348ms (2) 099 +job=u0a218:""
+          +6m50s367ms (2) 099 -job=u0a218:""
+          +6m50s455ms (2) 099 +job=u0a278:""
+          +6m50s489ms (2) 099 -job=u0a278:""
+          +6m50s642ms (2) 099 +job=u0a304:""
+          +6m50s656ms (2) 099 -job=u0a304:""
+          +6m50s734ms (2) 099 +job=u0a180:""
+          +6m50s742ms (2) 099 -job=u0a180:""
+          +6m50s798ms (2) 099 +job=u0a180:""
+          +6m50s804ms (2) 099 -job=u0a180:""
+          +6m51s505ms (2) 099 +job=u0a289:""
+          +6m51s582ms (2) 099 -job=u0a289:""
+          +7m00s222ms (2) 099 -job=u0a162:""
+          +7m01s885ms (2) 099 volt=4233
+          +7m15s110ms (3) 099 current=-434 ap_temp=35 pa_temp=34 skin_temp=32
+          +7m25s445ms (3) 099 -wake_lock -screen stats=0:""
+          +7m25s471ms (3) 099 +wake_lock=1000:"" brightness=dark
+          +7m25s511ms (1) 099 -wake_lock
+          +7m25s543ms (2) 099 +wake_lock=1001:""
+          +7m25s543ms (1) 099 -wake_lock
+          +7m25s543ms (2) 099 +wake_lock=1001:""
+          +7m25s546ms (1) 099 -wake_lock
+          +7m25s546ms (2) 099 +wake_lock=1001:""
+          +7m25s546ms (1) 099 -wake_lock
+          +7m25s547ms (2) 099 +wake_lock=1001:""
+          +7m25s548ms (1) 099 -wake_lock
+          +7m25s548ms (2) 099 +wake_lock=1001:""
+          +7m25s559ms (1) 099 -wake_lock
+          +7m25s559ms (2) 099 +wake_lock=1001:""
+          +7m25s560ms (1) 099 -wake_lock
+          +7m25s569ms (2) 099 +wake_lock=1001:""
+          +7m25s569ms (1) 099 -wake_lock
+          +7m25s569ms (2) 099 +wake_lock=1001:""
+          +7m25s577ms (1) 099 -wake_lock
+          +7m25s577ms (2) 099 +wake_lock=1001:""
+          +7m25s577ms (1) 099 -wake_lock
+          +7m25s582ms (2) 099 +wake_lock=1001:""
+          +7m25s583ms (1) 099 -wake_lock
+          +7m25s583ms (2) 099 +wake_lock=1001:""
+          +7m25s585ms (1) 099 -wake_lock
+          +7m25s585ms (2) 099 +wake_lock=1001:""
+          +7m25s586ms (1) 099 -wake_lock
+          +7m25s636ms (2) 099 +wake_lock=1000:""
+          +7m25s638ms (1) 099 -wake_lock
+          +7m25s692ms (3) 099 +wake_lock=1000:"" stats=0:""
+          +7m26s226ms (2) 099 stats=0:""
+          +7m27s373ms (1) 099 -wake_lock
+          +7m32s031ms (2) 098 charge=1653
+          +7m32s032ms (2) 098 stats=0:""
+          +7m40s387ms (3) 098 +wake_lock=1000:"" +tmpwhitelist=1000:""
+          +7m40s411ms (2) 098 -wake_lock +tmpwhitelist=u0a59:""
+          +7m45s115ms (3) 098 current=-246 ap_temp=34 pa_temp=33 skin_temp=31
+          +7m50s456ms (2) 098 -tmpwhitelist=1000:""
+          +7m50s464ms (2) 098 -tmpwhitelist=u0a59:""
+          +7m54s488ms (3) 098 +wake_lock=u0a9:"" +job=u0a9:""
+          +7m54s499ms (2) 098 +job=u0a294:""
+          +7m54s505ms (2) 098 +job=u0a9:""
+          +7m54s510ms (2) 098 +job=u0a9:""
+          +7m54s514ms (2) 098 -job=u0a9:""
+          +7m54s518ms (2) 098 -job=u0a9:""
+          +7m54s569ms (2) 098 -job=u0a294:""
+          +7m54s605ms (2) 098 stats=0:""
+          +7m54s681ms (2) 098 -wake_lock -job=u0a9:""
+          +8m02s181ms (1) 098 charge=1651
+          +8m15s113ms (3) 098 current=-135 ap_temp=33 pa_temp=33 skin_temp=31
+          +8m32s329ms (1) 098 charge=1649
+          +8m34s700ms (2) 098 wake_reason=0:""
+          +8m45s116ms (3) 098 current=-117 ap_temp=32 pa_temp=32 skin_temp=31
+          +8m54s519ms (2) 098 stats=0:""
+          +9m02s469ms (2) 098 volt=4254
+          +9m08s001ms (2) 098 -wifi_radio stats=0:""
+          +9m10s799ms (3) 098 +wake_lock=u0a294:"" +job=u0a294:""
+          +9m10s820ms (2) 098 +job=u0a9:""
+          +9m10s828ms (2) 098 +job=u0a9:""
+          +9m10s831ms (2) 098 +job=u0a9:""
+          +9m10s836ms (2) 098 -job=u0a9:""
+          +9m10s939ms (2) 098 device_idle=light +cellular_high_tx_power stats=0:""
+          +9m10s962ms (2) 098 -cellular_high_tx_power -job=u0a9:""
+          +9m10s964ms (2) 098 -job=u0a294:""
+          +9m10s967ms (2) 098 -wake_lock -job=u0a9:""
+          +9m11s090ms (2) 098 +wake_lock=1001:""
+          +9m11s092ms (1) 098 -wake_lock
+          +9m11s092ms (2) 098 +wake_lock=1000:""
+          +9m11s096ms (2) 098 -wake_lock stats=0:""
+          +9m11s096ms (2) 098 +wake_lock=1001:""
+          +9m11s097ms (1) 098 -wake_lock
+          +9m12s524ms (2) 098 +wifi_radio wakeupap=1051:""
+          +9m12s588ms (2) 098 stats=0:""
+          +9m15s114ms (3) 098 current=-114 ap_temp=33 pa_temp=32 skin_temp=31
+          +9m32s607ms (1) 098 charge=1648
+          +9m41s921ms (3) 098 +wake_lock=1000:"" wake_reason=0:"" +tmpwhitelist=u0a130:""
+          +9m41s961ms (2) 098 -wake_lock +tmpwhitelist=u0a121:""
+          +9m45s115ms (3) 098 current=-127 ap_temp=32 pa_temp=32 skin_temp=30
+          +9m48s703ms (2) 098 -wifi_radio stats=0:""
+          +9m49s669ms (2) 098 +wifi_radio wakeupap=1051:""
+          +9m49s694ms (2) 098 stats=0:""
+          +9m51s989ms (2) 098 -tmpwhitelist=u0a130:""
+          +9m51s999ms (2) 098 -tmpwhitelist=u0a121:""
+         +10m01s638ms (2) 098 +wake_lock=u0a393:""
+         +10m01s638ms (1) 098 -wake_lock
+         +10m11s091ms (2) 098 -wifi_radio stats=0:""
+         +10m12s085ms (2) 098 stats=0:""
+         +10m13s767ms (2) 098 +wifi_radio wakeupap=1051:""
+         +10m13s799ms (2) 098 stats=0:""
+         +10m15s118ms (3) 098 current=-108 ap_temp=32 pa_temp=32 skin_temp=30
+         +10m30s799ms (2) 098 +wake_lock=u150a103:""
+         +10m31s685ms (1) 098 -wake_lock
+         +10m35s373ms (2) 098 +wake_lock=u150a103:""
+         +10m37s884ms (1) 098 -wake_lock
+         +10m43s427ms (3) 098 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+         +10m43s443ms (1) 098 -wake_lock
+         +10m43s645ms (2) 098 +wake_lock=u0a103:""
+         +10m43s649ms (1) 098 -wake_lock
+         +10m45s118ms (3) 098 current=-120 ap_temp=32 pa_temp=32 skin_temp=30
+         +10m49s156ms (2) 098 wake_reason=0:""
+         +10m53s455ms (2) 098 -tmpwhitelist=u0a103:""
+         +11m03s061ms (1) 098 charge=1646
+         +11m08s575ms (2) 098 -wifi_radio stats=0:""
+         +11m09s642ms (2) 098 +wifi_radio wakeupap=1051:""
+         +11m09s665ms (2) 098 stats=0:""
+         +11m15s118ms (3) 098 current=-120 ap_temp=32 pa_temp=31 skin_temp=30
+         +11m24s703ms (2) 098 -wifi_radio stats=0:""
+         +11m25s718ms (2) 098 +wifi_radio wakeupap=1051:""
+         +11m25s738ms (2) 098 stats=0:""
+         +11m30s169ms (2) 098 +wake_lock=1001:""
+         +11m30s169ms (1) 098 -wake_lock
+         +11m30s169ms (2) 098 +wake_lock=1001:""
+         +11m30s171ms (1) 098 -wake_lock
+         +11m30s171ms (2) 098 +wake_lock=1001:""
+         +11m30s171ms (2) 098 -wake_lock stats=0:""
+         +11m45s120ms (3) 098 current=-124 ap_temp=31 pa_temp=31 skin_temp=30
+         +11m56s410ms (2) 098 wake_reason=0:""
+         +12m03s382ms (2) 098 temp=301
+         +12m11s807ms (2) 098 -wifi_radio stats=0:""
+         +12m14s991ms (2) 098 +wifi_radio wakeupap=1051:""
+         +12m15s060ms (2) 098 stats=0:""
+         +12m15s118ms (3) 098 current=-110 ap_temp=31 pa_temp=31 skin_temp=30
+         +12m33s520ms (1) 098 charge=1644
+         +12m45s121ms (3) 098 current=-115 ap_temp=31 pa_temp=31 skin_temp=30
+         +13m03s644ms (2) 098 wake_reason=0:""
+         +13m09s151ms (2) 098 -wifi_radio stats=0:""
+         +13m09s757ms (2) 098 +wifi_radio wakeupap=1051:""
+         +13m09s782ms (2) 098 stats=0:""
+         +13m15s118ms (3) 098 current=-109 ap_temp=31 pa_temp=31 skin_temp=30
+         +13m24s767ms (2) 098 -wifi_radio stats=0:""
+         +13m25s629ms (2) 098 +wifi_radio wakeupap=1051:""
+         +13m25s660ms (2) 098 stats=0:""
+         +13m41s667ms (2) 098 -wifi_radio stats=0:""
+         +13m45s119ms (3) 098 current=-113 ap_temp=31 pa_temp=31 skin_temp=29
+         +13m50s752ms (2) 098 +wifi_radio wakeupap=1051:""
+         +13m50s787ms (2) 098 stats=0:""
+         +14m02s621ms (2) 098 +wake_lock=1001:""
+         +14m02s622ms (1) 098 -wake_lock
+         +14m02s622ms (2) 098 +wake_lock=1001:""
+         +14m02s628ms (1) 098 -wake_lock
+         +14m02s628ms (2) 098 +wake_lock=1001:""
+         +14m02s629ms (1) 098 -wake_lock
+         +14m03s248ms (2) 098 +wake_lock=1000:""
+         +14m03s295ms (1) 098 -wake_lock
+         +14m03s339ms (2) 098 +wake_lock=1001:""
+         +14m03s339ms (1) 098 -wake_lock
+         +14m03s339ms (2) 098 +wake_lock=1000:""
+         +14m03s343ms (1) 098 -wake_lock
+         +14m03s343ms (3) 098 +wake_lock=1001:"" stats=0:""
+         +14m03s344ms (1) 098 charge=1643 -wake_lock
+         +14m10s887ms (2) 098 -wifi_radio wake_reason=0:""
+         +14m11s923ms (2) 098 stats=0:""
+         +14m13s788ms (2) 098 +wifi_radio wakeupap=1051:""
+         +14m13s821ms (2) 098 stats=0:""
+         +14m15s122ms (3) 098 current=-124 ap_temp=31 pa_temp=31 skin_temp=29
+         +14m29s023ms (2) 098 -wifi_radio stats=0:""
+         +14m29s629ms (2) 098 +wifi_radio wakeupap=1051:""
+         +14m29s649ms (2) 098 stats=0:""
+         +14m45s123ms (3) 098 current=-128 ap_temp=31 pa_temp=31 skin_temp=29
+         +15m03s255ms (2) 098 stats=0:""
+         +15m09s727ms (2) 098 -wifi_radio stats=0:""
+         +15m09s974ms (2) 098 +wifi_radio wakeupap=1051:""
+         +15m10s005ms (2) 098 stats=0:""
+         +15m15s124ms (3) 098 current=-118 ap_temp=31 pa_temp=31 skin_temp=29
+         +15m18s126ms (2) 098 wake_reason=0:""
+         +15m25s087ms (2) 098 -wifi_radio stats=0:""
+         +15m34s404ms (1) 098 charge=1641
+         +15m38s169ms (3) 098 +wake_lock=u0a103:"" +wifi_radio wakeupap=1051:""
+         +15m38s175ms (1) 098 -wake_lock
+         +15m38s176ms (2) 098 +wake_lock=u0a103:""
+         +15m38s194ms (1) 098 -wake_lock
+         +15m38s195ms (2) 098 +wake_lock=u0a103:""
+         +15m38s202ms (2) 098 -wake_lock stats=0:""
+         +15m45s124ms (3) 098 current=-112 ap_temp=31 pa_temp=30 skin_temp=29
+         +16m11s679ms (2) 098 -wifi_radio stats=0:""
+         +16m15s123ms (3) 098 current=-110 ap_temp=31 pa_temp=30 skin_temp=29
+         +16m21s689ms (2) 098 +wifi_radio wakeupap=1051:""
+         +16m21s721ms (2) 098 stats=0:""
+         +16m25s362ms (2) 098 wake_reason=0:""
+         +16m41s887ms (2) 098 -wifi_radio stats=0:""
+         +16m45s125ms (3) 098 current=-107 ap_temp=31 pa_temp=30 skin_temp=29
+         +16m51s692ms (2) 098 +wifi_radio wakeupap=1051:""
+         +16m51s722ms (2) 098 stats=0:""
+         +17m11s839ms (2) 098 -wifi_radio stats=0:""
+         +17m15s126ms (3) 098 current=-117 ap_temp=30 pa_temp=30 skin_temp=29
+         +17m32s604ms (2) 098 wake_reason=0:""
+         +17m35s055ms (1) 098 charge=1639
+         +17m45s126ms (3) 098 current=-112 ap_temp=30 pa_temp=30 skin_temp=29
+         +17m52s105ms (2) 098 +wifi_radio wakeupap=1051:""
+         +17m52s140ms (2) 098 stats=0:""
+         +18m12s255ms (2) 098 -wifi_radio stats=0:""
+         +18m15s126ms (3) 098 current=-103 ap_temp=30 pa_temp=30 skin_temp=29
+         +18m39s840ms (3) 098 +wifi_radio wake_reason=0:"" wakeupap=1051:""
+         +18m40s022ms (2) 098 stats=0:""
+         +18m45s126ms (3) 098 current=-110 ap_temp=30 pa_temp=30 skin_temp=29
+         +19m05s487ms (1) 098 charge=1638
+         +19m11s903ms (2) 098 -wifi_radio stats=0:""
+         +19m15s127ms (3) 098 current=-107 ap_temp=31 pa_temp=30 skin_temp=29
+         +19m45s128ms (3) 098 current=-111 ap_temp=30 pa_temp=30 skin_temp=29
+         +19m47s083ms (2) 098 wake_reason=0:""
+         +19m52s836ms (2) 098 +wifi_radio wakeupap=1051:""
+         +19m52s868ms (2) 098 stats=0:""
+         +20m11s807ms (2) 098 -wifi_radio stats=0:""
+         +20m15s129ms (3) 098 current=-114 ap_temp=30 pa_temp=30 skin_temp=29
+         +20m35s972ms (1) 098 charge=1636
+         +20m45s129ms (3) 098 current=-111 ap_temp=30 pa_temp=30 skin_temp=29
+         +20m53s049ms (2) 098 +wifi_radio wakeupap=1051:""
+         +20m53s086ms (2) 098 stats=0:""
+         +20m54s304ms (2) 098 wake_reason=0:""
+         +21m11s967ms (2) 098 -wifi_radio stats=0:""
+         +21m15s130ms (3) 098 current=-110 ap_temp=30 pa_temp=30 skin_temp=29
+         +21m30s224ms (2) 098 +wake_lock=1001:""
+         +21m30s227ms (1) 098 -wake_lock
+         +21m30s227ms (2) 098 +wake_lock=1001:""
+         +21m30s227ms (1) 098 -wake_lock
+         +21m36s279ms (2) 097
+         +21m36s279ms (2) 097 stats=0:""
+         +21m45s130ms (3) 097 current=-117 ap_temp=30 pa_temp=30 skin_temp=29
+         +21m53s361ms (2) 097 +wifi_radio wakeupap=1051:""
+         +21m53s399ms (2) 097 stats=0:""
+         +22m01s575ms (2) 097 wake_reason=0:""
+         +22m06s448ms (1) 097 charge=1634
+         +22m12s639ms (2) 097 -wifi_radio stats=0:""
+         +22m15s132ms (3) 097 current=-114 ap_temp=30 pa_temp=30 skin_temp=29
+         +22m28s204ms (3) 097 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+         +22m28s240ms (2) 097 +wifi_radio wakeupap=u0a103:""
+         +22m28s245ms (2) 097 +tmpwhitelist=u0a316:""
+         +22m28s299ms (2) 097 device_idle=off +cellular_high_tx_power stats=0:""
+         +22m28s357ms (2) 097 -cellular_high_tx_power +job=u0a9:""
+         +22m28s359ms (2) 097 +job=u0a9:""
+         +22m28s361ms (2) 097 +job=u0a9:""
+         +22m28s372ms (2) 097 -job=u0a9:""
+         +22m28s397ms (2) 097 stats=0:""
+         +22m28s532ms (2) 097 stats=0:""
+         +22m28s636ms (2) 097 stats=0:""
+         +22m28s715ms (2) 097 -job=u0a9:""
+         +22m28s742ms (2) 097 stats=0:""
+         +22m28s817ms (2) 097 -job=u0a9:""
+         +22m31s360ms (2) 097 +job=u0a294:""
+         +22m31s369ms (2) 097 +job=u0a218:""
+         +22m31s375ms (2) 097 +job=u0a121:""
+         +22m31s376ms (2) 097 +job=u0a24:""
+         +22m31s376ms (2) 097 +job=u150a162:""
+         +22m31s377ms (2) 097 +job=u0a370:""
+         +22m31s396ms (2) 097 +job=u0a296:""
+         +22m31s400ms (2) 097 +job=u0a294:""
+         +22m31s413ms (2) 097 -job=u0a121:""
+         +22m31s433ms (2) 097 +job=u0a130:""
+         +22m31s600ms (2) 097 -job=u0a130:""
+         +22m31s605ms (2) 097 +job=u0a121:""
+         +22m31s721ms (2) 097 -job=u0a121:""
+         +22m31s732ms (2) 097 -job=u0a294:""
+         +22m31s812ms (2) 097 -job=u0a296:""
+         +22m32s511ms (2) 097 -job=u0a370:""
+         +22m33s194ms (2) 097 -job=u0a218:""
+         +22m33s607ms (2) 097 -job=u0a24:""
+         +22m33s766ms (2) 097 +job=u0a24:""
+         +22m33s785ms (2) 097 -job=u0a24:""
+         +22m33s816ms (2) 097 -job=u150a162:""
+         +22m34s679ms (2) 097 device_idle=light +cellular_high_tx_power -job=u0a294:""
+         +22m35s846ms (1) 097 -wake_lock -cellular_high_tx_power
+         +22m35s853ms (2) 097 +wake_lock=u0a103:""
+         +22m35s858ms (1) 097 -wake_lock
+         +22m35s859ms (2) 097 +wake_lock=u0a103:""
+         +22m35s862ms (1) 097 -wake_lock
+         +22m36s606ms (2) 097 volt=4230
+         +22m38s251ms (2) 097 -tmpwhitelist=u0a103:""
+         +22m38s262ms (2) 097 -tmpwhitelist=u0a316:""
+         +22m38s986ms (3) 097 +wake_lock=u0a103:"" +tmpwhitelist=u0a270:""
+         +22m39s056ms (1) 097 -wake_lock
+         +22m39s057ms (2) 097 +wake_lock=u0a103:""
+         +22m41s285ms (1) 097 -wake_lock
+         +22m41s285ms (2) 097 +wake_lock=u0a103:""
+         +22m41s295ms (1) 097 -wake_lock
+         +22m41s295ms (2) 097 +wake_lock=u0a103:""
+         +22m42s584ms (1) 097 -wake_lock
+         +22m42s584ms (2) 097 +wake_lock=u0a103:""
+         +22m42s589ms (1) 097 -wake_lock
+         +22m42s589ms (2) 097 +wake_lock=u0a59:""
+         +22m43s607ms (1) 097 -wake_lock
+         +22m43s607ms (2) 097 +wake_lock=u0a103:""
+         +22m43s609ms (1) 097 -wake_lock
+         +22m43s609ms (2) 097 +wake_lock=u0a270:""
+         +22m44s124ms (1) 097 -wake_lock
+         +22m44s124ms (2) 097 +wake_lock=u0a103:""
+         +22m45s131ms (3) 097 current=-310 ap_temp=32 pa_temp=31 skin_temp=30
+         +23m06s738ms (2) 097 temp=291
+         +23m09s063ms (2) 097 -tmpwhitelist=u0a270:""
+         +23m15s137ms (3) 097 current=-153 ap_temp=31 pa_temp=31 skin_temp=29 -wake_lock
+         +23m27s519ms (2) 097 +wake_lock=1001:""
+         +23m27s520ms (1) 097 -wake_lock
+         +23m27s520ms (2) 097 +wake_lock=1000:""
+         +23m27s526ms (1) 097 -wake_lock
+         +23m27s526ms (2) 097 +wake_lock=1001:""
+         +23m27s526ms (2) 097 -wake_lock stats=0:""
+         +23m28s738ms (2) 097 stats=0:""
+         +23m30s719ms (2) 097 -wifi_radio stats=0:""
+         +23m34s633ms (2) 097 +wifi_radio wakeupap=u0a103:""
+         +23m34s665ms (2) 097 stats=0:""
+         +23m36s887ms (1) 097 charge=1633
+         +23m42s668ms (4) 097 +wake_lock=u0a59:"" +screen_doze stats=0:""
+         +23m45s134ms (3) 097 current=-113 ap_temp=31 pa_temp=30 skin_temp=29
+         +23m47s898ms (2) 097 -wake_lock +tmpwhitelist=u0a316:""
+         +23m48s008ms (4) 097 +wake_lock=u0a59:"" -screen_doze stats=0:""
+         +23m48s116ms (1) 097 -wake_lock
+         +23m51s710ms (2) 097 -wifi_radio stats=0:""
+         +23m54s089ms (2) 097 +wifi_radio wakeupap=u0a103:""
+         +23m54s118ms (2) 097 stats=0:""
+         +23m57s957ms (2) 097 -tmpwhitelist=u0a316:""
+         +24m02s644ms (2) 097 +wake_lock=1001:""
+         +24m02s644ms (1) 097 -wake_lock
+         +24m02s644ms (2) 097 +wake_lock=1001:""
+         +24m02s652ms (1) 097 -wake_lock
+         +24m02s652ms (2) 097 +wake_lock=1001:""
+         +24m02s652ms (1) 097 -wake_lock
+         +24m15s135ms (3) 097 current=-119 ap_temp=30 pa_temp=30 skin_temp=29
+         +24m22s902ms (2) 097 wake_reason=0:""
+         +24m25s759ms (2) 097 -wifi_radio stats=0:""
+         +24m37s179ms (2) 097 temp=279 charge=1631
+         +24m45s135ms (3) 097 current=-107 ap_temp=30 pa_temp=30 skin_temp=29
+         +24m48s105ms (2) 097 stats=0:""
+         +24m54s098ms (2) 097 +wifi_radio wakeupap=u0a103:""
+         +24m54s130ms (2) 097 stats=0:""
+         +25m14s910ms (2) 097 -wifi_radio stats=0:""
+         +25m15s137ms (4) 097 current=-110 ap_temp=30 pa_temp=30 skin_temp=28 +wifi_radio wakeupap=u0a103:""
+         +25m15s592ms (2) 097 stats=0:""
+         +25m30s102ms (2) 097 wake_reason=0:""
+         +25m31s551ms (2) 097 -wifi_radio stats=0:""
+         +25m45s140ms (3) 097 current=-110 ap_temp=30 pa_temp=29 skin_temp=28
+         +25m54s521ms (2) 097 +wifi_radio wakeupap=u0a103:""
+         +25m54s556ms (2) 097 stats=0:""
+         +26m14s815ms (2) 097 -wifi_radio stats=0:""
+         +26m15s137ms (3) 097 current=-111 ap_temp=29 pa_temp=29 skin_temp=28
+         +26m37s360ms (2) 097 charge=1629 wake_reason=0:""
+         +26m42s335ms (3) 097 +wake_lock=u0a103:"" +wifi_radio wakeupap=u0a103:""
+         +26m42s340ms (1) 097 -wake_lock
+         +26m42s358ms (2) 097 +wake_lock=u0a180:""
+         +26m42s363ms (2) 097 -wake_lock stats=0:""
+         +26m44s614ms (4) 097 +wake_lock=u0a59:"" +screen_doze stats=0:""
+         +26m45s138ms (3) 097 current=-113 ap_temp=29 pa_temp=29 skin_temp=28
+         +26m47s866ms (3) 097 +screen -screen_doze screenwake=u0a59:""
+         +26m47s867ms (2) 097 stats=0:""
+         +26m48s053ms (2) 097 +tmpwhitelist=u0a316:""
+         +26m48s097ms (3) 097 +audio stats=0:""
+         +26m48s288ms (2) 097 stats=0:""
+         +26m48s434ms (3) 097 brightness=medium wifi_signal_strength=3 +cellular_high_tx_power stats=0:""
+         +26m48s548ms (3) 097 -audio -cellular_high_tx_power conn=1:""
+         +26m48s665ms (2) 097 device_idle=off +cellular_high_tx_power active=1000:""
+         +26m48s684ms (2) 097 -cellular_high_tx_power +job=u0a289:""
+         +26m48s688ms (2) 097 +job=u0a9:""
+         +26m48s700ms (2) 097 +job=u0a218:""
+         +26m48s718ms (2) 097 +job=u0a9:""
+         +26m48s743ms (2) 097 +job=u0a9:""
+         +26m48s757ms (2) 097 -job=u0a9:""
+         +26m48s784ms (2) 097 -job=u0a9:""
+         +26m48s837ms (2) 097 -job=u0a218:""
+         +26m48s859ms (2) 097 +gps +wifi_scan stats=0:""
+         +26m49s371ms (2) 097 -job=u0a9:""
+         +26m49s452ms (2) 097 -wifi_scan -job=u0a289:""
+         +26m50s154ms (2) 097 +tmpwhitelist=u0a103:""
+         +26m50s203ms (2) 097 stats=0:""
+         +26m50s469ms (2) 097 stats=0:""
+         +26m52s196ms (2) 097 +tmpwhitelist=u0a59:""
+         +26m52s206ms (2) 097 +tmpwhitelist=1000:""
+         +26m52s321ms (2) 097 -top=u0a306:""
+         +26m52s321ms (2) 097 +top=u0a275:""
+         +26m55s974ms (2) 097 +job=u0a393:""
+         +26m55s976ms (2) 097 +job=u0a9:""
+         +26m55s982ms (2) 097 -job=u0a393:""
+         +26m55s987ms (2) 097 +job=u0a9:""
+         +26m55s990ms (2) 097 +job=u0a9:""
+         +26m55s993ms (2) 097 -job=u0a9:""
+         +26m55s996ms (2) 097 -job=u0a9:""
+         +26m56s055ms (2) 097 stats=0:""
+         +26m56s157ms (2) 097 +cellular_high_tx_power gps_signal_quality=good -job=u0a9:""
+         +26m58s088ms (2) 097 -cellular_high_tx_power -tmpwhitelist=u0a316:""
+         +27m05s171ms (3) 097 -screen brightness=dark stats=0:""
+         +27m05s738ms (2) 097 stats=0:""
+         +27m05s872ms (2) 097 stats=0:""
+         +27m06s962ms (1) 097 -wake_lock
+         +27m07s127ms (2) 097 +wake_lock=1000:""
+         +27m07s127ms (1) 097 -wake_lock
+         +27m07s129ms (2) 097 +wake_lock=u0a103:""
+         +27m07s129ms (1) 097 -wake_lock
+         +27m07s130ms (2) 097 +wake_lock=u150a103:""
+         +27m07s131ms (1) 097 -wake_lock
+         +27m07s956ms (3) 097 volt=4209 +wake_lock=1000:""
+         +27m08s131ms (1) 097 -wake_lock
+         +27m08s135ms (2) 097 +wake_lock=u0a103:""
+         +27m08s135ms (1) 097 -wake_lock
+         +27m08s135ms (2) 097 +wake_lock=u150a103:""
+         +27m08s136ms (1) 097 -wake_lock
+         +27m09s130ms (2) 097 +wake_lock=1000:""
+         +27m09s131ms (1) 097 -wake_lock
+         +27m09s135ms (2) 097 +wake_lock=u0a103:""
+         +27m09s135ms (1) 097 -wake_lock
+         +27m09s136ms (2) 097 +wake_lock=u150a103:""
+         +27m09s137ms (1) 097 -wake_lock
+         +27m10s145ms (2) 097 +wake_lock=1000:""
+         +27m10s145ms (1) 097 -wake_lock
+         +27m10s148ms (2) 097 +wake_lock=u0a103:""
+         +27m10s149ms (1) 097 -wake_lock
+         +27m10s149ms (2) 097 +wake_lock=u150a103:""
+         +27m10s151ms (1) 097 -wake_lock
+         +27m10s155ms (2) 097 +wake_lock=1000:""
+         +27m10s157ms (1) 097 -wake_lock
+         +27m10s158ms (2) 097 +wake_lock=u0a181:""
+         +27m10s162ms (1) 097 -wake_lock
+         +27m10s166ms (3) 097 +wake_lock=u0a103:"" -tmpwhitelist=u0a103:""
+         +27m10s207ms (1) 097 -wake_lock
+         +27m11s149ms (2) 097 +wake_lock=1000:""
+         +27m11s149ms (1) 097 -wake_lock
+         +27m11s152ms (2) 097 +wake_lock=u0a103:""
+         +27m11s160ms (1) 097 -wake_lock
+         +27m11s161ms (2) 097 +wake_lock=u0a103:""
+         +27m11s172ms (1) 097 -wake_lock
+         +27m11s172ms (2) 097 +wake_lock=u150a181:""
+         +27m11s176ms (1) 097 -wake_lock
+         +27m11s178ms (2) 097 +wake_lock=u150a103:""
+         +27m11s181ms (1) 097 -wake_lock
+         +27m12s162ms (2) 097 +wake_lock=1000:""
+         +27m12s162ms (1) 097 -wake_lock
+         +27m12s167ms (2) 097 +wake_lock=u0a103:"" -gps
+         +27m12s182ms (1) 097 -wake_lock
+         +27m12s186ms (2) 097 +wake_lock=u150a103:"" +wifi_scan
+         +27m13s224ms (2) 097 -wake_lock -wifi_scan +tmpwhitelist=u0a103:""
+         +27m15s138ms (3) 097 current=-439 ap_temp=32 pa_temp=32 skin_temp=29
+         +27m16s159ms (2) 097 +wake_lock=1000:""
+         +27m16s170ms (1) 097 -wake_lock
+         +27m16s707ms (4) 097 +wake_lock=1000:"" +screen screenwake=1000:""
+         +27m16s711ms (2) 097 wifi_signal_strength=4 +cellular_high_tx_power stats=0:""
+         +27m17s053ms (3) 097 brightness=medium -cellular_high_tx_power conn=1:""
+         +27m23s209ms (2) 097 stats=0:""
+         +27m23s609ms (2) 097 stats=0:""
+         +27m23s664ms (17) SHUTDOWN
+         +27m23s665ms (17) START
+         +27m23s665ms (19) TIME: 2022-12-07-01-42-21
+         +27m29s417ms (7) 097 status=discharging health=good plug=none temp=276 volt=4058 current=0 -wifi_ap -otg -high_speaker_volume txshare_event=0x0 online=1 current_event=0x40 misc_event=0x0 charge=1624 modemRailChargemAh=0 wifiRailChargemAh=0 +running stats=0:""
+         +27m29s425ms (2) 097 stats=0:""
+         +27m29s425ms (3) 097 +sensor stats=0:""
+         +27m31s504ms (4) 097 +wake_lock=-1:"" +screen brightness=bright stats=0:""
+         +27m32s014ms (3) 097 brightness=medium +tmpwhitelist=1000:""
+         +27m32s949ms (2) 097 volt=4032 +wifi
+         +27m35s451ms (2) 097 +user=0:""
+         +27m35s451ms (2) 097 +userfg=0:""
+         +27m35s488ms (3) 097 phone_state=off stats=0:""
+         +27m37s014ms (2) 097 +top=1000:""
+         +27m37s531ms (2) 097 stats=0:""
+         +27m37s544ms (5) 097 volt=4002 txshare_event=0x0 online=1 current_event=0x40 misc_event=0x10000 charge=1621
+         +27m39s245ms (2) 097 -sensor
+         +27m42s882ms (2) 097 +sensor
+         +27m42s909ms (2) 097 -sensor
+         +27m42s913ms (2) 097 +sensor
+         +27m42s936ms (3) 097 -sensor +gps +wifi_scan +tmpwhitelist=1001:""
+         +27m43s554ms (2) 097 +tmpwhitelist=u0a151:""
+         +27m43s833ms (2) 097 -wifi_scan +tmpwhitelist=u0a118:""
+         +27m44s039ms (2) 097 +tmpwhitelist=u0a103:""
+         +27m44s087ms (3) 097 +sensor wifi_suppl=associated +tmpwhitelist=5018:""
+         +27m44s804ms (1) 097 wifi_suppl=4-way-handshake
+         +27m44s857ms (1) 097 wifi_suppl=group-handshake
+         +27m44s900ms (2) 097 wifi_signal_strength=3 wifi_suppl=completed +tmpwhitelist=1002:""
+         +27m45s688ms (2) 097 +tmpwhitelist=1027:""
+         +27m45s689ms (2) 097 +user=150:""
+         +27m45s690ms (2) 097 +tmpwhitelist=u0a59:""
+         +27m45s700ms (2) 097 +tmpwhitelist=u0a221:""
+         +27m45s717ms (2) 097 +tmpwhitelist=u0a381:""
+         +27m46s088ms (2) 097 +tmpwhitelist=u0a87:""
+         +27m46s490ms (2) 097 +tmpwhitelist=5250:""
+         +27m46s493ms (2) 097 +tmpwhitelist=u0a131:""
+         +27m46s521ms (2) 097 +tmpwhitelist=u0a203:""
+         +27m46s779ms (2) 097 +tmpwhitelist=5003:""
+         +27m46s792ms (2) 097 +tmpwhitelist=u0a145:""
+         +27m46s975ms (2) 097 +tmpwhitelist=u0a116:""
+         +27m48s552ms (2) 097 +wifi_radio stats=0:""
+         +27m48s660ms (2) 097 stats=0:""
+         +27m48s682ms (2) 097 conn=1:""
+         +27m50s420ms (2) 097 conn=1:""
+         +27m50s976ms (2) 097 conn=1:""
+         +27m53s170ms (1) 097 gps_signal_quality=good
+         +27m54s439ms (1) 097 gps_signal_quality=poor
+         +27m55s690ms (2) 097 -tmpwhitelist=1002:""
+         +27m55s691ms (2) 097 -tmpwhitelist=1027:""
+         +27m55s693ms (2) 097 -tmpwhitelist=u0a59:""
+         +27m55s719ms (2) 097 -tmpwhitelist=u0a381:""
+         +27m59s452ms (1) 097 gps_signal_quality=good
+         +28m04s088ms (2) 097 -tmpwhitelist=5018:""
+         +28m06s094ms (2) 097 -tmpwhitelist=u0a87:""
+         +28m06s495ms (2) 097 -tmpwhitelist=u0a131:""
+         +28m06s730ms (2) 097 -tmpwhitelist=u0a203:""
+         +28m06s781ms (2) 097 -tmpwhitelist=5003:""
+         +28m07s168ms (2) 097 -tmpwhitelist=1000:""
+         +28m07s169ms (2) 097 -tmpwhitelist=u0a151:""
+         +28m07s301ms (2) 097 -tmpwhitelist=1001:""
+         +28m07s481ms (2) 097 -tmpwhitelist=u0a118:""
+         +28m07s594ms (2) 097 -tmpwhitelist=u0a103:""
+         +28m07s966ms (2) 097 -tmpwhitelist=u0a221:""
+         +28m08s182ms (2) 097 -tmpwhitelist=5250:""
+         +28m08s299ms (2) 097 -tmpwhitelist=u0a145:""
+         +28m08s397ms (2) 096 temp=287 volt=4175
+         +28m08s397ms (2) 096 stats=0:""
+         +28m08s461ms (2) 096 -tmpwhitelist=u0a116:""
+         +28m13s023ms (2) 096 -sensor -gps
+         +28m20s759ms (3) 096 -wake_lock -screen brightness=dark stats=0:""
+         +28m20s802ms (2) 096 +wake_lock=1001:""
+         +28m20s802ms (1) 096 -wake_lock
+         +28m20s803ms (2) 096 +wake_lock=1001:""
+         +28m20s809ms (1) 096 -wake_lock
+         +28m20s809ms (2) 096 +wake_lock=1001:""
+         +28m20s810ms (1) 096 -wake_lock
+         +28m20s810ms (2) 096 +wake_lock=1001:""
+         +28m20s810ms (1) 096 -wake_lock
+         +28m20s811ms (2) 096 +wake_lock=1001:""
+         +28m20s811ms (1) 096 -wake_lock
+         +28m20s811ms (2) 096 +wake_lock=1001:""
+         +28m20s812ms (1) 096 -wake_lock
+         +28m20s812ms (2) 096 +wake_lock=1001:""
+         +28m20s812ms (1) 096 -wake_lock
+         +28m20s812ms (2) 096 +wake_lock=1001:""
+         +28m20s813ms (1) 096 -wake_lock
+         +28m20s813ms (2) 096 +wake_lock=1001:""
+         +28m20s815ms (1) 096 -wake_lock
+         +28m20s815ms (2) 096 +wake_lock=1001:""
+         +28m20s815ms (1) 096 -wake_lock
+         +28m20s983ms (2) 096 +wake_lock=1000:""
+         +28m23s131ms (1) 096 -wake_lock
+         +28m26s689ms (2) 096 +wake_lock=1000:""
+         +28m26s731ms (1) 096 -wake_lock
+         +28m29s475ms (2) 096 wake_reason=0:""
+         +28m30s198ms (2) 096 wake_reason=0:""
+         +28m30s880ms (4) 096 +wake_lock=1000:"" +screen wake_reason=0:"" screenwake=1000:""
+         +28m30s952ms (2) 096 stats=0:""
+         +28m31s295ms (3) 096 brightness=medium conn=1:""
+         +28m32s973ms (3) 096 -wake_lock -screen brightness=dark stats=0:""
+         +28m32s991ms (2) 096 +wake_lock=1001:""
+         +28m32s992ms (1) 096 -wake_lock
+         +28m32s992ms (2) 096 +wake_lock=1001:""
+         +28m32s995ms (1) 096 -wake_lock
+         +28m32s995ms (2) 096 +wake_lock=1001:""
+         +28m32s997ms (1) 096 -wake_lock
+         +28m32s997ms (2) 096 +wake_lock=1001:""
+         +28m32s998ms (1) 096 -wake_lock
+         +28m32s998ms (2) 096 +wake_lock=1001:""
+         +28m32s999ms (1) 096 -wake_lock
+         +28m32s999ms (2) 096 +wake_lock=1001:""
+         +28m32s999ms (1) 096 -wake_lock
+         +28m32s999ms (2) 096 +wake_lock=1001:""
+         +28m33s000ms (1) 096 -wake_lock
+         +28m33s000ms (2) 096 +wake_lock=1001:""
+         +28m33s000ms (1) 096 -wake_lock
+         +28m33s000ms (2) 096 +wake_lock=1001:""
+         +28m33s001ms (1) 096 -wake_lock
+         +28m33s001ms (2) 096 +wake_lock=1001:""
+         +28m33s001ms (1) 096 -wake_lock
+         +28m33s001ms (2) 096 +wake_lock=1001:""
+         +28m33s002ms (1) 096 -wake_lock
+         +28m33s002ms (2) 096 +wake_lock=1001:""
+         +28m33s003ms (1) 096 -wake_lock
+         +28m33s003ms (2) 096 +wake_lock=1001:""
+         +28m33s003ms (1) 096 -wake_lock
+         +28m33s004ms (2) 096 +wake_lock=1001:""
+         +28m33s005ms (1) 096 -wake_lock
+         +28m33s005ms (2) 096 +wake_lock=1001:""
+         +28m33s005ms (1) 096 -wake_lock
+         +28m33s179ms (2) 096 +wake_lock=1000:""
+         +28m35s305ms (2) 096 -wake_lock wake_reason=0:""
+         +28m38s097ms (2) 096 wake_reason=0:""
+         +28m38s549ms (2) 096 volt=4206 charge=1616
+         +28m41s551ms (2) 096 wake_reason=0:""
+         +28m42s950ms (2) 096 +wake_lock=1001:""
+         +28m42s950ms (1) 096 -wake_lock
+         +28m42s950ms (2) 096 +wake_lock=1001:""
+         +28m42s953ms (1) 096 -wake_lock
+         +28m42s953ms (2) 096 +wake_lock=1001:""
+         +28m42s954ms (1) 096 -wake_lock
+         +28m48s145ms (2) 096 wake_reason=0:""
+         +28m49s521ms (2) 096 -wifi_radio stats=0:""
+         +29m01s129ms (2) 096 wake_reason=0:""
+         +29m08s718ms (1) 096 charge=1614
+         +29m23s960ms (2) 096 +wake_lock=1000:"" device_idle=light
+         +29m24s131ms (1) 096 -wake_lock
+         +29m26s948ms (2) 096 wake_reason=0:""
+         +29m32s992ms (2) 096 stats=0:""
+         +29m46s958ms (2) 096 +wake_lock=1001:""
+         +29m46s958ms (1) 096 -wake_lock
+         +29m46s959ms (2) 096 +wake_lock=1001:""
+         +29m46s962ms (1) 096 -wake_lock
+         +29m46s962ms (2) 096 +wake_lock=1001:""
+         +29m46s963ms (1) 096 -wake_lock
+         +30m08s989ms (1) 096 charge=1613
+         +30m18s358ms (2) 096 wake_reason=0:""
+         +30m46s958ms (2) 096 stats=0:""
+         +30m58s133ms (2) 096 +wifi_radio stats=0:""
+         +31m09s318ms (1) 096 charge=1611
+         +31m13s200ms (2) 096 -wifi_radio stats=0:""
+         +31m25s599ms (2) 096 wake_reason=0:""
+         +31m55s017ms (2) 096 +wake_lock=1001:""
+         +31m55s018ms (1) 096 -wake_lock
+         +31m55s018ms (2) 096 +wake_lock=1001:""
+         +31m55s020ms (1) 096 -wake_lock
+         +31m55s020ms (2) 096 +wake_lock=1001:""
+         +31m55s021ms (1) 096 -wake_lock
+         +31m55s021ms (2) 096 +wake_lock=1001:""
+         +31m55s022ms (1) 096 -wake_lock
+         +32m28s249ms (2) 096 +wake_lock=u0a103:"" +wifi_radio
+         +32m28s253ms (1) 096 -wake_lock
+         +32m28s256ms (2) 096 +wake_lock=u0a103:""
+         +32m28s260ms (2) 096 -wake_lock stats=0:""
+         +32m32s833ms (2) 096 wake_reason=0:""
+         +32m37s361ms (2) 096 +wake_lock=1001:""
+         +32m37s361ms (1) 096 -wake_lock
+         +32m37s361ms (2) 096 +wake_lock=1001:""
+         +32m37s367ms (1) 096 -wake_lock
+         +32m37s367ms (2) 096 +wake_lock=1001:""
+         +32m37s368ms (1) 096 -wake_lock
+         +32m39s737ms (1) 096 charge=1609
+         +32m43s568ms (2) 096 -wifi_radio stats=0:""
+         +32m51s064ms (2) 096 +wifi_radio wakeupap=1000:""
+         +32m51s126ms (2) 096 stats=0:""
+         +32m58s770ms (2) 096 +wake_lock=1000:""
+         +32m58s780ms (1) 096 -wake_lock
+         +33m01s937ms (2) 096 +wake_lock=1000:""
+         +33m01s938ms (1) 096 -wake_lock
+         +33m06s352ms (2) 096 -wifi_radio stats=0:""
+         +33m08s485ms (2) 096 +wake_lock=1001:""
+         +33m08s486ms (1) 096 -wake_lock
+         +33m08s486ms (2) 096 +wake_lock=1000:""
+         +33m08s487ms (1) 096 -wake_lock
+         +33m08s487ms (2) 096 +wake_lock=1001:""
+         +33m08s488ms (2) 096 -wake_lock stats=0:""
+         +33m40s079ms (2) 096 charge=1608 wake_reason=0:""
+         +33m58s773ms (3) 096 +wake_lock=1000:"" +tmpwhitelist=1000:""
+         +33m58s781ms (1) 096 -wake_lock
+         +33m58s786ms (2) 096 +wake_lock=1000:""
+         +33m58s792ms (1) 096 -wake_lock
+         +34m08s486ms (2) 096 stats=0:""
+         +34m08s781ms (2) 096 -tmpwhitelist=1000:""
+         +34m47s321ms (2) 096 wake_reason=0:""
+         +35m10s530ms (1) 096 charge=1606
+         +35m42s497ms (2) 096 +wifi_radio wakeupap=1000:""
+         +35m42s531ms (2) 096 stats=0:""
+         +35m54s562ms (2) 096 wake_reason=0:""
+         +35m57s616ms (2) 096 -wifi_radio stats=0:""
+         +36m11s064ms (2) 096 +wake_lock=1001:""
+         +36m11s064ms (1) 096 -wake_lock
+         +36m11s064ms (2) 096 +wake_lock=1001:""
+         +36m11s067ms (1) 096 -wake_lock
+         +36m11s067ms (2) 096 +wake_lock=1001:""
+         +36m11s068ms (1) 096 -wake_lock
+         +36m40s990ms (1) 096 charge=1604
+         +37m01s801ms (2) 096 wake_reason=0:""
+         +37m11s065ms (2) 096 stats=0:""
+         +37m33s869ms (2) 096 +wake_lock=1001:""
+         +37m33s870ms (1) 096 -wake_lock
+         +37m33s870ms (2) 096 +wake_lock=1001:""
+         +37m33s872ms (1) 096 -wake_lock
+         +37m33s872ms (2) 096 +wake_lock=1001:""
+         +37m33s873ms (1) 096 -wake_lock
+         +37m33s977ms (2) 096 +wake_lock=1001:""
+         +37m33s978ms (1) 096 -wake_lock
+         +37m33s978ms (2) 096 +wake_lock=1001:""
+         +37m33s982ms (1) 096 -wake_lock
+         +37m33s982ms (2) 096 +wake_lock=1001:""
+         +37m33s982ms (1) 096 -wake_lock
+         +37m41s356ms (2) 096 temp=277 charge=1603
+         +38m08s984ms (2) 096 wake_reason=0:""
+         +38m18s261ms (3) 096 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+         +38m18s288ms (2) 096 +wifi_radio wakeupap=u0a103:""
+         +38m18s340ms (2) 096 device_idle=off stats=0:""
+         +38m23s601ms (1) 096 -wake_lock device_idle=light
+         +38m28s269ms (2) 096 -tmpwhitelist=u0a103:""
+         +38m33s520ms (2) 096 -wifi_radio stats=0:""
+         +38m41s674ms (2) 095
+         +38m41s674ms (2) 095 stats=0:""
+         +39m08s795ms (2) 095 +wake_lock=1000:""
+         +39m08s807ms (1) 095 -wake_lock
+         +39m11s845ms (1) 095 charge=1601
+         +39m16s198ms (3) 095 +wifi_radio wake_reason=0:"" wakeupap=u0a103:""
+         +39m16s504ms (2) 095 stats=0:""
+         +39m31s631ms (2) 095 -wifi_radio stats=0:""
+         +40m08s795ms (3) 095 +wake_lock=1000:"" stats=0:""
+         +40m08s800ms (2) 095 -wake_lock +tmpwhitelist=1000:""
+         +40m08s806ms (2) 095 +wake_lock=1000:""
+         +40m08s810ms (1) 095 -wake_lock
+         +40m12s190ms (1) 095 charge=1599
+         +40m18s849ms (2) 095 -tmpwhitelist=1000:""
+         +40m23s443ms (2) 095 wake_reason=0:""
+         +41m30s666ms (2) 095 wake_reason=0:""
+         +41m42s697ms (1) 095 charge=1598
+         +42m09s057ms (2) 095 +wifi_radio wakeupap=u0a103:""
+         +42m09s093ms (2) 095 stats=0:""
+         +42m24s176ms (2) 095 -wifi_radio stats=0:""
+         +42m37s864ms (2) 095 wake_reason=0:""
+         +43m13s175ms (1) 095 charge=1596
+         +43m41s763ms (2) 095 +wake_lock=1001:""
+         +43m42s290ms (1) 095 -wake_lock
+         +43m42s290ms (3) 095 +wake_lock=1000:"" stats=0:""
+         +43m42s291ms (1) 095 -wake_lock
+         +43m42s291ms (2) 095 +wake_lock=1001:""
+         +43m42s292ms (1) 095 -wake_lock
+         +43m45s043ms (2) 095 wake_reason=0:""
+         +44m13s524ms (1) 095 charge=1594
+         +44m39s075ms (3) 095 +wake_lock=u0a103:"" +wifi_radio wakeupap=u0a103:""
+         +44m39s079ms (1) 095 -wake_lock
+         +44m39s083ms (2) 095 +wake_lock=u0a103:""
+         +44m39s087ms (2) 095 -wake_lock stats=0:""
+         +44m41s763ms (2) 095 stats=0:""
+         +44m43s068ms (2) 095 +wake_lock=1001:""
+         +44m43s068ms (1) 095 -wake_lock
+         +44m43s068ms (2) 095 +wake_lock=1001:""
+         +44m43s070ms (1) 095 -wake_lock
+         +44m43s070ms (2) 095 +wake_lock=1001:""
+         +44m43s071ms (1) 095 -wake_lock
+         +44m52s251ms (2) 095 wake_reason=0:""
+         +44m54s192ms (2) 095 -wifi_radio stats=0:""
+         +45m01s954ms (2) 095 +wake_lock=1000:""
+         +45m01s955ms (1) 095 -wake_lock
+         +45m18s814ms (2) 095 +wake_lock=1000:""
+         +45m18s822ms (1) 095 -wake_lock
+         +45m37s556ms (4) 095 +wake_lock=1000:"" +screen screenwake=1000:""
+         +45m37s559ms (2) 095 wifi_signal_strength=4 stats=0:""
+         +45m37s913ms (3) 095 brightness=medium conn=1:""
+         +45m40s514ms (2) 095 +wifi_radio wakeupap=u0a103:""
+         +45m40s550ms (3) 095 -wake_lock -screen stats=0:""
+         +45m40s694ms (4) 095 +wake_lock=1001:"" brightness=dark stats=0:""
+         +45m40s715ms (1) 095 -wake_lock
+         +45m40s715ms (2) 095 +wake_lock=1001:""
+         +45m40s720ms (1) 095 -wake_lock
+         +45m40s720ms (2) 095 +wake_lock=1001:""
+         +45m40s722ms (1) 095 -wake_lock
+         +45m40s722ms (2) 095 +wake_lock=1001:""
+         +45m40s722ms (1) 095 -wake_lock
+         +45m40s723ms (2) 095 +wake_lock=1001:""
+         +45m40s724ms (1) 095 -wake_lock
+         +45m40s724ms (2) 095 +wake_lock=1001:""
+         +45m40s724ms (1) 095 -wake_lock
+         +45m40s905ms (2) 095 +wake_lock=1000:""
+         +45m43s030ms (1) 095 charge=1593 -wake_lock
+         +45m59s489ms (2) 095 wake_reason=0:""
+         +46m07s408ms (2) 095 -wifi_radio stats=0:""
+         +46m18s817ms (3) 095 +wake_lock=1000:"" +tmpwhitelist=1000:""
+         +46m18s825ms (1) 095 -wake_lock
+         +46m18s828ms (2) 095 +wake_lock=1000:""
+         +46m18s833ms (1) 095 -wake_lock
+         +46m28s822ms (2) 095 -tmpwhitelist=1000:""
+         +46m40s715ms (2) 095 stats=0:""
+         +46m44s353ms (1) 095 charge=1591
+         +47m06s725ms (2) 095 wake_reason=0:""
+         +47m27s829ms (2) 095 +wifi_radio wakeupap=u0a103:""
+         +47m27s862ms (2) 095 stats=0:""
+         +47m33s965ms (2) 095 +wake_lock=1001:""
+         +47m33s966ms (1) 095 -wake_lock
+         +47m33s966ms (2) 095 +wake_lock=1001:""
+         +47m33s967ms (1) 095 -wake_lock
+         +47m33s967ms (2) 095 +wake_lock=1001:""
+         +47m33s968ms (1) 095 -wake_lock
+         +47m34s008ms (2) 095 +wake_lock=1001:""
+         +47m34s009ms (1) 095 -wake_lock
+         +47m34s009ms (2) 095 +wake_lock=1001:""
+         +47m34s010ms (1) 095 -wake_lock
+         +47m34s010ms (2) 095 +wake_lock=1001:""
+         +47m34s011ms (1) 095 -wake_lock
+         +47m42s896ms (2) 095 -wifi_radio stats=0:""
+         +47m44s658ms (1) 095 charge=1589
+         +48m13s958ms (2) 095 wake_reason=0:""
+         +49m15s126ms (1) 095 charge=1588
+         +49m21s183ms (2) 095 wake_reason=0:""
+         +49m59s789ms (3) 095 +wake_lock=u0a103:"" +wifi_radio wakeupap=u0a103:""
+         +49m59s793ms (1) 095 -wake_lock
+         +49m59s796ms (2) 095 +wake_lock=u0a103:""
+         +49m59s801ms (2) 095 -wake_lock stats=0:""
+         +50m01s938ms (2) 095 +wake_lock=1000:"" device_idle=off
+         +50m07s218ms (1) 095 -wake_lock device_idle=light
+         +50m14s960ms (2) 095 -wifi_radio stats=0:""
+         +50m28s380ms (2) 095 wake_reason=0:""
+         +50m45s639ms (1) 095 charge=1586
+         +50m59s790ms (2) 095 stats=0:""
+         +51m15s783ms (2) 094
+         +51m15s784ms (2) 094 stats=0:""
+         +51m28s835ms (2) 094 +wake_lock=1000:""
+         +51m28s845ms (1) 094 -wake_lock
+         +51m35s593ms (2) 094 wake_reason=0:""
+         +51m45s945ms (1) 094 charge=1584
+         +52m28s836ms (2) 094 stats=0:""
+         +52m42s833ms (2) 094 wake_reason=0:""
+         +53m16s458ms (1) 094 charge=1583
+         +53m50s073ms (2) 094 wake_reason=0:""
+         +54m11s693ms (2) 094 +wifi_radio wakeupap=u0a103:""
+         +54m11s725ms (2) 094 stats=0:""
+         +54m16s777ms (1) 094 charge=1581
+         +54m26s864ms (2) 094 -wifi_radio stats=0:""
+         +54m43s072ms (2) 094 +wake_lock=1001:""
+         +54m43s073ms (1) 094 -wake_lock
+         +54m43s073ms (2) 094 +wake_lock=1001:""
+         +54m43s078ms (1) 094 -wake_lock
+         +54m43s078ms (2) 094 +wake_lock=1001:""
+         +54m43s078ms (1) 094 -wake_lock
+         +54m57s308ms (2) 094 wake_reason=0:""
+         +55m43s072ms (2) 094 stats=0:""
+         +55m47s278ms (1) 094 charge=1579
+         +56m04s545ms (2) 094 wake_reason=0:""
+         +56m15s865ms (2) 094 +wake_lock=1001:""
+         +56m15s866ms (1) 094 -wake_lock
+         +56m15s866ms (2) 094 +wake_lock=1000:""
+         +56m15s867ms (1) 094 -wake_lock
+         +56m15s867ms (2) 094 +wake_lock=1001:""
+         +56m15s867ms (2) 094 -wake_lock stats=0:""
+         +56m18s719ms (4) 094 +wake_lock=u0a59:"" +screen_doze stats=0:""
+         +56m20s306ms (2) 094 -wake_lock stats=0:""
+         +56m24s090ms (3) 094 +wake_lock=1000:"" stats=0:""
+         +56m24s212ms (1) 094 -wake_lock
+         +56m24s226ms (4) 094 +wake_lock=u0a59:"" -screen_doze stats=0:""
+         +56m24s335ms (1) 094 -wake_lock
+         +56m49s803ms (3) 094 +wake_lock=u0a103:"" +tmpwhitelist=u0a103:""
+         +56m49s814ms (1) 094 -wake_lock
+         +56m49s816ms (3) 094 +wake_lock=u0a103:"" +wifi_radio wakeupap=u0a103:""
+         +56m49s839ms (2) 094 -wake_lock stats=0:""
+         +56m50s225ms (2) 094 +wake_lock=u0a103:""
+         +56m50s228ms (1) 094 -wake_lock
+         +56m59s853ms (2) 094 -tmpwhitelist=u0a103:""
+         +57m05s584ms (2) 094 -wifi_radio stats=0:""
+         +57m11s739ms (2) 094 wake_reason=0:""
+         +57m15s505ms (2) 094 +wake_lock=1001:""
+         +57m15s506ms (1) 094 -wake_lock
+         +57m15s506ms (2) 094 +wake_lock=1000:""
+         +57m15s508ms (1) 094 -wake_lock
+         +57m15s508ms (2) 094 +wake_lock=1001:""
+         +57m15s509ms (2) 094 -wake_lock stats=0:""
+         +57m17s775ms (1) 094 charge=1578
+         +57m34s008ms (2) 094 +wake_lock=1001:""
+         +57m34s008ms (1) 094 -wake_lock
+         +57m34s008ms (2) 094 +wake_lock=1001:""
+         +57m34s010ms (1) 094 -wake_lock
+         +57m34s010ms (2) 094 +wake_lock=1001:""
+         +57m34s010ms (1) 094 -wake_lock
+         +57m34s082ms (2) 094 +wake_lock=1001:""
+         +57m34s082ms (1) 094 -wake_lock
+         +57m34s083ms (2) 094 +wake_lock=1001:""
+         +57m34s084ms (1) 094 -wake_lock
+         +57m34s084ms (2) 094 +wake_lock=1001:""
+         +57m34s084ms (1) 094 -wake_lock
+         +58m18s110ms (2) 094 charge=1576 wake_reason=0:""
+         +59m18s392ms (1) 094 charge=1574
+         +59m26s186ms (2) 094 wake_reason=0:""
+       +1h00m33s420ms (2) 094 wake_reason=0:""
+       +1h00m48s854ms (1) 094 charge=1573
+       +1h01m40s580ms (2) 094 wake_reason=0:""
+       +1h01m49s210ms (1) 094 charge=1571
+       +1h02m08s652ms (4) 094 +wake_lock=1000:"" +screen screenwake=1000:""
+       +1h02m08s656ms (2) 094 wifi_signal_strength=3 stats=0:""
+       +1h02m09s078ms (3) 094 brightness=medium conn=1:""
+       +1h02m10s617ms (2) 094 +wifi_radio wakeupap=u0a103:""
+       +1h02m10s649ms (2) 094 stats=0:""
+       +1h02m17s427ms (3) 094 -wake_lock -screen brightness=dark stats=0:""
+       +1h02m17s457ms (2) 094 +wake_lock=1001:""
+       +1h02m17s457ms (1) 094 -wake_lock
+       +1h02m17s457ms (2) 094 +wake_lock=1001:""
+       +1h02m17s459ms (1) 094 -wake_lock
+       +1h02m17s459ms (2) 094 +wake_lock=1001:""
+       +1h02m17s460ms (1) 094 -wake_lock
+       +1h02m17s460ms (2) 094 +wake_lock=1001:""
+       +1h02m17s461ms (1) 094 -wake_lock
+       +1h02m17s461ms (2) 094 +wake_lock=1001:""
+       +1h02m17s462ms (1) 094 -wake_lock
+       +1h02m17s462ms (2) 094 +wake_lock=1001:""
+       +1h02m17s463ms (1) 094 -wake_lock
+       +1h02m17s463ms (2) 094 +wake_lock=1001:""
+       +1h02m17s463ms (1) 094 -wake_lock
+       +1h02m17s463ms (2) 094 +wake_lock=1001:""
+       +1h02m17s464ms (1) 094 -wake_lock
+       +1h02m17s464ms (2) 094 +wake_lock=1001:""
+       +1h02m17s464ms (1) 094 -wake_lock
+       +1h02m17s465ms (2) 094 +wake_lock=1001:""
+       +1h02m17s466ms (1) 094 -wake_lock
+       +1h02m17s466ms (2) 094 +wake_lock=1001:""
+       +1h02m17s466ms (1) 094 -wake_lock
+       +1h02m17s466ms (2) 094 +wake_lock=1001:""
+       +1h02m17s466ms (1) 094 -wake_lock
+       +1h02m17s467ms (2) 094 +wake_lock=1001:""
+       +1h02m17s467ms (1) 094 -wake_lock
+       +1h02m17s467ms (2) 094 +wake_lock=1001:""
+       +1h02m17s468ms (1) 094 -wake_lock
+       +1h02m17s468ms (2) 094 +wake_lock=1001:""
+       +1h02m17s468ms (1) 094 -wake_lock
+       +1h02m17s469ms (2) 094 +wake_lock=1001:""
+       +1h02m17s469ms (1) 094 -wake_lock
+       +1h02m17s469ms (2) 094 +wake_lock=1001:""
+       +1h02m17s471ms (1) 094 -wake_lock
+       +1h02m17s471ms (2) 094 +wake_lock=1001:""
+       +1h02m17s471ms (1) 094 -wake_lock
+       +1h02m17s649ms (2) 094 +wake_lock=1000:""
+       +1h02m19s800ms (1) 094 -wake_lock
+       +1h02m47s821ms (2) 094 wake_reason=0:""
+       +1h02m59s632ms (2) 094 -wifi_radio stats=0:""
+       +1h03m14s344ms (4) 094 +wake_lock=1000:"" +screen screenwake=1000:""
+       +1h03m14s348ms (2) 094 stats=0:""
+       +1h03m14s713ms (3) 094 brightness=medium conn=1:""
+       +1h03m18s917ms (2) 094 +wifi_radio wakeupap=u0a103:""
+       +1h03m18s949ms (2) 094 stats=0:""
+       +1h03m19s689ms (3) 094 volt=4178 charge=1569 +audio
+       +1h03m20s982ms (3) 094 -audio device_idle=off active=1000:""
+       +1h03m22s300ms (2) 094 -top=1000:""
+       +1h03m22s300ms (2) 094 +top=u0a157:""
+       +1h03m22s382ms (2) 094 +job=1000:""
+       +1h03m22s442ms (2) 094 pkgactive=u0a265:""
+       +1h03m22s722ms (2) 094 +tmpwhitelist=u0a225:""
+       +1h03m23s578ms (2) 094 pkgactive=u0a268:""
+       +1h03m23s718ms (2) 094 +tmpwhitelist=1000:""
+       +1h03m23s764ms (2) 094 +job=u0a75:""
+       +1h03m24s061ms (2) 094 stats=0:""
+       +1h03m24s163ms (2) 094 +job=u0a75:""
+       +1h03m24s329ms (2) 094 +job=u0a162:""
+       +1h03m24s748ms (2) 094 -job=1000:""
+       +1h03m24s930ms (2) 094 +tmpwhitelist=u0a99:""
+       +1h03m25s003ms (2) 094 -job=u0a162:""
+       +1h03m25s008ms (2) 094 -job=u0a75:""
+       +1h03m25s029ms (2) 094 +job=u0a162:""
+       +1h03m25s044ms (2) 094 +job=u0a103:""
+       +1h03m25s047ms (2) 094 +job=u0a103:""
+       +1h03m25s052ms (2) 094 -job=u0a75:""
+       +1h03m25s294ms (2) 094 +job=u0a103:""
+       +1h03m25s415ms (2) 094 -job=u0a162:""
+       +1h03m25s953ms (2) 094 -top=u0a157:""
+       +1h03m26s059ms (2) 094 +sync=u0a103:""
+       +1h03m26s104ms (2) 094 +job=u0a69:""
+       +1h03m26s238ms (2) 094 +top=u0a85:""
+       +1h03m26s300ms (2) 094 +job=u0a131:""
+       +1h03m26s387ms (2) 094 -job=u0a131:""
+       +1h03m26s419ms (2) 094 +sync=u0a103:""
+       +1h03m26s448ms (2) 094 +job=u0a131:""
+       +1h03m26s453ms (2) 094 -job=u0a103:""
+       +1h03m26s544ms (2) 094 +job=u0a121:""
+       +1h03m26s587ms (2) 094 -job=u0a69:""
+       +1h03m26s591ms (2) 094 +sync=u0a103:""
+       +1h03m26s640ms (2) 094 +job=u0a69:""
+       +1h03m26s643ms (2) 094 -job=u0a103:""
+       +1h03m26s741ms (2) 094 -job=u0a103:""
+       +1h03m26s819ms (2) 094 -job=u0a131:""
+       +1h03m26s847ms (2) 094 -job=u0a69:""
+       +1h03m26s913ms (2) 094 +job=5009:""
+       +1h03m26s964ms (2) 094 -job=u0a121:""
+       +1h03m27s029ms (2) 094 +job=5009:""
+       +1h03m27s068ms (2) 094 +job=u0a125:""
+       +1h03m27s101ms (2) 094 pkgactive=u0a244:""
+       +1h03m27s134ms (2) 094 -job=u0a125:""
+       +1h03m27s214ms (2) 094 +sync=5009:""
+       +1h03m27s217ms (2) 094 -job=5009:""
+       +1h03m27s246ms (2) 094 +sync=5009:""
+       +1h03m27s252ms (2) 094 -job=5009:""
+       +1h03m27s260ms (2) 094 -sync=u0a103:""
+       +1h03m27s269ms (2) 094 pkgactive=u0a197:""
+       +1h03m27s498ms (2) 094 -sync=5009:""
+       +1h03m27s633ms (2) 094 +job=u0a268:""
+       +1h03m28s073ms (2) 094 -sync=u0a103:""
+       +1h03m28s157ms (2) 094 +job=u0a252:""
+       +1h03m28s221ms (2) 094 -sync=5009:""
+       +1h03m28s783ms (2) 094 -top=u0a85:""
+       +1h03m28s783ms (2) 094 +top=u0a157:""
+       +1h03m28s859ms (2) 094 +job=u150a75:""
+       +1h03m30s100ms (2) 094 +job=u0a112:""
+       +1h03m30s102ms (2) 094 -job=u0a252:""
+       +1h03m30s456ms (2) 094 -job=u150a75:""
+       +1h03m30s567ms (2) 094 -sync=u0a103:""
+       +1h03m31s093ms (2) 094 +job=u0a76:""
+       +1h03m31s228ms (2) 094 +job=u150a103:""
+       +1h03m31s230ms (2) 094 -job=u0a76:""
+       +1h03m31s400ms (2) 094 +wifi_scan +job=u150a103:""
+       +1h03m31s436ms (2) 094 +ble_scan +job=u150a103:""
+       +1h03m31s532ms (2) 094 -job=u0a112:""
+       +1h03m31s681ms (2) 094 +job=u150a268:""
+       +1h03m31s717ms (2) 094 +sync=u150a103:""
+       +1h03m31s733ms (2) 094 -job=u150a103:""
+       +1h03m31s752ms (2) 094 +job=u150a103:""
+       +1h03m31s800ms (2) 094 +sync=u150a103:""
+       +1h03m31s915ms (2) 094 +sync=u150a103:""
+       +1h03m31s916ms (2) 094 -job=u150a103:""
+       +1h03m31s943ms (2) 094 -job=u150a103:""
+       +1h03m32s169ms (2) 094 pkgactive=u150a265:""
+       +1h03m32s186ms (2) 094 +sync=u150a103:""
+       +1h03m32s238ms (2) 094 pkgactive=u150a268:""
+       +1h03m32s254ms (2) 094 -sync=u150a103:""
+       +1h03m32s284ms (2) 094 -wifi_scan -sync=u150a103:""
+       +1h03m32s454ms (2) 094 -sync=u150a103:""
+       +1h03m32s603ms (2) 094 -job=u150a268:""
+       +1h03m32s643ms (2) 094 +tmpwhitelist=u0a59:""
+       +1h03m32s693ms (2) 094 pkgactive=u0a81:""
+       +1h03m32s907ms (2) 094 +job=u0a122:""
+       +1h03m33s207ms (2) 094 pkgactive=u0a194:""
+       +1h03m33s259ms (2) 094 -job=u0a122:""
+       +1h03m33s432ms (2) 094 +job=5017:""
+       +1h03m33s703ms (2) 094 -job=5017:""
+       +1h03m33s955ms (2) 094 +job=u0a123:""
+       +1h03m34s101ms (2) 094 -job=u150a103:""
+       +1h03m34s155ms (2) 094 -sync=u150a103:""
+       +1h03m34s181ms (2) 094 +wifi_scan -job=u0a123:""
+       +1h03m35s218ms (2) 094 +job=u0a122:""
+       +1h03m35s273ms (2) 094 pkgactive=u0a142:""
+       +1h03m35s380ms (2) 094 -wifi_scan +job=1000:""
+       +1h03m35s429ms (2) 094 +tmpwhitelist=u0a153:""
+       +1h03m35s467ms (2) 094 -job=1000:""
+       +1h03m36s242ms (2) 094 +job=u0a153:""
+       +1h03m36s333ms (2) 094 +job=u0a153:""
+       +1h03m36s442ms (2) 094 +tmpwhitelist=u0a97:""
+       +1h03m36s471ms (2) 094 +fg=u0a153:""
+       +1h03m36s522ms (2) 094 -job=u0a153:""
+       +1h03m37s227ms (2) 094 +job=u0a249:""
+       +1h03m37s300ms (2) 094 -job=u0a249:""
+       +1h03m37s382ms (2) 094 +tmpwhitelist=1002:""
+       +1h03m37s383ms (2) 094 +tmpwhitelist=u0a103:""
+       +1h03m37s627ms (2) 094 +tmpwhitelist=1001:""
+       +1h03m37s731ms (2) 094 +tmpwhitelist=u0a216:""
+       +1h03m38s152ms (2) 094 +tmpwhitelist=u0a221:""
+       +1h03m38s284ms (2) 094 +tmpwhitelist=u0a89:""
+       +1h03m38s495ms (2) 094 -job=u0a153:""
+       +1h03m38s496ms (2) 094 +tmpwhitelist=u0a106:""
+       +1h03m38s586ms (2) 094 -fg=u0a153:""
+       +1h03m38s956ms (2) 094 -job=u0a122:""
+       +1h03m39s243ms (2) 094 +job=u0a123:""
+       +1h03m39s268ms (2) 094 +job=u0a252:""
+       +1h03m39s307ms (2) 094 -job=u0a252:""
+       +1h03m39s326ms (2) 094 pkgactive=u0a89:""
+       +1h03m39s336ms (2) 094 +job=u0a112:""
+       +1h03m39s355ms (2) 094 -job=u0a123:""
+       +1h03m39s374ms (2) 094 -job=u0a112:""
+       +1h03m39s581ms (2) 094 pkgactive=u0a76:""
+       +1h03m39s658ms (2) 094 +job=u0a249:""
+       +1h03m39s891ms (2) 094 -job=u0a249:""
+       +1h03m40s033ms (2) 094 -job=u0a268:""
+       +1h03m40s272ms (2) 094 pkgactive=u150a194:""
+       +1h03m41s024ms (2) 094 +job=1000:""
+       +1h03m41s033ms (2) 094 -job=1000:""
+       +1h03m41s643ms (2) 094 +tmpwhitelist=u0a203:""
+       +1h03m41s828ms (2) 094 -top=u0a157:""
+       +1h03m41s861ms (2) 094 +top=u0a173:""
+       +1h03m42s635ms (2) 094 +tmpwhitelist=u0a62:""
+       +1h03m42s759ms (2) 094 -tmpwhitelist=u0a225:""
+       +1h03m43s655ms (2) 094 +tmpwhitelist=1027:""
+       +1h03m43s750ms (2) 094 +job=u0a123:""
+       +1h03m43s824ms (2) 094 -job=u0a123:""
+       +1h03m44s022ms (2) 094 +tmpwhitelist=5013:""
+       +1h03m44s064ms (2) 094 +tmpwhitelist=u0a151:""
+       +1h03m44s294ms (2) 094 +job=u0a69:""
+       +1h03m44s358ms (2) 094 +job=u0a125:""
+       +1h03m44s359ms (2) 094 -job=u0a69:""
+       +1h03m44s395ms (2) 094 -job=u0a125:""
+       +1h03m44s472ms (2) 094 +job=u0a125:""
+       +1h03m44s523ms (2) 094 +tmpwhitelist=u0a263:""
+       +1h03m44s575ms (2) 094 stats=0:""
+       +1h03m44s717ms (2) 094 -job=u0a125:""
+       +1h03m44s993ms (2) 094 -tmpwhitelist=u0a99:""
+       +1h03m45s023ms (3) 094 +audio +tmpwhitelist=u0a95:""
+       +1h03m45s336ms (2) 094 +job=u0a69:""
+       +1h03m45s362ms (2) 094 -job=u0a69:""
+       +1h03m45s488ms (2) 094 +tmpwhitelist=u0a96:""
+       +1h03m45s662ms (3) 094 -audio +job=u0a122:""
+       +1h03m45s919ms (2) 094 +tmpwhitelist=u0a360:""
+       +1h03m45s959ms (2) 094 +job=u0a360:""
+       +1h03m45s959ms (2) 094 +tmpwhitelist=u0a105:""
+       +1h03m46s105ms (2) 094 -job=u0a360:""
+       +1h03m46s180ms (2) 094 +tmpwhitelist=u0a118:""
+       +1h03m46s226ms (2) 094 +tmpwhitelist=u0a76:""
+       +1h03m46s287ms (2) 094 +tmpwhitelist=u0a268:""
+       +1h03m46s325ms (2) 094 +tmpwhitelist=2000:""
+       +1h03m46s432ms (2) 094 +tmpwhitelist=u0a143:""
+       +1h03m46s675ms (2) 094 +tmpwhitelist=u0a112:""
+       +1h03m46s715ms (2) 094 +job=u0a143:""
+       +1h03m46s786ms (2) 094 +tmpwhitelist=u0a213:""
+       +1h03m46s798ms (2) 094 -job=u0a143:""
+       +1h03m46s910ms (2) 094 +job=u0a112:""
+       +1h03m47s072ms (2) 094 +job=u0a213:""
+       +1h03m47s073ms (2) 094 +tmpwhitelist=u0a83:""
+       +1h03m47s405ms (2) 094 +job=u0a83:""
+       +1h03m47s409ms (2) 094 +tmpwhitelist=u0a69:""
+       +1h03m47s419ms (2) 094 +job=u0a69:""
+       +1h03m47s419ms (2) 094 +tmpwhitelist=u0a254:""
+       +1h03m47s432ms (2) 094 -job=u0a69:""
+       +1h03m47s527ms (2) 094 -job=u0a83:""
+       +1h03m48s420ms (2) 094 -job=u0a112:""
+       +1h03m48s426ms (2) 094 +job=u0a173:""
+       +1h03m48s434ms (2) 094 +job=u0a213:""
+       +1h03m48s435ms (2) 094 -job=u0a173:""
+       +1h03m48s494ms (2) 094 -job=u0a122:""
+       +1h03m48s523ms (2) 094 -job=u0a213:""
+       +1h03m49s041ms (3) 094 +audio +job=u0a254:""
+       +1h03m49s313ms (2) 094 -job=u0a254:""
+       +1h03m49s348ms (2) 094 +job=u0a125:""
+       +1h03m49s355ms (2) 094 -job=u0a125:""
+       +1h03m49s363ms (2) 094 +job=u0a125:""
+       +1h03m49s475ms (3) 094 -audio -job=u0a125:""
+       +1h03m49s527ms (3) 094 +audio +job=u0a254:""
+       +1h03m49s665ms (3) 094 -audio -job=u0a254:""
+       +1h03m49s761ms (2) 094 +audio
+       +1h03m49s837ms (2) 093 temp=292 volt=4001
+       +1h03m49s837ms (2) 093 stats=0:""
+       +1h03m49s904ms (3) 093 -audio -job=u0a213:""
+       +1h03m50s082ms (2) 093 +audio
+       +1h03m50s225ms (3) 093 -audio +tmpwhitelist=u0a252:""
+       +1h03m50s322ms (2) 093 +audio
+       +1h03m50s465ms (2) 093 -audio
+       +1h03m50s730ms (2) 093 +audio
+       +1h03m50s965ms (2) 093 -audio
+       +1h03m51s041ms (2) 093 +audio
+       +1h03m51s162ms (4) 093 current=-1610 ap_temp=47 pa_temp=40 skin_temp=34 -audio
+       +1h03m51s222ms (2) 093 +audio
+       +1h03m51s365ms (2) 093 -audio
+       +1h03m52s148ms (2) 093 +audio
+       +1h03m52s285ms (2) 093 -audio
+       +1h03m52s589ms (3) 093 +audio +job=u0a252:""
+       +1h03m52s723ms (3) 093 -audio -job=u0a252:""
+       +1h03m52s774ms (2) 093 +tmpwhitelist=u0a155:""
+       +1h03m53s182ms (2) 093 +job=u0a155:""
+       +1h03m53s221ms (2) 093 -job=u0a155:""
+       +1h03m53s359ms (2) 093 +tmpwhitelist=u0a70:""
+       +1h03m53s502ms (2) 093 +tmpwhitelist=u0a180:""
+       +1h03m53s525ms (2) 093 +job=u0a180:""
+       +1h03m53s549ms (2) 093 -job=u0a180:""
+       +1h03m53s594ms (2) 093 +job=u0a180:""
+       +1h03m53s606ms (2) 093 +job=u0a180:""
+       +1h03m53s612ms (2) 093 +job=u0a180:""
+       +1h03m53s621ms (2) 093 -job=u0a180:""
+       +1h03m53s651ms (2) 093 -job=u0a180:""
+       +1h03m53s687ms (2) 093 -job=u0a180:""
+       +1h03m53s798ms (2) 093 +tmpwhitelist=u0a162:""
+       +1h03m53s905ms (2) 093 +job=u0a162:""
+       +1h03m54s491ms (2) 093 -job=u0a162:""
+       +1h03m54s496ms (2) 093 +job=u0a122:""
+       +1h03m54s535ms (2) 093 -job=u0a122:""
+       +1h03m54s540ms (2) 093 +job=u0a162:""
+       +1h03m54s630ms (2) 093 -job=u0a162:""
+       +1h03m54s633ms (2) 093 +job=u0a162:""
+       +1h03m55s048ms (2) 093 +job=u0a162:""
+       +1h03m55s064ms (2) 093 +job=u0a162:""
+       +1h03m55s125ms (2) 093 -job=u0a162:""
+       +1h03m55s131ms (2) 093 -job=u0a162:""
+       +1h03m55s203ms (2) 093 -job=u0a162:""
+       +1h03m55s209ms (2) 093 +tmpwhitelist=u0a262:""
+       +1h03m55s330ms (2) 093 +tmpwhitelist=u0a90:""
+       +1h03m55s432ms (2) 093 -tmpwhitelist=u0a153:""
+       +1h03m55s459ms (2) 093 +tmpwhitelist=u0a91:""
+       +1h03m55s733ms (2) 093 +job=u0a91:""
+       +1h03m56s037ms (2) 093 +tmpwhitelist=u0a269:""
+       +1h03m56s448ms (2) 093 -tmpwhitelist=u0a97:""
+       +1h03m57s018ms (2) 093 +job=u0a112:""
+       +1h03m57s317ms (2) 093 -job=u0a112:""
+       +1h03m57s752ms (2) 093 -tmpwhitelist=u0a216:""
+       +1h03m57s753ms (2) 093 +tmpwhitelist=u0a220:""
+       +1h03m58s124ms (2) 093 +job=u0a220:""
+       +1h03m58s159ms (2) 093 -tmpwhitelist=u0a221:""
+       +1h03m58s186ms (2) 093 -job=u0a220:""
+       +1h03m58s206ms (2) 093 +job=u0a220:""
+       +1h03m58s211ms (2) 093 +tmpwhitelist=u0a187:""
+       +1h03m58s310ms (2) 093 -tmpwhitelist=u0a89:""
+       +1h03m58s501ms (2) 093 -tmpwhitelist=u0a106:""
+       +1h03m58s843ms (2) 093 +job=u0a125:""
+       +1h03m58s851ms (2) 093 -job=u0a125:""
+       +1h03m58s858ms (2) 093 +job=u0a125:""
+       +1h03m58s877ms (2) 093 -job=u0a125:""
+       +1h03m58s918ms (2) 093 +job=u0a187:""
+       +1h03m58s927ms (2) 093 +tmpwhitelist=u0a218:""
+       +1h03m59s034ms (2) 093 -job=u0a187:""
+       +1h03m59s566ms (2) 093 -job=u0a220:""
+       +1h04m00s975ms (2) 093 +job=u0a218:""
+       +1h04m01s071ms (2) 093 -job=u0a91:""
+       +1h04m01s177ms (4) 093 current=-1371 ap_temp=52 pa_temp=40 skin_temp=35 +job=u0a91:""
+       +1h04m01s510ms (2) 093 -job=u0a91:""
+       +1h04m01s593ms (2) 093 +tmpwhitelist=u0a161:""
+       +1h04m01s620ms (2) 093 -job=u0a218:""
+       +1h04m01s672ms (2) 093 -tmpwhitelist=u0a203:""
+       +1h04m01s858ms (2) 093 +job=u0a103:""
+       +1h04m01s892ms (2) 093 +sync=u0a103:""
+       +1h04m01s983ms (2) 093 -job=u0a103:""
+       +1h04m01s990ms (2) 093 -sync=u0a103:""
+       +1h04m02s776ms (2) 093 +job=u0a213:""
+       +1h04m02s837ms (2) 093 -job=u0a213:""
+       +1h04m03s081ms (2) 093 +job=u0a161:""
+       +1h04m03s711ms (2) 093 +tmpwhitelist=u0a121:""
+       +1h04m03s838ms (2) 093 -tmpwhitelist=1001:""
+       +1h04m03s949ms (2) 093 -job=u0a161:""
+       +1h04m03s962ms (2) 093 +job=u0a125:""
+       +1h04m03s969ms (2) 093 -job=u0a125:""
+       +1h04m04s004ms (2) 093 +job=u0a125:""
+       +1h04m04s035ms (2) 093 -tmpwhitelist=5013:""
+       +1h04m04s077ms (2) 093 -tmpwhitelist=1002:""
+       +1h04m04s101ms (2) 093 -tmpwhitelist=u0a151:""
+       +1h04m04s149ms (2) 093 -job=u0a125:""
+       +1h04m04s341ms (2) 093 +job=u0a161:""
+       +1h04m04s477ms (2) 093 -job=u0a161:""
+       +1h04m04s511ms (2) 093 +job=u0a161:""
+       +1h04m04s521ms (2) 093 -job=u0a161:""
+       +1h04m04s551ms (2) 093 +job=u0a161:""
+       +1h04m04s553ms (2) 093 -job=u0a161:""
+       +1h04m04s621ms (2) 093 -tmpwhitelist=u0a263:""
+       +1h04m04s698ms (2) 093 +tmpwhitelist=u0a66:""
+       +1h04m04s727ms (2) 093 +tmpwhitelist=u0a123:""
+       +1h04m05s043ms (2) 093 -tmpwhitelist=u0a95:""
+       +1h04m05s083ms (2) 093 +job=u0a123:""
+       +1h04m05s086ms (2) 093 +job=u0a123:""
+       +1h04m05s087ms (2) 093 +tmpwhitelist=u0a85:""
+       +1h04m05s137ms (2) 093 +job=u0a123:""
+       +1h04m05s137ms (2) 093 -job=u0a123:""
+       +1h04m05s266ms (2) 093 -job=u0a123:""
+       +1h04m05s355ms (2) 093 -job=u0a123:""
+       +1h04m05s367ms (2) 093 +tmpwhitelist=u0a362:""
+       +1h04m05s533ms (2) 093 -tmpwhitelist=u0a96:""
+       +1h04m05s604ms (2) 093 +tmpwhitelist=u0a100:""
+       +1h04m05s898ms (2) 093 +job=u0a122:""
+       +1h04m05s908ms (2) 093 +tmpwhitelist=u0a177:""
+       +1h04m05s980ms (2) 093 -tmpwhitelist=u0a360:""
+       +1h04m06s084ms (2) 093 -job=u0a122:""
+       +1h04m06s111ms (2) 093 -tmpwhitelist=u0a105:""
+       +1h04m06s121ms (2) 093 +job=u0a59:""
+       +1h04m06s166ms (2) 093 +job=u0a59:""
+       +1h04m06s239ms (2) 093 -tmpwhitelist=1027:""
+       +1h04m06s254ms (2) 093 -tmpwhitelist=u0a118:""
+       +1h04m06s254ms (2) 093 +tmpwhitelist=5026:""
+       +1h04m06s302ms (2) 093 -tmpwhitelist=u0a76:""
+       +1h04m06s344ms (2) 093 -tmpwhitelist=u0a268:""
+       +1h04m06s352ms (2) 093 -tmpwhitelist=2000:""
+       +1h04m06s380ms (2) 093 -job=u0a59:""
+       +1h04m06s617ms (2) 093 -tmpwhitelist=u0a143:""
+       +1h04m06s700ms (2) 093 -tmpwhitelist=u0a112:""
+       +1h04m06s786ms (2) 093 -tmpwhitelist=1000:""
+       +1h04m06s796ms (2) 093 -tmpwhitelist=u0a213:""
+       +1h04m07s089ms (2) 093 -tmpwhitelist=u0a83:""
+       +1h04m07s381ms (2) 093 +tmpwhitelist=u0a182:""
+       +1h04m07s430ms (2) 093 -tmpwhitelist=u0a69:""
+       +1h04m07s609ms (2) 093 +job=u0a213:""
+       +1h04m07s846ms (2) 093 -job=u0a213:""
+       +1h04m07s974ms (2) 093 +job=u0a182:""
+       +1h04m08s029ms (2) 093 +tmpwhitelist=u0a150:""
+       +1h04m08s170ms (2) 093 -job=u0a182:""
+       +1h04m08s428ms (2) 093 +tmpwhitelist=1000:""
+       +1h04m08s620ms (2) 093 +tmpwhitelist=5006:""
+       +1h04m08s799ms (2) 093 +tmpwhitelist=5018:""
+       +1h04m09s147ms (2) 093 +job=5018:""
+       +1h04m09s156ms (2) 093 +tmpwhitelist=u0a221:""
+       +1h04m09s211ms (2) 093 -job=5018:""
+       +1h04m09s255ms (2) 093 +tmpwhitelist=1001:""
+       +1h04m09s372ms (2) 093 +tmpwhitelist=u0a124:""
+       +1h04m09s609ms (2) 093 +job=u0a124:""
+       +1h04m09s667ms (2) 093 +job=u0a122:""
+       +1h04m09s699ms (2) 093 -job=u0a122:""
+       +1h04m09s780ms (2) 093 -job=u0a124:""
+       +1h04m09s915ms (2) 093 +tmpwhitelist=u0a88:""
+       +1h04m10s263ms (2) 093 -tmpwhitelist=u0a254:""
+       +1h04m10s380ms (2) 093 +job=u0a125:""
+       +1h04m10s386ms (2) 093 -job=u0a125:""
+       +1h04m10s396ms (2) 093 +job=u0a125:""
+       +1h04m10s410ms (2) 093 -job=u0a125:""
+       +1h04m10s553ms (2) 093 +tmpwhitelist=u0a201:""
+       +1h04m10s679ms (2) 093 +tmpwhitelist=5025:""
+       +1h04m10s850ms (2) 093 +tmpwhitelist=u0a131:""
+       +1h04m10s892ms (2) 093 +tmpwhitelist=u0a125:""
+       +1h04m10s898ms (2) 093 +tmpwhitelist=u0a76:""
+       +1h04m10s964ms (3) 093 +audio +tmpwhitelist=5023:""
+       +1h04m11s168ms (5) 093 current=-1621 ap_temp=51 pa_temp=43 skin_temp=36 -audio +tmpwhitelist=5010:""
+       +1h04m11s411ms (2) 093 +tmpwhitelist=u0a130:""
+       +1h04m11s431ms (3) 093 +audio +tmpwhitelist=5009:""
+       +1h04m11s622ms (3) 093 -audio +tmpwhitelist=u0a122:""
+       +1h04m11s899ms (3) 093 +audio +tmpwhitelist=u0a61:""
+       +1h04m11s911ms (2) 093 +tmpwhitelist=u0a144:""
+       +1h04m11s953ms (3) 093 -audio +job=5009:""
+       +1h04m12s275ms (2) 093 -job=5009:""
+       +1h04m12s564ms (2) 093 +tmpwhitelist=u0a94:""
+       +1h04m12s687ms (2) 093 +job=u0a122:""
+       +1h04m12s712ms (2) 093 -tmpwhitelist=u0a252:""
+       +1h04m12s739ms (2) 093 -job=u0a122:""
+       +1h04m12s876ms (2) 093 +tmpwhitelist=u0a244:""
+       +1h04m13s112ms (2) 093 +tmpwhitelist=u0a128:""
+       +1h04m13s133ms (2) 093 +tmpwhitelist=u0a153:""
+       +1h04m13s222ms (2) 093 -tmpwhitelist=u0a155:""
+       +1h04m13s498ms (2) 093 -tmpwhitelist=u0a70:""
+       +1h04m13s610ms (2) 093 +job=u0a153:""
+       +1h04m13s612ms (2) 093 +tmpwhitelist=u0a129:""
+       +1h04m13s653ms (2) 093 -job=u0a153:""
+       +1h04m13s700ms (2) 093 -tmpwhitelist=u0a180:""
+       +1h04m13s851ms (2) 093 +tmpwhitelist=u0a98:""
+       +1h04m14s050ms (2) 093 +tmpwhitelist=u0a119:""
+       +1h04m14s427ms (2) 093 +tmpwhitelist=u0a203:""
+       +1h04m14s691ms (2) 093 +tmpwhitelist=u0a134:""
+       +1h04m14s727ms (2) 093 +tmpwhitelist=u0a93:""
+       +1h04m15s002ms (2) 093 -tmpwhitelist=u0a162:""
+       +1h04m15s084ms (2) 093 +job=u0a123:""
+       +1h04m15s137ms (2) 093 -job=u0a123:""
+       +1h04m15s213ms (2) 093 -tmpwhitelist=u0a262:""
+       +1h04m15s340ms (2) 093 -tmpwhitelist=u0a90:""
+       +1h04m15s774ms (3) 093 +audio +tmpwhitelist=u0a145:""
+       +1h04m15s938ms (2) 093 +tmpwhitelist=u0a193:""
+       +1h04m15s991ms (2) 093 -tmpwhitelist=u0a91:""
+       +1h04m16s231ms (3) 093 +wifi_multicast -tmpwhitelist=u0a269:""
+       +1h04m16s681ms (2) 093 -job=u0a59:""
+       +1h04m16s950ms (2) 093 +job=u0a93:""
+       +1h04m17s197ms (2) 093 +job=u0a125:""
+       +1h04m17s201ms (2) 093 +job=u0a93:""
+       +1h04m17s207ms (2) 093 -job=u0a125:""
+       +1h04m17s224ms (2) 093 +job=u0a125:""
+       +1h04m17s303ms (2) 093 -job=u0a93:""
+       +1h04m17s421ms (2) 093 +tmpwhitelist=u0a186:""
+       +1h04m17s465ms (2) 093 -job=u0a125:""
+       +1h04m17s476ms (2) 093 -tmpwhitelist=u0a62:""
+       +1h04m17s493ms (2) 093 +video -job=u0a93:""
+       +1h04m18s097ms (2) 093 -tmpwhitelist=u0a220:""
+       +1h04m18s137ms (2) 093 +fg=u0a173:""
+       +1h04m18s213ms (2) 093 +tmpwhitelist=u0a116:""
+       +1h04m18s221ms (2) 093 -tmpwhitelist=u0a187:""
+       +1h04m18s435ms (2) 093 +tmpwhitelist=u0a249:""
+       +1h04m20s010ms (3) 093 temp=311 volt=3930 charge=1561 +job=u0a180:""
+       +1h04m20s717ms (2) 093 +job=u0a180:""
+       +1h04m20s734ms (2) 093 -job=u0a180:""
+       +1h04m20s754ms (2) 093 +job=u0a249:""
+       +1h04m20s772ms (2) 093 -job=u0a249:""
+       +1h04m20s786ms (2) 093 -job=u0a180:""
+       +1h04m21s165ms (4) 093 current=-1450 ap_temp=53 pa_temp=43 skin_temp=37 -tmpwhitelist=u0a218:""
+       +1h04m21s956ms (2) 093 +job=u0a123:""
+       +1h04m22s091ms (2) 093 -job=u0a123:""
+       +1h04m22s813ms (2) 093 +job=u0a122:""
+       +1h04m22s856ms (2) 093 -job=u0a122:""
+       +1h04m22s922ms (2) 093 +job=u150s1000:""
+       +1h04m22s923ms (2) 093 +tmpwhitelist=u150a97:""
+       +1h04m22s947ms (2) 093 -job=u150s1000:""
+       +1h04m23s141ms (2) 093 +tmpwhitelist=u150a216:""
+       +1h04m23s677ms (2) 093 -tmpwhitelist=u0a161:""
+       +1h04m23s717ms (2) 093 -tmpwhitelist=u0a121:""
+       +1h04m23s942ms (2) 093 +tmpwhitelist=1027:""
+       +1h04m23s971ms (2) 093 +tmpwhitelist=u150a151:""
+       +1h04m24s196ms (2) 093 +tmpwhitelist=u150a95:""
+       +1h04m24s326ms (2) 093 -video -fg=u0a173:""
+       +1h04m24s378ms (3) 093 -wifi_multicast +tmpwhitelist=u150a96:""
+       +1h04m24s498ms (3) 093 -audio +tmpwhitelist=u150a360:""
+       +1h04m24s585ms (2) 093 +tmpwhitelist=u150a105:""
+       +1h04m24s591ms (2) 093 +job=u150a360:""
+       +1h04m24s637ms (2) 093 -job=u150a360:""
+       +1h04m24s704ms (2) 093 -tmpwhitelist=u0a66:""
+       +1h04m24s745ms (2) 093 -tmpwhitelist=u0a123:""
+       +1h04m24s845ms (2) 093 +tmpwhitelist=u150a118:""
+       +1h04m24s886ms (2) 093 stats=0:""
+       +1h04m25s107ms (2) 093 -tmpwhitelist=u0a85:""
+       +1h04m25s131ms (2) 093 +tmpwhitelist=u150a268:""
+       +1h04m25s374ms (2) 093 -tmpwhitelist=u0a362:""
+       +1h04m25s374ms (2) 093 +tmpwhitelist=u150s2000:""
+       +1h04m25s599ms (2) 093 +tmpwhitelist=u150a143:""
+       +1h04m25s607ms (2) 093 -tmpwhitelist=u0a100:""
+       +1h04m25s654ms (2) 093 +job=u0a122:""
+       +1h04m25s701ms (2) 093 -job=u0a122:""
+       +1h04m25s831ms (2) 093 +job=u150a143:""
+       +1h04m25s902ms (2) 093 -job=u150a143:""
+       +1h04m25s920ms (2) 093 -tmpwhitelist=u0a177:""
+       +1h04m26s030ms (2) 093 +tmpwhitelist=u150a112:""
+       +1h04m27s091ms (2) 093 stats=0:""
+       +1h04m27s203ms (2) 093 -tmpwhitelist=5026:""
+       +1h04m27s333ms (2) 093 +tmpwhitelist=u150a213:""
+       +1h04m27s592ms (2) 093 +job=u150a213:""
+       +1h04m27s593ms (2) 093 +tmpwhitelist=u150a83:""
+       +1h04m27s847ms (2) 093 +job=u150a83:""
+       +1h04m27s863ms (2) 093 +tmpwhitelist=u150a69:""
+       +1h04m27s908ms (2) 093 +job=u150a112:""
+       +1h04m27s985ms (2) 093 -job=u150a83:""
+       +1h04m28s015ms (2) 093 -tmpwhitelist=u0a182:""
+       +1h04m28s040ms (2) 093 -tmpwhitelist=u0a150:""
+       +1h04m28s096ms (2) 093 +tmpwhitelist=u150a254:""
+       +1h04m28s625ms (3) 093 +wifi_multicast +audio -tmpwhitelist=5006:""
+       +1h04m29s156ms (2) 093 -tmpwhitelist=5018:""
+       +1h04m29s376ms (2) 093 -tmpwhitelist=u0a124:""
+       +1h04m29s541ms (2) 093 -job=u150a112:""
+       +1h04m29s740ms (2) 093 +job=u150a254:""
+       +1h04m29s859ms (2) 093 -job=u150a254:""
+       +1h04m29s920ms (2) 093 -tmpwhitelist=u0a88:""
+       +1h04m30s053ms (2) 093 -job=u150a213:""
+       +1h04m30s146ms (2) 093 +job=u0a125:""
+       +1h04m30s200ms (2) 093 +tmpwhitelist=u150a155:""
+       +1h04m30s306ms (2) 093 +job=u0a125:""
+       +1h04m30s314ms (2) 093 +job=u0a125:""
+       +1h04m30s323ms (2) 093 -job=u0a125:""
+       +1h04m30s338ms (2) 093 -job=u0a125:""
+       +1h04m30s343ms (2) 093 -job=u0a125:""
+       +1h04m30s349ms (2) 093 +job=u0a125:""
+       +1h04m30s429ms (2) 093 +video -job=u0a125:""
+       +1h04m30s566ms (2) 093 -tmpwhitelist=u0a201:""
+       +1h04m30s583ms (2) 093 +fg=u0a173:""
+       +1h04m30s618ms (2) 093 +job=u150a155:""
+       +1h04m30s663ms (2) 093 -job=u150a155:""
+       +1h04m30s691ms (2) 093 -tmpwhitelist=5025:""
+       +1h04m30s817ms (2) 093 +tmpwhitelist=u150a70:""
+       +1h04m30s859ms (2) 093 -tmpwhitelist=u0a131:""
+       +1h04m30s900ms (2) 093 -tmpwhitelist=u0a125:""
+       +1h04m30s967ms (2) 093 -tmpwhitelist=5023:""
+       +1h04m30s997ms (2) 093 +tmpwhitelist=u150a162:""
+       +1h04m31s164ms (4) 093 current=-1478 ap_temp=51 pa_temp=43 skin_temp=37 -tmpwhitelist=5010:""
+       +1h04m31s415ms (2) 093 -tmpwhitelist=u0a130:""
+       +1h04m31s443ms (2) 093 -tmpwhitelist=5009:""
+       +1h04m31s737ms (2) 093 +job=u150a162:""
+       +1h04m31s914ms (2) 093 -tmpwhitelist=u0a122:""
+       +1h04m31s918ms (2) 093 -tmpwhitelist=u0a61:""
+       +1h04m31s919ms (2) 093 -tmpwhitelist=u0a144:""
+       +1h04m32s046ms (2) 093 +job=u150a162:""
+       +1h04m32s572ms (2) 093 -tmpwhitelist=u0a94:""
+       +1h04m32s893ms (2) 093 +longwake=1000:""
+       +1h04m33s066ms (2) 093 -tmpwhitelist=u0a244:""
+       +1h04m33s116ms (2) 093 -tmpwhitelist=u0a128:""
+       +1h04m33s142ms (2) 093 -tmpwhitelist=u0a153:""
+       +1h04m33s502ms (2) 093 -job=u150a162:""
+       +1h04m33s506ms (2) 093 +job=u150a162:""
+       +1h04m33s608ms (2) 093 +job=u0a103:""
+       +1h04m33s609ms (2) 093 -job=u150a162:""
+       +1h04m33s636ms (2) 093 -tmpwhitelist=u0a129:""
+       +1h04m33s647ms (2) 093 +sync=u0a103:""
+       +1h04m33s696ms (2) 093 -sync=u0a103:""
+       +1h04m33s696ms (2) 093 -job=u0a103:""
+       +1h04m33s726ms (2) 093 -job=u150a162:""
+       +1h04m33s857ms (2) 093 -tmpwhitelist=u0a98:""
+       +1h04m34s012ms (2) 093 pkgactive=u0a183:""
+       +1h04m34s056ms (2) 093 -tmpwhitelist=u0a119:""
+       +1h04m34s259ms (2) 093 +tmpwhitelist=u150a262:""
+       +1h04m34s430ms (2) 093 -tmpwhitelist=u0a203:""
+       +1h04m34s458ms (2) 093 +tmpwhitelist=u150a90:""
+       +1h04m34s578ms (2) 093 +tmpwhitelist=u150a91:""
+       +1h04m34s740ms (2) 093 -tmpwhitelist=u0a134:""
+       +1h04m34s763ms (2) 093 -tmpwhitelist=u0a93:""
+       +1h04m34s900ms (2) 093 +job=u150a91:""
+       +1h04m35s027ms (2) 093 +tmpwhitelist=u150a269:""
+       +1h04m35s170ms (2) 093 +tmpwhitelist=u150a62:""
+       +1h04m35s780ms (2) 093 -tmpwhitelist=u0a145:""
+       +1h04m36s029ms (2) 093 +tmpwhitelist=u150a220:""
+       +1h04m36s321ms (2) 093 +job=u150a220:""
+       +1h04m36s387ms (2) 093 -job=u150a220:""
+       +1h04m36s392ms (2) 093 +job=u150a220:""
+       +1h04m36s399ms (2) 093 +tmpwhitelist=u150a187:""
+       +1h04m36s864ms (2) 093 +job=u150a187:""
+       +1h04m36s868ms (2) 093 +tmpwhitelist=u150a121:""
+       +1h04m36s955ms (2) 093 -job=u150a187:""
+       +1h04m37s252ms (2) 093 -tmpwhitelist=u0a193:""
+       +1h04m37s429ms (2) 093 -tmpwhitelist=u0a186:""
+       +1h04m37s714ms (2) 093 +job=u150a121:""
+       +1h04m37s727ms (2) 093 -job=u150a220:""
+       +1h04m38s053ms (2) 093 +tmpwhitelist=u150a66:""
+       +1h04m38s093ms (2) 093 -job=u150a121:""
+       +1h04m38s214ms (2) 093 -tmpwhitelist=u0a116:""
+       +1h04m38s251ms (2) 093 +tmpwhitelist=u150a123:""
+       +1h04m38s260ms (2) 093 +job=u150a125:""
+       +1h04m38s301ms (2) 093 -job=u150a125:""
+       +1h04m38s440ms (2) 093 -tmpwhitelist=u0a249:""
+       +1h04m38s462ms (2) 093 +job=u150a123:""
+       +1h04m38s470ms (2) 093 +job=u150a123:""
+       +1h04m38s472ms (2) 093 +tmpwhitelist=u150a85:""
+       +1h04m38s581ms (2) 093 -job=u150a123:""
+       +1h04m38s651ms (2) 093 +tmpwhitelist=u150a362:""
+       +1h04m38s828ms (2) 093 -job=u150a123:""
+       +1h04m38s837ms (2) 093 +tmpwhitelist=u150a177:""
+       +1h04m39s175ms (2) 093 +tmpwhitelist=u150a150:""
+       +1h04m39s879ms (2) 093 +tmpwhitelist=u150a201:""
+       +1h04m39s974ms (2) 093 +tmpwhitelist=u150s5025:""
+       +1h04m40s105ms (2) 093 +tmpwhitelist=u150a125:""
+       +1h04m40s139ms (2) 093 +tmpwhitelist=u150s5023:""
+       +1h04m40s453ms (2) 093 +tmpwhitelist=u150a130:""
+       +1h04m40s834ms (2) 093 +tmpwhitelist=u150a122:""
+       +1h04m41s083ms (2) 093 +tmpwhitelist=u150a61:""
+       +1h04m41s165ms (4) 093 current=-1411 ap_temp=50 pa_temp=44 skin_temp=37 +tmpwhitelist=u150a144:""
+       +1h04m41s556ms (2) 093 +tmpwhitelist=u150a94:""
+       +1h04m42s094ms (2) 093 +job=u150a122:""
+       +1h04m42s130ms (2) 093 -job=u150a122:""
+       +1h04m42s221ms (2) 093 +tmpwhitelist=u150a244:""
+       +1h04m42s538ms (2) 093 +tmpwhitelist=u150a128:""
+       +1h04m42s552ms (2) 093 +tmpwhitelist=u150a129:""
+       +1h04m42s707ms (2) 093 +tmpwhitelist=u150a136:""
+       +1h04m43s162ms (2) 093 +job=u150a103:""
+       +1h04m43s171ms (2) 093 +sync=u150a103:""
+       +1h04m43s689ms (2) 093 -job=u150a103:""
+       +1h04m43s694ms (2) 093 -sync=u150a103:""
+       +1h04m43s882ms (2) 093 +tmpwhitelist=u150a119:""
+       +1h04m44s141ms (2) 093 pkgactive=u150a269:""
+       +1h04m44s299ms (2) 093 +tmpwhitelist=u150a134:""
+       +1h04m44s316ms (2) 093 +tmpwhitelist=u150a93:""
+       +1h04m44s725ms (2) 093 -tmpwhitelist=1027:""
+       +1h04m44s876ms (2) 093 +tmpwhitelist=u150a145:""
+       +1h04m45s204ms (2) 093 +tmpwhitelist=u150a186:""
+       +1h04m45s562ms (2) 093 +job=u150a93:""
+       +1h04m45s592ms (2) 093 +job=u150a93:""
+       +1h04m45s606ms (2) 093 -job=u150a93:""
+       +1h04m45s619ms (2) 093 +tmpwhitelist=u150a116:""
+       +1h04m45s683ms (2) 093 -job=u150a93:""
+       +1h04m45s793ms (2) 093 -tmpwhitelist=u0a59:""
+       +1h04m46s045ms (2) 093 pkgactive=u150a76:""
+       +1h04m46s046ms (2) 093 pkgactive=u150a76:""
+       +1h04m48s159ms (2) 093 +job=u0a268:""
+       +1h04m48s164ms (2) 093 -job=u0a268:""
+       +1h04m48s445ms (2) 093 +job=u0a93:""
+       +1h04m48s776ms (2) 093 -job=u0a93:""
+       +1h04m49s215ms (2) 093 +job=u0a268:""
+       +1h04m49s223ms (2) 093 -job=u0a268:""
+       +1h04m50s039ms (2) 093 +job=u0a268:""
+       +1h04m50s045ms (2) 093 -job=u0a268:""
+       +1h04m50s151ms (2) 092 volt=3958 charge=1554
+       +1h04m50s151ms (2) 092 stats=0:""
+       +1h04m50s465ms (2) 092 +job=u0a268:""
+       +1h04m50s479ms (2) 092 -job=u0a268:""
+       +1h04m50s687ms (2) 092 +job=u150a268:""
+       +1h04m50s691ms (2) 092 -job=u150a268:""
+       +1h04m50s990ms (2) 092 -tmpwhitelist=u0a103:""
+       +1h04m51s062ms (2) 092 +job=u150a103:""
+       +1h04m51s072ms (2) 092 +sync=u150a103:""
+       +1h04m51s178ms (4) 092 current=-1296 ap_temp=53 pa_temp=44 skin_temp=37 +job=u150a103:""
+       +1h04m51s231ms (2) 092 +sync=u150a103:""
+       +1h04m51s241ms (2) 092 -job=u150a103:""
+       +1h04m51s247ms (2) 092 -sync=u150a103:""
+       +1h04m51s424ms (2) 092 +job=u150a122:""
+       +1h04m51s663ms (2) 092 -job=u150a122:""
+       +1h04m51s748ms (2) 092 +job=u150a268:""
+       +1h04m51s752ms (2) 092 -job=u150a268:""
+       +1h04m52s410ms (2) 092 +tmpwhitelist=u0a103:""
+       +1h04m52s452ms (2) 092 -longwake=1000:""
+       +1h04m52s749ms (2) 092 +job=u150a122:""
+       +1h04m53s132ms (2) 092 -job=u150a103:""
+       +1h04m53s133ms (2) 092 -sync=u150a103:""
+       +1h04m53s447ms (2) 092 +job=5017:""
+       +1h04m53s491ms (2) 092 -job=5017:""
+       +1h04m53s654ms (2) 092 +job=u0a123:""
+       +1h04m53s771ms (2) 092 -job=u150a122:""
+       +1h04m53s842ms (2) 092 +tmpwhitelist=u0a162:""
+       +1h04m53s948ms (2) 092 -job=u0a123:""
+       +1h04m54s440ms (2) 092 +tmpwhitelist=5010:""
+       +1h04m54s665ms (2) 092 +job=u0a122:""
+       +1h04m55s081ms (2) 092 -job=u0a122:""
+       +1h04m55s370ms (2) 092 +job=u0a121:""
+       +1h04m55s559ms (2) 092 -job=u0a121:""
+       +1h04m55s605ms (2) 092 +job=u0a125:""
+       +1h04m55s618ms (2) 092 +job=u0a125:""
+       +1h04m55s648ms (2) 092 +job=u0a125:""
+       +1h04m55s716ms (2) 092 -job=u0a125:""
+       +1h04m55s733ms (2) 092 +job=u0a125:""
+       +1h04m55s740ms (2) 092 -job=u0a125:""
+       +1h04m55s748ms (2) 092 -job=u0a125:""
+       +1h04m55s797ms (2) 092 -job=u0a125:""
+       +1h04m55s924ms (2) 092 +job=u150a125:""
+       +1h04m56s071ms (2) 092 +job=u150a125:""
+       +1h04m56s091ms (2) 092 -job=u150a125:""
+       +1h04m56s113ms (2) 092 +job=u150a125:""
+       +1h04m56s114ms (2) 092 -job=u150a125:""
+       +1h04m56s155ms (2) 092 -job=u150a125:""
+       +1h04m56s177ms (2) 092 +job=u0a122:""
+       +1h04m56s639ms (2) 092 -job=u0a122:""
+       +1h04m57s214ms (2) 092 +job=u0a89:""
+       +1h04m57s215ms (2) 092 +tmpwhitelist=u0a118:""
+       +1h04m57s228ms (2) 092 -job=u0a89:""
+       +1h04m57s387ms (2) 092 +job=u0a118:""
+       +1h04m57s652ms (2) 092 -job=u0a118:""
+       +1h04m58s122ms (2) 092 +job=u150a112:""
+       +1h04m58s128ms (2) 092 +job=u0a122:""
+       +1h04m58s416ms (2) 092 -job=u0a122:""
+       +1h04m58s964ms (2) 092 -job=u150a112:""
+       +1h04m59s392ms (2) 092 -tmpwhitelist=u0a221:""
+       +1h04m59s415ms (2) 092 +job=u0a173:""
+       +1h04m59s450ms (2) 092 -job=u0a173:""
+       +1h04m59s631ms (2) 092 +job=u0a221:""
+       +1h04m59s634ms (2) 092 -job=u0a221:""
+       +1h04m59s771ms (2) 092 -tmpwhitelist=1001:""
+       +1h05m00s133ms (2) 092 -tmpwhitelist=u0a76:""
+       +1h05m01s172ms (4) 092 current=-1342 ap_temp=53 pa_temp=44 skin_temp=38 +job=u150a122:""
+       +1h05m01s720ms (2) 092 -job=u150a122:""
+       +1h05m02s634ms (2) 092 +job=u0a125:""
+       +1h05m02s654ms (2) 092 -job=u0a125:""
+       +1h05m02s772ms (2) 092 +job=u0a218:""
+       +1h05m02s814ms (2) 092 -job=u0a218:""
+       +1h05m02s924ms (2) 092 +job=1001:""
+       +1h05m02s936ms (2) 092 -job=1001:""
+       +1h05m03s486ms (2) 092 +job=1000:""
+       +1h05m03s605ms (2) 092 +job=u0a123:""
+       +1h05m03s638ms (2) 092 -job=u0a123:""
+       +1h05m03s669ms (2) 092 +job=u0a356:""
+       +1h05m03s797ms (2) 092 -job=u0a356:""
+       +1h05m03s815ms (2) 092 +job=1000:""
+       +1h05m03s816ms (2) 092 -job=1000:""
+       +1h05m03s884ms (2) 092 +job=u0a221:""
+       +1h05m03s887ms (2) 092 +job=u0a221:""
+       +1h05m03s908ms (2) 092 -job=u0a221:""
+       +1h05m03s921ms (2) 092 -job=u0a221:""
+       +1h05m04s140ms (2) 092 +job=u0a122:""
+       +1h05m04s206ms (2) 092 -job=u0a122:""
+       +1h05m04s210ms (2) 092 -job=1000:""
+       +1h05m04s786ms (2) 092 +job=5022:""
+       +1h05m04s797ms (2) 092 +job=5022:""
+       +1h05m04s822ms (2) 092 +job=5022:""
+       +1h05m04s833ms (2) 092 -job=5022:""
+       +1h05m04s837ms (2) 092 -job=5022:""
+       +1h05m04s944ms (2) 092 -job=5022:""
+       +1h05m05s253ms (2) 092 +job=1000:""
+       +1h05m05s423ms (2) 092 +job=1000:""
+       +1h05m05s457ms (2) 092 -job=1000:""
+       +1h05m05s486ms (2) 092 -job=1000:""
+       +1h05m05s880ms (2) 092 +job=u0a365:""
+       +1h05m05s958ms (2) 092 +job=u150a125:""
+       +1h05m05s967ms (2) 092 -job=u0a365:""
+       +1h05m06s016ms (2) 092 -tmpwhitelist=1000:""
+       +1h05m06s118ms (2) 092 -job=u150a91:""
+       +1h05m06s142ms (2) 092 +job=u150a125:""
+       +1h05m06s150ms (2) 092 -job=u150a125:""
+       +1h05m06s162ms (2) 092 -job=u150a125:""
+       +1h05m06s223ms (2) 092 +job=u150a91:""
+       +1h05m06s233ms (2) 092 +job=u150a125:""
+       +1h05m06s374ms (2) 092 -job=u150a125:""
+       +1h05m06s402ms (2) 092 +job=u0a378:""
+       +1h05m06s540ms (2) 092 -job=u0a378:""
+       +1h05m07s220ms (2) 092 -tmpwhitelist=u0a118:""
+       +1h05m07s493ms (2) 092 +job=u0a128:""
+       +1h05m07s497ms (2) 092 +job=u0a128:""
+       +1h05m07s573ms (2) 092 -job=u0a128:""
+       +1h05m07s625ms (2) 092 +job=u0a162:""
+       +1h05m07s637ms (2) 092 +job=u0a209:""
+       +1h05m07s666ms (2) 092 -job=u0a209:""
+       +1h05m07s874ms (2) 092 -job=u0a128:""
+       +1h05m07s947ms (2) 092 -job=u0a162:""
+       +1h05m08s641ms (2) 092 +job=u0a125:""
+       +1h05m08s647ms (2) 092 -job=u150a91:""
+       +1h05m08s652ms (2) 092 -job=u0a125:""
+       +1h05m08s669ms (2) 092 +job=u0a125:""
+       +1h05m08s722ms (2) 092 -job=u0a125:""
+       +1h05m09s195ms (2) 092 +job=u0a180:""
+       +1h05m09s238ms (2) 092 +job=u0a180:""
+       +1h05m09s284ms (2) 092 -job=u0a180:""
+       +1h05m09s302ms (2) 092 +tmpwhitelist=u150a118:""
+       +1h05m09s314ms (2) 092 -job=u0a180:""
+       +1h05m09s519ms (2) 092 +job=u150a118:""
+       +1h05m09s573ms (2) 092 -job=u150a118:""
+       +1h05m11s166ms (4) 092 current=-1303 ap_temp=51 pa_temp=44 skin_temp=38 +job=1001:""
+       +1h05m11s493ms (2) 092 -job=1001:""
+       +1h05m11s848ms (2) 092 +job=1000:""
+       +1h05m11s986ms (2) 092 +job=u0a356:""
+       +1h05m12s010ms (2) 092 +job=1000:""
+       +1h05m12s013ms (2) 092 -job=1000:""
+       +1h05m12s054ms (2) 092 -job=u0a356:""
+       +1h05m12s187ms (2) 092 +job=u0a221:""
+       +1h05m12s189ms (2) 092 +job=u0a221:""
+       +1h05m12s208ms (2) 092 -job=u0a221:""
+       +1h05m12s210ms (2) 092 -job=u0a221:""
+       +1h05m12s362ms (2) 092 -job=1000:""
+       +1h05m12s921ms (2) 092 +job=5022:""
+       +1h05m12s930ms (2) 092 +job=5022:""
+       +1h05m12s940ms (2) 092 -job=5022:""
+       +1h05m12s948ms (2) 092 +job=5022:""
+       +1h05m12s950ms (2) 092 -job=5022:""
+       +1h05m12s991ms (2) 092 -job=5022:""
+       +1h05m13s048ms (2) 092 +job=u0a244:""
+       +1h05m13s156ms (2) 092 -job=u0a244:""
+       +1h05m13s316ms (2) 092 +job=1000:""
+       +1h05m13s344ms (2) 092 -job=1000:""
+       +1h05m13s398ms (2) 092 +job=1000:""
+       +1h05m13s427ms (2) 092 -job=1000:""
+       +1h05m13s640ms (2) 092 +job=u0a125:""
+       +1h05m13s643ms (2) 092 -job=u0a125:""
+       +1h05m13s651ms (2) 092 +job=u0a125:""
+       +1h05m13s701ms (2) 092 -job=u0a125:""
+       +1h05m14s043ms (2) 092 +job=u0a378:""
+       +1h05m14s063ms (2) 092 -job=u0a378:""
+       +1h05m14s584ms (2) 092 -tmpwhitelist=5010:""
+       +1h05m14s891ms (2) 092 +job=u0a128:""
+       +1h05m14s997ms (2) 092 -job=u0a128:""
+       +1h05m15s186ms (2) 092 +job=u0a122:""
+       +1h05m15s583ms (2) 092 -job=u0a122:""
+       +1h05m17s653ms (2) 092 +job=u0a180:""
+       +1h05m17s681ms (2) 092 +job=u0a180:""
+       +1h05m17s698ms (2) 092 -job=u0a180:""
+       +1h05m17s760ms (2) 092 -job=u0a180:""
+       +1h05m18s167ms (2) 092 +job=5022:""
+       +1h05m18s182ms (2) 092 +job=u0a180:""
+       +1h05m18s187ms (2) 092 +job=5022:""
+       +1h05m18s189ms (2) 092 +job=u0a180:""
+       +1h05m18s200ms (2) 092 -job=u0a180:""
+       +1h05m18s205ms (2) 092 -job=5022:""
+       +1h05m18s217ms (2) 092 -job=5022:""
+       +1h05m18s219ms (2) 092 -job=u0a180:""
+       +1h05m18s639ms (2) 092 +job=5022:""
+       +1h05m18s650ms (2) 092 +job=u0a244:""
+       +1h05m18s653ms (2) 092 +job=5022:""
+       +1h05m18s658ms (2) 092 -job=5022:""
+       +1h05m18s680ms (2) 092 -job=5022:""
+       +1h05m18s703ms (2) 092 -job=u0a244:""
+       +1h05m18s730ms (2) 092 +job=u0a180:""
+       +1h05m18s738ms (2) 092 +job=u0a180:""
+       +1h05m18s741ms (2) 092 -job=u0a180:""
+       +1h05m18s752ms (2) 092 +job=u0a193:""
+       +1h05m18s775ms (2) 092 -job=u0a180:""
+       +1h05m18s816ms (2) 092 +job=u0a180:""
+       +1h05m18s835ms (2) 092 -job=u0a180:""
+       +1h05m19s069ms (2) 092 -job=u0a193:""
+       +1h05m20s307ms (2) 092 temp=326 volt=4035 charge=1548
+       +1h05m21s165ms (3) 092 current=-1145 ap_temp=51 pa_temp=44 skin_temp=38
+       +1h05m25s155ms (2) 092 stats=0:""
+       +1h05m27s688ms (2) 092 +job=u150a162:""
+       +1h05m28s576ms (2) 092 +job=u150a112:""
+       +1h05m28s576ms (2) 092 -job=u150a162:""
+       +1h05m28s624ms (2) 092 -tmpwhitelist=u0a162:""
+       +1h05m28s669ms (2) 092 -job=u150a112:""
+       +1h05m30s315ms (2) 092 +job=u0a162:""
+       +1h05m30s425ms (2) 092 +longwake=u0a173:""
+       +1h05m30s803ms (2) 092 -job=u0a162:""
+       +1h05m31s162ms (4) 092 current=-1075 ap_temp=52 pa_temp=44 skin_temp=38 +job=u150a162:""
+       +1h05m31s502ms (2) 092 -job=u150a162:""
+       +1h05m33s726ms (2) 092 -tmpwhitelist=u0a103:""
+       +1h05m35s459ms (2) 092 +job=u0a162:""
+       +1h05m35s494ms (2) 092 -job=u0a162:""
+       +1h05m41s169ms (3) 092 current=-995 ap_temp=45 pa_temp=43 skin_temp=37
+       +1h05m50s295ms (2) 092 +job=u150a112:""
+       +1h05m50s304ms (2) 092 +job=u150a244:""
+       +1h05m50s357ms (2) 092 -job=u150a112:""
+       +1h05m50s404ms (2) 092 -job=u150a244:""
+       +1h05m50s457ms (2) 092 volt=4108 charge=1543
+       +1h05m51s164ms (3) 092 current=-689 ap_temp=43 pa_temp=41 skin_temp=36
+       +1h05m53s580ms (2) 092 +job=u0a155:""
+       +1h05m53s821ms (2) 092 -job=u0a155:""
+       +1h06m01s165ms (3) 092 current=-635 ap_temp=43 pa_temp=41 skin_temp=36
+       +1h06m06s232ms (2) 092 +tmpwhitelist=u0a103:""
+       +1h06m11s164ms (3) 092 current=-575 ap_temp=43 pa_temp=40 skin_temp=36
+       +1h06m20s615ms (1) 092 charge=1539
+       +1h06m21s166ms (3) 092 current=-567 ap_temp=41 pa_temp=40 skin_temp=35
+       +1h06m25s396ms (2) 092 stats=0:""
+       +1h06m26s294ms (2) 092 -tmpwhitelist=u0a103:""
+       +1h06m31s168ms (3) 092 current=-543 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h06m32s706ms (2) 092 +tmpwhitelist=5010:""
+       +1h06m32s718ms (2) 092 +job=5010:""
+       +1h06m34s023ms (2) 092 -job=5010:""
+       +1h06m41s166ms (3) 092 current=-583 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h06m42s754ms (2) 092 -tmpwhitelist=5010:""
+       +1h06m50s772ms (2) 091 temp=336 volt=4130 charge=1538
+       +1h06m50s772ms (2) 091 stats=0:""
+       +1h06m51s165ms (3) 091 current=-490 ap_temp=40 pa_temp=39 skin_temp=35
+       +1h06m58s463ms (2) 091 +job=u150a155:""
+       +1h06m58s727ms (2) 091 -job=u150a155:""
+       +1h07m01s166ms (3) 091 current=-487 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h07m11s166ms (3) 091 current=-521 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h07m14s228ms (2) 091 stats=0:""
+       +1h07m14s277ms (2) 091 stats=0:""
+       +1h07m20s979ms (1) 091 charge=1534
+       +1h07m21s166ms (3) 091 current=-537 ap_temp=40 pa_temp=39 skin_temp=35
+       +1h07m25s623ms (2) 091 stats=0:""
+       +1h07m31s166ms (3) 091 current=-508 ap_temp=40 pa_temp=38 skin_temp=35
+       +1h07m37s603ms (2) 091 +tmpwhitelist=u150a121:""
+       +1h07m38s003ms (2) 091 +job=u150a121:""
+       +1h07m38s314ms (2) 091 +job=u150a121:""
+       +1h07m38s337ms (2) 091 -job=u150a121:""
+       +1h07m38s361ms (2) 091 +job=u150a125:""
+       +1h07m38s387ms (2) 091 -job=u150a125:""
+       +1h07m39s839ms (2) 091 -job=u150a121:""
+       +1h07m40s791ms (2) 091 +tmpwhitelist=u150a130:""
+       +1h07m41s117ms (2) 091 +job=u150a130:""
+       +1h07m41s166ms (4) 091 current=-478 ap_temp=40 pa_temp=38 skin_temp=35 -job=u150a130:""
+       +1h07m51s144ms (1) 091 charge=1533
+       +1h07m51s166ms (3) 091 current=-482 ap_temp=39 pa_temp=38 skin_temp=35
+       +1h08m11s168ms (3) 091 current=-446 ap_temp=40 pa_temp=38 skin_temp=35
+       +1h08m21s167ms (3) 091 current=-535 ap_temp=41 pa_temp=39 skin_temp=35 charge=1529
+       +1h08m25s862ms (2) 091 stats=0:""
+       +1h08m31s167ms (3) 091 current=-500 ap_temp=40 pa_temp=38 skin_temp=35
+       +1h08m41s169ms (3) 091 current=-475 ap_temp=40 pa_temp=38 skin_temp=35
+       +1h08m45s369ms (3) 091 -wifi_multicast -audio -video -longwake=u0a173:""
+       +1h08m47s857ms (2) 091 -fg=u0a173:""
+       +1h08m49s868ms (2) 091 stats=0:""
+       +1h08m51s169ms (3) 091 current=-559 ap_temp=41 pa_temp=38 skin_temp=35
+       +1h08m51s448ms (2) 091 volt=4105 charge=1528
+       +1h08m52s601ms (3) 091 +audio stats=0:""
+       +1h08m54s190ms (3) 091 +wifi_multicast +video +fg=u0a173:""
+       +1h09m01s170ms (3) 091 current=-596 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h09m03s678ms (2) 091 -wifi_multicast -audio -video
+       +1h09m06s164ms (2) 091 -fg=u0a173:""
+       +1h09m11s168ms (3) 091 current=-592 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h09m16s059ms (3) 091 +wifi_multicast +audio stats=0:""
+       +1h09m18s706ms (2) 091 +video +fg=u0a173:""
+       +1h09m18s959ms (2) 091 +job=u150a162:""
+       +1h09m19s057ms (2) 091 -job=u150a162:""
+       +1h09m21s169ms (3) 091 current=-569 ap_temp=42 pa_temp=39 skin_temp=35 charge=1526
+       +1h09m26s062ms (2) 091 stats=0:""
+       +1h09m31s176ms (3) 091 current=-528 ap_temp=42 pa_temp=39 skin_temp=35
+       +1h09m41s169ms (3) 091 current=-551 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h09m51s173ms (3) 091 current=-517 ap_temp=40 pa_temp=39 skin_temp=35 charge=1523
+       +1h10m01s170ms (3) 091 current=-539 ap_temp=40 pa_temp=39 skin_temp=35
+       +1h10m06s259ms (2) 091 +tmpwhitelist=u0a103:""
+       +1h10m07s513ms (2) 091 -wifi_multicast -audio -video
+       +1h10m09s239ms (2) 091 conn=1:""
+       +1h10m09s985ms (2) 091 -fg=u0a173:""
+       +1h10m11s172ms (4) 091 current=-562 ap_temp=41 pa_temp=39 skin_temp=35 stats=0:""
+       +1h10m12s268ms (2) 091 wifi_signal_strength=4 conn=1:""
+       +1h10m16s516ms (2) 091 +tmpwhitelist=u150a162:""
+       +1h10m21s172ms (3) 091 current=-519 ap_temp=41 pa_temp=39 skin_temp=35 charge=1521
+       +1h10m22s264ms (3) 091 +wifi_multicast stats=0:""
+       +1h10m24s948ms (2) 091 +audio +video
+       +1h10m26s308ms (2) 091 stats=0:""
+       +1h10m26s329ms (2) 091 -tmpwhitelist=u0a103:""
+       +1h10m26s765ms (2) 091 +fg=u0a173:""
+       +1h10m31s171ms (3) 091 current=-552 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h10m41s170ms (3) 091 current=-492 ap_temp=42 pa_temp=39 skin_temp=35
+       +1h10m42s765ms (2) 091 brightness=light
+       +1h10m42s778ms (2) 091 brightness=bright
+       +1h10m48s646ms (1) 091 -video
+       +1h10m51s172ms (3) 091 current=-631 ap_temp=42 pa_temp=39 skin_temp=36 +video
+       +1h10m52s076ms (2) 090 charge=1519
+       +1h10m52s077ms (2) 090 stats=0:""
+       +1h11m01s178ms (3) 090 current=-560 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h11m11s171ms (3) 090 current=-507 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h11m13s676ms (2) 090 -wifi_multicast -audio -video
+       +1h11m15s612ms (3) 090 +audio -fg=u0a173:""
+       +1h11m19s263ms (2) 090 +video +fg=u0a173:""
+       +1h11m21s172ms (3) 090 current=-663 ap_temp=43 pa_temp=39 skin_temp=36
+       +1h11m22s224ms (1) 090 charge=1516
+       +1h11m26s481ms (2) 090 stats=0:""
+       +1h11m31s174ms (3) 090 current=-581 ap_temp=41 pa_temp=39 skin_temp=35
+       +1h11m36s966ms (2) 090 +job=u150a213:""
+       +1h11m37s089ms (2) 090 +job=u150a213:""
+       +1h11m37s320ms (2) 090 -job=u150a213:""
+       +1h11m37s324ms (2) 090 +job=u0a213:""
+       +1h11m37s331ms (2) 090 +job=u150a213:""
+       +1h11m37s357ms (2) 090 -job=u150a213:""
+       +1h11m37s467ms (2) 090 +job=u0a213:""
+       +1h11m37s603ms (2) 090 -job=u150a213:""
+       +1h11m37s807ms (2) 090 -job=u0a213:""
+       +1h11m37s823ms (2) 090 +job=u0a213:""
+       +1h11m37s862ms (2) 090 -video -job=u0a213:""
+       +1h11m38s129ms (2) 090 -job=u0a213:""
+       +1h11m41s175ms (3) 090 current=-660 ap_temp=43 pa_temp=40 skin_temp=36 +video
+       +1h11m51s171ms (3) 090 current=-717 ap_temp=43 pa_temp=40 skin_temp=36
+       +1h11m52s380ms (1) 090 charge=1513
+       +1h12m01s171ms (3) 090 current=-575 ap_temp=41 pa_temp=40 skin_temp=36
+       +1h12m11s175ms (3) 090 current=-500 ap_temp=40 pa_temp=39 skin_temp=35
+       +1h12m21s173ms (3) 090 current=-459 ap_temp=40 pa_temp=39 skin_temp=35
+       +1h12m22s544ms (2) 090 volt=4128 charge=1511
+       +1h12m26s677ms (2) 090 stats=0:""
+       +1h12m31s172ms (3) 090 current=-418 ap_temp=39 pa_temp=38 skin_temp=35
+       +1h12m33s499ms (1) 090 -video
+       +1h12m36s372ms (1) 090 +video
+       +1h12m41s173ms (3) 090 current=-422 ap_temp=39 pa_temp=38 skin_temp=35
+       +1h12m44s281ms (2) 090 +longwake=u0a173:""
+       +1h12m51s171ms (3) 090 current=-412 ap_temp=39 pa_temp=38 skin_temp=35
+       +1h12m52s719ms (1) 090 charge=1509
+       +1h12m53s854ms (1) 090 -video
+       +1h12m54s530ms (1) 090 +video
+       +1h12m55s698ms (2) 090 +tmpwhitelist=u0a173:""
+       +1h12m55s715ms (2) 090 -top=u0a173:""
+       +1h12m55s744ms (2) 090 +top=u0a173:""
+       +1h12m55s977ms (2) 090 -fg=u0a173:""
+       +1h12m56s052ms (2) 090 stats=0:""
+       +1h12m56s152ms (3) 090 -audio -video stats=0:""
+       +1h12m56s234ms (2) 090 -longwake=u0a173:""
+       +1h13m01s177ms (3) 090 current=-444 ap_temp=39 pa_temp=38 skin_temp=35
+       +1h13m08s969ms (2) 090 -top=u0a173:""
+       +1h13m08s969ms (2) 090 +top=u0a157:""
+       +1h13m22s842ms (1) 090 charge=1506
+       +1h13m25s706ms (2) 090 -tmpwhitelist=u0a173:""
+       +1h13m31s172ms (3) 090 current=-232 ap_temp=37 pa_temp=36 skin_temp=34
+       +1h13m38s034ms (3) 090 -wake_lock -screen stats=0:""
+       +1h13m38s034ms (2) 090 +wake_lock=1000:""
+       +1h13m38s044ms (2) 090 -wake_lock brightness=dark
+       +1h13m38s089ms (2) 090 +wake_lock=1001:""
+       +1h13m38s089ms (1) 090 -wake_lock
+       +1h13m38s090ms (2) 090 +wake_lock=1001:""
+       +1h13m38s106ms (1) 090 -wake_lock
+       +1h13m38s106ms (2) 090 +wake_lock=1001:""
+       +1h13m38s106ms (1) 090 -wake_lock
+       +1h13m38s107ms (2) 090 +wake_lock=1001:""
+       +1h13m38s108ms (1) 090 -wake_lock
+       +1h13m38s108ms (2) 090 +wake_lock=1001:""
+       +1h13m38s110ms (1) 090 -wake_lock
+       +1h13m38s110ms (2) 090 +wake_lock=1001:""
+       +1h13m38s115ms (1) 090 -wake_lock
+       +1h13m38s115ms (2) 090 +wake_lock=1001:""
+       +1h13m38s118ms (1) 090 -wake_lock
+       +1h13m38s119ms (2) 090 +wake_lock=1001:""
+       +1h13m38s119ms (1) 090 -wake_lock
+       +1h13m38s255ms (2) 090 +wake_lock=1000:""
+       +1h13m39s861ms (2) 090 -wake_lock wake_reason=0:""
+       +1h13m49s616ms (2) 090 -wifi_radio stats=0:""
+       +1h13m52s982ms (3) 090 +wake_lock=u0a59:"" +tmpwhitelist=u0a59:""
+       +1h13m52s990ms (2) 090 +tmpwhitelist=1000:""
+       +1h13m53s020ms (2) 090 volt=4156 -wake_lock
+       +1h14m01s179ms (3) 090 current=-145 ap_temp=36 pa_temp=36 skin_temp=33
+       +1h14m02s996ms (2) 090 -tmpwhitelist=u0a59:""
+       +1h14m03s003ms (2) 090 -tmpwhitelist=1000:""
+       +1h14m07s335ms (4) 090 +wake_lock=u0a59:"" +screen_doze stats=0:""
+       +1h14m12s646ms (1) 090 -wake_lock
+       +1h14m12s660ms (4) 090 +wake_lock=u0a59:"" -screen_doze stats=0:""
+       +1h14m12s782ms (1) 090 -wake_lock
+       +1h14m17s768ms (2) 090 +wifi_radio wakeupap=u0a103:""
+       +1h14m17s802ms (2) 090 stats=0:""
+       +1h14m23s177ms (1) 090 charge=1504
+       +1h14m30s093ms (3) 090 +wake_lock=u0a103:"" +job=u150a162:""
+       +1h14m30s113ms (2) 090 +job=1000:""
+       +1h14m30s184ms (2) 090 -job=u150a162:""
+       +1h14m30s205ms (2) 090 stats=0:""
+       +1h14m31s174ms (4) 090 current=-136 ap_temp=37 pa_temp=35 skin_temp=33 +job=u150a162:""
+       +1h14m31s373ms (2) 090 -job=u150a162:""
+       +1h14m31s500ms (2) 090 +job=u150a213:""
+       +1h14m31s517ms (2) 090 -job=u150a213:""
+       +1h14m46s448ms (2) 090 -wifi_radio stats=0:""
+       +1h14m53s319ms (2) 090 volt=4102
+       +1h15m01s177ms (3) 090 current=-468 ap_temp=40 pa_temp=37 skin_temp=34
+       +1h15m06s101ms (2) 090 -wake_lock -job=1000:""
+       +1h15m11s624ms (3) 090 +wake_lock=u0a103:"" +wifi_radio wakeupap=u0a103:""
+       +1h15m11s631ms (1) 090 -wake_lock
+       +1h15m11s655ms (3) 090 +wake_lock=u0a8:"" stats=0:""
+       +1h15m11s675ms (1) 090 -wake_lock
+       +1h15m12s612ms (2) 090 +wake_lock=u0a103:""
+       +1h15m12s615ms (1) 090 -wake_lock
+       +1h15m12s626ms (2) 090 +wake_lock=u0a8:""
+       +1h15m12s640ms (1) 090 -wake_lock
+       +1h15m23s392ms (3) 090 +wake_lock=1000:"" +job=u0a244:""
+       +1h15m23s476ms (2) 089 volt=4141 charge=1503
+       +1h15m23s476ms (2) 089 -wake_lock device_idle=light stats=0:""
+       +1h15m23s608ms (3) 089 +wake_lock=u0a244:"" -job=u0a244:""
+       +1h15m23s612ms (1) 089 -wake_lock
+       +1h15m31s181ms (3) 089 current=-178 ap_temp=36 pa_temp=35 skin_temp=33
+       +1h15m42s516ms (2) 089 -wifi_radio stats=0:""
+       +1h15m53s616ms (2) 089 temp=325 charge=1501
+       +1h16m01s179ms (3) 089 current=-117 ap_temp=34 pa_temp=34 skin_temp=32
+       +1h16m09s183ms (1) 089 wifi_suppl=group-handshake
+       +1h16m09s186ms (2) 089 wifi_suppl=completed conn=1:""
+       +1h16m09s199ms (2) 089 conn=1:""
+       +1h16m13s315ms (2) 089 wake_reason=0:""
+       +1h16m23s605ms (2) 089 stats=0:""
+       +1h16m31s178ms (3) 089 current=-120 ap_temp=34 pa_temp=34 skin_temp=32
+       +1h16m53s948ms (1) 089 charge=1499
+       +1h17m01s182ms (3) 089 current=-117 ap_temp=33 pa_temp=33 skin_temp=31
+       +1h17m11s664ms (3) 089 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +1h17m11s770ms (1) 089 -wake_lock
+       +1h17m16s722ms (2) 089 +wake_lock=u0a103:""
+       +1h17m16s746ms (1) 089 -wake_lock
+       +1h17m20s509ms (3) 089 +wifi_radio wake_reason=0:"" wakeupap=u0a103:""
+       +1h17m20s554ms (2) 089 stats=0:""
+       +1h17m26s749ms (2) 089 -tmpwhitelist=u0a103:""
+       +1h17m31s182ms (3) 089 current=-118 ap_temp=33 pa_temp=33 skin_temp=31
+       +1h17m34s167ms (2) 089 +wake_lock=1001:""
+       +1h17m34s168ms (1) 089 -wake_lock
+       +1h17m34s168ms (2) 089 +wake_lock=1001:""
+       +1h17m34s171ms (1) 089 -wake_lock
+       +1h17m34s171ms (2) 089 +wake_lock=1001:""
+       +1h17m34s171ms (1) 089 -wake_lock
+       +1h17m34s229ms (2) 089 +wake_lock=1001:""
+       +1h17m34s230ms (1) 089 -wake_lock
+       +1h17m34s230ms (2) 089 +wake_lock=1001:""
+       +1h17m34s232ms (1) 089 -wake_lock
+       +1h17m34s232ms (2) 089 +wake_lock=1001:""
+       +1h17m34s232ms (1) 089 -wake_lock
+       +1h17m35s664ms (2) 089 -wifi_radio stats=0:""
+       +1h17m54s288ms (2) 089 temp=315
+       +1h18m00s048ms (2) 089 +wake_lock=1000:""
+       +1h18m01s180ms (3) 089 current=-123 ap_temp=33 pa_temp=33 skin_temp=31
+       +1h18m03s619ms (1) 089 -wake_lock
+       +1h18m06s287ms (3) 089 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +1h18m06s324ms (1) 089 -wake_lock
+       +1h18m08s609ms (2) 089 +wake_lock=u0a103:""
+       +1h18m12s279ms (1) 089 -wake_lock
+       +1h18m16s351ms (2) 089 +wake_lock=u0a103:""
+       +1h18m16s376ms (1) 089 -wake_lock
+       +1h18m24s445ms (1) 089 charge=1497
+       +1h18m26s366ms (2) 089 -tmpwhitelist=u0a103:""
+       +1h18m27s785ms (2) 089 wake_reason=0:""
+       +1h18m31s182ms (3) 089 current=-125 ap_temp=33 pa_temp=32 skin_temp=31
+       +1h19m00s048ms (2) 089 stats=0:""
+       +1h19m01s181ms (3) 089 current=-121 ap_temp=32 pa_temp=32 skin_temp=31
+       +1h19m31s183ms (3) 089 current=-125 ap_temp=32 pa_temp=32 skin_temp=30
+       +1h19m35s025ms (2) 089 wake_reason=0:""
+       +1h19m54s885ms (1) 089 charge=1496
+       +1h20m00s667ms (2) 089 +wifi_radio wakeupap=1051:""
+       +1h20m00s725ms (2) 089 stats=0:""
+       +1h20m01s186ms (3) 089 current=-114 ap_temp=32 pa_temp=32 skin_temp=30
+       +1h20m23s563ms (2) 089 +wake_lock=1001:""
+       +1h20m23s564ms (1) 089 -wake_lock
+       +1h20m23s564ms (2) 089 +wake_lock=1000:""
+       +1h20m23s566ms (1) 089 -wake_lock
+       +1h20m23s566ms (2) 089 +wake_lock=1001:""
+       +1h20m23s567ms (2) 089 -wake_lock stats=0:""
+       +1h20m31s183ms (3) 089 current=-121 ap_temp=32 pa_temp=32 skin_temp=30
+       +1h20m42s266ms (2) 089 wake_reason=0:""
+       +1h20m48s177ms (2) 089 -wifi_radio stats=0:""
+       +1h20m53s808ms (2) 089 +wifi_radio stats=0:""
+       +1h20m55s186ms (2) 089 temp=304
+       +1h20m58s324ms (4) 089 +wake_lock=u0a59:"" +screen_doze stats=0:""
+       +1h21m01s185ms (3) 089 current=-125 ap_temp=32 pa_temp=31 skin_temp=30
+       +1h21m03s646ms (3) 089 -wake_lock -screen_doze stats=0:""
+       +1h21m11s720ms (3) 089 +wake_lock=u0a103:"" +tmpwhitelist=u0a103:""
+       +1h21m11s764ms (1) 089 -wake_lock
+       +1h21m16s764ms (2) 089 +wake_lock=u0a103:""
+       +1h21m16s790ms (1) 089 -wake_lock
+       +1h21m21s200ms (2) 089 -wifi_radio stats=0:""
+       +1h21m25s338ms (2) 089 temp=293 charge=1494
+       +1h21m26s785ms (2) 089 -tmpwhitelist=u0a103:""
+       +1h21m30s065ms (2) 089 +wake_lock=1000:"" device_idle=off
+       +1h21m31s186ms (3) 089 current=-136 ap_temp=32 pa_temp=31 skin_temp=30
+       +1h21m33s212ms (2) 089 +job=u0a173:""
+       +1h21m33s216ms (2) 089 +job=u0a244:""
+       +1h21m33s221ms (2) 089 -job=u0a173:""
+       +1h21m33s382ms (2) 089 +wifi_radio wakeupap=1051:""
+       +1h21m33s441ms (2) 089 stats=0:""
+       +1h21m36s263ms (2) 089 -wake_lock device_idle=light -job=u0a244:""
+       +1h21m37s205ms (2) 089 +wake_lock=u0a103:""
+       +1h21m37s234ms (1) 089 -wake_lock
+       +1h21m37s336ms (2) 089 +wake_lock=u0a103:""
+       +1h21m37s430ms (1) 089 -wake_lock
+       +1h21m37s456ms (2) 089 +wake_lock=u0a103:""
+       +1h21m37s678ms (1) 089 -wake_lock
+       +1h21m38s636ms (2) 089 +wake_lock=u0a103:""
+       +1h21m42s221ms (1) 089 -wake_lock
+       +1h21m49s506ms (2) 089 wake_reason=0:""
+       +1h22m01s186ms (3) 089 current=-152 ap_temp=31 pa_temp=31 skin_temp=29
+       +1h22m02s624ms (3) 089 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +1h22m02s635ms (1) 089 -wake_lock
+       +1h22m02s637ms (2) 089 +wake_lock=u0a103:""
+       +1h22m02s644ms (1) 089 -wake_lock
+       +1h22m02s784ms (2) 089 +wake_lock=u0a103:""
+       +1h22m02s786ms (2) 089 -wake_lock stats=0:""
+       +1h22m12s659ms (2) 089 -tmpwhitelist=u0a103:""
+       +1h22m22s897ms (2) 089 -wifi_radio stats=0:""
+       +1h22m31s187ms (3) 089 current=-120 ap_temp=31 pa_temp=30 skin_temp=29
+       +1h22m35s219ms (2) 089 +wifi_radio wakeupap=1051:""
+       +1h22m35s254ms (2) 089 stats=0:""
+       +1h22m55s776ms (2) 089 charge=1492 wake_reason=0:""
+       +1h23m01s190ms (3) 089 current=-128 ap_temp=30 pa_temp=30 skin_temp=29
+       +1h23m19s472ms (2) 089 -wifi_radio stats=0:""
+       +1h23m28s467ms (2) 089 +wifi_radio wakeupap=1051:""
+       +1h23m28s504ms (2) 089 stats=0:""
+       +1h23m31s191ms (3) 089 current=-124 ap_temp=30 pa_temp=30 skin_temp=29
+       +1h24m01s189ms (3) 089 current=-119 ap_temp=30 pa_temp=30 skin_temp=29
+       +1h24m03s990ms (2) 089 wake_reason=0:""
+       +1h24m16s305ms (2) 089 -wifi_radio stats=0:""
+       +1h24m26s212ms (1) 089 charge=1491
+       +1h24m31s191ms (3) 089 current=-118 ap_temp=30 pa_temp=30 skin_temp=29
+       +1h24m43s149ms (2) 089 +wake_lock=1001:""
+       +1h24m43s150ms (1) 089 -wake_lock
+       +1h24m43s150ms (2) 089 +wake_lock=1001:""
+       +1h24m43s155ms (1) 089 -wake_lock
+       +1h24m43s155ms (2) 089 +wake_lock=1001:""
+       +1h24m43s155ms (1) 089 -wake_lock
+       +1h25m00s000ms (3) 089 +wake_lock=1000:"" stats=0:""
+       +1h25m00s250ms (2) 089 +wifi_radio wakeupap=u0a103:""
+       +1h25m00s277ms (2) 089 stats=0:""
+       +1h25m01s192ms (3) 089 current=-125 ap_temp=32 pa_temp=29 skin_temp=29
+       +1h25m03s579ms (1) 089 -wake_lock
+       +1h25m08s567ms (2) 089 +wake_lock=1000:""
+       +1h25m12s169ms (1) 089 -wake_lock
+       +1h25m12s173ms (2) 089 +wake_lock=u150a103:""
+       +1h25m12s176ms (1) 089 -wake_lock
+       +1h25m31s195ms (3) 089 current=-143 ap_temp=30 pa_temp=30 skin_temp=29
+       +1h25m56s649ms (1) 089 charge=1489
+       +1h26m00s173ms (2) 089 stats=0:""
+       +1h26m01s195ms (3) 089 current=-122 ap_temp=30 pa_temp=29 skin_temp=28
+       +1h26m03s312ms (2) 089 -wifi_radio stats=0:""
+       +1h26m07s153ms (2) 089 +wifi_radio wakeupap=u0a129:""
+       +1h26m07s238ms (2) 089 stats=0:""
+       +1h26m19s361ms (2) 089 wake_reason=0:""
+       +1h26m31s192ms (3) 089 current=-117 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h26m36s592ms (2) 089 -wifi_radio stats=0:""
+       +1h26m56s940ms (2) 089 temp=283 charge=1487
+       +1h27m01s193ms (3) 089 current=-118 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h27m12s694ms (2) 089 +wifi_radio wakeupap=u150a129:""
+       +1h27m12s779ms (2) 089 stats=0:""
+       +1h27m15s504ms (2) 089 +wake_lock=1001:""
+       +1h27m15s506ms (1) 089 -wake_lock
+       +1h27m15s506ms (2) 089 +wake_lock=1000:""
+       +1h27m15s507ms (1) 089 -wake_lock
+       +1h27m15s507ms (2) 089 +wake_lock=1001:""
+       +1h27m15s508ms (2) 089 -wake_lock stats=0:""
+       +1h27m26s603ms (2) 089 wake_reason=0:""
+       +1h27m27s090ms (2) 089 volt=4120
+       +1h27m31s196ms (3) 089 current=-124 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h27m34s216ms (2) 089 +wake_lock=1001:""
+       +1h27m34s217ms (1) 089 -wake_lock
+       +1h27m34s217ms (2) 089 +wake_lock=1001:""
+       +1h27m34s218ms (1) 089 -wake_lock
+       +1h27m34s218ms (2) 089 +wake_lock=1001:""
+       +1h27m34s219ms (1) 089 -wake_lock
+       +1h27m34s241ms (2) 089 +wake_lock=1001:""
+       +1h27m34s241ms (1) 089 -wake_lock
+       +1h27m34s241ms (2) 089 +wake_lock=1001:""
+       +1h27m34s243ms (1) 089 -wake_lock
+       +1h27m34s243ms (2) 089 +wake_lock=1001:""
+       +1h27m34s243ms (1) 089 -wake_lock
+       +1h27m57s253ms (2) 089 volt=4152
+       +1h28m01s196ms (3) 089 current=-131 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h28m27s396ms (1) 089 charge=1486
+       +1h28m31s196ms (3) 089 current=-126 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h28m33s836ms (2) 089 wake_reason=0:""
+       +1h29m01s196ms (3) 089 current=-124 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h29m05s328ms (2) 089 -wifi_radio stats=0:""
+       +1h29m11s763ms (3) 089 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +1h29m11s799ms (2) 089 -wake_lock +tmpwhitelist=u0a121:""
+       +1h29m16s828ms (2) 089 +wake_lock=u0a103:""
+       +1h29m16s852ms (1) 089 -wake_lock
+       +1h29m21s807ms (2) 089 -tmpwhitelist=u0a121:""
+       +1h29m23s766ms (2) 089 +wifi_radio wakeupap=u150a129:""
+       +1h29m23s850ms (2) 089 stats=0:""
+       +1h29m26s858ms (2) 089 -tmpwhitelist=u0a103:""
+       +1h29m31s195ms (3) 089 current=-123 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h29m39s360ms (2) 089 +wake_lock=u0a103:""
+       +1h29m39s363ms (1) 089 -wake_lock
+       +1h29m39s375ms (2) 089 +wake_lock=u0a180:""
+       +1h29m39s387ms (1) 089 -wake_lock
+       +1h29m41s076ms (2) 089 wake_reason=0:""
+       +1h29m57s864ms (2) 088
+       +1h29m57s864ms (2) 088 stats=0:""
+       +1h30m01s197ms (1) 088
+       +1h30m10s352ms (2) 088 -wifi_radio wakeupap=u150a129:""
+       +1h30m10s386ms (2) 088 +wake_lock=u0a103:"" +wifi_radio
+       +1h30m10s393ms (1) 088 -wake_lock
+       +1h30m10s404ms (2) 088 +wake_lock=u0a8:""
+       +1h30m10s410ms (2) 088 -wake_lock stats=0:""
+       +1h30m10s414ms (2) 088 +wake_lock=u0a103:""
+       +1h30m10s415ms (2) 088 -wake_lock stats=0:""
+       +1h30m11s376ms (2) 088 +wake_lock=u0a103:""
+       +1h30m11s379ms (1) 088 -wake_lock
+       +1h30m11s389ms (2) 088 +wake_lock=u0a8:""
+       +1h30m11s394ms (1) 088 -wake_lock
+       +1h30m26s480ms (2) 088 -wifi_radio stats=0:""
+       +1h30m28s020ms (4) 088 charge=1484 +wake_lock=u0a59:"" +screen_doze stats=0:""
+       +1h30m29s296ms (2) 088 +wifi_radio wakeupap=u150a129:""
+       +1h30m29s380ms (2) 088 stats=0:""
+       +1h30m31s199ms (3) 088 current=-118 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h30m33s314ms (1) 088 -wake_lock
+       +1h30m33s326ms (4) 088 +wake_lock=u0a59:"" -screen_doze stats=0:""
+       +1h30m33s437ms (1) 088 -wake_lock
+       +1h30m44s400ms (2) 088 -wifi_radio stats=0:""
+       +1h30m48s301ms (2) 088 wake_reason=0:""
+       +1h31m01s203ms (3) 088 current=-131 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h31m28s381ms (1) 088 charge=1482
+       +1h31m31s201ms (3) 088 current=-117 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h31m33s427ms (2) 088 stats=0:""
+       +1h31m34s842ms (2) 088 +wifi_radio wakeupap=u150a129:""
+       +1h31m34s927ms (2) 088 stats=0:""
+       +1h31m55s546ms (2) 088 wake_reason=0:""
+       +1h32m01s206ms (3) 088 current=-132 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h32m31s203ms (3) 088 current=-123 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h32m58s860ms (1) 088 charge=1481
+       +1h33m01s205ms (3) 088 current=-125 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h33m02s788ms (2) 088 wake_reason=0:""
+       +1h33m31s202ms (3) 088 current=-122 ap_temp=28 pa_temp=28 skin_temp=28
+       +1h33m44s624ms (2) 088 -wifi_radio stats=0:""
+       +1h33m45s908ms (2) 088 +wifi_radio wakeupap=u0a129:""
+       +1h33m45s995ms (2) 088 stats=0:""
+       +1h33m55s231ms (3) 088 +wake_lock=1000:"" +job=1000:""
+       +1h33m57s279ms (2) 088 -wake_lock -job=1000:""
+       +1h34m01s205ms (3) 088 current=-126 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h34m06s321ms (3) 088 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +1h34m06s483ms (1) 088 -wake_lock
+       +1h34m10s026ms (2) 088 wake_reason=0:""
+       +1h34m11s378ms (2) 088 +wake_lock=u0a103:""
+       +1h34m11s408ms (1) 088 -wake_lock
+       +1h34m16s409ms (2) 088 +wake_lock=u0a103:""
+       +1h34m16s432ms (1) 088 -wake_lock
+       +1h34m26s431ms (2) 088 -tmpwhitelist=u0a103:""
+       +1h34m29s328ms (1) 088 charge=1479
+       +1h34m31s206ms (3) 088 current=-129 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h34m32s500ms (2) 088 -wifi_radio stats=0:""
+       +1h34m43s169ms (2) 088 +wake_lock=1001:""
+       +1h34m43s169ms (1) 088 -wake_lock
+       +1h34m43s169ms (2) 088 +wake_lock=1001:""
+       +1h34m43s173ms (1) 088 -wake_lock
+       +1h34m43s173ms (2) 088 +wake_lock=1001:""
+       +1h34m43s173ms (1) 088 -wake_lock
+       +1h34m51s444ms (2) 088 +wifi_radio wakeupap=u150a129:""
+       +1h34m51s531ms (2) 088 stats=0:""
+       +1h34m55s235ms (2) 088 stats=0:""
+       +1h34m57s948ms (2) 088 +wake_lock=1001:""
+       +1h34m57s948ms (1) 088 -wake_lock
+       +1h34m57s949ms (2) 088 +wake_lock=1000:""
+       +1h34m57s952ms (1) 088 -wake_lock
+       +1h34m57s952ms (2) 088 +wake_lock=1001:""
+       +1h34m57s952ms (2) 088 -wake_lock stats=0:""
+       +1h35m01s206ms (3) 088 current=-118 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h35m06s545ms (2) 088 -wifi_radio stats=0:""
+       +1h35m17s260ms (2) 088 wake_reason=0:""
+       +1h35m31s208ms (3) 088 current=-119 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h35m56s981ms (2) 088 +wifi_radio wakeupap=u0a129:""
+       +1h35m57s065ms (2) 088 stats=0:""
+       +1h35m57s948ms (2) 088 stats=0:""
+       +1h35m59s806ms (2) 088 temp=273 charge=1477
+       +1h36m01s206ms (3) 088 current=-115 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h36m15s954ms (2) 088 +wake_lock=u0a103:""
+       +1h36m15s958ms (1) 088 -wake_lock
+       +1h36m15s960ms (2) 088 +wake_lock=u0a103:""
+       +1h36m15s978ms (1) 088 -wake_lock
+       +1h36m15s978ms (2) 088 +wake_lock=u0a103:""
+       +1h36m15s987ms (1) 088 -wake_lock
+       +1h36m24s498ms (2) 088 wake_reason=0:""
+       +1h36m31s211ms (3) 088 current=-124 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h36m43s569ms (2) 088 -wifi_radio stats=0:""
+       +1h36m56s399ms (3) 088 +wake_lock=u0a103:"" +wifi_radio wakeupap=u0a129:""
+       +1h36m56s407ms (1) 088 -wake_lock
+       +1h36m56s424ms (2) 088 +wake_lock=u0a162:""
+       +1h36m56s428ms (1) 088 -wake_lock
+       +1h36m56s430ms (2) 088 +wake_lock=u0a103:""
+       +1h36m56s431ms (2) 088 -wake_lock stats=0:""
+       +1h37m01s209ms (3) 088 current=-119 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h37m15s955ms (2) 088 stats=0:""
+       +1h37m17s620ms (2) 088 -wifi_radio stats=0:""
+       +1h37m30s271ms (1) 088 charge=1476
+       +1h37m31s210ms (4) 088 current=-118 ap_temp=28 pa_temp=28 skin_temp=27 wake_reason=0:""
+       +1h37m34s229ms (2) 088 +wake_lock=1001:""
+       +1h37m34s230ms (1) 088 -wake_lock
+       +1h37m34s230ms (2) 088 +wake_lock=1001:""
+       +1h37m34s234ms (1) 088 -wake_lock
+       +1h37m34s234ms (2) 088 +wake_lock=1001:""
+       +1h37m34s235ms (1) 088 -wake_lock
+       +1h37m34s288ms (2) 088 +wake_lock=1001:""
+       +1h37m34s289ms (1) 088 -wake_lock
+       +1h37m34s289ms (2) 088 +wake_lock=1001:""
+       +1h37m34s291ms (1) 088 -wake_lock
+       +1h37m34s291ms (2) 088 +wake_lock=1001:""
+       +1h37m34s292ms (1) 088 -wake_lock
+       +1h38m01s210ms (3) 088 current=-121 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h38m08s055ms (2) 088 +wifi_radio wakeupap=u0a129:""
+       +1h38m08s140ms (2) 088 stats=0:""
+       +1h38m31s210ms (3) 088 current=-127 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h38m39s685ms (2) 088 wake_reason=0:""
+       +1h39m00s717ms (1) 088 charge=1474
+       +1h39m01s212ms (3) 088 current=-118 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h39m28s499ms (4) 088 +wake_lock=u0a59:"" +screen_doze stats=0:""
+       +1h39m30s936ms (3) 088 +screen -screen_doze screenwake=u0a59:""
+       +1h39m30s939ms (2) 088 -ble_scan stats=0:""
+       +1h39m30s988ms (2) 088 +ble_scan +job=1000:""
+       +1h39m31s216ms (5) 088 current=-117 ap_temp=30 pa_temp=28 skin_temp=28 +audio device_idle=off stats=0:""
+       +1h39m31s410ms (3) 088 brightness=bright -job=1000:""
+       +1h39m31s575ms (3) 088 -audio wifi_signal_strength=3 active=1000:""
+       +1h39m31s780ms (2) 088 conn=1:""
+       +1h39m31s934ms (2) 088 +job=u0a162:""
+       +1h39m31s955ms (2) 088 -job=u0a162:""
+       +1h39m31s957ms (2) 088 +job=u0a162:""
+       +1h39m31s966ms (2) 088 -job=u0a162:""
+       +1h39m31s968ms (2) 088 +job=u0a162:""
+       +1h39m31s976ms (2) 088 -job=u0a162:""
+       +1h39m31s981ms (2) 088 +job=u0a162:""
+       +1h39m31s994ms (2) 088 -job=u0a162:""
+       +1h39m31s996ms (2) 088 +job=u0a162:""
+       +1h39m32s137ms (2) 088 -job=u0a162:""
+       +1h39m32s142ms (2) 088 +job=u0a162:""
+       +1h39m32s933ms (2) 088 +job=u0a173:""
+       +1h39m32s967ms (2) 088 -job=u0a173:""
+       +1h39m33s053ms (2) 088 +job=u0a180:""
+       +1h39m33s068ms (2) 088 -job=u0a180:""
+       +1h39m33s075ms (2) 088 +job=u0a180:""
+       +1h39m33s081ms (2) 088 -job=u0a180:""
+       +1h39m33s098ms (2) 088 +job=u0a180:""
+       +1h39m33s113ms (2) 088 -job=u0a180:""
+       +1h39m33s139ms (2) 088 -job=u0a162:""
+       +1h39m33s146ms (2) 088 pkgactive=u0a240:""
+       +1h39m33s153ms (2) 088 +job=u0a162:""
+       +1h39m33s198ms (2) 088 -job=u0a162:""
+       +1h39m33s204ms (2) 088 +job=u0a162:""
+       +1h39m33s218ms (2) 088 -job=u0a162:""
+       +1h39m33s226ms (2) 088 +job=u0a162:""
+       +1h39m33s249ms (2) 088 -job=u0a162:""
+       +1h39m33s255ms (2) 088 +job=u0a162:""
+       +1h39m33s271ms (2) 088 -job=u0a162:""
+       +1h39m33s284ms (2) 088 +job=u0a162:""
+       +1h39m33s303ms (2) 088 -job=u0a162:""
+       +1h39m33s312ms (2) 088 +job=u0a162:""
+       +1h39m33s321ms (2) 088 -job=u0a162:""
+       +1h39m33s328ms (2) 088 +job=u0a162:""
+       +1h39m33s342ms (2) 088 -job=u0a162:""
+       +1h39m33s353ms (2) 088 +job=u0a162:""
+       +1h39m33s386ms (2) 088 -job=u0a162:""
+       +1h39m33s390ms (2) 088 +job=u0a162:""
+       +1h39m33s396ms (2) 088 -job=u0a162:""
+       +1h39m33s400ms (2) 088 +job=u0a162:""
+       +1h39m33s463ms (2) 088 -job=u0a162:""
+       +1h39m34s343ms (2) 088 +job=u150a213:""
+       +1h39m34s349ms (2) 088 -job=u150a213:""
+       +1h39m34s934ms (2) 088 +job=u0a393:""
+       +1h39m34s935ms (2) 088 +job=u0a213:""
+       +1h39m34s942ms (2) 088 +job=u0a125:""
+       +1h39m34s945ms (2) 088 +job=u0a121:""
+       +1h39m34s949ms (2) 088 -job=u0a393:""
+       +1h39m34s962ms (2) 088 -job=u0a125:""
+       +1h39m35s606ms (2) 088 +job=u0a213:""
+       +1h39m35s633ms (2) 088 -job=u0a213:""
+       +1h39m35s845ms (2) 088 -job=u0a213:""
+       +1h39m36s205ms (2) 088 -job=u0a121:""
+       +1h39m36s906ms (2) 088 -top=u0a157:""
+       +1h39m36s906ms (2) 088 +top=1000:""
+       +1h39m37s351ms (2) 088 +job=u0a128:""
+       +1h39m37s427ms (2) 088 -job=u0a128:""
+       +1h39m37s802ms (2) 088 conn=1:""
+       +1h39m39s453ms (2) 088 -top=1000:""
+       +1h39m39s503ms (2) 088 +top=1000:""
+       +1h39m39s615ms (2) 088 +job=1000:""
+       +1h39m39s916ms (2) 088 -job=1000:""
+       +1h39m40s851ms (2) 088 conn=1:""
+       +1h39m40s993ms (2) 088 stats=0:""
+       +1h39m45s090ms (3) 088 -screen brightness=dark stats=0:""
+       +1h39m48s565ms (1) 088 -wake_lock
+       +1h40m00s048ms (3) 088 +wake_lock=u0a59:"" +tmpwhitelist=u0a59:""
+       +1h40m00s070ms (2) 088 -wake_lock +tmpwhitelist=1000:""
+       +1h40m01s024ms (2) 088 volt=4117
+       +1h40m01s214ms (3) 088 current=-530 ap_temp=32 pa_temp=32 skin_temp=29
+       +1h40m10s070ms (2) 088 -tmpwhitelist=u0a59:""
+       +1h40m10s078ms (2) 088 -tmpwhitelist=1000:""
+       +1h40m31s157ms (1) 088 charge=1471
+       +1h40m31s212ms (3) 088 current=-221 ap_temp=30 pa_temp=30 skin_temp=29
+       +1h40m35s139ms (3) 088 +wake_lock=u150a112:"" +job=u150a112:""
+       +1h40m35s178ms (2) 088 -wake_lock -job=u150a112:""
+       +1h40m35s186ms (3) 088 +wake_lock=u0a218:"" +job=u0a218:""
+       +1h40m35s218ms (2) 088 -wake_lock -job=u0a218:""
+       +1h40m45s101ms (2) 088 stats=0:""
+       +1h40m56s280ms (2) 088 wake_reason=0:""
+       +1h41m01s216ms (3) 088 current=-142 ap_temp=29 pa_temp=29 skin_temp=28 charge=1469
+       +1h41m10s576ms (2) 088 -wifi_radio stats=0:""
+       +1h41m30s394ms (3) 088 +wake_lock=1000:"" +wifi_radio wakeupap=u0a244:""
+       +1h41m30s477ms (2) 088 +wifi_scan device_idle=light stats=0:""
+       +1h41m31s216ms (4) 088 current=-122 ap_temp=29 pa_temp=29 skin_temp=28 -wifi_scan +tmpwhitelist=u0a103:""
+       +1h41m32s443ms (1) 088 -wake_lock
+       +1h41m45s272ms (2) 088 +wake_lock=u0a103:""
+       +1h41m45s276ms (1) 088 -wake_lock
+       +1h41m45s278ms (2) 088 +wake_lock=u0a103:""
+       +1h41m45s299ms (1) 088 -wake_lock
+       +1h41m45s304ms (2) 088 +wake_lock=u0a579:""
+       +1h41m45s309ms (1) 088 -wake_lock
+       +1h41m45s310ms (2) 088 +wake_lock=u0a103:""
+       +1h41m45s311ms (1) 088 -wake_lock
+       +1h41m51s523ms (2) 088 -tmpwhitelist=u0a103:""
+       +1h42m00s496ms (2) 088 -wifi_radio stats=0:""
+       +1h42m01s214ms (3) 088 current=-121 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h42m01s622ms (2) 087 volt=4139
+       +1h42m01s623ms (2) 087 stats=0:""
+       +1h42m03s534ms (2) 087 wake_reason=0:""
+       +1h42m23s848ms (2) 087 +wifi_radio wakeupap=1051:""
+       +1h42m23s911ms (2) 087 stats=0:""
+       +1h42m31s215ms (3) 087 current=-118 ap_temp=29 pa_temp=29 skin_temp=28 charge=1467
+       +1h43m01s216ms (3) 087 current=-126 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h43m10s781ms (3) 087 -wifi_radio wake_reason=0:"" stats=0:""
+       +1h43m29s584ms (2) 087 +wifi_radio wakeupap=u0a173:""
+       +1h43m29s672ms (2) 087 stats=0:""
+       +1h43m31s217ms (3) 087 current=-119 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h43m43s077ms (2) 087 +wake_lock=1000:""
+       +1h43m43s078ms (2) 087 -wake_lock +job=1000:""
+       +1h43m43s082ms (3) 087 +wake_lock=1000:"" -job=1000:""
+       +1h43m43s106ms (1) 087 -wake_lock
+       +1h43m49s296ms (2) 087 -wifi_radio stats=0:""
+       +1h44m01s221ms (3) 087 current=-120 ap_temp=29 pa_temp=29 skin_temp=28
+       +1h44m02s233ms (1) 087 charge=1466
+       +1h44m18s015ms (2) 087 wake_reason=0:""
+       +1h44m31s221ms (3) 087 current=-117 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h44m33s852ms (2) 087 +wifi_radio wakeupap=u0a103:""
+       +1h44m33s901ms (2) 087 stats=0:""
+       +1h44m43s078ms (3) 087 +wake_lock=1001:"" stats=0:""
+       +1h44m43s189ms (1) 087 -wake_lock
+       +1h44m43s189ms (2) 087 +wake_lock=1001:""
+       +1h44m43s193ms (1) 087 -wake_lock
+       +1h44m43s193ms (2) 087 +wake_lock=1001:""
+       +1h44m43s194ms (1) 087 -wake_lock
+       +1h45m01s220ms (3) 087 current=-121 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h45m08s945ms (2) 087 +wake_lock=u0a103:""
+       +1h45m08s949ms (1) 087 -wake_lock
+       +1h45m08s951ms (2) 087 +wake_lock=u0a103:""
+       +1h45m08s973ms (1) 087 -wake_lock
+       +1h45m08s978ms (2) 087 +wake_lock=u0a220:""
+       +1h45m08s982ms (1) 087 -wake_lock
+       +1h45m08s984ms (2) 087 +wake_lock=u0a103:""
+       +1h45m08s985ms (1) 087 -wake_lock
+       +1h45m11s825ms (3) 087 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +1h45m11s864ms (1) 087 -wake_lock
+       +1h45m14s064ms (2) 087 +wake_lock=u0a103:""
+       +1h45m14s067ms (1) 087 -wake_lock
+       +1h45m14s074ms (2) 087 +wake_lock=u0a8:""
+       +1h45m14s079ms (1) 087 -wake_lock
+       +1h45m14s157ms (2) 087 +wake_lock=u0a103:""
+       +1h45m14s160ms (1) 087 -wake_lock
+       +1h45m14s164ms (2) 087 +wake_lock=u0a8:""
+       +1h45m14s168ms (1) 087 -wake_lock
+       +1h45m14s171ms (2) 087 +wake_lock=u0a103:""
+       +1h45m14s172ms (1) 087 -wake_lock
+       +1h45m16s863ms (2) 087 +wake_lock=u0a103:""
+       +1h45m16s885ms (1) 087 -wake_lock
+       +1h45m25s255ms (2) 087 wake_reason=0:""
+       +1h45m26s897ms (2) 087 -tmpwhitelist=u0a103:""
+       +1h45m31s222ms (3) 087 current=-117 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h45m32s740ms (1) 087 charge=1464
+       +1h45m43s189ms (2) 087 stats=0:""
+       +1h46m01s223ms (1) 087
+       +1h46m25s713ms (2) 087 -wifi_radio stats=0:""
+       +1h46m26s736ms (2) 087 +wifi_radio wakeupap=u150a112:""
+       +1h46m26s792ms (2) 087 stats=0:""
+       +1h46m31s220ms (3) 087 current=-115 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h46m32s484ms (2) 087 wake_reason=0:""
+       +1h47m01s224ms (4) 087 current=-120 ap_temp=28 pa_temp=28 skin_temp=28 +wake_lock=1001:""
+       +1h47m01s711ms (1) 087 -wake_lock
+       +1h47m01s711ms (2) 087 +wake_lock=1000:""
+       +1h47m01s713ms (1) 087 -wake_lock
+       +1h47m01s713ms (2) 087 +wake_lock=1001:""
+       +1h47m01s713ms (2) 087 -wake_lock stats=0:""
+       +1h47m03s259ms (1) 087 charge=1462
+       +1h47m31s222ms (3) 087 current=-123 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h47m34s320ms (2) 087 +wake_lock=1001:""
+       +1h47m34s321ms (1) 087 -wake_lock
+       +1h47m34s321ms (2) 087 +wake_lock=1001:""
+       +1h47m34s323ms (1) 087 -wake_lock
+       +1h47m34s323ms (2) 087 +wake_lock=1001:""
+       +1h47m34s324ms (1) 087 -wake_lock
+       +1h47m34s392ms (2) 087 +wake_lock=1001:""
+       +1h47m34s393ms (1) 087 -wake_lock
+       +1h47m34s393ms (2) 087 +wake_lock=1001:""
+       +1h47m34s395ms (1) 087 -wake_lock
+       +1h47m34s395ms (2) 087 +wake_lock=1001:""
+       +1h47m34s395ms (1) 087 -wake_lock
+       +1h47m40s660ms (2) 087 wake_reason=0:""
+       +1h47m55s514ms (3) 087 +wake_lock=u0a162:"" +job=u0a162:""
+       +1h47m55s630ms (2) 087 -wake_lock -job=u0a162:""
+       +1h48m01s224ms (3) 087 current=-134 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h48m31s223ms (3) 087 current=-121 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h48m33s680ms (1) 087 charge=1461
+       +1h48m47s866ms (2) 087 wake_reason=0:""
+       +1h48m55s517ms (2) 087 stats=0:""
+       +1h49m01s223ms (3) 087 current=-120 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h49m31s225ms (3) 087 current=-118 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h49m55s404ms (2) 087 wake_reason=0:""
+       +1h50m01s228ms (3) 087 current=-127 ap_temp=29 pa_temp=28 skin_temp=27
+       +1h50m04s106ms (1) 087 charge=1459
+       +1h50m31s227ms (3) 087 current=-121 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h51m01s227ms (3) 087 current=-119 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h51m02s638ms (2) 087 wake_reason=0:""
+       +1h51m31s228ms (1) 087
+       +1h51m32s780ms (2) 087 +wake_lock=1001:""
+       +1h51m32s781ms (1) 087 -wake_lock
+       +1h51m32s781ms (3) 087 +wake_lock=1000:"" stats=0:""
+       +1h51m32s783ms (1) 087 -wake_lock
+       +1h51m32s783ms (2) 087 +wake_lock=1001:""
+       +1h51m32s783ms (1) 087 -wake_lock
+       +1h51m34s572ms (1) 087 charge=1457
+       +1h52m01s228ms (3) 087 current=-120 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h52m04s175ms (3) 087 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +1h52m04s264ms (2) 087 device_idle=off stats=0:""
+       +1h52m04s330ms (2) 087 +job=u0a173:""
+       +1h52m04s337ms (2) 087 -job=u0a173:""
+       +1h52m04s706ms (2) 087 volt=4009
+       +1h52m07s280ms (2) 087 +job=u150a173:""
+       +1h52m07s283ms (2) 087 +job=u150a112:""
+       +1h52m07s332ms (2) 087 -job=u150a112:""
+       +1h52m07s870ms (2) 087 -job=u150a173:""
+       +1h52m09s423ms (2) 087 -wake_lock device_idle=light wake_reason=0:""
+       +1h52m14s216ms (2) 087 -tmpwhitelist=u0a103:""
+       +1h52m31s227ms (3) 087 current=-142 ap_temp=29 pa_temp=28 skin_temp=28
+       +1h52m33s360ms (2) 087 +wake_lock=u0a103:""
+       +1h52m33s363ms (1) 087 -wake_lock
+       +1h52m33s370ms (3) 087 +wake_lock=u0a103:"" +tmpwhitelist=u0a103:""
+       +1h52m34s844ms (2) 087 volt=4134 -wake_lock
+       +1h52m36s766ms (3) 087 +wake_lock=u0a103:"" +tmpwhitelist=u0a59:""
+       +1h52m36s833ms (1) 087 -wake_lock
+       +1h52m36s833ms (3) 087 +wake_lock=u0a59:"" +tmpwhitelist=u0a254:""
+       +1h52m38s038ms (1) 087 -wake_lock
+       +1h52m38s038ms (2) 087 +wake_lock=u0a103:""
+       +1h52m41s203ms (1) 087 -wake_lock
+       +1h52m45s546ms (2) 087 +wake_lock=u0a103:""
+       +1h52m45s549ms (1) 087 -wake_lock
+       +1h52m45s550ms (2) 087 +wake_lock=u0a103:""
+       +1h52m45s561ms (1) 087 -wake_lock
+       +1h52m45s565ms (2) 087 +wake_lock=u0a579:""
+       +1h52m45s570ms (1) 087 -wake_lock
+       +1h52m45s579ms (2) 087 +wake_lock=u0a103:""
+       +1h52m45s580ms (1) 087 -wake_lock
+       +1h53m01s229ms (1) 087
+       +1h53m04s996ms (1) 087 charge=1456
+       +1h53m06s784ms (2) 087 -tmpwhitelist=u0a59:""
+       +1h53m07s004ms (2) 087 -tmpwhitelist=u0a254:""
+       +1h53m07s092ms (2) 087 -tmpwhitelist=u0a103:""
+       +1h53m17s114ms (2) 087 wake_reason=0:""
+       +1h53m31s232ms (3) 087 current=-122 ap_temp=28 pa_temp=28 skin_temp=28
+       +1h53m45s546ms (2) 087 stats=0:""
+       +1h54m01s229ms (3) 087 current=-124 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h54m04s359ms (3) 087 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +1h54m04s392ms (1) 087 charge=1454 -wake_lock
+       +1h54m14s373ms (2) 087 -tmpwhitelist=u0a103:""
+       +1h54m24s564ms (2) 087 wake_reason=0:""
+       +1h54m31s235ms (1) 087
+       +1h54m43s241ms (2) 087 +wake_lock=1001:""
+       +1h54m43s242ms (1) 087 -wake_lock
+       +1h54m43s242ms (2) 087 +wake_lock=1001:""
+       +1h54m43s244ms (1) 087 -wake_lock
+       +1h54m43s244ms (2) 087 +wake_lock=1001:""
+       +1h54m43s245ms (1) 087 -wake_lock
+       +1h54m43s245ms (2) 087 +wake_lock=1001:""
+       +1h54m43s247ms (1) 087 -wake_lock
+       +1h54m43s247ms (2) 087 +wake_lock=1001:""
+       +1h54m43s247ms (1) 087 -wake_lock
+       +1h55m01s232ms (1) 087
+       +1h55m04s359ms (2) 087 stats=0:""
+       +1h55m31s236ms (4) 087 current=-128 ap_temp=28 pa_temp=28 skin_temp=27 wake_reason=0:""
+       +1h55m35s717ms (1) 087 charge=1452
+       +1h56m01s235ms (3) 087 current=-130 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h56m31s235ms (3) 087 current=-119 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h56m33s419ms (2) 087 +wake_lock=1001:""
+       +1h56m33s420ms (1) 087 -wake_lock
+       +1h56m33s420ms (2) 087 +wake_lock=1000:""
+       +1h56m33s422ms (1) 087 -wake_lock
+       +1h56m33s422ms (3) 087 +wake_lock=1001:"" stats=0:""
+       +1h56m33s422ms (1) 087 -wake_lock
+       +1h56m36s016ms (2) 086
+       +1h56m36s016ms (2) 086 stats=0:""
+       +1h56m39s052ms (2) 086 wake_reason=0:""
+       +1h57m01s238ms (3) 086 current=-120 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h57m06s140ms (1) 086 charge=1451
+       +1h57m15s536ms (2) 086 +wake_lock=1001:""
+       +1h57m15s538ms (1) 086 -wake_lock
+       +1h57m15s538ms (2) 086 +wake_lock=1000:""
+       +1h57m15s540ms (1) 086 -wake_lock
+       +1h57m15s540ms (3) 086 +wake_lock=1001:"" stats=0:""
+       +1h57m15s541ms (1) 086 -wake_lock
+       +1h57m31s239ms (3) 086 current=-121 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h57m34s366ms (2) 086 +wake_lock=1001:""
+       +1h57m34s367ms (1) 086 -wake_lock
+       +1h57m34s367ms (2) 086 +wake_lock=1001:""
+       +1h57m34s369ms (1) 086 -wake_lock
+       +1h57m34s369ms (2) 086 +wake_lock=1001:""
+       +1h57m34s369ms (1) 086 -wake_lock
+       +1h57m34s425ms (2) 086 +wake_lock=1001:""
+       +1h57m34s426ms (1) 086 -wake_lock
+       +1h57m34s426ms (2) 086 +wake_lock=1001:""
+       +1h57m34s428ms (1) 086 -wake_lock
+       +1h57m34s428ms (2) 086 +wake_lock=1001:""
+       +1h57m34s429ms (1) 086 -wake_lock
+       +1h57m46s291ms (2) 086 wake_reason=0:""
+       +1h58m01s237ms (3) 086 current=-127 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h58m31s240ms (3) 086 current=-118 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h58m36s596ms (1) 086 charge=1449
+       +1h58m53s524ms (2) 086 wake_reason=0:""
+       +1h59m01s239ms (3) 086 current=-119 ap_temp=28 pa_temp=28 skin_temp=27
+       +1h59m21s397ms (2) 086 -wifi_radio stats=0:""
+       +1h59m21s648ms (2) 086 +wifi_radio wakeupap=u150a112:""
+       +1h59m21s700ms (2) 086 stats=0:""
+       +1h59m31s239ms (1) 086
+       +2h00m00s766ms (2) 086 wake_reason=0:""
+       +2h00m01s245ms (3) 086 current=-125 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h00m06s787ms (2) 086 +wake_lock=u0a103:""
+       +2h00m06s790ms (1) 086 -wake_lock
+       +2h00m06s793ms (2) 086 +wake_lock=u0a103:""
+       +2h00m06s801ms (1) 086 charge=1447 -wake_lock
+       +2h00m11s394ms (2) 086 +wake_lock=u0a103:""
+       +2h00m11s398ms (1) 086 -wake_lock
+       +2h00m11s418ms (2) 086 +wake_lock=u0a8:""
+       +2h00m11s423ms (1) 086 -wake_lock
+       +2h00m11s424ms (2) 086 +wake_lock=u0a103:""
+       +2h00m11s425ms (1) 086 -wake_lock
+       +2h00m11s578ms (2) 086 +wake_lock=u0a103:""
+       +2h00m11s582ms (1) 086 -wake_lock
+       +2h00m11s590ms (2) 086 +wake_lock=u0a8:""
+       +2h00m11s594ms (1) 086 -wake_lock
+       +2h00m26s203ms (4) 086 +wake_lock=u0a59:"" +screen_doze stats=0:""
+       +2h00m31s240ms (3) 086 current=-134 ap_temp=28 pa_temp=28 skin_temp=27 -wake_lock
+       +2h00m31s518ms (4) 086 +wake_lock=u0a59:"" -screen_doze stats=0:""
+       +2h00m31s640ms (1) 086 -wake_lock
+       +2h00m40s752ms (2) 086 -wifi_radio stats=0:""
+       +2h00m41s776ms (2) 086 +wifi_radio wakeupap=u150a112:""
+       +2h00m41s828ms (2) 086 stats=0:""
+       +2h01m01s243ms (3) 086 current=-119 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h01m08s008ms (2) 086 wake_reason=0:""
+       +2h01m20s689ms (2) 086 -wifi_radio stats=0:""
+       +2h01m21s716ms (2) 086 +wifi_radio wakeupap=u150a112:""
+       +2h01m21s767ms (2) 086 stats=0:""
+       +2h01m31s248ms (4) 086 current=-118 ap_temp=28 pa_temp=28 skin_temp=27 stats=0:""
+       +2h01m37s538ms (1) 086 charge=1446
+       +2h02m01s249ms (3) 086 current=-123 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h02m15s462ms (2) 086 wake_reason=0:""
+       +2h02m31s246ms (3) 086 current=-124 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h03m01s244ms (3) 086 current=-129 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h03m07s977ms (1) 086 charge=1444
+       +2h03m22s702ms (2) 086 wake_reason=0:""
+       +2h03m31s245ms (3) 086 current=-133 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h03m33s543ms (2) 086 +wake_lock=u0a103:""
+       +2h03m34s677ms (1) 086 -wake_lock
+       +2h04m01s248ms (3) 086 current=-120 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h04m29s932ms (2) 086 wake_reason=0:""
+       +2h04m31s252ms (1) 086
+       +2h04m32s633ms (2) 086 +wake_lock=u150a103:""
+       +2h04m33s493ms (2) 086 -wake_lock stats=0:""
+       +2h04m38s429ms (1) 086 charge=1442
+       +2h04m43s336ms (2) 086 +wake_lock=1001:""
+       +2h04m43s337ms (1) 086 -wake_lock
+       +2h04m43s337ms (2) 086 +wake_lock=1001:""
+       +2h04m43s339ms (1) 086 -wake_lock
+       +2h04m43s339ms (2) 086 +wake_lock=1001:""
+       +2h04m43s340ms (1) 086 -wake_lock
+       +2h04m43s341ms (2) 086 +wake_lock=1001:""
+       +2h04m43s341ms (1) 086 -wake_lock
+       +2h04m56s223ms (4) 086 +wake_lock=u0a59:"" +screen_doze stats=0:""
+       +2h04m59s186ms (3) 086 +screen -screen_doze screenwake=u0a59:""
+       +2h04m59s187ms (2) 086 -ble_scan stats=0:""
+       +2h04m59s203ms (3) 086 +audio +ble_scan +tmpwhitelist=5010:""
+       +2h04m59s644ms (2) 086 device_idle=off active=1000:""
+       +2h04m59s697ms (2) 086 +job=u0a173:""
+       +2h04m59s702ms (2) 086 -job=u0a173:""
+       +2h04m59s736ms (3) 086 -audio brightness=bright conn=1:""
+       +2h05m00s067ms (2) 086 +job=5017:""
+       +2h05m00s121ms (2) 086 -job=5017:""
+       +2h05m00s140ms (2) 086 +job=5017:""
+       +2h05m00s160ms (2) 086 -job=5017:""
+       +2h05m01s083ms (2) 086 +job=u0a213:""
+       +2h05m01s087ms (2) 086 +job=u150a213:""
+       +2h05m01s153ms (2) 086 -job=u150a213:""
+       +2h05m01s199ms (2) 086 -job=u0a213:""
+       +2h05m01s246ms (3) 086 current=-121 ap_temp=33 pa_temp=29 skin_temp=28
+       +2h05m02s658ms (2) 086 +job=u0a121:""
+       +2h05m02s662ms (2) 086 +job=u150a162:""
+       +2h05m02s670ms (2) 086 -job=u0a121:""
+       +2h05m03s153ms (2) 086 -job=u150a162:""
+       +2h05m07s543ms (2) 086 -top=1000:""
+       +2h05m07s543ms (2) 086 +top=u0a157:""
+       +2h05m08s566ms (3) 086 volt=4067 -tmpwhitelist=5010:""
+       +2h05m10s522ms (2) 086 stats=0:""
+       +2h05m12s853ms (2) 086 +phone_scanning phone_state=out
+       +2h05m13s255ms (3) 086 -phone_scanning phone_state=in phone_signal_strength=great +job=5023:""
+       +2h05m13s554ms (2) 086 -job=5023:""
+       +2h05m13s676ms (2) 086 +job=5023:""
+       +2h05m13s686ms (2) 086 -job=5023:""
+       +2h05m13s694ms (2) 086 +job=u0a249:""
+       +2h05m13s733ms (2) 086 -job=u0a249:""
+       +2h05m13s935ms (2) 086 +job=u0a213:""
+       +2h05m13s984ms (3) 086 -screen -job=u0a213:""
+       +2h05m14s259ms (3) 086 -wake_lock brightness=dark stats=0:""
+       +2h05m14s348ms (2) 086 +wake_lock=1001:""
+       +2h05m14s349ms (1) 086 -wake_lock
+       +2h05m14s349ms (2) 086 +wake_lock=1001:""
+       +2h05m14s355ms (1) 086 -wake_lock
+       +2h05m14s355ms (2) 086 +wake_lock=1001:""
+       +2h05m14s356ms (1) 086 -wake_lock
+       +2h05m14s356ms (2) 086 +wake_lock=1001:""
+       +2h05m14s356ms (1) 086 -wake_lock
+       +2h05m14s357ms (2) 086 +wake_lock=1001:""
+       +2h05m14s359ms (1) 086 -wake_lock
+       +2h05m14s359ms (2) 086 +wake_lock=1001:""
+       +2h05m14s362ms (1) 086 -wake_lock
+       +2h05m14s362ms (2) 086 +wake_lock=1001:""
+       +2h05m14s370ms (1) 086 -wake_lock
+       +2h05m14s370ms (2) 086 +wake_lock=1001:""
+       +2h05m14s371ms (1) 086 -wake_lock
+       +2h05m14s373ms (2) 086 +wake_lock=1001:""
+       +2h05m14s373ms (1) 086 -wake_lock
+       +2h05m14s373ms (2) 086 +wake_lock=1001:""
+       +2h05m14s376ms (1) 086 -wake_lock
+       +2h05m14s376ms (2) 086 +wake_lock=1001:""
+       +2h05m14s377ms (1) 086 -wake_lock
+       +2h05m14s378ms (2) 086 +wake_lock=1001:""
+       +2h05m14s378ms (1) 086 -wake_lock
+       +2h05m14s378ms (2) 086 +wake_lock=1001:""
+       +2h05m14s380ms (1) 086 -wake_lock
+       +2h05m14s380ms (2) 086 +wake_lock=1001:""
+       +2h05m14s380ms (1) 086 -wake_lock
+       +2h05m14s383ms (2) 086 +wake_lock=1001:""
+       +2h05m14s384ms (1) 086 -wake_lock
+       +2h05m14s384ms (2) 086 +wake_lock=1001:""
+       +2h05m14s387ms (1) 086 -wake_lock
+       +2h05m14s387ms (2) 086 +wake_lock=1001:""
+       +2h05m14s388ms (1) 086 -wake_lock
+       +2h05m14s479ms (2) 086 +wake_lock=1000:""
+       +2h05m16s119ms (1) 086 -wake_lock
+       +2h05m17s630ms (2) 086 +wake_lock=1000:""
+       +2h05m17s633ms (1) 086 -wake_lock
+       +2h05m17s636ms (2) 086 +wake_lock=1000:"" +wifi_scan
+       +2h05m18s679ms (2) 086 -wake_lock -wifi_scan +tmpwhitelist=u0a103:""
+       +2h05m22s810ms (2) 086 +wake_lock=1001:""
+       +2h05m22s811ms (1) 086 -wake_lock
+       +2h05m22s811ms (2) 086 +wake_lock=1001:""
+       +2h05m22s823ms (1) 086 -wake_lock
+       +2h05m22s823ms (2) 086 +wake_lock=1001:""
+       +2h05m22s824ms (1) 086 -wake_lock
+       +2h05m27s829ms (2) 086 +wake_lock=1001:""
+       +2h05m27s830ms (1) 086 -wake_lock
+       +2h05m27s830ms (2) 086 +wake_lock=1001:""
+       +2h05m27s837ms (1) 086 -wake_lock
+       +2h05m27s837ms (2) 086 +wake_lock=1001:""
+       +2h05m27s837ms (1) 086 -wake_lock
+       +2h05m29s230ms (3) 086 +wake_lock=u0a59:"" +tmpwhitelist=u0a59:""
+       +2h05m29s249ms (2) 086 +tmpwhitelist=1000:""
+       +2h05m31s248ms (3) 086 current=-561 ap_temp=32 pa_temp=31 skin_temp=29
+       +2h05m33s119ms (1) 086 -wake_lock
+       +2h05m33s121ms (2) 086 +wake_lock=u0a103:""
+       +2h05m33s130ms (1) 086 -wake_lock
+       +2h05m33s131ms (2) 086 +wake_lock=u0a103:""
+       +2h05m33s160ms (1) 086 -wake_lock
+       +2h05m37s259ms (2) 086 +wake_lock=1001:"" wake_reason=0:""
+       +2h05m37s857ms (1) 086 -wake_lock
+       +2h05m37s857ms (2) 086 +wake_lock=1001:""
+       +2h05m37s865ms (1) 086 -wake_lock
+       +2h05m37s865ms (2) 086 +wake_lock=1001:""
+       +2h05m37s866ms (2) 086 -wake_lock -tmpwhitelist=u0a103:""
+       +2h05m38s770ms (3) 086 volt=4110 charge=1441 -tmpwhitelist=u0a59:""
+       +2h05m39s255ms (2) 086 -tmpwhitelist=1000:""
+       +2h05m42s871ms (2) 086 +wake_lock=1001:""
+       +2h05m42s871ms (1) 086 -wake_lock
+       +2h05m42s871ms (2) 086 +wake_lock=1001:""
+       +2h05m42s878ms (1) 086 -wake_lock
+       +2h05m42s878ms (2) 086 +wake_lock=1001:""
+       +2h05m42s879ms (1) 086 -wake_lock
+       +2h05m51s833ms (3) 086 +wake_lock=u0a103:"" +wifi_scan +tmpwhitelist=u0a103:""
+       +2h05m52s883ms (1) 086 -wifi_scan
+       +2h05m54s773ms (2) 086 -wake_lock +tmpwhitelist=u0a254:""
+       +2h05m57s989ms (3) 086 +wake_lock=u0a103:"" +tmpwhitelist=u0a59:""
+       +2h05m58s020ms (1) 086 -wake_lock
+       +2h06m01s250ms (3) 086 current=-242 ap_temp=30 pa_temp=30 skin_temp=28
+       +2h06m06s376ms (2) 086 +wake_lock=1000:""
+       +2h06m06s415ms (1) 086 -wake_lock
+       +2h06m07s957ms (3) 086 +wake_lock=u0a155:"" +job=u0a155:""
+       +2h06m08s236ms (2) 086 -wake_lock -job=u0a155:""
+       +2h06m08s243ms (3) 086 +wake_lock=u0a218:"" +job=u0a218:""
+       +2h06m08s294ms (2) 086 charge=1439 -wake_lock -job=u0a218:""
+       +2h06m14s279ms (2) 086 stats=0:""
+       +2h06m16s390ms (2) 086 -tmpwhitelist=u0a103:""
+       +2h06m26s553ms (2) 086 -tmpwhitelist=u0a254:""
+       +2h06m28s002ms (2) 086 -tmpwhitelist=u0a59:""
+       +2h06m31s251ms (3) 086 current=-149 ap_temp=29 pa_temp=29 skin_temp=28
+       +2h06m39s079ms (1) 086 charge=1437
+       +2h06m43s761ms (3) 086 -wifi_radio wake_reason=0:"" stats=0:""
+       +2h06m59s306ms (3) 086 +wake_lock=5017:"" +job=5017:""
+       +2h06m59s460ms (2) 086 -wake_lock -job=5017:""
+       +2h06m59s475ms (3) 086 +wake_lock=5017:"" +job=5017:""
+       +2h06m59s522ms (2) 086 -wake_lock -job=5017:""
+       +2h06m59s690ms (3) 086 +wake_lock=1000:"" +job=u150a155:""
+       +2h06m59s715ms (2) 086 +wifi_radio wakeupap=u0a254:""
+       +2h06m59s775ms (2) 086 device_idle=light stats=0:""
+       +2h06m59s827ms (2) 086 -wake_lock -job=u150a155:""
+       +2h07m00s334ms (2) 086 +wake_lock=u0a103:""
+       +2h07m00s350ms (1) 086 -wake_lock
+       +2h07m00s419ms (2) 086 +wake_lock=u0a103:""
+       +2h07m00s638ms (1) 086 -wake_lock
+       +2h07m01s255ms (3) 086 current=-123 ap_temp=30 pa_temp=29 skin_temp=28
+       +2h07m14s737ms (2) 086 -wifi_radio stats=0:""
+       +2h07m26s559ms (3) 086 +wake_lock=1000:"" +job=1000:""
+       +2h07m26s567ms (2) 086 -wake_lock -job=1000:""
+       +2h07m31s255ms (3) 086 current=-135 ap_temp=29 pa_temp=29 skin_temp=28
+       +2h07m34s384ms (2) 086 +wake_lock=1001:""
+       +2h07m34s385ms (1) 086 -wake_lock
+       +2h07m34s385ms (2) 086 +wake_lock=1001:""
+       +2h07m34s387ms (1) 086 -wake_lock
+       +2h07m34s387ms (2) 086 +wake_lock=1001:""
+       +2h07m34s387ms (1) 086 -wake_lock
+       +2h07m34s453ms (2) 086 +wake_lock=1001:""
+       +2h07m34s454ms (1) 086 -wake_lock
+       +2h07m34s454ms (2) 086 +wake_lock=1001:""
+       +2h07m34s456ms (1) 086 -wake_lock
+       +2h07m34s456ms (2) 086 +wake_lock=1001:""
+       +2h07m34s457ms (2) 086 -wake_lock +wifi_radio wakeupap=u0a254:""
+       +2h07m34s913ms (2) 086 stats=0:""
+       +2h07m50s064ms (2) 086 -wifi_radio stats=0:""
+       +2h07m51s733ms (2) 086 wake_reason=0:""
+       +2h08m01s251ms (3) 086 current=-125 ap_temp=29 pa_temp=29 skin_temp=28
+       +2h08m09s540ms (1) 086 charge=1436
+       +2h08m29s160ms (3) 086 +wake_lock=u0a103:"" +wifi_radio wakeupap=u0a254:""
+       +2h08m29s170ms (1) 086 -wake_lock
+       +2h08m29s172ms (3) 086 +wake_lock=u0a103:"" +tmpwhitelist=u0a103:""
+       +2h08m29s198ms (2) 086 -wake_lock stats=0:""
+       +2h08m29s252ms (2) 086 +wake_lock=u0a59:""
+       +2h08m30s436ms (1) 086 -wake_lock
+       +2h08m30s437ms (2) 086 +wake_lock=u0a103:""
+       +2h08m31s253ms (3) 086 current=-122 ap_temp=29 pa_temp=28 skin_temp=28 -wake_lock
+       +2h08m49s251ms (2) 086 -tmpwhitelist=u0a103:""
+       +2h08m58s973ms (2) 086 wake_reason=0:""
+       +2h09m01s253ms (1) 086
+       +2h09m09s845ms (2) 085
+       +2h09m09s845ms (2) 085 stats=0:""
+       +2h09m18s640ms (2) 085 -wifi_radio stats=0:""
+       +2h09m22s656ms (3) 085 +wake_lock=5017:"" +job=5017:""
+       +2h09m22s824ms (2) 085 -wake_lock -job=5017:""
+       +2h09m22s836ms (3) 085 +wake_lock=5017:"" +job=5017:""
+       +2h09m22s895ms (2) 085 -wake_lock -job=5017:""
+       +2h09m22s917ms (3) 085 +wake_lock=5017:"" +job=5017:""
+       +2h09m22s993ms (2) 085 -wake_lock -job=5017:""
+       +2h09m23s693ms (2) 085 +wake_lock=u0a103:""
+       +2h09m23s708ms (1) 085 -wake_lock
+       +2h09m23s767ms (2) 085 +wake_lock=u0a103:""
+       +2h09m23s796ms (1) 085 -wake_lock
+       +2h09m23s820ms (2) 085 +wake_lock=u0a103:""
+       +2h09m23s983ms (1) 085 -wake_lock
+       +2h09m23s990ms (2) 085 +wake_lock=u0a103:""
+       +2h09m24s022ms (1) 085 -wake_lock
+       +2h09m31s255ms (3) 085 current=-121 ap_temp=29 pa_temp=28 skin_temp=28
+       +2h09m32s894ms (3) 085 +wake_lock=5017:"" +job=5017:""
+       +2h09m32s942ms (2) 085 -wake_lock -job=5017:""
+       +2h09m33s923ms (2) 085 +wake_lock=u0a103:""
+       +2h09m33s934ms (1) 085 -wake_lock
+       +2h09m34s002ms (2) 085 +wake_lock=u0a103:""
+       +2h09m34s151ms (1) 085 -wake_lock
+       +2h09m39s996ms (1) 085 charge=1434
+       +2h09m43s132ms (3) 085 +wake_lock=5017:"" +job=5017:""
+       +2h09m44s032ms (2) 085 +wifi_radio wakeupap=1051:""
+       +2h09m44s093ms (2) 085 stats=0:""
+       +2h09m47s682ms (2) 085 -wake_lock -job=5017:""
+       +2h09m48s811ms (2) 085 +wake_lock=u0a103:""
+       +2h09m48s822ms (1) 085 -wake_lock
+       +2h09m48s865ms (2) 085 +wake_lock=u0a103:""
+       +2h09m48s974ms (1) 085 -wake_lock
+       +2h10m01s258ms (4) 085 current=-167 ap_temp=29 pa_temp=29 skin_temp=28 +wake_lock=1000:""
+       +2h10m01s974ms (1) 085 -wake_lock
+       +2h10m06s178ms (2) 085 wake_reason=0:""
+       +2h10m22s388ms (2) 085 -wifi_radio stats=0:""
+       +2h10m22s659ms (2) 085 stats=0:""
+       +2h10m24s764ms (2) 085 +wifi_radio wakeupap=1051:""
+       +2h10m24s825ms (2) 085 stats=0:""
+       +2h10m31s259ms (3) 085 current=-129 ap_temp=29 pa_temp=28 skin_temp=28
+       +2h10m40s308ms (1) 085 charge=1432
+       +2h11m01s258ms (1) 085
+       +2h11m13s360ms (2) 085 wake_reason=0:""
+       +2h11m22s288ms (2) 085 -wifi_radio stats=0:""
+       +2h11m28s358ms (2) 085 +wifi_radio wakeupap=1051:""
+       +2h11m28s388ms (2) 085 stats=0:""
+       +2h11m31s259ms (3) 085 current=-131 ap_temp=28 pa_temp=28 skin_temp=28
+       +2h11m46s096ms (2) 085 -wifi_radio stats=0:""
+       +2h12m01s263ms (3) 085 current=-125 ap_temp=28 pa_temp=28 skin_temp=28
+       +2h12m20s617ms (2) 085 wake_reason=0:""
+       +2h12m31s026ms (2) 085 +wifi_radio wakeupap=1051:""
+       +2h12m31s059ms (2) 085 stats=0:""
+       +2h12m31s260ms (3) 085 current=-124 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h12m40s904ms (1) 085 charge=1431
+       +2h12m46s257ms (2) 085 -wifi_radio stats=0:""
+       +2h12m56s114ms (3) 085 +wake_lock=u0a103:"" +wifi_radio wakeupap=1051:""
+       +2h12m56s120ms (1) 085 -wake_lock
+       +2h12m56s140ms (2) 085 +wake_lock=u0a162:""
+       +2h12m56s144ms (2) 085 -wake_lock stats=0:""
+       +2h12m56s149ms (2) 085 +wake_lock=u0a103:""
+       +2h12m56s150ms (1) 085 -wake_lock
+       +2h13m01s262ms (1) 085
+       +2h13m11s344ms (2) 085 -wifi_radio stats=0:""
+       +2h13m27s853ms (2) 085 wake_reason=0:""
+       +2h13m31s264ms (4) 085 current=-126 ap_temp=28 pa_temp=28 skin_temp=27 +wifi_radio wakeupap=u0a103:""
+       +2h13m31s332ms (2) 085 stats=0:""
+       +2h13m41s187ms (1) 085 charge=1429
+       +2h13m46s416ms (2) 085 -wifi_radio stats=0:""
+       +2h13m56s117ms (2) 085 stats=0:""
+       +2h14m01s265ms (3) 085 current=-122 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h14m09s930ms (2) 085 +wake_lock=1001:""
+       +2h14m09s931ms (1) 085 -wake_lock
+       +2h14m09s931ms (3) 085 +wake_lock=1000:"" stats=0:""
+       +2h14m09s937ms (1) 085 -wake_lock
+       +2h14m09s938ms (2) 085 +wake_lock=1001:""
+       +2h14m09s938ms (1) 085 -wake_lock
+       +2h14m31s267ms (3) 085 current=-123 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h14m35s091ms (2) 085 wake_reason=0:""
+       +2h14m43s357ms (2) 085 +wake_lock=1001:""
+       +2h14m43s358ms (1) 085 -wake_lock
+       +2h14m43s358ms (2) 085 +wake_lock=1001:""
+       +2h14m43s366ms (1) 085 -wake_lock
+       +2h14m43s366ms (2) 085 +wake_lock=1001:""
+       +2h14m43s368ms (1) 085 -wake_lock
+       +2h15m01s265ms (3) 085 current=-118 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h15m09s931ms (2) 085 stats=0:""
+       +2h15m10s978ms (3) 085 +wake_lock=u0a103:"" +wifi_radio wakeupap=u0a103:""
+       +2h15m10s982ms (1) 085 -wake_lock
+       +2h15m11s001ms (2) 085 +wake_lock=u0a8:""
+       +2h15m11s005ms (2) 085 charge=1427 -wake_lock stats=0:""
+       +2h15m12s514ms (2) 085 +wake_lock=u0a103:""
+       +2h15m12s519ms (1) 085 -wake_lock
+       +2h15m12s526ms (2) 085 +wake_lock=u0a8:""
+       +2h15m12s532ms (1) 085 -wake_lock
+       +2h15m12s535ms (2) 085 +wake_lock=u0a103:""
+       +2h15m12s536ms (1) 085 -wake_lock
+       +2h15m27s796ms (2) 085 -wifi_radio stats=0:""
+       +2h15m31s265ms (3) 085 current=-121 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h15m42s332ms (2) 085 wake_reason=0:""
+       +2h16m01s268ms (1) 085
+       +2h16m10s980ms (2) 085 stats=0:""
+       +2h16m20s094ms (3) 085 +wake_lock=u0a103:"" +wifi_radio wakeupap=u0a103:""
+       +2h16m20s100ms (1) 085 -wake_lock
+       +2h16m20s115ms (3) 085 +wake_lock=u0a103:"" stats=0:""
+       +2h16m20s125ms (2) 085 +tmpwhitelist=u0a103:""
+       +2h16m31s267ms (3) 085 current=-130 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h16m42s092ms (1) 085 charge=1426
+       +2h16m44s499ms (2) 085 -tmpwhitelist=u0a103:""
+       +2h17m01s267ms (3) 085 current=-121 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h17m07s888ms (2) 085 -wifi_radio stats=0:""
+       +2h17m20s096ms (2) 085 stats=0:""
+       +2h17m20s129ms (2) 085 +longwake=u0a103:""
+       +2h17m21s475ms (2) 085 +wifi_radio wakeupap=u0a103:""
+       +2h17m21s540ms (2) 085 stats=0:""
+       +2h17m31s269ms (3) 085 current=-123 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h17m51s920ms (2) 085 -wifi_radio stats=0:""
+       +2h17m52s944ms (2) 085 +wifi_radio wakeupap=u0a103:""
+       +2h17m52s972ms (2) 085 stats=0:""
+       +2h18m01s271ms (3) 085 current=-128 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h18m08s048ms (2) 085 -wifi_radio stats=0:""
+       +2h18m12s613ms (1) 085 charge=1424
+       +2h18m21s516ms (2) 085 +wifi_radio wakeupap=u0a103:""
+       +2h18m21s579ms (2) 085 stats=0:""
+       +2h18m23s519ms (2) 085 -wake_lock -longwake=u0a103:""
+       +2h18m31s273ms (4) 085 current=-124 ap_temp=28 pa_temp=28 skin_temp=27 +wake_lock=u0a103:""
+       +2h18m31s889ms (1) 085 -wake_lock
+       +2h18m31s906ms (2) 085 +wake_lock=u0a373:""
+       +2h18m31s921ms (1) 085 -wake_lock
+       +2h18m46s960ms (2) 085 -wifi_radio stats=0:""
+       +2h19m01s274ms (1) 085
+       +2h19m23s520ms (2) 085 stats=0:""
+       +2h19m30s763ms (2) 085 wake_reason=0:""
+       +2h19m31s273ms (3) 085 current=-121 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h19m43s062ms (1) 085 charge=1422
+       +2h20m01s274ms (3) 085 current=-117 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h20m31s276ms (5) 085 current=-114 ap_temp=28 pa_temp=28 skin_temp=27 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +2h20m32s019ms (2) 085 device_idle=off stats=0:""
+       +2h20m32s234ms (2) 085 +wifi_radio wakeupap=1051:""
+       +2h20m32s257ms (2) 085 stats=0:""
+       +2h20m35s088ms (2) 085 +job=u0a213:""
+       +2h20m35s094ms (2) 085 -job=u0a213:""
+       +2h20m37s241ms (2) 085 -wake_lock device_idle=light wake_reason=0:""
+       +2h20m41s966ms (2) 085 -tmpwhitelist=u0a103:""
+       +2h21m01s277ms (3) 085 current=-132 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h21m08s532ms (2) 085 -wifi_radio stats=0:""
+       +2h21m13s532ms (1) 085 charge=1421
+       +2h21m31s277ms (4) 085 current=-141 ap_temp=28 pa_temp=28 skin_temp=27 stats=0:""
+       +2h21m45s160ms (2) 085 wake_reason=0:""
+       +2h22m01s275ms (3) 085 current=-125 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h22m23s822ms (2) 085 +wifi_radio wakeupap=1051:""
+       +2h22m23s852ms (2) 085 stats=0:""
+       +2h22m31s276ms (3) 085 current=-124 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h22m43s960ms (1) 085 charge=1419
+       +2h22m53s061ms (2) 085 wake_reason=0:""
+       +2h23m01s278ms (3) 085 current=-121 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h23m31s280ms (3) 085 current=-120 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h23m40s624ms (4) 085 +wake_lock=u0a59:"" +screen_doze stats=0:""
+       +2h23m43s116ms (3) 085 +screen -screen_doze screenwake=u0a59:""
+       +2h23m43s116ms (2) 085 -ble_scan stats=0:""
+       +2h23m43s174ms (3) 085 +audio +ble_scan conn=1:""
+       +2h23m43s519ms (3) 085 -audio brightness=bright device_idle=off active=1000:""
+       +2h23m44s253ms (2) 084 volt=4048
+       +2h23m44s253ms (2) 084 +gps +wifi_scan stats=0:""
+       +2h23m45s671ms (2) 084 -wifi_scan gps_signal_quality=poor +tmpwhitelist=u0a103:""
+       +2h23m46s068ms (2) 084 -top=u0a157:""
+       +2h23m46s068ms (2) 084 +top=1000:""
+       +2h23m46s525ms (2) 084 +job=u0a393:""
+       +2h23m46s527ms (2) 084 -job=u0a393:""
+       +2h23m46s578ms (2) 084 +tmpwhitelist=1000:""
+       +2h23m46s579ms (2) 084 +tmpwhitelist=u0a59:""
+       +2h23m49s093ms (1) 084 gps_signal_quality=good
+       +2h23m50s658ms (1) 084 gps_signal_quality=poor
+       +2h23m55s658ms (1) 084 gps_signal_quality=good
+       +2h23m56s655ms (1) 084 gps_signal_quality=poor
+       +2h23m59s635ms (1) 084 -gps
+       +2h24m01s277ms (5) 084 current=-397 ap_temp=30 pa_temp=30 skin_temp=28 -wake_lock -screen stats=0:""
+       +2h24m02s192ms (3) 084 +wake_lock=1000:"" brightness=dark
+       +2h24m02s266ms (1) 084 -wake_lock
+       +2h24m02s406ms (2) 084 +wake_lock=1000:""
+       +2h24m03s974ms (1) 084 -wake_lock
+       +2h24m05s725ms (2) 084 -tmpwhitelist=u0a103:""
+       +2h24m14s400ms (2) 084 volt=4101 charge=1417
+       +2h24m17s143ms (2) 084 +wake_lock=u0a59:""
+       +2h24m17s398ms (1) 084 -wake_lock
+       +2h24m18s829ms (2) 084 +wake_lock=u0a103:"" +wifi_scan
+       +2h24m19s857ms (2) 084 -wifi_scan +tmpwhitelist=u0a103:""
+       +2h24m20s866ms (1) 084 -wake_lock
+       +2h24m27s158ms (2) 084 -tmpwhitelist=u0a59:""
+       +2h24m27s164ms (2) 084 -tmpwhitelist=1000:""
+       +2h24m31s279ms (4) 084 current=-246 ap_temp=29 pa_temp=30 skin_temp=28 +wake_lock=u0a103:""
+       +2h24m32s016ms (1) 084 -wake_lock
+       +2h24m42s006ms (2) 084 -tmpwhitelist=u0a103:""
+       +2h24m43s368ms (2) 084 +wake_lock=1001:""
+       +2h24m43s369ms (1) 084 -wake_lock
+       +2h24m43s369ms (2) 084 +wake_lock=1001:""
+       +2h24m43s376ms (1) 084 -wake_lock
+       +2h24m43s376ms (2) 084 +wake_lock=1001:""
+       +2h24m43s377ms (1) 084 -wake_lock
+       +2h24m44s564ms (1) 084 charge=1416
+       +2h24m53s735ms (2) 084 +wake_lock=u0a103:""
+       +2h24m53s740ms (1) 084 -wake_lock
+       +2h24m53s754ms (2) 084 +wake_lock=u0a579:""
+       +2h24m53s764ms (1) 084 -wake_lock
+       +2h25m01s281ms (4) 084 current=-162 ap_temp=29 pa_temp=29 skin_temp=28 stats=0:""
+       +2h25m22s524ms (2) 084 wake_reason=0:""
+       +2h25m31s281ms (3) 084 current=-124 ap_temp=29 pa_temp=28 skin_temp=28
+       +2h25m44s902ms (1) 084 charge=1414
+       +2h25m46s576ms (2) 084 +wake_lock=u0a103:""
+       +2h25m46s579ms (1) 084 -wake_lock
+       +2h25m46s582ms (3) 084 +wake_lock=u0a103:"" +job=u0a173:""
+       +2h25m46s614ms (2) 084 -wake_lock -job=u0a173:""
+       +2h25m47s497ms (3) 084 +wake_lock=u0a218:"" +job=u0a218:""
+       +2h25m47s548ms (2) 084 -wake_lock device_idle=light -job=u0a218:""
+       +2h25m47s616ms (2) 084 +wake_lock=1000:""
+       +2h25m47s620ms (1) 084 -wake_lock
+       +2h25m47s621ms (2) 084 +wake_lock=1000:""
+       +2h25m47s622ms (1) 084 -wake_lock
+       +2h26m01s284ms (3) 084 current=-133 ap_temp=29 pa_temp=28 skin_temp=28
+       +2h26m02s672ms (2) 084 -wifi_radio stats=0:""
+       +2h26m29s733ms (2) 084 wake_reason=0:""
+       +2h26m31s283ms (3) 084 current=-125 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h26m46s577ms (2) 084 stats=0:""
+       +2h27m01s282ms (3) 084 current=-128 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h27m15s368ms (2) 084 charge=1412 +wake_lock=1001:""
+       +2h27m15s553ms (1) 084 -wake_lock
+       +2h27m15s553ms (3) 084 +wake_lock=1000:"" stats=0:""
+       +2h27m15s560ms (1) 084 -wake_lock
+       +2h27m15s560ms (2) 084 +wake_lock=1001:""
+       +2h27m15s561ms (1) 084 -wake_lock
+       +2h27m31s287ms (3) 084 current=-122 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h27m34s440ms (2) 084 +wake_lock=1001:""
+       +2h27m34s441ms (1) 084 -wake_lock
+       +2h27m34s441ms (2) 084 +wake_lock=1001:""
+       +2h27m34s442ms (1) 084 -wake_lock
+       +2h27m34s442ms (2) 084 +wake_lock=1001:""
+       +2h27m34s442ms (1) 084 -wake_lock
+       +2h27m34s608ms (2) 084 +wake_lock=1001:""
+       +2h27m34s608ms (1) 084 -wake_lock
+       +2h27m34s608ms (2) 084 +wake_lock=1001:""
+       +2h27m34s610ms (1) 084 -wake_lock
+       +2h27m34s610ms (2) 084 +wake_lock=1001:""
+       +2h27m34s610ms (1) 084 -wake_lock
+       +2h27m36s960ms (2) 084 wake_reason=0:""
+       +2h27m44s868ms (2) 084 pkgactive=u0a265:""
+       +2h27m48s531ms (3) 084 +wake_lock=u0a103:"" +wifi_radio wakeupap=1051:""
+       +2h27m48s535ms (1) 084 -wake_lock
+       +2h27m48s554ms (2) 084 +wake_lock=u0a296:""
+       +2h27m48s559ms (1) 084 -wake_lock
+       +2h27m48s562ms (2) 084 +wake_lock=u0a103:""
+       +2h27m48s562ms (2) 084 -wake_lock stats=0:""
+       +2h27m48s909ms (2) 084 +wake_lock=u0a103:""
+       +2h27m48s912ms (1) 084 -wake_lock
+       +2h27m48s917ms (2) 084 +wake_lock=u0a296:""
+       +2h27m48s922ms (1) 084 -wake_lock
+       +2h28m01s284ms (3) 084 current=-131 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h28m04s785ms (2) 084 -wifi_radio stats=0:""
+       +2h28m31s284ms (1) 084
+       +2h28m44s196ms (2) 084 wake_reason=0:""
+       +2h28m45s837ms (1) 084 charge=1411
+       +2h28m48s532ms (2) 084 stats=0:""
+       +2h29m01s285ms (5) 084 current=-124 ap_temp=28 pa_temp=28 skin_temp=27 +wake_lock=1000:"" +tmpwhitelist=u0a162:""
+       +2h29m02s019ms (2) 084 -wake_lock +tmpwhitelist=1000:""
+       +2h29m02s712ms (2) 084 +wifi_radio wakeupap=1000:""
+       +2h29m02s765ms (2) 084 stats=0:""
+       +2h29m12s025ms (2) 084 -tmpwhitelist=u0a162:""
+       +2h29m12s029ms (2) 084 -tmpwhitelist=1000:""
+       +2h29m17s471ms (4) 084 +wake_lock=1000:"" +screen screenwake=1000:""
+       +2h29m17s476ms (2) 084 stats=0:""
+       +2h29m17s782ms (3) 084 +gps +wifi_scan brightness=bright conn=1:""
+       +2h29m19s334ms (3) 084 -wifi_scan +audio +tmpwhitelist=u0a103:""
+       +2h29m19s842ms (3) 084 -audio device_idle=off active=1000:""
+       +2h29m22s847ms (2) 084 +job=u0a173:""
+       +2h29m22s850ms (2) 084 +job=u0a218:""
+       +2h29m22s861ms (2) 084 -job=u0a173:""
+       +2h29m22s875ms (2) 084 -gps -job=u0a218:""
+       +2h29m23s991ms (2) 084 +tmpwhitelist=1000:""
+       +2h29m23s992ms (2) 084 +tmpwhitelist=u0a59:""
+       +2h29m31s285ms (3) 084 current=-417 ap_temp=30 pa_temp=30 skin_temp=28
+       +2h29m39s375ms (2) 084 -tmpwhitelist=u0a103:""
+       +2h29m44s063ms (3) 084 -wake_lock -screen stats=0:""
+       +2h29m44s072ms (3) 084 +wake_lock=1000:"" brightness=dark
+       +2h29m44s158ms (1) 084 -wake_lock
+       +2h29m44s287ms (2) 084 +wake_lock=1000:""
+       +2h29m45s851ms (1) 084 charge=1409 -wake_lock
+       +2h29m51s413ms (2) 084 +wake_lock=u0a103:"" +wifi_scan wake_reason=0:""
+       +2h29m53s190ms (2) 084 -wake_lock -wifi_scan +tmpwhitelist=u0a103:""
+       +2h29m59s034ms (2) 084 +wake_lock=u0a59:""
+       +2h29m59s247ms (1) 084 -wake_lock
+       +2h30m01s291ms (4) 084 current=-269 ap_temp=30 pa_temp=30 skin_temp=28 -tmpwhitelist=1000:""
+       +2h30m06s128ms (2) 084 -wifi_radio stats=0:""
+       +2h30m09s048ms (2) 084 -tmpwhitelist=u0a59:""
+       +2h30m10s765ms (3) 084 +wake_lock=u0a103:"" +wifi_radio wakeupap=1000:""
+       +2h30m10s771ms (1) 084 -wake_lock
+       +2h30m10s789ms (3) 084 +wake_lock=u0a8:"" stats=0:""
+       +2h30m10s798ms (1) 084 -wake_lock
+       +2h30m11s470ms (2) 084 +wake_lock=u0a103:""
+       +2h30m11s473ms (1) 084 -wake_lock
+       +2h30m11s482ms (2) 084 +wake_lock=u0a8:""
+       +2h30m11s490ms (1) 084 -wake_lock
+       +2h30m13s216ms (2) 084 -tmpwhitelist=u0a103:""
+       +2h30m16s348ms (1) 084 charge=1407
+       +2h30m31s289ms (3) 084 current=-169 ap_temp=29 pa_temp=29 skin_temp=28
+       +2h30m44s081ms (2) 084 stats=0:""
+       +2h30m46s577ms (2) 084 -wifi_radio stats=0:""
+       +2h30m58s670ms (2) 084 wake_reason=0:""
+       +2h31m01s291ms (3) 084 current=-127 ap_temp=29 pa_temp=29 skin_temp=28
+       +2h31m16s658ms (1) 084 charge=1406
+       +2h31m19s848ms (3) 084 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +2h31m19s866ms (2) 084 +job=u0a218:""
+       +2h31m19s881ms (2) 084 +tmpwhitelist=1000:""
+       +2h31m19s904ms (2) 084 -wake_lock -job=u0a218:""
+       +2h31m19s952ms (2) 084 +wake_lock=1001:""
+       +2h31m19s953ms (1) 084 -wake_lock
+       +2h31m19s953ms (2) 084 +wake_lock=1000:""
+       +2h31m19s959ms (1) 084 -wake_lock
+       +2h31m19s959ms (3) 084 +wake_lock=1001:"" stats=0:""
+       +2h31m19s960ms (2) 084 -wake_lock +wifi_radio wakeupap=u0a218:""
+       +2h31m20s022ms (2) 084 stats=0:""
+       +2h31m29s382ms (2) 084 +wake_lock=1000:"" device_idle=light
+       +2h31m29s499ms (2) 084 -wake_lock -tmpwhitelist=u0a103:""
+       +2h31m29s886ms (2) 084 -tmpwhitelist=1000:""
+       +2h31m31s293ms (3) 084 current=-137 ap_temp=29 pa_temp=29 skin_temp=28
+       +2h31m35s729ms (2) 084 -wifi_radio stats=0:""
+       +2h32m01s293ms (3) 084 current=-125 ap_temp=29 pa_temp=28 skin_temp=28
+       +2h32m05s901ms (2) 084 wake_reason=0:""
+       +2h32m19s887ms (2) 084 stats=0:""
+       +2h32m31s294ms (5) 084 current=-122 ap_temp=28 pa_temp=28 skin_temp=27 +wake_lock=1000:"" +tmpwhitelist=u0a103:""
+       +2h32m32s053ms (1) 084 -wake_lock
+       +2h32m42s044ms (2) 084 -tmpwhitelist=u0a103:""
+       +2h32m47s132ms (1) 084 charge=1404
+       +2h33m00s647ms (2) 084 +wifi_radio wakeupap=u0a218:""
+       +2h33m00s690ms (2) 084 stats=0:""
+       +2h33m01s296ms (3) 084 current=-127 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h33m07s787ms (2) 084 +wake_lock=u0a162:""
+       +2h33m08s020ms (1) 084 -wake_lock
+       +2h33m13s146ms (2) 084 wake_reason=0:""
+       +2h33m15s825ms (2) 084 -wifi_radio stats=0:""
+       +2h33m31s294ms (3) 084 current=-123 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h34m01s298ms (3) 084 current=-125 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h34m07s788ms (2) 084 stats=0:""
+       +2h34m12s326ms (2) 084 +wifi_radio wakeupap=u0a218:""
+       +2h34m12s357ms (2) 084 stats=0:""
+       +2h34m17s568ms (1) 084 charge=1402
+       +2h34m20s382ms (2) 084 wake_reason=0:""
+       +2h34m31s296ms (3) 084 current=-114 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h34m39s536ms (2) 084 -wifi_radio stats=0:""
+       +2h34m43s418ms (2) 084 +wake_lock=1001:""
+       +2h34m43s419ms (1) 084 -wake_lock
+       +2h34m43s419ms (2) 084 +wake_lock=1001:""
+       +2h34m43s426ms (1) 084 -wake_lock
+       +2h34m43s426ms (2) 084 +wake_lock=1001:""
+       +2h34m43s426ms (1) 084 -wake_lock
+       +2h35m01s298ms (3) 084 current=-125 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h35m11s872ms (2) 084 +wifi_radio wakeupap=u0a103:""
+       +2h35m11s931ms (2) 084 stats=0:""
+       +2h35m17s860ms (2) 083
+       +2h35m17s860ms (2) 083 stats=0:""
+       +2h35m27s152ms (3) 083 -wifi_radio wake_reason=0:"" stats=0:""
+       +2h35m31s301ms (1) 083
+       +2h35m47s996ms (1) 083 charge=1401
+       +2h36m01s298ms (4) 083 current=-120 ap_temp=28 pa_temp=28 skin_temp=27 +wake_lock=1000:""
+       +2h36m01s959ms (1) 083 -wake_lock
+       +2h36m08s168ms (4) 083 +wake_lock=1000:"" +screen screenwake=1000:""
+       +2h36m08s172ms (2) 083 -ble_scan stats=0:""
+       +2h36m08s195ms (2) 083 +wifi_radio +ble_scan wakeupap=1000:""
+       +2h36m08s445ms (2) 083 wifi_signal_strength=4 stats=0:""
+       +2h36m08s513ms (2) 083 conn=1:""
+       +2h36m08s891ms (2) 083 +tmpwhitelist=u0a59:""
+       +2h36m08s895ms (3) 083 brightness=bright +tmpwhitelist=1000:""
+       +2h36m10s486ms (3) 083 +audio device_idle=off active=1000:""
+       +2h36m10s885ms (2) 083 -audio
+       +2h36m13s719ms (2) 083 +job=u0a218:""
+       +2h36m13s740ms (2) 083 -job=u0a218:""
+       +2h36m18s154ms (2) 083 volt=4001
+       +2h36m25s986ms (2) 083 -top=1000:""
+       +2h36m25s986ms (2) 083 +top=u0a59:""
+       +2h36m29s164ms (2) 083 -top=u0a59:""
+       +2h36m29s164ms (2) 083 +top=1000:""
+       +2h36m31s297ms (4) 083 current=-430 ap_temp=31 pa_temp=30 skin_temp=29 -top=1000:""
+       +2h36m31s481ms (2) 083 +top=1000:""
+       +2h36m34s334ms (3) 083 -screen brightness=dark stats=0:""
+       +2h36m36s875ms (1) 083 -wake_lock
+       +2h36m48s304ms (3) 083 volt=4092 charge=1399 +wake_lock=u0a59:""
+       +2h36m49s521ms (1) 083 -wake_lock
+       +2h36m59s314ms (2) 083 -tmpwhitelist=u0a59:""
+       +2h36m59s316ms (2) 083 -tmpwhitelist=1000:""
+       +2h37m01s303ms (3) 083 current=-242 ap_temp=30 pa_temp=30 skin_temp=28
+       +2h37m02s878ms (2) 083 +wake_lock=1001:""
+       +2h37m02s879ms (1) 083 -wake_lock
+       +2h37m02s879ms (2) 083 +wake_lock=1000:""
+       +2h37m02s885ms (1) 083 -wake_lock
+       +2h37m02s885ms (3) 083 +wake_lock=1001:"" stats=0:""
+       +2h37m02s886ms (1) 083 -wake_lock
+       +2h37m08s997ms (2) 083 +wake_lock=1001:""
+       +2h37m08s997ms (1) 083 -wake_lock
+       +2h37m08s997ms (2) 083 +wake_lock=1000:""
+       +2h37m09s004ms (1) 083 -wake_lock
+       +2h37m09s004ms (3) 083 +wake_lock=1001:"" stats=0:""
+       +2h37m09s004ms (1) 083 -wake_lock
+       +2h37m18s444ms (1) 083 charge=1397
+       +2h37m31s302ms (3) 083 current=-154 ap_temp=29 pa_temp=29 skin_temp=28
+       +2h37m34s533ms (2) 083 +wake_lock=1001:""
+       +2h37m34s533ms (1) 083 -wake_lock
+       +2h37m34s533ms (2) 083 +wake_lock=1001:""
+       +2h37m34s536ms (1) 083 -wake_lock
+       +2h37m34s536ms (2) 083 +wake_lock=1001:""
+       +2h37m34s537ms (1) 083 -wake_lock
+       +2h37m34s710ms (2) 083 +wake_lock=1001:""
+       +2h37m34s711ms (1) 083 -wake_lock
+       +2h37m34s711ms (2) 083 +wake_lock=1001:""
+       +2h37m34s713ms (1) 083 -wake_lock
+       +2h37m34s713ms (2) 083 +wake_lock=1001:""
+       +2h37m34s713ms (1) 083 -wake_lock
+       +2h37m44s009ms (2) 083 wake_reason=0:""
+       +2h38m01s302ms (3) 083 current=-141 ap_temp=29 pa_temp=29 skin_temp=28
+       +2h38m18s792ms (2) 083 charge=1396 +wake_lock=1000:""
+       +2h38m19s795ms (1) 083 -wake_lock device_idle=light
+       +2h38m31s306ms (3) 083 current=-132 ap_temp=29 pa_temp=28 skin_temp=28
+       +2h38m51s501ms (2) 083 wake_reason=0:""
+       +2h39m01s304ms (3) 083 current=-121 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h39m19s673ms (2) 083 stats=0:""
+       +2h39m31s307ms (1) 083
+       +2h39m49s248ms (1) 083 charge=1394
+       +2h39m58s736ms (2) 083 wake_reason=0:""
+       +2h40m01s304ms (3) 083 current=-127 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h40m31s304ms (3) 083 current=-123 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h40m47s513ms (2) 083 +wake_lock=1000:""
+       +2h40m47s555ms (1) 083 -wake_lock
+       +2h41m01s306ms (3) 083 current=-127 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h41m05s957ms (2) 083 wake_reason=0:""
+       +2h41m19s687ms (1) 083 charge=1392
+       +2h41m31s308ms (3) 083 current=-125 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h41m32s457ms (2) 083 +wake_lock=u150a103:""
+       +2h41m34s971ms (1) 083 -wake_lock
+       +2h41m47s513ms (2) 083 stats=0:""
+       +2h42m01s306ms (3) 083 current=-127 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h42m09s706ms (2) 083 +wake_lock=1001:""
+       +2h42m09s707ms (1) 083 -wake_lock
+       +2h42m09s707ms (2) 083 +wake_lock=1000:""
+       +2h42m09s714ms (1) 083 -wake_lock
+       +2h42m09s714ms (3) 083 +wake_lock=1001:"" stats=0:""
+       +2h42m09s715ms (1) 083 -wake_lock
+       +2h42m13s283ms (2) 083 wake_reason=0:""
+       +2h42m31s307ms (3) 083 current=-129 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h42m50s127ms (1) 083 charge=1391
+       +2h43m01s309ms (3) 083 current=-127 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h43m20s521ms (2) 083 wake_reason=0:""
+       +2h43m31s311ms (3) 083 current=-131 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h44m01s313ms (4) 083 current=-125 ap_temp=28 pa_temp=28 skin_temp=27 +wake_lock=1000:"" device_idle=off
+       +2h44m02s322ms (2) 083 +job=u0a193:""
+       +2h44m02s329ms (2) 083 +gps +wifi_scan stats=0:""
+       +2h44m03s573ms (2) 083 -gps -wifi_scan +tmpwhitelist=u0a103:""
+       +2h44m05s120ms (2) 083 +job=u150a162:""
+       +2h44m06s089ms (2) 083 -job=u150a162:""
+       +2h44m06s732ms (2) 083 -wake_lock device_idle=light -job=u0a193:""
+       +2h44m20s606ms (1) 083 charge=1389
+       +2h44m21s871ms (2) 083 +wake_lock=u0a103:""
+       +2h44m21s875ms (1) 083 -wake_lock
+       +2h44m21s875ms (2) 083 +wake_lock=u0a103:""
+       +2h44m21s885ms (1) 083 -wake_lock
+       +2h44m21s993ms (2) 083 +wake_lock=u0a103:""
+       +2h44m21s995ms (1) 083 -wake_lock
+       +2h44m27s774ms (2) 083 wake_reason=0:""
+       +2h44m31s314ms (4) 083 current=-152 ap_temp=28 pa_temp=28 skin_temp=27 -tmpwhitelist=u0a103:""
+       +2h44m36s649ms (2) 083 +wake_lock=u0a103:"" +wifi_scan
+       +2h44m37s731ms (2) 083 -wake_lock -wifi_scan +tmpwhitelist=u0a103:""
+       +2h44m43s432ms (2) 083 +wake_lock=1001:""
+       +2h44m43s433ms (1) 083 -wake_lock
+       +2h44m43s433ms (2) 083 +wake_lock=1001:""
+       +2h44m43s440ms (1) 083 -wake_lock
+       +2h44m43s440ms (2) 083 +wake_lock=1001:""
+       +2h44m43s440ms (1) 083 -wake_lock
+       +2h44m57s817ms (2) 083 -tmpwhitelist=u0a103:""
+       +2h45m01s310ms (4) 083 current=-125 ap_temp=28 pa_temp=28 skin_temp=27 stats=0:""
+       +2h45m17s822ms (2) 083 +wake_lock=u0a103:""
+       +2h45m17s825ms (1) 083 -wake_lock
+       +2h45m17s836ms (2) 083 +wake_lock=u0a8:""
+       +2h45m17s842ms (1) 083 -wake_lock
+       +2h45m19s359ms (2) 083 +wake_lock=u0a103:""
+       +2h45m19s361ms (1) 083 -wake_lock
+       +2h45m19s366ms (2) 083 +wake_lock=u0a8:""
+       +2h45m19s370ms (1) 083 -wake_lock
+       +2h45m19s373ms (2) 083 +wake_lock=u0a103:""
+       +2h45m19s374ms (1) 083 -wake_lock
+       +2h45m20s888ms (1) 083 charge=1387
+       +2h45m31s312ms (3) 083 current=-132 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h45m35s368ms (2) 083 wake_reason=0:""
+       +2h46m01s315ms (3) 083 current=-125 ap_temp=28 pa_temp=28 skin_temp=27
+       +2h46m05s208ms (4) 083 +wake_lock=u0a59:"" +screen_doze stats=0:""
+       +2h46m10s373ms (2) 083 stats=0:""

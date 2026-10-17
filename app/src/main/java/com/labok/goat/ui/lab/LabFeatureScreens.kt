@@ -162,7 +162,7 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val w = rememberLabWriter()
-    // 상단바 숨기기(실험)는 아이콘 카드와 따로 둔 카드: 아이콘만이 아니라 상단바 자리까지 숨겨 앱이 그 자리까지 쓰게 한다(포커스 창 방식, [StatusBarHider])
+    // 상단바 숨기기는 아이콘 카드와 따로 둔 카드: 아이콘만이 아니라 상단바 자리까지 숨겨 앱이 그 자리까지 쓰게 한다(포커스 창 방식, [StatusBarHider])
     val hideCard: @Composable ColumnScope.() -> Unit = {
         NewTag(NewBadge.STATUS_BAR_HIDE, Modifier.padding(bottom = Gap.Item))
         val scope = rememberCoroutineScope()
@@ -175,22 +175,6 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         }
         // 주의 문구는 설명 바로 아래에 붙인다(다른 카드처럼 설명 줄과 같은 간격)
         Text(Copy.LAB_STATUS_HIDE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(end = 72.dp))
-        // 실기에서 다시 숨지 않을 때 원인을 볼 수 있게 진단 글을 공유한다(메신저 등으로 바로 보냄)
-        Spacer(Modifier.height(Gap.Item))
-        LiquidButton(Copy.LAB_STATUS_HIDE_SEND_LOG, primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
-            scope.launch {
-                // 메신저(디스코드 등)는 긴 글을 공유로 받지 못해 글 파일로 저장해 첨부한다
-                val uri = withContext(Dispatchers.IO) { StatusBarHider.diagnosticsFile(context) }
-                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(android.content.Intent.EXTRA_SUBJECT, "GOAT 상단바 숨기기 기록")
-                    putExtra(android.content.Intent.EXTRA_STREAM, uri)
-                    clipData = android.content.ClipData.newRawUri("", uri)
-                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                context.startActivity(android.content.Intent.createChooser(send, Copy.LAB_STATUS_HIDE_SEND_LOG))
-            }
-        })
     }
     // 마이크·카메라 사용 표시(초록 점): 기기 설정 값이라 Shizuku로 바꾼다. 아이콘 카드 아래에 따로 둔다
     val dotCard: @Composable ColumnScope.() -> Unit = {
@@ -344,12 +328,19 @@ internal fun StatusIconsHelpSheet() {
                 "바꿀 수 있고, Android 14 이상은 시스템이 막아 두어 스위치가 잠깁니다."
         )
         HelpTopic("4. 되돌리기", "[처음대로]를 누르면 숨긴 아이콘이 GOAT가 바꾸기 전 값으로 돌아갑니다.")
-        // 같은 화면의 상단바 숨기기(실험) 카드도 설명한다(빠져 있었음, QA 1차)
+        // 같은 화면의 상단바 숨기기 카드도 설명한다(빠져 있었음, QA 1차)
         HelpTopic(
-            "5. 상단바 숨기기(실험)",
-            "아이콘뿐 아니라 상단바 전체를 숨겨 앱이 그 자리까지 화면을 사용합니다. 위 가장자리를 쓸어내리면 잠깐 보입니다. 뒤로 가기를 쓰면 잠깐 보였다가 " +
-                "자동으로 다시 숨겨지고, 키보드가 열려 있는 동안에는 보이다가 키보드를 닫으면 다시 숨겨집니다. " +
-                "설정 앱처럼 다른 앱 위 표시를 막는 화면에서는 보이고, 그 화면을 벗어나면 다시 숨겨집니다. 그래도 보이면 알림의 [다시 숨기기]를 누르세요. '다른 앱 위에 표시' 권한이 필요하며, Shizuku가 연결되어 있으면 GOAT가 받습니다."
+            "5. 상단바 숨기기",
+            "아이콘뿐 아니라 상단바 전체를 숨겨 앱이 그 자리까지 화면을 사용합니다. 위 가장자리를 쓸어내리면 잠깐 보입니다. " +
+                "뒤로 가기를 쓰면 잠깐 보였다가 자동으로 다시 숨겨집니다. '다른 앱 위에 표시' 권한이 필요하며, Shizuku가 연결되어 있으면 GOAT가 받습니다."
+        )
+        HelpTopic(
+            "6. Android 11 이상의 제한",
+            "Android 11부터 시스템 전체를 전체 화면으로 바꾸는 설정이 없어졌습니다. 그래서 GOAT는 보이지 않는 작은 창을 앞에 두고 그 창이 상단바를 숨기게 합니다. " +
+                "이 방식 때문에 다음 경우에는 상단바가 보입니다.\n" +
+                "• 입력란을 눌러 키보드를 쓰는 동안: 키보드는 앞에 있는 창에서만 뜰 수 있어 잠시 앱에 자리를 넘깁니다. 키보드를 닫으면 다시 숨겨집니다.\n" +
+                "• 설정 앱, 권한 요청 창처럼 다른 앱 위 표시를 막는 화면: 그 화면을 벗어나면 다시 숨겨집니다.\n" +
+                "그래도 보이면 알림의 [다시 숨기기]를 누르세요."
         )
     }
 }

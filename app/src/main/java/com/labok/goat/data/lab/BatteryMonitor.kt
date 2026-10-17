@@ -157,47 +157,6 @@ object BatteryMonitor {
         return drop * HOUR_MS.toFloat() / span
     }
 
-    /**
-     * 시간대 한 칸의 사용량. [usedPct]는 그 칸에서 줄어든 잔량(%), [charging]은 그 칸에 충전한 구간이 있었는지,
-     * [recorded]는 그 칸에 기록이 있었는지(기록이 없으면 사용량을 알 수 없다).
-     */
-    data class Slot(val start: Long, val end: Long, val usedPct: Float, val charging: Boolean, val recorded: Boolean)
-
-    /** [now]가 들어 있는 2시간 칸의 끝 시각. 기기 시간대 기준 짝수 정시(0·2·4…시)에 맞춘다(안드로이드 배터리 화면과 같은 칸). */
-    internal fun slotEnd(now: Long, zone: java.util.TimeZone = java.util.TimeZone.getDefault()): Long {
-        val offset = zone.getOffset(now)
-        val local = now + offset
-        return (local / SLOT_MS + 1) * SLOT_MS - offset
-    }
-
-    /**
-     * 최근 24시간을 2시간씩 12칸으로 나눠 칸마다 줄어든 잔량을 더한다(왼쪽이 오래된 칸). 두 기록 사이에서 줄어든 잔량은
-     * 두 기록이 걸친 칸들에 시간 비율대로 나눈다. 충전이 낀 구간은 사용량에 넣지 않고 그 칸을 충전으로 표시한다.
-     * 기록이 2시간 넘게 비면(기기 꺼짐 등) 그 사이는 기록 없음으로 둔다.
-     */
-    internal fun slots(list: List<Sample>, end: Long, count: Int = 12): List<Slot> {
-        val start = end - count * SLOT_MS
-        val used = FloatArray(count)
-        val charging = BooleanArray(count)
-        val recorded = BooleanArray(count)
-        val sorted = list.sortedBy { it.time }
-        sorted.forEach { s -> ((s.time - start) / SLOT_MS).toInt().takeIf { s.time >= start && it in 0 until count }?.let { recorded[it] = true } }
-        sorted.zipWithNext().forEach { (a, b) ->
-            if (b.time - a.time > 2 * HOUR_MS || b.time <= start || a.time >= end) return@forEach
-            val charge = a.charging || b.charging || b.level > a.level
-            val drop = (a.level - b.level).coerceAtLeast(0)
-            val span = (b.time - a.time).toFloat()
-            for (i in 0 until count) {
-                val s0 = start + i * SLOT_MS
-                val overlap = minOf(b.time, s0 + SLOT_MS) - maxOf(a.time, s0)
-                if (overlap <= 0) continue
-                recorded[i] = true
-                if (charge) charging[i] = true else used[i] += drop * overlap / span
-            }
-        }
-        return List(count) { i -> Slot(start + i * SLOT_MS, start + (i + 1) * SLOT_MS, used[i], charging[i], recorded[i]) }
-    }
-
     class LogWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             record(applicationContext)
@@ -209,7 +168,6 @@ object BatteryMonitor {
 
     internal const val HOUR_MS = 3_600_000L
     internal const val DAY_MS = 24 * HOUR_MS
-    internal const val SLOT_MS = 2 * HOUR_MS
     private const val KEEP_MS = 48 * HOUR_MS
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)

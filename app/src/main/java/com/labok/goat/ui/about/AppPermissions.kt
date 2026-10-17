@@ -64,7 +64,7 @@ internal object AppPermissions {
         Item(
             Manifest.permission.SYSTEM_ALERT_WINDOW,
             "다른 앱 위에 표시",
-            "상태 표시줄의 상단바 숨기기(실험)에서 다른 앱 위에 투명한 창을 띄워 상단바를 숨길 때 씁니다. Shizuku가 연결되면 GOAT가 자동으로 허용합니다.",
+            "상태 표시줄의 상단바 숨기기에서 다른 앱 위에 투명한 창을 띄워 상단바를 숨길 때 씁니다. Shizuku가 연결되면 GOAT가 자동으로 허용합니다.",
             How.USER,
             optional = true
         ),
