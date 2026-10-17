@@ -94,4 +94,30 @@ class BatteryHistoryTest {
         assertEquals(listOf(10_000_000L - 3_600_000L, 10_000_000L), p.map { it.time })
         assertEquals(emptyList<BatteryHistory.Point>(), BatteryHistory.parse(text, utc))
     }
+
+    @Test
+    fun format2AbsoluteTimeLines() {
+        // Android 16 이후 삼성 실기 형식(Battery History [Format: 2]): 줄 앞이 실제 시각, 연도는 RESET:TIME에서 가져온다
+        val text = """
+            Battery History [Format: 2] (35% used, 1438KB used of 4096KB, 1368 strings using 86KB):
+              12-31 23:50:00.000 RESET:TIME: 2026-12-31-23-50-00-000
+              12-31 23:50:00.000 100 status=discharging health=good plug=none temp=280 +running +screen
+                             Details: cpu=141280u+172830s
+              12-31 23:55:00.500 099 -screen -running
+              01-01 00:10:00.000 098 stats=0:""
+              01-01 00:20:00.000 SHUTDOWN
+              01-01 00:30:00.000 START
+              01-01 00:30:01.000 098 status=charging +running
+        """.trimIndent()
+        val p = BatteryHistory.parse(text, utc)
+        assertEquals(4, p.size)
+        assertEquals(1798761000000L, p[0].time) // 2026-12-31 23:50:00 UTC
+        assertEquals(true, p[0].screen)
+        assertEquals(1798761300500L, p[1].time)
+        assertEquals(false, p[1].screen)
+        // 해를 넘겨 2027-01-01이 된다
+        assertEquals(1798762200000L, p[2].time)
+        assertEquals(true, p[3].afterOff)
+        assertEquals(true, p[3].charging)
+    }
 }

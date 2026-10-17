@@ -71,17 +71,20 @@ object BatteryHistory {
         appendLine("-- 원래 출력 앞 40줄")
         ShizukuAccess.shell("dumpsys batterystats --history | head -40")?.out?.lines()?.forEach { appendLine(it.take(200)) }
         appendLine("-- 원래 출력에서 기록 줄 앞 10줄")
-        ShizukuAccess.shell("dumpsys batterystats --history | grep -m10 -E '\\([0-9]+\\) '")?.out?.lines()?.forEach { appendLine(it.take(200)) }
+        ShizukuAccess.shell("dumpsys batterystats --history | grep -m10 -E '\\([0-9]+\\) |^ +[0-9][0-9]-[0-9][0-9] '")?.out?.lines()?.forEach { appendLine(it.take(200)) }
     }
 
     private fun command(): String {
-        val awk = "awk '/^ +(0|\\+[0-9dhms]+) \\(/{ if (\$0 ~ /TIME:|SHUTDOWN|START|status=|[+-]screen( |\$)|[+-]running( |\$)/) " +
+        // 두 형식의 기록 줄: 옛 형식 '  +1m02s003ms (2) 099 …', 새 형식(Format: 2) '  10-16 18:24:22.406 099 …'. 둘 다 세 번째 칸이 잔량이다
+        val awk = "awk '/^ +(0|\\+[0-9dhms]+) \\(|^ +[0-9][0-9]-[0-9][0-9] [0-9][0-9]:/{ if (\$0 ~ /TIME:|SHUTDOWN|START|status=|[+-]screen( |\$)|[+-]running( |\$)/) " +
             "{print; last=\$3; next} if (\$3!=last) {print; last=\$3} }'"
-        val grep = "grep -E '^ +(0|\\+[0-9dhms]+) \\('"
+        val grep = "grep -E '^ +(0|\\+[0-9dhms]+) \\(|^ +[0-9][0-9]-[0-9][0-9] [0-9][0-9]:'"
         return "if command -v awk >/dev/null; then dumpsys batterystats --history | $awk; else dumpsys batterystats --history | $grep; fi"
     }
 
     private val LINE = Regex("""^\s*(0|\+[0-9dhms]+)\s+\(\d+\)\s+(.*)$""")
+    /** 새 형식(Android 16 이후 삼성 실기 'Battery History [Format: 2]'): 줄 앞이 실제 시각(월-일 시:분:초.밀리초)이다. */
+    private val LINE2 = Regex("""^\s*(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d{3})\s+(.*)$""")
     private val PART = Regex("""(\d+)(ms|d|h|m|s)""")
 
     /** "+1h02m03s456ms" → 밀리초. */
@@ -101,6 +104,7 @@ object BatteryHistory {
      * 마지막 기록을 지금으로 보고 거꾸로 맞춘다(마지막 기록은 길어야 몇 분 전이다).
      */
     internal fun parse(text: String, zone: TimeZone = TimeZone.getDefault(), now: Long? = null): List<Point> {
+        if (text.lineSequence().any { LINE2.containsMatchIn(it) }) return parse2(text, zone, now)
         val fmt = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).apply { timeZone = zone }
         val out = ArrayList<Point>()
         // 실제 시각 기준점: (경과 시간, 실제 시각)
@@ -158,6 +162,62 @@ object BatteryHistory {
             screen = s
             charging = c
             awake = a
+            off = false
+        }
+        return out
+    }
+
+    /**
+     * 새 형식 해석. 시각이 줄마다 있지만 연도가 없어서 RESET:TIME 줄의 연도(없으면 [now]의 연도)에서 시작하고,
+     * 월이 줄어들면(12월 → 1월) 해를 넘긴 것으로 본다.
+     */
+    private fun parse2(text: String, zone: TimeZone, now: Long?): List<Point> {
+        val cal = java.util.Calendar.getInstance(zone)
+        var year = text.lineSequence().mapNotNull { Regex("""RESET:TIME: (\d{4})-""").find(it)?.groupValues?.get(1)?.toIntOrNull() }.firstOrNull()
+            ?: cal.apply { timeInMillis = now ?: System.currentTimeMillis() }.get(java.util.Calendar.YEAR)
+        var lastMonth = -1
+        val out = ArrayList<Point>()
+        var level = -1
+        var screen = false
+        var charging = false
+        var awake = false
+        var off = false
+        for (raw in text.lineSequence()) {
+            val m = LINE2.find(raw) ?: continue
+            val g = m.groupValues
+            val month = g[1].toInt()
+            if (lastMonth in 1..12 && month < lastMonth) year++
+            lastMonth = month
+            cal.clear()
+            cal.set(year, month - 1, g[2].toInt(), g[3].toInt(), g[4].toInt(), g[5].toInt())
+            val wall = cal.timeInMillis + g[6].toLong()
+            val rest = g[7].trim()
+            when {
+                rest.startsWith("RESET:TIME:") || rest.startsWith("TIME:") || rest.startsWith("START") -> continue
+                rest.startsWith("SHUTDOWN") -> {
+                    off = true
+                    continue
+                }
+            }
+            val lv = rest.take(3).trim().toIntOrNull() ?: continue
+            var s = screen
+            var c = charging
+            var a2 = awake
+            for (tk in rest.split(' ')) {
+                when {
+                    tk == "+screen" -> s = true
+                    tk == "-screen" -> s = false
+                    tk == "+running" -> a2 = true
+                    tk == "-running" -> a2 = false
+                    tk.startsWith("status=") -> c = tk.removePrefix("status=").let { it == "charging" || it == "full" }
+                }
+            }
+            if (lv == level && s == screen && c == charging && a2 == awake && !off) continue
+            out += Point(wall, lv, s, c, a2, afterOff = off && out.isNotEmpty())
+            level = lv
+            screen = s
+            charging = c
+            awake = a2
             off = false
         }
         return out

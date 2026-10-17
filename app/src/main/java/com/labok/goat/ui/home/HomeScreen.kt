@@ -213,18 +213,20 @@ internal fun HomeScreen(
 
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     // 문의·문제 신고 공통: 진단 파일을 저장하고, 방울이 날아가는 장면 뒤 개발자에게 보내는 메일을 연다(로그 첨부).
-    val mail: (ReportMail.Kind) -> Unit = { kind ->
+    val mail: (ReportMail.Kind, Boolean) -> Unit = { kind, share ->
         scope.launch {
             val uris = vm.exportDiagnostics()
             if (uris.isEmpty()) vm.say(Copy.TOAST_REPORT_FAILED)
             flying = {
                 flying = null
                 if (uris.isNotEmpty()) vm.say(Copy.TOAST_REPORT_SAVED)
-                ReportMail.send(context, kind, uris)
+                ReportMail.send(context, kind, uris, share)
             }
         }
     }
-    val report: () -> Unit = { mail(ReportMail.Kind.REPORT) }
+    // 문제 신고는 보낼 방법을 먼저 고른다: 점 세 개 메뉴가 닫힌 뒤 같은 자리에서 물방울 메뉴가 다시 부풀어 오른다
+    var reportMenu by remember { mutableStateOf(false) }
+    val report: () -> Unit = { reportMenu = true }
 
     LifecycleResumeEffect(Unit) {
         vm.refresh()
@@ -508,6 +510,14 @@ internal fun HomeScreen(
                             Box {
                                 IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, "설정 메뉴") }
                                 LiquidMenu(expanded = menu, onDismiss = { menu = false }, items = menuItems)
+                                LiquidMenu(
+                                    expanded = reportMenu,
+                                    onDismiss = { reportMenu = false },
+                                    items = listOf(
+                                        Copy.REPORT_VIA_MAIL to { mail(ReportMail.Kind.REPORT, false) },
+                                        Copy.REPORT_VIA_SHARE to { mail(ReportMail.Kind.REPORT, true) }
+                                    )
+                                )
                             }
                         }
                     )

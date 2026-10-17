@@ -192,6 +192,8 @@ object Copy {
     const val LAB_FLEX_GESTURES_TITLE = "터치패드 제스처 도움말"
     const val LAB_FLEX_SWITCH_BODY = "화면이 켜져 있는 동안 힌지 각도를 확인합니다. 펴거나 닫으면 원래대로 돌아옵니다."
     const val LAB_FLEX_NEED_SHIZUKU = "Shizuku 연결이 필요합니다."
+    const val REPORT_VIA_MAIL = "메일로 보내기"
+    const val REPORT_VIA_SHARE = "파일 공유(메신저 등)"
     const val LAB_STATUS_HIDE = "상단바 숨기기"
     const val LAB_STATUS_HIDE_BODY = "상단바를 숨겨 앱이 그 자리까지 화면을 사용합니다. 위 가장자리를 쓸어내리면 잠시 표시됩니다."
     const val LAB_STATUS_HIDE_NOTE = "Android 11부터는 시스템 제한으로 키보드를 쓰는 동안과 설정 앱 등 일부 화면에서는 상단바가 보입니다."

@@ -14,7 +14,7 @@ import com.labok.goat.data.log.LogRepository
  * 개발자에게 보내는 메일.
  * - 문의([inquiry]): 첨부 없는 메일 작성 창.
  * - 문제 신고([send]): 받는 사람·제목·본문 양식을 채우고 진단 파일과 오늘 로그를 첨부한다.
- *   먼저 '메일로 보내기'와 '파일 공유(메신저 등)' 중에서 고른다. 파일 공유는 같은 첨부를 모든 앱이 보이는 공유 창으로 보낸다.
+ *   보낼 방법('메일로 보내기'·'파일 공유(메신저 등)')은 홈의 물방울 메뉴에서 먼저 고른다. [share]면 같은 첨부를 모든 앱이 보이는 공유 창으로 보낸다.
  *   메일 앱으로만 보내 받는 사람(개발자 주소)이 채워지게 한다(메신저 등으로 가면 주소가 빠진다).
  *   메일 앱이 하나면 바로 열고, 여럿이면 고르게 하고, 없으면 예전처럼 공유 창을 연다.
  */
@@ -34,7 +34,7 @@ internal object ReportMail {
 
     enum class Kind(val label: String) { INQUIRY("문의"), REPORT("문제 신고") }
 
-    fun send(context: Context, kind: Kind, attachments: List<Uri>, viaMailOnly: Boolean = false) {
+    fun send(context: Context, kind: Kind, attachments: List<Uri>, share: Boolean = false) {
         val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "-"
         val body = buildString {
             appendLine(if (kind == Kind.REPORT) "어떤 문제였는지 적어 주세요. (언제, 무엇을 했을 때, 어떻게 되었는지)" else "문의 내용을 적어 주세요.")
@@ -63,19 +63,10 @@ internal object ReportMail {
         // 메일 앱으로만 보낸다: 첨부를 받는 앱(SEND) 중 mailto도 처리하는 앱만 고른다.
         // 시스템 공유 창의 선택자·제외 기능은 기기마다 다르게 동작해(삼성: '작업을 수행할 수 있는 앱이 없습니다') 쓰지 않고,
         // 하나면 바로 열고, 여럿이면 직접 고르게 한다. 메일 앱이 없으면 모든 앱이 보이는 공유 창을 연다.
-        // 문제 신고는 파일 공유도 고를 수 있게 한다(메신저로 진단 파일을 바로 보낼 때). 공유 창에는 모든 앱이 보인다
-        if (kind == Kind.REPORT && attachments.isNotEmpty() && !viaMailOnly) {
-            AlertDialog.Builder(context)
-                .setTitle(kind.label)
-                .setItems(arrayOf("메일로 보내기", "파일 공유(메신저 등)")) { _, i ->
-                    if (i == 0) {
-                        send(context, kind, attachments, viaMailOnly = true)
-                    } else {
-                        LogRepository.from(context).add("${kind.label}: 파일 공유 창 (${attachments.size}개)")
-                        context.startActivity(Intent.createChooser(Intent(mail).apply { removeExtra(Intent.EXTRA_EMAIL) }, "진단 파일 공유"))
-                    }
-                }
-                .show()
+        // 파일 공유: 같은 첨부를 모든 앱이 보이는 공유 창으로 보낸다(메신저로 진단 파일을 바로 보낼 때)
+        if (share) {
+            LogRepository.from(context).add("${kind.label}: 파일 공유 창 (${attachments.size}개)")
+            context.startActivity(Intent.createChooser(Intent(mail).apply { removeExtra(Intent.EXTRA_EMAIL) }, "진단 파일 공유"))
             return
         }
         val pm = context.packageManager
