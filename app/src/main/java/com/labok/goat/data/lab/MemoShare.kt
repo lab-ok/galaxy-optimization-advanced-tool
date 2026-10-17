@@ -13,9 +13,9 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 실험실 메모장: 긴 글을 임시 txt 파일로 만들어 공유한다. 메신저는 긴 글을 그대로 보내지 못하는 경우가 있어,
- * 글을 파일로 바꿔 첨부하게 하는 것이 목적이다. 파일은 앱 캐시의 share 폴더에만 두고, 공유를 마치고 돌아오면 지운다.
- * 다른 앱의 공유 메뉴에도 'txt 파일로 공유'([com.labok.goat.ui.lab.MemoShareActivity])로 나타난다(실험실을 연 경우에만).
+ * 실험실 '텍스트 파일로 공유': 다른 앱의 공유 메뉴([com.labok.goat.ui.lab.MemoShareActivity])로 받은 긴 글을
+ * 임시 txt 파일로 만들어 다시 공유한다. 메신저는 긴 글을 그대로 보내지 못하는 경우가 있어 파일로 첨부하게 하는 것이 목적이다.
+ * 파일은 앱 캐시의 share 폴더에만 두고, 공유를 마치고 돌아오면 지운다. 실험실을 연 경우에만 공유 메뉴에 나타난다.
  */
 object MemoShare {
     private const val PREFIX = "memo_"
@@ -26,7 +26,7 @@ object MemoShare {
         val dir = File(app.cacheDir, "share").apply { mkdirs() }
         val stamp = SimpleDateFormat("yyMMdd_HHmmss", Locale.US).format(Date())
         val file = File(dir, "$PREFIX$stamp.txt").apply { writeText(text) }
-        LogRepository.from(app).add("메모장(실험실): 임시 파일 저장 (${text.length}자)")
+        LogRepository.from(app).add("텍스트 파일로 공유(실험실): 임시 파일 저장 (${text.length}자)")
         return FileProvider.getUriForFile(app, "${app.packageName}.files", file)
     }
 
@@ -38,7 +38,7 @@ object MemoShare {
             clipData = android.content.ClipData.newRawUri("", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        return Intent.createChooser(send, "txt 파일로 공유").apply {
+        return Intent.createChooser(send, "텍스트 파일로 공유").apply {
             putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, arrayOf(ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity")))
         }
     }
@@ -47,10 +47,10 @@ object MemoShare {
     fun clear(context: Context) {
         // share 폴더는 공유용 임시 파일만 두는 곳이라 남은 파일(예전 판이 남긴 것 포함)을 모두 지운다
         val n = File(context.applicationContext.cacheDir, "share").listFiles()?.count { it.delete() } ?: 0
-        if (n > 0) LogRepository.from(context).add("메모장(실험실): 공유를 마쳐 임시 파일 ${n}개 지움")
+        if (n > 0) LogRepository.from(context).add("텍스트 파일로 공유(실험실): 공유를 마쳐 임시 파일 ${n}개 지움")
     }
 
-    /** 다른 앱 공유 메뉴의 'txt 파일로 공유'를 켜거나 끈다(실험실을 열었을 때만 보이게). */
+    /** 다른 앱 공유 메뉴의 '텍스트 파일로 공유'를 켜거나 끈다(실험실을 열었을 때만 보이게). */
     fun setShareTarget(context: Context, on: Boolean) {
         context.packageManager.setComponentEnabledSetting(
             ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity"),

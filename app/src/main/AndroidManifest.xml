@@ -176,13 +176,13 @@
             android:name=".ui.lab.FlexTestActivity"
             android:exported="false"
             android:configChanges="density|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden" />
-        <!-- 실험실 메모장: 다른 앱 공유 메뉴의 'txt 파일로 공유'. 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
+        <!-- 실험실: 다른 앱 공유 메뉴의 '텍스트 파일로 공유'. 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
         <activity
             android:name=".ui.lab.MemoShareActivity"
             android:enabled="false"
             android:exported="true"
             android:excludeFromRecents="true"
-            android:label="txt 파일로 공유"
+            android:label="텍스트 파일로 공유"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
@@ -191,7 +191,7 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-        <!-- 공유용 임시 파일(실험실 메모장) -->
+        <!-- 공유용 임시 파일(실험실 텍스트 파일로 공유) -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files"
