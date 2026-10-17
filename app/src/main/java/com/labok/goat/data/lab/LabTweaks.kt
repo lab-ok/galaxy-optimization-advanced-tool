@@ -166,35 +166,20 @@ object ScreenMode {
 }
 
 /**
- * 빠른 설정 타일 격자. 예전 One UI는 `qs_tile_column`·`qs_tile_row`(secure)를 읽었지만 One UI 8.5(안드로이드 17) 실기기에서는
- * 값을 써도 패널이 바뀌지 않았다(2026-10-18 진단). 그 기기에는 QuickStar가 쓰는 `quickstar_qs_tile_layout_custom_matrix`(켬)와
- * `quickstar_qs_tile_layout_custom_matrix_width`가 있었지만 QuickStar가 값을 되돌려 써 이것도 통하지 않았다. 지금 격자는
- * [QsOverlay]로 바꾸고, 여기 키들은 예전에 바꿔 본 값을 [처음대로]로 되돌리는 데만 쓴다.
+ * 예전 실험실 '빠른 설정 타일 격자'(1.14.1~1.15.2)가 바꿨던 설정 키. One UI 8.5(안드로이드 17) 실기기는 이 키들을 읽지 않았고,
+ * 시스템 UI 리소스 오버레이는 루트가 아닌 셸(Shizuku)에 막혀(Non-root shell cannot fabricate overlays) 실험을 접었다(2026-10-18).
+ * 앱을 켤 때 바꿔 둔 값이 남아 있으면 처음 값으로 되돌린다([restoreLeftovers]).
  */
 object QsGrid {
-    val column = LabSetting("secure", "qs_tile_column", "빠른 설정 한 줄 타일 수")
-    val row = LabSetting("secure", "qs_tile_row", "빠른 설정 타일 줄 수")
-    val matrix = LabSetting("secure", "quickstar_qs_tile_layout_custom_matrix", "빠른 설정 격자 직접 지정")
-    val matrixWidth = LabSetting("secure", "quickstar_qs_tile_layout_custom_matrix_width", "빠른 설정 격자 너비")
-    /** [처음대로]로 되돌릴 값 전부(예전 키도 바꾼 적이 있으면 함께 되돌린다). */
-    val all = listOf(matrixWidth, matrix, column, row)
+    private val all = listOf(
+        LabSetting("secure", "quickstar_qs_tile_layout_custom_matrix_width", "빠른 설정 격자 너비"),
+        LabSetting("secure", "quickstar_qs_tile_layout_custom_matrix", "빠른 설정 격자 직접 지정"),
+        LabSetting("secure", "qs_tile_column", "빠른 설정 한 줄 타일 수"),
+        LabSetting("secure", "qs_tile_row", "빠른 설정 타일 줄 수")
+    )
 
-    /** 시스템 UI를 다시 띄워 격자 값을 다시 읽게 한다(상태 표시줄·빠른 패널이 잠깐 사라졌다 돌아온다). */
-    // force-stop은 상주 앱인 시스템 UI에 듣지 않아(에뮬레이터 확인) 강제 종료 신호로 다시 띄운다
-    fun restartSystemUi(): Boolean = ShizukuAccess.shell("am crash com.android.systemui")?.ok == true
-
-    /**
-     * 진단 로그용: 시스템 UI가 격자를 어느 값에서 읽는지 찾으려고 빠른 패널과 관련된 설정 키, 시스템 UI 버전,
-     * 시스템 UI 상태(dumpsys)에서 격자·타일 줄을 모은다. Shizuku가 없으면 그렇다고만 적는다. 작업 스레드에서 부른다.
-     */
-    fun diagnose(): String {
-        val pat = "'qs|tile|quick|panel|column|grid|sysui'"
-        val dumpPat = "'column|columns|maxtiles|max_tiles|tile_size|tilesize|grid|qs_|qspanel|tilelayout|sidelabel|span'"
-        val out = ShizukuAccess.shell(
-            "for t in secure system global; do echo \"[\$t]\"; settings list \$t | grep -i -E $pat; done; " +
-                "echo '[systemui]'; dumpsys package com.android.systemui 2>/dev/null | grep -m2 -E 'versionName|versionCode'; " +
-                "echo '[dumpsys systemui]'; dumpsys activity service com.android.systemui/.SystemUIService 2>/dev/null | grep -i -E $dumpPat | head -150"
-        ) ?: return "Shizuku가 연결되지 않아 읽지 못했습니다."
-        return (out.out + if (out.err.isNotBlank()) "\n(오류) ${out.err.take(500)}" else "").ifBlank { "(빈 결과)" }
+    /** 바꿔 둔 값이 남아 있으면 처음 값으로 되돌린다. 작업 스레드에서 부른다. */
+    fun restoreLeftovers(context: android.content.Context) {
+        all.filter { it.changed(context) }.forEach { it.restore(context) }
     }
 }

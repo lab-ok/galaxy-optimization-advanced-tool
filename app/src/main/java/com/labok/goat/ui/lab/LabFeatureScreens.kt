@@ -42,16 +42,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.lab.AirplaneRadios
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.LabSetting
 import com.labok.goat.data.lab.PrivacyDot
-import com.labok.goat.data.lab.QsGrid
-import com.labok.goat.data.lab.QsOverlay
 import com.labok.goat.data.lab.ScreenMode
 import com.labok.goat.data.lab.StatusBarHider
-import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.Section
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -62,7 +58,6 @@ import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
-import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
@@ -255,7 +250,7 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val w = rememberLabWriter()
-    LabPage(contentPadding, more = listOf { QsGridCard(w) }) {
+    LabPage(contentPadding) {
         val setting = remember(w.version) { ScreenMode.active(context) }
         val now = remember(w.version) { setting?.read(context) }
         Text(Copy.LAB_SCREEN_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -293,72 +288,6 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
             }
         }
     }
-}
-
-/**
- * 빠른 설정 타일 격자 바꿔 보기. 시스템 UI의 열 수 리소스를 찾아 보여 주고, 열 수를 고르면 그 값으로 덮어쓰는 오버레이([QsOverlay])를
- * 등록한 뒤 시스템 UI를 다시 띄운다. [처음대로]는 오버레이와 예전에 바꿔 본 설정 키([QsGrid])를 모두 되돌린다.
- */
-@Composable
-private fun ColumnScope.QsGridCard(w: LabWriter) {
-    val c = LocalLiquid.current
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var values by remember { mutableStateOf<List<QsOverlay.Value>?>(null) }
-    var present by remember { mutableStateOf(false) }
-    var result by remember { mutableStateOf<String?>(null) }
-    var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(w.version) {
-        values = withContext(Dispatchers.IO) { QsOverlay.integers(context) }
-        present = withContext(Dispatchers.IO) { QsOverlay.present() }
-    }
-    val columns = values?.let { QsOverlay.columnNames(it) }.orEmpty()
-    Text(Copy.LAB_QS_GRID_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-    Text(Copy.LAB_QS_GRID_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-    Spacer(Modifier.height(Gap.Item))
-    when {
-        values == null -> LiquidLoader(Copy.LAB_QS_GRID_LOADING)
-        columns.isEmpty() -> Text(Copy.LAB_QS_GRID_NONE, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        else -> {
-            values!!.filter { it.name in columns }.forEach {
-                Text("integer/${it.name} = ${it.value}", color = c.ink, style = MaterialTheme.typography.labelMedium)
-            }
-            Spacer(Modifier.height(Gap.Item))
-            val now = values!!.firstOrNull { it.name in columns }?.value?.toString().orEmpty()
-            LiquidChips(options = listOf("4", "5", "6", "7", "8"), selected = if (present) now else "", label = { "${it}열" }, onSelect = { v ->
-                if (busy) return@LiquidChips
-                busy = true
-                scope.launch {
-                    val r = withContext(Dispatchers.IO) { QsOverlay.apply(columns, v.toInt()).onSuccess { QsGrid.restartSystemUi() } }
-                    result = r.fold({ Copy.LAB_QS_GRID_APPLIED }, { "${Copy.LAB_WRITE_FAILED} ${HiddenApi.describe(it)}" })
-                    LogRepository.from(context).add("실험실 빠른 설정 격자 덮어쓰기: ${v}열 (${columns.joinToString()}) " + r.fold({ "성공" }, { "실패 ${HiddenApi.describe(it)}" }))
-                    busy = false
-                    w.version++
-                }
-            })
-        }
-    }
-    result?.let {
-        Spacer(Modifier.height(Gap.Item))
-        Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-    }
-    Spacer(Modifier.height(Gap.Item))
-    val changed = remember(w.version, present) { present || QsGrid.all.any { it.changed(context) } }
-    LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed && !busy, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = {
-        busy = true
-        scope.launch {
-            val ok = withContext(Dispatchers.IO) {
-                val removed = QsOverlay.remove().isSuccess
-                val restored = QsGrid.all.map { it.restore(context) }.all { it }
-                QsGrid.restartSystemUi()
-                removed && restored
-            }
-            result = if (ok) Copy.LAB_RESTORED else Copy.LAB_WRITE_FAILED
-            LogRepository.from(context).add("실험실 빠른 설정 격자: 처음대로" + if (ok) "" else " 실패")
-            busy = false
-            w.version++
-        }
-    })
 }
 
 /** 삼성 화면 모드 값별 이름과 설명([ScreenMode.SAMSUNG_VALUES]). */

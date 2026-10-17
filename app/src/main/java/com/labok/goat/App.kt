@@ -5,6 +5,7 @@ import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.DpiManager
 import com.labok.goat.data.lab.LabUnlock
+import com.labok.goat.data.lab.QsGrid
 import com.labok.goat.data.log.CrashRecorder
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
@@ -31,6 +32,8 @@ class App : Application() {
         UiGoat.load(this)
         NewBadge.load(this)
         LabUnlock.load(this)
+        // 예전 실험실 빠른 설정 격자가 바꿔 둔 설정이 남아 있으면 되돌린다(1.15.3에서 실험을 접음)
+        Thread { runCatching { QsGrid.restoreLeftovers(this) } }.start()
         DpiManager.exemptHiddenApis()
         // Shizuku가 켜지며(재부팅 뒤 자동 시작 포함) GOAT에 바인더를 건네면, 옵션에 따라 무선 디버깅을 끈다
         if (ShizukuAccess.autoOffEnabled(this)) ShizukuAccess.watch(this)
