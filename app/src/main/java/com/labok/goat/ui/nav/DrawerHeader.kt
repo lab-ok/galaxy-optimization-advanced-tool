@@ -24,9 +24,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -164,17 +161,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
             logo.blob.path(lp)
             drawPath(lp, c.logo)
             // 염소 얼굴: 안쪽 방울(drop)의 중심을 따라가므로, 아이콘을 끌면 염소가 관성으로 늦게 따라오며 고개를 갸웃한다
-            val gs = logoS * 1.25f
-            val tilt = ((drop.blob.cx - logo.blob.cx) / logoS * 40f).coerceIn(-14f, 14f)
-            // 그림은 로고 물방울 모양으로 잘라 그린다. 물방울보다 넉넉히 크게 그리고 안쪽 방울을 절반 이하로만 따라가게 해,
-            // 끌거나 출렁여도 가장자리에 빈 곳이 생기지 않는다(물방울 테두리만 출렁이고 그림은 살짝 늦게 따라온다)
-            clipPath(lp) {
-                val gx = logo.blob.cx + (drop.blob.cx - logo.blob.cx) * 0.35f
-                val gy = logo.blob.cy + (drop.blob.cy - logo.blob.cy) * 0.35f
-                rotate(tilt * 0.5f, Offset(gx, gy)) {
-                    translate(gx - gs / 2, gy - gs / 2) { with(goat) { draw(Size(gs, gs)) } }
-                }
-            }
+            drawGoat(goat, lp, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
         }
         Column(
             Modifier

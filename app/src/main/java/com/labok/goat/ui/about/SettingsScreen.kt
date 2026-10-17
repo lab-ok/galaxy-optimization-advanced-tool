@@ -63,6 +63,7 @@ import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.liquid.UiHaptics
 import com.labok.goat.ui.liquid.UiInk
 import com.labok.goat.ui.liquid.UiMotion
@@ -159,6 +160,21 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                             InkTones()
                         }
                     }
+                }
+            }
+        }
+        item(key = "goatStyle") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.GOAT_STYLE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.GOAT_STYLE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidChips(
+                        options = UiGoat.Style.entries,
+                        selected = UiGoat.style,
+                        label = { if (it == UiGoat.Style.ART) Copy.GOAT_STYLE_ART else Copy.GOAT_STYLE_CLASSIC },
+                        onSelect = { UiGoat.set(context, it) }
+                    )
                 }
             }
         }

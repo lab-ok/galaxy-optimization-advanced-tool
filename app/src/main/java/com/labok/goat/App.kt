@@ -14,6 +14,7 @@ import com.labok.goat.data.tweaks.Doze
 import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.data.tweaks.Gos
 import com.labok.goat.data.tweaks.Resolution
+import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.liquid.UiHaptics
 import com.labok.goat.ui.liquid.UiInk
 import com.labok.goat.ui.liquid.UiMotion
@@ -27,6 +28,7 @@ class App : Application() {
         UiMotion.load(this)
         UiHaptics.load(this)
         UiInk.load(this)
+        UiGoat.load(this)
         NewBadge.load(this)
         LabUnlock.load(this)
         DpiManager.exemptHiddenApis()

@@ -44,6 +44,19 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.15.0",
+        "2026-10-18",
+        "염소 아이콘을 지금 그림과 이전 그림 가운데 고를 수 있습니다.",
+        listOf(
+            "추가" to listOf(
+                "앱 설정 → 염소 아이콘에서 앱 아이콘과 로고를 지금 그림과 이전 그림 가운데 고를 수 있습니다."
+            ),
+            "알아 둘 점" to listOf(
+                "이번 업데이트나 아이콘을 바꾼 뒤에는 홈 화면에 놓은 GOAT 아이콘을 다시 놓아야 할 수 있습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.14.4",
         "2026-10-18",
         "숨은 기능을 다듬었습니다.",

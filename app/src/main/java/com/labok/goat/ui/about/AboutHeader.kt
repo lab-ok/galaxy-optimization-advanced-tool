@@ -22,11 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -45,6 +41,7 @@ import com.labok.goat.ui.liquid.nudge
 import com.labok.goat.ui.liquid.poke
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.liquid.rememberSoftBlob
+import com.labok.goat.ui.nav.drawGoat
 import com.labok.goat.ui.nav.goatPainter
 import com.labok.goat.ui.nav.rememberGoatMood
 import kotlin.math.PI
@@ -140,17 +137,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
                 if (!logo.blob.ready || !drop.blob.ready) return@Canvas
                 logo.blob.path(path)
                 drawPath(path, c.logo)
-                val gs = logoS * 1.25f
-                val tilt = ((drop.blob.cx - logo.blob.cx) / logoS * 40f).coerceIn(-14f, 14f)
-                // 그림은 로고 물방울 모양으로 잘라 그린다. 물방울보다 넉넉히 크게 그리고 안쪽 방울을 절반 이하로만 따라가게 해,
-                // 끌거나 출렁여도 가장자리에 빈 곳이 생기지 않는다(물방울 테두리만 출렁이고 그림은 살짝 늦게 따라온다)
-                clipPath(path) {
-                    val gx = logo.blob.cx + (drop.blob.cx - logo.blob.cx) * 0.35f
-                    val gy = logo.blob.cy + (drop.blob.cy - logo.blob.cy) * 0.35f
-                    rotate(tilt * 0.5f, Offset(gx, gy)) {
-                        translate(gx - gs / 2, gy - gs / 2) { with(goat) { draw(Size(gs, gs)) } }
-                    }
-                }
+                drawGoat(goat, path, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
             }
             Column(
                 Modifier
@@ -250,17 +237,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
         if (!logo.blob.ready || !drop.blob.ready) return@Canvas
         logo.blob.path(path)
         drawPath(path, c.logo)
-        val gs = logoS * 1.25f
-        val tilt = ((drop.blob.cx - logo.blob.cx) / logoS * 40f).coerceIn(-14f, 14f)
-        // 그림은 로고 물방울 모양으로 잘라 그린다. 물방울보다 넉넉히 크게 그리고 안쪽 방울을 절반 이하로만 따라가게 해,
-        // 끌거나 출렁여도 가장자리에 빈 곳이 생기지 않는다(물방울 테두리만 출렁이고 그림은 살짝 늦게 따라온다)
-        clipPath(path) {
-            val gx = logo.blob.cx + (drop.blob.cx - logo.blob.cx) * 0.35f
-            val gy = logo.blob.cy + (drop.blob.cy - logo.blob.cy) * 0.35f
-            rotate(tilt * 0.5f, Offset(gx, gy)) {
-                translate(gx - gs / 2, gy - gs / 2) { with(goat) { draw(Size(gs, gs)) } }
-            }
-        }
+        drawGoat(goat, path, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
     }
 }
 

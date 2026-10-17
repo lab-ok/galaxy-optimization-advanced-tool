@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 이전 염소 아이콘(1.14.0 전). 앱 설정 → 염소 아이콘 → 이전 을 고르면 쓴다(UiGoat) -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_bg" />
+    <foreground android:drawable="@drawable/ic_launcher_fg" />
+    <monochrome android:drawable="@drawable/ic_launcher_mono" />
+</adaptive-icon>

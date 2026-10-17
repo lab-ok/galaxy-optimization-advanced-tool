@@ -8,11 +8,22 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import com.labok.goat.R
 import com.labok.goat.data.lab.LabUnlock
+import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.text.Copy
 import kotlin.random.Random
 
@@ -102,11 +113,47 @@ private val CRY_FACES = intArrayOf(R.drawable.goat_face_04, R.drawable.goat_face
 /** 화남: 화남(06)·삐침(07)·어지러움(09). */
 private val ANGRY_FACES = intArrayOf(R.drawable.goat_face_06, R.drawable.goat_face_07, R.drawable.goat_face_09)
 
-/** 지금 표정의 염소 그림. 정사각형 그림이라 그리는 쪽에서 로고 물방울 모양으로 잘라 그린다. */
+/**
+ * 지금 표정의 염소 그림. 캐릭터 그림([UiGoat.Style.ART])은 정사각형이라 [drawGoat]가 로고 물방울 모양으로 잘라 그리고,
+ * 이전 선 그림([UiGoat.Style.CLASSIC])은 표정마다 한 장씩이다.
+ */
 @Composable
 fun goatPainter(mood: Mood, variant: Int): Painter {
+    if (UiGoat.style == UiGoat.Style.CLASSIC) {
+        val res = when (mood) {
+            Mood.CALM -> R.drawable.ic_goat
+            Mood.SQUINT -> R.drawable.ic_goat_squint
+            Mood.CRY -> R.drawable.ic_goat_cry
+            Mood.ANGRY -> R.drawable.ic_goat_angry
+        }
+        return rememberVectorPainter(ImageVector.vectorResource(res))
+    }
     val faces = faces(mood)
     return painterResource(faces[variant % faces.size])
+}
+
+/**
+ * 로고 물방울 안에 염소를 그린다. [clip]은 로고 물방울 모양, (logoX, logoY)는 그 중심, (dropX, dropY)는 안쪽 방울 중심, [logoS]는 로고 크기.
+ * 캐릭터 그림은 물방울보다 넉넉히 크게 그리고 안쪽 방울을 절반 이하로만 따라가게 해, 끌거나 출렁여도 가장자리에 빈 곳이 생기지 않는다.
+ * 이전 선 그림은 예전처럼 안쪽 방울 중심을 그대로 따라가며 고개를 갸웃한다(배경이 투명해 자르지 않는다).
+ */
+fun DrawScope.drawGoat(goat: Painter, clip: Path, logoX: Float, logoY: Float, dropX: Float, dropY: Float, logoS: Float) {
+    val tilt = ((dropX - logoX) / logoS * 40f).coerceIn(-14f, 14f)
+    if (UiGoat.style == UiGoat.Style.CLASSIC) {
+        val gs = logoS * 0.98f
+        rotate(tilt, Offset(dropX, dropY)) {
+            translate(dropX - gs / 2, dropY - gs / 2) { with(goat) { draw(Size(gs, gs)) } }
+        }
+        return
+    }
+    val gs = logoS * 1.25f
+    clipPath(clip) {
+        val gx = logoX + (dropX - logoX) * 0.35f
+        val gy = logoY + (dropY - logoY) * 0.35f
+        rotate(tilt * 0.5f, Offset(gx, gy)) {
+            translate(gx - gs / 2, gy - gs / 2) { with(goat) { draw(Size(gs, gs)) } }
+        }
+    }
 }
 
 private fun faces(mood: Mood) = when (mood) {
