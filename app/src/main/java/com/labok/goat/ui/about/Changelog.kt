@@ -44,6 +44,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.13.2",
+        "2026-10-17",
+        "로딩 표시와 숨은 기능을 다듬었습니다.",
+        listOf(
+            "변경" to listOf(
+                "불러오는 동안 리퀴드 로딩 방울을 보여 주는 곳을 늘렸습니다.",
+                "숨은 기능을 다듬었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.13.1",
         "2026-10-17",
         "문제 신고 선택 창을 다듬었습니다.",

@@ -66,9 +66,10 @@ object Copy {
     const val FEATURE_LAB_BATTERY = "배터리 모니터링"
 
     // 실험실: 배터리 모니터링
-    const val LAB_BATTERY_BODY = "배터리 상태를 2초마다 새로 고칩니다. 전류 부호와 단위는 기기마다 달라 GOAT가 맞춰 보여 줍니다."
-    const val LAB_BATTERY_LOG = "15분마다 기록"
-    const val LAB_BATTERY_LOG_BODY = "잔량을 기록해 하루 변화와 시간당 소모량을 보여 줍니다. 기록은 이 기기에만 남습니다."
+    const val LAB_BATTERY_NOW = "지금 배터리"
+    const val LAB_BATTERY_BODY = "2초마다 새로 고칩니다. 전류 부호와 단위는 GOAT가 기기에 맞춰 보여 줍니다."
+    const val LAB_BATTERY_LOG = "충전 주기 자동 기록"
+    const val LAB_BATTERY_LOG_BODY = "15분마다 시스템 통계를 확인해, 이 화면을 열지 않고 충전해도 지난 주기를 남깁니다."
     const val FEATURE_SHAKE_ROTATE = "흔들어서 화면 회전"
     const val FEATURE_CAMERA_MUTE = "카메라 촬영음 끄기"
     const val FEATURE_HOME = "홈"

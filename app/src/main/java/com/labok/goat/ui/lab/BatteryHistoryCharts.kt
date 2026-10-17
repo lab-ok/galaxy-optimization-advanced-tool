@@ -2,6 +2,9 @@ package com.labok.goat.ui.lab
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +23,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
@@ -49,9 +53,13 @@ import kotlin.math.sin
  * 대기 중에 배터리가 새는 시간대가 바로 보이게 하는 것이 목적이다. 기둥을 누르면 그 시간대의 자세한 값을 보여 준다.
  */
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun BatteryHistorySection(points: List<BatteryHistory.Point>, now: Long) {
+internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, since: Long?) {
     val c = LocalLiquid.current
+    // 시스템 기록은 통계 기준(마지막 충전 이후)보다 앞에서 시작할 수 있다(실기: 기록 10/16 18:24, 통계 10/17 00:29).
+    // 카드 제목과 맞게 기준 시각부터 자른다
+    val points = remember(all, since) { BatteryHistory.since(all, since) }
     if (points.size < 2) {
         Text("시스템 배터리 기록이 아직 충분하지 않습니다. 잠시 사용한 뒤 다시 열어 주세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         return
@@ -62,11 +70,11 @@ internal fun BatteryHistorySection(points: List<BatteryHistory.Point>, now: Long
     var selected by remember(buckets.size) { mutableStateOf<Int?>(null) }
     LiquidBucketColumns(buckets, selected, { selected = it })
     Spacer(Modifier.height(Gap.Item))
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        LegendChip(c.ink)
-        Text("화면 켜짐에 쓴 양", color = c.ink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 6.dp, end = 16.dp))
-        LegendChip(c.ink.copy(alpha = 0.3f))
-        Text("대기(화면 꺼짐)에 쓴 양", color = c.ink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 6.dp))
+    // 범례: 기둥의 세 가지 물(가장 옅은 기둥은 충전한 시간대)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Legend(c.ink, "화면 켜짐에 쓴 양")
+        Legend(c.ink.copy(alpha = 0.3f), "대기(화면 꺼짐)에 쓴 양")
+        Legend(c.ink.copy(alpha = 0.12f), "충전한 시간대")
     }
     Spacer(Modifier.height(Gap.Item))
     val hourFmt = remember { SimpleDateFormat("a h시", Locale.KOREA) }
@@ -75,7 +83,7 @@ internal fun BatteryHistorySection(points: List<BatteryHistory.Point>, now: Long
         Text("기둥 하나가 ${bucketMs / 3_600_000}시간입니다. 기둥을 누르면 그 시간대에 쓴 양을 볼 수 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
     } else {
         val range = "${hourFmt.format(Date(pick.start))}~${hourFmt.format(Date(pick.end)).substringAfter(' ')}"
-        Text("$range · ${pctText(pick.usedPct)} 사용" + if (pick.charging) " · 충전" else "", color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+        Text("$range · ${pctText(pick.usedPct)} 사용" + if (pick.chargedPct >= 0.5f) " · 충전 +${pick.chargedPct.roundToInt()}%" else if (pick.charging) " · 충전" else "", color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
         Text(
             "화면 켜짐에 ${pctText(pick.screenPct)} · 대기에 ${pctText(pick.standbyPct)} · 화면 켜짐 ${duration(pick.screenMs)}",
             color = c.muted,
@@ -85,8 +93,12 @@ internal fun BatteryHistorySection(points: List<BatteryHistory.Point>, now: Long
 }
 
 @Composable
-private fun LegendChip(color: androidx.compose.ui.graphics.Color) {
-    Canvas(Modifier.width(14.dp).height(14.dp)) { drawRoundRect(color, cornerRadius = CornerRadius(4.dp.toPx())) }
+private fun Legend(color: Color, label: String) {
+    val c = LocalLiquid.current
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+        Canvas(Modifier.width(14.dp).height(14.dp)) { drawRoundRect(color, cornerRadius = CornerRadius(4.dp.toPx())) }
+        Text(label, color = c.ink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 6.dp))
+    }
 }
 
 private fun floorHour(t: Long): Long {

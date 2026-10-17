@@ -36,7 +36,16 @@ object BatteryHistory {
      * 시간대 한 칸. [usedPct]는 충전하지 않은 동안 줄어든 잔량, 그중 [screenPct]는 화면이 켜져 있던 동안 줄어든 몫이다
      * (나머지는 대기). [screenMs]는 화면이 켜져 있던 시간.
      */
-    data class Bucket(val start: Long, val end: Long, val usedPct: Float, val screenPct: Float, val screenMs: Long, val charging: Boolean) {
+    data class Bucket(
+        val start: Long,
+        val end: Long,
+        val usedPct: Float,
+        val screenPct: Float,
+        val screenMs: Long,
+        val charging: Boolean,
+        /** 그 칸에서 충전으로 오른 잔량 */
+        val chargedPct: Float = 0f
+    ) {
         val standbyPct: Float get() = (usedPct - screenPct).coerceAtLeast(0f)
     }
 
@@ -223,6 +232,50 @@ object BatteryHistory {
         return out
     }
 
+    /** 충전 한 번: [startLevel]%에서 [endLevel]%까지 [start]~[end] 동안. [ongoing]이면 아직 충전 중이다. */
+    data class Charge(val start: Long, val end: Long, val startLevel: Int, val endLevel: Int, val ongoing: Boolean) {
+        val gained: Int get() = endLevel - startLevel
+        val durationMs: Long get() = end - start
+    }
+
+    /**
+     * 기록에서 충전한 구간들(오래된 것부터). 충전기를 꽂은 때부터 뺀 때까지를 한 번으로 보고, 끝 잔량은 그 사이 가장 높은 잔량이다.
+     * 잠깐 꽂았다 뺀 것(1분 미만이면서 오른 잔량이 없는 것)은 뺀다.
+     */
+    internal fun charges(points: List<Point>, now: Long): List<Charge> {
+        val out = ArrayList<Charge>()
+        var start: Point? = null
+        var top = 0
+        fun close(end: Long, ongoing: Boolean) {
+            val s0 = start ?: return
+            if (end - s0.time >= 60_000L || top > s0.level) out += Charge(s0.time, end, s0.level, maxOf(top, s0.level), ongoing)
+            start = null
+        }
+        points.forEach { p ->
+            if (p.afterOff && start != null) close(p.time, false)
+            if (p.charging) {
+                if (start == null) {
+                    start = p
+                    top = p.level
+                } else {
+                    top = maxOf(top, p.level)
+                }
+            } else {
+                close(p.time, false)
+            }
+        }
+        close(now, true)
+        return out
+    }
+
+    /** [from] 이후만 남긴다. 그 앞의 마지막 상태는 [from] 시각의 시점으로 옮겨 시작 상태로 쓴다. [from]이 null이면 그대로. */
+    internal fun since(points: List<Point>, from: Long?): List<Point> {
+        if (from == null) return points
+        val before = points.lastOrNull { it.time <= from }
+        val after = points.filter { it.time > from }
+        return listOfNotNull(before?.copy(time = from, afterOff = false)) + after
+    }
+
     /**
      * [from]~[now]를 [bucketMs] 칸으로 나눠 칸마다 줄어든 잔량과 화면 켜짐 시간을 더한다. 두 시점 사이에서 줄어든 잔량은
      * 시간 비율대로 나눈다. 충전 중이거나 꺼져 있던 구간은 사용량에 넣지 않는다.
@@ -232,6 +285,7 @@ object BatteryHistory {
         val count = ((now - from + bucketMs - 1) / bucketMs).toInt().coerceAtLeast(1)
         val used = FloatArray(count)
         val usedOn = FloatArray(count)
+        val charged = FloatArray(count)
         val screen = LongArray(count)
         val charging = BooleanArray(count)
         // 마지막 시점은 지금까지 이어진다
@@ -246,7 +300,10 @@ object BatteryHistory {
                 val s0 = from + i * bucketMs
                 val overlap = minOf(b.time, s0 + bucketMs) - maxOf(a.time, s0)
                 if (overlap <= 0) continue
-                if (a.charging) charging[i] = true
+                if (a.charging) {
+                    charging[i] = true
+                    charged[i] += (b.level - a.level).coerceAtLeast(0) * overlap / span
+                }
                 used[i] += drop * overlap / span
                 if (a.screen) {
                     usedOn[i] += drop * overlap / span
@@ -254,7 +311,7 @@ object BatteryHistory {
                 }
             }
         }
-        return List(count) { i -> Bucket(from + i * bucketMs, minOf(from + (i + 1) * bucketMs, now), used[i], usedOn[i], screen[i], charging[i]) }
+        return List(count) { i -> Bucket(from + i * bucketMs, minOf(from + (i + 1) * bucketMs, now), used[i], usedOn[i], screen[i], charging[i], charged[i]) }
     }
 
     /** 칸 길이: 마지막 충전 이후가 길면 칸을 넓혀 기둥이 [maxBars]개를 넘지 않게 한다(1·2·3·4·6·12시간). */

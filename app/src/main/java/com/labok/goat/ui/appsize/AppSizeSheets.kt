@@ -35,6 +35,7 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.copyText
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.shizuku.ShizukuGuide
@@ -176,10 +177,10 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
         GlassCard(accent = if (step > 0) c.danger else null) {
             Text(Copy.APP_SIZE_RESET_ACTION, fontWeight = FontWeight.SemiBold, color = c.danger)
             Text(Copy.APP_SIZE_RESET_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Text(
+            // 개수를 세는 동안은 리퀴드 로딩 방울을 보여 준다
+            if (ready && count == null) LiquidLoader("배율을 바꾼 앱을 확인하는 중…", Modifier.padding(vertical = 8.dp)) else Text(
                 when {
                     !ready -> "Shizuku가 연결되어 있지 않아 지금은 되돌릴 수 없습니다."
-                    count == null -> "배율을 바꾼 앱을 확인하는 중…"
                     // 되돌릴 앱이 없으면 꺼진 버튼 대신 여기서 알린다(꺼진 버튼을 누르면 뜨는 토스트가 시트 맨 아래 버튼을 가렸다, QA 1차)
                     count == 0 -> Copy.DISABLED_NO_SIZED_APPS
                     else -> "현재 배율을 바꾼 앱: ${count}개"
@@ -209,7 +210,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                             }
                         })
                     }
-                    else -> Text("되돌리는 중…", color = c.muted, style = MaterialTheme.typography.bodyMedium)
+                    else -> LiquidLoader("되돌리는 중…", Modifier.padding(vertical = 8.dp))
                 }
             }
         }

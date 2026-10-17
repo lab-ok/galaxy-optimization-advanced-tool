@@ -113,7 +113,7 @@ internal fun LiquidBar(fraction: Float, modifier: Modifier = Modifier, height: D
 
 /**
  * 배터리 물통: 배터리 모양 안에 지금 잔량([level])만큼 물이 차 있고, 마지막 충전 때 잔량([startLevel])까지는
- * 쓴 만큼 옅은 물 자국으로 남는다. 가운데 글자는 물에 잠긴 부분만 반전색이 된다.
+ * 쓴 만큼 옅은 물 자국으로 남는다. 가운데 글자는 물에 잠긴 부분만 반전색이 된다(물방울·거품은 그리지 않는다).
  */
 @Composable
 internal fun LiquidBatteryTank(level: Int, startLevel: Int?, charging: Boolean, modifier: Modifier = Modifier) {
@@ -136,12 +136,6 @@ internal fun LiquidBatteryTank(level: Int, startLevel: Int?, charging: Boolean, 
         clipPath(body) {
             if (ghost != null && ghost > fill) drawPath(waterPath(w * ghost, h, t + 1.1f, 2.dp.toPx(), 2.dp.toPx()), c.ink.copy(alpha = 0.18f))
             drawPath(water, c.ink)
-            // 앞면에서 튀는 작은 물방울
-            if (fill in 0.04f..0.96f) {
-                val k = (t * 0.45f) % 1f
-                val arc = 4f * k * (1f - k)
-                drawCircle(c.ink, 3.dp.toPx() * (1f - k * 0.5f), Offset(w * fill + 5.dp.toPx() + k * 12.dp.toPx(), h / 2 - arc * 14.dp.toPx()))
-            }
         }
         drawRoundRect(c.line, size = Size(w, h), cornerRadius = r, style = Stroke(1.dp.toPx()))
         val style = TextStyle(fontFamily = GalaxyFont, fontSize = 22.sp, fontWeight = FontWeight.Bold)

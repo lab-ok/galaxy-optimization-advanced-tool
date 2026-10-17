@@ -120,4 +120,40 @@ class BatteryHistoryTest {
         assertEquals(true, p[3].afterOff)
         assertEquals(true, p[3].charging)
     }
+
+    @Test
+    fun sinceCutsAtStatsStart() {
+        val pts = listOf(
+            BatteryHistory.Point(0, 100, screen = true, charging = false, awake = true),
+            BatteryHistory.Point(10, 90, screen = false, charging = false, awake = true),
+            BatteryHistory.Point(30, 80, screen = true, charging = false, awake = true)
+        )
+        // 기준 20: 그 앞 마지막 상태(90%)가 20에서 시작 상태가 된다
+        assertEquals(listOf(20L to 90, 30L to 80), BatteryHistory.since(pts, 20).map { it.time to it.level })
+        assertEquals(pts, BatteryHistory.since(pts, null))
+    }
+
+    @Test
+    fun chargesFromPlugToUnplug() {
+        val m = 60_000L
+        val pts = listOf(
+            BatteryHistory.Point(0, 50, screen = false, charging = false, awake = true),
+            BatteryHistory.Point(10 * m, 48, screen = false, charging = true, awake = true),
+            BatteryHistory.Point(40 * m, 70, screen = false, charging = true, awake = true),
+            BatteryHistory.Point(70 * m, 85, screen = false, charging = false, awake = true),
+            BatteryHistory.Point(80 * m, 84, screen = false, charging = true, awake = true),
+            BatteryHistory.Point(95 * m, 90, screen = false, charging = true, awake = true)
+        )
+        val c = BatteryHistory.charges(pts, now = 100 * m)
+        assertEquals(2, c.size)
+        // 48%에 꽂아 30분 뒤 70%, 뺄 때(70분) 85%
+        assertEquals(BatteryHistory.Charge(10 * m, 70 * m, 48, 70, false), c[0])
+        assertEquals(true, c[1].ongoing)
+        assertEquals(84, c[1].startLevel)
+        assertEquals(90, c[1].endLevel)
+        // 칸에도 충전으로 오른 양이 들어간다
+        val b = BatteryHistory.buckets(pts, now = 100 * m, bucketMs = 60 * m, from = 0)
+        // 0~60분 칸: 10~40분 +22%, 40~70분 +15% 중 20분 몫 +10% → 32%
+        assertEquals(32f, b[0].chargedPct, 0.01f)
+    }
 }
