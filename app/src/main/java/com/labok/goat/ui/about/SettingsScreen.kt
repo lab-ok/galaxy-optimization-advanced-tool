@@ -3,6 +3,10 @@ package com.labok.goat.ui.about
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
+import com.labok.goat.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -169,12 +173,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                     Text(Copy.GOAT_STYLE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.GOAT_STYLE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidChips(
-                        options = UiGoat.Style.entries,
-                        selected = UiGoat.style,
-                        label = { if (it == UiGoat.Style.ART) Copy.GOAT_STYLE_ART else Copy.GOAT_STYLE_CLASSIC },
-                        onSelect = { UiGoat.set(context, it) }
-                    )
+                    GoatStylePicker()
                 }
             }
         }
@@ -326,4 +325,28 @@ private fun InkTones() {
             }
         }
     }
+}
+
+/** 염소 아이콘 고르기: 앱 아이콘 그림 두 개(이전·지금)를 리퀴드 칩으로 두고, 고른 쪽으로 방울이 옮겨 간다. */
+@Composable
+private fun GoatStylePicker() {
+    val context = LocalContext.current
+    // 앱 아이콘(적응형 아이콘)을 그대로 그림으로 그린다
+    val icons = remember {
+        val px = (56 * context.resources.displayMetrics.density).toInt()
+        mapOf(
+            UiGoat.Style.CLASSIC to R.mipmap.ic_launcher_classic,
+            UiGoat.Style.ART to R.mipmap.ic_launcher
+        ).mapValues { (_, res) -> context.getDrawable(res)?.toBitmap(px, px)?.asImageBitmap() }
+    }
+    LiquidChips(
+        options = listOf(UiGoat.Style.CLASSIC, UiGoat.Style.ART),
+        selected = UiGoat.style,
+        label = { if (it == UiGoat.Style.ART) Copy.GOAT_STYLE_ART else Copy.GOAT_STYLE_CLASSIC },
+        onSelect = { UiGoat.set(context, it) },
+        height = 84.dp,
+        content = { style, _ ->
+            icons[style]?.let { Image(it, contentDescription = null, modifier = Modifier.size(56.dp).clip(RoundedCornerShape(16.dp))) }
+        }
+    )
 }

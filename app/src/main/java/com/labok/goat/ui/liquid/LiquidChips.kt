@@ -28,16 +28,19 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.liquid.Text
 
 /**
  * 액체 칩 선택: 고른 칩 아래의 방울이 연체 물리([SoftBlob])로 옮겨 간다. 이동 방향 앞쪽이 먼저 끌려가 길쭉해졌다가
  * 표면장력과 압력으로 둥글게 돌아오며 한 번 출렁인다. 칩 글자는 방울이 덮은 만큼 배경색으로 반전된다.
+ * [content]를 주면 글자 대신 그 내용(예: 아이콘 그림)을 칸에 그리고 [label]은 화면 읽기용 이름으로만 쓴다. 칸 높이는 [height].
  */
 @Composable
 fun <T> LiquidChips(
@@ -45,7 +48,9 @@ fun <T> LiquidChips(
     selected: T,
     label: (T) -> String,
     onSelect: (T) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    height: Dp = LiquidShape.control,
+    content: (@Composable (option: T, cover: Float) -> Unit)? = null
 ) {
     val haptics = rememberLiquidHaptics()
     val c = LocalLiquid.current
@@ -73,7 +78,7 @@ fun <T> LiquidChips(
     Box(
         modifier
             .fillMaxWidth()
-            .height(LiquidShape.control)
+            .height(height)
             .semantics { role = Role.RadioButton }
     ) {
         // 트랙 테두리는 맨 아래 층에 그린다. Modifier.border는 내용 위에 그려져 고른 칩(검은 방울)의 가장자리를 가린다.
@@ -114,7 +119,7 @@ fun <T> LiquidChips(
                 Box(
                     Modifier
                         .weight(1f)
-                        .height(LiquidShape.control)
+                        .height(height)
                         .onGloballyPositioned {
                             lefts[i] = it.positionInParent().x
                             widths[i] = it.size.width.toFloat()
@@ -124,9 +129,16 @@ fun <T> LiquidChips(
                             if (option != selected) haptics.segment()
                             onSelect(option)
                         }
-                        .semantics { this.selected = isSel },
+                        .semantics {
+                            this.selected = isSel
+                            if (content != null) contentDescription = label(option)
+                        },
                     contentAlignment = Alignment.Center
                 ) {
+                    if (content != null) {
+                        content(option, cover)
+                        return@Box
+                    }
                     Text(
                         label(option),
                         color = textColor,

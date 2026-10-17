@@ -8,18 +8,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /**
- * 염소 아이콘 모양(앱 설정): 지금 쓰는 캐릭터 그림([Style.ART]) 또는 1.14.0 전의 선 그림 염소([Style.CLASSIC]).
+ * 염소 아이콘 모양(앱 설정): 1.14.0 전의 선 그림 염소([Style.CLASSIC], 기본) 또는 캐릭터 그림([Style.ART]).
  * 앱 안 로고([com.labok.goat.ui.nav.goatPainter])와 앱 아이콘을 함께 바꾼다. 앱 아이콘은 런처 항목 둘(activity-alias)
  * 가운데 하나만 켜서 바꾸므로, 런처에 따라 홈 화면에 놓은 아이콘이 빠져 다시 놓아야 할 수 있다.
  */
 object UiGoat {
     enum class Style { ART, CLASSIC }
 
-    var style by mutableStateOf(Style.ART)
+    var style by mutableStateOf(Style.CLASSIC)
         private set
 
     fun load(context: Context) {
-        style = runCatching { Style.valueOf(prefs(context).getString("style", null) ?: "") }.getOrDefault(Style.ART)
+        style = runCatching { Style.valueOf(prefs(context).getString("style", null) ?: "") }.getOrDefault(Style.CLASSIC)
     }
 
     fun set(context: Context, s: Style) {
