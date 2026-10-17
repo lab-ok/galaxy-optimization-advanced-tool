@@ -159,6 +159,7 @@ object StatusBarHider {
         val gen = ++regrabGen
         val power = context.getSystemService(android.os.PowerManager::class.java)
         var tries = 0
+        var lastWhy: String? = null
         fun check(delay: Long) {
             main.postDelayed({
                 if (gen != regrabGen || !onFlow.value) return@postDelayed
@@ -168,17 +169,20 @@ object StatusBarHider {
                     val state = focusState()
                     main.post {
                         if (gen != regrabGen || !onFlow.value) return@post
-                        when (state) {
-                            // 다시 받았는데도 포커스가 안 오면(다른 앱 위 표시를 막는 설정 화면 등) 점점 느리게 확인한다
-                            FocusState.APP -> {
-                                view?.let { regrab(context, it) }
-                                check((POLL_MS * ++tries).coerceAtMost(OFF_POLL_MS))
+                        // 기다리는 이유가 바뀔 때만 기록한다(실기에서 왜 다시 숨지 않는지 보이게)
+                        state?.why?.takeIf { it != lastWhy }?.let { LogRepository.from(context).add("상단바 숨기기: $it") }
+                        lastWhy = state?.why
+                        when {
+                            // 다시 띄웠는데도 포커스가 안 오면(다른 앱 위 표시를 막는 설정 화면 등) 점점 느리게 확인한다
+                            state?.app == true -> {
+                                regrab(context, ++tries)
+                                check((POLL_MS * tries).coerceAtMost(OFF_POLL_MS))
                             }
-                            FocusState.WAIT -> check(POLL_MS)
+                            state != null -> check(POLL_MS)
                             // Shizuku가 없으면 뒤로 가기 뒤에만 다시 숨는다(키보드 입력 중에는 빼앗지 않는다)
-                            null -> {
+                            else -> {
                                 LogRepository.from(context).add("상단바 숨기기: Shizuku가 없어 ${if (afterBack) "뒤로 가기 뒤라 다시 숨김" else "다시 숨기지 않음"}")
-                                if (afterBack) view?.let { regrab(context, it) }
+                                if (afterBack) regrab(context, 1)
                             }
                         }
                     }
@@ -188,10 +192,11 @@ object StatusBarHider {
         check(REGRAB_MS)
     }
 
-    private enum class FocusState { APP, WAIT }
+    /** [app]이면 다시 숨겨도 된다. [why]는 기록용 설명(포커스 창·키보드 상태). */
+    private class FocusState(val app: Boolean, val why: String)
 
     /**
-     * 지금 포커스가 일반 앱 창에 있고 키보드가 닫혀 있으면 APP, 키보드가 열려 있거나 시스템 창(알림창·잠금 화면 등)이면 WAIT.
+     * 지금 포커스가 일반 앱 창에 있고 키보드가 닫혀 있으면 app, 키보드가 열려 있거나 시스템 창(알림창·잠금 화면 등)이면 기다린다.
      * 셸을 쓸 수 없으면 null.
      */
     private fun focusState(): FocusState? {
@@ -203,15 +208,23 @@ object StatusBarHider {
         // 앱 창은 'Window{… u0 패키지/액티비티}' 꼴이다. 이 창(GOAT status bar hider)이나 시스템 창은 '/'가 없다
         val focus = out.lineSequence().firstOrNull { "mCurrentFocus" in it }.orEmpty()
         val app = Regex("""u\d+ [\w.]+/[\w.$]+""").containsMatchIn(focus)
-        return if (app && !ime) FocusState.APP else FocusState.WAIT
+        val name = focus.substringAfter("u0 ", focus.substringAfter("=")).trim().trimEnd('}').ifEmpty { "없음" }
+        return when {
+            ime -> FocusState(false, "키보드가 열려 있어 대기($name)")
+            !app -> FocusState(false, "시스템 창이 포커스를 가져 대기($name)")
+            else -> FocusState(true, "앱 창($name)으로 포커스가 넘어가 다시 숨김")
+        }
     }
 
-    private fun regrab(context: Context, v: View) {
-        val lp = v.layoutParams as? WindowManager.LayoutParams ?: return
-        if (lp.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE == 0) return
-        lp.flags = lp.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
-        runCatching { context.getSystemService(WindowManager::class.java).updateViewLayout(v, lp) }
-        LogRepository.from(context).add("상단바 숨기기: 자동으로 다시 숨김")
+    /**
+     * 창을 다시 띄워 포커스를 다시 받는다. 처음 켤 때 실기에서 실제로 숨겨지는 방법을 그대로 쓴다(1.11.12의 '플래그만 지우기'는
+     * 에뮬레이터에서는 됐지만 실기에서 뒤로 가기 뒤 다시 숨지 않는다는 보고가 있었다). [tries]번째 시도는 처음 세 번만 기록한다.
+     */
+    private fun regrab(context: Context, tries: Int) {
+        if (view == null) return
+        detach(context)
+        attach(context)
+        if (tries <= 3) LogRepository.from(context).add("상단바 숨기기: 창을 다시 띄움(${tries}번째)")
     }
 
     private fun detach(context: Context) {
