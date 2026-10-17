@@ -64,11 +64,15 @@ object Copy {
     const val FEATURE_APP_SIZE = "앱별 화면 배율 설정"
     const val FEATURE_LAB_TOOLS = "조사 도구"
     const val FEATURE_LAB_BATTERY = "배터리 모니터링"
+    const val FEATURE_LAB_NOTE = "메모장"
+    const val LAB_NOTE_BODY = "긴 글을 txt 파일로 만들어 공유합니다. 공유를 마치고 돌아오면 파일과 글을 지웁니다."
+    const val LAB_NOTE_PASTE_SHARE = "붙여넣고 공유"
+    const val LAB_NOTE_SHARE_MENU = "다른 앱의 공유 메뉴에서 'txt 파일로 공유'를 골라도 같은 일을 합니다."
+    const val LAB_NOTE_SHARE = "파일로 공유"
+    const val LAB_NOTE_HINT = "여기에 붙여넣으면 바로 txt 파일로 공유합니다."
 
     // 실험실: 배터리 모니터링
     const val LAB_BATTERY_NOW = "지금 배터리"
-    const val LAB_BATTERY_LOG = "충전 주기 자동 기록"
-    const val LAB_BATTERY_LOG_BODY = "15분마다 시스템 통계를 확인해, 이 화면을 열지 않고 충전해도 지난 주기를 남깁니다."
     const val FEATURE_SHAKE_ROTATE = "흔들어서 화면 회전"
     const val FEATURE_CAMERA_MUTE = "카메라 촬영음 끄기"
     const val FEATURE_HOME = "홈"

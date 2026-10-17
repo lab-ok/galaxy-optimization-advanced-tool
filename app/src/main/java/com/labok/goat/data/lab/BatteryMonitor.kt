@@ -5,18 +5,14 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import androidx.work.CoroutineWorker
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.labok.goat.data.log.LogRepository
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 /**
- * 실험실: 배터리 모니터링. 지금 배터리 상태(잔량·충전·온도·전압·전류)를 읽고, 켜 두면 15분마다 잔량을 기록해
- * 하루 동안의 변화와 시간당 소모량을 보여 준다. 권한 없이 시스템 배터리 방송(ACTION_BATTERY_CHANGED)과
- * BatteryManager만 쓴다. 기록은 기기 안(앱 설정 저장소)에만 둔다.
+ * 실험실: 배터리 모니터링. 지금 배터리 상태(잔량·충전·온도·전압·전류)를 읽는다. 권한 없이 시스템 배터리 방송
+ * (ACTION_BATTERY_CHANGED)과 BatteryManager만 쓴다.
  */
 object BatteryMonitor {
     private const val PREF = "battery_monitor"
@@ -42,9 +38,6 @@ object BatteryMonitor {
         /** 순간 전력(W). 전압·전류를 모두 읽었을 때만. */
         val watts: Float? get() = if (voltageMv != null && currentMa != null) voltageMv * currentMa / 1_000_000f else null
     }
-
-    /** 기록 한 줄: 시각·잔량·충전 중. */
-    data class Sample(val time: Long, val level: Int, val charging: Boolean)
 
     fun read(context: Context): Snapshot? {
         val i = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return null
@@ -89,86 +82,23 @@ object BatteryMonitor {
         return normalizeCurrent(bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW), charging)
     }
 
-    // 기록
-
-    fun logging(context: Context) = prefs(context).getBoolean("logging", false)
-
-    fun setLogging(context: Context, on: Boolean) {
-        prefs(context).edit().putBoolean("logging", on).apply()
-        LogRepository.from(context).add("배터리 모니터링(실험실): 15분 기록 ${if (on) "켜짐" else "꺼짐"}")
-        sync(context)
-        if (on) record(context)
-    }
-
-    /** 기록 켜짐에 맞춰 15분 작업을 걸거나 지운다. */
-    fun sync(context: Context) {
-        val wm = WorkManager.getInstance(context)
-        if (logging(context)) {
-            wm.enqueueUniquePeriodicWork(WORK, ExistingPeriodicWorkPolicy.KEEP, PeriodicWorkRequestBuilder<LogWorker>(15, TimeUnit.MINUTES).build())
-        } else {
-            wm.cancelUniqueWork(WORK)
-        }
-    }
-
-    /** 지금 상태를 한 줄 기록한다. 기록이 꺼져 있으면 하지 않는다. 같은 분에 두 번 기록하지 않는다. */
-    fun record(context: Context) {
-        if (!logging(context)) return
-        val s = read(context) ?: return
-        val list = samples(context)
-        if (list.lastOrNull()?.let { s.time - it.time < 60_000 } == true) return
-        save(context, trim(list + Sample(s.time, s.level, s.charging), s.time))
-    }
-
-    fun samples(context: Context): List<Sample> = decode(prefs(context).getString("samples", null))
-
-    fun clear(context: Context) {
-        prefs(context).edit().remove("samples").apply()
-        LogRepository.from(context).add("배터리 모니터링(실험실): 기록 지움")
-    }
-
-    private fun save(context: Context, list: List<Sample>) = prefs(context).edit().putString("samples", encode(list)).apply()
-
-    /** [KEEP_MS](48시간)보다 오래된 기록은 버린다. */
-    internal fun trim(list: List<Sample>, now: Long) = list.filter { now - it.time <= KEEP_MS }
-
-    internal fun encode(list: List<Sample>) = list.joinToString(";") { "${it.time},${it.level},${if (it.charging) 1 else 0}" }
-
-    internal fun decode(raw: String?): List<Sample> = raw.orEmpty().split(';').mapNotNull { part ->
-        val f = part.split(',')
-        if (f.size != 3) return@mapNotNull null
-        Sample(f[0].toLongOrNull() ?: return@mapNotNull null, f[1].toIntOrNull() ?: return@mapNotNull null, f[2] == "1")
-    }
-
     /**
-     * 시간당 소모량(%/시간). 충전하지 않은 연속 구간들의 (잔량 감소 합) ÷ (시간 합). 최근 [windowMs] 안의 기록만 쓴다.
-     * 쓸 수 있는 구간이 30분이 안 되면 null.
+     * 예전 '15분 기록'(잔량 기록·충전 주기 자동 기록)을 정리한다. 시스템 배터리 기록([BatteryHistory])으로 대신해 옵션을 없앴다.
+     * 켜 둔 적이 있으면 예약 작업과 저장한 잔량 기록을 지운다. 배터리 화면을 열 때 부른다.
      */
-    internal fun drainPerHour(list: List<Sample>, now: Long, windowMs: Long = DAY_MS): Float? {
-        val recent = list.filter { now - it.time <= windowMs }.sortedBy { it.time }
-        var drop = 0
-        var span = 0L
-        recent.zipWithNext().forEach { (a, b) ->
-            // 두 기록 사이에 충전이 끼었거나 잔량이 올랐으면(충전) 그 구간은 뺀다. 기록이 2시간 넘게 비면(기기 꺼짐 등) 뺀다
-            if (a.charging || b.charging || b.level > a.level || b.time - a.time > 2 * HOUR_MS) return@forEach
-            drop += a.level - b.level
-            span += b.time - a.time
-        }
-        if (span < 30 * 60_000L) return null
-        return drop * HOUR_MS.toFloat() / span
+    fun retireLogging(context: Context) {
+        val p = prefs(context)
+        if (!p.contains("logging") && !p.contains("samples")) return
+        WorkManager.getInstance(context).cancelUniqueWork(WORK)
+        p.edit().remove("logging").remove("samples").apply()
+        LogRepository.from(context).add("배터리 모니터링(실험실): 15분 기록 옵션을 없애 예약 작업과 잔량 기록을 지움")
     }
 
+    /** 예전 15분 기록 작업. 이미 예약된 작업이 남아 있어도 아무 일도 하지 않고 끝나도록 클래스만 둔다. */
     class LogWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
-        override suspend fun doWork(): Result {
-            record(applicationContext)
-            // 충전 주기 기록: 시스템 통계를 읽어 넘긴다(Shizuku가 없으면 건너뛴다)
-            BatteryStatsReader.read()?.let { s -> BatteryCycles.update(applicationContext, s) { BatteryStatsReader.uidName(applicationContext, it) } }
-            return Result.success()
-        }
+        override suspend fun doWork(): Result = Result.success()
     }
 
-    internal const val HOUR_MS = 3_600_000L
-    internal const val DAY_MS = 24 * HOUR_MS
-    private const val KEEP_MS = 48 * HOUR_MS
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 }

@@ -176,6 +176,31 @@
             android:name=".ui.lab.FlexTestActivity"
             android:exported="false"
             android:configChanges="density|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden" />
+        <!-- 실험실 메모장: 다른 앱 공유 메뉴의 'txt 파일로 공유'. 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
+        <activity
+            android:name=".ui.lab.MemoShareActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="txt 파일로 공유"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        <!-- 공유용 임시 파일(실험실 메모장) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_paths" />
+        </provider>
         <!-- 알림창 [작게]·[기본]·[크게]를 받아 방금 쓰던 앱의 크기를 바꾸는 투명 화면 -->
         <activity
             android:name=".ui.appsize.DensityStepActivity"

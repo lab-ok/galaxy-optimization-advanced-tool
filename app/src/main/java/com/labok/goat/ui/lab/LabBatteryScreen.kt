@@ -59,6 +59,7 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
     var health by remember { mutableStateOf<BatteryHealth.Info?>(null) }
     LaunchedEffect(Unit) {
         // 화면을 여는 동안 2초마다 다시 읽는다
+        withContext(Dispatchers.IO) { BatteryMonitor.retireLogging(context) }
         health = withContext(Dispatchers.IO) { BatteryHealth.read(context) }
         while (true) {
             now = BatteryMonitor.read(context)

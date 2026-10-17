@@ -246,16 +246,8 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>) {
 @Composable
 private fun PastCycles(cycles: List<BatteryCycles.Cycle>) {
     val c = LocalLiquid.current
-    val context = LocalContext.current
-    var auto by remember { mutableStateOf(BatteryMonitor.logging(context)) }
-    // 시스템 통계는 충전할 때마다 새로 시작해 지난 주기가 지워진다. 이 화면을 열지 않은 채 충전하면 놓치므로, 15분마다 확인해 남긴다
-    LiquidSwitchRow(Copy.LAB_BATTERY_LOG, Copy.LAB_BATTERY_LOG_BODY, auto, true) { want ->
-        auto = want
-        BatteryMonitor.setLogging(context, want)
-    }
-    Spacer(Modifier.height(Gap.Item))
     if (cycles.isEmpty()) {
-        Text("충전 후 충전기를 분리하면 직전 주기가 여기에 기록됩니다(최근 ${BatteryCycles.KEEP}회).", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("충전할 때마다 직전 주기가 여기에 남습니다(최근 ${BatteryCycles.KEEP}회). 다음 충전 전에 이 화면을 한 번 열면 빠짐없이 남습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         return
     }
     Text("기둥 높이는 그 주기처럼 쓸 때 100%를 다 쓰는 데 걸리는 시간이고, 진한 물은 그중 화면 켜짐입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)

@@ -18,6 +18,8 @@ object LabUnlock {
 
     fun load(context: Context) {
         unlocked = prefs(context).getBoolean("unlocked", false)
+        // 메모장의 'txt 파일로 공유'는 실험실을 연 경우에만 다른 앱 공유 메뉴에 보인다
+        runCatching { MemoShare.setShareTarget(context, unlocked) }
     }
 
     /** 처음 열었으면 true. */
@@ -25,6 +27,7 @@ object LabUnlock {
         if (unlocked) return false
         unlocked = true
         prefs(context).edit().putBoolean("unlocked", true).apply()
+        runCatching { MemoShare.setShareTarget(context, true) }
         return true
     }
 
