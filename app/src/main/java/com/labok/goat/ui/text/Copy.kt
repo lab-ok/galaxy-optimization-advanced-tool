@@ -194,7 +194,7 @@ object Copy {
     const val LAB_FLEX_NEED_SHIZUKU = "Shizuku 연결이 필요합니다."
     const val LAB_STATUS_HIDE = "상단바 숨기기(실험)"
     const val LAB_STATUS_HIDE_BODY = "상단바를 숨겨 앱이 그 자리까지 화면을 사용합니다. 위 가장자리를 쓸어내리면 잠시 표시됩니다."
-    const val LAB_STATUS_HIDE_NOTE = "키보드나 뒤로 가기를 사용하면 다시 표시됩니다. 알림의 [다시 숨기기]를 누르면 숨겨집니다."
+    const val LAB_STATUS_HIDE_NOTE = "뒤로 가기를 사용해도 곧 다시 숨겨집니다. 키보드가 열려 있는 동안에는 표시됩니다."
     const val LAB_FLEX_TEST_NEED_ON = "위의 사용 스위치를 먼저 켜 주세요."
     const val LAB_FLEX_RANGE_TITLE = "플렉스 모드가 켜지는 각도 범위"
     const val LAB_FLEX_RANGE_BODY = "가로로 접어 이 범위에 들어오면 플렉스 모드가 켜집니다."

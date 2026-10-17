@@ -31,13 +31,23 @@ import kotlinx.coroutines.flow.asStateFlow
  * (AOSP InsetsPolicy.getStatusControlTarget은 강제 표시 상황이 아니면 포커스 창을 따른다). 그래서 다른 앱 위에 1px 투명 창을
  * 포커스를 받게 띄우고 상단바를 숨긴다. 위 가장자리를 쓸어내리면 잠깐 보인다.
  * 이 창이 포커스를 쥐는 동안 키 입력(뒤로 가기·키보드)이 이 창으로 오므로, 키가 오면 포커스를 내려놓고(상단바가 다시 보임)
- * 뒤로 가기는 셸로 다시 보낸다. [다시 숨기기]로 창을 다시 띄우면 다시 숨는다. 포커스가 바뀌는 때를 GOAT 기록에 남긴다.
+ * 뒤로 가기는 포커스가 실제로 넘어간 뒤 셸로 다시 보낸다(넘어가기 전에 보내면 이 창이 다시 받아 여러 번 돌게 된다).
+ * 고정: 포커스를 잃으면(키 입력·다른 창) [REGRAB_MS] 뒤부터 확인해, 키보드가 닫혀 있고 포커스가 일반 앱 창에 있으면
+ * 포커스를 다시 받아 다시 숨는다. 키보드가 열려 있거나 알림창·시스템 창이 포커스를 가진 동안은 [POLL_MS]마다 다시 확인한다
+ * (포커스를 빼앗으면 입력이 끊기거나 시스템 창이 키를 못 받는다). 상태는 Shizuku 셸로만 알 수 있어, Shizuku가 없으면
+ * 뒤로 가기 뒤에만 다시 숨는다. [다시 숨기기]로 창을 다시 띄워도 다시 숨는다. 포커스가 바뀌는 때를 GOAT 기록에 남긴다.
  */
 object StatusBarHider {
     private const val CHANNEL_ID = "status_bar_hide"
     private const val NOTIFICATION_ID = 3201
     private val main = Handler(Looper.getMainLooper())
     private var view: View? = null
+    /** 다시 숨기기 예약 세대. 끄거나 새로 예약하면 올려서 이전 예약을 무효로 만든다. */
+    @Volatile private var regrabGen = 0
+    /** 포커스를 내려놓는 중에 받은 뒤로 가기. 포커스가 넘어가면 앱에 보낸다. */
+    private var pendingBack = false
+    /** 마지막으로 포커스를 내려놓게 한 키가 뒤로 가기였는지. */
+    private var lastKeyBack = false
     private val onFlow = MutableStateFlow(false)
     val on: StateFlow<Boolean> = onFlow.asStateFlow()
 
@@ -57,6 +67,7 @@ object StatusBarHider {
 
     fun stop(context: Context) {
         val app = context.applicationContext
+        regrabGen++
         main.post { detach(app) }
         onFlow.value = false
         app.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
@@ -81,14 +92,27 @@ object StatusBarHider {
             override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
                 super.onWindowFocusChanged(hasWindowFocus)
                 log.add("상단바 숨기기: 포커스 ${if (hasWindowFocus) "받음(숨김)" else "잃음(상단바 보일 수 있음)"}")
-                if (hasWindowFocus) hideBars(this)
+                if (hasWindowFocus) {
+                    regrabGen++
+                    hideBars(this)
+                } else {
+                    sendPendingBack()
+                    if (onFlow.value) scheduleRegrab(context, afterBack = lastKeyBack)
+                    lastKeyBack = false
+                }
             }
 
             override fun dispatchKeyEvent(event: KeyEvent): Boolean {
                 // 키는 이 창이 받으면 안 된다: 포커스를 내려놓고, 뒤로 가기는 아래 앱에 다시 보낸다
                 if (event.action == KeyEvent.ACTION_UP) {
+                    val back = event.keyCode == KeyEvent.KEYCODE_BACK
+                    lastKeyBack = back
+                    if (back && !pendingBack) {
+                        pendingBack = true
+                        // 포커스가 넘어가지 않아도 늦게나마 보낸다
+                        main.postDelayed({ sendPendingBack() }, BACK_FALLBACK_MS)
+                    }
                     stepAside(context, this)
-                    if (event.keyCode == KeyEvent.KEYCODE_BACK) Thread { ShizukuAccess.shell("input keyevent 4") }.start()
                     log.add("상단바 숨기기: 키(${KeyEvent.keyCodeToString(event.keyCode)}) 입력으로 포커스 해제")
                 }
                 return true
@@ -124,6 +148,72 @@ object StatusBarHider {
         runCatching { context.getSystemService(WindowManager::class.java).updateViewLayout(v, lp) }
     }
 
+    private fun sendPendingBack() {
+        if (!pendingBack) return
+        pendingBack = false
+        Thread { ShizukuAccess.shell("input keyevent 4") }.start()
+    }
+
+    /** 포커스를 잃은 뒤 다시 숨기기를 예약한다. 포커스를 다시 받으면([regrabGen]이 바뀌면) 멈춘다. */
+    private fun scheduleRegrab(context: Context, afterBack: Boolean) {
+        val gen = ++regrabGen
+        val power = context.getSystemService(android.os.PowerManager::class.java)
+        var tries = 0
+        fun check(delay: Long) {
+            main.postDelayed({
+                if (gen != regrabGen || !onFlow.value) return@postDelayed
+                // 화면이 꺼져 있으면 셸을 부르지 않고 느리게 기다린다
+                if (power?.isInteractive == false) return@postDelayed check(OFF_POLL_MS)
+                Thread {
+                    val state = focusState()
+                    main.post {
+                        if (gen != regrabGen || !onFlow.value) return@post
+                        when (state) {
+                            // 다시 받았는데도 포커스가 안 오면(다른 앱 위 표시를 막는 설정 화면 등) 점점 느리게 확인한다
+                            FocusState.APP -> {
+                                view?.let { regrab(context, it) }
+                                check((POLL_MS * ++tries).coerceAtMost(OFF_POLL_MS))
+                            }
+                            FocusState.WAIT -> check(POLL_MS)
+                            // Shizuku가 없으면 뒤로 가기 뒤에만 다시 숨는다(키보드 입력 중에는 빼앗지 않는다)
+                            null -> {
+                                LogRepository.from(context).add("상단바 숨기기: Shizuku가 없어 ${if (afterBack) "뒤로 가기 뒤라 다시 숨김" else "다시 숨기지 않음"}")
+                                if (afterBack) view?.let { regrab(context, it) }
+                            }
+                        }
+                    }
+                }.start()
+            }, delay)
+        }
+        check(REGRAB_MS)
+    }
+
+    private enum class FocusState { APP, WAIT }
+
+    /**
+     * 지금 포커스가 일반 앱 창에 있고 키보드가 닫혀 있으면 APP, 키보드가 열려 있거나 시스템 창(알림창·잠금 화면 등)이면 WAIT.
+     * 셸을 쓸 수 없으면 null.
+     */
+    private fun focusState(): FocusState? {
+        val out = ShizukuAccess.shell(
+            "dumpsys window | grep -m1 mCurrentFocus; dumpsys input_method | grep -m1 mInputShown="
+        )?.out ?: return null
+        // mIsInputViewShown은 키보드를 닫은 뒤에도 true로 남는 경우가 있어 mInputShown만 본다
+        val ime = out.contains("mInputShown=true")
+        // 앱 창은 'Window{… u0 패키지/액티비티}' 꼴이다. 이 창(GOAT status bar hider)이나 시스템 창은 '/'가 없다
+        val focus = out.lineSequence().firstOrNull { "mCurrentFocus" in it }.orEmpty()
+        val app = Regex("""u\d+ [\w.]+/[\w.$]+""").containsMatchIn(focus)
+        return if (app && !ime) FocusState.APP else FocusState.WAIT
+    }
+
+    private fun regrab(context: Context, v: View) {
+        val lp = v.layoutParams as? WindowManager.LayoutParams ?: return
+        if (lp.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE == 0) return
+        lp.flags = lp.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
+        runCatching { context.getSystemService(WindowManager::class.java).updateViewLayout(v, lp) }
+        LogRepository.from(context).add("상단바 숨기기: 자동으로 다시 숨김")
+    }
+
     private fun detach(context: Context) {
         val v = view ?: return
         view = null
@@ -142,7 +232,7 @@ object StatusBarHider {
         val n: Notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setContentTitle("상단바 숨기는 중")
-            .setContentText("키보드나 뒤로 가기를 쓰면 상단바가 다시 보입니다")
+            .setContentText("뒤로 가기를 써도 곧 다시 숨깁니다. 키보드가 열려 있는 동안에는 보입니다")
             .setOngoing(true)
             .setSilent(true)
             .addAction(0, "다시 숨기기", action(ACTION_REHIDE, 1))
@@ -151,6 +241,10 @@ object StatusBarHider {
         runCatching { nm.notify(NOTIFICATION_ID, n) }
     }
 
+    private const val REGRAB_MS = 600L
+    private const val POLL_MS = 2_000L
+    private const val OFF_POLL_MS = 10_000L
+    private const val BACK_FALLBACK_MS = 400L
     private const val ACTION_REHIDE = "com.labok.goat.STATUS_BAR_REHIDE"
     private const val ACTION_STOP = "com.labok.goat.STATUS_BAR_STOP"
 
