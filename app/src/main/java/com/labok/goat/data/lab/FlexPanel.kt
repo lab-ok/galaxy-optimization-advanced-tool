@@ -63,8 +63,11 @@ object FlexPanel {
     private const val MODE_NOTIFICATION = 3101
     private const val SPLIT_CMD = "dumpsys activity service SystemUIService WMShell splitscreen"
 
+    /** 옆 칸 자리: 1 = 아래·오른쪽(SPLIT_POSITION_BOTTOM_OR_RIGHT). 앞 앱은 위·왼쪽 큰 칸에 남는다. */
+    private const val SIDE_POSITION = 1
+
     /** 화면에 보이는 전체 화면 일반 앱 작업(번호, 패키지). 시스템 UI·GOAT·홈은 뺀다. */
-    private fun frontTask(context: Context): Pair<String, String>? = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)[^\n]*visible=true[^\n]*mode=fullscreen""")
+    private fun frontTask(context: Context): Pair<String, String>? = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)[^\n]*visible=true[^\n]*mode=(?:fullscreen|multi-window)""")
         .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
         .map { it.groupValues[1] to it.groupValues[2] }
         .firstOrNull { (_, pkg) -> pkg != "com.android.systemui" && !pkg.startsWith(context.packageName) }
@@ -110,37 +113,50 @@ object FlexPanel {
     }
 
     /**
-     * 가로 까딱 분할(실험실): 화면이 분할돼 있으면 풀고, 아니면 앞에 있는 앱으로 삼성 공식 화면 분할을 연다.
-     * 다른 칸은 삼성의 앱 고르기가 맡는다(startTaskWithAllApps, 삼성 SystemUI SplitScreenShellCommandHandler).
-     * 분할 시험(1.11.2·1.11.6)에서 접힘 상태를 덮어쓰지 않으면 공식 분할은 좌우로 안정적으로 열렸다. 그래서 반쯤 접힘은 걸지 않는다.
+     * 가로 까딱 분할(실험실): 화면이 분할돼 있으면 풀고, 아니면 앞에 있는 앱과 바로 전에 쓴 앱으로 화면을 나눈다.
+     * 안드로이드 17 삼성 펌웨어에는 예전에 쓰던 startTaskWithAllApps가 없어(명령 목록 확인, 2026-10-18) 실행되지 않았다.
+     * 지금은 AOSP 명령으로 한다: 나누기는 전에 쓴 앱을 옆 칸으로 보내는 moveToSideStage(앞 앱은 그대로 큰 칸),
+     * 풀기는 exitSplitScreen(폰), 안 되면 removeFromSideStage(에뮬레이터 AOSP 14). 접힘 상태는 덮어쓰지 않는다.
+     * 명령은 시스템 UI 오류에도 종료 코드가 0이라, 1.5초 뒤 실제로 나뉘었는지(풀렸는지) 확인해 기록한다.
      */
     fun sideSplit(context: Context) = queue.execute {
         if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
         val log = LogRepository.from(context)
-        val dump = ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty()
-        // 분할 중이면 보이는 분할 작업 중 맨 위(포커스) 작업을 남기고 푼다
-        val inSplit = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard[^\n]*visible=true[^\n]*mode=multi-window""").find(dump)?.groupValues?.get(1)
-        if (inSplit != null) {
-            val r = ShizukuAccess.shell("$SPLIT_CMD exitSplitScreen $inSplit")
-            log.add("가로 까딱: 분할 풀기(#$inSplit) ${if (r?.ok == true) "성공" else "실패"}")
+        val splitTasks = visibleSplitTasks()
+        if (splitTasks.size >= 2) {
+            ShizukuAccess.shell("$SPLIT_CMD exitSplitScreen ${splitTasks.first()}")
+            Thread.sleep(1200)
+            if (visibleSplitTasks().size >= 2) splitTasks.drop(1).forEach { ShizukuAccess.shell("$SPLIT_CMD removeFromSideStage $it") }
+            Thread.sleep(800)
+            log.add("가로 까딱: 화면 분할 풀기 ${if (visibleSplitTasks().size < 2) "됨" else "안 됨"}")
             return@execute
         }
         val front = frontTask(context)
         if (front == null) {
-            log.add("가로 까딱: 포그라운드 앱이 없어 분할하지 않음")
+            log.add("가로 까딱: 앞에 있는 앱이 없어 나누지 않음")
             return@execute
         }
-        val r = ShizukuAccess.shell("$SPLIT_CMD startTaskWithAllApps ${front.first}")
-        // dumpsys 명령은 시스템 UI 안에서 오류가 나도 종료 코드가 0이라, 나온 글을 함께 남겨 실제 결과를 본다(10-18 '성공'으로 남았지만 폰에서는 오류)
-        // 앞부분은 dump 머리글뿐이라(1.17.2 실기기) 뒷부분을 남긴다
-        val said = listOfNotNull(r?.out, r?.err).joinToString(" ").replace(Regex("\\s+"), " ").trim().takeLast(400)
-        log.add("가로 까딱: ${front.second}(#${front.first}) 분할 열기 ${if (r?.ok == true) "명령 보냄" else "실패"}" + if (said.isNotEmpty()) " · 응답: $said" else "")
-        // 잠시 뒤 실제로 분할됐는지 확인해 남긴다
+        val prev = previousTask(context, front.first)
+        if (prev == null) {
+            log.add("가로 까딱: 함께 띄울 다른 앱이 없어 나누지 않음(최근 앱 없음)")
+            return@execute
+        }
+        ShizukuAccess.shell("$SPLIT_CMD moveToSideStage ${prev.first} $SIDE_POSITION")
         Thread.sleep(1500)
-        val after = ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty()
-        val split = Regex("""Task\{[0-9a-f]+ #\d+ type=standard[^\n]*visible=true[^\n]*mode=multi-window""").containsMatchIn(after)
-        log.add("가로 까딱: 1.5초 뒤 화면 분할 ${if (split) "됨" else "안 됨"}")
+        log.add("가로 까딱: ${front.second} + ${prev.second} 화면 나누기 ${if (visibleSplitTasks().size >= 2) "됨" else "안 됨"}")
     }
+
+    /** 지금 보이는 분할 칸의 앱 작업 번호. 둘 이상이면 분할 중이다(분할을 푼 뒤에도 남은 앱 하나가 분할 칸 모드로 남을 수 있다). */
+    private fun visibleSplitTasks(): List<String> = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard[^\n]*visible=true[^\n]*mode=multi-window""")
+        .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
+        .map { it.groupValues[1] }.distinct().toList()
+
+    /** 앞 앱([frontId]) 다음으로 최근에 쓴 일반 앱 작업(시스템 UI·GOAT 제외). */
+    private fun previousTask(context: Context, frontId: String): Pair<String, String>? = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)""")
+        .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
+        .map { it.groupValues[1] to it.groupValues[2] }
+        .distinctBy { it.first }
+        .firstOrNull { (id, pkg) -> id != frontId && pkg != "com.android.systemui" && !pkg.startsWith(context.packageName) }
 
     /**
      * 진단 로그용: 시스템 UI(WMShell)가 받는 화면 분할 명령 목록. 안드로이드 17 실기기에서 startTaskWithAllApps를 보내면
