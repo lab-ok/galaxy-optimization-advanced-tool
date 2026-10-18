@@ -1,6 +1,12 @@
 package com.labok.goat
 
 import android.app.Application
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.UserManager
+import androidx.core.content.ContextCompat
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.DpiManager
@@ -28,6 +34,27 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         CrashRecorder.install(this)
+        // 부팅 직후 잠금 해제 전(Direct Boot)에는 부팅 수신기 때문에 앱이 먼저 뜨는데, 이때 일반 저장소(설정)는 열 수 없어
+        // 아래 초기화가 'credential encrypted storage' 예외로 앱을 죽였다(10-17 실기기 크래시). 잠금이 풀린 뒤에 한 번 한다.
+        if (getSystemService(UserManager::class.java)?.isUserUnlocked == false) {
+            ContextCompat.registerReceiver(
+                this,
+                object : BroadcastReceiver() {
+                    override fun onReceive(context: Context, intent: Intent) {
+                        runCatching { unregisterReceiver(this) }
+                        initUnlocked()
+                    }
+                },
+                IntentFilter(Intent.ACTION_USER_UNLOCKED),
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+            return
+        }
+        initUnlocked()
+    }
+
+    /** 일반 저장소가 열린 뒤의 초기화(설정 읽기, 감시 시작 등). */
+    private fun initUnlocked() {
         // 앱 설정의 UI 낭창거림을 첫 화면 전에 읽는다
         UiMotion.load(this)
         UiHaptics.load(this)

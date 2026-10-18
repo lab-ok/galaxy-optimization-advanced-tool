@@ -62,6 +62,10 @@ object DiagnosticReport {
         appendLine(runCatching { com.labok.goat.data.lab.BatteryHistory.diagnose() }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
+        appendLine("## 볼륨 버튼 회전")
+        appendLine(runCatching { com.labok.goat.data.lab.VolumeRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
+        appendLine()
+
         appendLine("## 크래시 기록")
         appendLine(CrashRecorder.read(context).ifBlank { "(없음)" })
         appendLine()

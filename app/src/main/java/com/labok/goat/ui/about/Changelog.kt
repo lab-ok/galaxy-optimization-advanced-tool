@@ -44,6 +44,18 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.17.1",
+        "2026-10-18",
+        "앱이 꺼지던 문제 두 가지를 고쳤습니다.",
+        listOf(
+            "수정" to listOf(
+                "재부팅 직후 잠금을 풀기 전에 GOAT가 꺼지던 문제를 고쳤습니다.",
+                "자동 플렉스를 쓰는 중 Shizuku 연결이 끊긴 상태에서 화면을 끄면 GOAT가 꺼지던 문제를 고쳤습니다.",
+                "볼륨 버튼 회전이 볼륨 키를 어떻게 처리했는지 진단 파일에 남깁니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.17.0",
         "2026-10-18",
         "화면을 돌리면 볼륨 버튼 방향도 맞춰 주는 '볼륨 버튼 회전'을 더했습니다.",

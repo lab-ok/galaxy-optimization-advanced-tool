@@ -40,7 +40,8 @@ class FineHinge(private val onAngle: (Float) -> Unit) {
 
     fun stop() {
         running = false
-        process?.destroy()
+        // Shizuku 연결이 이미 끊겼으면 원격 프로세스의 destroy가 NullPointerException을 던져, 화면이 꺼질 때 앱이 죽었다(10-15 실기기 크래시)
+        runCatching { process?.destroy() }
         process = null
     }
 

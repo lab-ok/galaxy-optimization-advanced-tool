@@ -92,6 +92,27 @@ object VolumeRotate {
     fun isCamera(pkg: String?) = pkg != null && pkg.contains("camera", ignoreCase = true)
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences("volume_rotate", Context.MODE_PRIVATE)
+
+    /** 최근 볼륨 키 처리 기록(진단 로그용, 앱 프로세스 안에서만 둔다). 서비스와 앱은 같은 프로세스에서 돈다. */
+    private val recent = ArrayDeque<String>()
+    var connectedAt: Long = 0L
+        internal set
+
+    internal fun record(line: String) = synchronized(recent) {
+        recent.addLast("${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.KOREA).format(java.util.Date())} $line")
+        while (recent.size > 20) recent.removeFirst()
+    }
+
+    /** 진단 로그용: 켜짐 여부, 옵션, 지금 방향, 서비스 연결 시각, 시스템 접근성 상태, 최근 키 기록. 작업 스레드에서 부른다. */
+    fun diagnose(context: Context): String = buildString {
+        appendLine("켜짐(설정)=${enabled(context)} 켜 두기로 함=${prefs(context).getBoolean(KEY_WANTED, false)} 반대=${invert(context)} 카메라 예외=${cameraExempt(context)}")
+        appendLine("지금 방향=${rotationLabel(rotation(context))} · 서비스 연결=${if (connectedAt == 0L) "없음(이 프로세스에서)" else java.text.SimpleDateFormat("MM-dd HH:mm:ss", java.util.Locale.KOREA).format(java.util.Date(connectedAt))}")
+        appendLine("enabled_accessibility_services=${Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)}")
+        com.labok.goat.data.shizuku.ShizukuAccess.shell("dumpsys accessibility | grep -i -E 'goat|Bound services|Enabled services|Enabled features'")?.out?.let { appendLine(it.lines().take(10).joinToString("\n") { l -> l.take(300) }) }
+        val keys = synchronized(recent) { recent.toList() }
+        appendLine("최근 볼륨 키(${keys.size}건):")
+        if (keys.isEmpty()) appendLine("  (없음: 볼륨 키가 서비스에 들어오지 않았거나 앱이 다시 시작됨)") else keys.forEach { appendLine("  $it") }
+    }
 }
 
 /**
@@ -100,6 +121,12 @@ object VolumeRotate {
  */
 class VolumeRotateService : AccessibilityService() {
     private var foreground: String? = null
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        VolumeRotate.connectedAt = System.currentTimeMillis()
+        Log.i(TAG, "서비스 연결")
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
@@ -110,6 +137,11 @@ class VolumeRotateService : AccessibilityService() {
     }
 
     override fun onInterrupt() = Unit
+
+    private fun note(line: String) {
+        VolumeRotate.record(line)
+        Log.i(TAG, line)
+    }
 
     private companion object {
         const val TAG = "GOAT-VolumeRotate"
@@ -122,15 +154,15 @@ class VolumeRotateService : AccessibilityService() {
             else -> return false
         }
         if (VolumeRotate.cameraExempt(this) && VolumeRotate.isCamera(foreground)) {
-            if (event.action == KeyEvent.ACTION_DOWN) Log.d(TAG, "카메라 앞($foreground): 그대로")
+            if (event.action == KeyEvent.ACTION_DOWN) note("${if (up) "올리기" else "내리기"} · 카메라 앞($foreground) · 그대로")
             return false
         }
         val rotation = VolumeRotate.rotation(this)
         if (!VolumeRotate.swapFor(rotation, VolumeRotate.invert(this))) {
-            if (event.action == KeyEvent.ACTION_DOWN) Log.d(TAG, "회전 $rotation: 그대로")
+            if (event.action == KeyEvent.ACTION_DOWN) note("${if (up) "올리기" else "내리기"} · ${VolumeRotate.rotationLabel(rotation)} · 그대로")
             return false
         }
-        if (event.action == KeyEvent.ACTION_DOWN) Log.d(TAG, "회전 $rotation: ${if (up) "올리기→내리기" else "내리기→올리기"}")
+        if (event.action == KeyEvent.ACTION_DOWN) note("${if (up) "올리기→내리기" else "내리기→올리기"} · ${VolumeRotate.rotationLabel(rotation)} · 앱 $foreground")
         // 누를 때(길게 누르면 반복)마다 반대 방향으로 조절하고, 원래 키는 누름·뗌 모두 소비한다
         if (event.action == KeyEvent.ACTION_DOWN) {
             getSystemService(AudioManager::class.java)?.adjustSuggestedStreamVolume(
