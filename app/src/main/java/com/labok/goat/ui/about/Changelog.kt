@@ -44,6 +44,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.17.0",
+        "2026-10-18",
+        "화면을 돌리면 볼륨 버튼 방향도 맞춰 주는 '볼륨 버튼 회전'을 더했습니다.",
+        listOf(
+            "추가" to listOf(
+                "'볼륨 버튼 회전'(편의 기능): 화면을 돌려 볼륨 버튼이 위로 가면 아이패드처럼 오른쪽이 올리기, 왼쪽이 내리기가 됩니다.",
+                "폴드 메인 화면처럼 방향이 반대인 화면을 위한 '반대 방향으로', 카메라 볼륨 셔터를 그대로 두는 '카메라에서는 그대로'를 고를 수 있습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.16.1",
         "2026-10-18",
         "숨은 기능을 다듬었습니다.",

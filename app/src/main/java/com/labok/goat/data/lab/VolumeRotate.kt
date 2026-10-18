@@ -14,7 +14,7 @@ import android.view.accessibility.AccessibilityEvent
 import com.labok.goat.data.log.LogRepository
 
 /**
- * 실험실 볼륨 버튼 회전: 화면을 돌려 볼륨 버튼 방향이 뒤집히면(버튼이 위로 가는 가로, 거꾸로 세로) 올리기·내리기를 바꾼다.
+ * 볼륨 버튼 회전(1.16.1 실험실 → 1.17.0 정식): 화면을 돌려 볼륨 버튼 방향이 뒤집히면(버튼이 위로 가는 가로, 거꾸로 세로) 올리기·내리기를 바꾼다.
  * 아이패드처럼 화면 기준으로 오른쪽(위)이 올리기가 된다. 삼성 기본 설정에는 없고 루트 없이 되는 방법은 접근성 서비스의
  * 키 필터뿐이라 [VolumeRotateService]가 볼륨 키만 받아 처리한다(화면 내용은 읽지 않음). GOAT의 시스템 설정 권한으로
  * 접근성 서비스를 직접 켜고 끈다. 사용자 문의 메일(2026-10-13)에서 나온 기능이다.
@@ -43,19 +43,19 @@ object VolumeRotate {
         Settings.Secure.putString(r, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, next)
         if (on) Settings.Secure.putInt(r, Settings.Secure.ACCESSIBILITY_ENABLED, 1)
         prefs(context).edit().putBoolean(KEY_WANTED, on).apply()
-        LogRepository.from(context).add("볼륨 버튼 회전(실험실): ${if (on) "켬" else "끔"}")
+        LogRepository.from(context).add("볼륨 버튼 회전: ${if (on) "켬" else "끔"}")
         enabled(context) == on
     }.getOrDefault(false)
 
     /**
      * 앱을 강제 종료하면 시스템이 접근성 서비스 목록에서 GOAT를 뺀다(에뮬레이터에서 확인). 사용자가 켜 둔 상태였으면
-     * 앱이 다시 뜰 때 되살린다. 실험실이 잠겨 있으면 되살리지 않는다.
+     * 앱이 다시 뜰 때 되살린다.
      */
     fun restoreIfWanted(context: Context) {
-        if (!LabUnlock.unlocked || !prefs(context).getBoolean(KEY_WANTED, false) || enabled(context)) return
+        if (!prefs(context).getBoolean(KEY_WANTED, false) || enabled(context)) return
         runCatching {
             setEnabled(context, true)
-            LogRepository.from(context).add("볼륨 버튼 회전(실험실): 강제 종료로 꺼져 있어 다시 켬")
+            LogRepository.from(context).add("볼륨 버튼 회전: 강제 종료로 꺼져 있어 다시 켬")
         }
     }
 

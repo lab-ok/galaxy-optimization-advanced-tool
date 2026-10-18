@@ -108,6 +108,9 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 비행기 모드를 켜도 고른 무선(와이파이·블루투스·NFC)은 그대로 둔다(시스템 설정 권한, 실험실에서 정식으로). */
     AIRPLANE(Copy.FEATURE_AIRPLANE, NavIcon.AIRPLANE),
 
+    /** 화면을 돌리면 볼륨 버튼의 올리기·내리기를 화면 방향에 맞춘다(접근성 서비스, 1.16.1 실험실에서 정식으로). */
+    VOLUME_ROTATE(Copy.FEATURE_VOLUME_ROTATE, NavIcon.VOLUME),
+
     /** 상태 표시줄의 고른 아이콘을 숨긴다(시스템 설정 권한, 실험실에서 정식으로). */
     STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.EYE_OFF),
 
@@ -124,16 +127,13 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 긴 글을 붙여넣으면 TXT 파일로 만들어 공유한다(다른 앱 공유 메뉴의 'TXT로 공유'와 같은 일). */
     LAB_NOTE(Copy.FEATURE_LAB_NOTE, NavIcon.NOTE),
 
-    /** 실험실: 화면을 돌리면 볼륨 버튼의 올리기·내리기를 화면 방향에 맞춘다(접근성 서비스). */
-    LAB_VOLUME(Copy.FEATURE_LAB_VOLUME, NavIcon.VOLUME),
-
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */
     SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR)
     ;
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_BATTERY, LAB_NOTE, LAB_VOLUME, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
     }
 }
 

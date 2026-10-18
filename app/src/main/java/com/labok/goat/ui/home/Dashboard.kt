@@ -75,6 +75,7 @@ import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.ResolutionState
 import com.labok.goat.data.lab.AirplaneRadios
+import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
@@ -218,6 +219,7 @@ internal fun Dashboard(
                     AirplaneRadios.Radio.entries.filter { AirplaneRadios.kept(raw, it) }.map { it.label }
                 }.let { if (it.isEmpty()) Copy.AIRPLANE_DASH_NONE else Copy.airplaneDash(it) }
             }
+            NavItem.VOLUME_ROTATE -> if (VolumeRotate.enabled(context)) Copy.VOLUME_DASH_ON + if (VolumeRotate.invert(context)) " · 반대 방향" else "" else Copy.VOLUME_DASH_OFF
             else -> ""
         }
     }
@@ -243,6 +245,7 @@ internal fun Dashboard(
                 AirplaneRadios.setting.read(context).let { raw ->
                     AirplaneRadios.Radio.entries.any { AirplaneRadios.kept(raw, it) }
                 }
+            NavItem.VOLUME_ROTATE -> VolumeRotate.enabled(context)
             else -> false
         }
     }

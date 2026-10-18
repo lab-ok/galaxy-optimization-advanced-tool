@@ -115,7 +115,6 @@ import com.labok.goat.ui.lab.FlexHelpSheet
 import com.labok.goat.ui.lab.LabAirplaneScreen
 import com.labok.goat.ui.lab.LabBatteryScreen
 import com.labok.goat.ui.lab.LabNoteScreen
-import com.labok.goat.ui.lab.LabVolumeScreen
 import com.labok.goat.ui.lab.LabFlexScreen
 import com.labok.goat.ui.lab.LabIconsScreen
 import com.labok.goat.ui.lab.LabScreen
@@ -137,6 +136,8 @@ import com.labok.goat.ui.nav.SideDrawerContent
 import com.labok.goat.ui.rotate.ShakeCalibrationSheet
 import com.labok.goat.ui.rotate.ShakeRotateHelpSheet
 import com.labok.goat.ui.rotate.ShakeRotateScreen
+import com.labok.goat.ui.rotate.VolumeRotateHelpSheet
+import com.labok.goat.ui.rotate.VolumeRotateScreen
 import com.labok.goat.ui.sizetest.RowCountOverlay
 import com.labok.goat.ui.sizetest.SizeTestSheet
 import com.labok.goat.ui.text.Copy
@@ -166,7 +167,7 @@ import kotlinx.coroutines.launch
 private const val WIDE_DP = 600
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, ICONS_HELP, AIRPLANE_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, ICONS_HELP, AIRPLANE_HELP, VOLUME_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -298,12 +299,12 @@ internal fun HomeScreen(
             // 화면 표시: 크기(해상도) → 움직임(주사율·애니메이션) → 색(다크) 순. 해상도는 화면 배율 바로 뒤라 이어서 읽힌다.
             add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, NavItem.STATUS_ICONS)))
             // 편의 기능: 화면(회전) → 연결(비행기 모드 무선) → 소리(촬영음) 순. 시스템: 성능(GOS) → 배터리(잠자기) → 정리(기본 앱) 순
-            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.AIRPLANE, NavItem.CAMERA_MUTE)))
+            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE, NavItem.AIRPLANE, NavItem.CAMERA_MUTE)))
             add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.GOS, NavItem.DOZE, NavItem.APP_CLEANUP)))
             // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구도 함께 둔다(공유 화면 진단·설정 비교를 공개 빌드에서도 쓰려고).
             // lab 빌드는 잠금과 상관없이 조사 도구를 보인다
             // 실험실은 자주 쓰는 자동 플렉스를 맨 앞에 둔다
-            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_FLEX.takeIf { AutoFlex.supported() }, NavItem.LAB_SCREEN, NavItem.LAB_BATTERY, NavItem.LAB_NOTE, NavItem.LAB_VOLUME) else emptyList()) +
+            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_FLEX.takeIf { AutoFlex.supported() }, NavItem.LAB_SCREEN, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
                 listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || LabUnlock.unlocked })
             if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }
@@ -333,6 +334,11 @@ internal fun HomeScreen(
             NavItem.CAMERA_MUTE -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.CAMERA_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
+                Copy.MENU_REPORT to report
+            )
+            NavItem.VOLUME_ROTATE -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.VOLUME_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
                 Copy.MENU_REPORT to report
             )
             NavItem.ANIMATION -> listOf(
@@ -388,7 +394,7 @@ internal fun HomeScreen(
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
                 Copy.MENU_REPORT to report
             )
-            NavItem.LAB_SCREEN, NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_NOTE, NavItem.LAB_VOLUME -> listOf(Copy.MENU_REPORT to report)
+            NavItem.LAB_SCREEN, NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_NOTE -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -568,7 +574,7 @@ internal fun HomeScreen(
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                             NavItem.LAB_BATTERY -> LabBatteryScreen(inner)
                             NavItem.LAB_NOTE -> LabNoteScreen(inner)
-                            NavItem.LAB_VOLUME -> LabVolumeScreen(inner)
+                            NavItem.VOLUME_ROTATE -> VolumeRotateScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.SETTINGS -> SettingsScreen(inner, onAbout = { sheet = Sheet.ABOUT }, onChangelog = { sheet = Sheet.CHANGELOG }, onPermissions = { sheet = Sheet.PERMISSIONS })
                         }
                     }
@@ -664,6 +670,7 @@ internal fun HomeScreen(
                     Sheet.DOZE_HELP -> DozeHelpSheet()
                     Sheet.ICONS_HELP -> StatusIconsHelpSheet()
                     Sheet.AIRPLANE_HELP -> AirplaneHelpSheet()
+                    Sheet.VOLUME_HELP -> VolumeRotateHelpSheet()
                     Sheet.CHANGELOG -> ChangelogSheet()
                     Sheet.PERMISSIONS -> PermissionsSheet()
                     Sheet.DARK_HELP -> DarkHelpSheet()
