@@ -11,6 +11,8 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.data.tweaks.AnimationKeepWorker
+import com.labok.goat.data.tweaks.AnimationSpeed
 import com.labok.goat.data.tweaks.Doze
 import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.data.tweaks.Gos
@@ -34,6 +36,11 @@ class App : Application() {
         LabUnlock.load(this)
         // 예전 실험실 빠른 설정 격자가 바꿔 둔 설정이 남아 있으면 되돌린다(1.15.3에서 실험을 접음)
         Thread { runCatching { QsGrid.restoreLeftovers(this) } }.start()
+        // 애니메이션 속도 유지 감지를 건다(고른 값이 있고 유지가 켜져 있을 때)
+        runCatching {
+            AnimationSpeed.seedIfMissing(this)
+            AnimationKeepWorker.sync(this)
+        }
         DpiManager.exemptHiddenApis()
         // Shizuku가 켜지며(재부팅 뒤 자동 시작 포함) GOAT에 바인더를 건네면, 옵션에 따라 무선 디버깅을 끈다
         if (ShizukuAccess.autoOffEnabled(this)) ShizukuAccess.watch(this)

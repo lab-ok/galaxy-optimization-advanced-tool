@@ -9,6 +9,7 @@ import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.settings.SettingsRepository
+import com.labok.goat.data.tweaks.AnimationKeepWorker
 import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.data.update.UpdateNotice
 import com.labok.goat.domain.DpiFixer
@@ -61,6 +62,7 @@ class BootReceiver : BroadcastReceiver() {
                 DpiWorker.enqueue(context, reason)
                 FoldWatchService.syncWithSettings(context)
                 DensityWatchWorker.sync(context)
+                AnimationKeepWorker.sync(context)
             }
         }
     }

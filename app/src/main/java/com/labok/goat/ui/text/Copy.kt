@@ -103,6 +103,8 @@ object Copy {
     const val ANIM_NEED_PERMISSION = "애니메이션 속도는 시스템 설정 권한으로 바꿉니다. Shizuku나 PC로 한 번만 받으면 됩니다."
     const val ANIM_PRESET_TITLE = "속도 선택"
     const val ANIM_SLIDER_HINT = "왼쪽 끝은 끔, 가운데는 기본(1배)입니다. 0.5배를 가장 많이 사용합니다."
+    const val ANIM_KEEP_TITLE = "기본으로 풀리면 되돌리기"
+    const val ANIM_KEEP_BODY = "개발자 옵션을 끄면 기본값으로 돌아갑니다. 켜 두면 고른 값으로 다시 맞춥니다."
     const val ANIM_DETAIL_TITLE = "하나씩 맞추기"
     const val ANIM_DETAIL_BODY = "창·화면 전환·애니메이터 배율을 0~2배로 각각 조정합니다."
 
