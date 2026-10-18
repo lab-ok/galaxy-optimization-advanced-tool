@@ -6,6 +6,7 @@ import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.DpiManager
 import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.data.lab.QsGrid
+import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.log.CrashRecorder
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
@@ -34,6 +35,8 @@ class App : Application() {
         UiGoat.load(this)
         NewBadge.load(this)
         LabUnlock.load(this)
+        // 실험실 볼륨 버튼 회전: 강제 종료로 접근성 서비스가 빠졌으면 다시 켠다
+        runCatching { VolumeRotate.restoreIfWanted(this) }
         // 예전 실험실 빠른 설정 격자가 바꿔 둔 설정이 남아 있으면 되돌린다(1.15.3에서 실험을 접음)
         Thread { runCatching { QsGrid.restoreLeftovers(this) } }.start()
         // 애니메이션 속도 유지 감지를 건다(고른 값이 있고 유지가 켜져 있을 때)

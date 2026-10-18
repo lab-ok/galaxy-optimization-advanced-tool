@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 실험실 볼륨 버튼 회전(VolumeRotateService): 볼륨 키만 걸러 받고 창 전환으로 맨 앞 앱만 알아 둔다. 화면 내용은 읽지 않는다 -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRequestFilterKeyEvents"
+    android:canRequestFilterKeyEvents="true"
+    android:canRetrieveWindowContent="false"
+    android:description="@string/volume_rotate_desc"
+    android:notificationTimeout="100" />

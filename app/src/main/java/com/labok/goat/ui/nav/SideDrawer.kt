@@ -124,17 +124,20 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 긴 글을 붙여넣으면 TXT 파일로 만들어 공유한다(다른 앱 공유 메뉴의 'TXT로 공유'와 같은 일). */
     LAB_NOTE(Copy.FEATURE_LAB_NOTE, NavIcon.NOTE),
 
+    /** 실험실: 화면을 돌리면 볼륨 버튼의 올리기·내리기를 화면 방향에 맞춘다(접근성 서비스). */
+    LAB_VOLUME(Copy.FEATURE_LAB_VOLUME, NavIcon.VOLUME),
+
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */
     SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR)
     ;
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_BATTERY, LAB_NOTE, LAB_VOLUME, LAB_TOOLS)
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, INFO, GEAR }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -351,6 +354,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.FLEX -> flex(color, s)
             NavIcon.BATTERY -> battery(color, s)
             NavIcon.NOTE -> note(color, s)
+            NavIcon.VOLUME -> volume(color, s)
             NavIcon.INFO -> info(color, s)
             NavIcon.GEAR -> gear(color, s)
         }
@@ -592,6 +596,27 @@ private fun DrawScope.note(c: Color, s: Stroke) {
     drawLine(c, p(9f, 11f), p(15.5f, 11f), s.width, StrokeCap.Round)
     drawLine(c, p(9f, 14.2f), p(15.5f, 14.2f), s.width, StrokeCap.Round)
     drawLine(c, p(9f, 17.4f), p(13f, 17.4f), s.width, StrokeCap.Round)
+}
+
+/** 스피커와 위아래 화살표(볼륨 버튼 회전). */
+private fun DrawScope.volume(c: Color, s: Stroke) {
+    val speaker = Path().apply {
+        moveTo(u(3.5f), u(9.5f))
+        lineTo(u(7f), u(9.5f))
+        lineTo(u(11.5f), u(5.5f))
+        lineTo(u(11.5f), u(18.5f))
+        lineTo(u(7f), u(14.5f))
+        lineTo(u(3.5f), u(14.5f))
+        close()
+    }
+    drawPath(speaker, c, style = s)
+    // 위 화살표와 아래 화살표: 올리기·내리기가 바뀐다는 뜻
+    drawLine(c, p(17.5f, 4.5f), p(17.5f, 10.5f), s.width, StrokeCap.Round)
+    drawLine(c, p(15f, 7f), p(17.5f, 4.5f), s.width, StrokeCap.Round)
+    drawLine(c, p(20f, 7f), p(17.5f, 4.5f), s.width, StrokeCap.Round)
+    drawLine(c, p(17.5f, 13.5f), p(17.5f, 19.5f), s.width, StrokeCap.Round)
+    drawLine(c, p(15f, 17f), p(17.5f, 19.5f), s.width, StrokeCap.Round)
+    drawLine(c, p(20f, 17f), p(17.5f, 19.5f), s.width, StrokeCap.Round)
 }
 
 private fun DrawScope.flask(c: Color, s: Stroke) {

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">GOAT</string>
+    <string name="volume_rotate_desc">GOAT 실험실: 화면을 돌리면 볼륨 버튼의 올리기·내리기를 화면 방향에 맞춰 바꿉니다. 볼륨 키만 받고 화면 내용은 읽지 않습니다.</string>
+    <string name="volume_rotate_label">GOAT 볼륨 버튼 회전</string>
 </resources>

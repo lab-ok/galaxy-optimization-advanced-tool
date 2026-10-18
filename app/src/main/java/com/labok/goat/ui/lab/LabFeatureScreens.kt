@@ -1,6 +1,9 @@
 package com.labok.goat.ui.lab
 
 import android.content.Context
+import android.hardware.display.DisplayManager
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -48,6 +52,7 @@ import com.labok.goat.data.lab.LabSetting
 import com.labok.goat.data.lab.PrivacyDot
 import com.labok.goat.data.lab.ScreenMode
 import com.labok.goat.data.lab.StatusBarHider
+import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.Section
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -287,6 +292,57 @@ internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
                 Text("· $it", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
         }
+    }
+}
+
+/** 실험실 볼륨 버튼 회전([VolumeRotate]): 켜기·반대로·카메라 예외와 지금 화면 방향에서 바뀌는지. */
+@Composable
+internal fun LabVolumeScreen(contentPadding: PaddingValues) {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    var version by remember { mutableIntStateOf(0) }
+    val on = remember(version) { VolumeRotate.enabled(context) }
+    var invert by remember { mutableStateOf(VolumeRotate.invert(context)) }
+    var camera by remember { mutableStateOf(VolumeRotate.cameraExempt(context)) }
+    // 왼쪽·오른쪽 가로끼리 바뀔 때는 구성 변경이 없어 화면 표시 변경을 직접 듣고 방향을 다시 읽는다
+    var rotation by remember { mutableIntStateOf(VolumeRotate.rotation(context)) }
+    DisposableEffect(Unit) {
+        val dm = context.getSystemService(DisplayManager::class.java)
+        val listener = object : DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) = Unit
+            override fun onDisplayRemoved(displayId: Int) = Unit
+            override fun onDisplayChanged(displayId: Int) {
+                rotation = VolumeRotate.rotation(context)
+            }
+        }
+        dm.registerDisplayListener(listener, Handler(Looper.getMainLooper()))
+        onDispose { dm.unregisterDisplayListener(listener) }
+    }
+    LabPage(contentPadding) {
+        Text(Copy.FEATURE_LAB_VOLUME, fontWeight = FontWeight.SemiBold, color = c.ink)
+        Text(Copy.LAB_VOLUME_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidSwitchRow(Copy.LAB_VOLUME_ON, Copy.LAB_VOLUME_ON_DESC, on, true) {
+            if (!VolumeRotate.setEnabled(context, it)) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+            version++
+        }
+        Spacer(Modifier.height(Gap.Section))
+        LiquidSwitchRow(Copy.LAB_VOLUME_INVERT, Copy.LAB_VOLUME_INVERT_DESC, invert, on) {
+            invert = it
+            VolumeRotate.setInvert(context, it)
+        }
+        Spacer(Modifier.height(Gap.Section))
+        LiquidSwitchRow(Copy.LAB_VOLUME_CAMERA, Copy.LAB_VOLUME_CAMERA_DESC, camera, on) {
+            camera = it
+            VolumeRotate.setCameraExempt(context, it)
+        }
+        Spacer(Modifier.height(Gap.Section))
+        val swap = VolumeRotate.swapFor(rotation, invert)
+        Text(
+            "지금 화면: ${VolumeRotate.rotationLabel(rotation)} · " + if (!on) "꺼져 있음" else if (swap) "올리기·내리기를 바꿈" else "그대로",
+            color = c.ink,
+            style = MaterialTheme.typography.labelMedium
+        )
     }
 }
 
