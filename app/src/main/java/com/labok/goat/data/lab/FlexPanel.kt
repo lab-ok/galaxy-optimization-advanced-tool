@@ -131,7 +131,14 @@ object FlexPanel {
             return@execute
         }
         val r = ShizukuAccess.shell("$SPLIT_CMD startTaskWithAllApps ${front.first}")
-        log.add("가로 까딱: ${front.second}(#${front.first}) 분할 열기 ${if (r?.ok == true) "성공" else "실패"}")
+        // dumpsys 명령은 시스템 UI 안에서 오류가 나도 종료 코드가 0이라, 나온 글을 함께 남겨 실제 결과를 본다(10-18 '성공'으로 남았지만 폰에서는 오류)
+        val said = listOfNotNull(r?.out, r?.err).joinToString(" ").replace(Regex("\\s+"), " ").trim().take(300)
+        log.add("가로 까딱: ${front.second}(#${front.first}) 분할 열기 ${if (r?.ok == true) "명령 보냄" else "실패"}" + if (said.isNotEmpty()) " · 응답: $said" else "")
+        // 잠시 뒤 실제로 분할됐는지 확인해 남긴다
+        Thread.sleep(1500)
+        val after = ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty()
+        val split = Regex("""Task\{[0-9a-f]+ #\d+ type=standard[^\n]*visible=true[^\n]*mode=multi-window""").containsMatchIn(after)
+        log.add("가로 까딱: 1.5초 뒤 화면 분할 ${if (split) "됨" else "안 됨"}")
     }
 
     /** 켜져 있는 동안 지금 앱·모드를 보여 주고, 알림 버튼으로 모드를 바꿀 수 있게 한다. */
