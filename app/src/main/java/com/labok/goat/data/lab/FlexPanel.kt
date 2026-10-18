@@ -132,13 +132,34 @@ object FlexPanel {
         }
         val r = ShizukuAccess.shell("$SPLIT_CMD startTaskWithAllApps ${front.first}")
         // dumpsys 명령은 시스템 UI 안에서 오류가 나도 종료 코드가 0이라, 나온 글을 함께 남겨 실제 결과를 본다(10-18 '성공'으로 남았지만 폰에서는 오류)
-        val said = listOfNotNull(r?.out, r?.err).joinToString(" ").replace(Regex("\\s+"), " ").trim().take(300)
+        // 앞부분은 dump 머리글뿐이라(1.17.2 실기기) 뒷부분을 남긴다
+        val said = listOfNotNull(r?.out, r?.err).joinToString(" ").replace(Regex("\\s+"), " ").trim().takeLast(400)
         log.add("가로 까딱: ${front.second}(#${front.first}) 분할 열기 ${if (r?.ok == true) "명령 보냄" else "실패"}" + if (said.isNotEmpty()) " · 응답: $said" else "")
         // 잠시 뒤 실제로 분할됐는지 확인해 남긴다
         Thread.sleep(1500)
         val after = ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty()
         val split = Regex("""Task\{[0-9a-f]+ #\d+ type=standard[^\n]*visible=true[^\n]*mode=multi-window""").containsMatchIn(after)
         log.add("가로 까딱: 1.5초 뒤 화면 분할 ${if (split) "됨" else "안 됨"}")
+    }
+
+    /**
+     * 진단 로그용: 시스템 UI(WMShell)가 받는 화면 분할 명령 목록. 안드로이드 17 실기기에서 startTaskWithAllApps를 보내면
+     * dump 머리글만 돌아오고 분할되지 않아(1.17.2), 지금 펌웨어가 어떤 명령을 받는지 확인하려고 남긴다. 작업 스레드에서 부른다.
+     */
+    fun diagnoseSplit(): String {
+        val help = ShizukuAccess.shell("dumpsys activity service SystemUIService WMShell help")?.out ?: return "Shizuku가 연결되지 않아 읽지 못했습니다."
+        val lines = help.lines()
+        // 'split'·'stage'가 들어간 줄과 그 아래 설명 몇 줄을 모은다
+        val keep = sortedSetOf<Int>()
+        lines.forEachIndexed { i, l -> if (l.contains("split", true) || l.contains("stage", true)) (i..minOf(i + 3, lines.lastIndex)).forEach { keep += it } }
+        val picked = keep.map { lines[it].trimEnd() }.take(120)
+        val tail = ShizukuAccess.shell(SPLIT_CMD)?.let { (it.out + "\n" + it.err).trim().lines().takeLast(30) }.orEmpty()
+        return buildString {
+            appendLine("[WMShell help 중 분할 관련 ${picked.size}줄]")
+            picked.forEach { appendLine(it.take(200)) }
+            appendLine("[splitscreen 단독 응답 끝 30줄]")
+            tail.forEach { appendLine(it.take(200)) }
+        }
     }
 
     /** 켜져 있는 동안 지금 앱·모드를 보여 주고, 알림 버튼으로 모드를 바꿀 수 있게 한다. */

@@ -66,6 +66,10 @@ object DiagnosticReport {
         appendLine(runCatching { com.labok.goat.data.lab.VolumeRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
+        appendLine("## 화면 분할 명령(가로 까딱)")
+        appendLine(runCatching { com.labok.goat.data.lab.FlexPanel.diagnoseSplit() }.getOrElse { "읽기 실패: $it" })
+        appendLine()
+
         appendLine("## 크래시 기록")
         appendLine(CrashRecorder.read(context).ifBlank { "(없음)" })
         appendLine()
