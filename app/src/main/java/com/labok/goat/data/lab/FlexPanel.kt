@@ -115,48 +115,137 @@ object FlexPanel {
     /**
      * 가로 까딱 분할(실험실): 화면이 분할돼 있으면 풀고, 아니면 앞에 있는 앱과 바로 전에 쓴 앱으로 화면을 나눈다.
      * 안드로이드 17 삼성 펌웨어에는 예전에 쓰던 startTaskWithAllApps가 없어(명령 목록 확인, 2026-10-18) 실행되지 않았다.
-     * 지금은 AOSP 명령으로 한다: 나누기는 전에 쓴 앱을 옆 칸으로 보내는 moveToSideStage(앞 앱은 그대로 큰 칸),
-     * 풀기는 exitSplitScreen(폰), 안 되면 removeFromSideStage(에뮬레이터 AOSP 14). 접힘 상태는 덮어쓰지 않는다.
+     * 지금은 AOSP 명령으로 한다: 나누기는 전에 쓴 앱을 옆 칸으로 보내는 moveToSideStage(앞 앱은 그대로 큰 칸, 안 들어가는 앱은
+     * 다음 최근 앱으로 최대 [MAX_TRIES]번), 풀기는 나누기 전 앞 앱을 남기는 exitSplitScreen(폰), 안 되면 removeFromSideStage
+     * (에뮬레이터 AOSP 14). 접힘 상태는 덮어쓰지 않는다.
      * 명령은 시스템 UI 오류에도 종료 코드가 0이라, 1.5초 뒤 실제로 나뉘었는지(풀렸는지) 확인해 기록한다.
      */
-    fun sideSplit(context: Context) = queue.execute {
-        if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
+    fun sideSplit(context: Context) = queue.execute { sideSplitNow(context) }
+
+    /** [sideSplit]의 본체(작업 스레드에서 바로 실행). 남긴 결과 한 줄을 돌려준다([SideSplitTest]도 쓴다). */
+    internal fun sideSplitNow(context: Context): String {
+        if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return "Shizuku 연결 안 됨"
         val log = LogRepository.from(context)
+        var result = ""
+        fun add(line: String) {
+            log.add(line)
+            result = line
+        }
         val splitTasks = visibleSplitTasks()
         if (splitTasks.size >= 2) {
-            ShizukuAccess.shell("$SPLIT_CMD exitSplitScreen ${splitTasks.first()}")
-            Thread.sleep(1200)
-            if (visibleSplitTasks().size >= 2) splitTasks.drop(1).forEach { ShizukuAccess.shell("$SPLIT_CMD removeFromSideStage $it") }
-            Thread.sleep(800)
-            log.add("가로 까딱: 화면 분할 풀기 ${if (visibleSplitTasks().size < 2) "됨" else "안 됨"}")
-            return@execute
+            // 나누기 전에 앞에 있던 앱을 앞에 남긴다(1.17.4 폰: 목록 첫 칸을 남겨 옆 칸 앱이 앞에 남았다)
+            val keep = lastFront?.takeIf { it in splitTasks } ?: splitTasks.first()
+            val ok = unsplit(keep, splitTasks)
+            add("가로 까딱: 화면 분할 풀기 ${if (ok) "됨" else "안 됨"}")
+            return result
         }
         val front = frontTask(context)
         if (front == null) {
-            log.add("가로 까딱: 앞에 있는 앱이 없어 나누지 않음")
-            return@execute
+            add("가로 까딱: 앞에 있는 앱이 없어 나누지 않음")
+            return result
         }
-        val prev = previousTask(context, front.first)
-        if (prev == null) {
-            log.add("가로 까딱: 함께 띄울 다른 앱이 없어 나누지 않음(최근 앱 없음)")
-            return@execute
+        // 최근 앱을 차례로 옆 칸에 보내 본다. 삼성 페이처럼 분할 칸에 못 들어가는 앱은 나뉘지 않으므로 다음 앱으로 넘어간다(1.17.4 폰)
+        val candidates = previousTasks(context, front.first).take(MAX_TRIES)
+        if (candidates.isEmpty()) {
+            add("가로 까딱: 함께 띄울 다른 앱이 없어 나누지 않음(최근 앱 없음)")
+            return result
         }
-        ShizukuAccess.shell("$SPLIT_CMD moveToSideStage ${prev.first} $SIDE_POSITION")
-        Thread.sleep(1500)
-        log.add("가로 까딱: ${front.second} + ${prev.second} 화면 나누기 ${if (visibleSplitTasks().size >= 2) "됨" else "안 됨"}")
+        for ((i, prev) in candidates.withIndex()) {
+            // 분할을 푼 뒤 옆 칸에 있던 앱은 분할 칸 상태가 남아 다시 옆 칸으로 못 보내는 일이 있다(에뮬레이터 자동 시험).
+            // 첫 앱이 실패하면 그 앱과 앞 앱을 차례로 다시 띄워 보통 전체 화면 작업으로 돌린 뒤 한 번 더 해 본다
+            var split = trySide(prev.first)
+            if (split.size < 2 && i == 0) {
+                bringToFront(prev.first)
+                Thread.sleep(700)
+                bringToFront(front.first)
+                Thread.sleep(700)
+                split = trySide(prev.first)
+            }
+            // 앞 앱이 빠진 채로 엉뚱한 앱끼리 나뉘었으면(에뮬레이터 연속 시험에서 GOAT가 끼어듦) 바로 되돌린다
+            if (split.size >= 2 && front.first !in split) {
+                unsplit(split.first(), split)
+                add("가로 까딱: ${front.second} + ${prev.second} 다른 앱끼리 나뉘어 되돌림")
+                return result
+            }
+            val ok = split.size >= 2
+            add("가로 까딱: ${front.second} + ${prev.second} 화면 나누기 ${if (ok) "됨" else "안 됨"}${if (!ok && i < candidates.lastIndex) ", 다음 앱으로" else ""}")
+            if (ok) {
+                lastFront = front.first
+                lastSide = prev.first
+                return result
+            }
+        }
+        return result
     }
 
+    /** [taskId]를 옆 칸으로 보내고 1.3초 뒤 보이는 분할 칸 작업을 돌려준다. */
+    private fun trySide(taskId: String): List<String> {
+        ShizukuAccess.shell("$SPLIT_CMD moveToSideStage $taskId $SIDE_POSITION")
+        Thread.sleep(1300)
+        return visibleSplitTasks()
+    }
+
+    /**
+     * 분할을 푼다: [keep]을 남기는 exitSplitScreen(폰) → 안 되면 나머지를 removeFromSideStage(에뮬레이터 AOSP 14) →
+     * 그래도 안 되면 모든 칸을 removeFromSideStage. 풀렸으면 true.
+     */
+    private fun unsplit(keep: String, tasks: List<String>): Boolean {
+        ShizukuAccess.shell("$SPLIT_CMD exitSplitScreen $keep")
+        Thread.sleep(1200)
+        if (visibleSplitTasks().size < 2) return true
+        tasks.filter { it != keep }.forEach { ShizukuAccess.shell("$SPLIT_CMD removeFromSideStage $it") }
+        Thread.sleep(800)
+        if (visibleSplitTasks().size >= 2) {
+            visibleSplitTasks().forEach { ShizukuAccess.shell("$SPLIT_CMD removeFromSideStage $it") }
+            Thread.sleep(800)
+        }
+        // removeFromSideStage로 풀면 남은 앱이 분할 칸 모드로 남아 다음 나누기가 실패했다(에뮬레이터 자동 시험).
+        // 그 앱을 다시 앞으로 띄워 전체 화면으로 돌려 놓는다
+        bringToFront(keep)
+        Thread.sleep(800)
+        return visibleSplitTasks().size < 2
+    }
+
+    /** 작업 [taskId]의 맨 위 화면을 다시 띄워 그 작업을 전체 화면으로 앞에 둔다. */
+    private fun bringToFront(taskId: String) {
+        val comp = Regex("""ActivityRecord\{[0-9a-f]+ u\d+ ([\w.]+/[\w.$]+) t$taskId\b""")
+            .find(ShizukuAccess.shell("dumpsys activity activities | grep -E 'ActivityRecord\\{'")?.out.orEmpty())?.groupValues?.get(1) ?: return
+        ShizukuAccess.shell("am start -n $comp -f 0x10200000")
+    }
+
+    /** 가로 까딱으로 나눌 때 앞에 있던 앱(풀 때 이 앱을 앞에 남긴다). */
+    @Volatile
+    private var lastFront: String? = null
+
+    /** 바로 전에 옆 칸에 보냈던 앱(다시 까딱하면 같은 짝으로 나눈다). */
+    @Volatile
+    private var lastSide: String? = null
+
+    /** 옆 칸에 보내 볼 최근 앱 수. */
+    private const val MAX_TRIES = 3
+
     /** 지금 보이는 분할 칸의 앱 작업 번호. 둘 이상이면 분할 중이다(분할을 푼 뒤에도 남은 앱 하나가 분할 칸 모드로 남을 수 있다). */
-    private fun visibleSplitTasks(): List<String> = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard[^\n]*visible=true[^\n]*mode=multi-window""")
+    internal fun visibleSplitTasks(): List<String> = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard[^\n]*visible=true[^\n]*mode=multi-window""")
         .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
         .map { it.groupValues[1] }.distinct().toList()
 
-    /** 앞 앱([frontId]) 다음으로 최근에 쓴 일반 앱 작업(시스템 UI·GOAT 제외). */
-    private fun previousTask(context: Context, frontId: String): Pair<String, String>? = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)""")
-        .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
-        .map { it.groupValues[1] to it.groupValues[2] }
-        .distinctBy { it.first }
-        .firstOrNull { (id, pkg) -> id != frontId && pkg != "com.android.systemui" && !pkg.startsWith(context.packageName) }
+    /**
+     * 앞 앱([frontId]) 다음으로 최근에 쓴 일반 앱 작업들, 최근 순. 화면 쌓임 순서가 아니라 최근 앱 목록(dumpsys activity recents)을 쓴다
+     * (쌓임 순서는 검색창 같은 작업이 앞에 와 엉뚱한 앱을 골랐다, 에뮬레이터 자동 시험). 바로 전에 함께 나눴던 앱이 있으면 맨 앞에 둔다.
+     * 시스템 UI·GOAT·공유 창(intentresolver)·같은 앱은 뺀다.
+     */
+    private fun previousTasks(context: Context, frontId: String): List<Pair<String, String>> {
+        val all = Regex("""Recent #\d+: Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)""")
+            .findAll(ShizukuAccess.shell("dumpsys activity recents | grep -E 'Recent #'")?.out.orEmpty())
+            .map { it.groupValues[1] to it.groupValues[2] }
+            .distinctBy { it.first }
+            .toList()
+        val frontPkg = all.firstOrNull { it.first == frontId }?.second
+        val skip = setOf("com.android.systemui", "com.android.intentresolver", "android")
+        val list = all.filter { (id, pkg) -> id != frontId && pkg != frontPkg && pkg !in skip && !pkg.startsWith(context.packageName) }
+        val side = lastSide
+        return list.sortedByDescending { it.first == side }
+    }
 
     /**
      * 진단 로그용: 시스템 UI(WMShell)가 받는 화면 분할 명령 목록. 안드로이드 17 실기기에서 startTaskWithAllApps를 보내면

@@ -69,6 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.FlexPanel
+import com.labok.goat.data.lab.SideSplitTest
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.AppEntry
 import com.labok.goat.ui.appsize.Section
@@ -81,6 +82,7 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidProgressButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LiquidSwitchRow
@@ -258,6 +260,31 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     LiquidSwitchRow(Copy.LAB_FLEX_SIDE_CLICK, Copy.LAB_FLEX_SIDE_CLICK_BODY, sideClick, enabled) { v ->
                         sideClick = v
                         AutoFlex.setSideClick(context, v)
+                    }
+                }
+            }
+        }
+        // 가로 까딱 분할 자동 시험: 까딱 없이 여러 경우를 돌려 결과 파일을 만들고, 끝나면 공유 창을 띄운다
+        item(key = "side-split-test") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(Copy.LAB_SIDE_TEST_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.LAB_SIDE_TEST_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    val test by SideSplitTest.state.collectAsStateWithLifecycle()
+                    LiquidProgressButton(
+                        Copy.LAB_SIDE_TEST_RUN,
+                        progress = if (test.running) test.progress ?: 0f else null,
+                        status = test.status,
+                        enabled = shizuku == ShizukuAccess.State.READY,
+                        disabledHint = Copy.DISABLED_SHIZUKU,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { if (!test.running) SideSplitTest.start(context) }
+                    )
+                    val last = remember(test.running) { SideSplitTest.lastFile(context) }
+                    last?.let { uri ->
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.LAB_SHARE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { shareResult(context, uri) })
                     }
                 }
             }
@@ -512,3 +539,13 @@ private val liquidPlace: FiniteAnimationSpec<IntOffset>
     get() = spring(UiMotion.ratio(0.62f), UiMotion.stiffness(260f, 0.62f))
 private val liquidFade: FiniteAnimationSpec<Float>
     get() = spring(1f, UiMotion.stiffness(400f, 1f))
+
+/** 시험 결과 파일을 공유 창으로 보낸다. */
+internal fun shareResult(context: android.content.Context, uri: android.net.Uri) {
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    runCatching { context.startActivity(Intent.createChooser(send, Copy.LAB_SHARE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+}
