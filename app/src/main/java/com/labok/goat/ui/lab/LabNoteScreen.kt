@@ -6,13 +6,17 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -52,6 +56,7 @@ private const val PASTE_MIN_CHARS = 30
  * 공유를 마치고 돌아오면 파일과 글을 지운다. [붙여넣고 공유]는 클립보드 글을 한 번에 처리하고,
  * 입력란에 직접 붙여넣어도(한 번에 [PASTE_MIN_CHARS]자 이상 늘면) 같은 일을 한다.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun LabNoteScreen(contentPadding: PaddingValues) {
     val c = LocalLiquid.current
@@ -82,29 +87,34 @@ internal fun LabNoteScreen(contentPadding: PaddingValues) {
         Modifier
             .fillMaxSize()
             .padding(contentPadding)
+            // 아래 여백(내비게이션 막대)은 contentPadding에 이미 들어 있어, 키보드 여백에서 그만큼 빼야 사이가 뜨지 않는다(1.17.5 전수 점검: 약 48dp 빔)
+            .consumeWindowInsets(contentPadding)
             .padding(horizontal = 16.dp)
             .padding(top = 4.dp, bottom = 16.dp)
             .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
-            Text(Copy.FEATURE_LAB_NOTE, fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(Copy.LAB_NOTE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton(Copy.LAB_NOTE_PASTE_SHARE, modifier = Modifier.fillMaxWidth(), onClick = {
-                val clip = context.getSystemService(ClipboardManager::class.java)?.primaryClip
-                val pasted = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
-                if (pasted.isBlank()) {
-                    Toast.makeText(context, "클립보드에 글이 없습니다.", Toast.LENGTH_SHORT).show()
-                } else {
-                    text = pasted
-                    share(pasted)
-                }
-            })
-            Spacer(Modifier.height(Gap.Item))
-            Text(Copy.LAB_NOTE_SHARE_MENU, color = c.muted, style = MaterialTheme.typography.labelSmall)
+        // 키보드가 올라오면 위 카드를 접어 입력란이 한 줄로 줄지 않게 한다(힌트 글이 잘렸다)
+        if (!WindowInsets.isImeVisible) {
+            GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
+                Text(Copy.FEATURE_LAB_NOTE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(Copy.LAB_NOTE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(Gap.Item))
+                LiquidButton(Copy.LAB_NOTE_PASTE_SHARE, modifier = Modifier.fillMaxWidth(), onClick = {
+                    val clip = context.getSystemService(ClipboardManager::class.java)?.primaryClip
+                    val pasted = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
+                    if (pasted.isBlank()) {
+                        Toast.makeText(context, "클립보드에 글이 없습니다.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        text = pasted
+                        share(pasted)
+                    }
+                })
+                Spacer(Modifier.height(Gap.Item))
+                Text(Copy.LAB_NOTE_SHARE_MENU, color = c.muted, style = MaterialTheme.typography.labelSmall)
+            }
         }
-        Spacer(Modifier.height(Gap.Card))
+        if (!WindowInsets.isImeVisible) Spacer(Modifier.height(Gap.Card))
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth).weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("직접 붙여넣기", fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))

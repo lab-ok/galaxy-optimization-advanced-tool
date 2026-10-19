@@ -162,7 +162,9 @@ private fun LiquidBucketColumns(buckets: List<BatteryHistory.Bucket>, selected: 
         listOf(1f, 0.5f).forEach { f ->
             val y = chartH * (1f - f)
             drawLine(c.line, Offset(0f, y), Offset(chartW, y), 1.dp.toPx())
-            val v = measurer.measure("${(top * f).roundToInt()}%", small)
+            // 가운데 줄이 2.5%처럼 반 단위면 반올림하지 않고 그대로 적는다(3%로 보여 눈금이 고르지 않았다, 1.17.5 전수 점검)
+            val value = top * f
+            val v = measurer.measure(if (value % 1f == 0f) "${value.roundToInt()}%" else "%.1f%%".format(value), small)
             drawText(v, topLeft = Offset(chartW + 4.dp.toPx(), (y - v.size.height / 2f).coerceAtLeast(0f)))
         }
         drawLine(c.line, Offset(0f, chartH), Offset(chartW, chartH), 1.dp.toPx())

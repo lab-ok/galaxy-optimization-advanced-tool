@@ -56,8 +56,8 @@ import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
-import kotlin.math.abs
 import com.labok.goat.ui.text.Copy
+import kotlin.math.abs
 
 /** 기준 도형 한 변(dp). 런처 아이콘 크기와 같다. */
 private const val REF_DP = 48
@@ -95,49 +95,51 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
         )
         Spacer(Modifier.height(Gap.Section))
 
-        if (state.foldable) GlassCard(accent = c.ink) {
-            Text("세로 줄 수 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(
-                "두 화면은 실제 높이가 거의 같아서, 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다. 가장 구분하기 쉬운 방법입니다.",
-                color = c.muted,
-                style = MaterialTheme.typography.bodySmall
-            )
-            Spacer(Modifier.height(Gap.Item))
-            val cover = outer?.screen?.key
-            val outerRows = if (outer != null && outerDpi != null) ScreenGeometry.orientedSize(outer.screen.key, cover, false)?.let { ScreenGeometry.rowsFor(it.second, outerDpi) } else null
-            val innerRows = if (inner != null && innerDpi != null) ScreenGeometry.orientedSize(inner.screen.key, cover, true)?.let { ScreenGeometry.rowsFor(it.second, innerDpi) } else null
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                RowsFigure("외부 화면", outerRows)
-                RowsFigure("내부 화면", innerRows)
-            }
-            if (outerRows != null && innerRows != null) {
-                val diff = (innerRows - outerRows) / outerRows * 100f
+        if (state.foldable) {
+            GlassCard(accent = c.ink) {
+                Text("세로 줄 수 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(
+                    "두 화면은 실제 높이가 거의 같아서, 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다. 가장 구분하기 쉬운 방법입니다.",
+                    color = c.muted,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(Modifier.height(Gap.Item))
+                val cover = outer?.screen?.key
+                val outerRows = if (outer != null && outerDpi != null) ScreenGeometry.orientedSize(outer.screen.key, cover, false)?.let { ScreenGeometry.rowsFor(it.second, outerDpi) } else null
+                val innerRows = if (inner != null && innerDpi != null) ScreenGeometry.orientedSize(inner.screen.key, cover, true)?.let { ScreenGeometry.rowsFor(it.second, innerDpi) } else null
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    RowsFigure("외부 화면", outerRows)
+                    RowsFigure("내부 화면", innerRows)
+                }
+                if (outerRows != null && innerRows != null) {
+                    val diff = (innerRows - outerRows) / outerRows * 100f
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(
+                        "차이 %+.1f%% · %s".format(
+                            diff,
+                            if (abs(diff) < 2f) {
+                                "일치"
+                            } else if (diff > 0) {
+                                "내부 화면이 더 작게 표시됨(보정 + 방향)"
+                            } else {
+                                "내부 화면이 더 크게 표시됨(보정 − 방향)"
+                            }
+                        ),
+                        color = if (abs(diff) < 2f) c.ink else c.danger,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+                Spacer(Modifier.height(Gap.Card))
+                LiquidButton("전체 화면으로 줄 수 보기", modifier = Modifier.fillMaxWidth(), onClick = onCount)
                 Spacer(Modifier.height(Gap.Item))
                 Text(
-                    "차이 %+.1f%% · %s".format(
-                        diff,
-                        if (abs(diff) < 2f) {
-                            "일치"
-                        } else if (diff > 0) {
-                            "내부 화면이 더 작게 표시됨(보정 + 방향)"
-                        } else {
-                            "내부 화면이 더 크게 표시됨(보정 − 방향)"
-                        }
-                    ),
-                    color = if (abs(diff) < 2f) c.ink else c.danger,
-                    fontWeight = FontWeight.SemiBold,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    "전체 화면에 번호 매긴 줄을 채웁니다. 이 상태로 접고 펼쳐서 두 화면의 마지막 번호를 비교해 보세요.",
+                    color = c.muted,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
-            Spacer(Modifier.height(Gap.Card))
-            LiquidButton("전체 화면으로 줄 수 보기", modifier = Modifier.fillMaxWidth(), onClick = onCount)
-            Spacer(Modifier.height(Gap.Item))
-            Text(
-                "전체 화면에 번호 매긴 줄을 채웁니다. 이 상태로 접고 펼쳐서 두 화면의 마지막 번호를 비교해 보세요.",
-                color = c.muted,
-                style = MaterialTheme.typography.bodySmall
-            )
         }
         Spacer(Modifier.height(Gap.Item))
 

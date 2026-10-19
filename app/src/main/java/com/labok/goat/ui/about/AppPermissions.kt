@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import com.labok.goat.data.appsize.AppUsage
+import com.labok.goat.data.lab.VolumeRotate
 
 /** 앱이 쓰는 권한과 받는 방법. 최종 APK의 권한 목록(aapt2 dump permissions)과 맞춘다. */
 internal object AppPermissions {
@@ -14,7 +15,8 @@ internal object AppPermissions {
     enum class How(val label: String) {
         ADB("Shizuku·PC adb로 1회 부여"),
         USER("사용자 허용"),
-        INSTALL("설치 시 자동")
+        INSTALL("설치 시 자동"),
+        GOAT("시스템 설정 권한으로 GOAT가 켬")
     }
 
     data class Item(
@@ -31,6 +33,9 @@ internal object AppPermissions {
     /** Shizuku API를 쓰는 권한(Shizuku 라이브러리가 매니페스트에 넣는다). Shizuku의 허용 창에서 받는다. */
     private const val SHIZUKU_API = "moe.shizuku.manager.permission.API_V23"
 
+    /** 접근성 서비스(볼륨 버튼 회전)를 가리키는 이름. 매니페스트 권한이 아니라 서비스 등록이라 [granted]에서 따로 본다. */
+    private const val ACCESSIBILITY = "accessibility"
+
     // 권한 이름은 컴파일 때 문자열로 박히는 상수라 낮은 버전에서도 안전하다. 해당 버전 미만은 applies로 거른다.
 
     @SuppressLint("InlinedApi")
@@ -38,7 +43,7 @@ internal object AppPermissions {
         Item(
             Manifest.permission.WRITE_SECURE_SETTINGS,
             "시스템 설정 변경",
-            "외부·내부 화면의 DPI를 바꾸고, 흔들어서 화면 회전에서 회전 잠금 방향을 바꾸는 데 필요합니다. 일반 권한 창으로는 받을 수 없어 Shizuku나 PC의 adb로 받습니다.",
+            "화면 DPI, 애니메이션 속도, 흔들어서 화면 회전의 회전 방향, 비행기 모드 무선, 상태 표시줄 아이콘을 바꾸고 볼륨 버튼 회전의 접근성 서비스를 켜는 데 필요합니다. 일반 권한 창으로는 받을 수 없어 Shizuku나 PC의 adb로 받습니다.",
             How.ADB
         ),
         Item(
@@ -66,6 +71,14 @@ internal object AppPermissions {
             "다른 앱 위에 표시",
             "상태 표시줄의 상단바 숨기기에서 다른 앱 위에 투명한 창을 띄워 상단바를 숨길 때 씁니다. Shizuku가 연결되면 GOAT가 자동으로 허용합니다.",
             How.USER,
+            optional = true
+        ),
+        // 권한은 아니지만 사용자가 알아야 할 시스템 접근이라 함께 보인다(1.17.5 전수 점검: '전체 권한'에서 빠져 있었다)
+        Item(
+            ACCESSIBILITY,
+            "접근성 서비스",
+            "볼륨 버튼 회전을 켜면 화면 방향에 맞춰 볼륨 키를 바꾸려고 볼륨 키 입력만 받습니다. 화면 내용은 읽지 않습니다.",
+            How.GOAT,
             optional = true
         ),
         Item(
@@ -119,6 +132,7 @@ internal object AppPermissions {
         item.permission == Manifest.permission.PACKAGE_USAGE_STATS -> AppUsage.hasAccess(context)
         item.permission == Manifest.permission.REQUEST_INSTALL_PACKAGES -> context.packageManager.canRequestPackageInstalls()
         item.permission == Manifest.permission.SYSTEM_ALERT_WINDOW -> Settings.canDrawOverlays(context)
+        item.permission == ACCESSIBILITY -> VolumeRotate.enabled(context)
         else -> context.checkSelfPermission(item.permission) == PackageManager.PERMISSION_GRANTED
     }
 }

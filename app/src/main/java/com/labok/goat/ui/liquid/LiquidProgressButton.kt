@@ -63,8 +63,9 @@ fun LiquidProgressButton(
         while (true) withFrameNanos { t = (it - start) / 1e9f * UiMotion.speed }
     }
     val measurer = rememberTextMeasurer()
-    // 퍼센트 숫자도 물이 차오르는 속도를 따라 부드럽게 오른다(물과 같은 스프링 값을 쓴다)
-    val pct = (fill * 100).roundToInt()
+    // 퍼센트 숫자는 실제 진행값을 그대로 쓴다. 물과 같은 스프링 값을 쓰면 단계 글자가 6/6까지 가도 숫자가 5~27%에 머물러
+    // 멈춘 것처럼 보였다(1.11.4·1.17.5 전수 점검, 실험실 조사 도구). 물 높이만 스프링으로 따라간다
+    val pct = (progress.coerceIn(0f, 1f) * 100).roundToInt()
     val label = "$status · $pct%"
     Box(
         modifier
