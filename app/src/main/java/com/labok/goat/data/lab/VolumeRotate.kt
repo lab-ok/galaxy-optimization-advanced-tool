@@ -38,7 +38,7 @@ object VolumeRotate {
     }
 
     /** 서비스를 켜거나 끈다(시스템 설정 권한). 성공하면 true. */
-    fun setEnabled(context: Context, on: Boolean): Boolean = runCatching {
+    fun setEnabled(context: Context, on: Boolean, why: String? = null): Boolean = runCatching {
         val r = context.contentResolver
         val c = component(context)
         val others = Settings.Secure.getString(r, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
@@ -47,7 +47,7 @@ object VolumeRotate {
         Settings.Secure.putString(r, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, next)
         if (on) Settings.Secure.putInt(r, Settings.Secure.ACCESSIBILITY_ENABLED, 1)
         prefs(context).edit().putBoolean(KEY_WANTED, on).apply()
-        LogRepository.from(context).add("볼륨 버튼 회전: ${if (on) "켬" else "끔"}")
+        LogRepository.from(context).add("볼륨 버튼 회전: ${if (on) "켬" else "끔"}" + (why?.let { " ($it)" } ?: ""))
         enabled(context) == on
     }.getOrDefault(false)
 
@@ -57,10 +57,7 @@ object VolumeRotate {
      */
     fun restoreIfWanted(context: Context) {
         if (!prefs(context).getBoolean(KEY_WANTED, false) || enabled(context)) return
-        runCatching {
-            setEnabled(context, true)
-            LogRepository.from(context).add("볼륨 버튼 회전: 강제 종료로 꺼져 있어 다시 켬")
-        }
+        runCatching { setEnabled(context, true, "강제 종료로 꺼져 있어 다시 켬") }
     }
 
     /** 바꾸는 방향을 반대로(폴드 메인 화면처럼 기본 방향이 다른 화면용). */
