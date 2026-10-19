@@ -232,6 +232,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             val name = PublicLogFile.timestampedName("diagnostic")
             val saved = PublicLogFile.saveNew(app, name, DiagnosticReport.build(app)) ?: error("파일 생성 실패")
             logRepo.add("진단 로그 저장: ${PublicLogFile.displayPath}$name")
+            // 진단 파일에 지금까지의 충돌이 담겼으니 홈의 비정상 종료 카드는 내린다(새 충돌이 생기면 다시 뜬다)
+            CrashRecorder.markReported(app)
             listOfNotNull(saved, PublicLogFile.todayUri(app))
         }.getOrElse {
             logRepo.add("진단 로그 저장 실패: ${it.javaClass.simpleName}: ${it.message}")
@@ -271,7 +273,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             watchFold = settings.watchFold,
             lastApply = settings.lastApply,
             displays = displays,
-            hasCrash = CrashRecorder.read(getApplication()).isNotBlank(),
+            hasCrash = CrashRecorder.hasNew(getApplication()),
             foldable = DeviceKind.isFoldable(getApplication()),
             inactivePpi = settings.inactivePpi
         )

@@ -30,7 +30,27 @@ object CrashRecorder {
 
     fun clear(context: Context) {
         Storage.crashFile(context).delete()
+        prefs(context).edit().remove(KEY_REPORTED).apply()
     }
+
+    /**
+     * 아직 보내지 않은 새 충돌이 있는지(홈 '비정상 종료 기록' 카드용). 예전에는 기록이 하나라도 있으면 카드가 계속 떠서,
+     * 이미 보내 고친 옛 충돌(10-15·10-17)로 진단 파일을 보낸 뒤에도 '비정상 종료됐다'고 보였다(2026-10-19 사용자 신고).
+     * 기록 파일 길이를 마지막으로 보낸 때와 비교한다. 진단 기록에는 지난 충돌까지 그대로 남긴다.
+     */
+    fun hasNew(context: Context): Boolean {
+        val f = Storage.crashFile(context)
+        return f.exists() && f.length() > prefs(context).getLong(KEY_REPORTED, 0L)
+    }
+
+    /** 진단 파일을 만들어 보냈을 때: 지금까지의 충돌은 알린 것으로 본다. */
+    fun markReported(context: Context) {
+        prefs(context).edit().putLong(KEY_REPORTED, Storage.crashFile(context).let { if (it.exists()) it.length() else 0L }).apply()
+    }
+
+    private const val KEY_REPORTED = "reported_bytes"
+
+    private fun prefs(context: Context) = context.applicationContext.getSharedPreferences("crash_recorder", Context.MODE_PRIVATE)
 
     private fun record(context: Context, thread: Thread, error: Throwable) {
         val trace = StringWriter().also { error.printStackTrace(PrintWriter(it)) }.toString()
