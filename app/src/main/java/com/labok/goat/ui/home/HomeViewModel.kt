@@ -261,7 +261,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         val displays = dpi.displays()
         displays.forEach { d -> if (d.id != 0 && d.screen?.key != screen?.key) learner.observeInactive(d.id, d.screen) }
         val plan = settings.plan()
-        val external = settings.externalChange ?: fixer.checkExternal("앱 화면")
+        // 저장된 외부 변경도 지금 값과 다시 대조한다(그사이 값이 또 바뀌었으면 옛 '바뀐 값'을 보여 주지 않게)
+        fixer.checkExternal("앱 화면")
+        val external = settings.externalChange
         return UiState(
             external = external,
             rulerPpi = settings.rulerPpi,

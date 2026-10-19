@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,6 +91,14 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
     LaunchedEffect(advanced) {
         if (advanced) {
             delay(320)
+            // 펼침이 아직 자라는 중이면 남은 거리가 모자라 맨 아래 버튼이 막대 뒤에 걸렸다(1.17.6 점검 2차). 마지막 칸 높이가 멈출 때까지 기다린다
+            var prev = -1
+            for (i in 0 until 40) {
+                withFrameNanos { }
+                val h = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.size ?: break
+                if (h == prev) break
+                prev = h
+            }
             // 끝까지 남은 거리만큼 부드럽게 굴린다. 예전처럼 큰 오프셋을 주면 한 프레임에 끝으로 튀었다(1.17.5 전수 점검)
             val info = listState.layoutInfo
             val last = info.visibleItemsInfo.lastOrNull()

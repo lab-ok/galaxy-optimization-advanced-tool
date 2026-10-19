@@ -167,9 +167,13 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             Text("예상 실측 크기", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text("${REF_DP}dp 기준 도형이 ${if (state.foldable) "각 화면" else "이 화면"}에서 차지하는 실제 길이입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
-            val outerMm = if (outer != null && outerDpi != null) ScreenGeometry.dpToMm(REF_DP, outerDpi, state.rulerPpi[outer.screen.key] ?: outer.screen.ppi) else null
+            // 화면이 하나면 외부 화면 대신 지금 화면으로 계산한다(외부 화면을 찾으면 늘 '정보 없음'이었다, 1.17.6 점검 2차)
+            // 아직 기준을 정하지 않아 계획이 없으면 켜진 화면 정보와 지금 DPI를 쓴다
+            val first = if (state.foldable) outer?.screen else current?.screen ?: state.activeScreen
+            val firstDpi = if (state.foldable) outerDpi else current?.let { state.plan?.targetFor(it.screen)?.dpi } ?: state.dpi?.current
+            val outerMm = if (first != null && firstDpi != null) ScreenGeometry.dpToMm(REF_DP, firstDpi, state.rulerPpi[first.key] ?: first.ppi) else null
             val innerMm = if (inner != null && innerDpi != null) ScreenGeometry.dpToMm(REF_DP, innerDpi, state.rulerPpi[inner.screen.key] ?: inner.screen.ppi) else null
-            InfoRow(if (state.foldable) "외부 화면" else "이 화면", outerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, outerDpi, outer!!.screen.ppi) } ?: "정보 없음")
+            InfoRow(if (state.foldable) "외부 화면" else "이 화면", outerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, firstDpi, first!!.ppi) } ?: "정보 없음")
             if (state.foldable) InfoRow("내부 화면", innerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, innerDpi, inner!!.screen.ppi) } ?: "정보 없음")
             // 화면이 하나면 두 화면 비교는 없다
             if (state.foldable && outerMm != null && innerMm != null) {

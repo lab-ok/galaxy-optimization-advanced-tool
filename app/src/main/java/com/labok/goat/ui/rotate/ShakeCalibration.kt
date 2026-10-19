@@ -47,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -104,12 +105,14 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
     var failed by remember { mutableStateOf(false) }
     var tune by remember { mutableStateOf(LiquidTune.read(context)) }
     var tuning by remember { mutableStateOf(false) }
-    // 물방울 조절을 펼치면 조절바 대부분이 시트 아래로 숨었다(QA 1차). 펼침이 끝날 무렵 펼친 내용이 보이도록 굴린다
-    val bringTuner = remember { BringIntoViewRequester() }
+    // 물방울 조절을 펼치면 조절바 대부분이 시트 아래로 숨었다(QA 1차). 펼침이 끝날 무렵 물방울 위쪽을 화면 맨 위에 맞춰
+    // 물방울·[물방울 조절]·조절바 앞부분이 한 화면에 들어오게 한다. 버튼만 끌어오면 물방울이 화면 밖으로 밀렸다(1.17.6 점검 2차)
+    val bringBubble = remember { BringIntoViewRequester() }
     LaunchedEffect(tuning) {
         if (tuning) {
             delay(320)
-            bringTuner.bringIntoView()
+            // 화면보다 큰 사각형을 주면 그 위쪽 끝을 화면 위에 맞춘다
+            bringBubble.bringIntoView(Rect(0f, 0f, 1f, Float.MAX_VALUE / 4))
         }
     }
     // 제목은 다른 시트처럼 왼쪽, 본문(물방울·결과)은 가운데
@@ -128,15 +131,17 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center
             )
-            LiquidPlayground(round = round, recording = running, look = LiquidTune.look(tune), onDone = { lv ->
-                running = false
-                if (lv == null) {
-                    failed = true
-                } else {
-                    ShakeRotate.setLevel(context, lv, "자동 맞추기")
-                    result = lv
-                }
-            })
+            Box(Modifier.fillMaxWidth().bringIntoViewRequester(bringBubble)) {
+                LiquidPlayground(round = round, recording = running, look = LiquidTune.look(tune), onDone = { lv ->
+                    running = false
+                    if (lv == null) {
+                        failed = true
+                    } else {
+                        ShakeRotate.setLevel(context, lv, "자동 맞추기")
+                        result = lv
+                    }
+                })
+            }
             // 물방울 조절 중에는 시작 안내를 접어, 조절바를 움직이며 바로 위 물방울이 바뀌는 것을 함께 보게 한다(1.17.5 전수 점검:
             // 펼친 조절바를 보이려고 굴리면 물방울이 시트 위로 밀려났다). 맞추는 중이면 그대로 둔다
             AnimatedVisibility(!tuning || running, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
@@ -199,8 +204,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                 }
             }
             Spacer(Modifier.height(Gap.Item))
-            // 굴릴 때 [물방울 조절] 버튼까지 함께 보이게 버튼과 조절바를 한 묶음으로 끌어온다(버튼 글자가 잘렸다)
-            Column(Modifier.fillMaxWidth().bringIntoViewRequester(bringTuner)) {
+            Column(Modifier.fillMaxWidth()) {
                 LiquidButton(Copy.FLUID_TUNE, modifier = Modifier.fillMaxWidth(), primary = false, onClick = { tuning = !tuning })
                 AnimatedVisibility(tuning, enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                     FluidTuner(tune, onChange = { tune = it })
