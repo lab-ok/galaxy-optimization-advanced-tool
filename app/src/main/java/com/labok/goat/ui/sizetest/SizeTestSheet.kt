@@ -84,13 +84,18 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
     SheetColumn {
         Text("크기 테스트", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Text(
-            "이 화면을 연 채로 기기를 접고 펼쳐 아래 기준 도형과 글자가 두 화면에서 같은 크기로 보이는지 확인합니다.",
+            // 화면이 하나인 기기에는 접고 펴는 안내와 두 화면 비교가 맞지 않는다(1.17.5 전수 점검)
+            if (state.foldable) {
+                "이 화면을 연 채로 기기를 접고 펼쳐 아래 기준 도형과 글자가 두 화면에서 같은 크기로 보이는지 확인합니다."
+            } else {
+                "아래 기준 도형과 글자가 바꾼 배율에서 어떤 크기로 보이는지 확인합니다."
+            },
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
         )
         Spacer(Modifier.height(Gap.Section))
 
-        GlassCard(accent = c.ink) {
+        if (state.foldable) GlassCard(accent = c.ink) {
             Text("세로 줄 수 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "두 화면은 실제 높이가 거의 같아서, 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다. 가장 구분하기 쉬운 방법입니다.",
@@ -157,13 +162,14 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
 
         GlassCard {
             Text("예상 실측 크기", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text("${REF_DP}dp 기준 도형이 각 화면에서 차지하는 실제 길이입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text("${REF_DP}dp 기준 도형이 ${if (state.foldable) "각 화면" else "이 화면"}에서 차지하는 실제 길이입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             val outerMm = if (outer != null && outerDpi != null) ScreenGeometry.dpToMm(REF_DP, outerDpi, state.rulerPpi[outer.screen.key] ?: outer.screen.ppi) else null
             val innerMm = if (inner != null && innerDpi != null) ScreenGeometry.dpToMm(REF_DP, innerDpi, state.rulerPpi[inner.screen.key] ?: inner.screen.ppi) else null
-            InfoRow("외부 화면", outerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, outerDpi, outer!!.screen.ppi) } ?: "정보 없음")
-            InfoRow("내부 화면", innerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, innerDpi, inner!!.screen.ppi) } ?: "정보 없음")
-            if (outerMm != null && innerMm != null) {
+            InfoRow(if (state.foldable) "외부 화면" else "이 화면", outerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, outerDpi, outer!!.screen.ppi) } ?: "정보 없음")
+            if (state.foldable) InfoRow("내부 화면", innerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, innerDpi, inner!!.screen.ppi) } ?: "정보 없음")
+            // 화면이 하나면 두 화면 비교는 없다
+            if (state.foldable && outerMm != null && innerMm != null) {
                 val diff = (innerMm - outerMm) / outerMm * 100f
                 val ok = abs(diff) < 2f
                 InfoRow("차이", "%+.1f%% · %s".format(diff, if (ok) "일치" else "불일치"), emphasize = true)
@@ -178,7 +184,7 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-            } else {
+            } else if (state.foldable) {
                 Text("기기를 한 번 접었다 펼치면 두 화면을 비교할 수 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
         }

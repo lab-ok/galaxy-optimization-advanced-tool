@@ -54,6 +54,12 @@ class SettingsRepository(private val store: KeyValueStore) {
             store.putInt(KEY_TARGET, value)
         }
 
+    /**
+     * 목표 DPI를 지운다(기본 DPI로 복원할 때). SharedPreferences는 null을 넣으면 키를 지운다.
+     * 복원 뒤에도 목표가 남아 홈 카드가 옛 값을 보이고 '적용되지 않았습니다 [지금 적용]'이 떠 복원이 실패한 것처럼 보였다(1.11.4·1.17.5 전수 점검).
+     */
+    fun clearTarget() = store.putString(KEY_TARGET, null)
+
     /** 자동 복구 전체 스위치. 끄면 부팅·접기/펼치기 어떤 자동 동작도 하지 않는다. */
     var autoRecover: Boolean
         get() = store.getBoolean(KEY_AUTO, true)
