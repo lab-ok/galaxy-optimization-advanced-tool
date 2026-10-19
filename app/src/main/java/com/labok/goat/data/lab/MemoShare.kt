@@ -45,7 +45,10 @@ object MemoShare {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         return Intent.createChooser(send, "TXT로 공유").apply {
-            putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, arrayOf(ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity")))
+            putExtra(
+                Intent.EXTRA_EXCLUDE_COMPONENTS,
+                arrayOf(ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity"), ComponentName(context, "com.labok.goat.ui.lab.TranscriptShareActivity"))
+            )
         }
     }
 
@@ -57,13 +60,13 @@ object MemoShare {
     }
 
     /**
-     * 'TXT로 공유' 입구들을 켜거나 끈다(실험실을 열었을 때만 보이게): 다른 앱 공유 메뉴, 빠른 설정 타일,
+     * 'TXT로 공유' 입구들을 켜거나 끈다(실험실을 열었을 때만 보이게): 다른 앱 공유 메뉴('TXT로 공유'·'전사문 저장'), 빠른 설정 타일,
      * GOAT 아이콘을 길게 누르면 나오는 '클립보드를 TXT로 공유' 바로가기.
      */
     fun setShareTarget(context: Context, on: Boolean) {
         val pm = context.packageManager
         val state = if (on) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-        listOf("com.labok.goat.ui.lab.MemoShareActivity", "com.labok.goat.ui.lab.TxtShareTileService").forEach {
+        listOf("com.labok.goat.ui.lab.MemoShareActivity", "com.labok.goat.ui.lab.TranscriptShareActivity", "com.labok.goat.ui.lab.TxtShareTileService").forEach {
             pm.setComponentEnabledSetting(ComponentName(context, it), state, PackageManager.DONT_KILL_APP)
         }
         val sm = context.getSystemService(ShortcutManager::class.java) ?: return

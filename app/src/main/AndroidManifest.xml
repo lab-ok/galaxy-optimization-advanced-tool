@@ -216,6 +216,21 @@
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <!-- 실험실: 다른 앱 공유 메뉴의 '전사문 저장'(삼성 음성 녹음 전사문을 나·상대로 바꿔 저장). 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
+        <activity
+            android:name=".ui.lab.TranscriptShareActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="전사문 저장(나·상대)"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
         <!-- 실험실: 빠른 설정 타일 'TXT로 공유'. 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
         <service
             android:name=".ui.lab.TxtShareTileService"

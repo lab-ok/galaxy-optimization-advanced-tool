@@ -2,6 +2,14 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.17.7 · 2026-10-19
+
+<sub>숨은 기능을 다듬었습니다.</sub>
+
+#### 변경
+
+- <sub>숨은 기능을 다듬었습니다.</sub>
+
 ### GOAT 1.17.6 · 2026-10-19
 
 <sub>전수 점검에서 찾은 문제들을 고쳤습니다.</sub>
