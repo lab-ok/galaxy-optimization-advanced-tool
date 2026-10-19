@@ -53,6 +53,7 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.home.UiState
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidButtonPair
 import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
@@ -246,14 +247,14 @@ private fun RulerCard(state: UiState, current: PanelSpec.Resolved?, onCalibrate:
             style = MaterialTheme.typography.labelMedium
         )
         Spacer(Modifier.height(Gap.Item))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            LiquidButton("이 폭으로 저장", modifier = Modifier.weight(1f), enabled = pct != 0, disabledHint = Copy.DISABLED_SIZE_UNCHANGED, onClick = { onCalibrate(key, ppi) })
-            LiquidButton("기기 값으로", modifier = Modifier.weight(1f), primary = false, enabled = saved != null, disabledHint = Copy.DISABLED_SIZE_DEFAULT, onClick = { onCalibrate(key, null) })
+        LiquidButtonPair(listOf("이 폭으로 저장", "기기 값으로")) { half ->
+            LiquidButton("이 폭으로 저장", modifier = half, enabled = pct != 0, disabledHint = Copy.DISABLED_SIZE_UNCHANGED, onClick = { onCalibrate(key, ppi) })
+            LiquidButton("기기 값으로", modifier = half, primary = false, enabled = saved != null, disabledHint = Copy.DISABLED_SIZE_DEFAULT, onClick = { onCalibrate(key, null) })
         }
         Spacer(Modifier.height(Gap.Section))
         val px = with(LocalDensity.current) { REF_DP.dp.toPx() }
         Text(
-            "아래 상자는 ${REF_DP}dp로, 이 화면에서 약 %.1f mm입니다.".format(px / ppi * 25.4f),
+            "아래 상자는 ${REF_DP}dp로, 이 화면에서 약 %.1f\u00A0mm입니다.".format(px / ppi * 25.4f),
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
         )

@@ -105,6 +105,8 @@ class GapGuideTest {
                 val next = lines.subList(n, end(lines, n) + 1).joinToString(" ")
                 val want = when {
                     isC && nC && ("weight" in first || "weight" in next) -> continue
+                    // LiquidButtonPair 안의 두 버튼은 묶음이 간격을 맞춘다(가로 배치든 세로로 쌓든)
+                    isC && nC && "modifier = half" in first -> continue
                     isC && nC && "LiquidSwitchRow" in first -> "Gap.Section"
                     isC && nT && "c.ink" in next && "c.muted" !in next -> "Gap.Section"
                     else -> "Gap.Item"

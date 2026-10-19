@@ -74,8 +74,8 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
     // 범례: 기둥의 세 가지 물(가장 옅은 기둥은 충전한 시간대)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Legend(c.ink, "화면 켜짐에 쓴 양")
-        Legend(c.ink.copy(alpha = 0.3f), "대기(화면 꺼짐)에 쓴 양")
-        Legend(c.ink.copy(alpha = 0.12f), "충전한 시간대")
+        Legend(c.ink.copy(alpha = standbyAlpha(c.dark)), "대기(화면 꺼짐)에 쓴 양")
+        Legend(c.ink.copy(alpha = chargeAlpha(c.dark)), "충전한 시간대")
     }
     Spacer(Modifier.height(Gap.Item))
     val hourFmt = remember { SimpleDateFormat("a h시", Locale.KOREA) }
@@ -112,6 +112,11 @@ private fun Legend(color: Color, label: String) {
         Text(label, color = c.ink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 6.dp))
     }
 }
+
+// 다크 카드 위에서는 옅은 물이 배경과 섞여 안 보여 더 진하게 칠한다
+private fun standbyAlpha(dark: Boolean) = if (dark) 0.5f else 0.3f
+
+private fun chargeAlpha(dark: Boolean) = if (dark) 0.26f else 0.12f
 
 private fun floorHour(t: Long): Long {
     val zone = TimeZone.getDefault()
@@ -173,12 +178,12 @@ private fun LiquidBucketColumns(buckets: List<BatteryHistory.Bucket>, selected: 
             val dim = selected != null && selected != i
             val ink = if (dim) c.ink.copy(alpha = 0.3f) else c.ink
             val r = CornerRadius(colW / 2.6f)
-            if (b.charging) drawRoundRect(c.ink.copy(alpha = if (dim) 0.05f else 0.12f), topLeft = Offset(x, 0f), size = Size(colW, chartH), cornerRadius = r)
+            if (b.charging) drawRoundRect(c.ink.copy(alpha = chargeAlpha(c.dark) * (if (dim) 0.4f else 1f)), topLeft = Offset(x, 0f), size = Size(colW, chartH), cornerRadius = r)
             val colH = chartH * fills[i].coerceIn(0f, 1f)
             if (colH > 0.5f) {
                 val y0 = chartH - colH
                 val col = Path().apply { addRoundRect(RoundRect(x, y0, x + colW, chartH, r, r, CornerRadius.Zero, CornerRadius.Zero)) }
-                drawPath(col, c.ink.copy(alpha = 0.3f * (if (dim) 0.5f else 1f)))
+                drawPath(col, c.ink.copy(alpha = standbyAlpha(c.dark) * (if (dim) 0.5f else 1f)))
                 val onShare = if (b.usedPct > 0f) (b.screenPct / b.usedPct).coerceIn(0f, 1f) else 0f
                 val onH = colH * onShare
                 if (onH > 0.5f) {

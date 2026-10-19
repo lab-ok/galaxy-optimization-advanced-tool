@@ -126,7 +126,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     if (found != null) {
                         Spacer(Modifier.height(Gap.Item))
                         // 숫자 앞은 줄바꿈하지 않는 공백(좁은 폭에서 '0개'만 다음 줄로 떨어졌다)
-                        Text("이 기기에서 정리할 수 있는 앱\u00A0${apps.size}개 · 꺼 둔 앱\u00A0${offCount}개", color = c.ink, style = MaterialTheme.typography.labelMedium)
+                        Text("이 기기에서 정리할 수 있는 앱\u00A0${apps.size}개 · 꺼\u00A0둔\u00A0앱\u00A0${offCount}개", color = c.ink, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }

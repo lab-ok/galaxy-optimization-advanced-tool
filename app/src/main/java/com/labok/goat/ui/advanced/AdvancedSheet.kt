@@ -156,7 +156,7 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
                     color = c.ink
                 )
                 // 숫자와 단위 사이는 줄바꿈하지 않는 공백(좁은 폭에서 'dpi'만 다음 줄로 떨어졌다)
-                Text("현재 ${d.current?.let { "$it\u00A0dpi" } ?: "꺼짐"} · 기본 ${d.physical}\u00A0dpi", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text("현재 ${d.current?.let { "$it\u00A0dpi" } ?: "꺼짐"} · 기본\u00A0${d.physical}\u00A0dpi", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
             Text(if (open) "접기" else "상세", color = c.muted, style = MaterialTheme.typography.labelMedium)
         }

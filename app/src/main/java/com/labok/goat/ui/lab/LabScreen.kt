@@ -34,6 +34,7 @@ import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidButtonPair
 import com.labok.goat.ui.liquid.LiquidProgressButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
@@ -91,8 +92,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Card))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                LiquidButton("바꾸기 전 저장", modifier = Modifier.weight(1f), onClick = {
+            LiquidButtonPair(listOf("바꾸기 전 저장", "바꾼 뒤 비교")) { half ->
+                LiquidButton("바꾸기 전 저장", modifier = half, onClick = {
                     scope.launch {
                         val snap = withContext(Dispatchers.IO) { SettingsSnapshot.take(context).also { beforeFile.writeText(SettingsSnapshot.serialize(it)) } }
                         hasBefore = true
@@ -100,7 +101,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                         status = "저장했습니다 · " + snap.entries.joinToString(" · ") { "${it.key} ${it.value.size}개" }
                     }
                 })
-                LiquidButton("바꾼 뒤 비교", modifier = Modifier.weight(1f), primary = false, enabled = hasBefore, disabledHint = Copy.DISABLED_NO_BEFORE, onClick = {
+                LiquidButton("바꾼 뒤 비교", modifier = half, primary = false, enabled = hasBefore, disabledHint = Copy.DISABLED_NO_BEFORE, onClick = {
                     scope.launch {
                         val (diff, uri) = withContext(Dispatchers.IO) {
                             val before = SettingsSnapshot.parse(beforeFile.readText())
