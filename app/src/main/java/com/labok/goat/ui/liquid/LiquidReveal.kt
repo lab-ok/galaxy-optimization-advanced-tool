@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,7 +39,7 @@ fun Modifier.liquidReveal(active: Boolean, origin: (Size) -> Offset): Modifier {
     var done by remember { mutableStateOf(false) }
     val path = remember { Path() }
     val bg = LocalLiquid.current.bg
-    var far by remember { mutableStateOf(1f) }
+    var far by remember { mutableFloatStateOf(1f) }
     LaunchedEffect(size) {
         if (size == Size.Zero) return@LaunchedEffect
         val o = origin(size)
