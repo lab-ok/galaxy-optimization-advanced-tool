@@ -21,23 +21,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Springs
 import com.labok.goat.ui.liquid.UiMotion
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlinx.coroutines.delay
 
 /*
  * 배터리 모니터링의 리퀴드 그래프. 앱의 진행 버튼처럼 잉크 물이 차오르고, 물 앞면은 얌전히 출렁인다.
@@ -66,7 +57,7 @@ internal fun rememberFill(target: Float, delayMs: Long = 0L): Float {
         if (reduce) {
             a.snapTo(target)
         } else {
-            if (a.value == 0f && delayMs > 0) kotlinx.coroutines.delay(delayMs)
+            if (a.value == 0f && delayMs > 0) delay(delayMs)
             a.animateTo(target, Springs.water())
         }
     }
@@ -143,7 +134,9 @@ internal fun BatteryBarsArt(level: Int, charging: Boolean, modifier: Modifier = 
             val r = CornerRadius(barW * 0.3f)
             drawRoundRect(c.ink.copy(alpha = 0.12f), topLeft = Offset(bx, by), size = Size(barW, barH), cornerRadius = r)
             val base = (levelBars - i).coerceIn(0f, 1f)
-            val f = if (charging) maxOf(base, (sweep - i).coerceIn(0f, 1f)) else {
+            val f = if (charging) {
+                maxOf(base, (sweep - i).coerceIn(0f, 1f))
+            } else {
                 // 사용 중: 찬 칸의 윗면이 저마다 살짝 오르내린다(빈 칸은 그대로)
                 if (base <= 0f) 0f else (base - 0.06f + 0.06f * sin(t * 2.2f + i * 1.3f)).coerceIn(0.04f, 1f)
             }

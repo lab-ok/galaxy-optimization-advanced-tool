@@ -43,6 +43,7 @@ import com.labok.goat.ui.liquid.Text
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -83,7 +84,18 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
         Text("기둥 하나가 ${bucketMs / 3_600_000}시간입니다. 누르면 그 시간대 사용량이 나옵니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
     } else {
         val range = "${hourFmt.format(Date(pick.start))}~${hourFmt.format(Date(pick.end)).substringAfter(' ')}"
-        Text("$range · ${pctText(pick.usedPct)} 사용" + if (pick.chargedPct >= 0.5f) " · 충전 +${pick.chargedPct.roundToInt()}%" else if (pick.charging) " · 충전" else "", color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            "$range · ${pctText(pick.usedPct)} 사용" + if (pick.chargedPct >= 0.5f) {
+                " · 충전 +${pick.chargedPct.roundToInt()}%"
+            } else if (pick.charging) {
+                " · 충전"
+            } else {
+                ""
+            },
+            color = c.ink,
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.bodyMedium
+        )
         Text(
             "화면 켜짐에 ${pctText(pick.screenPct)} · 대기에 ${pctText(pick.standbyPct)} · 화면 켜짐 ${duration(pick.screenMs)}",
             color = c.muted,
@@ -102,7 +114,7 @@ private fun Legend(color: Color, label: String) {
 }
 
 private fun floorHour(t: Long): Long {
-    val zone = java.util.TimeZone.getDefault()
+    val zone = TimeZone.getDefault()
     val off = zone.getOffset(t)
     return (t + off) / 3_600_000L * 3_600_000L - off
 }

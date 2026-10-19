@@ -2,6 +2,8 @@ package com.labok.goat.data.lab
 
 import com.labok.goat.data.shizuku.ShizukuAccess
 import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
@@ -72,7 +74,7 @@ object BatteryHistory {
         val lines = r.out.lines()
         appendLine("거른 출력: ${r.out.length}자 ${lines.size}줄 · 종료 ${if (r.ok) "정상" else "실패"}${r.err.takeIf { it.isNotBlank() }?.let { " · 오류 ${it.take(300)}" } ?: ""}")
         val points = parse(r.out, now = now)
-        appendLine("읽은 시점: ${points.size}개" + (points.firstOrNull()?.let { " · 처음 ${java.util.Date(it.time)} ${it.level}% · 마지막 ${java.util.Date(points.last().time)} ${points.last().level}%" } ?: ""))
+        appendLine("읽은 시점: ${points.size}개" + (points.firstOrNull()?.let { " · 처음 ${Date(it.time)} ${it.level}% · 마지막 ${Date(points.last().time)} ${points.last().level}%" } ?: ""))
         appendLine("-- 거른 출력 앞 15줄")
         lines.take(15).forEach { appendLine(it.take(200)) }
         appendLine("-- 거른 출력 끝 5줄")
@@ -92,6 +94,7 @@ object BatteryHistory {
     }
 
     private val LINE = Regex("""^\s*(0|\+[0-9dhms]+)\s+\(\d+\)\s+(.*)$""")
+
     /** 새 형식(Android 16 이후 삼성 실기 'Battery History [Format: 2]'): 줄 앞이 실제 시각(월-일 시:분:초.밀리초)이다. */
     private val LINE2 = Regex("""^\s*(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d{3})\s+(.*)$""")
     private val PART = Regex("""(\d+)(ms|d|h|m|s)""")
@@ -181,9 +184,9 @@ object BatteryHistory {
      * 월이 줄어들면(12월 → 1월) 해를 넘긴 것으로 본다.
      */
     private fun parse2(text: String, zone: TimeZone, now: Long?): List<Point> {
-        val cal = java.util.Calendar.getInstance(zone)
+        val cal = Calendar.getInstance(zone)
         var year = text.lineSequence().mapNotNull { Regex("""RESET:TIME: (\d{4})-""").find(it)?.groupValues?.get(1)?.toIntOrNull() }.firstOrNull()
-            ?: cal.apply { timeInMillis = now ?: System.currentTimeMillis() }.get(java.util.Calendar.YEAR)
+            ?: cal.apply { timeInMillis = now ?: System.currentTimeMillis() }.get(Calendar.YEAR)
         var lastMonth = -1
         val out = ArrayList<Point>()
         var level = -1

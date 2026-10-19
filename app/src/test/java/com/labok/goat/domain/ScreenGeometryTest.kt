@@ -1,6 +1,7 @@
 package com.labok.goat.domain
 
 import com.labok.goat.domain.ScreenGeometry
+import com.labok.goat.ui.components.displayCommand
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -35,7 +36,7 @@ class RowsTest {
 class CommandDisplayTest {
     @Test
     fun longWordGoesOnItsOwnLine() {
-        val shown = com.labok.goat.ui.components.displayCommand(
+        val shown = displayCommand(
             ".\\adb shell pm grant com.labok.goat android.permission.WRITE_SECURE_SETTINGS"
         )
         assertEquals(".\\adb shell pm grant com.labok.goat\nandroid.permission.WRITE_SECURE_SETTINGS", shown)

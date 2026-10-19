@@ -10,9 +10,11 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
@@ -42,14 +44,19 @@ object StatusBarHider {
     private const val NOTIFICATION_ID = 3201
     private val main = Handler(Looper.getMainLooper())
     private var view: View? = null
+
     /** 다시 숨기기 예약 세대. 끄거나 새로 예약하면 올려서 이전 예약을 무효로 만든다. */
     @Volatile private var regrabGen = 0
+
     /** 마지막으로 본 '키보드 띄우기 실패' 기록 번호(ImeTracker). -1이면 아직 기준을 잡지 않았다. */
     @Volatile private var lastImeFail = -1
+
     /** 바깥 누름 확인이 돌고 있는지(누를 때마다 셸을 겹쳐 부르지 않게). */
     @Volatile private var outsideCheck = false
+
     /** 포커스를 내려놓는 중에 받은 뒤로 가기. 포커스가 넘어가면 앱에 보낸다. */
     private var pendingBack = false
+
     /** 마지막으로 포커스를 내려놓게 한 키가 뒤로 가기였는지. */
     private var lastKeyBack = false
     private val onFlow = MutableStateFlow(false)
@@ -106,9 +113,9 @@ object StatusBarHider {
                 }
             }
 
-            override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
+            override fun onTouchEvent(event: MotionEvent): Boolean {
                 // 다른 앱을 누르면 입력란이었는지 확인한다(키보드 요청이 이 창 때문에 실패했으면 포커스를 넘긴다)
-                if (event.actionMasked == android.view.MotionEvent.ACTION_OUTSIDE) onOutsideTouch(context, this)
+                if (event.actionMasked == MotionEvent.ACTION_OUTSIDE) onOutsideTouch(context, this)
                 return false
             }
 
@@ -208,7 +215,7 @@ object StatusBarHider {
     /** 포커스를 잃은 뒤 다시 숨기기를 예약한다. 포커스를 다시 받으면([regrabGen]이 바뀌면) 멈춘다. */
     private fun scheduleRegrab(context: Context, afterBack: Boolean) {
         val gen = ++regrabGen
-        val power = context.getSystemService(android.os.PowerManager::class.java)
+        val power = context.getSystemService(PowerManager::class.java)
         var tries = 0
         var lastWhy: String? = null
         fun check(delay: Long) {

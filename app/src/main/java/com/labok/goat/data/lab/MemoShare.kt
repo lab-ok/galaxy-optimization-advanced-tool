@@ -1,12 +1,18 @@
 package com.labok.goat.data.lab
 
+import android.content.ClipData
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
+import android.graphics.drawable.Icon
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.ui.lab.ClipShareActivity
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -35,7 +41,7 @@ object MemoShare {
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_STREAM, uri)
-            clipData = android.content.ClipData.newRawUri("", uri)
+            clipData = ClipData.newRawUri("", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         return Intent.createChooser(send, "TXT로 공유").apply {
@@ -60,13 +66,13 @@ object MemoShare {
         listOf("com.labok.goat.ui.lab.MemoShareActivity", "com.labok.goat.ui.lab.TxtShareTileService").forEach {
             pm.setComponentEnabledSetting(ComponentName(context, it), state, PackageManager.DONT_KILL_APP)
         }
-        val sm = context.getSystemService(android.content.pm.ShortcutManager::class.java) ?: return
+        val sm = context.getSystemService(ShortcutManager::class.java) ?: return
         if (on) {
-            val intent = Intent(context, com.labok.goat.ui.lab.ClipShareActivity::class.java).setAction(Intent.ACTION_VIEW)
-            val shortcut = android.content.pm.ShortcutInfo.Builder(context, SHORTCUT_ID)
+            val intent = Intent(context, ClipShareActivity::class.java).setAction(Intent.ACTION_VIEW)
+            val shortcut = ShortcutInfo.Builder(context, SHORTCUT_ID)
                 .setShortLabel("클립보드 TXT로 공유")
                 .setLongLabel("클립보드를 TXT로 공유")
-                .setIcon(android.graphics.drawable.Icon.createWithResource(context, com.labok.goat.R.drawable.ic_shortcut_txt))
+                .setIcon(Icon.createWithResource(context, R.drawable.ic_shortcut_txt))
                 .setIntent(intent)
                 .build()
             runCatching { sm.dynamicShortcuts = listOf(shortcut) }

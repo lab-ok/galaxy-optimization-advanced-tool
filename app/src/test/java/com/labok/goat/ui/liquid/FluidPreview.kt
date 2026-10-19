@@ -6,8 +6,10 @@ import java.io.File
 import java.util.zip.CRC32
 import java.util.zip.Deflater
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.sin
+import kotlin.math.sqrt
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 
@@ -76,7 +78,7 @@ class FluidPreview {
             var v = 0.93f * (1 - al) + 0.09f * al
             val dx = p % size - size / 2f
             val dy = p / size - size / 2f
-            if (kotlin.math.abs(kotlin.math.sqrt(dx * dx + dy * dy) - ring) < 1.2f) v = minOf(v, 0.8f)
+            if (abs(sqrt(dx * dx + dy * dy) - ring) < 1.2f) v = minOf(v, 0.8f)
             img[p] = v
         }
         return img

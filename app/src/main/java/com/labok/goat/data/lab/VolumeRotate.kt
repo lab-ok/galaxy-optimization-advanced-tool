@@ -12,6 +12,10 @@ import android.view.KeyEvent
 import android.view.Surface
 import android.view.accessibility.AccessibilityEvent
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.shizuku.ShizukuAccess
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * 볼륨 버튼 회전(1.16.1 실험실 → 1.17.0 정식): 화면을 돌려 볼륨 버튼 방향이 뒤집히면(버튼이 위로 가는 가로, 거꾸로 세로) 올리기·내리기를 바꾼다.
@@ -99,16 +103,16 @@ object VolumeRotate {
         internal set
 
     internal fun record(line: String) = synchronized(recent) {
-        recent.addLast("${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.KOREA).format(java.util.Date())} $line")
+        recent.addLast("${SimpleDateFormat("HH:mm:ss", Locale.KOREA).format(Date())} $line")
         while (recent.size > 20) recent.removeFirst()
     }
 
     /** 진단 로그용: 켜짐 여부, 옵션, 지금 방향, 서비스 연결 시각, 시스템 접근성 상태, 최근 키 기록. 작업 스레드에서 부른다. */
     fun diagnose(context: Context): String = buildString {
         appendLine("켜짐(설정)=${enabled(context)} 켜 두기로 함=${prefs(context).getBoolean(KEY_WANTED, false)} 반대=${invert(context)} 카메라 예외=${cameraExempt(context)}")
-        appendLine("지금 방향=${rotationLabel(rotation(context))} · 서비스 연결=${if (connectedAt == 0L) "없음(이 프로세스에서)" else java.text.SimpleDateFormat("MM-dd HH:mm:ss", java.util.Locale.KOREA).format(java.util.Date(connectedAt))}")
+        appendLine("지금 방향=${rotationLabel(rotation(context))} · 서비스 연결=${if (connectedAt == 0L) "없음(이 프로세스에서)" else SimpleDateFormat("MM-dd HH:mm:ss", Locale.KOREA).format(Date(connectedAt))}")
         appendLine("enabled_accessibility_services=${Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)}")
-        com.labok.goat.data.shizuku.ShizukuAccess.shell("dumpsys accessibility | grep -i -E 'goat|Bound services|Enabled services|Enabled features'")?.out?.let { appendLine(it.lines().take(10).joinToString("\n") { l -> l.take(300) }) }
+        ShizukuAccess.shell("dumpsys accessibility | grep -i -E 'goat|Bound services|Enabled services|Enabled features'")?.out?.let { appendLine(it.lines().take(10).joinToString("\n") { l -> l.take(300) }) }
         val keys = synchronized(recent) { recent.toList() }
         appendLine("최근 볼륨 키(${keys.size}건):")
         if (keys.isEmpty()) appendLine("  (없음: 볼륨 키가 서비스에 들어오지 않았거나 앱이 다시 시작됨)") else keys.forEach { appendLine("  $it") }

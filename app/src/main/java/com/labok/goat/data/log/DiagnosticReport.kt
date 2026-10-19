@@ -7,6 +7,9 @@ import android.os.Build
 import android.os.Process
 import com.labok.goat.AppInfo
 import com.labok.goat.data.display.DpiManager
+import com.labok.goat.data.lab.BatteryHistory
+import com.labok.goat.data.lab.FlexPanel
+import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.plan
 import com.labok.goat.domain.resolvedPanels
@@ -59,15 +62,15 @@ object DiagnosticReport {
         appendLine()
 
         appendLine("## 배터리 기록(시스템, 실험실 배터리 모니터링)")
-        appendLine(runCatching { com.labok.goat.data.lab.BatteryHistory.diagnose() }.getOrElse { "읽기 실패: $it" })
+        appendLine(runCatching { BatteryHistory.diagnose() }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
         appendLine("## 볼륨 버튼 회전")
-        appendLine(runCatching { com.labok.goat.data.lab.VolumeRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
+        appendLine(runCatching { VolumeRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
         appendLine("## 화면 분할 명령(가로 까딱)")
-        appendLine(runCatching { com.labok.goat.data.lab.FlexPanel.diagnoseSplit() }.getOrElse { "읽기 실패: $it" })
+        appendLine(runCatching { FlexPanel.diagnoseSplit() }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
         appendLine("## 크래시 기록")

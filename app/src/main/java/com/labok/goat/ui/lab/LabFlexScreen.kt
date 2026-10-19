@@ -2,6 +2,7 @@ package com.labok.goat.ui.lab
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -68,7 +69,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.AutoFlex
-import com.labok.goat.data.lab.FlexPanel
 import com.labok.goat.data.lab.SideSplitTest
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.AppEntry
@@ -82,9 +82,9 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
-import com.labok.goat.ui.liquid.LiquidProgressButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
+import com.labok.goat.ui.liquid.LiquidProgressButton
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -541,7 +541,7 @@ private val liquidFade: FiniteAnimationSpec<Float>
     get() = spring(1f, UiMotion.stiffness(400f, 1f))
 
 /** 시험 결과 파일을 공유 창으로 보낸다. */
-internal fun shareResult(context: android.content.Context, uri: android.net.Uri) {
+internal fun shareResult(context: Context, uri: Uri) {
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_STREAM, uri)

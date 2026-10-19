@@ -179,7 +179,7 @@ object QsGrid {
     )
 
     /** 바꿔 둔 값이 남아 있으면 처음 값으로 되돌린다. 작업 스레드에서 부른다. */
-    fun restoreLeftovers(context: android.content.Context) {
+    fun restoreLeftovers(context: Context) {
         all.filter { it.changed(context) }.forEach { it.restore(context) }
     }
 }
