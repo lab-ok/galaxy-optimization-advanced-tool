@@ -71,6 +71,8 @@ class App : Application() {
             AnimationSpeed.seedIfMissing(this)
             AnimationKeepWorker.sync(this)
         }
+        // 기본값으로 풀린 사이 앱이 멈춰 있었으면(강제 종료 등) 바뀜 감지가 지나가 버리므로, 앱이 뜰 때 한 번 직접 확인한다(1.17.5 전수 점검)
+        Thread { runCatching { AnimationSpeed.restoreIfReset(this) } }.start()
         DpiManager.exemptHiddenApis()
         // Shizuku가 켜지며(재부팅 뒤 자동 시작 포함) GOAT에 바인더를 건네면, 옵션에 따라 무선 디버깅을 끈다
         if (ShizukuAccess.autoOffEnabled(this)) ShizukuAccess.watch(this)

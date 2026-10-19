@@ -137,65 +137,74 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                     result = lv
                 }
             })
-            Spacer(Modifier.height(Gap.Item))
-            // 높이 변화는 바깥 시트(animateContentSize) 한 곳에서만 잇는다. AnimatedContent도 기본으로 크기를 따로 움직여
-            // 두 애니메이션이 겹치면서 [시작]을 누를 때 내용이 위로 튀었다가 내려왔다(QA 1차). 여기서는 크기를 바로 맞추고 글자만 바꿔 보인다
-            AnimatedContent(
-                Triple(running, result, failed),
-                transitionSpec = { (fadeIn() togetherWith fadeOut()).using(SizeTransform(clip = false) { _, _ -> snap() }) },
-                label = "calibrate"
-            ) { (run, level, fail) ->
+            // 물방울 조절 중에는 시작 안내를 접어, 조절바를 움직이며 바로 위 물방울이 바뀌는 것을 함께 보게 한다(1.17.5 전수 점검:
+            // 펼친 조절바를 보이려고 굴리면 물방울이 시트 위로 밀려났다). 맞추는 중이면 그대로 둔다
+            AnimatedVisibility(!tuning || running, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    when {
-                        run -> {
-                            // 시트는 아래에 붙어 있어 짧아지면 내용이 위로 튀었다가 시트를 따라 내려온다(QA 1차 재검). 안내 줄 자리를 그대로 비워 높이를 유지한다
-                            Text(
-                                "[시작]을 누른 뒤 ${CALIBRATE_SECONDS}초 동안 평소처럼 기기를 흔들어 주세요.",
-                                modifier = Modifier.alpha(0f).clearAndSetSemantics { },
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(Modifier.height(Gap.Item))
-                            LiquidButton("흔드는 중…", modifier = Modifier.fillMaxWidth(), enabled = false, onClick = {})
-                        }
-                        level != null -> {
-                            Text(
-                                "이후에는 방금과 같거나 조금 약하게 흔들어도 화면이 회전합니다.",
-                                color = c.muted,
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(Modifier.height(Gap.Item))
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                LiquidButton("다시 하기", modifier = Modifier.weight(1f), primary = false, onClick = {
-                                    result = null
-                                    round++
-                                    running = true
-                                })
-                                LiquidButton("확인", modifier = Modifier.weight(1f), onClick = onClose)
+                    Spacer(Modifier.height(Gap.Item))
+                    // 높이 변화는 바깥 시트(animateContentSize) 한 곳에서만 잇는다. AnimatedContent도 기본으로 크기를 따로 움직여
+                    // 두 애니메이션이 겹치면서 [시작]을 누를 때 내용이 위로 튀었다가 내려왔다(QA 1차). 여기서는 크기를 바로 맞추고 글자만 바꿔 보인다
+                    AnimatedContent(
+                        Triple(running, result, failed),
+                        transitionSpec = { (fadeIn() togetherWith fadeOut()).using(SizeTransform(clip = false) { _, _ -> snap() }) },
+                        label = "calibrate"
+                    ) { (run, level, fail) ->
+                        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                            when {
+                                run -> {
+                                    // 시트는 아래에 붙어 있어 짧아지면 내용이 위로 튀었다가 시트를 따라 내려온다(QA 1차 재검). 안내 줄 자리를 그대로 비워 높이를 유지한다
+                                    Text(
+                                        "[시작]을 누른 뒤 ${CALIBRATE_SECONDS}초 동안 평소처럼 기기를 흔들어 주세요.",
+                                        modifier = Modifier.alpha(0f).clearAndSetSemantics { },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(Modifier.height(Gap.Item))
+                                    LiquidButton("흔드는 중…", modifier = Modifier.fillMaxWidth(), enabled = false, onClick = {})
+                                }
+                                level != null -> {
+                                    Text(
+                                        "이후에는 방금과 같거나 조금 약하게 흔들어도 화면이 회전합니다.",
+                                        color = c.muted,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(Modifier.height(Gap.Item))
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        LiquidButton("다시 하기", modifier = Modifier.weight(1f), primary = false, onClick = {
+                                            result = null
+                                            round++
+                                            running = true
+                                        })
+                                        LiquidButton("확인", modifier = Modifier.weight(1f), onClick = onClose)
+                                    }
+                                }
+                                else -> {
+                                    Text(
+                                        if (fail) Copy.SHAKE_CALIBRATE_FAIL else "[시작]을 누른 뒤 ${CALIBRATE_SECONDS}초 동안 평소처럼 기기를 흔들어 주세요.",
+                                        color = c.muted,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(Modifier.height(Gap.Item))
+                                    LiquidButton(if (fail) "다시 하기" else "시작", modifier = Modifier.fillMaxWidth(), onClick = {
+                                        failed = false
+                                        round++
+                                        running = true
+                                    })
+                                }
                             }
-                        }
-                        else -> {
-                            Text(
-                                if (fail) Copy.SHAKE_CALIBRATE_FAIL else "[시작]을 누른 뒤 ${CALIBRATE_SECONDS}초 동안 평소처럼 기기를 흔들어 주세요.",
-                                color = c.muted,
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(Modifier.height(Gap.Item))
-                            LiquidButton(if (fail) "다시 하기" else "시작", modifier = Modifier.fillMaxWidth(), onClick = {
-                                failed = false
-                                round++
-                                running = true
-                            })
                         }
                     }
                 }
             }
             Spacer(Modifier.height(Gap.Item))
-            LiquidButton(Copy.FLUID_TUNE, modifier = Modifier.fillMaxWidth(), primary = false, onClick = { tuning = !tuning })
-            AnimatedVisibility(tuning, enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-                Box(Modifier.bringIntoViewRequester(bringTuner)) { FluidTuner(tune, onChange = { tune = it }) }
+            // 굴릴 때 [물방울 조절] 버튼까지 함께 보이게 버튼과 조절바를 한 묶음으로 끌어온다(버튼 글자가 잘렸다)
+            Column(Modifier.fillMaxWidth().bringIntoViewRequester(bringTuner)) {
+                LiquidButton(Copy.FLUID_TUNE, modifier = Modifier.fillMaxWidth(), primary = false, onClick = { tuning = !tuning })
+                AnimatedVisibility(tuning, enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                    FluidTuner(tune, onChange = { tune = it })
+                }
             }
         }
     }

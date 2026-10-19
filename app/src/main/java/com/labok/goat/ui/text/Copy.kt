@@ -93,6 +93,8 @@ object Copy {
     // 기본 앱 정리
     const val BLOAT_INTRO_TITLE = "쓰지 않는 기본 앱 끄기"
     const val BLOAT_INTRO_BODY = "삭제하지 않고 사용만 중지하므로 언제든 다시 켤 수 있습니다. 꺼도 기본 기능은 그대로입니다."
+    const val BLOAT_EMPTY_TITLE = "정리할 기본 앱이 없습니다"
+    const val BLOAT_EMPTY_BODY = "이 기기에는 목록에 있는 기본 앱이 설치되어 있지 않습니다."
     const val BLOAT_NEED_SHIZUKU = "앱을 끄는 명령은 셸 권한이 필요해 Shizuku로 실행합니다."
     const val BLOAT_FAILED = "바꾸지 못했습니다. Shizuku 연결을 확인해 주세요"
     const val BLOAT_RESTORE_ALL = "꺼 둔 앱 모두 다시 켜기"

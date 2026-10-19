@@ -20,7 +20,7 @@ object LiquidTune {
     val GRAVITY = Knob("gravity", Copy.FLUID_GRAVITY, 0..100, 5) { if (it == 0) "무중력" else "지구의 $it%" }
 
     /** 출렁임이 이어지는 정도: 0이면 금방 멈추고 100이면 오래 출렁인다(속도 감쇠 0.958~0.998, 기본 50 = 0.978). */
-    val WOBBLE = Knob("wobble", Copy.FLUID_WOBBLE, 0..100, 50) { "$it" }
+    val WOBBLE = Knob("wobble", Copy.FLUID_WOBBLE, 0..100, 50) { "$it/100" }
     val PULL = Knob("pull", Copy.FLUID_PULL, 0..400, 100, percent)
     val all = listOf(WATER, VISCOSITY, TENSION, SCATTER, SPLASH, GRAVITY, WOBBLE, PULL)
 

@@ -6,11 +6,13 @@ import android.os.Looper
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,7 +90,14 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
     LaunchedEffect(advanced) {
         if (advanced) {
             delay(320)
-            listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1, Int.MAX_VALUE / 2)
+            // 끝까지 남은 거리만큼 부드럽게 굴린다. 예전처럼 큰 오프셋을 주면 한 프레임에 끝으로 튀었다(1.17.5 전수 점검)
+            val info = listState.layoutInfo
+            val last = info.visibleItemsInfo.lastOrNull()
+            if (last == null || last.index < info.totalItemsCount - 1) listState.animateScrollToItem(info.totalItemsCount - 1)
+            val now = listState.layoutInfo
+            val end = now.visibleItemsInfo.lastOrNull() ?: return@LaunchedEffect
+            val remaining = end.offset + end.size - (now.viewportEndOffset - now.afterContentPadding)
+            if (remaining > 0) listState.animateScrollBy(remaining.toFloat(), tween(350))
         }
     }
     var message by remember { mutableStateOf("") }

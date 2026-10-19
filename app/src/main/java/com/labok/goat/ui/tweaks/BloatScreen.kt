@@ -148,6 +148,17 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 }
             }
         }
+        // 정리할 앱이 하나도 없으면 빈 화면 대신 그렇다고 알린다(1.17.5 전수 점검: GOS·주사율처럼 안내 카드가 없었다)
+        if (found != null && apps.isEmpty()) {
+            item(key = "empty") {
+                Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                    GlassCard {
+                        Text(Copy.BLOAT_EMPTY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.BLOAT_EMPTY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
         apps.groupBy { it.group }.forEach { (group, list) ->
             item(key = "group:$group") {
                 Text(

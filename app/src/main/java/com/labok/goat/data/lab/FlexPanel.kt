@@ -250,6 +250,7 @@ object FlexPanel {
     /**
      * 진단 로그용: 시스템 UI(WMShell)가 받는 화면 분할 명령 목록. 안드로이드 17 실기기에서 startTaskWithAllApps를 보내면
      * dump 머리글만 돌아오고 분할되지 않아(1.17.2), 지금 펌웨어가 어떤 명령을 받는지 확인하려고 남긴다. 작업 스레드에서 부른다.
+     * splitscreen을 인자 없이 보내면 AOSP 시스템 UI가 ArrayIndexOutOfBounds로 죽어(1.17.5 전수 점검, 문제 신고 때마다) help만 쓴다.
      */
     fun diagnoseSplit(): String {
         val help = ShizukuAccess.shell("dumpsys activity service SystemUIService WMShell help")?.out ?: return "Shizuku가 연결되지 않아 읽지 못했습니다."
@@ -258,12 +259,9 @@ object FlexPanel {
         val keep = sortedSetOf<Int>()
         lines.forEachIndexed { i, l -> if (l.contains("split", true) || l.contains("stage", true)) (i..minOf(i + 3, lines.lastIndex)).forEach { keep += it } }
         val picked = keep.map { lines[it].trimEnd() }.take(120)
-        val tail = ShizukuAccess.shell(SPLIT_CMD)?.let { (it.out + "\n" + it.err).trim().lines().takeLast(30) }.orEmpty()
         return buildString {
             appendLine("[WMShell help 중 분할 관련 ${picked.size}줄]")
             picked.forEach { appendLine(it.take(200)) }
-            appendLine("[splitscreen 단독 응답 끝 30줄]")
-            tail.forEach { appendLine(it.take(200)) }
         }
     }
 
