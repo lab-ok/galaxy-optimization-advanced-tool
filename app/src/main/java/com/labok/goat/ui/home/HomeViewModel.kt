@@ -136,13 +136,16 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** 자동 적용 스위치 하나로 자동 복구·부팅 적용·전환 감지를 함께 켜고 끈다. */
-    fun setAuto(on: Boolean) {
+    fun setAuto(on: Boolean) = viewModelScope.launch {
         settings.autoRecover = on
         settings.applyOnBoot = on
         settings.watchFold = on
         logRepo.add("자동 적용 ${if (on) "켜짐" else "꺼짐"}")
         FoldWatchService.syncWithSettings(getApplication())
         DensityWatchWorker.sync(getApplication())
+        // 켜는 순간 설정값과 다르면 바로 맞춘다. 예전에는 다음 화면 전환까지 기다려, 켠 뒤에도 '적용되지 않았습니다'와
+        // 'DPI 적용 중'이 함께 떠 서로 맞지 않았다(1.17.5 전수 점검)
+        if (on) withContext(Dispatchers.IO) { fixer.ensure("자동 적용 켬", automatic = true) }
         refresh()
     }
 
