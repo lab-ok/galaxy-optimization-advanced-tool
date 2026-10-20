@@ -10,6 +10,7 @@ import androidx.core.app.ServiceCompat
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.ForegroundWatcher
 import com.labok.goat.data.lab.AutoFlex
+import com.labok.goat.data.lab.ChargeMeter
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeEngine
 import com.labok.goat.data.rotate.ShakeRotate
@@ -20,6 +21,7 @@ import rikka.shizuku.Shizuku
  * GOAT의 상주 서비스 하나. 켜 둔 기능을 한 서비스·한 알림에 모아, GOAT 알림이 둘 이상 뜨지 않게 한다.
  * - 알림창 앱별 배율 조절([AppDensityNotifier]): Shizuku가 준비되면 [ForegroundWatcher]로 맨 앞 앱이 바뀔 때 알림 내용을 고친다.
  * - 흔들어서 화면 회전([ShakeRotate]): [ShakeEngine]이 화면이 켜져 있는 동안 흔들기를 감지한다.
+ * - 충전 실측 용량([ChargeMeter], 실험실): 충전 중에만 전류를 읽어 쌓는다.
  * 알림은 앱별 배율 조절이 켜져 있으면 그 알림(작게·기본·크게 버튼)을 쓰고, 흔들기만 켜져 있으면 조용한 알림 하나를 쓴다.
  * 둘 다 꺼지면 스스로 멈춘다. 켜고 끄는 쪽은 [sync]만 부른다.
  */
@@ -28,6 +30,7 @@ class GoatService : Service() {
     private val permission = Shizuku.OnRequestPermissionResultListener { _, _ -> watchApps() }
     private var shake: ShakeEngine? = null
     private var flex: AutoFlex.Engine? = null
+    private var charge: ChargeMeter.Engine? = null
     private var shizukuHooked = false
     private var lastRunning: String? = null
 
@@ -40,11 +43,12 @@ class GoatService : Service() {
         val apps = AppDensityNotifier.enabled(this)
         val rotate = ShakeRotate.enabled(this) && ShakeRotate.canWrite(this)
         val autoFlex = AutoFlex.engineNeeded(this)
-        if (!apps && !rotate && !autoFlex) {
+        val meter = ChargeMeter.enabled(this)
+        if (!apps && !rotate && !autoFlex && !meter) {
             stopSelf()
             return START_NOT_STICKY
         }
-        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "자동 플렉스 모드".takeIf { autoFlex }).joinToString("·")
+        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "자동 플렉스 모드".takeIf { autoFlex }, "충전 실측 용량".takeIf { meter }).joinToString("·")
         if (running != lastRunning) {
             LogRepository.from(this).add("GOAT 상주 서비스: $running")
             lastRunning = running
@@ -70,6 +74,13 @@ class GoatService : Service() {
         } else {
             flex?.stop()
             flex = null
+        }
+
+        if (meter) {
+            if (charge == null) charge = ChargeMeter.Engine(this).also { it.start() }
+        } else {
+            charge?.stop()
+            charge = null
         }
 
         if (rotate) {
@@ -111,6 +122,8 @@ class GoatService : Service() {
         shake = null
         flex?.stop()
         flex = null
+        charge?.stop()
+        charge = null
         unhookShizuku()
         AppDensityNotifier.cancel(this)
         super.onDestroy()
@@ -118,10 +131,14 @@ class GoatService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /** 상주 알림 하나를 쓰는 기능. */
+    enum class Owner { APPS, SHAKE, FLEX, CHARGE }
+
     companion object {
         /** 켜진 기능이 하나라도 있으면 서비스를 띄우거나 설정을 다시 읽게 하고, 없으면 멈춘다. */
         fun sync(context: Context) {
-            val any = AppDensityNotifier.enabled(context) || (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) || AutoFlex.engineNeeded(context)
+            val any = AppDensityNotifier.enabled(context) || (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) ||
+                AutoFlex.engineNeeded(context) || ChargeMeter.enabled(context)
             val intent = Intent(context, GoatService::class.java)
             if (any) {
                 runCatching { context.startForegroundService(intent) }
@@ -130,13 +147,20 @@ class GoatService : Service() {
             }
         }
 
+        /** 알림 하나를 어느 기능이 쓰는지: 앱별 배율 → 흔들기 → 자동 플렉스 → 충전 실측 순. */
+        fun notificationOwner(context: Context) = when {
+            AppDensityNotifier.enabled(context) -> Owner.APPS
+            ShakeRotate.enabled(context) -> Owner.SHAKE
+            AutoFlex.engineNeeded(context) -> Owner.FLEX
+            else -> Owner.CHARGE
+        }
+
         /** 지금 켜진 기능에 맞는 알림. */
-        fun notification(context: Context) = if (AppDensityNotifier.enabled(context)) {
-            AppDensityNotifier.build(context, AppDensityNotifier.describe(context, null), AppDensityNotifier.shakeNote(context))
-        } else if (ShakeRotate.enabled(context)) {
-            ShakeRotate.buildNotification(context)
-        } else {
-            AutoFlex.buildNotification(context)
+        fun notification(context: Context) = when (notificationOwner(context)) {
+            Owner.APPS -> AppDensityNotifier.build(context, AppDensityNotifier.describe(context, null), AppDensityNotifier.shakeNote(context))
+            Owner.SHAKE -> ShakeRotate.buildNotification(context)
+            Owner.FLEX -> AutoFlex.buildNotification(context)
+            Owner.CHARGE -> ChargeMeter.buildNotification(context)
         }
     }
 }

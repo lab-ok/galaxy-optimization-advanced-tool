@@ -30,7 +30,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.labok.goat.data.lab.BatteryHealth
 import com.labok.goat.data.lab.BatteryMonitor
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
@@ -56,11 +55,9 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     var now by remember { mutableStateOf(BatteryMonitor.read(context)) }
-    var health by remember { mutableStateOf<BatteryHealth.Info?>(null) }
     LaunchedEffect(Unit) {
         // 화면을 여는 동안 2초마다 다시 읽는다
         withContext(Dispatchers.IO) { BatteryMonitor.retireLogging(context) }
-        health = withContext(Dispatchers.IO) { BatteryHealth.read(context) }
         while (true) {
             now = BatteryMonitor.read(context)
             delay(2_000)
@@ -104,38 +101,12 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
                 Metric("전력", s.watts?.let { String.format(Locale.KOREA, "%+.1fW", it) })
             }
         }
-        health?.takeIf { !it.empty }?.let { h ->
-            Spacer(Modifier.height(Gap.Card))
-            GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) { HealthCard(h, now?.health) }
-        }
+        // 배터리 수명 카드는 뺐다: 삼성 기기의 남은 전하량은 화면 잔량으로 만든 값이라 수명을 추정할 수 없고(2026-10-20 조사),
+        // 삼성 수명값은 설정에서도 볼 수 있다. 대신 충전 중 전류를 쌓아 실제 용량을 잰다
+        Spacer(Modifier.height(Gap.Card))
+        GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) { ChargeMeterCard() }
         BatterySinceCharge(now?.level, now?.charging == true)
     }
-}
-
-/**
- * 배터리 수명: 설계 용량 대비 지금 실제로 담을 수 있는 용량(%)을 큰 숫자와 물 막대로, 아래에 실제·설계 용량(mAh), 구한 방법, 충전 횟수.
- * 값은 Shizuku 셸과 BatteryManager로 구한다([BatteryHealth]).
- */
-@Composable
-private fun HealthCard(h: BatteryHealth.Info, condition: String?) {
-    val c = LocalLiquid.current
-    Text("배터리 수명", fontWeight = FontWeight.SemiBold, color = c.ink)
-    Text("설계 용량 대비 지금 담을 수 있는 용량입니다. 보통 80% 아래면 사용 시간이 눈에 띄게 줄어듭니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-    Spacer(Modifier.height(Gap.Item))
-    h.percent?.let { p ->
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text("$p", fontSize = 44.sp, fontWeight = FontWeight.Bold, color = c.ink)
-            Text("%", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
-        }
-        Spacer(Modifier.height(Gap.Tight))
-        LiquidBar(p / 100f, height = 12.dp, description = "배터리 수명 $p%")
-        Spacer(Modifier.height(Gap.Item))
-    }
-    // 용량은 한 줄(실제 / 설계), 구한 방법은 그 아래 작은 글자로만
-    if (h.actualMah != null && h.designMah != null) Metric("용량(실제 / 설계)", String.format(Locale.KOREA, "%,d / %,dmAh", h.actualMah, h.designMah))
-    h.cycles?.let { Metric("충전 횟수(완충 환산)", String.format(Locale.KOREA, "%.0f회", it)) }
-    condition?.let { Metric("배터리 상태", it) }
-    h.source?.let { Text(it.label, color = c.muted, style = MaterialTheme.typography.labelSmall) }
 }
 
 @Composable
