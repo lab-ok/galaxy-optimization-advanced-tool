@@ -102,9 +102,7 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
             }
         }
         // 배터리 수명 카드는 뺐다: 삼성 기기의 남은 전하량은 화면 잔량으로 만든 값이라 수명을 추정할 수 없고(2026-10-20 조사),
-        // 삼성 수명값은 설정에서도 볼 수 있다. 대신 충전 중 전류를 쌓아 실제 용량을 잰다
-        Spacer(Modifier.height(Gap.Card))
-        GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) { ChargeMeterCard() }
+        // 삼성 수명값은 설정에서도 볼 수 있다. 충전 실측 용량(1.17.8)도 뺐다(1.17.9)
         BatterySinceCharge(now?.level, now?.charging == true)
     }
 }

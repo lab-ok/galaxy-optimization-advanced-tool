@@ -1,6 +1,7 @@
 package com.labok.goat
 
 import android.app.Application
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -66,6 +67,13 @@ class App : Application() {
         runCatching { VolumeRotate.restoreIfWanted(this) }
         // 예전 실험실 빠른 설정 격자가 바꿔 둔 설정이 남아 있으면 되돌린다(1.15.3에서 실험을 접음)
         Thread { runCatching { QsGrid.restoreLeftovers(this) } }.start()
+        // 1.17.8의 실험실 '충전 실측 용량'을 뺐다(1.17.9): 켜 두었던 기록과 알림 채널을 지운다
+        Thread {
+            runCatching {
+                deleteSharedPreferences("charge_meter")
+                getSystemService(NotificationManager::class.java).deleteNotificationChannel("charge_meter_quiet")
+            }
+        }.start()
         // 애니메이션 속도 유지 감지를 건다(고른 값이 있고 유지가 켜져 있을 때)
         runCatching {
             AnimationSpeed.seedIfMissing(this)
