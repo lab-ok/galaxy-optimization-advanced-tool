@@ -75,8 +75,8 @@ import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.ResolutionState
 import com.labok.goat.data.lab.AirplaneRadios
-import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.lab.IconBlacklist
+import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.tweaks.AnimationSpeed
@@ -168,8 +168,12 @@ internal fun Dashboard(
         when (item) {
             NavItem.DPI_MATCH -> state.target?.let { (if (state.foldable) "외부 화면 $it dpi" else "$it dpi") + if (state.auto) " · 자동 적용" else "" }
                 ?: if (state.foldable) "외부 화면 DPI를 정해 주세요" else "DPI를 정해 주세요"
-            NavItem.APP_SIZE -> DensityShell.savedCount(context).let { if (it == 0) "바꾼 앱 없음" else "바꾼 앱 ${it}개" } +
-                if (AppDensityNotifier.enabled(context)) " · 알림창 조절" else ""
+            NavItem.APP_SIZE -> if (DensityShell.rejected(context)) {
+                "이 기기에서 쓸 수 없음"
+            } else {
+                DensityShell.savedCount(context).let { if (it == 0) "바꾼 앱 없음" else "바꾼 앱 ${it}개" } +
+                    if (AppDensityNotifier.enabled(context)) " · 알림창 조절" else ""
+            }
             NavItem.ANIMATION -> AnimationSpeed.label(AnimationSpeed.read(context, AnimationSpeed.Kind.WINDOW))
             NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) "켜짐 · 민감도 ${ShakeRotate.level(context)}" + (if (ShakeRotate.largeOnly(context)) " · 큰 화면만" else "") else "꺼짐"
             NavItem.CAMERA_MUTE -> when (camera) {
@@ -203,6 +207,8 @@ internal fun Dashboard(
             }
             NavItem.REFRESH -> if (!RefreshRate.supported(context)) {
                 Copy.REFRESH_UNSUPPORTED_SHORT
+            } else if (!RefreshRate.changedByGoat(context)) {
+                Copy.REFRESH_SYSTEM
             } else {
                 RefreshRate.read(context).let {
                     if (it == RefreshRate.Choice.SMOOTH) Copy.refreshAlways(RefreshRate.max(context)) else it.label
@@ -237,7 +243,7 @@ internal fun Dashboard(
             NavItem.DARK -> dark.forced == true
             NavItem.DOZE -> doze == Doze.State.OFF || (doze == Doze.State.UNKNOWN && Doze.wanted(context))
             NavItem.RESOLUTION -> ResolutionState.base(context) != null && Resolution.current(context) != Resolution.base(context)
-            NavItem.REFRESH -> RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
+            NavItem.REFRESH -> RefreshRate.changedByGoat(context) && RefreshRate.read(context) != RefreshRate.Choice.SYSTEM
             NavItem.STATUS_ICONS -> IconBlacklist.setting.read(context).let { raw ->
                 IconBlacklist.Slot.entries.any { IconBlacklist.hidden(raw, it) }
             }

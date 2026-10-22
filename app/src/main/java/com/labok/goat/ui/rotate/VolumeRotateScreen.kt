@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
@@ -44,6 +45,7 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidColors
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -63,8 +65,11 @@ internal fun VolumeRotateScreen(contentPadding: PaddingValues, permitted: Boolea
     val context = LocalContext.current
     var version by remember { mutableIntStateOf(0) }
     val on = remember(version) { VolumeRotate.enabled(context) }
-    var invert by remember { mutableStateOf(VolumeRotate.invert(context)) }
-    var camera by remember { mutableStateOf(VolumeRotate.cameraExempt(context)) }
+    // 폴드는 접었을 때·펼쳤을 때 설정을 따로 둔다. 처음엔 지금 화면 쪽을 보여 준다
+    val foldable = remember { DeviceKind.isFoldable(context) }
+    var editOpen by remember { mutableStateOf(VolumeRotate.isOpen(context)) }
+    var invert by remember(editOpen) { mutableStateOf(VolumeRotate.invert(context, editOpen)) }
+    var camera by remember(editOpen) { mutableStateOf(VolumeRotate.cameraExempt(context, editOpen)) }
     // 왼쪽·오른쪽 가로끼리 바뀔 때는 구성 변경이 없어 화면 표시 변경을 직접 듣고 방향을 다시 읽는다
     var rotation by remember { mutableIntStateOf(VolumeRotate.rotation(context)) }
     DisposableEffect(Unit) {
@@ -115,19 +120,37 @@ internal fun VolumeRotateScreen(contentPadding: PaddingValues, permitted: Boolea
                         version++
                     }
                     Spacer(Modifier.height(Gap.Section))
+                    if (foldable) {
+                        Text(Copy.VOLUME_PER_SCREEN, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidChips(
+                            options = listOf(false, true),
+                            selected = editOpen,
+                            label = { if (it) Copy.VOLUME_OPEN else Copy.VOLUME_CLOSED },
+                            onSelect = { editOpen = it }
+                        )
+                        Spacer(Modifier.height(Gap.Item))
+                    }
                     LiquidSwitchRow(Copy.VOLUME_INVERT, Copy.VOLUME_INVERT_DESC, invert, on) {
                         invert = it
-                        VolumeRotate.setInvert(context, it)
+                        VolumeRotate.setInvert(context, it, editOpen)
                     }
                     Spacer(Modifier.height(Gap.Section))
                     LiquidSwitchRow(Copy.VOLUME_CAMERA, Copy.VOLUME_CAMERA_DESC, camera, on) {
                         camera = it
-                        VolumeRotate.setCameraExempt(context, it)
+                        VolumeRotate.setCameraExempt(context, it, editOpen)
                     }
                     Spacer(Modifier.height(Gap.Section))
-                    val swap = VolumeRotate.swapFor(rotation, invert)
+                    // 아래 줄은 지금 화면(접힘·펼침) 설정 기준
+                    val swap = VolumeRotate.swapFor(rotation, VolumeRotate.invert(context))
                     Text(
-                        "지금 화면: ${VolumeRotate.rotationLabel(rotation)} · " + if (!on) "꺼져 있음" else if (swap) "올리기·내리기를 바꿈" else "그대로",
+                        "지금 화면: ${VolumeRotate.rotationLabel(rotation)} · " + if (!on) {
+                            "꺼져 있음"
+                        } else if (swap) {
+                            "올리기·내리기를 바꿈"
+                        } else {
+                            "그대로"
+                        },
                         color = c.ink,
                         style = MaterialTheme.typography.labelMedium
                     )
@@ -181,7 +204,10 @@ private fun DrawScope.drop(c: LiquidColors, tm: TextMeasurer, from: Offset, to: 
     val stretch = 1f + 0.6f * sin(PI * s).toFloat()
     val r = 14.dp.toPx()
     // 움직이는 방향으로 늘어난 타원(가로·세로 성분을 섞어 대각선 이동에도 자연스럽게)
-    val dir = (to - from).let { d -> val l = d.getDistance().coerceAtLeast(1f); Offset(d.x / l, d.y / l) }
+    val dir = (to - from).let { d ->
+        val l = d.getDistance().coerceAtLeast(1f)
+        Offset(d.x / l, d.y / l)
+    }
     val ang = atan2(dir.y, dir.x) * 180f / PI.toFloat()
     rotate(ang, p) {
         drawOval(color, Offset(p.x - r * stretch, p.y - r / stretch), Size(2 * r * stretch, 2 * r / stretch))

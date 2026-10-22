@@ -3,15 +3,20 @@ package com.labok.goat.data.lab
 import android.accessibilityservice.AccessibilityService
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.Display
 import android.view.KeyEvent
 import android.view.Surface
 import android.view.accessibility.AccessibilityEvent
+import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -60,13 +65,24 @@ object VolumeRotate {
         runCatching { setEnabled(context, true, "강제 종료로 꺼져 있어 다시 켬") }
     }
 
+    /**
+     * 폴드는 접었을 때(외부 화면)와 펼쳤을 때(내부 화면)를 따로 설정한다(사용자 요청 10-20). [large]는 펼친 큰 화면인지,
+     * 생략하면 지금 화면. 화면별 값이 아직 없으면 예전 공통 값을 쓴다. 폴드가 아니면 공통 값 하나만 쓴다.
+     */
+    fun isOpen(context: Context) = ShakeRotate.isLargeScreen(context)
+
+    private fun key(context: Context, base: String, large: Boolean?): String {
+        if (!DeviceKind.isFoldable(context)) return base
+        return base + if (large ?: isOpen(context)) "_open" else "_closed"
+    }
+
     /** 바꾸는 방향을 반대로(폴드 메인 화면처럼 기본 방향이 다른 화면용). */
-    fun invert(context: Context) = prefs(context).getBoolean(KEY_INVERT, false)
-    fun setInvert(context: Context, on: Boolean) = prefs(context).edit().putBoolean(KEY_INVERT, on).apply()
+    fun invert(context: Context, large: Boolean? = null) = prefs(context).let { it.getBoolean(key(context, KEY_INVERT, large), it.getBoolean(KEY_INVERT, false)) }
+    fun setInvert(context: Context, on: Boolean, large: Boolean? = null) = prefs(context).edit().putBoolean(key(context, KEY_INVERT, large), on).apply()
 
     /** 카메라 앱이 앞에 있을 때는 바꾸지 않기(볼륨 키 셔터를 그대로 쓰게, 기본 켬). */
-    fun cameraExempt(context: Context) = prefs(context).getBoolean(KEY_CAMERA, true)
-    fun setCameraExempt(context: Context, on: Boolean) = prefs(context).edit().putBoolean(KEY_CAMERA, on).apply()
+    fun cameraExempt(context: Context, large: Boolean? = null) = prefs(context).let { it.getBoolean(key(context, KEY_CAMERA, large), it.getBoolean(KEY_CAMERA, true)) }
+    fun setCameraExempt(context: Context, on: Boolean, large: Boolean? = null) = prefs(context).edit().putBoolean(key(context, KEY_CAMERA, large), on).apply()
 
     /**
      * [rotation](Surface.ROTATION_*)에서 볼륨 키를 바꿀지. 볼륨 버튼이 기본 방향의 오른쪽 옆면(위가 올리기)에 있다고 보면,
@@ -146,6 +162,10 @@ class VolumeRotateService : AccessibilityService() {
 
     private companion object {
         const val TAG = "GOAT-VolumeRotate"
+
+        // 시스템 볼륨 키 길게 누름과 비슷한 빠르기(처음 0.4초 뒤부터 0.1초마다)
+        const val REPEAT_DELAY_MS = 400L
+        const val REPEAT_MS = 100L
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
@@ -163,15 +183,37 @@ class VolumeRotateService : AccessibilityService() {
             if (event.action == KeyEvent.ACTION_DOWN) note("${if (up) "올리기" else "내리기"} · ${VolumeRotate.rotationLabel(rotation)} · 그대로")
             return false
         }
-        if (event.action == KeyEvent.ACTION_DOWN) note("${if (up) "올리기→내리기" else "내리기→올리기"} · ${VolumeRotate.rotationLabel(rotation)} · 앱 $foreground")
-        // 누를 때(길게 누르면 반복)마다 반대 방향으로 조절하고, 원래 키는 누름·뗌 모두 소비한다
-        if (event.action == KeyEvent.ACTION_DOWN) {
-            getSystemService(AudioManager::class.java)?.adjustSuggestedStreamVolume(
-                if (up) AudioManager.ADJUST_LOWER else AudioManager.ADJUST_RAISE,
-                AudioManager.USE_DEFAULT_STREAM_TYPE,
-                AudioManager.FLAG_SHOW_UI
-            )
+        // 원래 키는 누름·뗌 모두 소비하고 반대 방향으로 조절한다. 접근성 서비스가 키를 가로채면 시스템이 길게 누름 반복을 만들지 않아
+        // 한 칸씩만 바뀌었다(사용자 신고 10-20). 그래서 누르고 있는 동안 직접 반복한다: 처음 한 번, [REPEAT_DELAY_MS] 뒤부터 [REPEAT_MS]마다.
+        when (event.action) {
+            KeyEvent.ACTION_DOWN -> if (event.repeatCount == 0) {
+                note("${if (up) "올리기→내리기" else "내리기→올리기"} · ${VolumeRotate.rotationLabel(rotation)} · 앱 $foreground")
+                val dir = if (up) AudioManager.ADJUST_LOWER else AudioManager.ADJUST_RAISE
+                adjust(dir)
+                handler.removeCallbacks(repeat)
+                repeatDir = dir
+                handler.postDelayed(repeat, REPEAT_DELAY_MS)
+            }
+            KeyEvent.ACTION_UP -> handler.removeCallbacks(repeat)
         }
         return true
+    }
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var repeatDir = AudioManager.ADJUST_SAME
+    private val repeat = object : Runnable {
+        override fun run() {
+            adjust(repeatDir)
+            handler.postDelayed(this, REPEAT_MS)
+        }
+    }
+
+    private fun adjust(dir: Int) {
+        getSystemService(AudioManager::class.java)?.adjustSuggestedStreamVolume(dir, AudioManager.USE_DEFAULT_STREAM_TYPE, AudioManager.FLAG_SHOW_UI)
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        handler.removeCallbacks(repeat)
+        return super.onUnbind(intent)
     }
 }

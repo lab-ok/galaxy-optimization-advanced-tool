@@ -154,7 +154,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
         }
         // 이전 값은 그대로 두고 새 값으로 한꺼번에 바꾼다(다시 읽는 동안 '…'로 깜빡이지 않게). 읽기는 IO, 대입은 메인에서.
         val (ok, read) = withContext(Dispatchers.IO) {
-            val ok = runCatching { DensityShell.supported() }.getOrDefault(false)
+            val ok = !DensityShell.rejected(context) && runCatching { DensityShell.supported() }.getOrDefault(false)
             ok to if (ok) list.associate { it.pkg to runCatching { DensityShell.get(context, it.pkg) }.getOrDefault(-1) } else emptyMap()
         }
         supported = ok
@@ -183,7 +183,10 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                 values = values + (app.pkg to it)
                 message = "${app.label}: ${if (it == 0) Copy.APP_SIZE_DEFAULT else "$it dpi"}"
             }
-                .onFailure { message = "${Copy.APP_SIZE_FAILED}${it.message}" }
+                .onFailure {
+                    message = "${Copy.APP_SIZE_FAILED}${it.message}"
+                    if (DensityShell.rejected(context)) supported = false
+                }
         }
     }
 

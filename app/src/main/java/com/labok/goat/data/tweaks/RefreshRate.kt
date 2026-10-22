@@ -127,6 +127,12 @@ object RefreshRate {
     /** '시스템 기본'으로 되돌릴 수 있는지: GOAT로 바꾼 적이 있거나(처음 값이 있음) 이미 시스템 기본이다. 앱 밖에서 고정한 값은 되돌리지 않는다. */
     fun canRestore(context: Context) = saved(context) != null || read(context) == Choice.SYSTEM
 
+    /**
+     * GOAT로 주사율을 바꿔 둔 상태인지(처음 값을 기억해 두었음). 홈의 켜짐 표시는 이것으로만 정한다:
+     * 삼성 기본 설정에서도 최저 주사율이 최고값으로 들어가 있는 기기가 있어, 값만 보면 GOAT로 고정한 적이 없는데도 켜짐으로 보였다(사용자 신고 10-20).
+     */
+    fun changedByGoat(context: Context) = saved(context) != null
+
     /** GOAT로 처음 바꾸기 전 값(없으면 null). 키가 없었으면 그 칸이 null이다. */
     internal fun saved(context: Context): Values? {
         val p = prefs(context)

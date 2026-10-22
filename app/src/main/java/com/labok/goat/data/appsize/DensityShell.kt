@@ -1,6 +1,7 @@
 package com.labok.goat.data.appsize
 
 import android.content.Context
+import android.os.Build
 import android.os.IBinder
 import android.os.Parcel
 import com.labok.goat.data.UserId
@@ -105,6 +106,18 @@ object DensityShell {
             }
         }.onFailure { LogRepository.from(context).add("앱별 화면 배율 실패: $pkg → ${if (dpi == 0) "기본" else dpi} ($via): ${it.javaClass.simpleName}: ${it.message}") }
             .getOrThrow()
+        // 명령이 오류 없이 끝나도 값이 남지 않는 기기가 있다(One UI 9 폰 S25, 사용자 신고 10-19). 다시 읽어 확인하고,
+        // 안 바뀌었으면 이 기기(같은 펌웨어)는 받아들이지 않는 것으로 기억해 화면에 '쓸 수 없음'으로 보인다.
+        if (dpi != 0) {
+            val got = runCatching { raw(pkg) }.getOrNull()
+            // 값이 아예 남지 않은(기본으로 읽히는) 경우만 받아들이지 않는 것으로 본다. 다른 값으로 읽히는 건 삼성 읽기 함수의
+            // 환산(320 → 360) 같은 차이일 수 있어 폴드에서 잘못 막지 않게 한다
+            if (got == 0) {
+                LogRepository.from(context).add("앱별 화면 배율: $pkg → $dpi 명령은 끝났지만 값이 남지 않음(읽은 값 $got). 이 기기는 받아들이지 않는 것으로 봄")
+                state(context).edit().putString(KEY_REJECTED, Build.FINGERPRINT).apply()
+                throw IllegalStateException(REJECTED_MESSAGE)
+            }
+        }
         LogRepository.from(context).add("앱별 화면 배율: $pkg → ${if (dpi == 0) "기본" else "$dpi dpi"} ($via)")
         prefs(context).edit().apply { if (dpi == 0) remove(pkg) else putInt(pkg, dpi) }.apply()
     }
@@ -114,6 +127,15 @@ object DensityShell {
     fun savedCount(context: Context): Int = prefs(context).all.size
 
     private fun prefs(context: Context) = context.getSharedPreferences("lab_app_density", Context.MODE_PRIVATE)
+
+    // 바꾼 앱 목록(prefs)과 섞이지 않게 상태는 따로 둔다(savedCount가 prefs 항목 수를 센다)
+    private fun state(context: Context) = context.getSharedPreferences("app_density_state", Context.MODE_PRIVATE)
+
+    private const val KEY_REJECTED = "rejected_fingerprint"
+    const val REJECTED_MESSAGE = "이 기기는 앱별 배율 변경을 받아들이지 않습니다(One UI 9 폰은 아직 지원하지 않습니다)."
+
+    /** 이 펌웨어에서 배율을 바꿔도 값이 남지 않은 적이 있는지. 펌웨어가 바뀌면 다시 시험한다. */
+    fun rejected(context: Context) = state(context).getString(KEY_REJECTED, null) == Build.FINGERPRINT
 
     /** 사용자가 크기를 정해 둔 앱(홈 화면에 아이콘이 있는 앱 중). */
     fun appliedApps(context: Context): List<String> = AppList.launcherApps(context).map { it.pkg }.filter { runCatching { get(context, it) > 0 }.getOrDefault(false) }
