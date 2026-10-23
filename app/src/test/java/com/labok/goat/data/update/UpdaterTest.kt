@@ -22,4 +22,21 @@ class UpdaterTest {
         assertEquals(sha.lowercase(), Updater.shaOf("### 설치\n- SHA-256: `$sha`\n"))
         assertNull(Updater.shaOf("SHA-256 없음"))
     }
+
+    @Test
+    fun testBuildIsLastDigitNotZero() {
+        assertEquals(false, Updater.isTestBuild("1.19.0"))
+        assertEquals(true, Updater.isTestBuild("1.19.2"))
+        assertEquals(false, Updater.isTestBuild("1.19"))
+    }
+
+    @Test
+    fun newestSkipsPrereleaseUnlessTestChannel() {
+        fun rel(tag: String, pre: Boolean) = Updater.Release(tag, "d", 1, null, "", "u", test = pre)
+        val list = listOf(rel("1.19.2", true), rel("1.19.0", false), rel("1.18.0", false))
+        assertEquals("1.19.0", Updater.newest(list, withTest = false)?.version)
+        val t = Updater.newest(list, withTest = true)
+        assertEquals("1.19.2", t?.version)
+        assertEquals(true, t?.test)
+    }
 }

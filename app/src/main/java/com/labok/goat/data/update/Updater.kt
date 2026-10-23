@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import com.labok.goat.BuildConfig
+import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import java.io.File
@@ -15,11 +16,15 @@ import java.security.MessageDigest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
  * 앱 안 업데이트: GitHub 릴리스(최신 판)의 버전을 이 앱 버전과 비교하고, 새 판이면 APK를 내려받아 설치한다.
  * - 확인: `api.github.com/repos/<저장소>/releases/latest`의 tag_name(예: "1.3")과 첨부 APK, 릴리스 노트의 SHA-256.
+ * - 버전 채널(2026-10-23): 번호는 [앱].[안정].[시험]이다. 안정 버전은 정식 릴리스, 시험 버전(실험실 업데이트)은 GitHub '미리 보기(pre-release)'로
+ *   올린다. 실험실을 연 사람([testChannel])만 미리 보기까지 포함한 목록에서 가장 높은 판을 받고, 나머지는 정식 릴리스(latest)만 받는다.
+ *   '안정 버전으로 돌아가기'는 실험실을 다시 숨겨 이 채널을 끈다(낮은 판으로 내려 설치하지는 않는다).
  * - 내려받기: 앱 캐시에 받고, 크기와 (노트에 있으면) SHA-256이 맞을 때만 설치한다.
  * - 설치: Shizuku가 연결돼 있으면 `pm install -r -S 크기`로 묻지 않고 바로 설치하고(앱이 다시 시작된다), 없으면
  *   시스템 설치 창(PackageInstaller)을 띄운다. 처음 한 번은 'GOAT의 앱 설치 허용'을 켜야 한다.
@@ -32,7 +37,13 @@ object Updater {
     /** 홈을 열거나 홈으로 돌아올 때 자동으로 확인하는 간격. */
     private const val AUTO_CHECK_MS = 30 * 60 * 1000L
 
-    data class Release(val version: String, val apkUrl: String, val size: Long, val sha256: String?, val notes: String, val page: String)
+    data class Release(val version: String, val apkUrl: String, val size: Long, val sha256: String?, val notes: String, val page: String, val test: Boolean = false)
+
+    /** 시험 버전도 받는지: 실험실을 연 사람만. */
+    fun testChannel() = LabUnlock.unlocked
+
+    /** 이 앱이 시험 버전인지: 버전 끝자리(시험 빌드 번호)가 0이 아니다. */
+    fun isTestBuild(version: String = BuildConfig.VERSION_NAME) = version.split('.').getOrNull(2)?.takeWhile { it.isDigit() }?.toIntOrNull()?.let { it != 0 } ?: false
 
     sealed interface State {
         data object Idle : State
@@ -64,8 +75,23 @@ object Updater {
     internal fun shaOf(notes: String): String? = Regex("SHA-256:\\s*`?([0-9a-fA-F]{64})").find(notes)?.groupValues?.get(1)?.lowercase()
 
     /** 릴리스 JSON → [Release](첨부 중 .apk 하나). APK가 없으면 null. */
-    internal fun parse(json: String): Release? {
-        val o = JSONObject(json)
+    internal fun parse(json: String): Release? = parse(JSONObject(json))
+
+    /** 릴리스 목록 JSON에서 초안을 빼고 가장 높은 판(APK가 있는 것). [withTest]가 아니면 미리 보기도 뺀다. */
+    internal fun newestOf(json: String, withTest: Boolean): Release? {
+        val arr = JSONArray(json)
+        val list = (0 until arr.length()).mapNotNull { i ->
+            val o = arr.getJSONObject(i)
+            if (o.optBoolean("draft")) null else parse(o)
+        }
+        return newest(list, withTest)
+    }
+
+    /** [newestOf]의 고르기(시험할 수 있게 뗐다): 미리 보기는 [withTest]일 때만, 그중 가장 높은 판. */
+    internal fun newest(list: List<Release>, withTest: Boolean): Release? =
+        list.filter { withTest || !it.test }.fold(null as Release?) { best, r -> if (best == null || isNewer(r.version, best.version)) r else best }
+
+    private fun parse(o: JSONObject): Release? {
         val assets = o.optJSONArray("assets") ?: return null
         for (i in 0 until assets.length()) {
             val a = assets.getJSONObject(i)
@@ -77,7 +103,8 @@ object Updater {
                 size = a.optLong("size"),
                 sha256 = shaOf(notes),
                 notes = notes,
-                page = o.optString("html_url")
+                page = o.optString("html_url"),
+                test = o.optBoolean("prerelease")
             )
         }
         return null
@@ -89,20 +116,22 @@ object Updater {
         if (current is State.Downloading || current is State.Installing) return
         if (!quiet) state.value = State.Checking
         val result = runCatching {
-            val c = (URL("https://api.github.com/repos/$REPO/releases/latest").openConnection() as HttpURLConnection).apply {
+            val test = testChannel()
+            val url = if (test) "https://api.github.com/repos/$REPO/releases?per_page=20" else "https://api.github.com/repos/$REPO/releases/latest"
+            val c = (URL(url).openConnection() as HttpURLConnection).apply {
                 connectTimeout = 10_000
                 readTimeout = 15_000
                 setRequestProperty("Accept", "application/vnd.github+json")
                 setRequestProperty("User-Agent", "GOAT/${BuildConfig.VERSION_NAME}")
             }
-            c.inputStream.bufferedReader().use { it.readText() }.also { c.disconnect() }
+            test to c.inputStream.bufferedReader().use { it.readText() }.also { c.disconnect() }
         }
         prefs(context).edit().putLong("checkedAt", System.currentTimeMillis()).apply()
-        val json = result.getOrElse {
+        val (test, json) = result.getOrElse {
             if (!quiet) state.value = State.Failed("업데이트를 확인하지 못했습니다. 인터넷 연결을 확인해 주세요.")
             return
         }
-        val release = runCatching { parse(json) }.getOrNull()
+        val release = runCatching { if (test) newestOf(json, withTest = true) else parse(json) }.getOrNull()
         state.value = when {
             release == null -> if (quiet) state.value else State.Failed("최신 릴리스에서 APK를 찾지 못했습니다.")
             isNewer(release.version, BuildConfig.VERSION_NAME) -> State.Available(release)

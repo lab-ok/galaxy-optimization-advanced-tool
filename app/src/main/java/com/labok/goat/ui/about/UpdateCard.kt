@@ -1,18 +1,22 @@
 package com.labok.goat.ui.about
 
 import android.os.SystemClock
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -22,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.BuildConfig
+import com.labok.goat.data.lab.LabUnlock
+import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.update.Updater
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
@@ -73,6 +79,23 @@ internal fun UpdateCard(manual: Boolean) {
     }
     // 그림에 넘기는 속도(0~1): 초당 4MB면 가장 크게 출렁인다
     val rate = (bps / (4f * 1024 * 1024)).coerceIn(0f, 1f)
+    var askStable by remember { mutableStateOf(false) }
+    if (askStable) {
+        AlertDialog(
+            onDismissRequest = { askStable = false },
+            title = { Text(Copy.UPDATE_TO_STABLE) },
+            text = { Text(Copy.UPDATE_TO_STABLE_BODY) },
+            confirmButton = {
+                TextButton(onClick = {
+                    askStable = false
+                    LabUnlock.lock(context)
+                    LogRepository.from(context).add("안정 버전으로 돌아가기: 실험실을 숨기고 안정 버전만 받음")
+                    Toast.makeText(context, Copy.UPDATE_TO_STABLE_DONE, Toast.LENGTH_LONG).show()
+                }) { Text(Copy.UPDATE_TO_STABLE_OK) }
+            },
+            dismissButton = { TextButton(onClick = { askStable = false }) { Text(Copy.CANCEL) } }
+        )
+    }
     GlassCard {
         // 상태가 바뀌면 카드 높이도 물처럼 늘었다 줄어든다
         Column(Modifier.animateContentSize(spring(UiMotion.ratio(0.7f), UiMotion.stiffness(320f, 0.7f)))) {
@@ -80,7 +103,7 @@ internal fun UpdateCard(manual: Boolean) {
             Spacer(Modifier.height(Gap.Item))
             when (val s = state) {
                 is Updater.State.Available -> {
-                    Text(Copy.updateTitle(s.release.version), fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.updateTitle(s.release.version) + if (s.release.test) Copy.UPDATE_TEST_SUFFIX else "", fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(firstLine(s.release.notes), color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Spacer(Modifier.height(Gap.Item))
                     LiquidButton(Copy.UPDATE_NOW, modifier = Modifier.fillMaxWidth(), onClick = { run { Updater.update(context, s.release) } })
@@ -118,6 +141,23 @@ internal fun UpdateCard(manual: Boolean) {
                         Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.UPDATE_CHECK, modifier = Modifier.fillMaxWidth(), primary = false, enabled = s != Updater.State.Checking, onClick = { run { Updater.check(context) } })
                     }
+                }
+            }
+            // 버전 채널: 실험실을 열었거나 시험 버전을 쓰는 중이면 안내하고, 실험실을 열었으면 안정 버전으로 돌아가는 버튼을 둔다
+            if (manual && (LabUnlock.unlocked || Updater.isTestBuild())) {
+                Spacer(Modifier.height(Gap.Section))
+                Text(Copy.UPDATE_CHANNEL_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(
+                    when {
+                        LabUnlock.unlocked -> Copy.UPDATE_CHANNEL_TEST
+                        else -> Copy.updateBackToStable(BuildConfig.VERSION_NAME)
+                    },
+                    color = c.muted,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                if (LabUnlock.unlocked) {
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidButton(Copy.UPDATE_TO_STABLE, modifier = Modifier.fillMaxWidth(), primary = false, onClick = { askStable = true })
                 }
             }
         }

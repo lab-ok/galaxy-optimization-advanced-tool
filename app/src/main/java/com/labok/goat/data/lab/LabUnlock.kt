@@ -31,5 +31,15 @@ object LabUnlock {
         return true
     }
 
+    /**
+     * 실험실을 다시 숨긴다(앱 설정 '안정 버전으로 돌아가기'). 시험 버전 채널도 함께 꺼진다([com.labok.goat.data.update.Updater.testChannel]).
+     * 염소를 다시 열 번 누르면 언제든 다시 열린다.
+     */
+    fun lock(context: Context) {
+        unlocked = false
+        prefs(context).edit().putBoolean("unlocked", false).apply()
+        runCatching { MemoShare.setShareTarget(context, false) }
+    }
+
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 }
