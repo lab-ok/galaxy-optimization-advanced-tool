@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,12 +23,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +58,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Text
@@ -168,6 +174,8 @@ fun SideDrawerContent(
     val context = LocalContext.current
     val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "" }
     val items = sections.flatMap { it.items }
+    var query by remember { mutableStateOf("") }
+    LaunchedEffect(visible) { if (!visible) query = "" }
 
     // 등장: 항목이 차례로(머리는 DrawerHeader가 물방울로 맺힌다)
     val enter = remember { Animatable(0f) }
@@ -217,74 +225,121 @@ fun SideDrawerContent(
                 .padding(horizontal = 14.dp, vertical = 18.dp)
         ) {
             DrawerHeader(version, visible)
-            Box(Modifier.onSizeChanged { boxW = it.width.toFloat() }) {
-                // 방울 층(항목 뒤): 고른 항목을 따라다니는 연체 물방울
-                val path = remember { Path() }
-                Canvas(Modifier.matchParentSize()) {
-                    blob.frame // 프레임마다 다시 그리기
-                    if (blob.blob.ready) drawPath(blob.blob.path(path), c.ink)
+            // 설정 검색: 기능 이름이나 기능 안의 설정 이름으로 찾아 바로 연다(초성으로도 찾는다)
+            Spacer(Modifier.height(Gap.Item))
+            LiquidTextField(
+                query,
+                { query = it },
+                placeholder = Copy.DRAWER_SEARCH,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                leading = { Icon(Icons.Outlined.Search, null, tint = c.muted) }
+            )
+            if (query.isNotBlank()) {
+                val hits = remember(query, items) { SettingsSearch.search(query, items + NavItem.SETTINGS) }
+                Spacer(Modifier.height(Gap.Item))
+                if (hits.isEmpty()) {
+                    Text(Copy.DRAWER_SEARCH_NONE, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 22.dp))
                 }
-                Column {
-                    var index = 0
-                    sections.forEach { section ->
-                        Spacer(Modifier.height(Gap.Section))
-                        val titleOrder = index
-                        // 제목 없는 묶음(맨 위 홈)은 제목 줄을 그리지 않는다
-                        if (section.title.isNotEmpty()) {
-                            Text(
-                                section.title,
-                                color = c.muted,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.padding(start = 22.dp, bottom = 6.dp).graphicsLayer { alpha = (enter.value - titleOrder).coerceIn(0f, 1f) }
-                            )
-                        }
-                        section.items.forEach { item ->
-                            val order = ++index
-                            DrawerRow(
-                                item,
-                                item == current,
-                                cover = cover@{
-                                    val top = tops[item] ?: return@cover if (item == current) 1f else 0f
-                                    blob.frame
-                                    if (!blob.blob.ready || rowH <= 0f) {
-                                        (if (item == current) 1f else 0f)
-                                    } else {
-                                        (1f - abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
-                                    }
-                                },
-                                appear = { (enter.value - order).coerceIn(0f, 1f) },
-                                modifier = Modifier.onGloballyPositioned {
-                                    tops[item] = it.positionInParent().y
-                                    rowH = it.size.height.toFloat()
-                                    centers[item] = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f)
-                                }
-                            ) { onSelect(item, centers[item]) }
-                        }
-                        index++
+                hits.forEach { hit ->
+                    SearchRow(hit) {
+                        query = ""
+                        onSelect(hit.item, null)
                     }
-                    // 맨 아래: 앱 설정. 기능 묶음과 선으로 나누되, 고르면 다른 항목처럼 잉크 방울이 옮겨 와 덮는다.
-                    Spacer(Modifier.height(Gap.Section))
-                    Box(Modifier.fillMaxWidth().height(1.dp).padding(horizontal = 22.dp).background(c.line))
-                    Spacer(Modifier.height(Gap.Item))
-                    val settingsOrder = ++index
-                    DrawerRow(
-                        NavItem.SETTINGS,
-                        current == NavItem.SETTINGS,
-                        cover = cover@{
-                            val top = tops[NavItem.SETTINGS] ?: return@cover if (current == NavItem.SETTINGS) 1f else 0f
-                            blob.frame
-                            if (!blob.blob.ready || rowH <= 0f) {
-                                (if (current == NavItem.SETTINGS) 1f else 0f)
-                            } else {
-                                (1f - abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                }
+            } else {
+                Box(Modifier.onSizeChanged { boxW = it.width.toFloat() }) {
+                    // 방울 층(항목 뒤): 고른 항목을 따라다니는 연체 물방울
+                    val path = remember { Path() }
+                    Canvas(Modifier.matchParentSize()) {
+                        blob.frame // 프레임마다 다시 그리기
+                        if (blob.blob.ready) drawPath(blob.blob.path(path), c.ink)
+                    }
+                    Column {
+                        var index = 0
+                        sections.forEach { section ->
+                            Spacer(Modifier.height(Gap.Section))
+                            val titleOrder = index
+                            // 제목 없는 묶음(맨 위 홈)은 제목 줄을 그리지 않는다
+                            if (section.title.isNotEmpty()) {
+                                Text(
+                                    section.title,
+                                    color = c.muted,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    modifier = Modifier.padding(start = 22.dp, bottom = 6.dp).graphicsLayer { alpha = (enter.value - titleOrder).coerceIn(0f, 1f) }
+                                )
                             }
-                        },
-                        appear = { (enter.value - settingsOrder).coerceIn(0f, 1f) },
-                        modifier = Modifier.onGloballyPositioned { tops[NavItem.SETTINGS] = it.positionInParent().y },
-                        onClick = { onSelect(NavItem.SETTINGS, null) }
-                    )
+                            section.items.forEach { item ->
+                                val order = ++index
+                                DrawerRow(
+                                    item,
+                                    item == current,
+                                    cover = cover@{
+                                        val top = tops[item] ?: return@cover if (item == current) 1f else 0f
+                                        blob.frame
+                                        if (!blob.blob.ready || rowH <= 0f) {
+                                            (if (item == current) 1f else 0f)
+                                        } else {
+                                            (1f - abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                                        }
+                                    },
+                                    appear = { (enter.value - order).coerceIn(0f, 1f) },
+                                    modifier = Modifier.onGloballyPositioned {
+                                        tops[item] = it.positionInParent().y
+                                        rowH = it.size.height.toFloat()
+                                        centers[item] = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f)
+                                    }
+                                ) { onSelect(item, centers[item]) }
+                            }
+                            index++
+                        }
+                        // 맨 아래: 앱 설정. 기능 묶음과 선으로 나누되, 고르면 다른 항목처럼 잉크 방울이 옮겨 와 덮는다.
+                        Spacer(Modifier.height(Gap.Section))
+                        Box(Modifier.fillMaxWidth().height(1.dp).padding(horizontal = 22.dp).background(c.line))
+                        Spacer(Modifier.height(Gap.Item))
+                        val settingsOrder = ++index
+                        DrawerRow(
+                            NavItem.SETTINGS,
+                            current == NavItem.SETTINGS,
+                            cover = cover@{
+                                val top = tops[NavItem.SETTINGS] ?: return@cover if (current == NavItem.SETTINGS) 1f else 0f
+                                blob.frame
+                                if (!blob.blob.ready || rowH <= 0f) {
+                                    (if (current == NavItem.SETTINGS) 1f else 0f)
+                                } else {
+                                    (1f - abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
+                                }
+                            },
+                            appear = { (enter.value - settingsOrder).coerceIn(0f, 1f) },
+                            modifier = Modifier.onGloballyPositioned { tops[NavItem.SETTINGS] = it.positionInParent().y },
+                            onClick = { onSelect(NavItem.SETTINGS, null) }
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+/** 검색 결과 한 줄: 기능 아이콘, 찾은 설정 이름, 그 아래 어느 기능에 있는지. */
+@Composable
+private fun SearchRow(hit: SettingsSearch.Hit, onClick: () -> Unit) {
+    val c = LocalLiquid.current
+    val interaction = remember { MutableInteractionSource() }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .liquidPress(interaction, sx = 1.02f, sy = 0.95f)
+            .clip(RoundedCornerShape(24.dp))
+            .clickable(interaction, null, onClick = onClick)
+            .padding(start = 22.dp, end = 16.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        NavGlyph(hit.item.icon, c.ink)
+        Spacer(Modifier.width(14.dp))
+        Column {
+            Text(hit.title, color = c.ink, fontWeight = FontWeight.Medium)
+            if (hit.title != hit.item.label) Text(hit.item.label, color = c.muted, style = MaterialTheme.typography.labelSmall)
         }
     }
 }

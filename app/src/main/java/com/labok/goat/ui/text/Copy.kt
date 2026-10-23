@@ -76,6 +76,8 @@ object Copy {
     const val FEATURE_SHAKE_ROTATE = "흔들어서 화면 회전"
     const val FEATURE_CAMERA_MUTE = "카메라 촬영음 끄기"
     const val FEATURE_HOME = "홈"
+    const val DRAWER_SEARCH = "설정 검색"
+    const val DRAWER_SEARCH_NONE = "찾는 설정이 없습니다."
     const val APP_SIZE_HOME_TITLE = "홈 화면 아이콘 크기"
     const val APP_SIZE_HOME_BODY = "홈 화면 앱에만 배율을 적용해 홈 화면 아이콘과 글자만 작게(크게) 합니다. 다른 앱은 그대로입니다."
     const val APP_SIZE_HOME_HINT = "숫자가 작을수록 작아집니다. 바꾸면 홈 화면이 잠깐 다시 시작됩니다."
