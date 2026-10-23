@@ -161,6 +161,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
             drawPath(lp, c.logo)
             // 염소 얼굴: 안쪽 방울(drop)의 중심을 따라가므로, 아이콘을 끌면 염소가 관성으로 늦게 따라오며 고개를 갸웃한다
             drawGoat(goat, lp, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
+            drawGoatRing(lp, c.ink, logoS)
         }
         Column(
             Modifier

@@ -42,6 +42,7 @@ import com.labok.goat.ui.liquid.poke
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.liquid.rememberSoftBlob
 import com.labok.goat.ui.nav.drawGoat
+import com.labok.goat.ui.nav.drawGoatRing
 import com.labok.goat.ui.nav.goatPainter
 import com.labok.goat.ui.nav.rememberGoatMood
 import kotlin.math.PI
@@ -138,6 +139,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
                 logo.blob.path(path)
                 drawPath(path, c.logo)
                 drawGoat(goat, path, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
+                drawGoatRing(path, c.ink, logoS)
             }
             Column(
                 Modifier
@@ -238,6 +240,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
         logo.blob.path(path)
         drawPath(path, c.logo)
         drawGoat(goat, path, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
+        drawGoatRing(path, c.ink, logoS)
     }
 }
 

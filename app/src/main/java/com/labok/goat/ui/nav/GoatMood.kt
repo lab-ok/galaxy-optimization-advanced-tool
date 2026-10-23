@@ -10,8 +10,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
@@ -130,6 +133,14 @@ fun goatPainter(mood: Mood, variant: Int): Painter {
     }
     val faces = faces(mood)
     return painterResource(faces[variant % faces.size])
+}
+
+/**
+ * 염소 아이콘 테두리(시안 4 '물방울 고리', 2026-10-23): 로고 물방울의 외곽선을 테마 잉크색으로 그린다. 외곽선이 물방울 모양을 그대로
+ * 따라가서 누르거나 쉬는 동안 출렁일 때 테두리도 함께 일렁인다. 흰 얼굴이 밝은 카드에 묻히지 않게 한다.
+ */
+fun DrawScope.drawGoatRing(clip: Path, color: Color, logoS: Float) {
+    drawPath(clip, color, style = Stroke(logoS * 0.06f, join = StrokeJoin.Round))
 }
 
 /**
