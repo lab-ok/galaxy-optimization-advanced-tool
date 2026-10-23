@@ -12,6 +12,7 @@ import android.provider.Settings
 import android.view.InputDevice
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
+import android.view.MotionEvent
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.appsize.AppUsage
@@ -19,6 +20,7 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.AppDensityPolicy
 import java.io.InputStream
 import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -177,6 +179,13 @@ object ShizukuAccess {
 
     internal fun atm(): Any = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
 
+    /** 맨 앞(포커스된) 작업이 있는 화면 번호(셸 권한, 작업 스레드). 폴드는 접고 펼 때 앱이 다른 화면으로 옮겨 간다. 못 읽으면 null. */
+    fun focusedDisplay(): Int? = runCatching {
+        val atm = atm()
+        val info = atm.javaClass.methods.first { it.name == "getFocusedRootTaskInfo" && it.parameterTypes.isEmpty() }.invoke(atm) ?: return null
+        info.javaClass.getField("displayId").getInt(info)
+    }.getOrNull()
+
     /** 입력 관리자(셸 권한). 키 입력을 보낼 때 쓴다([injectKey]). */
     private fun input(): Any = HiddenApi.asInterface("android.hardware.input.IInputManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("input")))
 
@@ -185,8 +194,7 @@ object ShizukuAccess {
      * `input keyevent`보다 빠르다(셸 프로세스를 새로 띄우지 않는다).
      */
     fun injectKey(code: Int): Boolean = runCatching {
-        val im = input()
-        val inject = im.javaClass.methods.first { it.name == "injectInputEvent" && it.parameterTypes.size == 2 }
+        val (im, inject) = injector()
         val down = SystemClock.uptimeMillis()
         listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).all { action ->
             val e = KeyEvent(
@@ -195,6 +203,34 @@ object ShizukuAccess {
             )
             inject.invoke(im, e, 0) == true
         }
+    }.getOrDefault(false)
+
+    private fun injector(): Pair<Any, Method> {
+        val im = input()
+        return im to im.javaClass.methods.first { it.name == "injectInputEvent" && it.parameterTypes.size == 2 }
+    }
+
+    /**
+     * 화면 [displayId]의 ([x], [fromY])에서 ([x], [toY])로 [ms] 동안 손가락으로 쓸어 넘긴다(셸 권한, 작업 스레드, 끝날 때까지 기다림).
+     * 쇼츠·릴스를 위아래로 넘길 때 쓴다. 보냈으면 true.
+     */
+    fun injectSwipe(displayId: Int, x: Float, fromY: Float, toY: Float, ms: Long = 160): Boolean = runCatching {
+        val (im, inject) = injector()
+        val setDisplay = MotionEvent::class.java.methods.firstOrNull { it.name == "setDisplayId" && it.parameterTypes.size == 1 }
+        val down = SystemClock.uptimeMillis()
+        val steps = 8
+        fun send(action: Int, y: Float, at: Long): Boolean {
+            val e = MotionEvent.obtain(down, at, action, x, y, 0)
+            e.source = InputDevice.SOURCE_TOUCHSCREEN
+            setDisplay?.invoke(e, displayId)
+            return (inject.invoke(im, e, 2) == true).also { e.recycle() }
+        }
+        var ok = send(MotionEvent.ACTION_DOWN, fromY, down)
+        for (i in 1..steps) {
+            Thread.sleep(ms / steps)
+            ok = ok && send(MotionEvent.ACTION_MOVE, fromY + (toY - fromY) * i / steps, SystemClock.uptimeMillis())
+        }
+        ok && send(MotionEvent.ACTION_UP, toY, SystemClock.uptimeMillis())
     }.getOrDefault(false)
 
     private fun call(name: String, size: Int, vararg args: Any): Any? {

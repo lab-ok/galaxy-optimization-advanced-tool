@@ -185,6 +185,10 @@
         <receiver
             android:name=".data.lab.StatusBarHider$Receiver"
             android:exported="false" />
+        <!-- 앱 폭 좁히기: 알림에서 좁힌 앱을 붙일 쪽(왼쪽·가운데·오른쪽)을 바꾸는 버튼 -->
+        <receiver
+            android:name=".data.lab.NarrowApps$SideReceiver"
+            android:exported="false" />
         <!-- 자동 플렉스가 켜져 있는 동안 알림에서 앱별 모드를 바꾸는 버튼 -->
         <receiver
             android:name=".data.lab.FlexModeReceiver"

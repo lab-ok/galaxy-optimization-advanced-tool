@@ -1,14 +1,25 @@
 package com.labok.goat.ui.lab
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -39,12 +50,15 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.NarrowApps
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.AppEntry
+import com.labok.goat.ui.appsize.Section
+import com.labok.goat.ui.appsize.ago
 import com.labok.goat.ui.appsize.loadApps
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLoop
@@ -53,6 +67,7 @@ import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidChips
+import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -71,7 +86,8 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     val ready = shizuku == ShizukuAccess.State.READY
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
-    var chosen by remember { mutableStateOf(NarrowApps.apps(context)) }
+    var chosen by remember { mutableStateOf(NarrowApps.ratios(context)) }
+    var open by remember { mutableStateOf<String?>(null) }
     var side by remember { mutableStateOf(NarrowApps.side(context)) }
     var bar by remember { mutableStateOf(NarrowApps.controller(context)) }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
@@ -80,20 +96,21 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
     val busy = remember { mutableStateMapOf<String, Boolean>() }
     LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { loadApps(context) } }
 
-    fun toggle(app: AppEntry, on: Boolean) = scope.launch {
+    fun choose(app: AppEntry, ratio: NarrowApps.Ratio?) = scope.launch {
+        if (chosen[app.pkg] == ratio) return@launch
         busy[app.pkg] = true
-        val err = withContext(Dispatchers.IO) { NarrowApps.set(context, app.pkg, on) }
-        chosen = NarrowApps.apps(context)
+        val err = withContext(Dispatchers.IO) { NarrowApps.set(context, app.pkg, ratio) }
+        chosen = NarrowApps.ratios(context)
         busy.remove(app.pkg)
         GoatService.sync(context)
         if (err != null) Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
     }
 
-    // 고른 앱을 맨 앞에, 그다음 최근 사용 순. 검색어가 있으면 이름으로 거른다
+    // 앱별 화면 배율처럼 '적용된 앱'과 나머지(최근 사용 순)로 나눈다. 검색어가 있으면 이름으로 거른다
     val q = query.trim()
-    val shown = apps.orEmpty()
-        .filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) }
-        .sortedByDescending { it.pkg in chosen }
+    val list = apps.orEmpty().filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) || it.pkg.contains(q, ignoreCase = true) }
+    val applied = list.filter { it.pkg in chosen }
+    val rest = list.filter { it.pkg !in chosen }
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -147,33 +164,103 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                 }
             }
         }
-        item(key = "appsHead") {
+        item(key = "search") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.LAB_NARROW_APPS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(if (apps == null) "앱 목록을 불러오는 중…" else "${chosen.size}개 앱을 좁혔습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidTextField(
-                        query,
-                        { query = it },
-                        "앱 이름 검색",
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) }
+                LiquidTextField(
+                    query,
+                    { query = it },
+                    "앱 이름 검색",
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) }
+                )
+            }
+        }
+        if (apps == null) {
+            item(key = "loading") { LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp)) }
+        }
+        if (applied.isNotEmpty()) {
+            item(key = "h-applied") {
+                Section("적용된 앱 ${applied.size}", Modifier.animateItem()) {
+                    Text(
+                        Copy.LAB_NARROW_CLEAR,
+                        color = c.danger,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(enabled = ready) {
+                            scope.launch {
+                                val failed = withContext(Dispatchers.IO) { NarrowApps.clearAll(context) }
+                                chosen = NarrowApps.ratios(context)
+                                GoatService.sync(context)
+                                if (failed > 0) Toast.makeText(context, "${failed}개 앱을 되돌리지 못했습니다.", Toast.LENGTH_SHORT).show()
+                            }
+                        }.padding(horizontal = 8.dp, vertical = 6.dp)
                     )
                 }
             }
+            items(applied, key = { it.pkg }) { app ->
+                NarrowRow(app, chosen[app.pkg], open == app.pkg, ready && busy[app.pkg] != true, { open = if (open == app.pkg) null else app.pkg }, { choose(app, it) }, Modifier.animateItem())
+            }
         }
-        items(shown, key = { "app:" + it.pkg }) { app ->
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
-                        Spacer(Modifier.width(Gap.Card))
-                        Box(Modifier.weight(1f)) {
-                            LiquidSwitchRow(app.label, null, app.pkg in chosen, ready && busy[app.pkg] != true) { on -> toggle(app, on) }
-                        }
-                    }
-                }
+        item(key = "h-rest") { Section("최근 사용 순", Modifier.animateItem()) }
+        if (apps != null && rest.isEmpty()) {
+            item(key = "empty") { Text("찾는 앱이 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(6.dp)) }
+        }
+        items(rest, key = { it.pkg }) { app ->
+            NarrowRow(app, chosen[app.pkg], open == app.pkg, ready && busy[app.pkg] != true, { open = if (open == app.pkg) null else app.pkg }, { choose(app, it) }, Modifier.animateItem())
+        }
+    }
+}
+
+/** 앱 한 줄(앱별 화면 배율과 같은 모양): 아이콘·이름·마지막 사용·지금 비율. 누르면 비율 고르기(기본·16:9·3:2)가 펼쳐진다. */
+@Composable
+private fun NarrowRow(
+    app: AppEntry,
+    ratio: NarrowApps.Ratio?,
+    expanded: Boolean,
+    enabled: Boolean,
+    onToggle: () -> Unit,
+    onSelect: (NarrowApps.Ratio?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val c = LocalLiquid.current
+    val on = ratio != null
+    val shape = RoundedCornerShape(20.dp)
+    val border by animateColorAsState(if (expanded) c.ink.copy(alpha = 0.5f) else c.line, label = "narrowRow")
+    Column(
+        modifier
+            .widthIn(max = ContentMaxWidth)
+            .fillMaxWidth()
+            .clip(shape)
+            .background(c.surface)
+            .border(1.dp, border, shape)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
+            }
+            Spacer(Modifier.width(8.dp))
+            val fill by animateColorAsState(if (on) c.ink else c.line.copy(alpha = 0.5f), label = "narrowPill")
+            val ink by animateColorAsState(if (on) c.onInk else c.muted, label = "narrowPillText")
+            Box(Modifier.clip(RoundedCornerShape(12.dp)).background(fill).padding(horizontal = 10.dp, vertical = 4.dp)) {
+                Text(ratio?.label ?: Copy.APP_SIZE_DEFAULT, color = ink, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, style = MaterialTheme.typography.labelMedium)
+            }
+        }
+        AnimatedVisibility(expanded, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+            Column(Modifier.padding(start = 10.dp, end = 10.dp, bottom = 12.dp)) {
+                LiquidChips(
+                    options = listOf<NarrowApps.Ratio?>(null) + NarrowApps.Ratio.entries,
+                    selected = ratio,
+                    label = { it?.label ?: Copy.APP_SIZE_DEFAULT },
+                    onSelect = { if (enabled) onSelect(it) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(Gap.Item))
+                Text(Copy.LAB_NARROW_ROW_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 4.dp))
             }
         }
     }

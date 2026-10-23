@@ -19,6 +19,20 @@ class NarrowBarTest {
     }
 
     @Test
+    fun mediumRatioLeavesNoMarginOnCover() {
+        // 3:2(1.5)는 커버(1972/1248≈1.58)보다 넓어 여백이 생기지 않는다
+        assertEquals(0, NarrowBar.margin(1248, 1972, 0, 1.5f))
+    }
+
+    @Test
+    fun swipeGoesThroughTheAppMiddle() {
+        // 폭 1248, 여백 200: 앱 폭 1048
+        assertEquals(524f, NarrowBar.appCenterX(NarrowApps.Side.LEFT, 1248, 200), 0.01f)
+        assertEquals(724f, NarrowBar.appCenterX(NarrowApps.Side.RIGHT, 1248, 200), 0.01f)
+        assertEquals(624f, NarrowBar.appCenterX(NarrowApps.Side.CENTER, 1248, 200), 0.01f)
+    }
+
+    @Test
     fun slotSitsOppositeTheApp() {
         assertEquals(Gravity.END to 200, NarrowBar.slot(NarrowApps.Side.LEFT, 200))
         assertEquals(Gravity.START to 200, NarrowBar.slot(NarrowApps.Side.RIGHT, 200))
