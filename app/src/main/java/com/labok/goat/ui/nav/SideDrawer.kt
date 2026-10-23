@@ -231,7 +231,7 @@ fun SideDrawerContent(
                 query,
                 { query = it },
                 placeholder = Copy.DRAWER_SEARCH,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                modifier = Modifier.fillMaxWidth(),
                 leading = { Icon(Icons.Outlined.Search, null, tint = c.muted) }
             )
             if (query.isNotBlank()) {

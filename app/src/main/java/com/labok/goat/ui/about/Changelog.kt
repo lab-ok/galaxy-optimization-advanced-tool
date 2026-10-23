@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.20.0",
+        "2026-10-23",
+        "사이드바 검색창 폭을 맞췄습니다.",
+        listOf(
+            "수정" to listOf(
+                "사이드바 설정 검색창의 폭을 위아래 항목과 같게 맞췄습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.19.0",
         "2026-10-23",
         "설정 검색을 더하고, 켜기 스위치와 재부팅 뒤 자동 적용을 한곳에 모았습니다.",
