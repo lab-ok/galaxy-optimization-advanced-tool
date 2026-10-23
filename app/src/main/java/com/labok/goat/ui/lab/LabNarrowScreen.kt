@@ -92,7 +92,8 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
     var open by remember { mutableStateOf<String?>(null) }
     var side by remember { mutableStateOf(NarrowApps.side(context)) }
     var bar by remember { mutableStateOf(NarrowApps.controller(context)) }
-    var gesture by remember { mutableStateOf(StatusGestures.enabled(context)) }
+    var gesture by remember { mutableStateOf(StatusGestures.narrowPress(context) && StatusGestures.enabled(context)) }
+    var master by remember { mutableStateOf(NarrowApps.on(context)) }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
     var query by remember { mutableStateOf("") }
     // 바꾸는 중인 앱(셸이 끝날 때까지 스위치를 잠근다)
@@ -130,6 +131,28 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                     NarrowArt(side)
                     Spacer(Modifier.height(Gap.Item))
                     Text(if (!supported) Copy.LAB_NARROW_FOLD8_ONLY else if (ready) Copy.LAB_NARROW_NOTE else Copy.LAB_FLEX_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    // 전체 켜고 끄기: 끄면 좁힌 앱을 모두 원래대로 돌리고 컨트롤러·꾹 누르기도 멈춘다(목록은 남는다)
+                    LiquidSwitchRow(Copy.LAB_NARROW_MASTER, Copy.LAB_NARROW_MASTER_BODY, master, ready) { on ->
+                        master = on
+                        scope.launch {
+                            withContext(Dispatchers.IO) { NarrowApps.setOn(context, on) }
+                            GoatService.sync(context)
+                        }
+                    }
+                }
+            }
+        }
+        item(key = "gesture") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    LiquidSwitchRow(Copy.LAB_NARROW_GESTURE, Copy.LAB_NARROW_GESTURE_BODY, gesture, supported && master) { on ->
+                        scope.launch {
+                            val ok = withContext(Dispatchers.IO) { StatusGestures.setFeature(context, narrowPress = on) }
+                            gesture = StatusGestures.narrowPress(context) && StatusGestures.enabled(context)
+                            if (!ok) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             }
         }
@@ -162,19 +185,6 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                         scope.launch {
                             withContext(Dispatchers.IO) { NarrowApps.setController(context, on) }
                             GoatService.sync(context)
-                        }
-                    }
-                }
-            }
-        }
-        item(key = "gesture") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    LiquidSwitchRow(Copy.LAB_NARROW_GESTURE, Copy.LAB_NARROW_GESTURE_BODY, gesture, supported) { on ->
-                        scope.launch {
-                            val ok = withContext(Dispatchers.IO) { StatusGestures.setEnabled(context, on) }
-                            gesture = StatusGestures.enabled(context)
-                            if (!ok) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
                         }
                     }
                 }

@@ -78,27 +78,53 @@ object NarrowApps {
     fun side(context: Context): Side = Side.entries.getOrNull(prefs(context).getInt("side", Side.RIGHT.ordinal))?.takeIf { it != Side.CENTER } ?: Side.RIGHT
 
     /**
+     * 앱 폭 좁히기 전체 켜고 끄기(소장님 지정 '온오프'). 끄면 좁힌 앱을 모두 원래대로 돌리고 컨트롤러·상단바 꾹 누르기도 멈춘다.
+     * 앱 목록·비율은 그대로 남겨 다시 켜면 다시 걸린다. 1.24.4까지 쓰던 사람은 켜진 상태로 읽는다.
+     */
+    fun on(context: Context) = prefs(context).getBoolean("on", true)
+
+    fun setOn(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("on", on).apply()
+        if (on) {
+            reapply(context)
+            nudge()
+        } else {
+            if (global(context)) stopGlobal(context, null)
+            ratios(context).keys.forEach { ShizukuAccess.clearCompat(it) }
+            nudge()
+            NarrowBar.hide(context)
+        }
+        LogRepository.from(context).add("앱 폭 좁히기 ${if (on) "켬" else "끔"}")
+    }
+
+    /**
+     * [pkg]에 [ratio]를 걸거나(null이면 지운다) 앱을 닫지 않고 바꾼다(작업 스레드). 시스템 호환성 서비스로 앱마다 한 번 호출하고
+     * (1.24.4까지는 `am compat` 명령을 설정마다 따로 불러 앱 171개에 20초 넘게 걸렸다, 실기기 로그), 안 되면 명령으로 한다.
+     */
+    private fun override(pkg: String, ratio: Ratio?): Boolean {
+        ShizukuAccess.clearCompat(pkg)
+        if (ratio == null) return true
+        return ShizukuAccess.setCompat(pkg, (COMMON_ON + ratio.change).toSet(), OFF.toSet(), optional = setOf(UNIVERSAL_RESIZABLE_BY_DEFAULT)) ||
+            ShizukuAccess.shell(commands(pkg, ratio, kill = false))?.out?.contains("Enabled change $MIN_ASPECT_RATIO") == true
+    }
+
+    /**
      * [pkg]를 [ratio]로 좁히거나(null이면 원래대로) 둔다(작업 스레드). 앱을 닫지 않고 설정만 바꾼 뒤 화면 크기를 아주 잠깐 바꿔
      * 열려 있는 앱도 바로 새 모양으로 바뀌게 한다(에뮬레이터 실측: 켜고 끌 때 모두 같은 프로세스로 바로 바뀜).
      * 실패하면 이유(한 줄), 성공하면 null.
      */
     fun set(context: Context, pkg: String, ratio: Ratio?): String? {
         val log = LogRepository.from(context)
-        val on = ratio != null
-        val r = ShizukuAccess.shell(commands(pkg, ratio, kill = false)) ?: return "Shizuku가 연결되지 않았습니다.".also {
-            log.add("앱 폭 좁히기($pkg): Shizuku 없음")
-        }
-        // 핵심 설정(최소 화면비)이 바뀌었는지 출력으로 확인한다. 안드로이드 15 이하에는 없는 설정(357141415)의 오류는 무시한다
-        val ok = if (on) "Enabled change $MIN_ASPECT_RATIO" in r.out else "Reset change $MIN_ASPECT_RATIO" in r.out
-        if (!ok) {
-            log.add("앱 폭 좁히기($pkg) ${ratio?.label ?: "끄기"} 실패: ${(r.err.ifBlank { r.out }).take(160)}")
-            return "바꾸지 못했습니다: ${(r.err.ifBlank { r.out }).lineSequence().firstOrNull().orEmpty().take(80)}"
+        if (ShizukuAccess.status.value != ShizukuAccess.State.READY) ShizukuAccess.refresh()
+        if (on(context) && !override(pkg, ratio)) {
+            log.add("앱 폭 좁히기($pkg) ${ratio?.label ?: "끄기"} 실패")
+            return "바꾸지 못했습니다. Shizuku 연결을 확인하세요."
         }
         val legacy = prefs(context).getStringSet("apps", emptySet()).orEmpty() - pkg
         prefs(context).edit().putStringSet("apps", legacy).apply {
             if (ratio != null) putString("ratio:$pkg", ratio.name) else remove("ratio:$pkg")
         }.apply()
-        if (on) {
+        if (ratio != null) {
             applySide(context)
             watch(context)
         }
@@ -147,7 +173,7 @@ object NarrowApps {
         return find("Physical")?.let { it to find("Override") }
     }
 
-    /** 셸 명령 한 줄. [kill]이면 바꾼 뒤 앱을 닫아 다시 열 때 새 모양으로 뜨게 한다(다시 걸 때는 열려 있는 앱을 닫지 않는다). */
+    /** 셸 명령 한 줄(호환성 서비스를 못 쓸 때의 예비). [kill]이면 바꾼 뒤 앱을 닫는다. */
     internal fun commands(pkg: String, ratio: Ratio?, kill: Boolean): String {
         val flag = if (kill) "" else " --no-kill"
         val ratioOff = Ratio.entries.filter { it != ratio }.map { "am compat reset$flag ${it.change} $pkg" }
@@ -171,23 +197,40 @@ object NarrowApps {
     /** 전체 좁히기에서 빼는 앱: 다른 앱 위에 잠깐 뜨는 시스템 창(권한 요청 등). */
     private val SKIP = setOf("com.android.permissioncontroller", "com.google.android.permissioncontroller", "com.android.systemui", "com.android.intentresolver")
 
-    /** 좁혀 있는(또는 좁혀야 하는) 앱인지: 직접 고른 앱이거나 전체 좁히기가 켜져 있으면. */
-    fun isNarrow(context: Context, pkg: String) = pkg in ratios(context) || (global(context) && pkg != context.packageName && pkg !in SKIP)
+    /** 좁혀 있는(또는 좁혀야 하는) 앱인지: 직접 고른 앱이거나 전체 좁히기가 켜져 있으면. 앱 폭 좁히기를 꺼 두면 늘 false. */
+    fun isNarrow(context: Context, pkg: String) = on(context) && (pkg in ratios(context) || (global(context) && pkg != context.packageName && pkg !in SKIP))
 
     /** 앱 비율: 직접 고른 비율, 없으면 전체 좁히기의 16:9. */
     fun ratioOf(context: Context, pkg: String): Ratio? = ratios(context)[pkg] ?: Ratio.TALL.takeIf { global(context) }
 
+    /** 전체 좁히기를 켜고 끄는 중이면 true: 꾹 누르기가 처리 중에 겹쳐 쌓이지 않게 한다(실기기 로그: 1초마다 켬이 쌓였다). */
+    private val busy = java.util.concurrent.atomic.AtomicBoolean(false)
+
     /**
-     * 전체 좁히기를 켠다(작업 스레드): [side] 쪽에 앱을 붙이고, 지금 맨 앞 앱부터 좁힌다. 컨트롤러도 켠다.
+     * 전체 좁히기를 켠다(작업 스레드): [side] 쪽에 앱을 붙이고, 지금 맨 앞 앱부터 좁힌 뒤 홈 화면 앱 전부에 미리 건다.
+     * 이미 켜져 있으면 붙일 쪽만 바꾼다. 처리 중이면 무시하고 false.
      */
-    fun startGlobal(context: Context, side: Side, pkg: String?) {
-        prefs(context).edit().putBoolean("global", true).putInt("side", side.ordinal).apply()
-        setController(context, true)
-        applySide(context)
-        if (pkg != null) onForeground(context, pkg, force = true) else nudge()
-        watch(context)
-        LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 켬(${side.label})")
-        preapply(context)
+    fun startGlobal(context: Context, side: Side, pkg: String?): Boolean {
+        if (!on(context) || !busy.compareAndSet(false, true)) return false
+        try {
+            val already = global(context)
+            prefs(context).edit().putBoolean("global", true).putInt("side", side.ordinal).apply()
+            if (!controller(context)) setController(context, true)
+            applySide(context)
+            if (already) {
+                nudge()
+                NarrowBar.relayout(context)
+                LogRepository.from(context).add("앱 폭 좁히기: 붙일 쪽 ${side.label}")
+                return true
+            }
+            if (pkg != null) onForeground(context, pkg, force = true) else nudge()
+            watch(context)
+            preapply(context)
+            LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 켬(${side.label})")
+            return true
+        } finally {
+            busy.set(false)
+        }
     }
 
     /**
@@ -197,26 +240,25 @@ object NarrowApps {
     private fun preapply(context: Context) {
         val skip = SKIP + context.packageName + ratios(context).keys + globalApplied(context)
         val pkgs = AppList.launcherApps(context).map { it.pkg }.filter { it !in skip }
-        if (pkgs.isEmpty()) return
-        // 한 번에 너무 긴 명령이 되지 않게 나눠 보낸다
-        pkgs.chunked(10).forEach { group ->
-            if (!global(context)) return
-            ShizukuAccess.shell(group.joinToString("; ") { commands(it, Ratio.TALL, kill = false) }) ?: return
-            prefs(context).edit().putStringSet("global_applied", globalApplied(context) + group).apply()
-        }
-        LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 앱 ${pkgs.size}개에 미리 걸기")
+        val done = pkgs.filter { global(context) && override(it, Ratio.TALL) }
+        prefs(context).edit().putStringSet("global_applied", globalApplied(context) + done).apply()
+        LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 앱 ${done.size}개에 미리 걸기")
     }
 
     /** 전체 좁히기를 끈다(작업 스레드): 이 모드가 좁힌 앱을 모두 되돌린다. [pkg](지금 앱)를 직접 고른 앱이면 그 앱도 끈다. */
-    fun stopGlobal(context: Context, pkg: String?) {
-        val applied = globalApplied(context)
-        prefs(context).edit().putBoolean("global", false).putStringSet("global_applied", emptySet()).apply()
-        val reset = applied + listOfNotNull(pkg?.takeIf { it in ratios(context) })
-        reset.filter { it in ratios(context) }.forEach { set(context, it, null) }
-        val rest = reset.filter { it !in ratios(context) }
-        if (rest.isNotEmpty()) ShizukuAccess.shell(rest.joinToString("; ") { commands(it, null, kill = false) })
-        nudge()
-        LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 끔(${applied.size}개 앱 되돌림)")
+    fun stopGlobal(context: Context, pkg: String?): Boolean {
+        if (!busy.compareAndSet(false, true)) return false
+        try {
+            val applied = globalApplied(context)
+            val wasOn = global(context)
+            prefs(context).edit().putBoolean("global", false).putStringSet("global_applied", emptySet()).apply()
+            applied.filter { it !in ratios(context) }.forEach { ShizukuAccess.clearCompat(it) }
+            if (pkg != null && pkg in ratios(context)) set(context, pkg, null) else nudge()
+            if (wasOn || applied.isNotEmpty()) LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 끔(${applied.size}개 앱 되돌림)")
+            return true
+        } finally {
+            busy.set(false)
+        }
     }
 
     /**
@@ -224,9 +266,9 @@ object NarrowApps {
      * 직접 고른 앱은 이미 걸려 있어 건너뛴다.
      */
     fun onForeground(context: Context, pkg: String, force: Boolean = false) {
-        if (!global(context) || pkg == context.packageName || pkg in SKIP || pkg in ratios(context)) return
+        if (!on(context) || !global(context) || pkg == context.packageName || pkg in SKIP || pkg in ratios(context)) return
         if (!force && pkg in globalApplied(context)) return
-        if (ShizukuAccess.shell(commands(pkg, Ratio.TALL, kill = false)) == null) return
+        if (!override(pkg, Ratio.TALL)) return
         prefs(context).edit().putStringSet("global_applied", globalApplied(context) + pkg).apply()
         nudge()
         // 설정 없이 처음 열린 화면은 설정을 바꿔도 좁아지지 않을 때가 있다(에뮬레이터 연락처: 화면 크기를 바꿔도 그대로, 다시 열면 좁아짐).
@@ -245,23 +287,31 @@ object NarrowApps {
 
     /** 고른 앱과 여백 위치를 다시 건다(Shizuku 연결 때, 작업 스레드). 열려 있는 앱은 닫지 않는다. */
     fun reapply(context: Context) {
+        if (!on(context)) return
         val ratios = ratios(context) + (if (global(context)) globalApplied(context).associateWith { Ratio.TALL } else emptyMap())
         if (ratios.isEmpty()) return
-        if (ShizukuAccess.shell(ratios.entries.joinToString("; ") { (pkg, r) -> commands(pkg, r, kill = false) }) == null) return
+        val ok = ratios.count { (pkg, r) -> override(pkg, r) }
         applySide(context)
-        LogRepository.from(context).add("앱 폭 좁히기: ${ratios.size}개 앱 다시 걸기")
+        LogRepository.from(context).add("앱 폭 좁히기: ${ok}/${ratios.size}개 앱 다시 걸기")
     }
 
     private val binder = Shizuku.OnBinderReceivedListener { reapplyAsync?.invoke() }
 
     @Volatile private var reapplyAsync: (() -> Unit)? = null
 
-    /** 앱 시작 때 부른다: Shizuku가 연결되는 순간(재부팅 뒤 포함) 고른 앱을 다시 건다. */
+    @Volatile private var watching = false
+
+    /**
+     * 앱 시작 때 부른다: Shizuku가 연결되는 순간(재부팅 뒤 포함) 고른 앱을 다시 건다. 감시는 한 번만 등록한다
+     * (1.24.4는 부를 때마다 겹쳐 등록돼, 한 번 연결에 173개 다시 걸기가 여러 번 돌았다, 실기기 로그).
+     */
     fun watch(context: Context) {
         val app = context.applicationContext
         runCatching { app.getSystemService(NotificationManager::class.java).cancel(OLD_NOTIFICATION_ID) }
         if (apps(app).isEmpty() && !global(app)) return
         reapplyAsync = { Thread { reapply(app) }.start() }
+        if (watching) return
+        watching = true
         Shizuku.addBinderReceivedListenerSticky(binder)
     }
 

@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
 import android.os.Bundle
@@ -14,6 +15,7 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.Display
 import android.view.Gravity
+import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.compose.foundation.layout.ime
@@ -61,6 +63,15 @@ object NarrowBar {
     private var owner: OverlayOwner? = null
     private var shownOn = -1
 
+    /** 창을 붙였는지(addView는 바로 반영되지 않아 isAttachedToWindow로 보면 두 번 붙이려다 실패했다, 실기기 로그). */
+    private var added = false
+
+    /**
+     * 좁힌 앱 위 상단바 자리를 덮는 검은 판. 좁힌 앱은 상단바 뒤까지 그리지 못해 앱이 정한 상단바 색이 반투명 띠로 보였다(소장님 지적).
+     * 일반 앱 창보다 위, 상단바 아이콘보다 아래 층이라 띠만 가리고 시계·아이콘은 그대로 보인다. 터치는 받지 않는다.
+     */
+    private var cover: View? = null
+
     /** 지금 컨트롤러를 띄운 앱. */
     @Volatile private var current: String? = null
 
@@ -72,7 +83,7 @@ object NarrowBar {
     private var recentIcons by mutableStateOf<List<ImageBitmap>>(emptyList())
     private var recentTasks: List<ShizukuAccess.RecentTask> = emptyList()
 
-    fun enabled(context: Context) = NarrowApps.controller(context) && (NarrowApps.apps(context).isNotEmpty() || NarrowApps.global(context))
+    fun enabled(context: Context) = NarrowApps.on(context) && NarrowApps.controller(context) && (NarrowApps.apps(context).isNotEmpty() || NarrowApps.global(context))
 
     /**
      * 맨 앞 앱이 [pkg]로 바뀌었을 때(작업 스레드에서 부른다): 좁힌 앱이 화면을 꽉 채우고 있으면 그 화면에 띄우고, 아니면 내린다.
@@ -164,8 +175,43 @@ object NarrowBar {
         }
         val lp = layout(v.context) ?: return detach(context)
         val wm = v.context.getSystemService(WindowManager::class.java)
-        runCatching { if (v.isAttachedToWindow) wm.updateViewLayout(v, lp) else wm.addView(v, lp) }
-            .onFailure { LogRepository.from(context).add("좁힌 앱 컨트롤러: 창을 띄우지 못함(${it.message})") }
+        runCatching {
+            if (added) {
+                wm.updateViewLayout(v, lp)
+            } else {
+                wm.addView(v, lp)
+                added = true
+            }
+        }.onFailure { LogRepository.from(context).add("좁힌 앱 컨트롤러: 창을 띄우지 못함(${it.message})") }
+        attachCover(v.context)
+    }
+
+    private fun attachCover(context: Context) {
+        val wm = context.getSystemService(WindowManager::class.java)
+        val h = wm.maximumWindowMetrics.windowInsets.getInsets(WindowInsets.Type.statusBars()).top
+        if (h <= 0) return
+        val lp = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            h,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            PixelFormat.OPAQUE
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            title = "GOAT narrow status cover"
+        }
+        val c = cover
+        runCatching {
+            if (c == null) {
+                val v = View(context).apply { setBackgroundColor(Color.BLACK) }
+                wm.addView(v, lp)
+                cover = v
+            } else {
+                wm.updateViewLayout(c, lp)
+            }
+        }
     }
 
     private fun create(context: Context): ComposeView {
@@ -192,10 +238,13 @@ object NarrowBar {
     }
 
     private fun detach(context: Context) {
+        cover?.let { c -> runCatching { c.context.getSystemService(WindowManager::class.java).removeView(c) } }
+        cover = null
         val v = view ?: return
         view = null
         shownOn = -1
-        if (v.isAttachedToWindow) runCatching { v.context.getSystemService(WindowManager::class.java).removeView(v) }
+        if (added) runCatching { v.context.getSystemService(WindowManager::class.java).removeView(v) }
+        added = false
         owner?.destroy()
         owner = null
     }
@@ -246,15 +295,8 @@ object NarrowBar {
                 NarrowKey.RIGHT -> ShizukuAccess.injectSwipe(id, x + appW * 0.3f, h * 0.5f, x - appW * 0.3f, h * 0.5f)
                 NarrowKey.LEFT -> ShizukuAccess.injectSwipe(id, x - appW * 0.3f, h * 0.5f, x + appW * 0.3f, h * 0.5f)
                 NarrowKey.SWAP -> NarrowApps.setSide(app, if (side == NarrowApps.Side.LEFT) NarrowApps.Side.RIGHT else NarrowApps.Side.LEFT) == null
-                NarrowKey.EXIT -> pkg != null && run {
-                    // 전체 좁히기면 모드를 끄고, 아니면 지금 앱만 끈다
-                    if (NarrowApps.global(app)) {
-                        NarrowApps.stopGlobal(app, pkg)
-                        true
-                    } else {
-                        NarrowApps.set(app, pkg, null) == null
-                    }
-                }
+                // 전체 좁히기면 모드를 끄고, 아니면 지금 앱만 끈다
+                NarrowKey.EXIT -> pkg != null && if (NarrowApps.global(app)) NarrowApps.stopGlobal(app, pkg) else NarrowApps.set(app, pkg, null) == null
             }
             if (key == NarrowKey.EXIT && ok) hide(app)
             if (!ok) LogRepository.from(app).add("좁힌 앱 컨트롤러: ${key.name} 실패(Shizuku 확인)")

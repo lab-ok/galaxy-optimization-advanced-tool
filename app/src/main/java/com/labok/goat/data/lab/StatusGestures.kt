@@ -61,6 +61,24 @@ object StatusGestures {
         return list.split(':').any { ComponentName.unflattenFromString(it) == component(context) }
     }
 
+    /** 상단바 두 번 누르기 = 맨 위로(별도 기능, 소장님 지정). */
+    fun scrollTop(context: Context) = prefs(context).getBoolean("scroll_top", false)
+
+    /** 상단바 꾹 누르기 = 앱 폭 좁히기(왼쪽·오른쪽 켜기, 가운데 끄기). 1.24.4에서 '상단바 제스처'를 켰으면 켜진 것으로 읽는다. */
+    fun narrowPress(context: Context) = prefs(context).getBoolean("narrow_press", prefs(context).getBoolean("wanted", false))
+
+    /** 두 기능 중 하나를 바꾸고, 하나라도 켜져 있으면 접근성 서비스를 켜고 둘 다 꺼지면 끈다. 성공하면 true. */
+    fun setFeature(context: Context, scrollTop: Boolean? = null, narrowPress: Boolean? = null): Boolean {
+        prefs(context).edit().apply {
+            scrollTop?.let { putBoolean("scroll_top", it) }
+            narrowPress?.let { putBoolean("narrow_press", it) }
+        }.apply()
+        val need = scrollTop(context) || narrowPress(context)
+        return setEnabled(context, need)
+    }
+
+    private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+
     /** 서비스를 켜거나 끈다(시스템 설정 권한, 볼륨 버튼 회전과 같은 방식). 성공하면 true. */
     fun setEnabled(context: Context, on: Boolean): Boolean = runCatching {
         val r = context.contentResolver
@@ -70,14 +88,14 @@ object StatusGestures {
         val next = (if (on) others + c.flattenToString() else others).joinToString(":")
         Settings.Secure.putString(r, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, next)
         if (on) Settings.Secure.putInt(r, Settings.Secure.ACCESSIBILITY_ENABLED, 1)
-        context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putBoolean("wanted", on).apply()
-        LogRepository.from(context).add("상단바 제스처: ${if (on) "켬" else "끔"}")
+        prefs(context).edit().putBoolean("wanted", on).apply()
+        LogRepository.from(context).add("상단바 제스처 서비스: ${if (on) "켬" else "끔"}")
         enabled(context) == on
     }.getOrDefault(false)
 
     /** 강제 종료로 시스템이 서비스를 뺐으면 앱이 다시 뜰 때 되살린다. */
     fun restoreIfWanted(context: Context) {
-        if (!context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getBoolean("wanted", false) || enabled(context)) return
+        if (!(scrollTop(context) || narrowPress(context)) || enabled(context)) return
         runCatching { setEnabled(context, true) }
     }
 }
@@ -173,8 +191,15 @@ class StatusGestureService : AccessibilityService() {
         runCatching { windowManager(id).removeView(v) }
     }
 
+    /** 높이·터치 여부가 바뀌었을 때만 다시 배치한다(1.24.4는 화면 상태가 바뀔 때마다 다시 배치해 로그가 넘쳤다, 실기기 로그). */
     private fun relayout(id: Int, v: View) {
-        runCatching { windowManager(id).updateViewLayout(v, params(id, (v as Strip).barVisible)) }
+        val strip = v as Strip
+        val h = statusHeight(id)
+        val touch = strip.barVisible
+        if (strip.laidHeight == h && strip.laidTouch == touch) return
+        strip.laidHeight = h
+        strip.laidTouch = touch
+        runCatching { windowManager(id).updateViewLayout(v, params(id, touch)) }
     }
 
     /** 지금 맨 앞 앱(작업 스레드). */
@@ -182,6 +207,7 @@ class StatusGestureService : AccessibilityService() {
 
     private fun longPress(zone: StatusGestures.Zone) {
         val app = applicationContext
+        if (!StatusGestures.narrowPress(app) || !NarrowApps.on(app) || !NarrowApps.supported()) return
         io.execute {
             val pkg = foreground()
             when (zone) {
@@ -205,17 +231,42 @@ class StatusGestureService : AccessibilityService() {
             val target = root?.let { biggestScrollable(it) }
             var moved = 0
             if (target != null) {
+                // 한 화면씩 올리고, 화면 내용(보이는 자식들의 위치·글)이 두 번 연속 그대로면 맨 위로 본다.
+                // 1.24.4는 크롬처럼 '올림 성공'만 계속 돌려주는 화면에서 300번 헛돌았다(실기기 로그)
                 val until = SystemClock.uptimeMillis() + 2500
-                while (moved < 300 && SystemClock.uptimeMillis() < until) {
+                var last = ""
+                var same = 0
+                while (moved < 120 && SystemClock.uptimeMillis() < until) {
                     val ok = target.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id) ||
                         target.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
                     if (!ok) break
                     moved++
+                    Thread.sleep(16)
+                    target.refresh()
+                    val sig = signature(target)
+                    if (sig == last) {
+                        if (++same >= 2) break
+                    } else {
+                        same = 0
+                        last = sig
+                    }
                 }
             }
             // 스크롤 영역을 못 찾았으면 여러 번, 찾았으면 접히는 머리글까지 펼치도록 한 번 쓸어내린다
             fling(if (moved == 0) 6 else 1)
             LogRepository.from(this).add("상단바 제스처: 맨 위로(${if (moved > 0) "스크롤 ${moved}번" else "쓸어 올리기"})")
+        }
+    }
+
+    /** 스크롤 영역의 지금 모습: 앞쪽 자식 몇 개의 위치와 글. 올렸는데 그대로면 더 올라갈 데가 없다. */
+    private fun signature(n: AccessibilityNodeInfo): String {
+        val r = Rect()
+        return buildString {
+            for (i in 0 until minOf(n.childCount, 4)) {
+                val c = n.getChild(i) ?: continue
+                c.getBoundsInScreen(r)
+                append(r.top).append(':').append(c.text ?: c.contentDescription ?: "").append('|')
+            }
         }
     }
 
@@ -265,6 +316,8 @@ class StatusGestureService : AccessibilityService() {
         private var handled = false
         /** 이 화면의 상단바가 보이는지(접근성 창 목록으로 판단, [checkBars]). */
         var barVisible = true
+        var laidHeight = -1
+        var laidTouch = true
         private val long = Runnable {
             handled = true
             performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -292,7 +345,7 @@ class StatusGestureService : AccessibilityService() {
                     removeCallbacks(long)
                     if (!handled) {
                         val now = SystemClock.uptimeMillis()
-                        if (now - lastUp < doubleMs) {
+                        if (now - lastUp < doubleMs && StatusGestures.scrollTop(context)) {
                             lastUp = 0L
                             performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                             scrollTop()

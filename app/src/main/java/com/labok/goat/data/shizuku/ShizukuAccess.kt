@@ -242,6 +242,34 @@ object ShizukuAccess {
         info.javaClass.getField("displayId").getInt(info)
     }.getOrNull()
 
+    /** 앱 호환성 설정 서비스(셸 권한). `am compat` 명령 대신 앱마다 한 번의 호출로 설정을 건다(명령은 앱당 수백 ms, 이것은 2ms 안팎). */
+    private fun platformCompat(): Any = HiddenApi.asInterface("com.android.internal.compat.IPlatformCompat", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("platform_compat")))
+
+    /**
+     * [pkg]에 호환성 설정을 건다(셸 권한, 작업 스레드): [enabled]는 켜고 [disabled]는 끈다. 앱을 닫지 않는다(setOverridesForTest,
+     * `am compat --no-kill`과 같은 호출). 이 기기에 없는 설정 번호가 섞여 거절되면 그 번호를 빼고 다시 건다. 됐으면 true.
+     */
+    fun setCompat(pkg: String, enabled: Set<Long>, disabled: Set<Long>, optional: Set<Long> = emptySet()): Boolean {
+        fun attempt(en: Set<Long>, dis: Set<Long>) = runCatching {
+            HiddenApi.exemptAll()
+            val pc = platformCompat()
+            val changeConfig = Class.forName("android.compat.Compatibility\$ChangeConfig")
+            val cfg = changeConfig.getConstructor(Set::class.java, Set::class.java).newInstance(en, dis)
+            val ccc = Class.forName("com.android.internal.compat.CompatibilityChangeConfig").getConstructor(changeConfig).newInstance(cfg)
+            pc.javaClass.methods.first { it.name == "setOverridesForTest" && it.parameterTypes.size == 2 }.invoke(pc, ccc, pkg)
+            true
+        }.getOrDefault(false)
+        return attempt(enabled, disabled) || attempt(enabled - optional, disabled - optional)
+    }
+
+    /** [pkg]의 호환성 설정을 모두 지운다(셸 권한, 작업 스레드, 앱을 닫지 않음). 됐으면 true. */
+    fun clearCompat(pkg: String): Boolean = runCatching {
+        HiddenApi.exemptAll()
+        val pc = platformCompat()
+        pc.javaClass.methods.first { it.name == "clearOverridesForTest" && it.parameterTypes.size == 1 }.invoke(pc, pkg)
+        true
+    }.getOrDefault(false)
+
     /** 입력 관리자(셸 권한). 키 입력을 보낼 때 쓴다([injectKey]). */
     private fun input(): Any = HiddenApi.asInterface("android.hardware.input.IInputManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("input")))
 

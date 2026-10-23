@@ -117,6 +117,7 @@ import com.labok.goat.ui.lab.LabFlexScreen
 import com.labok.goat.ui.lab.LabIconsScreen
 import com.labok.goat.ui.lab.LabNarrowScreen
 import com.labok.goat.ui.lab.LabNoteScreen
+import com.labok.goat.ui.lab.LabScrollTopScreen
 import com.labok.goat.ui.lab.LabScreen
 import com.labok.goat.ui.lab.LabScreenModeScreen
 import com.labok.goat.ui.lab.StatusIconsHelpSheet
@@ -316,7 +317,7 @@ internal fun HomeScreen(
             // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구도 함께 둔다(공유 화면 진단·설정 비교를 공개 빌드에서도 쓰려고).
             // lab 빌드는 잠금과 상관없이 조사 도구를 보인다
             // 실험실은 자주 쓰는 자동 플렉스를 맨 앞에 둔다
-            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_FLEX, NavItem.LAB_NARROW, NavItem.LAB_SCREEN, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
+            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_FLEX, NavItem.LAB_NARROW, NavItem.LAB_SCROLL_TOP, NavItem.LAB_SCREEN, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
                 listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || LabUnlock.unlocked })
             if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }
@@ -410,7 +411,7 @@ internal fun HomeScreen(
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report
             )
-            NavItem.LAB_SCREEN, NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_NOTE -> listOf(Copy.MENU_REPORT to report)
+            NavItem.LAB_SCREEN, NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_NOTE, NavItem.LAB_SCROLL_TOP -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -588,6 +589,7 @@ internal fun HomeScreen(
                             NavItem.LAB_SCREEN -> LabScreenModeScreen(inner)
                             NavItem.LAB_FLEX -> LabFlexScreen(inner)
                             NavItem.LAB_NARROW -> LabNarrowScreen(inner)
+                            NavItem.LAB_SCROLL_TOP -> LabScrollTopScreen(inner)
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                             NavItem.LAB_BATTERY -> LabBatteryScreen(inner)
                             NavItem.LAB_NOTE -> LabNoteScreen(inner)

@@ -127,6 +127,9 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 고른 앱을 세로로 길고 좁게(16:9) 띄우고 양옆을 검은 여백으로 둔다(Shizuku, 앱 호환성 설정). */
     LAB_NARROW(Copy.FEATURE_LAB_NARROW, NavIcon.NARROW),
 
+    /** 실험실: 상단바를 두 번 누르면 지금 앱을 맨 위로 올린다(접근성 서비스). */
+    LAB_SCROLL_TOP(Copy.FEATURE_LAB_SCROLL_TOP, NavIcon.TOP),
+
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 
@@ -142,11 +145,11 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_NARROW, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_NARROW, LAB_SCROLL_TOP, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR, NARROW }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR, NARROW, TOP }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -416,6 +419,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.INFO -> info(color, s)
             NavIcon.GEAR -> gear(color, s)
             NavIcon.NARROW -> narrow(color, s)
+            NavIcon.TOP -> top(color, s)
         }
     }
 }
@@ -619,6 +623,18 @@ private fun DrawScope.narrow(c: Color, s: Stroke) {
     val bar = c.copy(alpha = 0.45f)
     drawRect(bar, p(5.5f, 4.5f), Size(u(1.6f), u(15f)))
     drawRect(bar, p(16.9f, 4.5f), Size(u(1.6f), u(15f)))
+}
+
+/** 맨 위로 가기: 위쪽 가로줄과 그 줄로 올라가는 화살표. */
+private fun DrawScope.top(c: Color, s: Stroke) {
+    drawLine(c, p(5f, 4.5f), p(19f, 4.5f), s.width, StrokeCap.Round)
+    drawLine(c, p(12f, 9f), p(12f, 20f), s.width, StrokeCap.Round)
+    val head = Path().apply {
+        moveTo(u(7f), u(14f))
+        lineTo(u(12f), u(9f))
+        lineTo(u(17f), u(14f))
+    }
+    drawPath(head, c, style = s)
 }
 
 /** 정보: 원 안의 i. */
