@@ -44,6 +44,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.23.0",
+        "2026-10-23",
+        "염소 테두리 물결을 끊김 없이 잇고, 누르면 더 꿀렁이게 했습니다.",
+        listOf(
+            "수정" to listOf(
+                "염소 아이콘 테두리가 몇 초마다 뚝 끊기던 것을 고쳐, 끊김 없이 계속 이어서 일렁입니다.",
+                "염소를 누르면 테두리가 더 크게 꿀렁였다가 잦아듭니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.22.0",
         "2026-10-23",
         "염소 아이콘 테두리를 물방울 고리로 다시 그렸습니다.",

@@ -44,8 +44,8 @@ import com.labok.goat.ui.liquid.rememberSoftBlob
 import com.labok.goat.ui.nav.drawGoat
 import com.labok.goat.ui.nav.drawGoatRing
 import com.labok.goat.ui.nav.goatPainter
-import com.labok.goat.ui.nav.goatRingPhase
 import com.labok.goat.ui.nav.rememberGoatMood
+import com.labok.goat.ui.nav.rememberGoatRing
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.hypot
@@ -77,7 +77,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
     // 염소 표정: 누르면 찡그리고, 많이 누르면 울고, 더 누르면 화낸다
     val mood = rememberGoatMood()
     val goat = goatPainter(mood.mood, mood.variant)
-    val ringPhase = goatRingPhase()
+    val ring = rememberGoatRing()
     val text = remember { Animatable(0f) }
     val path = remember { Path() }
 
@@ -111,6 +111,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
                     if (hypot(p.x - cx(), p.y - cy()) > logoS * 0.75f) return@awaitEachGesture
                     haptics.press()
                     if (mood.press()) haptics.snap()
+                    ring.poke()
                     val k = mood.impulse
                     // 누른 자리를 안쪽으로 밀어 움푹 들어가게 하고, 염소 방울은 반대로 튕긴다
                     val dx = cx() - p.x
@@ -140,7 +141,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
                 if (!logo.blob.ready || !drop.blob.ready) return@Canvas
                 logo.blob.path(path)
                 // 테두리는 물방울 뒤에 그려 바깥으로 일렁이는 부분만 보이게 한다
-                drawGoatRing(path, c.ink, logoS, ringPhase)
+                drawGoatRing(path, c.ink, logoS, ring.phase, ring.kick)
                 drawPath(path, c.logo)
                 drawGoat(goat, path, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
             }
@@ -187,7 +188,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
     val drop = rememberSoftBlob()
     val mood = rememberGoatMood()
     val goat = goatPainter(mood.mood, mood.variant)
-    val ringPhase = goatRingPhase()
+    val ring = rememberGoatRing()
     val path = remember { Path() }
     fun cx() = box.width / 2f
     fun cy() = box.height / 2f
@@ -217,6 +218,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
                     val p = down.position
                     haptics.press()
                     if (mood.press()) haptics.snap()
+                    ring.poke()
                     if (reduce) return@awaitEachGesture
                     val k = mood.impulse
                     val dx = cx() - p.x
@@ -243,7 +245,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
         if (!logo.blob.ready || !drop.blob.ready) return@Canvas
         logo.blob.path(path)
         // 테두리는 물방울 뒤에 그려 바깥으로 일렁이는 부분만 보이게 한다
-        drawGoatRing(path, c.ink, logoS, ringPhase)
+        drawGoatRing(path, c.ink, logoS, ring.phase, ring.kick)
         drawPath(path, c.logo)
         drawGoat(goat, path, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
     }

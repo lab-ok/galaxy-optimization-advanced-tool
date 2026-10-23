@@ -1,18 +1,18 @@
 package com.labok.goat.ui.nav
 
 import android.widget.Toast
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -34,8 +34,11 @@ import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.text.Copy
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.sin
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 /** 염소 표정. */
 enum class Mood { CALM, SQUINT, CRY, ANGRY }
@@ -147,7 +150,7 @@ fun goatPainter(mood: Mood, variant: Int): Painter {
  * 두께가 물결처럼 바뀌며 [phase]에 따라 계속 천천히 일렁이고, 안쪽은 물방울 외곽선을 따라가 누르거나 출렁일 때 함께 움직인다.
  * 물방울을 채우기 전에(뒤에) 불러야 안쪽이 가려져 바깥 고리만 보인다.
  */
-fun DrawScope.drawGoatRing(clip: Path, color: Color, logoS: Float, phase: Float) {
+fun DrawScope.drawGoatRing(clip: Path, color: Color, logoS: Float, phase: Float, kick: Float = 0f) {
     val pm = PathMeasure().apply { setPath(clip, true) }
     val len = pm.length
     if (len <= 0f) return
@@ -176,7 +179,15 @@ fun DrawScope.drawGoatRing(clip: Path, color: Color, logoS: Float, phase: Float)
             ny = -ny
         }
         // 시안 4의 두께: 기본 약 7%, 세 번·다섯 번 굽이치는 물결을 겹쳐 천천히 돈다
-        val w = logoS * (0.07f + 0.022f * sin(u * 6f * PI.toFloat() + phase) + 0.013f * sin(u * 10f * PI.toFloat() + 1f - phase * 1.3f))
+        // 위상 배수는 정수(1·2)여야 한 바퀴(2π)가 돌아 처음으로 이어질 때 모양이 튀지 않는다(1.3배였을 때 7초마다 뚝 끊겼다)
+        // 누르면 [kick]만큼 물결이 커지고, 큰 물결 하나(두 번 굽이침)가 더해져 꿀렁인다. kick은 스프링이라 음수로도 넘어가며 출렁인다
+        val k = kick.coerceIn(-1.5f, 1.5f)
+        val w = logoS * (
+            0.07f +
+                (0.022f * sin(u * 6f * PI.toFloat() + phase) + 0.013f * sin(u * 10f * PI.toFloat() + 1f - phase * 2f)) * (1f + 1.6f * abs(k)) +
+                0.05f * k * sin(u * 4f * PI.toFloat() + phase * 3f)
+            // 비율끼리 비교한다(로고 크기를 곱하기 전 값): 너무 얇아져 끊기지 않게 최소 1.5%
+            ).coerceAtLeast(0.015f)
         val x = p.x + nx * w
         val y = p.y + ny * w
         if (i == 0) outer.moveTo(x, y) else outer.lineTo(x, y)
@@ -185,12 +196,41 @@ fun DrawScope.drawGoatRing(clip: Path, color: Color, logoS: Float, phase: Float)
     drawPath(outer, color)
 }
 
-/** 고리가 일렁이는 위상(0~2π, 7초에 한 바퀴). 동작 줄이기가 켜져 있으면 멈춘다. */
+/** 염소 테두리의 움직임: 늘 도는 위상([phase], 7초에 한 바퀴)과 눌렀을 때의 꿀렁임([kick], 스프링으로 출렁이며 0으로 돌아옴). */
+class GoatRingState(private val scope: CoroutineScope) {
+    val kickAnim = Animatable(0f)
+    var phase by mutableFloatStateOf(0f)
+        internal set
+    val kick: Float get() = kickAnim.value
+
+    /** 눌렀을 때: 크게 부풀었다가 덜 감쇠된 스프링으로 몇 번 출렁이며 잦아든다. */
+    fun poke() {
+        scope.launch {
+            kickAnim.snapTo(1.4f)
+            kickAnim.animateTo(0f, spring(dampingRatio = 0.22f, stiffness = 90f))
+        }
+    }
+}
+
+/** [GoatRingState]를 만든다. 위상은 프레임마다 끊김 없이 돈다. 동작 줄이기가 켜져 있으면 멈춘다. */
 @Composable
-fun goatRingPhase(): Float {
+fun rememberGoatRing(): GoatRingState {
     val reduce = LocalReduceMotion.current
-    val t by rememberInfiniteTransition(label = "goatRing").animateFloat(0f, (2 * PI).toFloat(), infiniteRepeatable(tween(7000, easing = LinearEasing)), label = "phase")
-    return if (reduce) 0f else t
+    val scope = rememberCoroutineScope()
+    val ring = remember { GoatRingState(scope) }
+    LaunchedEffect(reduce) {
+        if (reduce) {
+            ring.phase = 0f
+            return@LaunchedEffect
+        }
+        val start = withFrameNanos { it }
+        while (true) {
+            val now = withFrameNanos { it }
+            // 실제 시간으로 돌린다(7초에 한 바퀴): 시작으로 다시 감아도 위상 배수가 정수라 이어진다
+            ring.phase = (((now - start) / 1_000_000L) % 7000L) / 7000f * (2 * PI).toFloat()
+        }
+    }
+    return ring
 }
 
 /**

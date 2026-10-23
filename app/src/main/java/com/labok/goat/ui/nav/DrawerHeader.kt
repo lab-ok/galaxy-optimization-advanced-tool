@@ -76,7 +76,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
     // 염소 표정: 누르면 찡그리고, 많이 누르면 울고, 더 누르면 화낸다
     val mood = rememberGoatMood()
     val goat = goatPainter(mood.mood, mood.variant)
-    val ringPhase = goatRingPhase()
+    val ring = rememberGoatRing()
     val text = remember { Animatable(0f) }
     val paths = remember { Path() to Path() }
 
@@ -126,6 +126,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
                     inward(headX(), cy(), 1800f).let { head.poke(p.x, p.y, it.x, it.y, headH * 0.6f) }
                     if (hypot(p.x - logoX, p.y - cy()) < logoS * 0.7f) {
                         if (mood.press()) haptics.snap()
+                        ring.poke()
                         val k = mood.impulse
                         inward(logoX, cy(), 1400f * k).let { logo.poke(p.x, p.y, it.x, it.y, logoS * 0.5f) }
                         drop.poke(logoX, cy(), (p.x - logoX) * -14f * k, (p.y - cy()) * -14f * k, logoS)
@@ -160,7 +161,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
             // 아이콘 바탕
             logo.blob.path(lp)
             // 테두리는 물방울 뒤에 그려 바깥으로 일렁이는 부분만 보이게 한다
-            drawGoatRing(lp, c.ink, logoS, ringPhase)
+            drawGoatRing(lp, c.ink, logoS, ring.phase, ring.kick)
             drawPath(lp, c.logo)
             // 염소 얼굴: 안쪽 방울(drop)의 중심을 따라가므로, 아이콘을 끌면 염소가 관성으로 늦게 따라오며 고개를 갸웃한다
             drawGoat(goat, lp, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
