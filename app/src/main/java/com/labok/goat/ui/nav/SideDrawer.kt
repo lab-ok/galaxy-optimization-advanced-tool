@@ -124,6 +124,9 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     LAB_SCREEN(Copy.FEATURE_LAB_SCREEN, NavIcon.PALETTE),
     LAB_FLEX(Copy.FEATURE_LAB_FLEX, NavIcon.FLEX),
 
+    /** 실험실: 고른 앱을 세로로 길고 좁게(16:9) 띄우고 양옆을 검은 여백으로 둔다(Shizuku, 앱 호환성 설정). */
+    LAB_NARROW(Copy.FEATURE_LAB_NARROW, NavIcon.NARROW),
+
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 
@@ -139,11 +142,11 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_NARROW, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR, NARROW }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -412,6 +415,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.VOLUME -> volume(color, s)
             NavIcon.INFO -> info(color, s)
             NavIcon.GEAR -> gear(color, s)
+            NavIcon.NARROW -> narrow(color, s)
         }
     }
 }
@@ -606,6 +610,15 @@ private fun DrawScope.pixels(c: Color, s: Stroke) {
     drawRoundRect(c, p(12.5f, 12.5f), Size(u(4.5f), u(4.5f)), r)
     drawRoundRect(c.copy(alpha = 0.5f), p(13f, 7f), Size(u(1.8f), u(1.8f)), r)
     drawRoundRect(c.copy(alpha = 0.5f), p(15.4f, 9.4f), Size(u(1.8f), u(1.8f)), r)
+}
+
+/** 앱 폭 좁히기: 화면 테두리 안에 세로로 좁은 앱, 양옆은 채운 여백. */
+private fun DrawScope.narrow(c: Color, s: Stroke) {
+    drawRoundRect(c, p(3.5f, 2.5f), Size(u(17f), u(19f)), CornerRadius(u(2.6f)), style = s)
+    drawRoundRect(c, p(8.5f, 5.5f), Size(u(7f), u(13f)), CornerRadius(u(1.2f)), style = s)
+    val bar = c.copy(alpha = 0.45f)
+    drawRect(bar, p(5.5f, 4.5f), Size(u(1.6f), u(15f)))
+    drawRect(bar, p(16.9f, 4.5f), Size(u(1.6f), u(15f)))
 }
 
 /** 정보: 원 안의 i. */
