@@ -61,7 +61,7 @@ internal fun AirplaneArt(kept: List<Boolean>, labels: List<String>) {
 @Composable
 internal fun StatusDropArt() {
     val t = artLoop(3400)
-    ArtCanvas(132.dp) { c, _ ->
+    ArtCanvas(92.dp) { c, _ ->
         val barW = size.width * 0.8f
         val left = (size.width - barW) / 2
         val top = 8.dp.toPx()
@@ -81,7 +81,7 @@ internal fun StatusDropArt() {
                 if (fall < 0.02f || back > 0f) {
                     glyph(i, Offset(x, cy), c.ink.copy(alpha = if (back > 0f) back else 1f))
                 } else {
-                    val y = cy + fall * 80.dp.toPx()
+                    val y = cy + fall * 52.dp.toPx()
                     val r = 6.dp.toPx() * (1f - fall * 0.5f)
                     // 물방울: 위가 뾰족하게 늘어난다
                     val p = Path().apply {
