@@ -3,7 +3,6 @@ package com.labok.goat.data.lab
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import com.labok.goat.data.appsize.AppList
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import rikka.shizuku.Shizuku
@@ -48,13 +47,30 @@ object NarrowApps {
     /** 검은 여백을 어디에 둘지: 앱이 붙는 쪽(왼쪽·가운데·오른쪽). 값은 `wm set-letterbox-style --horizontalPositionMultiplier`. */
     enum class Side(val label: String, val multiplier: String) { LEFT("왼쪽", "0.0"), CENTER("가운데", "0.5"), RIGHT("오른쪽", "1.0") }
 
-    /** 좁힌 앱과 비율. 1.24.1~1.24.2에 고른 앱(목록만 있던 것)은 16:9로 읽는다. */
-    fun ratios(context: Context): Map<String, Ratio> {
+    /**
+     * 앱별 설정은 없앴다(소장님 지정 10-24: 앱별로 하지 말고 꾹 누르면 전체 적용). 늘 빈 지도이고, 예전에 앱별로 걸어 둔 설정은
+     * Shizuku가 연결될 때 [cleanupPerApp]이 지운다. 아래 앱별 코드는 이 빈 지도를 거쳐 아무 일도 하지 않는다.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun ratios(context: Context): Map<String, Ratio> = emptyMap()
+
+    /** 1.24.1~1.24.5에 앱별로 고른 앱(정리할 대상). */
+    private fun perAppLeftovers(context: Context): Set<String> {
         val p = prefs(context)
-        val legacy = p.getStringSet("apps", emptySet()).orEmpty().associateWith { Ratio.TALL }
-        val set = p.all.filterKeys { it.startsWith("ratio:") }
-            .mapNotNull { (k, v) -> Ratio.entries.firstOrNull { it.name == v }?.let { k.removePrefix("ratio:") to it } }.toMap()
-        return legacy + set
+        return p.getStringSet("apps", emptySet()).orEmpty() + p.all.keys.filter { it.startsWith("ratio:") }.map { it.removePrefix("ratio:") }
+    }
+
+    /** 예전 앱별 설정을 지운다(작업 스레드, Shizuku 연결 때). 전체 좁히기가 건 앱은 건드리지 않는다. */
+    private fun cleanupPerApp(context: Context) {
+        val left = perAppLeftovers(context)
+        if (left.isEmpty()) return
+        val keep = if (global(context)) globalApplied(context) else emptySet()
+        left.filter { it !in keep }.forEach { ShizukuAccess.clearCompat(it) }
+        val e = prefs(context).edit().remove("apps")
+        prefs(context).all.keys.filter { it.startsWith("ratio:") }.forEach { e.remove(it) }
+        e.apply()
+        nudge()
+        LogRepository.from(context).add("앱 폭 좁히기: 예전 앱별 설정 ${left.size}개 정리(이제 전체 적용만)")
     }
 
     fun apps(context: Context): Set<String> = ratios(context).keys
@@ -223,26 +239,14 @@ object NarrowApps {
                 LogRepository.from(context).add("앱 폭 좁히기: 붙일 쪽 ${side.label}")
                 return true
             }
+            // 보이는 앱만 바로 좁히고, 다른 앱은 앞에 올 때 좁힌다(소장님 지정 10-24: 굳이 전체에 미리 걸 이유가 없다)
             if (pkg != null) onForeground(context, pkg, force = true) else nudge()
             watch(context)
-            preapply(context)
             LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 켬(${side.label})")
             return true
         } finally {
             busy.set(false)
         }
-    }
-
-    /**
-     * 홈 화면 앱 전부에 미리 설정을 건다(작업 스레드). 설정이 걸린 채로 열린 앱은 처음부터 좁게 뜨므로, 새로 여는 앱이
-     * 넓게 열렸다가 다시 열리는 깜빡임이 없다. 열려 있는 앱은 닫지 않는다.
-     */
-    private fun preapply(context: Context) {
-        val skip = SKIP + context.packageName + ratios(context).keys + globalApplied(context)
-        val pkgs = AppList.launcherApps(context).map { it.pkg }.filter { it !in skip }
-        val done = pkgs.filter { global(context) && override(it, Ratio.TALL) }
-        prefs(context).edit().putStringSet("global_applied", globalApplied(context) + done).apply()
-        LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 앱 ${done.size}개에 미리 걸기")
     }
 
     /** 전체 좁히기를 끈다(작업 스레드): 이 모드가 좁힌 앱을 모두 되돌린다. [pkg](지금 앱)를 직접 고른 앱이면 그 앱도 끈다. */
@@ -277,16 +281,20 @@ object NarrowApps {
         if (ShizukuAccess.focusedTask()?.basePkg == pkg && ShizukuAccess.focusedLetterboxed() == false) restart(context, pkg)
     }
 
-    /** [pkg]를 닫았다가 처음 화면으로 다시 연다(작업 스레드). */
+    /**
+     * [pkg]의 화면만 새로 연다(작업 스레드). 앱 프로세스는 닫지 않고 작업을 비운 뒤 첫 화면을 다시 띄운다(--activity-clear-task).
+     * 설정 없이 처음 열린 화면은 설정을 걸어도 그대로지만, 화면을 새로 만들면 좁게 뜬다(에뮬레이터 시계 앱, 같은 프로세스).
+     */
     private fun restart(context: Context, pkg: String) {
         val comp = context.packageManager.getLaunchIntentForPackage(pkg)?.component?.flattenToShortString() ?: return
         // 백그라운드에서 화면을 여는 제한이 있어 셸로 연다
-        ShizukuAccess.shell("am force-stop $pkg; am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n $comp")
-        LogRepository.from(context).add("앱 폭 좁히기: $pkg 열려 있던 화면이 좁아지지 않아 다시 엶")
+        ShizukuAccess.shell("am start --activity-clear-task -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n $comp")
+        LogRepository.from(context).add("앱 폭 좁히기: $pkg 화면이 좁아지지 않아 화면만 새로 엶")
     }
 
     /** 고른 앱과 여백 위치를 다시 건다(Shizuku 연결 때, 작업 스레드). 열려 있는 앱은 닫지 않는다. */
     fun reapply(context: Context) {
+        cleanupPerApp(context)
         if (!on(context)) return
         val ratios = ratios(context) + (if (global(context)) globalApplied(context).associateWith { Ratio.TALL } else emptyMap())
         if (ratios.isEmpty()) return
@@ -308,7 +316,7 @@ object NarrowApps {
     fun watch(context: Context) {
         val app = context.applicationContext
         runCatching { app.getSystemService(NotificationManager::class.java).cancel(OLD_NOTIFICATION_ID) }
-        if (apps(app).isEmpty() && !global(app)) return
+        if (!global(app) && perAppLeftovers(app).isEmpty()) return
         reapplyAsync = { Thread { reapply(app) }.start() }
         if (watching) return
         watching = true

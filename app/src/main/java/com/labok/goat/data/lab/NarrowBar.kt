@@ -83,7 +83,7 @@ object NarrowBar {
     private var recentIcons by mutableStateOf<List<ImageBitmap>>(emptyList())
     private var recentTasks: List<ShizukuAccess.RecentTask> = emptyList()
 
-    fun enabled(context: Context) = NarrowApps.on(context) && NarrowApps.controller(context) && (NarrowApps.apps(context).isNotEmpty() || NarrowApps.global(context))
+    fun enabled(context: Context) = NarrowApps.on(context) && NarrowApps.controller(context) && NarrowApps.global(context)
 
     /**
      * 맨 앞 앱이 [pkg]로 바뀌었을 때(작업 스레드에서 부른다): 좁힌 앱이 화면을 꽉 채우고 있으면 그 화면에 띄우고, 아니면 내린다.

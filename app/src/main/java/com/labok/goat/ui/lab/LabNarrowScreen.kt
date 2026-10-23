@@ -88,33 +88,9 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
     val supported = remember { NarrowApps.supported() }
     val ready = shizuku == ShizukuAccess.State.READY && supported
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
-    var chosen by remember { mutableStateOf(NarrowApps.ratios(context)) }
-    var open by remember { mutableStateOf<String?>(null) }
-    var side by remember { mutableStateOf(NarrowApps.side(context)) }
     var bar by remember { mutableStateOf(NarrowApps.controller(context)) }
     var gesture by remember { mutableStateOf(StatusGestures.narrowPress(context) && StatusGestures.enabled(context)) }
     var master by remember { mutableStateOf(NarrowApps.on(context)) }
-    var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
-    var query by remember { mutableStateOf("") }
-    // 바꾸는 중인 앱(셸이 끝날 때까지 스위치를 잠근다)
-    val busy = remember { mutableStateMapOf<String, Boolean>() }
-    LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { loadApps(context) } }
-
-    fun choose(app: AppEntry, ratio: NarrowApps.Ratio?) = scope.launch {
-        if (chosen[app.pkg] == ratio) return@launch
-        busy[app.pkg] = true
-        val err = withContext(Dispatchers.IO) { NarrowApps.set(context, app.pkg, ratio) }
-        chosen = NarrowApps.ratios(context)
-        busy.remove(app.pkg)
-        GoatService.sync(context)
-        if (err != null) Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
-    }
-
-    // 앱별 화면 배율처럼 '적용된 앱'과 나머지(최근 사용 순)로 나눈다. 검색어가 있으면 이름으로 거른다
-    val q = query.trim()
-    val list = apps.orEmpty().filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) || it.pkg.contains(q, ignoreCase = true) }
-    val applied = list.filter { it.pkg in chosen }
-    val rest = list.filter { it.pkg !in chosen }
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -128,7 +104,7 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                     Text(Copy.FEATURE_LAB_NARROW, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.LAB_NARROW_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    NarrowArt(side)
+                    NarrowArt(NarrowApps.side(context))
                     Spacer(Modifier.height(Gap.Item))
                     Text(if (!supported) Copy.LAB_NARROW_FOLD8_ONLY else if (ready) Copy.LAB_NARROW_NOTE else Copy.LAB_FLEX_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
@@ -156,27 +132,6 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                 }
             }
         }
-        item(key = "side") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.LAB_NARROW_SIDE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.LAB_NARROW_SIDE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidChips(
-                        options = listOf(NarrowApps.Side.LEFT, NarrowApps.Side.RIGHT),
-                        selected = side,
-                        label = { it.label },
-                        onSelect = { s ->
-                            side = s
-                            scope.launch {
-                                val err = withContext(Dispatchers.IO) { NarrowApps.setSide(context, s) }
-                                if (err != null) Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    )
-                }
-            }
-        }
         item(key = "bar") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
@@ -188,105 +143,6 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                         }
                     }
                 }
-            }
-        }
-        item(key = "search") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                LiquidTextField(
-                    query,
-                    { query = it },
-                    "앱 이름 검색",
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) }
-                )
-            }
-        }
-        if (apps == null) {
-            item(key = "loading") { LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp)) }
-        }
-        if (applied.isNotEmpty()) {
-            item(key = "h-applied") {
-                Section("적용된 앱 ${applied.size}", Modifier.animateItem()) {
-                    Text(
-                        Copy.LAB_NARROW_CLEAR,
-                        color = c.danger,
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(enabled = ready) {
-                            scope.launch {
-                                val failed = withContext(Dispatchers.IO) { NarrowApps.clearAll(context) }
-                                chosen = NarrowApps.ratios(context)
-                                GoatService.sync(context)
-                                if (failed > 0) Toast.makeText(context, "${failed}개 앱을 되돌리지 못했습니다.", Toast.LENGTH_SHORT).show()
-                            }
-                        }.padding(horizontal = 8.dp, vertical = 6.dp)
-                    )
-                }
-            }
-            items(applied, key = { it.pkg }) { app ->
-                NarrowRow(app, chosen[app.pkg], open == app.pkg, ready && busy[app.pkg] != true, { open = if (open == app.pkg) null else app.pkg }, { choose(app, it) }, Modifier.animateItem())
-            }
-        }
-        item(key = "h-rest") { Section("최근 사용 순", Modifier.animateItem()) }
-        if (apps != null && rest.isEmpty()) {
-            item(key = "empty") { Text("찾는 앱이 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(6.dp)) }
-        }
-        items(rest, key = { it.pkg }) { app ->
-            NarrowRow(app, chosen[app.pkg], open == app.pkg, ready && busy[app.pkg] != true, { open = if (open == app.pkg) null else app.pkg }, { choose(app, it) }, Modifier.animateItem())
-        }
-    }
-}
-
-/** 앱 한 줄(앱별 화면 배율과 같은 모양): 아이콘·이름·마지막 사용·지금 비율. 누르면 비율 고르기(기본·16:9·3:2)가 펼쳐진다. */
-@Composable
-private fun NarrowRow(
-    app: AppEntry,
-    ratio: NarrowApps.Ratio?,
-    expanded: Boolean,
-    enabled: Boolean,
-    onToggle: () -> Unit,
-    onSelect: (NarrowApps.Ratio?) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val c = LocalLiquid.current
-    val on = ratio != null
-    val shape = RoundedCornerShape(20.dp)
-    val border by animateColorAsState(if (expanded) c.ink.copy(alpha = 0.5f) else c.line, label = "narrowRow")
-    Column(
-        modifier
-            .widthIn(max = ContentMaxWidth)
-            .fillMaxWidth()
-            .clip(shape)
-            .background(c.surface)
-            .border(1.dp, border, shape)
-    ) {
-        Row(
-            Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
-            }
-            Spacer(Modifier.width(8.dp))
-            val fill by animateColorAsState(if (on) c.ink else c.line.copy(alpha = 0.5f), label = "narrowPill")
-            val ink by animateColorAsState(if (on) c.onInk else c.muted, label = "narrowPillText")
-            Box(Modifier.clip(RoundedCornerShape(12.dp)).background(fill).padding(horizontal = 10.dp, vertical = 4.dp)) {
-                Text(ratio?.label ?: Copy.APP_SIZE_DEFAULT, color = ink, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, style = MaterialTheme.typography.labelMedium)
-            }
-        }
-        AnimatedVisibility(expanded, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-            Column(Modifier.padding(start = 10.dp, end = 10.dp, bottom = 12.dp)) {
-                LiquidChips(
-                    options = listOf<NarrowApps.Ratio?>(null) + NarrowApps.Ratio.entries,
-                    selected = ratio,
-                    label = { it?.label ?: Copy.APP_SIZE_DEFAULT },
-                    onSelect = { if (enabled) onSelect(it) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(Gap.Item))
-                Text(Copy.LAB_NARROW_ROW_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 4.dp))
             }
         }
     }
