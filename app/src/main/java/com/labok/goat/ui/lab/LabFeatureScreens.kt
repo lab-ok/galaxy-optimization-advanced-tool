@@ -141,6 +141,9 @@ internal fun LabAirplaneScreen(contentPadding: PaddingValues) {
         val raw = remember(w.version) { AirplaneRadios.setting.read(context) }
         Text(Copy.LAB_AIRPLANE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
         Text(Copy.LAB_AIRPLANE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        AirplaneArt(AirplaneRadios.Radio.entries.map { AirplaneRadios.kept(raw, it) }, AirplaneRadios.Radio.entries.map { it.label })
+        Spacer(Modifier.height(Gap.Item))
         // 세 줄에 같은 설명을 되풀이하지 않고 한 번만 적는다
         Text(Copy.LAB_AIRPLANE_ROW, color = c.muted, style = MaterialTheme.typography.bodySmall)
         AirplaneRadios.Radio.entries.forEach { radio ->
@@ -207,6 +210,8 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         val raw = remember(w.version) { IconBlacklist.setting.read(context) }
         Text(Copy.LAB_ICONS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
         Text(Copy.LAB_ICONS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        StatusDropArt()
         IconBlacklist.Slot.entries.forEach { slot ->
             Spacer(Modifier.height(Gap.Item))
             // 줄 앞에 상태 표시줄에서 보이는 모양을 그려 어떤 아이콘인지 바로 알아보게 한다
