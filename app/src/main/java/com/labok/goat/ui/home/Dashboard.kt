@@ -105,6 +105,7 @@ import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.poke
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
 import com.labok.goat.ui.liquid.rememberSoftBlob
+import com.labok.goat.ui.nav.FeatureSupport
 import com.labok.goat.ui.nav.NavGlyph
 import com.labok.goat.ui.nav.NavItem
 import com.labok.goat.ui.nav.NavSection
@@ -153,10 +154,13 @@ internal fun Dashboard(
     LaunchedEffect(tick, shizuku) {
         if (shizuku == ShizukuAccess.State.READY) {
             cleaned = withContext(Dispatchers.IO) {
-                Gos.read()
+                // GOS·촬영음 강제 설정이 없는 기기는 기억해 두고 메뉴에서 숨긴다(실험실이면 보임, FeatureSupport)
+                Gos.read().takeIf { it != Gos.State.UNKNOWN }?.let { FeatureSupport.note(context, NavItem.GOS, it != Gos.State.NONE) }
                 Doze.read()
+                // 앱별 화면 배율 함수가 없는 기기(삼성이 아니거나 폴드 기능이 없는 기기)도 미리 알아 둔다
+                runCatching { DensityShell.supported() }.getOrNull()?.let { if (!it) FeatureSupport.note(context, NavItem.APP_SIZE, false) }
                 // 촬영음도 실제 값을 읽는다(안 읽으면 '읽지 못함'에 머물러 설정 없는 기기에서도 '꺼 두기로 함'이 떴다)
-                CameraMute.read()
+                CameraMute.read().takeIf { it != CameraMute.State.UNKNOWN }?.let { FeatureSupport.note(context, NavItem.CAMERA_MUTE, it != CameraMute.State.NONE) }
                 ForceDark.read(context)
                 Bloat.scan()?.count { it.value }
             }

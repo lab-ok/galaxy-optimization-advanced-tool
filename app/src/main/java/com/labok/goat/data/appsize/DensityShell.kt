@@ -132,7 +132,7 @@ object DensityShell {
     private fun state(context: Context) = context.getSharedPreferences("app_density_state", Context.MODE_PRIVATE)
 
     private const val KEY_REJECTED = "rejected_fingerprint"
-    const val REJECTED_MESSAGE = "이 기기는 앱별 배율 변경을 받아들이지 않습니다(One UI 9 폰은 아직 지원하지 않습니다)."
+    const val REJECTED_MESSAGE = "이 기기는 앱별 화면 배율을 지원하지 않습니다(폴드처럼 큰 화면 기기 전용)."
 
     /** 이 펌웨어에서 배율을 바꿔도 값이 남지 않은 적이 있는지. 펌웨어가 바뀌면 다시 시험한다. */
     fun rejected(context: Context) = state(context).getString(KEY_REJECTED, null) == Build.FINGERPRINT

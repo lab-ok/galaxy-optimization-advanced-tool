@@ -44,6 +44,19 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.24.0",
+        "2026-10-23",
+        "쓸 수 없는 기능은 메뉴에서 숨기고, 앱별 화면 배율 안내 문구를 바로잡았습니다.",
+        listOf(
+            "변경" to listOf(
+                "이 기기에서 쓸 수 없는 기능(주사율 고정, 앱별 화면 배율, GOS 끄기, 촬영음 끄기 등)은 메뉴와 홈에 보이지 않게 했습니다."
+            ),
+            "수정" to listOf(
+                "앱별 화면 배율을 지원하지 않는 기기에서 'One UI 9 이상 필요'로 잘못 안내하던 문구를 고쳤습니다. 이 기능은 폴드처럼 큰 화면 기기에만 있습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.23.0",
         "2026-10-23",
         "염소 테두리 물결을 끊김 없이 잇고, 누르면 더 꿀렁이게 했습니다.",

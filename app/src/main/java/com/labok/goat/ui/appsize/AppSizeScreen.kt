@@ -87,6 +87,8 @@ import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.nav.FeatureSupport
+import com.labok.goat.ui.nav.NavItem
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -158,6 +160,8 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
             ok to if (ok) list.associate { it.pkg to runCatching { DensityShell.get(context, it.pkg) }.getOrDefault(-1) } else emptyMap()
         }
         supported = ok
+        // 쓸 수 없는 기기로 판정되면 기억해 메뉴에서 숨긴다(실험실이면 보임)
+        if (!ok) FeatureSupport.note(context, NavItem.APP_SIZE, false)
         if (ok) values = read
     }
 

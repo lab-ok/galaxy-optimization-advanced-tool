@@ -84,7 +84,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.labok.goat.BuildConfig
 import com.labok.goat.background.ExternalChangeNotifier
-import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.data.lab.SideSplitTest
 import com.labok.goat.domain.ScreenPolicy
@@ -128,6 +127,7 @@ import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.liquidReveal
 import com.labok.goat.ui.liquid.rememberLiquidHaptics
+import com.labok.goat.ui.nav.FeatureSupport
 import com.labok.goat.ui.nav.GLASS_ALPHA
 import com.labok.goat.ui.nav.NavGlyph
 import com.labok.goat.ui.nav.NavItem
@@ -301,18 +301,21 @@ internal fun HomeScreen(
     )
     CompositionLocalProvider(LocalDeviceShape provides deviceShape) {
         // 사이드바는 기능 단위. DPI를 다루는 두 기능은 '화면 배율'로, 그 밖의 유틸은 '편의 기능'으로 묶는다. 조사 도구는 lab 빌드에서만.
+        // 이 기기에서 쓸 수 없는 기능은 숨긴다(실험실을 열면 모두 보인다, [FeatureSupport])
+        FeatureSupport.version
+        fun shownOf(vararg items: NavItem) = items.filter { FeatureSupport.visible(context, it) }
         val sections = buildList {
             add(NavSection("", listOf(NavItem.HOME)))
-            add(NavSection(Copy.MENU_SECTION_SCREEN, listOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
+            add(NavSection(Copy.MENU_SECTION_SCREEN, shownOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
             // 화면 표시: 크기(해상도) → 움직임(주사율·애니메이션) → 색(다크) 순. 해상도는 화면 배율 바로 뒤라 이어서 읽힌다.
-            add(NavSection(Copy.MENU_SECTION_DISPLAY, listOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, NavItem.STATUS_ICONS)))
+            add(NavSection(Copy.MENU_SECTION_DISPLAY, shownOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, NavItem.STATUS_ICONS)))
             // 편의 기능: 화면(회전) → 연결(비행기 모드 무선) → 소리(촬영음) 순. 시스템: 성능(GOS) → 배터리(잠자기) → 정리(기본 앱) 순
-            add(NavSection(Copy.MENU_SECTION_TOOLS, listOf(NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE, NavItem.AIRPLANE, NavItem.CAMERA_MUTE)))
-            add(NavSection(Copy.MENU_SECTION_SYSTEM, listOf(NavItem.GOS, NavItem.DOZE, NavItem.APP_CLEANUP)))
+            add(NavSection(Copy.MENU_SECTION_TOOLS, shownOf(NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE, NavItem.AIRPLANE, NavItem.CAMERA_MUTE)))
+            add(NavSection(Copy.MENU_SECTION_SYSTEM, shownOf(NavItem.GOS, NavItem.DOZE, NavItem.APP_CLEANUP)))
             // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구도 함께 둔다(공유 화면 진단·설정 비교를 공개 빌드에서도 쓰려고).
             // lab 빌드는 잠금과 상관없이 조사 도구를 보인다
             // 실험실은 자주 쓰는 자동 플렉스를 맨 앞에 둔다
-            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_FLEX.takeIf { AutoFlex.supported() }, NavItem.LAB_SCREEN, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
+            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_FLEX, NavItem.LAB_SCREEN, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
                 listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || LabUnlock.unlocked })
             if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }

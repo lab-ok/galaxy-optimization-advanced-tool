@@ -351,7 +351,7 @@ object Copy {
     const val APP_SIZE_CONNECT_TITLE = "Shizuku 연결이 필요합니다"
     const val APP_SIZE_CONNECT_BODY = "앱별 크기를 바꾸려면 시스템 권한이 필요해, 무료 앱 Shizuku로 연결합니다."
     const val APP_SIZE_CONNECT_ACTION = "연결하기"
-    const val APP_SIZE_UNSUPPORTED = "이 기기에는 삼성 앱별 화면 크기 기능이 없습니다(One UI 9 이상 필요)."
+    const val APP_SIZE_UNSUPPORTED = "이 기기는 앱별 화면 배율을 지원하지 않습니다. 폴드처럼 큰 화면 기기에만 있는 삼성 기능입니다."
     const val APP_SIZE_NOTIFY_TITLE = "알림창에서 바로 조절"
     const val APP_SIZE_NOTIFY_BODY = "알림의 [작게]·[기본]·[크게]로 지금 보고 있는 앱의 크기를 바꿉니다."
     const val APP_SIZE_USAGE_NEEDED = "최근 사용 순 정렬에는 '사용 기록 접근'이 필요합니다."
