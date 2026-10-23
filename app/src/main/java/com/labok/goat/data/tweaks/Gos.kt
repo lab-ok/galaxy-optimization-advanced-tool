@@ -99,13 +99,12 @@ object Gos {
 
     fun wanted(context: Context) = prefs(context).getBoolean("wanted", false)
 
-    /** 재부팅·업데이트로 다시 켜지면 다시 끈다. */
-    fun keep(context: Context) = prefs(context).getBoolean("keep", true)
-
-    fun setKeep(context: Context, on: Boolean) {
-        prefs(context).edit().putBoolean("keep", on).apply()
-        LogRepository.from(context).add("GOS 끄기: 다시 켜지면 자동으로 끄기 ${if (on) "켜짐" else "꺼짐"}")
-    }
+    /**
+     * 풀리면 다시 적용할지. 따로 있던 옵션 스위치를 주 스위치로 합쳐(2026-10-23, 켜 두면 늘 다시 적용) 항상 켬이다.
+     * 예전에 끈 기록(keep=false)이 남아 있어도 따르지 않는다.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun keep(context: Context) = true
 
     /** 다시 끄기에서 할 일. */
     internal enum class Action {

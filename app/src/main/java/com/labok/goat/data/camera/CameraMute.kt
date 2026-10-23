@@ -41,13 +41,12 @@ object CameraMute {
     /** 사용자가 끄기를 원하는지(다시 끄기의 기준). */
     fun wanted(context: Context) = prefs(context).getBoolean("muted", false)
 
-    /** 재부팅·업데이트로 돌아오면 다시 끈다. */
-    fun keep(context: Context) = prefs(context).getBoolean("keep", true)
-
-    fun setKeep(context: Context, on: Boolean) {
-        prefs(context).edit().putBoolean("keep", on).apply()
-        LogRepository.from(context).add("카메라 촬영음 끄기: 재부팅 뒤 다시 끄기 ${if (on) "켜짐" else "꺼짐"}")
-    }
+    /**
+     * 풀리면 다시 적용할지. 따로 있던 옵션 스위치를 주 스위치로 합쳐(2026-10-23, 켜 두면 늘 다시 적용) 항상 켬이다.
+     * 예전에 끈 기록(keep=false)이 남아 있어도 따르지 않는다.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun keep(context: Context) = true
 
     /** 지금 값을 읽는다(작업 스레드). */
     fun read(): State {

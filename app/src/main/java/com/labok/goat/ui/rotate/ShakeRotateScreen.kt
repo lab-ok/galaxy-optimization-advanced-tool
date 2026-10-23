@@ -37,8 +37,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -152,24 +152,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                     Text(Copy.SHAKE_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     ShakeTurnArt()
-                }
-            }
-        }
-        if (!permitted) {
-            item(key = "permission") {
-                Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                    GlassCard {
-                        Text(Copy.STATUS_NEED_SETUP, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.SHAKE_NEED_PERMISSION, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                        Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.MENU_GUIDE, onClick = onGuide, modifier = Modifier.fillMaxWidth())
-                    }
-                }
-            }
-        }
-        item(key = "switch") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
+                    Spacer(Modifier.height(Gap.Item))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(Copy.FEATURE_SHAKE_ROTATE, fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -197,6 +180,21 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                             Spacer(Modifier.height(Gap.Item))
                             Text(message, color = c.danger, style = MaterialTheme.typography.bodySmall)
                         }
+                    }
+
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(Copy.SWITCH_KEEP_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+        if (!permitted) {
+            item(key = "permission") {
+                Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                    GlassCard {
+                        Text(Copy.STATUS_NEED_SETUP, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.SHAKE_NEED_PERMISSION, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.MENU_GUIDE, onClick = onGuide, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }

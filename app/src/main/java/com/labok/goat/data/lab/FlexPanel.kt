@@ -102,7 +102,11 @@ object FlexPanel {
         val mode = AutoFlex.mode(context, front.second)
         // 사용 안 함: 걸어 둔 반쯤 접힘을 풀어 이 앱에서는 아무것도 바뀌지 않게 한다(알림으로 다른 모드로 바꿀 수 있게 알림은 남긴다).
         // 플렉스 모드는 알림으로 바꿔 들어온 경우를 위해 반쯤 접힘을 다시 건다
-        if (mode == AutoFlex.MODE_OFF) resetPosture(context) else if (!forced) forceHalfOpened(context)
+        if (mode == AutoFlex.MODE_OFF) {
+            resetPosture(context)
+        } else if (!forced) {
+            forceHalfOpened(context)
+        }
         applied = Applied(mode, front.second, label).also { notifyMode(context, it) }
     }
 

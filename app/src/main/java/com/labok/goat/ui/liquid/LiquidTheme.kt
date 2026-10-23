@@ -3,6 +3,9 @@ package com.labok.goat.ui.liquid
 import android.content.Context
 import android.graphics.Typeface
 import android.provider.Settings
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -28,9 +31,6 @@ import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.sp
 
 /**
@@ -70,6 +70,7 @@ val DarkLiquid = LiquidColors(
 @Composable
 private fun animateLiquid(target: LiquidColors, reduce: Boolean): LiquidColors {
     val spec = if (reduce) snap() else tween<Color>(THEME_FADE_MS)
+
     @Composable
     fun a(col: Color, label: String) = animateColorAsState(col, spec, label = label).value
     return target.copy(

@@ -2,7 +2,6 @@ package com.labok.goat.ui.home
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.os.Build
 import android.widget.Toast
@@ -86,8 +85,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.labok.goat.BuildConfig
 import com.labok.goat.background.ExternalChangeNotifier
 import com.labok.goat.data.lab.AutoFlex
-import com.labok.goat.data.lab.SideSplitTest
 import com.labok.goat.data.lab.LabUnlock
+import com.labok.goat.data.lab.SideSplitTest
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.about.AboutSheet
 import com.labok.goat.ui.about.ChangelogSheet
@@ -115,13 +114,13 @@ import com.labok.goat.ui.lab.AirplaneHelpSheet
 import com.labok.goat.ui.lab.FlexHelpSheet
 import com.labok.goat.ui.lab.LabAirplaneScreen
 import com.labok.goat.ui.lab.LabBatteryScreen
-import com.labok.goat.ui.lab.LabNoteScreen
-import com.labok.goat.ui.lab.shareResult
 import com.labok.goat.ui.lab.LabFlexScreen
 import com.labok.goat.ui.lab.LabIconsScreen
+import com.labok.goat.ui.lab.LabNoteScreen
 import com.labok.goat.ui.lab.LabScreen
 import com.labok.goat.ui.lab.LabScreenModeScreen
 import com.labok.goat.ui.lab.StatusIconsHelpSheet
+import com.labok.goat.ui.lab.shareResult
 import com.labok.goat.ui.liquid.LiquidMenu
 import com.labok.goat.ui.liquid.LiquidToast
 import com.labok.goat.ui.liquid.LocalLiquid

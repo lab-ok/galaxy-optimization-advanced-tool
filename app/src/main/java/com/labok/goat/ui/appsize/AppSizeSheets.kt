@@ -178,16 +178,20 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
             Text(Copy.APP_SIZE_RESET_ACTION, fontWeight = FontWeight.SemiBold, color = c.danger)
             Text(Copy.APP_SIZE_RESET_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
             // 개수를 세는 동안은 리퀴드 로딩 방울을 보여 준다
-            if (ready && count == null) LiquidLoader("배율을 바꾼 앱을 확인하는 중…", Modifier.padding(vertical = 8.dp)) else Text(
-                when {
-                    !ready -> "Shizuku가 연결되어 있지 않아 지금은 되돌릴 수 없습니다."
-                    // 되돌릴 앱이 없으면 꺼진 버튼 대신 여기서 알린다(꺼진 버튼을 누르면 뜨는 토스트가 시트 맨 아래 버튼을 가렸다, QA 1차)
-                    count == 0 -> Copy.DISABLED_NO_SIZED_APPS
-                    else -> "현재 배율을 바꾼 앱: ${count}개"
-                },
-                color = c.ink,
-                style = MaterialTheme.typography.bodySmall
-            )
+            if (ready && count == null) {
+                LiquidLoader("배율을 바꾼 앱을 확인하는 중…", Modifier.padding(vertical = 8.dp))
+            } else {
+                Text(
+                    when {
+                        !ready -> "Shizuku가 연결되어 있지 않아 지금은 되돌릴 수 없습니다."
+                        // 되돌릴 앱이 없으면 꺼진 버튼 대신 여기서 알린다(꺼진 버튼을 누르면 뜨는 토스트가 시트 맨 아래 버튼을 가렸다, QA 1차)
+                        count == 0 -> Copy.DISABLED_NO_SIZED_APPS
+                        else -> "현재 배율을 바꾼 앱: ${count}개"
+                    },
+                    color = c.ink,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
             Spacer(Modifier.height(Gap.Item))
             AnimatedContent(step, label = "reset") { s ->
                 when (s) {

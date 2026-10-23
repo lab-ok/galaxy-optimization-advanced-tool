@@ -36,13 +36,12 @@ object AnimationSpeed {
     /** GOAT로 마지막에 고른 값(없으면 null). */
     fun chosen(context: Context, kind: Kind): Float? = prefs(context).takeIf { it.contains(kind.key) }?.getFloat(kind.key, 1f)
 
-    /** 기본으로 풀리면 되돌리기(기본 켬). */
-    fun keep(context: Context) = prefs(context).getBoolean(KEY_KEEP, true)
-
-    fun setKeep(context: Context, on: Boolean) {
-        prefs(context).edit().putBoolean(KEY_KEEP, on).apply()
-        AnimationKeepWorker.sync(context)
-    }
+    /**
+     * 풀리면 다시 적용할지. 따로 있던 옵션 스위치를 주 스위치로 합쳐(2026-10-23, 켜 두면 늘 다시 적용) 항상 켬이다.
+     * 예전에 끈 기록(keep=false)이 남아 있어도 따르지 않는다.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun keep(context: Context) = true
 
     /** 되돌릴 일이 있는지: 유지가 켜져 있고, 고른 값 가운데 기본이 아닌 것이 있을 때. */
     fun keepNeeded(context: Context) = keep(context) && Kind.entries.any { chosen(context, it)?.let { v -> v != 1f } == true }
@@ -73,8 +72,6 @@ object AnimationSpeed {
         if (now.values.all { it == 1f }) return
         prefs(context).edit().apply { now.forEach { (k, v) -> putFloat(k.key, v) } }.apply()
     }
-
-    private const val KEY_KEEP = "keep"
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences("animation_speed", Context.MODE_PRIVATE)
 

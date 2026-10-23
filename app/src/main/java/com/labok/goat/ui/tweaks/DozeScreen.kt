@@ -93,24 +93,7 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     Text(Copy.DOZE_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     DozeArt(off = state == Doze.State.OFF)
-                }
-            }
-        }
-        if (!ready) {
-            item(key = "connect") {
-                Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                    GlassCard {
-                        Text(Copy.DOZE_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.DOZE_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                        Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.DOZE_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
-                    }
-                }
-            }
-        }
-        item(key = "switch") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
+                    Spacer(Modifier.height(Gap.Item))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(Copy.DOZE_SWITCH_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -126,6 +109,21 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                         }
                         Spacer(Modifier.width(12.dp))
                         LiquidSwitch(pending ?: (state == Doze.State.OFF), { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Doze.State.UNKNOWN, label = Copy.DOZE_SWITCH_TITLE)
+                    }
+
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(Copy.SWITCH_KEEP_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+        if (!ready) {
+            item(key = "connect") {
+                Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                    GlassCard {
+                        Text(Copy.DOZE_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.DOZE_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.DOZE_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }

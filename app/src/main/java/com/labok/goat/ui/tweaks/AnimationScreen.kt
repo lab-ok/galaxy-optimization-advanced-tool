@@ -45,7 +45,6 @@ import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidSlider
-import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
@@ -131,12 +130,7 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
                     )
                     Spacer(Modifier.height(Gap.Item))
                     Text(Copy.ANIM_SLIDER_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    var keep by remember { mutableStateOf(AnimationSpeed.keep(context)) }
-                    LiquidSwitchRow(Copy.ANIM_KEEP_TITLE, Copy.ANIM_KEEP_BODY, keep, permitted) {
-                        keep = it
-                        AnimationSpeed.setKeep(context, it)
-                    }
+                    Text(Copy.ANIM_KEEP_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
                     Spacer(Modifier.height(Gap.Section))
                     Row(
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { detail = !detail },
@@ -201,7 +195,7 @@ internal fun AnimationHelpSheet() {
         HelpTopic(
             "4. 권한과 유지",
             "고급 화면 배율 설정과 같은 시스템 설정 권한으로 변경하며, 재부팅해도 유지됩니다. 개발자 옵션을 끄면 기기가 기본값으로 되돌리는데, " +
-                "'기본으로 풀리면 되돌리기'를 켜 두면 GOAT가 고른 값으로 다시 맞춥니다."
+                "GOAT가 고른 값으로 자동으로 다시 맞춥니다."
         )
     }
 }

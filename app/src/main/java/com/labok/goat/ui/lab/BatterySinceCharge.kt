@@ -1,49 +1,46 @@
 package com.labok.goat.ui.lab
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.widthIn
 import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.drawable.toBitmap
 import com.labok.goat.data.lab.BatteryHistory
-import com.labok.goat.data.lab.BatteryMonitor
 import com.labok.goat.data.lab.BatteryStatsReader
 import com.labok.goat.data.lab.BatteryStatsReader.SinceCharge
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
-import com.labok.goat.ui.liquid.LiquidSwitchRow
-import com.labok.goat.ui.text.Copy
-import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import java.text.SimpleDateFormat
@@ -113,8 +110,11 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
             return@Card
         }
         if (s == null) {
-            if (loaded) Text("시스템 배터리 통계를 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            else LiquidLoader("시스템 배터리 통계를 불러오는 중…", Modifier.padding(vertical = 8.dp))
+            if (loaded) {
+                Text("시스템 배터리 통계를 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            } else {
+                LiquidLoader("시스템 배터리 통계를 불러오는 중…", Modifier.padding(vertical = 8.dp))
+            }
             return@Card
         }
         SinceChargeSummary(s, level, charging)
@@ -124,8 +124,11 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
 
     Card("시간대별 사용량") {
         when (val h = history) {
-            null -> if (historyLoaded) Text("시스템 배터리 기록을 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            else LiquidLoader("시스템 배터리 기록을 불러오는 중…", Modifier.padding(vertical = 8.dp))
+            null -> if (historyLoaded) {
+                Text("시스템 배터리 기록을 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            } else {
+                LiquidLoader("시스템 배터리 기록을 불러오는 중…", Modifier.padding(vertical = 8.dp))
+            }
             else -> BatteryHistorySection(h, now, s.startClock)
         }
     }
@@ -191,7 +194,13 @@ private fun ChargeRow(ch: BatteryHistory.Charge) {
     val day = SimpleDateFormat("M/d a h:mm", Locale.KOREA)
     val time = SimpleDateFormat("a h:mm", Locale.KOREA)
     val sameDay = SimpleDateFormat("yyyyMMdd", Locale.US).let { it.format(Date(ch.start)) == it.format(Date(ch.end)) }
-    val range = "${day.format(Date(ch.start))}~" + if (ch.ongoing) "지금" else if (sameDay) time.format(Date(ch.end)) else day.format(Date(ch.end))
+    val range = "${day.format(Date(ch.start))}~" + if (ch.ongoing) {
+        "지금"
+    } else if (sameDay) {
+        time.format(Date(ch.end))
+    } else {
+        day.format(Date(ch.end))
+    }
     Column(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("${ch.startLevel}% → ${ch.endLevel}%", color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
@@ -268,8 +277,11 @@ private fun ShareRow(name: String, share: Float, detail: String, dark: Float = s
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         if (withIcon) {
             Box(Modifier.size(ICON_DP), contentAlignment = Alignment.Center) {
-                if (icon != null) Image(icon, contentDescription = null, modifier = Modifier.size(ICON_DP))
-                else Text(name.take(1), color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                if (icon != null) {
+                    Image(icon, contentDescription = null, modifier = Modifier.size(ICON_DP))
+                } else {
+                    Text(name.take(1), color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                }
             }
             Spacer(Modifier.width(12.dp))
         }

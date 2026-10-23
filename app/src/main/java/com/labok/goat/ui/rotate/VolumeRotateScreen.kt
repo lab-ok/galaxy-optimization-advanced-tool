@@ -97,6 +97,13 @@ internal fun VolumeRotateScreen(contentPadding: PaddingValues, permitted: Boolea
                     Text(Copy.VOLUME_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     VolumeRotateArt()
+                    Spacer(Modifier.height(Gap.Item))
+                    LiquidSwitchRow(Copy.VOLUME_ON, Copy.VOLUME_ON_DESC, on, permitted) {
+                        if (!VolumeRotate.setEnabled(context, it)) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+                        version++
+                    }
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(Copy.SWITCH_KEEP_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -115,11 +122,6 @@ internal fun VolumeRotateScreen(contentPadding: PaddingValues, permitted: Boolea
         item(key = "controls") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    LiquidSwitchRow(Copy.VOLUME_ON, Copy.VOLUME_ON_DESC, on, permitted) {
-                        if (!VolumeRotate.setEnabled(context, it)) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
-                        version++
-                    }
-                    Spacer(Modifier.height(Gap.Section))
                     if (foldable) {
                         Text(Copy.VOLUME_PER_SCREEN, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))

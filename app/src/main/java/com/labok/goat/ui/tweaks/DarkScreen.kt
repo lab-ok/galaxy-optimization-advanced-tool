@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * 앱 다크 모드 강제: 다크 모드 없는 앱도 어둡게, 재부팅 뒤 다시 켜기, 시스템 다크 모드 상태(강제 다크의 전제)와
+ * 앱 다크 모드 강제: 다크 모드 없는 앱도 어둡게(켜 두면 재부팅 뒤 다시 켬), 시스템 다크 모드 상태(강제 다크의 전제)와
  * 디스플레이 설정 바로 가기, 주의. 강제 다크는 Shizuku 셸로 바꾸고, 돌아올 때마다 다시 읽는다.
  * @param onConnect Shizuku 연결 안내를 연다.
  */
@@ -55,7 +55,6 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     val state by ForceDark.status.collectAsStateWithLifecycle()
     val ready = shizuku == ShizukuAccess.State.READY
-    var keep by remember { mutableStateOf(ForceDark.keep(context)) }
     var busy by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     LifecycleResumeEffect(ready) {
@@ -85,24 +84,7 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     Text(Copy.DARK_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     DarkArt(on = state.forced == true)
-                }
-            }
-        }
-        if (!ready) {
-            item(key = "connect") {
-                Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                    GlassCard {
-                        Text(Copy.DARK_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.DARK_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                        Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.DARK_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
-                    }
-                }
-            }
-        }
-        item(key = "switches") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
+                    Spacer(Modifier.height(Gap.Item))
                     LiquidSwitchRow(
                         Copy.DARK_FORCE_TITLE,
                         when {
@@ -114,10 +96,19 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                         state.forced == true,
                         ready && !busy && state.forced != null
                     ) { on -> change({ ForceDark.setForced(context, on, "스위치") }, if (on) Copy.DARK_TOAST_FORCE_ON else Copy.DARK_TOAST_FORCE_OFF) }
-                    Spacer(Modifier.height(Gap.Section))
-                    LiquidSwitchRow(Copy.DARK_KEEP_TITLE, Copy.DARK_KEEP_BODY, keep, true) { on ->
-                        keep = on
-                        ForceDark.setKeep(context, on)
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(Copy.SWITCH_KEEP_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+        if (!ready) {
+            item(key = "connect") {
+                Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                    GlassCard {
+                        Text(Copy.DARK_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.DARK_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.DARK_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -175,7 +166,7 @@ internal fun DarkHelpSheet() {
         )
         HelpTopic(
             "5. 재부팅 뒤",
-            "이 설정은 재부팅하면 꺼집니다. '재부팅 뒤 다시 켜기'를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 다시 켭니다. " +
+            "이 설정은 재부팅하면 꺼집니다. 스위치를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 다시 켭니다. " +
                 "부팅 후 개발자 옵션에서 직접 끈 경우에는 그대로 둡니다. Shizuku 셸 권한으로 바꿉니다."
         )
     }

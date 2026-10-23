@@ -104,13 +104,12 @@ object ForceDark {
 
     fun wanted(context: Context) = prefs(context).getBoolean("wanted", false)
 
-    /** 재부팅으로 꺼지면 다시 켠다. */
-    fun keep(context: Context) = prefs(context).getBoolean("keep", true)
-
-    fun setKeep(context: Context, on: Boolean) {
-        prefs(context).edit().putBoolean("keep", on).apply()
-        LogRepository.from(context).add("앱 다크 모드 강제: 재부팅 뒤 다시 켜기 ${if (on) "켜짐" else "꺼짐"}")
-    }
+    /**
+     * 풀리면 다시 적용할지. 따로 있던 옵션 스위치를 주 스위치로 합쳐(2026-10-23, 켜 두면 늘 다시 적용) 항상 켬이다.
+     * 예전에 끈 기록(keep=false)이 남아 있어도 따르지 않는다.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun keep(context: Context) = true
 
     /** 다시 켜기 판단(시험할 수 있게 뗐다): 원하고, keep이고, 이번 부팅에 아직 확인하지 않았고, 지금 꺼져 있을 때만 켠다. */
     internal fun shouldReapply(wanted: Boolean, keep: Boolean, boot: Int?, checkedBoot: Int?, forced: Boolean?): Boolean? = when {

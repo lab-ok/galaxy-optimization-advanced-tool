@@ -47,7 +47,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * GOS 끄기: 지금 상태, 끄기 스위치(끌 때 발열·배터리 확인 창), 다시 켜지면 자동으로 끄기, 주의.
+ * GOS 끄기: 소개 카드의 끄기 스위치(끌 때 발열·배터리 확인 창, 켜 두면 다시 켜져도 자동으로 끔), 주의.
  * 기본 앱 정리와 같은 '끄기'라 그 화면 목록의 GOS와 상태가 같다. 돌아올 때마다 다시 읽는다.
  * @param onConnect Shizuku 연결 안내를 연다.
  */
@@ -59,7 +59,6 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     val state by Gos.status.collectAsStateWithLifecycle()
     val ready = shizuku == ShizukuAccess.State.READY
-    var keep by remember { mutableStateOf(Gos.keep(context)) }
     var busy by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
@@ -90,6 +89,28 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     Text(Copy.GOS_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     GosArt(off = state == Gos.State.OFF, none = state == Gos.State.NONE)
+                    // GOS가 없는 기기에는 끌 것이 없어 스위치를 두지 않는다
+                    if (state != Gos.State.NONE) {
+                        Spacer(Modifier.height(Gap.Item))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(Copy.GOS_SWITCH_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                                Text(
+                                    when (state) {
+                                        Gos.State.OFF -> Copy.GOS_STATE_OFF
+                                        Gos.State.ON -> Copy.GOS_STATE_ON
+                                        else -> Copy.GOS_STATE_UNKNOWN
+                                    },
+                                    color = c.muted,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            LiquidSwitch(state == Gos.State.OFF, { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Gos.State.UNKNOWN, label = Copy.GOS_SWITCH_TITLE)
+                        }
+                        Spacer(Modifier.height(Gap.Item))
+                        Text(Copy.SWITCH_KEEP_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }
@@ -111,41 +132,6 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     GlassCard {
                         Text(Copy.GOS_NONE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.GOS_NONE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-        } else {
-            item(key = "switch") {
-                Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                    GlassCard {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(Copy.GOS_SWITCH_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                                Text(
-                                    when (state) {
-                                        Gos.State.OFF -> Copy.GOS_STATE_OFF
-                                        Gos.State.ON -> Copy.GOS_STATE_ON
-                                        else -> Copy.GOS_STATE_UNKNOWN
-                                    },
-                                    color = c.muted,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            LiquidSwitch(state == Gos.State.OFF, { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Gos.State.UNKNOWN, label = Copy.GOS_SWITCH_TITLE)
-                        }
-                        Spacer(Modifier.height(Gap.Section))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(Copy.GOS_KEEP_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                                Text(Copy.GOS_KEEP_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            LiquidSwitch(keep, { on ->
-                                keep = on
-                                Gos.setKeep(context, on)
-                            }, label = Copy.GOS_KEEP_TITLE)
-                        }
                     }
                 }
             }
@@ -194,7 +180,7 @@ internal fun GosHelpSheet() {
         )
         HelpTopic(
             "3. 다시 켜지는 경우",
-            "업데이트나 재부팅 뒤 GOS가 다시 켜지는 기기가 있습니다. '다시 켜지면 자동으로 끄기'를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 확인해 다시 끕니다. " +
+            "업데이트나 재부팅 뒤 GOS가 다시 켜지는 기기가 있습니다. 끄기 스위치를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 확인해 다시 끕니다. " +
                 "같은 부팅 안에서 설정 앱 등으로 직접 다시 켠 것은 그대로 둡니다."
         )
         HelpTopic(

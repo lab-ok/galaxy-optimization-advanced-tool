@@ -65,7 +65,11 @@ object BatteryStatsReader {
                 "pwi" -> {
                     // pwi,<이름표>,<mAh>,<숨김>,... 앱은 이름표가 uid이고 줄의 uid 칸이 그 앱이다
                     val mah = v.getOrNull(1)?.toDoubleOrNull() ?: continue
-                    if (v[0] == "uid") uidMah[uid] = (uidMah[uid] ?: 0.0) + mah else if (mah > 0 && v[0] != "???") system[v[0]] = (system[v[0]] ?: 0.0) + mah
+                    if (v[0] == "uid") {
+                        uidMah[uid] = (uidMah[uid] ?: 0.0) + mah
+                    } else if (mah > 0 && v[0] != "???") {
+                        system[v[0]] = (system[v[0]] ?: 0.0) + mah
+                    }
                 }
                 // fg,<화면 앞 시간 ms>,<횟수>
                 "fg" -> v.getOrNull(0)?.toLongOrNull()?.let { front[uid] = it }

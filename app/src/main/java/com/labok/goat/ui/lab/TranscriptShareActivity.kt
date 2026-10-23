@@ -44,14 +44,14 @@ import com.labok.goat.ui.liquid.LiquidTheme
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * 다른 앱의 공유 메뉴에 나타나는 '전사문 저장(나·상대)'(실험실). 삼성 음성 녹음의 전사문을 글(EXTRA_TEXT)이나

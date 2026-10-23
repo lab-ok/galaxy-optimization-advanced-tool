@@ -53,6 +53,7 @@ object Transcript {
         val inlineNames = lines.mapNotNull { l -> inline.matchEntire(l)?.groupValues?.get(2)?.trim()?.takeIf(::validName) }
             .groupingBy { it }.eachCount()
         fun inlineOk(n: String) = isGeneric(n) || (inlineNames[n] ?: 0) >= 2
+
         // 시간이 붙은 화자 줄도 이름을 바꾼 화자는 두 번 이상 나와야 한다("내일 3:30"처럼 시간으로 끝나는 말을 화자로 오해하지 않게)
         fun headerOf(line: String) = nameThenTime.matchEntire(line)?.let { Header(it.groupValues[1].trim(), it.groupValues[2], 1) }
             ?: timeThenName.matchEntire(line)?.let { Header(it.groupValues[2].trim(), it.groupValues[1], 2) }
@@ -99,7 +100,11 @@ object Transcript {
                 body.appendLine(m.groupValues[4])
                 continue
             }
-            if (speaker != null) body.appendLine(line) else if (turns.isEmpty()) preamble.appendLine(line)
+            if (speaker != null) {
+                body.appendLine(line)
+            } else if (turns.isEmpty()) {
+                preamble.appendLine(line)
+            }
         }
         flush()
         if (turns.isEmpty()) return null

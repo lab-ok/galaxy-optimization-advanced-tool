@@ -99,6 +99,5 @@ object BatteryMonitor {
         override suspend fun doWork(): Result = Result.success()
     }
 
-
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 }

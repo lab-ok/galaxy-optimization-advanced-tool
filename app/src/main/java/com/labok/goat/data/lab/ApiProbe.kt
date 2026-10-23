@@ -26,8 +26,8 @@ object ApiProbe {
     )
 
     // 숨은 시스템 서비스 목록을 훑는 조사 도구라 일부러 숨은 API를 부른다
-    @SuppressLint("PrivateApi")
     /** [progress]는 진행률(0~1)과 지금 하는 일을 알린다(작업 스레드에서 불린다). */
+    @SuppressLint("PrivateApi")
     fun run(context: Context, keywords: Regex = DENSITY_KEYWORDS, progress: (Float, String) -> Unit = { _, _ -> }): String = buildString {
         appendLine("기기: ${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT}) · ${Build.DISPLAY}")
         HiddenApi.exemptAll()
