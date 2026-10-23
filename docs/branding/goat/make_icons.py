@@ -6,7 +6,7 @@ generate.py의 염소 모양을 그대로 쓰고, svg2vd.py로 Android VectorDra
 - ic_app_logo: 앱 안 로고(검은 둥근 타일 + 염소)
 - ic_goat: 염소 얼굴만(사이드바 머리)
 - ic_goat_squint·ic_goat_cry·ic_goat_angry: 누를 때 표정(찡그림·울음·화남)
-- ic_stat_goat: 알림 작은 아이콘(단색 염소, 24dp를 거의 채운다)
+- ic_stat_goat: 알림 작은 아이콘(단색 염소, 24dp를 거의 채운다, 시안 1 '동글 머리')
 """
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -47,7 +47,14 @@ mono = (f'<path d="{horn}" fill="#fff"/><g {mir}><path d="{horn}" fill="#fff"/><
         '<path d="M240 366 Q248 382 252 404 Q256 412 260 404 Q264 382 272 366 Z" fill="#fff"/>'
         f'<path d="{HEAD} {circ(212, 282, 25)} {circ(300, 282, 25)} M243 316 Q256 308 269 316 Q264 330 256 332 Q248 330 243 316 Z" fill="#fff" fill-rule="evenodd"/>')
 out['ic_launcher_mono.xml'] = (svg(scale(mono, 0.84, -4)), 108)
-out['ic_stat_goat.xml'] = (svg(scale(mono, 1.45, -9)), 24)
+# 상단바(알림) 아이콘: 시안 1 '동글 머리'(2026-10-23 소장님 선택) — 더 넓고 둥근 머리, 짧은 뿔, 둥근 귀, 수염 없음
+stub_horn = 'M214 186 C206 150 188 128 166 124 C156 124 154 134 160 140 C172 152 178 170 182 190 C186 202 202 204 214 186 Z'
+round_ear = 'M166 254 C140 238 104 242 90 266 C86 276 96 288 116 290 C140 292 162 286 176 276 Z'
+wide_head = 'M256 176 C336 176 382 222 380 280 C378 340 330 380 256 380 C182 380 134 340 132 280 C130 222 176 176 256 176 Z'
+stat = (f'<path d="{stub_horn}" fill="#fff"/><g {mir}><path d="{stub_horn}" fill="#fff"/></g>'
+        f'<path d="{round_ear}" fill="#fff"/><g {mir}><path d="{round_ear}" fill="#fff"/></g>'
+        f'<path d="{wide_head} {circ(210, 284, 27)} {circ(302, 284, 27)} M243 316 Q256 308 269 316 Q264 330 256 332 Q248 330 243 316 Z" fill="#fff" fill-rule="evenodd"/>')
+out['ic_stat_goat.xml'] = (svg(scale(stat, 1.45, -9)), 24)
 
 for name, (s, dp) in out.items():
     with open(os.path.join(res, name), 'w', encoding='utf-8') as f:

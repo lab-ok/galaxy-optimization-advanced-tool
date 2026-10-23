@@ -185,10 +185,6 @@
         <receiver
             android:name=".data.lab.StatusBarHider$Receiver"
             android:exported="false" />
-        <!-- 앱 폭 좁히기: 알림에서 좁힌 앱을 붙일 쪽(왼쪽·가운데·오른쪽)을 바꾸는 버튼 -->
-        <receiver
-            android:name=".data.lab.NarrowApps$SideReceiver"
-            android:exported="false" />
         <!-- 자동 플렉스가 켜져 있는 동안 알림에서 앱별 모드를 바꾸는 버튼 -->
         <receiver
             android:name=".data.lab.FlexModeReceiver"
@@ -259,6 +255,19 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/volume_rotate_service" />
+        </service>
+        <!-- 상단바 제스처(접근성 서비스): 두 번 누르기 맨 위로, 꾹 누르기 앱 폭 좁히기. GOAT가 시스템 설정 권한으로 켜고 끈다(StatusGestures) -->
+        <service
+            android:name=".data.lab.StatusGestureService"
+            android:exported="true"
+            android:label="@string/status_gesture_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/status_gesture_service" />
         </service>
         <!-- 공유용 임시 파일(실험실 TXT로 공유) -->
         <provider

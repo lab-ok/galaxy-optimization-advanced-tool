@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.NarrowApps
+import com.labok.goat.data.lab.StatusGestures
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.AppEntry
 import com.labok.goat.ui.appsize.Section
@@ -84,12 +85,14 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
-    val ready = shizuku == ShizukuAccess.State.READY
+    val supported = remember { NarrowApps.supported() }
+    val ready = shizuku == ShizukuAccess.State.READY && supported
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     var chosen by remember { mutableStateOf(NarrowApps.ratios(context)) }
     var open by remember { mutableStateOf<String?>(null) }
     var side by remember { mutableStateOf(NarrowApps.side(context)) }
     var bar by remember { mutableStateOf(NarrowApps.controller(context)) }
+    var gesture by remember { mutableStateOf(StatusGestures.enabled(context)) }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
     var query by remember { mutableStateOf("") }
     // 바꾸는 중인 앱(셸이 끝날 때까지 스위치를 잠근다)
@@ -126,7 +129,7 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                     Spacer(Modifier.height(Gap.Item))
                     NarrowArt(side)
                     Spacer(Modifier.height(Gap.Item))
-                    Text(if (ready) Copy.LAB_NARROW_NOTE else Copy.LAB_FLEX_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(if (!supported) Copy.LAB_NARROW_FOLD8_ONLY else if (ready) Copy.LAB_NARROW_NOTE else Copy.LAB_FLEX_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -137,7 +140,7 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                     Text(Copy.LAB_NARROW_SIDE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     LiquidChips(
-                        options = NarrowApps.Side.entries,
+                        options = listOf(NarrowApps.Side.LEFT, NarrowApps.Side.RIGHT),
                         selected = side,
                         label = { it.label },
                         onSelect = { s ->
@@ -159,6 +162,19 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                         scope.launch {
                             withContext(Dispatchers.IO) { NarrowApps.setController(context, on) }
                             GoatService.sync(context)
+                        }
+                    }
+                }
+            }
+        }
+        item(key = "gesture") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    LiquidSwitchRow(Copy.LAB_NARROW_GESTURE, Copy.LAB_NARROW_GESTURE_BODY, gesture, supported) { on ->
+                        scope.launch {
+                            val ok = withContext(Dispatchers.IO) { StatusGestures.setEnabled(context, on) }
+                            gesture = StatusGestures.enabled(context)
+                            if (!ok) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
                         }
                     }
                 }

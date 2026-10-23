@@ -3,15 +3,14 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
     android:width="24dp" android:height="24dp" android:viewportWidth="512" android:viewportHeight="512">
     <group android:translateX="-115.19999999999999" android:translateY="-124.19999999999999" android:scaleX="1.45" android:scaleY="1.45">
-        <path android:pathData="M216 194 C204 152 182 122 152 112 C146 110 142 116 146 121 C162 138 170 160 176 184 C180 198 188 206 200 210 Z" android:fillColor="#FFFFFFFF"/>
+        <path android:pathData="M214 186 C206 150 188 128 166 124 C156 124 154 134 160 140 C172 152 178 170 182 190 C186 202 202 204 214 186 Z" android:fillColor="#FFFFFFFF"/>
         <group android:scaleX="-1" android:pivotX="256.0">
-            <path android:pathData="M216 194 C204 152 182 122 152 112 C146 110 142 116 146 121 C162 138 170 160 176 184 C180 198 188 206 200 210 Z" android:fillColor="#FFFFFFFF"/>
+            <path android:pathData="M214 186 C206 150 188 128 166 124 C156 124 154 134 160 140 C172 152 178 170 182 190 C186 202 202 204 214 186 Z" android:fillColor="#FFFFFFFF"/>
         </group>
-        <path android:pathData="M168 250 C138 232 104 236 82 258 C80 262 82 266 86 268 C112 288 146 290 174 276 Z" android:fillColor="#FFFFFFFF"/>
+        <path android:pathData="M166 254 C140 238 104 242 90 266 C86 276 96 288 116 290 C140 292 162 286 176 276 Z" android:fillColor="#FFFFFFFF"/>
         <group android:scaleX="-1" android:pivotX="256.0">
-            <path android:pathData="M168 250 C138 232 104 236 82 258 C80 262 82 266 86 268 C112 288 146 290 174 276 Z" android:fillColor="#FFFFFFFF"/>
+            <path android:pathData="M166 254 C140 238 104 242 90 266 C86 276 96 288 116 290 C140 292 162 286 176 276 Z" android:fillColor="#FFFFFFFF"/>
         </group>
-        <path android:pathData="M240 366 Q248 382 252 404 Q256 412 260 404 Q264 382 272 366 Z" android:fillColor="#FFFFFFFF"/>
-        <path android:pathData="M256 170 C320 170 362 212 360 270 C358 330 316 374 256 376 C196 374 154 330 152 270 C150 212 192 170 256 170 Z M187,282a25,25 0 1,0 50,0a25,25 0 1,0 -50,0Z M275,282a25,25 0 1,0 50,0a25,25 0 1,0 -50,0Z M243 316 Q256 308 269 316 Q264 330 256 332 Q248 330 243 316 Z" android:fillColor="#FFFFFFFF" android:fillType="evenOdd"/>
+        <path android:pathData="M256 176 C336 176 382 222 380 280 C378 340 330 380 256 380 C182 380 134 340 132 280 C130 222 176 176 256 176 Z M183,284a27,27 0 1,0 54,0a27,27 0 1,0 -54,0Z M275,284a27,27 0 1,0 54,0a27,27 0 1,0 -54,0Z M243 316 Q256 308 269 316 Q264 330 256 332 Q248 330 243 316 Z" android:fillColor="#FFFFFFFF" android:fillType="evenOdd"/>
     </group>
 </vector>

@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.AppOpsManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
@@ -179,6 +180,61 @@ object ShizukuAccess {
 
     internal fun atm(): Any = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
 
+    /** 맨 앞 작업: 앱, 화면 번호, 창 종류(1 전체 화면, 5 팝업 창, 6 분할 화면). */
+    data class FocusedTask(val pkg: String?, val displayId: Int, val windowingMode: Int, val basePkg: String? = pkg)
+
+    /** 맨 앞(포커스된) 작업(셸 권한, 작업 스레드). 못 읽으면 null. */
+    fun focusedTask(): FocusedTask? = runCatching {
+        val atm = atm()
+        val info = atm.javaClass.methods.first { it.name == "getFocusedRootTaskInfo" && it.parameterTypes.isEmpty() }.invoke(atm) ?: return null
+        val top = info.javaClass.getField("topActivity").get(info) as ComponentName?
+        val mode = runCatching { info.javaClass.getMethod("getWindowingMode").invoke(info) as Int }.getOrDefault(1)
+        // 작업의 바탕 앱(권한 요청 창처럼 다른 앱 화면이 위에 떠도 작업 주인은 그대로)
+        val base = runCatching { info.javaClass.getField("baseActivity").get(info) as ComponentName? }.getOrNull()
+        FocusedTask(top?.packageName, info.javaClass.getField("displayId").getInt(info), mode, base?.packageName ?: top?.packageName)
+    }.getOrNull()
+
+    /**
+     * 맨 앞 앱이 레터박스로 좁혀져 있는지(셸 권한, 작업 스레드). 안드로이드 14는 TaskInfo.topActivityBoundsLetterboxed,
+     * 15 이상은 appCompatTaskInfo 안에 있다. 못 읽으면 null.
+     */
+    fun focusedLetterboxed(): Boolean? = runCatching {
+        val atm = atm()
+        val info = atm.javaClass.methods.first { it.name == "getFocusedRootTaskInfo" && it.parameterTypes.isEmpty() }.invoke(atm) ?: return null
+        runCatching { info.javaClass.getField("topActivityBoundsLetterboxed").getBoolean(info) }.getOrNull()
+            ?: run {
+                val compat = info.javaClass.getField("appCompatTaskInfo").get(info) ?: return null
+                runCatching { compat.javaClass.getMethod("isTopActivityLetterboxed").invoke(compat) as Boolean }.getOrNull()
+                    ?: runCatching { compat.javaClass.getField("topActivityBoundsLetterboxed").getBoolean(compat) }.getOrNull()
+            }
+    }.getOrNull()
+
+    /** 최근 작업 하나: 작업 번호와 앱. */
+    data class RecentTask(val taskId: Int, val pkg: String)
+
+    /** 최근에 연 작업(최근 순, 셸 권한, 작업 스레드). 같은 앱은 하나만. 못 읽으면 빈 목록. */
+    fun recentTasks(max: Int): List<RecentTask> = runCatching {
+        val atm = atm()
+        val get = atm.javaClass.methods.first { it.name == "getRecentTasks" && it.parameterTypes.size == 3 }
+        // 2 = RECENT_IGNORE_UNAVAILABLE, 4 = RECENT_WITH_EXCLUDED 없이 보이는 것만
+        val slice = get.invoke(atm, max * 3, 2, UserId.current()) ?: return emptyList()
+        val list = slice.javaClass.getMethod("getList").invoke(slice) as List<*>
+        list.mapNotNull { t ->
+            t ?: return@mapNotNull null
+            val id = t.javaClass.getField("taskId").getInt(t)
+            val base = t.javaClass.getField("baseIntent").get(t) as Intent?
+            val pkg = base?.component?.packageName ?: return@mapNotNull null
+            RecentTask(id, pkg)
+        }.distinctBy { it.pkg }.take(max)
+    }.getOrDefault(emptyList())
+
+    /** 최근 작업 [taskId]로 바꾼다(셸 권한, 작업 스레드). 됐으면 true. */
+    fun openRecent(taskId: Int): Boolean = runCatching {
+        val atm = atm()
+        val start = atm.javaClass.methods.first { it.name == "startActivityFromRecents" && it.parameterTypes.size == 2 }
+        (start.invoke(atm, taskId, null) as Int) >= 0
+    }.getOrDefault(false)
+
     /** 맨 앞(포커스된) 작업이 있는 화면 번호(셸 권한, 작업 스레드). 폴드는 접고 펼 때 앱이 다른 화면으로 옮겨 간다. 못 읽으면 null. */
     fun focusedDisplay(): Int? = runCatching {
         val atm = atm()
@@ -211,26 +267,26 @@ object ShizukuAccess {
     }
 
     /**
-     * 화면 [displayId]의 ([x], [fromY])에서 ([x], [toY])로 [ms] 동안 손가락으로 쓸어 넘긴다(셸 권한, 작업 스레드, 끝날 때까지 기다림).
-     * 쇼츠·릴스를 위아래로 넘길 때 쓴다. 보냈으면 true.
+     * 화면 [displayId]의 ([x1], [y1])에서 ([x2], [y2])로 [ms] 동안 손가락으로 쓸어 넘긴다(셸 권한, 작업 스레드, 끝날 때까지 기다림).
+     * 쇼츠·릴스를 위아래로, 게시판 글을 좌우로 넘길 때 쓴다. 보냈으면 true.
      */
-    fun injectSwipe(displayId: Int, x: Float, fromY: Float, toY: Float, ms: Long = 160): Boolean = runCatching {
+    fun injectSwipe(displayId: Int, x1: Float, y1: Float, x2: Float, y2: Float, ms: Long = 160): Boolean = runCatching {
         val (im, inject) = injector()
         val setDisplay = MotionEvent::class.java.methods.firstOrNull { it.name == "setDisplayId" && it.parameterTypes.size == 1 }
         val down = SystemClock.uptimeMillis()
         val steps = 8
-        fun send(action: Int, y: Float, at: Long): Boolean {
+        fun send(action: Int, x: Float, y: Float, at: Long): Boolean {
             val e = MotionEvent.obtain(down, at, action, x, y, 0)
             e.source = InputDevice.SOURCE_TOUCHSCREEN
             setDisplay?.invoke(e, displayId)
             return (inject.invoke(im, e, 2) == true).also { e.recycle() }
         }
-        var ok = send(MotionEvent.ACTION_DOWN, fromY, down)
+        var ok = send(MotionEvent.ACTION_DOWN, x1, y1, down)
         for (i in 1..steps) {
             Thread.sleep(ms / steps)
-            ok = ok && send(MotionEvent.ACTION_MOVE, fromY + (toY - fromY) * i / steps, SystemClock.uptimeMillis())
+            ok = ok && send(MotionEvent.ACTION_MOVE, x1 + (x2 - x1) * i / steps, y1 + (y2 - y1) * i / steps, SystemClock.uptimeMillis())
         }
-        ok && send(MotionEvent.ACTION_UP, toY, SystemClock.uptimeMillis())
+        ok && send(MotionEvent.ACTION_UP, x2, y2, SystemClock.uptimeMillis())
     }.getOrDefault(false)
 
     private fun call(name: String, size: Int, vararg args: Any): Any? {

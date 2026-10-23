@@ -2,4 +2,6 @@
     <string name="app_name">GOAT</string>
     <string name="volume_rotate_desc">GOAT: 화면을 돌리면 볼륨 버튼의 올리기·내리기를 화면 방향에 맞춰 바꿉니다. 볼륨 키만 받고 화면 내용은 읽지 않습니다.</string>
     <string name="volume_rotate_label">GOAT 볼륨 버튼 회전</string>
+    <string name="status_gesture_label">GOAT 상단바 제스처</string>
+    <string name="status_gesture_desc">GOAT: 상단바를 두 번 누르면 지금 앱을 맨 위로 올리고, 꾹 누르면 앱 폭 좁히기를 켜고 끕니다. 맨 위로 올릴 때만 스크롤 영역을 찾고 화면 글자는 읽지 않습니다.</string>
 </resources>

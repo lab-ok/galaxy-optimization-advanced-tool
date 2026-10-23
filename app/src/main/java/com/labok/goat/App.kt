@@ -8,12 +8,15 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.UserManager
 import androidx.core.content.ContextCompat
+import com.labok.goat.background.GoatService
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.DpiManager
 import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.data.lab.NarrowApps
+import com.labok.goat.data.lab.NarrowBar
 import com.labok.goat.data.lab.QsGrid
+import com.labok.goat.data.lab.StatusGestures
 import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.log.CrashRecorder
 import com.labok.goat.data.log.LogRepository
@@ -98,6 +101,10 @@ class App : Application() {
         ForceDark.watch(this)
         // 앱 폭 좁히기(실험실): 삼성이 부팅 때 호환성 설정을 지우므로 Shizuku가 연결될 때 고른 앱을 다시 건다
         NarrowApps.watch(this)
+        // 좁힌 앱 컨트롤러: 업데이트·강제 종료 뒤에도 상주 서비스가 맨 앞 앱을 따라가도록 다시 띄운다
+        if (NarrowBar.enabled(this)) GoatService.sync(this)
+        // 상단바 제스처(접근성 서비스): 강제 종료로 시스템이 뺐으면 다시 켠다
+        StatusGestures.restoreIfWanted(this)
         // 해상도 낮추기: 확인을 기다리던 중 앱이 다시 시작됐으면 남은 시간으로 이어 가거나 되돌린다
         Resolution.resume(this)
         // 대각선 직접 입력 기능을 없앴다(사용자 요청). 이전 버전 입력값이 남아 있으면 계산에서 빼기 위해 지운다.

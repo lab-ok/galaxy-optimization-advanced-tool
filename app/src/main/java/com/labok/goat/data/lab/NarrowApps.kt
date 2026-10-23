@@ -1,16 +1,11 @@
 package com.labok.goat.data.lab
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import androidx.core.app.NotificationCompat
-import com.labok.goat.R
+import android.os.Build
+import com.labok.goat.data.appsize.AppList
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
-import com.labok.goat.ui.MainActivity
 import rikka.shizuku.Shizuku
 
 /**
@@ -64,6 +59,13 @@ object NarrowApps {
 
     fun apps(context: Context): Set<String> = ratios(context).keys
 
+    /**
+     * 폴드8(기본형, SM-F971) 전용(소장님 지정). 커버 화면 비율(10:16)과 여백 컨트롤러 배치를 이 기기에 맞췄다.
+     * 시험용으로 `setprop debug.goat.narrow 1`이면 다른 기기(에뮬레이터)에서도 켤 수 있다(일반 사용자는 설정할 수 없는 속성).
+     */
+    fun supported(): Boolean = (Build.MANUFACTURER.equals("samsung", true) && Build.MODEL.uppercase().startsWith("SM-F971")) ||
+        runCatching { Class.forName("android.os.SystemProperties").getMethod("get", String::class.java).invoke(null, "debug.goat.narrow") == "1" }.getOrDefault(false)
+
     /** 좁힌 앱 옆 여백에 세로 컨트롤러([NarrowBar])를 띄울지. */
     fun controller(context: Context) = prefs(context).getBoolean("controller", false)
 
@@ -72,16 +74,18 @@ object NarrowApps {
         LogRepository.from(context).add("좁힌 앱 컨트롤러 ${if (on) "켜짐" else "꺼짐"}")
     }
 
-    fun side(context: Context): Side = Side.entries.getOrNull(prefs(context).getInt("side", Side.CENTER.ordinal)) ?: Side.CENTER
+    /** 앱이 붙은 쪽. 가운데는 1.24.3까지 고를 수 있었는데 커버 화면에서 뺐다(소장님 지정): 남아 있으면 오른쪽으로 읽는다. */
+    fun side(context: Context): Side = Side.entries.getOrNull(prefs(context).getInt("side", Side.RIGHT.ordinal))?.takeIf { it != Side.CENTER } ?: Side.RIGHT
 
     /**
-     * [pkg]를 [ratio]로 좁히거나(null이면 원래대로) 둔다(작업 스레드). 바꾸면 그 앱을 닫아, 다시 열 때 새 모양으로 뜬다.
+     * [pkg]를 [ratio]로 좁히거나(null이면 원래대로) 둔다(작업 스레드). 앱을 닫지 않고 설정만 바꾼 뒤 화면 크기를 아주 잠깐 바꿔
+     * 열려 있는 앱도 바로 새 모양으로 바뀌게 한다(에뮬레이터 실측: 켜고 끌 때 모두 같은 프로세스로 바로 바뀜).
      * 실패하면 이유(한 줄), 성공하면 null.
      */
     fun set(context: Context, pkg: String, ratio: Ratio?): String? {
         val log = LogRepository.from(context)
         val on = ratio != null
-        val r = ShizukuAccess.shell(commands(pkg, ratio, kill = true)) ?: return "Shizuku가 연결되지 않았습니다.".also {
+        val r = ShizukuAccess.shell(commands(pkg, ratio, kill = false)) ?: return "Shizuku가 연결되지 않았습니다.".also {
             log.add("앱 폭 좁히기($pkg): Shizuku 없음")
         }
         // 핵심 설정(최소 화면비)이 바뀌었는지 출력으로 확인한다. 안드로이드 15 이하에는 없는 설정(357141415)의 오류는 무시한다
@@ -98,7 +102,7 @@ object NarrowApps {
             applySide(context)
             watch(context)
         }
-        notifyControls(context)
+        nudge()
         log.add("앱 폭 좁히기($pkg) ${ratio?.label ?: "끔"}")
         return null
     }
@@ -115,7 +119,6 @@ object NarrowApps {
         if (!applySide(context)) return "Shizuku가 연결되지 않았습니다."
         nudge()
         NarrowBar.relayout(context)
-        notifyControls(context)
         LogRepository.from(context).add("앱 폭 좁히기: 붙일 쪽 ${side.label}")
         return null
     }
@@ -157,13 +160,95 @@ object NarrowApps {
         return (if (kill) lines + "am force-stop $pkg" else lines).joinToString("; ")
     }
 
+    /**
+     * 전체 좁히기(상단바 꾹 누르기로 켠다): 켜 두면 앱이 바뀌어도 맨 앞에 오는 앱을 차례로 16:9로 좁혀 계속 유지한다(소장님 지정).
+     * 이 모드가 좁힌 앱은 따로 기억해([globalApplied]) 끌 때 그 앱들만 되돌린다. 앱 목록에서 직접 고른 앱은 건드리지 않는다.
+     */
+    fun global(context: Context) = prefs(context).getBoolean("global", false)
+
+    private fun globalApplied(context: Context): Set<String> = prefs(context).getStringSet("global_applied", emptySet()).orEmpty()
+
+    /** 전체 좁히기에서 빼는 앱: 다른 앱 위에 잠깐 뜨는 시스템 창(권한 요청 등). */
+    private val SKIP = setOf("com.android.permissioncontroller", "com.google.android.permissioncontroller", "com.android.systemui", "com.android.intentresolver")
+
+    /** 좁혀 있는(또는 좁혀야 하는) 앱인지: 직접 고른 앱이거나 전체 좁히기가 켜져 있으면. */
+    fun isNarrow(context: Context, pkg: String) = pkg in ratios(context) || (global(context) && pkg != context.packageName && pkg !in SKIP)
+
+    /** 앱 비율: 직접 고른 비율, 없으면 전체 좁히기의 16:9. */
+    fun ratioOf(context: Context, pkg: String): Ratio? = ratios(context)[pkg] ?: Ratio.TALL.takeIf { global(context) }
+
+    /**
+     * 전체 좁히기를 켠다(작업 스레드): [side] 쪽에 앱을 붙이고, 지금 맨 앞 앱부터 좁힌다. 컨트롤러도 켠다.
+     */
+    fun startGlobal(context: Context, side: Side, pkg: String?) {
+        prefs(context).edit().putBoolean("global", true).putInt("side", side.ordinal).apply()
+        setController(context, true)
+        applySide(context)
+        if (pkg != null) onForeground(context, pkg, force = true) else nudge()
+        watch(context)
+        LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 켬(${side.label})")
+        preapply(context)
+    }
+
+    /**
+     * 홈 화면 앱 전부에 미리 설정을 건다(작업 스레드). 설정이 걸린 채로 열린 앱은 처음부터 좁게 뜨므로, 새로 여는 앱이
+     * 넓게 열렸다가 다시 열리는 깜빡임이 없다. 열려 있는 앱은 닫지 않는다.
+     */
+    private fun preapply(context: Context) {
+        val skip = SKIP + context.packageName + ratios(context).keys + globalApplied(context)
+        val pkgs = AppList.launcherApps(context).map { it.pkg }.filter { it !in skip }
+        if (pkgs.isEmpty()) return
+        // 한 번에 너무 긴 명령이 되지 않게 나눠 보낸다
+        pkgs.chunked(10).forEach { group ->
+            if (!global(context)) return
+            ShizukuAccess.shell(group.joinToString("; ") { commands(it, Ratio.TALL, kill = false) }) ?: return
+            prefs(context).edit().putStringSet("global_applied", globalApplied(context) + group).apply()
+        }
+        LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 앱 ${pkgs.size}개에 미리 걸기")
+    }
+
+    /** 전체 좁히기를 끈다(작업 스레드): 이 모드가 좁힌 앱을 모두 되돌린다. [pkg](지금 앱)를 직접 고른 앱이면 그 앱도 끈다. */
+    fun stopGlobal(context: Context, pkg: String?) {
+        val applied = globalApplied(context)
+        prefs(context).edit().putBoolean("global", false).putStringSet("global_applied", emptySet()).apply()
+        val reset = applied + listOfNotNull(pkg?.takeIf { it in ratios(context) })
+        reset.filter { it in ratios(context) }.forEach { set(context, it, null) }
+        val rest = reset.filter { it !in ratios(context) }
+        if (rest.isNotEmpty()) ShizukuAccess.shell(rest.joinToString("; ") { commands(it, null, kill = false) })
+        nudge()
+        LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 끔(${applied.size}개 앱 되돌림)")
+    }
+
+    /**
+     * 맨 앞 앱이 [pkg]로 바뀌었을 때(작업 스레드): 전체 좁히기가 켜져 있고 아직 좁히지 않은 앱이면 앱을 닫지 않고 바로 좁힌다.
+     * 직접 고른 앱은 이미 걸려 있어 건너뛴다.
+     */
+    fun onForeground(context: Context, pkg: String, force: Boolean = false) {
+        if (!global(context) || pkg == context.packageName || pkg in SKIP || pkg in ratios(context)) return
+        if (!force && pkg in globalApplied(context)) return
+        if (ShizukuAccess.shell(commands(pkg, Ratio.TALL, kill = false)) == null) return
+        prefs(context).edit().putStringSet("global_applied", globalApplied(context) + pkg).apply()
+        nudge()
+        // 설정 없이 처음 열린 화면은 설정을 바꿔도 좁아지지 않을 때가 있다(에뮬레이터 연락처: 화면 크기를 바꿔도 그대로, 다시 열면 좁아짐).
+        // 잠시 뒤 좁혀졌는지 보고, 아니면 그 앱만 다시 연다(가로 고정 앱처럼 원래 좁아지지 않는 앱은 다시 열어도 그대로라 한 번만)
+        Thread.sleep(500)
+        if (ShizukuAccess.focusedTask()?.basePkg == pkg && ShizukuAccess.focusedLetterboxed() == false) restart(context, pkg)
+    }
+
+    /** [pkg]를 닫았다가 처음 화면으로 다시 연다(작업 스레드). */
+    private fun restart(context: Context, pkg: String) {
+        val comp = context.packageManager.getLaunchIntentForPackage(pkg)?.component?.flattenToShortString() ?: return
+        // 백그라운드에서 화면을 여는 제한이 있어 셸로 연다
+        ShizukuAccess.shell("am force-stop $pkg; am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n $comp")
+        LogRepository.from(context).add("앱 폭 좁히기: $pkg 열려 있던 화면이 좁아지지 않아 다시 엶")
+    }
+
     /** 고른 앱과 여백 위치를 다시 건다(Shizuku 연결 때, 작업 스레드). 열려 있는 앱은 닫지 않는다. */
     fun reapply(context: Context) {
-        val ratios = ratios(context)
+        val ratios = ratios(context) + (if (global(context)) globalApplied(context).associateWith { Ratio.TALL } else emptyMap())
         if (ratios.isEmpty()) return
         if (ShizukuAccess.shell(ratios.entries.joinToString("; ") { (pkg, r) -> commands(pkg, r, kill = false) }) == null) return
         applySide(context)
-        notifyControls(context)
         LogRepository.from(context).add("앱 폭 좁히기: ${ratios.size}개 앱 다시 걸기")
     }
 
@@ -174,54 +259,14 @@ object NarrowApps {
     /** 앱 시작 때 부른다: Shizuku가 연결되는 순간(재부팅 뒤 포함) 고른 앱을 다시 건다. */
     fun watch(context: Context) {
         val app = context.applicationContext
-        if (apps(app).isEmpty()) return
+        runCatching { app.getSystemService(NotificationManager::class.java).cancel(OLD_NOTIFICATION_ID) }
+        if (apps(app).isEmpty() && !global(app)) return
         reapplyAsync = { Thread { reapply(app) }.start() }
         Shizuku.addBinderReceivedListenerSticky(binder)
     }
 
-    private const val CHANNEL_ID = "narrow_side"
-    private const val NOTIFICATION_ID = 31
-
-    /**
-     * 알림창 조절: 좁힌 앱이 있는 동안 알림에 [왼쪽·가운데·오른쪽] 버튼을 두어 앱을 바로 옮긴다. 좁힌 앱이 없으면 알림을 지운다.
-     * 알림 권한이 없으면 조용히 넘어간다.
-     */
-    fun notifyControls(context: Context) {
-        val nm = context.getSystemService(NotificationManager::class.java)
-        if (apps(context).isEmpty()) {
-            nm.cancel(NOTIFICATION_ID)
-            return
-        }
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "앱 폭 좁히기", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
-        val now = side(context)
-        val open = PendingIntent.getActivity(context, 23, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
-        val b = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_goat)
-            .setContentTitle("앱 폭 좁히기 · ${now.label}")
-            .setContentText("좁힌 앱을 붙일 쪽을 바로 바꿉니다")
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setSilent(true)
-            .setContentIntent(open)
-        Side.entries.forEach { s ->
-            val i = Intent(context, SideReceiver::class.java).putExtra("side", s.name)
-            val pi = PendingIntent.getBroadcast(context, 40 + s.ordinal, i, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-            b.addAction(0, if (s == now) "● ${s.label}" else s.label, pi)
-        }
-        runCatching { nm.notify(NOTIFICATION_ID, b.build()) }
-    }
-
-    /** 알림 버튼을 받아 붙일 쪽을 바꾼다. */
-    class SideReceiver : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val side = Side.entries.firstOrNull { it.name == intent.getStringExtra("side") } ?: return
-            val pending = goAsync()
-            Thread {
-                runCatching { setSide(context.applicationContext, side) }
-                pending.finish()
-            }.start()
-        }
-    }
+    /** 1.24.3에 있던 알림창 붙일 쪽 버튼(31번 알림)을 없앴다. 남아 있으면 지운다. */
+    private const val OLD_NOTIFICATION_ID = 31
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 }
