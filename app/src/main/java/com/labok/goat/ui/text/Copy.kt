@@ -215,6 +215,8 @@ object Copy {
     const val LAB_NARROW_SIDE_TITLE = "앱을 붙일 쪽"
     const val LAB_NARROW_SIDE_BODY = "모든 앱에 함께 쓰입니다. 최근 앱에서 그 앱을 닫았다가 다시 열면 바뀝니다."
     const val LAB_NARROW_APPS_TITLE = "좁힐 앱"
+    const val LAB_NARROW_BAR = "여백에 버튼 띄우기"
+    const val LAB_NARROW_BAR_BODY = "좁힌 앱을 쓰는 동안 옆 검은 여백에 최근 앱·홈·뒤로 버튼을 세로로 띄웁니다."
     const val LAB_FLEX_BODY = "기기를 접으면 위 화면에는 사용하던 앱이, 아래 화면에는 그 앱에 맞는 조작 패널이 표시됩니다."
     const val LAB_FLEX_BODY2 = "폴드8은 반쯤 접어도 플렉스 모드로 바뀌지 않으므로, 정한 각도로 접으면 GOAT가 대신 전환합니다."
     const val LAB_FLEX_WHEEL_TITLE = "스크롤 휠 위치"

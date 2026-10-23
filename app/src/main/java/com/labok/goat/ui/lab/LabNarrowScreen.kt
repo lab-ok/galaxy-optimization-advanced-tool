@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.NarrowApps
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.AppEntry
@@ -72,6 +73,7 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     var chosen by remember { mutableStateOf(NarrowApps.apps(context)) }
     var side by remember { mutableStateOf(NarrowApps.side(context)) }
+    var bar by remember { mutableStateOf(NarrowApps.controller(context)) }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
     var query by remember { mutableStateOf("") }
     // 바꾸는 중인 앱(셸이 끝날 때까지 스위치를 잠근다)
@@ -83,6 +85,7 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
         val err = withContext(Dispatchers.IO) { NarrowApps.set(context, app.pkg, on) }
         chosen = NarrowApps.apps(context)
         busy.remove(app.pkg)
+        GoatService.sync(context)
         if (err != null) Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
     }
 
@@ -128,6 +131,19 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                             }
                         }
                     )
+                }
+            }
+        }
+        item(key = "bar") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    LiquidSwitchRow(Copy.LAB_NARROW_BAR, Copy.LAB_NARROW_BAR_BODY, bar, ready || bar) { on ->
+                        bar = on
+                        scope.launch {
+                            withContext(Dispatchers.IO) { NarrowApps.setController(context, on) }
+                            GoatService.sync(context)
+                        }
+                    }
                 }
             }
         }

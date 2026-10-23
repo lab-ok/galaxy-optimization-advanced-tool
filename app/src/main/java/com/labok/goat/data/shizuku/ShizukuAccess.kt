@@ -7,7 +7,11 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
+import android.view.InputDevice
+import android.view.KeyCharacterMap
+import android.view.KeyEvent
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.appsize.AppUsage
@@ -172,6 +176,26 @@ object ShizukuAccess {
     }
 
     internal fun atm(): Any = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
+
+    /** 입력 관리자(셸 권한). 키 입력을 보낼 때 쓴다([injectKey]). */
+    private fun input(): Any = HiddenApi.asInterface("android.hardware.input.IInputManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("input")))
+
+    /**
+     * [code] 키를 한 번 누르고 뗀다(셸 권한, 작업 스레드). 뒤로·홈·최근 앱처럼 시스템이 처리하는 키를 보낸다. 보냈으면 true.
+     * `input keyevent`보다 빠르다(셸 프로세스를 새로 띄우지 않는다).
+     */
+    fun injectKey(code: Int): Boolean = runCatching {
+        val im = input()
+        val inject = im.javaClass.methods.first { it.name == "injectInputEvent" && it.parameterTypes.size == 2 }
+        val down = SystemClock.uptimeMillis()
+        listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).all { action ->
+            val e = KeyEvent(
+                down, SystemClock.uptimeMillis(), action, code, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                KeyEvent.FLAG_FROM_SYSTEM or KeyEvent.FLAG_VIRTUAL_HARD_KEY, InputDevice.SOURCE_KEYBOARD
+            )
+            inject.invoke(im, e, 0) == true
+        }
+    }.getOrDefault(false)
 
     private fun call(name: String, size: Int, vararg args: Any): Any? {
         val svc = atm()

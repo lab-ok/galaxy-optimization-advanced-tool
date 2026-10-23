@@ -18,6 +18,12 @@ object NarrowApps {
     /** 안드로이드 16 이상에서 큰 화면이면 앱의 방향·비율 고정을 무시하는 설정(끄지 않으면 아래 설정이 먹지 않는다). */
     private const val UNIVERSAL_RESIZABLE_BY_DEFAULT = 357141415L
 
+    /**
+     * 최소 화면비를 세로로 고정한 앱에만 쓰는 기본 조건. 폴드 커버 화면에서는 아래 방향 바꾸기가 먹지 않아 이 조건에 막혔다
+     * (1.24.1 실기기: 내부 화면만 좁아지고 커버 화면은 그대로). 꺼야 커버 화면에서도 좁아진다(Aspectly와 같은 방식).
+     */
+    private const val MIN_ASPECT_RATIO_PORTRAIT_ONLY = 203647190L
+
     /** 방향을 정하지 않은 앱을 세로 방향으로 본다. */
     private const val UNDEFINED_ORIENTATION_TO_PORTRAIT = 265452344L
 
@@ -28,11 +34,20 @@ object NarrowApps {
     private const val MIN_ASPECT_RATIO_LARGE = 180326787L
 
     private val ON = listOf(MIN_ASPECT_RATIO, MIN_ASPECT_RATIO_LARGE, UNDEFINED_ORIENTATION_TO_PORTRAIT)
+    private val OFF = listOf(UNIVERSAL_RESIZABLE_BY_DEFAULT, MIN_ASPECT_RATIO_PORTRAIT_ONLY)
 
     /** 검은 여백을 어디에 둘지: 앱이 붙는 쪽(왼쪽·가운데·오른쪽). 값은 `wm set-letterbox-style --horizontalPositionMultiplier`. */
     enum class Side(val label: String, val multiplier: String) { LEFT("왼쪽", "0.0"), CENTER("가운데", "0.5"), RIGHT("오른쪽", "1.0") }
 
     fun apps(context: Context): Set<String> = prefs(context).getStringSet("apps", emptySet()).orEmpty()
+
+    /** 좁힌 앱 옆 여백에 세로 컨트롤러([NarrowBar])를 띄울지. */
+    fun controller(context: Context) = prefs(context).getBoolean("controller", false)
+
+    fun setController(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("controller", on).apply()
+        LogRepository.from(context).add("좁힌 앱 컨트롤러 ${if (on) "켜짐" else "꺼짐"}")
+    }
 
     fun side(context: Context): Side = Side.entries.getOrNull(prefs(context).getInt("side", Side.CENTER.ordinal)) ?: Side.CENTER
 
@@ -76,9 +91,9 @@ object NarrowApps {
     internal fun commands(pkg: String, on: Boolean, kill: Boolean): String {
         val flag = if (kill) "" else " --no-kill"
         val lines = if (on) {
-            listOf("am compat disable$flag $UNIVERSAL_RESIZABLE_BY_DEFAULT $pkg") + ON.map { "am compat enable$flag $it $pkg" }
+            OFF.map { "am compat disable$flag $it $pkg" } + ON.map { "am compat enable$flag $it $pkg" }
         } else {
-            (ON + UNIVERSAL_RESIZABLE_BY_DEFAULT).map { "am compat reset$flag $it $pkg" }
+            (ON + OFF).map { "am compat reset$flag $it $pkg" }
         }
         // 설정을 되돌릴 때(reset)는 시스템이 앱을 닫지 않아, 열려 있던 앱이 옛 모양으로 남는다. 바꿀 때는 직접 닫는다
         return (if (kill) lines + "am force-stop $pkg" else lines).joinToString("; ")
