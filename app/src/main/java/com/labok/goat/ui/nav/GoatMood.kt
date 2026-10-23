@@ -1,6 +1,11 @@
 package com.labok.goat.ui.nav
 
 import android.widget.Toast
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -12,9 +17,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
@@ -26,8 +30,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import com.labok.goat.R
 import com.labok.goat.data.lab.LabUnlock
+import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.text.Copy
+import kotlin.math.PI
+import kotlin.math.sin
 import kotlin.random.Random
 
 /** 염소 표정. */
@@ -136,11 +143,54 @@ fun goatPainter(mood: Mood, variant: Int): Painter {
 }
 
 /**
- * 염소 아이콘 테두리(시안 4 '물방울 고리', 2026-10-23): 로고 물방울의 외곽선을 테마 잉크색으로 그린다. 외곽선이 물방울 모양을 그대로
- * 따라가서 누르거나 쉬는 동안 출렁일 때 테두리도 함께 일렁인다. 흰 얼굴이 밝은 카드에 묻히지 않게 한다.
+ * 염소 아이콘 테두리(시안 4 '물방울 고리', 2026-10-23): 원 모양 로고 물방울의 바깥으로 테마 잉크색 고리를 그린다. 고리의 바깥 가장자리는
+ * 두께가 물결처럼 바뀌며 [phase]에 따라 계속 천천히 일렁이고, 안쪽은 물방울 외곽선을 따라가 누르거나 출렁일 때 함께 움직인다.
+ * 물방울을 채우기 전에(뒤에) 불러야 안쪽이 가려져 바깥 고리만 보인다.
  */
-fun DrawScope.drawGoatRing(clip: Path, color: Color, logoS: Float) {
-    drawPath(clip, color, style = Stroke(logoS * 0.06f, join = StrokeJoin.Round))
+fun DrawScope.drawGoatRing(clip: Path, color: Color, logoS: Float, phase: Float) {
+    val pm = PathMeasure().apply { setPath(clip, true) }
+    val len = pm.length
+    if (len <= 0f) return
+    val n = 120
+    val pts = ArrayList<Offset>(n)
+    var cx = 0f
+    var cy = 0f
+    for (i in 0 until n) {
+        val p = pm.getPosition(len * i / n)
+        cx += p.x
+        cy += p.y
+        pts += p
+    }
+    cx /= n
+    cy /= n
+    val outer = Path()
+    for (i in 0 until n) {
+        val u = i.toFloat() / n
+        val t = pm.getTangent(len * u)
+        val p = pts[i]
+        // 바깥(중심 반대쪽)을 향하는 법선
+        var nx = -t.y
+        var ny = t.x
+        if (nx * (p.x - cx) + ny * (p.y - cy) < 0f) {
+            nx = -nx
+            ny = -ny
+        }
+        // 시안 4의 두께: 기본 약 7%, 세 번·다섯 번 굽이치는 물결을 겹쳐 천천히 돈다
+        val w = logoS * (0.07f + 0.022f * sin(u * 6f * PI.toFloat() + phase) + 0.013f * sin(u * 10f * PI.toFloat() + 1f - phase * 1.3f))
+        val x = p.x + nx * w
+        val y = p.y + ny * w
+        if (i == 0) outer.moveTo(x, y) else outer.lineTo(x, y)
+    }
+    outer.close()
+    drawPath(outer, color)
+}
+
+/** 고리가 일렁이는 위상(0~2π, 7초에 한 바퀴). 동작 줄이기가 켜져 있으면 멈춘다. */
+@Composable
+fun goatRingPhase(): Float {
+    val reduce = LocalReduceMotion.current
+    val t by rememberInfiniteTransition(label = "goatRing").animateFloat(0f, (2 * PI).toFloat(), infiniteRepeatable(tween(7000, easing = LinearEasing)), label = "phase")
+    return if (reduce) 0f else t
 }
 
 /**

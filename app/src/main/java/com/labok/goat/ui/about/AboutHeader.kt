@@ -44,6 +44,7 @@ import com.labok.goat.ui.liquid.rememberSoftBlob
 import com.labok.goat.ui.nav.drawGoat
 import com.labok.goat.ui.nav.drawGoatRing
 import com.labok.goat.ui.nav.goatPainter
+import com.labok.goat.ui.nav.goatRingPhase
 import com.labok.goat.ui.nav.rememberGoatMood
 import kotlin.math.PI
 import kotlin.math.cos
@@ -76,6 +77,7 @@ internal fun AboutHeader(title: String, subtitle: String) {
     // 염소 표정: 누르면 찡그리고, 많이 누르면 울고, 더 누르면 화낸다
     val mood = rememberGoatMood()
     val goat = goatPainter(mood.mood, mood.variant)
+    val ringPhase = goatRingPhase()
     val text = remember { Animatable(0f) }
     val path = remember { Path() }
 
@@ -137,9 +139,10 @@ internal fun AboutHeader(title: String, subtitle: String) {
                 drop.frame
                 if (!logo.blob.ready || !drop.blob.ready) return@Canvas
                 logo.blob.path(path)
+                // 테두리는 물방울 뒤에 그려 바깥으로 일렁이는 부분만 보이게 한다
+                drawGoatRing(path, c.ink, logoS, ringPhase)
                 drawPath(path, c.logo)
                 drawGoat(goat, path, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
-                drawGoatRing(path, c.ink, logoS)
             }
             Column(
                 Modifier
@@ -184,6 +187,7 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
     val drop = rememberSoftBlob()
     val mood = rememberGoatMood()
     val goat = goatPainter(mood.mood, mood.variant)
+    val ringPhase = goatRingPhase()
     val path = remember { Path() }
     fun cx() = box.width / 2f
     fun cy() = box.height / 2f
@@ -238,14 +242,15 @@ internal fun LiquidGoatLogo(size: Dp, modifier: Modifier = Modifier, idle: Boole
         drop.frame
         if (!logo.blob.ready || !drop.blob.ready) return@Canvas
         logo.blob.path(path)
+        // 테두리는 물방울 뒤에 그려 바깥으로 일렁이는 부분만 보이게 한다
+        drawGoatRing(path, c.ink, logoS, ringPhase)
         drawPath(path, c.logo)
         drawGoat(goat, path, logo.blob.cx, logo.blob.cy, drop.blob.cx, drop.blob.cy, logoS)
-        drawGoatRing(path, c.ink, logoS)
     }
 }
 
-/** 리퀴드 로고 상자의 모서리 반지름(크기 대비). 홈·앱 정보·사이드바가 같은 모양을 쓴다. */
-internal const val LOGO_CORNER = 0.4f
+/** 리퀴드 로고 상자의 모서리 반지름(크기 대비). 0.5면 원이다(2026-10-23 염소 테두리 시안 4로 원으로 바꿈). 홈·앱 정보·사이드바가 같은 모양을 쓴다. */
+internal const val LOGO_CORNER = 0.5f
 
 /**
  * 쉬는 동안의 출렁임: 3~6초마다 상자 가장자리 한 곳을 안쪽으로 살짝 밀면, 표면장력이 펴고 압력이 되밀며 물결처럼 잦아든다.
