@@ -227,7 +227,7 @@ object Copy {
     const val LAB_NARROW_FOLD8_ONLY = "갤럭시 Z 폴드8 전용 기능입니다. 이 기기에서는 쓸 수 없습니다."
     const val LAB_NARROW_ROW_HINT = "16:9는 커버·펼친 화면 모두, 3:2는 펼친 화면에서만 좁아집니다."
     const val LAB_NARROW_BAR = "여백에 버튼 띄우기"
-    const val LAB_NARROW_BAR_BODY = "좁힌 앱을 쓰는 동안 옆 여백에 최근 앱과 위아래·좌우 넘기기, 끄기 버튼을 띄웁니다."
+    const val LAB_NARROW_BAR_BODY = "좁힌 앱을 쓰는 동안 옆 여백에 최근 앱과 위아래·좌우 넘기기 버튼을 띄웁니다."
     const val LAB_FLEX_BODY = "기기를 접으면 위 화면에는 사용하던 앱이, 아래 화면에는 그 앱에 맞는 조작 패널이 표시됩니다."
     const val LAB_FLEX_BODY2 = "폴드8은 반쯤 접어도 플렉스 모드로 바뀌지 않으므로, 정한 각도로 접으면 GOAT가 대신 전환합니다."
     const val LAB_FLEX_WHEEL_TITLE = "스크롤 휠 위치"

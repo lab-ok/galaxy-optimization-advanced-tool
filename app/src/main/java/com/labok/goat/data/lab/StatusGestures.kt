@@ -334,10 +334,11 @@ class StatusGestureService : AccessibilityService() {
                     postDelayed(long, longMs)
                 }
                 MotionEvent.ACTION_MOVE -> if (!handled && (e.y - downY > slop * 2)) {
-                    // 아래로 끌면 알림창을 내린다(띠가 상단바를 덮고 있어 대신 내려 준다)
+                    // 아래로 끌면 띠가 상단바를 덮고 있어 대신 내려 준다. One UI처럼 오른쪽 절반에서 끌면 제어 패널(빠른 설정),
+                    // 왼쪽 절반이면 알림창(1.24.5까지는 늘 알림창이라 오른쪽 위에서 제어 패널이 안 열렸다, 소장님 지적)
                     handled = true
                     removeCallbacks(long)
-                    performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
+                    performGlobalAction(if (downX > width / 2f) GLOBAL_ACTION_QUICK_SETTINGS else GLOBAL_ACTION_NOTIFICATIONS)
                 } else if (abs(e.x - downX) > slop) {
                     removeCallbacks(long)
                 }

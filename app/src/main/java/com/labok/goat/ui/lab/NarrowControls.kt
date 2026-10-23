@@ -56,7 +56,7 @@ import kotlinx.coroutines.launch
 /**
  * 좁힌 앱 옆 여백 컨트롤러(실험실)를 GOAT 리퀴드 부품으로 그린다: 테마 잉크색 방울([rememberSoftBlob], 연체 물리),
  * 누르면 옆으로 퍼졌다 튕기는 눌림([liquidPress]). 버튼은 여백 폭을 다 쓰고 손가락으로 누르기 좋게 크게 둔다.
- * 아래(엄지 영역)부터 같은 크기의 원: ▼ 다음 · ▲ 이전 · ▶ · ◀(좌우 넘기기) · 좁은 화면 끄기. 위쪽에는 같은 크기의 최근 앱 아이콘.
+ * 아래(엄지 영역)부터 같은 크기의 원: ▼ 다음 · ▲ 이전 · ▶ · ◀(좌우 넘기기). 위쪽에는 같은 크기의 최근 앱 아이콘.
  * 붙일 쪽은 상단바 꾹 누르기로 정한다(컨트롤러의 옮기기 버튼은 뺐다, 소장님 지정).
  * [compact]면(키보드가 떠 있을 때) 넘기기 네 개만 남긴다.
  */
@@ -75,20 +75,17 @@ internal fun NarrowControls(
     BoxWithConstraints(modifier.fillMaxHeight().padding(horizontal = 4.dp), contentAlignment = Alignment.BottomCenter) {
         // 모든 버튼은 같은 크기의 원: 여백 폭을 다 쓴다(최대 72dp). 최근 앱 아이콘도 같은 크기
         val d = maxWidth.coerceAtMost(72.dp)
-        val keys = if (compact) 4 else 5
-        val buttons = d * keys + GAP * (keys - 1) + 24.dp
+        val keys = 4
+        val buttons = d * keys + GAP * (keys - 1) + BOTTOM
         val fit = ((maxHeight - buttons - DOCK_TOP - 16.dp) / (d + GAP)).toInt().coerceIn(0, 5)
         if (recents.isNotEmpty() && !compact && fit > 0) {
             Box(Modifier.align(Alignment.TopCenter).padding(top = DOCK_TOP)) { RecentDock(recents.take(fit), d, onRecent) }
         }
         Column(
-            Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            Modifier.fillMaxWidth().padding(bottom = if (compact) 24.dp else BOTTOM),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(GAP)
         ) {
-            if (!compact) {
-                InkKey(NarrowKey.EXIT, d, primary = false, onKey = onKey)
-            }
             InkKey(NarrowKey.LEFT, d, onKey = onKey)
             InkKey(NarrowKey.RIGHT, d, onKey = onKey)
             InkKey(NarrowKey.PREV, d, onKey = onKey)
@@ -99,6 +96,9 @@ internal fun NarrowControls(
 
 private val GAP = 10.dp
 private val DOCK_TOP = 52.dp
+
+/** 방향키 묶음 아래 여백: 화면 맨 아래보다 조금 위, 엄지가 편한 높이(소장님 지정 10-24: 더 올리기). '원래대로' 버튼은 뺐다(꾹 누르기 가운데로 끈다). */
+private val BOTTOM = 120.dp
 
 /**
  * 멀티태스킹 바: 최근에 연 앱 아이콘을 세로로(최근 순, 첫째가 지금 앱). 지금 앱 뒤에는 잉크 방울이 깔리고, 다른 앱을 누르면

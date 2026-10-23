@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
 import android.os.Bundle
@@ -15,7 +14,6 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.Display
 import android.view.Gravity
-import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.compose.foundation.layout.ime
@@ -66,11 +64,6 @@ object NarrowBar {
     /** 창을 붙였는지(addView는 바로 반영되지 않아 isAttachedToWindow로 보면 두 번 붙이려다 실패했다, 실기기 로그). */
     private var added = false
 
-    /**
-     * 좁힌 앱 위 상단바 자리를 덮는 검은 판. 좁힌 앱은 상단바 뒤까지 그리지 못해 앱이 정한 상단바 색이 반투명 띠로 보였다(소장님 지적).
-     * 일반 앱 창보다 위, 상단바 아이콘보다 아래 층이라 띠만 가리고 시계·아이콘은 그대로 보인다. 터치는 받지 않는다.
-     */
-    private var cover: View? = null
 
     /** 지금 컨트롤러를 띄운 앱. */
     @Volatile private var current: String? = null
@@ -183,35 +176,6 @@ object NarrowBar {
                 added = true
             }
         }.onFailure { LogRepository.from(context).add("좁힌 앱 컨트롤러: 창을 띄우지 못함(${it.message})") }
-        attachCover(v.context)
-    }
-
-    private fun attachCover(context: Context) {
-        val wm = context.getSystemService(WindowManager::class.java)
-        val h = wm.maximumWindowMetrics.windowInsets.getInsets(WindowInsets.Type.statusBars()).top
-        if (h <= 0) return
-        val lp = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            h,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            PixelFormat.OPAQUE
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
-            title = "GOAT narrow status cover"
-        }
-        val c = cover
-        runCatching {
-            if (c == null) {
-                val v = View(context).apply { setBackgroundColor(Color.BLACK) }
-                wm.addView(v, lp)
-                cover = v
-            } else {
-                wm.updateViewLayout(c, lp)
-            }
-        }
     }
 
     private fun create(context: Context): ComposeView {
@@ -238,8 +202,6 @@ object NarrowBar {
     }
 
     private fun detach(context: Context) {
-        cover?.let { c -> runCatching { c.context.getSystemService(WindowManager::class.java).removeView(c) } }
-        cover = null
         val v = view ?: return
         view = null
         shownOn = -1
