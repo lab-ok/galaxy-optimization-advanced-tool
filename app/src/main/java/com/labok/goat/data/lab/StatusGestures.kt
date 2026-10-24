@@ -133,10 +133,9 @@ class StatusGestureService : AccessibilityService() {
                 val b = Rect().also { w.getBoundsInScreen(it) }
                 w.type == AccessibilityWindowInfo.TYPE_SYSTEM && b.top <= 0 && b.height() in 1..(h * 2) && b.width() >= v.width * 0.9f
             } ?: true
-            if (visible != strip.barVisible) {
-                strip.barVisible = visible
-                relayout(id, v)
-            }
+            // 숨김 주체(GOAT·앱)가 바뀌어도 다시 맞춘다(relayout은 바뀐 게 없으면 그대로 둔다)
+            strip.barVisible = visible
+            relayout(id, v)
         }
     }
     override fun onInterrupt() = Unit
@@ -165,9 +164,9 @@ class StatusGestureService : AccessibilityService() {
         return if (h > 0) h else (24 * resources.displayMetrics.density).toInt()
     }
 
-    private fun params(id: Int, touchable: Boolean) = WindowManager.LayoutParams(
+    private fun params(id: Int, touchable: Boolean, height: Int = statusHeight(id)) = WindowManager.LayoutParams(
         WindowManager.LayoutParams.MATCH_PARENT,
-        statusHeight(id),
+        height,
         WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
             (if (touchable) 0 else WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE),
@@ -194,12 +193,15 @@ class StatusGestureService : AccessibilityService() {
     /** 높이·터치 여부가 바뀌었을 때만 다시 배치한다(1.24.4는 화면 상태가 바뀔 때마다 다시 배치해 로그가 넘쳤다, 실기기 로그). */
     private fun relayout(id: Int, v: View) {
         val strip = v as Strip
-        val h = statusHeight(id)
-        val touch = strip.barVisible
+        // 좁힌 앱 때문에 GOAT가 상단바를 숨긴 동안에도 꾹 누르기·두 번 누르기·끌어내리기를 받는다(소장님 지정 10-24: 숨기니 꾹 누르기가 안 됨).
+        // 앱 맨 위를 덜 가리게 얇게 둔다. 영상처럼 앱이 직접 숨긴 때는 예전처럼 터치를 받지 않는다
+        val hiddenByUs = !strip.barVisible && StatusBarHider.autoHiding
+        val h = if (hiddenByUs) minOf(statusHeight(id), (HIDDEN_STRIP_DP * resources.displayMetrics.density).toInt()) else statusHeight(id)
+        val touch = strip.barVisible || hiddenByUs
         if (strip.laidHeight == h && strip.laidTouch == touch) return
         strip.laidHeight = h
         strip.laidTouch = touch
-        runCatching { windowManager(id).updateViewLayout(v, params(id, touch)) }
+        runCatching { windowManager(id).updateViewLayout(v, params(id, touch, h)) }
     }
 
     /** 지금 맨 앞 앱(작업 스레드). */
@@ -366,3 +368,6 @@ class StatusGestureService : AccessibilityService() {
         }
     }
 }
+
+/** GOAT가 상단바를 숨긴 동안의 제스처 띠 높이(dp). 앱 맨 위를 덜 가리면서 손가락으로 꾹 누를 수 있는 정도. */
+private const val HIDDEN_STRIP_DP = 16
