@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import rikka.shizuku.Shizuku
 
@@ -262,6 +263,7 @@ object NarrowApps {
             val applied = globalApplied(context)
             val wasOn = global(context)
             prefs(context).edit().putBoolean("global", false).putStringSet("global_applied", emptySet()).apply()
+            widthChecked.clear()
             applied.filter { it !in ratios(context) }.forEach { ShizukuAccess.clearCompat(it) }
             if (pkg != null && pkg in ratios(context)) set(context, pkg, null) else nudge()
             if (wasOn || applied.isNotEmpty()) LogRepository.from(context).add("앱 폭 좁히기: 전체 좁히기 끔(${applied.size}개 앱 되돌림)")
@@ -277,25 +279,43 @@ object NarrowApps {
      */
     fun onForeground(context: Context, pkg: String, force: Boolean = false) {
         if (!on(context) || !global(context) || pkg == context.packageName || pkg in SKIP || pkg in ratios(context)) return
-        if (!force && pkg in globalApplied(context)) return
-        if (!override(pkg, Ratio.TALL)) return
-        prefs(context).edit().putStringSet("global_applied", globalApplied(context) + pkg).apply()
-        nudge()
+        val fresh = force || pkg !in globalApplied(context)
+        if (fresh) {
+            if (!override(pkg, Ratio.TALL)) return
+            prefs(context).edit().putStringSet("global_applied", globalApplied(context) + pkg).apply()
+            nudge()
+            Thread.sleep(500)
+        } else if (Build.VERSION.SDK_INT < 35 || pkg in widthChecked) {
+            return
+        }
+        if (ShizukuAccess.focusedTask()?.basePkg != pkg) return
         // 설정 없이 처음 열린 화면은 설정을 바꿔도 좁아지지 않을 때가 있다(에뮬레이터 연락처: 화면 크기를 바꿔도 그대로, 다시 열면 좁아짐).
         // 잠시 뒤 좁혀졌는지 보고, 아니면 그 앱만 다시 연다(가로 고정 앱처럼 원래 좁아지지 않는 앱은 다시 열어도 그대로라 한 번만)
-        Thread.sleep(500)
-        if (ShizukuAccess.focusedTask()?.basePkg == pkg && ShizukuAccess.focusedLetterboxed() == false) restart(context, pkg)
+        if (fresh && ShizukuAccess.focusedLetterboxed() == false) {
+            restart(context, pkg, "화면이 좁아지지 않아")
+            return
+        }
+        // 폭 통일(안드로이드 15+): 옛 앱(대상 SDK 34 이하)은 상단바를 뺀 높이로 폭을 정해 새 앱보다 좁다. 폭 통일 설정은
+        // 화면(ActivityRecord)을 새로 만들 때만 먹어, 설정 전에 열려 있던 화면은 다시 열어야 같은 폭(전체 높이×9/16)이 된다
+        // (1.24.8 실기기: 크롬 1109px·디스코드 1051px, 안드로이드 15 에뮬레이터에서 같은 차이와 다시 열면 맞춰지는 것을 확인). 앱마다 한 번만
+        if (Build.VERSION.SDK_INT >= 35 && widthChecked.add(pkg)) {
+            val (w, h) = ShizukuAccess.focusedLetterboxSize() ?: return
+            if (w < h * 9 / 16 - 4) restart(context, pkg, "폭이 ${w}px로 다른 앱(${h * 9 / 16}px)보다 좁아")
+        }
     }
+
+    /** 이번에 폭을 확인한 앱(앱마다 한 번만 다시 열려고). GOAT가 다시 시작되면 비운다. */
+    private val widthChecked: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     /**
      * [pkg]의 화면만 새로 연다(작업 스레드). 앱 프로세스는 닫지 않고 작업을 비운 뒤 첫 화면을 다시 띄운다(--activity-clear-task).
      * 설정 없이 처음 열린 화면은 설정을 걸어도 그대로지만, 화면을 새로 만들면 좁게 뜬다(에뮬레이터 시계 앱, 같은 프로세스).
      */
-    private fun restart(context: Context, pkg: String) {
+    private fun restart(context: Context, pkg: String, why: String) {
         val comp = context.packageManager.getLaunchIntentForPackage(pkg)?.component?.flattenToShortString() ?: return
         // 백그라운드에서 화면을 여는 제한이 있어 셸로 연다
         ShizukuAccess.shell("am start --activity-clear-task -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n $comp")
-        LogRepository.from(context).add("앱 폭 좁히기: $pkg 화면이 좁아지지 않아 화면만 새로 엶")
+        LogRepository.from(context).add("앱 폭 좁히기: $pkg $why 화면만 새로 엶")
     }
 
     /** 고른 앱과 여백 위치를 다시 건다(Shizuku 연결 때, 작업 스레드). 열려 있는 앱은 닫지 않는다. */

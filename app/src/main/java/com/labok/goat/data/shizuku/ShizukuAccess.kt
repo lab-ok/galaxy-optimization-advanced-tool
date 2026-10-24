@@ -6,6 +6,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -205,6 +206,20 @@ object ShizukuAccess {
                 runCatching { compat.javaClass.getMethod("isTopActivityLetterboxed").invoke(compat) as Boolean }.getOrNull()
                     ?: runCatching { compat.javaClass.getField("topActivityBoundsLetterboxed").getBoolean(compat) }.getOrNull()
             }
+    }.getOrNull()
+
+    /**
+     * 맨 앞 작업의 좁혀진 앱 화면 크기(가로, 세로 px, 셸 권한, 작업 스레드). 좁혀지지 않았거나 못 읽으면 null.
+     * 안드로이드 16은 topActivityLetterboxBounds(Rect), 15는 topActivityLetterboxWidth/Height로 준다.
+     */
+    fun focusedLetterboxSize(): Pair<Int, Int>? = runCatching {
+        val atm = atm()
+        val info = atm.javaClass.methods.first { it.name == "getFocusedRootTaskInfo" && it.parameterTypes.isEmpty() }.invoke(atm) ?: return null
+        val compat = runCatching { info.javaClass.getField("appCompatTaskInfo").get(info) }.getOrNull()
+        listOfNotNull(compat, info).firstNotNullOfOrNull { o ->
+            runCatching { (o.javaClass.getField("topActivityLetterboxBounds").get(o) as Rect?)?.let { it.width() to it.height() } }.getOrNull()
+                ?: runCatching { o.javaClass.getField("topActivityLetterboxWidth").getInt(o) to o.javaClass.getField("topActivityLetterboxHeight").getInt(o) }.getOrNull()
+        }?.takeIf { (w, h) -> w > 0 && h > 0 }
     }.getOrNull()
 
     /** 최근 작업 하나: 작업 번호와 앱. */
