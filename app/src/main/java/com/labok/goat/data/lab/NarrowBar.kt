@@ -79,7 +79,11 @@ object NarrowBar {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ImageBitmap>?) = size > 12
     }
 
-    fun enabled(context: Context) = NarrowApps.on(context) && NarrowApps.controller(context) && NarrowApps.global(context)
+    /**
+     * 맨 앞 앱을 따라가야 하는지: 전체 좁히기가 켜져 있으면 새로 앞에 온 앱을 좁히고, 상단바 숨기기·여백 버튼을 맞춘다.
+     * 예전에는 여백 버튼이 켜져 있을 때만 따라가, 버튼을 끄면 새로 연 앱이 좁아지지 않았다(1.24.9 점검).
+     */
+    fun enabled(context: Context) = NarrowApps.on(context) && NarrowApps.global(context)
 
     /**
      * 맨 앞 앱이 [pkg]로 바뀌었을 때(작업 스레드에서 부른다): 좁힌 앱이 화면을 꽉 채우고 있으면 그 화면에 띄우고, 아니면 내린다.
@@ -89,11 +93,16 @@ object NarrowBar {
         val app = context.applicationContext
         val task = ShizukuAccess.focusedTask()
         // 맨 앞 화면이 권한 요청 창처럼 다른 앱이어도 작업의 바탕 앱 기준으로 좁힌다(에뮬레이터 연락처: 권한 창이 먼저 떴다)
-        val owner = task?.basePkg ?: pkg
+        // 홈·최근 앱 화면은 앱이 아니다: 런처를 좁히거나 그 위에 버튼·상단바 숨기기를 남기지 않는다(1.24.10 에뮬레이터: 홈으로 가도 남음)
+        val owner = if (task?.home == true) null else task?.basePkg ?: pkg
         // 전체 좁히기가 켜져 있으면 새로 앞에 온 앱을 먼저 좁힌다
         if (owner != null) NarrowApps.onForeground(app, owner)
         // 1 = 전체 화면. 팝업 창(5)·분할 화면(6)에서는 여백이 없으니 띄우지 않는다(1.24.3 실기기: 팝업 창 위에 떴다)
-        val want = enabled(app) && owner != null && NarrowApps.isNarrow(app, owner) && (task == null || task.windowingMode == 1)
+        val narrowed = enabled(app) && owner != null && NarrowApps.isNarrow(app, owner) && (task == null || task.windowingMode == 1)
+        // 좁힌 앱이 상단바 아이콘 자리와 겹치면 SystemUI가 상단바에 반투명 막을 씌운다(AOSP LetterboxAppearanceCalculator.isScrimNeeded).
+        // 셸로는 끌 수 없어, 좁힌 앱이 화면을 채우는 동안 상단바를 숨긴다(설정으로 끌 수 있음, 1.24.10)
+        if (narrowed && NarrowApps.hideStatus(app)) StatusBarHider.startAuto(app) else StatusBarHider.stopAuto(app)
+        val want = narrowed && NarrowApps.controller(app)
         if (want) {
             current = owner
             display = task?.displayId ?: Display.DEFAULT_DISPLAY
@@ -126,6 +135,7 @@ object NarrowBar {
 
     fun hide(context: Context) {
         val app = context.applicationContext
+        StatusBarHider.stopAuto(app)
         main.post { detach(app) }
     }
 

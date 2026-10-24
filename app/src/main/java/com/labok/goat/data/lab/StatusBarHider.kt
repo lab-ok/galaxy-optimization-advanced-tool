@@ -19,10 +19,12 @@ import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -69,6 +71,7 @@ object StatusBarHider {
             ShizukuAccess.shell("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
             if (!Settings.canDrawOverlays(app)) return "다른 앱 위에 표시 권한을 받지 못했습니다(Shizuku 연결 필요)."
         }
+        auto = false
         main.post { attach(app) }
         onFlow.value = true
         notify(app)
@@ -76,8 +79,43 @@ object StatusBarHider {
         return null
     }
 
+    /** 앱 폭 좁히기가 켠 것인지(사용자가 직접 켠 숨기기는 좁히기가 끄지 않는다). */
+    @Volatile private var auto = false
+
+    /**
+     * 앱 폭 좁히기가 좁힌 앱을 띄운 동안 숨긴다(작업 스레드에서 불러도 된다). 이미 켜져 있으면 그대로 둔다.
+     * 처음 한 번은 끌어내리면 보인다는 안내를 띄운다. 알림은 따로 띄우지 않는다(좁히기를 끄면 함께 꺼진다).
+     */
+    fun startAuto(context: Context) {
+        val app = context.applicationContext
+        if (onFlow.value) return
+        if (!Settings.canDrawOverlays(app)) ShizukuAccess.shell("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
+        if (!Settings.canDrawOverlays(app)) return
+        auto = true
+        onFlow.value = true
+        main.post { attach(app) }
+        // 앱이 막 열리는 중이면 창을 붙인 뒤 포커스가 앱으로 넘어가 숨지 않는다(에뮬레이터 파일 앱). 잠시 뒤 포커스가 없으면 다시 붙인다
+        main.postDelayed({ if (auto && onFlow.value && view?.hasWindowFocus() == false) rehide(app) }, AUTO_REGRAB_MS)
+        LogRepository.from(app).add("상단바 숨기기: 좁힌 앱이라 켬")
+        if (NarrowApps.firstHide(app)) {
+            main.post { Toast.makeText(app, Copy.LAB_NARROW_HIDE_TOAST, Toast.LENGTH_LONG).show() }
+        }
+    }
+
+    /** [startAuto]로 켠 숨기기만 끈다. */
+    fun stopAuto(context: Context) {
+        if (!auto || !onFlow.value) return
+        auto = false
+        val app = context.applicationContext
+        regrabGen++
+        main.post { detach(app) }
+        onFlow.value = false
+        LogRepository.from(app).add("상단바 숨기기: 좁힌 앱을 벗어나 끔")
+    }
+
     fun stop(context: Context) {
         val app = context.applicationContext
+        auto = false
         regrabGen++
         main.post { detach(app) }
         onFlow.value = false
@@ -297,6 +335,7 @@ object StatusBarHider {
         runCatching { nm.notify(NOTIFICATION_ID, n) }
     }
 
+    private const val AUTO_REGRAB_MS = 900L
     private val OUTSIDE_CHECKS_MS = longArrayOf(350L, 500L)
     private const val REGRAB_MS = 600L
     private const val POLL_MS = 2_000L

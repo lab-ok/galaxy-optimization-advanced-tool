@@ -203,7 +203,11 @@ class StatusGestureService : AccessibilityService() {
     }
 
     /** 지금 맨 앞 앱(작업 스레드). */
-    private fun foreground(): String? = ShizukuAccess.focusedTask()?.basePkg ?: ForegroundWatcher.current
+    private fun foreground(): String? {
+        val task = ShizukuAccess.focusedTask()
+        // 홈 화면에서 꾹 누르면 런처를 좁히지 않는다
+        return if (task?.home == true) null else task?.basePkg ?: ForegroundWatcher.current
+    }
 
     private fun longPress(zone: StatusGestures.Zone) {
         val app = applicationContext

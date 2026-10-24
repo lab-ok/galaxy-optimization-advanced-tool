@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.NarrowApps
+import com.labok.goat.data.lab.NarrowBar
+import com.labok.goat.data.lab.StatusBarHider
 import com.labok.goat.data.lab.StatusGestures
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.art.ArtCanvas
@@ -59,6 +61,7 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
     val ready = shizuku == ShizukuAccess.State.READY && supported
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
     var bar by remember { mutableStateOf(NarrowApps.controller(context)) }
+    var hide by remember { mutableStateOf(NarrowApps.hideStatus(context)) }
     var gesture by remember { mutableStateOf(StatusGestures.narrowPress(context) && StatusGestures.enabled(context)) }
     var master by remember { mutableStateOf(NarrowApps.on(context)) }
 
@@ -107,6 +110,22 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                             val ok = withContext(Dispatchers.IO) { StatusGestures.setFeature(context, narrowPress = on) }
                             gesture = StatusGestures.narrowPress(context) && StatusGestures.enabled(context)
                             if (!ok) Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+        }
+        item(key = "hide") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    LiquidSwitchRow(Copy.LAB_NARROW_HIDE, Copy.LAB_NARROW_HIDE_BODY, hide, ready || hide) { on ->
+                        hide = on
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                NarrowApps.setHideStatus(context, on)
+                                // 바로 맞춘다: 끄면 좁히기가 켠 숨기기만 끄고, 켜면 지금 앞 앱 기준으로 다시 본다
+                                if (on) NarrowBar.update(context, null) else StatusBarHider.stopAuto(context)
+                            }
                         }
                     }
                 }

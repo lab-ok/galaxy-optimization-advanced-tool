@@ -46,7 +46,7 @@ class GoatService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "자동 플렉스 모드".takeIf { autoFlex }, "좁힌 앱 컨트롤러".takeIf { narrowBar }).joinToString("·")
+        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "자동 플렉스 모드".takeIf { autoFlex }, "앱 폭 좁히기".takeIf { narrowBar }).joinToString("·")
         if (running != lastRunning) {
             LogRepository.from(this).add("GOAT 상주 서비스: $running")
             lastRunning = running

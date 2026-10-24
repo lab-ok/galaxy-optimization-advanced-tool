@@ -180,7 +180,8 @@ object ShizukuAccess {
     internal fun atm(): Any = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
 
     /** 맨 앞 작업: 앱, 화면 번호, 창 종류(1 전체 화면, 5 팝업 창, 6 분할 화면). */
-    data class FocusedTask(val pkg: String?, val displayId: Int, val windowingMode: Int, val basePkg: String? = pkg)
+    /** [home]: 홈 화면·최근 앱 화면 작업(topActivityType 2·3). 이때 [pkg]는 런처라 앱으로 다루지 않는다. */
+    data class FocusedTask(val pkg: String?, val displayId: Int, val windowingMode: Int, val basePkg: String? = pkg, val home: Boolean = false)
 
     /** 맨 앞(포커스된) 작업(셸 권한, 작업 스레드). 못 읽으면 null. */
     fun focusedTask(): FocusedTask? = runCatching {
@@ -190,7 +191,8 @@ object ShizukuAccess {
         val mode = runCatching { info.javaClass.getMethod("getWindowingMode").invoke(info) as Int }.getOrDefault(1)
         // 작업의 바탕 앱(권한 요청 창처럼 다른 앱 화면이 위에 떠도 작업 주인은 그대로)
         val base = runCatching { info.javaClass.getField("baseActivity").get(info) as ComponentName? }.getOrNull()
-        FocusedTask(top?.packageName, info.javaClass.getField("displayId").getInt(info), mode, base?.packageName ?: top?.packageName)
+        val type = runCatching { info.javaClass.getField("topActivityType").getInt(info) }.getOrDefault(1)
+        FocusedTask(top?.packageName, info.javaClass.getField("displayId").getInt(info), mode, base?.packageName ?: top?.packageName, home = type == 2 || type == 3)
     }.getOrNull()
 
     /**

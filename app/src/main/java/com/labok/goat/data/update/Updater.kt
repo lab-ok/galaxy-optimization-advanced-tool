@@ -26,7 +26,7 @@ import org.json.JSONObject
  *   올린다. 실험실을 연 사람([testChannel])만 미리 보기까지 포함한 목록에서 가장 높은 판을 받고, 나머지는 정식 릴리스(latest)만 받는다.
  *   '안정 버전으로 돌아가기'는 실험실을 다시 숨겨 이 채널을 끈다(낮은 판으로 내려 설치하지는 않는다).
  * - 내려받기: 앱 캐시에 받고, 크기와 (노트에 있으면) SHA-256이 맞을 때만 설치한다.
- * - 설치: Shizuku가 연결돼 있으면 `pm install -r -S 크기`로 묻지 않고 바로 설치하고(앱이 다시 시작된다), 없으면
+ * - 설치: Shizuku가 연결돼 있으면 `pm install -r --user current -S 크기`로 묻지 않고 바로 설치하고(앱이 다시 시작된다), 없으면
  *   시스템 설치 창(PackageInstaller)을 띄운다. 처음 한 번은 'GOAT의 앱 설치 허용'을 켜야 한다.
  * 서명이 다른 APK는 안드로이드가 설치를 거절하므로 같은 키로 서명한 판만 설치된다.
  */
@@ -196,9 +196,11 @@ object Updater {
         // 설치가 끝나면 GOAT를 다시 연다. Shizuku는 GOAT가 닫힐 때 GOAT가 띄운 셸도 함께 끝내므로, 설치 명령 뒤에
         // 이어 붙이면 실행되지 않는다(에뮬레이터에서 확인). 그래서 설치 전에 세션을 떼어 낸(setsid) 감시 셸을 먼저 띄워,
         // 새 버전이 깔린 것을 확인하면 GOAT를 연다. 60초 안에 바뀌지 않으면(설치 실패) 그냥 끝난다.
+        // 셸의 pm install은 사용자를 정하지 않으면 기기의 모든 사용자에게 깐다. 듀얼 메신저·보안 폴더가 있는 삼성 기기에서
+        // GOAT가 '듀얼' 표시를 달고 하나 더 생겼다(1.24.0 사용자 문의, 에뮬레이터에서 새 사용자에게도 깔리는 것 확인). 지금 사용자에게만 깐다
         if (ShizukuAccess.status.value == ShizukuAccess.State.READY) {
             val r = ShizukuAccess.shellWithInput(
-                relaunchAfter(context.packageName, release.version) + "pm install -r -S ${file.length()}",
+                relaunchAfter(context.packageName, release.version) + "pm install -r --user current -S ${file.length()}",
                 file.inputStream()
             )
             if (r?.ok == true && r.out.contains("Success")) return

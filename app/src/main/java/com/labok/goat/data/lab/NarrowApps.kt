@@ -93,6 +93,21 @@ object NarrowApps {
         runCatching { Class.forName("android.os.SystemProperties").getMethod("get", String::class.java).invoke(null, "debug.goat.narrow") == "1" }.getOrDefault(false)
 
     /** 좁힌 앱 옆 여백에 세로 컨트롤러([NarrowBar])를 띄울지. */
+    /** 좁힌 앱이 화면을 채우는 동안 상단바를 숨길지(기본 켬, 소장님 지정 10-24). */
+    fun hideStatus(context: Context) = prefs(context).getBoolean("hide_status", true)
+
+    fun setHideStatus(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("hide_status", on).apply()
+    }
+
+    /** 상단바를 처음 자동으로 숨길 때 안내를 한 번 보였는지. 보이지 않았으면 true를 돌려주고 보인 것으로 적는다. */
+    fun firstHide(context: Context): Boolean {
+        val p = prefs(context)
+        if (p.getBoolean("hide_status_told", false)) return false
+        p.edit().putBoolean("hide_status_told", true).apply()
+        return true
+    }
+
     fun controller(context: Context) = prefs(context).getBoolean("controller", false)
 
     fun setController(context: Context, on: Boolean) {
