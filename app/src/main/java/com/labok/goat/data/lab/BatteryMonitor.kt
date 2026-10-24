@@ -43,7 +43,8 @@ object BatteryMonitor {
         val i = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return null
         val level = i.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale = i.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
-        if (level < 0 || scale <= 0) return null
+        // 배터리가 없다고 알리면(에뮬레이터 등: level 0) 0%로 보이지 않게 읽지 못한 것으로 본다(1.24.8 점검)
+        if (level < 0 || scale <= 0 || !i.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true)) return null
         val status = i.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
         val charging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
         val plug = when (i.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)) {

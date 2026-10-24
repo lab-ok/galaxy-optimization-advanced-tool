@@ -16,6 +16,7 @@ import android.view.Display
 import android.view.Gravity
 import android.view.WindowInsets
 import android.view.WindowManager
+import androidx.compose.foundation.layout.WindowInsets as ComposeInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
@@ -46,12 +47,11 @@ import com.labok.goat.ui.lab.NarrowKey
 import com.labok.goat.ui.liquid.LiquidTheme
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
-import androidx.compose.foundation.layout.WindowInsets as ComposeInsets
 
 /**
  * 좁힌 앱 옆 여백 컨트롤러(실험실, [NarrowApps]): 앱 폭 좁히기로 생긴 검은 여백에 GOAT 리퀴드 컨트롤러([NarrowControls])를 띄운다.
  * 맨 앞 앱이 좁힌 앱이고 화면을 꽉 채울 때만 보인다(팝업 창·분할 화면이면 숨김). GOAT 상주 서비스가 [update]를 부른다.
- * 버튼은 Shizuku 셸 권한으로 앱 가운데를 쓸어 넘기거나(위아래·좌우), 붙일 쪽을 바꾸거나, 좁힌 화면을 끈다.
+ * 버튼은 Shizuku 셸 권한으로 앱 가운데를 쓸어 넘긴다(위아래·좌우). 붙일 쪽과 끄기는 상단바 꾹 누르기로 한다.
  * 여백 폭은 앱이 쓰는 높이(화면 높이 − 아래 내비게이션 막대)를 비율로 나눈 폭을 화면 폭에서 뺀 값이다(에뮬레이터 실측 1049px와 일치).
  */
 object NarrowBar {
@@ -64,17 +64,20 @@ object NarrowBar {
     /** 창을 붙였는지(addView는 바로 반영되지 않아 isAttachedToWindow로 보면 두 번 붙이려다 실패했다, 실기기 로그). */
     private var added = false
 
-
     /** 지금 컨트롤러를 띄운 앱. */
     @Volatile private var current: String? = null
 
     /** 지금 앱이 있는 화면 번호. */
     @Volatile private var display: Int = Display.DEFAULT_DISPLAY
 
-    /** 컨트롤러에 그릴 상태(앱이 붙은 쪽, 최근 앱 아이콘). 바뀌면 Compose가 다시 그린다. */
-    private var appLeft by mutableStateOf(false)
+    /** 컨트롤러에 그릴 최근 앱 아이콘. 바뀌면 Compose가 다시 그린다. */
     private var recentIcons by mutableStateOf<List<ImageBitmap>>(emptyList())
     private var recentTasks: List<ShizukuAccess.RecentTask> = emptyList()
+
+    /** 앱 아이콘 비트맵(서비스·상단바 두 작업 스레드에서 부르므로 잠가서 쓴다): 앞 앱이 바뀔 때마다 다시 그리지 않게 둔다. */
+    private val iconCache = object : LinkedHashMap<String, ImageBitmap>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ImageBitmap>?) = size > 12
+    }
 
     fun enabled(context: Context) = NarrowApps.on(context) && NarrowApps.controller(context) && NarrowApps.global(context)
 
@@ -96,17 +99,19 @@ object NarrowBar {
             display = task?.displayId ?: Display.DEFAULT_DISPLAY
             loadRecents(app)
         }
-        main.post {
-            appLeft = NarrowApps.side(app) == NarrowApps.Side.LEFT
-            if (want) attach(app) else detach(app)
-        }
+        main.post { if (want) attach(app) else detach(app) }
     }
 
     private fun loadRecents(context: Context) {
         val pm = context.packageManager
-        val size = (38 * context.resources.displayMetrics.density).roundToInt()
+        // 아이콘은 버튼 지름(최대 72dp)의 0.78배로 그린다: 그 크기로 읽어야 흐리게 늘어나지 않는다
+        val size = (56 * context.resources.displayMetrics.density).roundToInt()
         val tasks = ShizukuAccess.recentTasks(6).filter { it.pkg != context.packageName }.take(5)
-        val pairs = tasks.mapNotNull { t -> runCatching { pm.getApplicationIcon(t.pkg).toBitmap(size, size).asImageBitmap() }.getOrNull()?.let { t to it } }
+        val pairs = tasks.mapNotNull { t ->
+            val icon = synchronized(iconCache) { iconCache[t.pkg] }
+                ?: runCatching { pm.getApplicationIcon(t.pkg).toBitmap(size, size).asImageBitmap() }.getOrNull()?.also { synchronized(iconCache) { iconCache[t.pkg] = it } }
+            icon?.let { t to it }
+        }
         main.post {
             recentTasks = pairs.map { it.first }
             recentIcons = pairs.map { it.second }
@@ -116,10 +121,7 @@ object NarrowBar {
     /** 붙일 쪽이 바뀌었을 때: 떠 있으면 새 여백 자리로 옮긴다. */
     fun relayout(context: Context) {
         val app = context.applicationContext
-        main.post {
-            appLeft = NarrowApps.side(app) == NarrowApps.Side.LEFT
-            if (view != null) attach(app)
-        }
+        main.post { if (view != null) attach(app) }
     }
 
     fun hide(context: Context) {
@@ -189,7 +191,6 @@ object NarrowBar {
                     val density = LocalDensity.current
                     val ime = ComposeInsets.ime.getBottom(density)
                     NarrowControls(
-                        appLeft = appLeft,
                         modifier = Modifier.padding(bottom = if (ime > 0) with(density) { ime.toDp() } + 8.dp else 0.dp),
                         compact = ime > 0,
                         recents = recentIcons,
@@ -245,7 +246,6 @@ object NarrowBar {
         val (w, h, m) = geometry(context)
         val side = NarrowApps.side(app)
         val id = display
-        val pkg = current
         io.execute {
             val x = appCenterX(side, w, m)
             val appW = (w - m).toFloat()
@@ -256,11 +256,7 @@ object NarrowBar {
                 // 오른쪽 버튼은 다음 글(손가락이 오른쪽에서 왼쪽으로), 왼쪽 버튼은 이전 글
                 NarrowKey.RIGHT -> ShizukuAccess.injectSwipe(id, x + appW * 0.3f, h * 0.5f, x - appW * 0.3f, h * 0.5f)
                 NarrowKey.LEFT -> ShizukuAccess.injectSwipe(id, x - appW * 0.3f, h * 0.5f, x + appW * 0.3f, h * 0.5f)
-                NarrowKey.SWAP -> NarrowApps.setSide(app, if (side == NarrowApps.Side.LEFT) NarrowApps.Side.RIGHT else NarrowApps.Side.LEFT) == null
-                // 전체 좁히기면 모드를 끄고, 아니면 지금 앱만 끈다
-                NarrowKey.EXIT -> pkg != null && if (NarrowApps.global(app)) NarrowApps.stopGlobal(app, pkg) else NarrowApps.set(app, pkg, null) == null
             }
-            if (key == NarrowKey.EXIT && ok) hide(app)
             if (!ok) LogRepository.from(app).add("좁힌 앱 컨트롤러: ${key.name} 실패(Shizuku 확인)")
         }
     }
@@ -287,7 +283,9 @@ object NarrowBar {
     private const val MIN_DP = 40
 
     /** 서비스에서 띄운 ComposeView가 쓸 생명주기·상태 저장(액티비티가 없어서 직접 둔다). */
-    private class OverlayOwner : LifecycleOwner, SavedStateRegistryOwner {
+    private class OverlayOwner :
+        LifecycleOwner,
+        SavedStateRegistryOwner {
         private val registry = LifecycleRegistry(this)
         private val saved = SavedStateRegistryController.create(this)
         override val lifecycle: Lifecycle get() = registry

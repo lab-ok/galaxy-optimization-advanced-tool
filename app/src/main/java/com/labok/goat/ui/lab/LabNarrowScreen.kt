@@ -1,47 +1,26 @@
 package com.labok.goat.ui.lab
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -49,28 +28,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.NarrowApps
 import com.labok.goat.data.lab.StatusGestures
 import com.labok.goat.data.shizuku.ShizukuAccess
-import com.labok.goat.ui.appsize.AppEntry
-import com.labok.goat.ui.appsize.Section
-import com.labok.goat.ui.appsize.ago
-import com.labok.goat.ui.appsize.loadApps
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
-import com.labok.goat.ui.liquid.LiquidChips
-import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LiquidSwitchRow
-import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
@@ -106,7 +76,17 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
                     Spacer(Modifier.height(Gap.Item))
                     NarrowArt(NarrowApps.side(context))
                     Spacer(Modifier.height(Gap.Item))
-                    Text(if (!supported) Copy.LAB_NARROW_FOLD8_ONLY else if (ready) Copy.LAB_NARROW_NOTE else Copy.LAB_FLEX_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        if (!supported) {
+                            Copy.LAB_NARROW_FOLD8_ONLY
+                        } else if (ready) {
+                            Copy.LAB_NARROW_NOTE
+                        } else {
+                            Copy.LAB_FLEX_NEED_SHIZUKU
+                        },
+                        color = c.muted,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                     Spacer(Modifier.height(Gap.Item))
                     // 전체 켜고 끄기: 끄면 좁힌 앱을 모두 원래대로 돌리고 컨트롤러·꾹 누르기도 멈춘다(목록은 남는다)
                     LiquidSwitchRow(Copy.LAB_NARROW_MASTER, Copy.LAB_NARROW_MASTER_BODY, master, ready) { on ->
@@ -122,7 +102,7 @@ internal fun LabNarrowScreen(contentPadding: PaddingValues) {
         item(key = "gesture") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    LiquidSwitchRow(Copy.LAB_NARROW_GESTURE, Copy.LAB_NARROW_GESTURE_BODY, gesture, supported && master) { on ->
+                    LiquidSwitchRow(Copy.LAB_NARROW_GESTURE, Copy.LAB_NARROW_GESTURE_BODY, gesture, (ready && master) || gesture) { on ->
                         scope.launch {
                             val ok = withContext(Dispatchers.IO) { StatusGestures.setFeature(context, narrowPress = on) }
                             gesture = StatusGestures.narrowPress(context) && StatusGestures.enabled(context)

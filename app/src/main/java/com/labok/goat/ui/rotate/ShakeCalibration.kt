@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
+import com.labok.goat.data.update.UpdateNotice
 import com.labok.goat.domain.ShakeRotatePolicy
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
@@ -122,7 +123,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
             Text(
                 when {
                     running -> Copy.SHAKE_CALIBRATE_NOW
-                    result != null -> "민감도를 $result(으)로 맞췄습니다"
+                    result != null -> "민감도를 $result${UpdateNotice.ro("$result")} 맞췄습니다"
                     failed -> "흔들림을 인식하지 못했습니다"
                     else -> "기기를 움직이면 물방울이 함께 움직입니다."
                 },

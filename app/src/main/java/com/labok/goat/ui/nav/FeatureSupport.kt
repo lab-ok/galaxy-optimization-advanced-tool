@@ -7,8 +7,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.lab.AutoFlex
-import com.labok.goat.data.lab.NarrowApps
 import com.labok.goat.data.lab.LabUnlock
+import com.labok.goat.data.lab.NarrowApps
 import com.labok.goat.data.tweaks.RefreshRate
 import com.labok.goat.data.tweaks.Resolution
 

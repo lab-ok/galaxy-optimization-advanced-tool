@@ -94,7 +94,7 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                         Spacer(Modifier.height(Gap.Item))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                Text(Copy.GOS_SWITCH_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                                Text(Copy.GOS_SWITCH_TITLE, fontWeight = FontWeight.SemiBold, color = if (ready && state != Gos.State.UNKNOWN) c.ink else c.muted)
                                 Text(
                                     when (state) {
                                         Gos.State.OFF -> Copy.GOS_STATE_OFF

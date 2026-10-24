@@ -3,6 +3,7 @@ package com.labok.goat.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,11 +65,22 @@ internal fun CommandBox(text: String, onCopy: () -> Unit, extra: @Composable (()
             .border(1.dp, c.line, shape)
             .padding(start = 12.dp, top = 10.dp, end = 4.dp)
     ) {
-        Text(
-            displayCommand(text),
-            color = c.ink,
-            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp)
-        )
+        val shown = displayCommand(text)
+        BoxWithConstraints(Modifier.fillMaxWidth().padding(end = 8.dp)) {
+            // 큰 글자·좁은 화면에서도 가장 긴 낱말(공백 없이 이어진 글자)이 한 줄에 들어가게 글자를 줄인다(고정폭 글자 폭 약 0.62em,
+            // 글자 사이 간격 0). 낱말 사이는 공백에서 줄을 바꾸면 되므로 줄 길이가 아니라 낱말 길이로 잰다.
+            // 1.24.8 점검: 글자 1.3배·365dp에서 촬영음 키 이름이 낱말 가운데서 잘렸고, 줄 길이로 재자 PC 명령이 너무 작아졌다
+            val longest = shown.split(' ', '\n').maxOf { it.length }.coerceAtLeast(1)
+            val fit = with(LocalDensity.current) { (maxWidth / (longest * 0.62f)).toSp() }.value
+            // 8sp보다 작아져야 들어가는 낱말(긴 주소 등)은 8sp로 두고 예전처럼 낱말 안에서 줄을 바꾼다.
+            // 들어가면 '/', '-' 뒤에서 줄이 바뀌지 않게 낱말 이음표(U+2060)를 넣는다(보이기만, 복사는 원래 글)
+            val size = fit.coerceIn(8f, 11f)
+            Text(
+                if (fit >= 8f) shown.replace(Regex("([^\\s\\w])(?=\\S)"), "$1\u2060") else shown,
+                color = c.ink,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = size.sp, letterSpacing = 0.sp)
+            )
+        }
         Row(Modifier.align(Alignment.End), verticalAlignment = Alignment.CenterVertically) {
             extra?.invoke()
             TextButton(onClick = onCopy) { Text("복사", color = c.ink) }

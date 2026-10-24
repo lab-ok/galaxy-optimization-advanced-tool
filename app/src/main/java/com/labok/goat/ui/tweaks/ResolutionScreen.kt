@@ -233,7 +233,7 @@ internal fun ResolutionHelpSheet() {
         ) { ResolutionArt(art.percent, art.points) }
         HelpTopic(
             "2. 바꾼 뒤 확인",
-            "바꾸면 화면이 잠깐 깜빡이고 ${Resolution.CONFIRM_MS / 1000}초 동안 '이 해상도를 유지할까요?'를 묻습니다. '유지'를 누르지 않으면 " +
+            "바꾸면 화면이 잠깐 깜빡이고 ${Resolution.CONFIRM_MS / 1000}초 동안 '해상도 유지 확인' 창이 뜹니다. 그 안에 '유지'를 누르지 않으면 " +
                 "원래대로 되돌립니다. 확인하기 전에 재부팅하면 다음 부팅 시 자동으로 원래대로 되돌립니다."
         )
         HelpTopic(

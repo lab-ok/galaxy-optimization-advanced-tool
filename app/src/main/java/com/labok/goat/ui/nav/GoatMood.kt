@@ -212,17 +212,21 @@ class GoatRingState(private val scope: CoroutineScope) {
     }
 }
 
-/** [GoatRingState]를 만든다. 위상은 프레임마다 끊김 없이 돈다. 동작 줄이기가 켜져 있으면 멈춘다. */
+/**
+ * [GoatRingState]를 만든다. 위상은 프레임마다 끊김 없이 돈다. 동작 줄이기가 켜져 있거나 [active]가 아니면 멈춘다.
+ * 닫힌 사이드바의 머리글도 늘 구성돼 있어, 멈추지 않으면 어느 화면에서든 쉬는 동안 매 프레임 다시 그렸다(1.24.8 점검).
+ */
 @Composable
-fun rememberGoatRing(): GoatRingState {
+fun rememberGoatRing(active: Boolean = true): GoatRingState {
     val reduce = LocalReduceMotion.current
     val scope = rememberCoroutineScope()
     val ring = remember { GoatRingState(scope) }
-    LaunchedEffect(reduce) {
+    LaunchedEffect(reduce, active) {
         if (reduce) {
             ring.phase = 0f
             return@LaunchedEffect
         }
+        if (!active) return@LaunchedEffect
         val start = withFrameNanos { it }
         while (true) {
             val now = withFrameNanos { it }

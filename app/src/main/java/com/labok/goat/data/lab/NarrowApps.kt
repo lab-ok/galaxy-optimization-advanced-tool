@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import java.util.concurrent.atomic.AtomicBoolean
 import rikka.shizuku.Shizuku
 
 /**
@@ -41,7 +42,15 @@ object NarrowApps {
         MEDIUM("3:2", 180326845L, 3f / 2)
     }
 
-    private val COMMON_ON = listOf(MIN_ASPECT_RATIO, UNDEFINED_ORIENTATION_TO_PORTRAIT)
+    /**
+     * 앱마다 좁아지는 폭을 맞추는 설정(OVERRIDE_ENABLE_INSETS_DECOUPLED_CONFIGURATION, @Overridable). 안드로이드 15 이상에서
+     * 오래된 앱(대상 SDK 35 미만)은 상단바·하단바를 뺀 높이로 폭을 계산받아 최신 앱보다 좁았다(AOSP ActivityRecord,
+     * 폴드8 커버 약 1047 vs 1109px). 이걸 켜면 최신 앱처럼 화면 전체 높이를 쓴다. 14 이하는 뜻이 반대라 걸지 않는다(소장님 요청 10-24).
+     */
+    private const val INSETS_DECOUPLED = 327313645L
+
+    private val COMMON_ON = listOf(MIN_ASPECT_RATIO, UNDEFINED_ORIENTATION_TO_PORTRAIT) +
+        (if (Build.VERSION.SDK_INT >= 35) listOf(INSETS_DECOUPLED) else emptyList())
     private val OFF = listOf(UNIVERSAL_RESIZABLE_BY_DEFAULT, MIN_ASPECT_RATIO_PORTRAIT_ONLY)
 
     /** 검은 여백을 어디에 둘지: 앱이 붙는 쪽(왼쪽·가운데·오른쪽). 값은 `wm set-letterbox-style --horizontalPositionMultiplier`. */
@@ -120,7 +129,7 @@ object NarrowApps {
     private fun override(pkg: String, ratio: Ratio?): Boolean {
         ShizukuAccess.clearCompat(pkg)
         if (ratio == null) return true
-        return ShizukuAccess.setCompat(pkg, (COMMON_ON + ratio.change).toSet(), OFF.toSet(), optional = setOf(UNIVERSAL_RESIZABLE_BY_DEFAULT)) ||
+        return ShizukuAccess.setCompat(pkg, (COMMON_ON + ratio.change).toSet(), OFF.toSet(), optional = setOf(UNIVERSAL_RESIZABLE_BY_DEFAULT, INSETS_DECOUPLED)) ||
             ShizukuAccess.shell(commands(pkg, ratio, kill = false))?.out?.contains("Enabled change $MIN_ASPECT_RATIO") == true
     }
 
@@ -148,9 +157,6 @@ object NarrowApps {
         log.add("앱 폭 좁히기($pkg) ${ratio?.label ?: "끔"}")
         return null
     }
-
-    /** 앱 폭 좁히기를 모두 끈다(작업 스레드). 실패한 앱 수를 돌려준다. */
-    fun clearAll(context: Context): Int = apps(context).count { set(context, it, null) != null }
 
     /**
      * 검은 여백 위치를 바꾼다(작업 스레드, 모든 앱에 함께 쓰인다). 위치는 앱이 화면을 새로 잡을 때 정해지므로, 화면 크기를 2px
@@ -220,7 +226,7 @@ object NarrowApps {
     fun ratioOf(context: Context, pkg: String): Ratio? = ratios(context)[pkg] ?: Ratio.TALL.takeIf { global(context) }
 
     /** 전체 좁히기를 켜고 끄는 중이면 true: 꾹 누르기가 처리 중에 겹쳐 쌓이지 않게 한다(실기기 로그: 1초마다 켬이 쌓였다). */
-    private val busy = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val busy = AtomicBoolean(false)
 
     /**
      * 전체 좁히기를 켠다(작업 스레드): [side] 쪽에 앱을 붙이고, 지금 맨 앞 앱부터 좁힌 뒤 홈 화면 앱 전부에 미리 건다.
@@ -300,7 +306,7 @@ object NarrowApps {
         if (ratios.isEmpty()) return
         val ok = ratios.count { (pkg, r) -> override(pkg, r) }
         applySide(context)
-        LogRepository.from(context).add("앱 폭 좁히기: ${ok}/${ratios.size}개 앱 다시 걸기")
+        LogRepository.from(context).add("앱 폭 좁히기: $ok/${ratios.size}개 앱 다시 걸기")
     }
 
     private val binder = Shizuku.OnBinderReceivedListener { reapplyAsync?.invoke() }

@@ -155,7 +155,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                     Spacer(Modifier.height(Gap.Item))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(Copy.FEATURE_SHAKE_ROTATE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                            Text(Copy.FEATURE_SHAKE_ROTATE, fontWeight = FontWeight.SemiBold, color = if (permitted) c.ink else c.muted)
                             Text(
                                 if (on) Copy.SHAKE_ON_BODY else Copy.SHAKE_OFF_BODY,
                                 color = c.muted,

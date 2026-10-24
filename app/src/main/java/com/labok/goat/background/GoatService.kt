@@ -128,7 +128,9 @@ class GoatService : Service() {
     companion object {
         /** 켜진 기능이 하나라도 있으면 서비스를 띄우거나 설정을 다시 읽게 하고, 없으면 멈춘다. */
         fun sync(context: Context) {
-            val any = AppDensityNotifier.enabled(context) || (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) || AutoFlex.engineNeeded(context) ||
+            val any = AppDensityNotifier.enabled(context) ||
+                (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) ||
+                AutoFlex.engineNeeded(context) ||
                 NarrowBar.enabled(context)
             val intent = Intent(context, GoatService::class.java)
             if (any) {

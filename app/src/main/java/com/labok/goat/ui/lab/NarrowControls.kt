@@ -29,9 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
@@ -60,11 +58,10 @@ import kotlinx.coroutines.launch
  * 붙일 쪽은 상단바 꾹 누르기로 정한다(컨트롤러의 옮기기 버튼은 뺐다, 소장님 지정).
  * [compact]면(키보드가 떠 있을 때) 넘기기 네 개만 남긴다.
  */
-internal enum class NarrowKey { NEXT, PREV, RIGHT, LEFT, SWAP, EXIT }
+internal enum class NarrowKey { NEXT, PREV, RIGHT, LEFT }
 
 @Composable
 internal fun NarrowControls(
-    appLeft: Boolean,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
     /** 멀티태스킹 바: 최근에 연 앱 아이콘(최근 순, 첫째가 지금 앱). 비면 그리지 않는다. */
@@ -150,10 +147,10 @@ private fun RecentDock(icons: List<ImageBitmap>, diameter: Dp, onPick: (Int) -> 
 
 /**
  * 큰 잉크 버튼: 누르면 옆으로 퍼졌다 튕기고(LiquidButton과 같은 스프링), 안의 잉크 방울이 누른 방향으로 한 번 밀렸다
- * 돌아온다(연체 방울). 화살표도 그 방향으로 살짝 미끄러졌다 돌아온다. [primary]가 아니면 테두리만 있는 버튼(옮기기·끄기).
+ * 돌아온다(연체 방울). 화살표도 그 방향으로 살짝 미끄러졌다 돌아온다.
  */
 @Composable
-private fun InkKey(key: NarrowKey, height: Dp, primary: Boolean = true, appLeft: Boolean = true, onKey: (NarrowKey) -> Unit) {
+private fun InkKey(key: NarrowKey, height: Dp, onKey: (NarrowKey) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val haptics = rememberLiquidHaptics()
@@ -172,14 +169,12 @@ private fun InkKey(key: NarrowKey, height: Dp, primary: Boolean = true, appLeft:
         NarrowKey.PREV -> Offset(0f, -1f)
         NarrowKey.RIGHT -> Offset(1f, 0f)
         NarrowKey.LEFT -> Offset(-1f, 0f)
-        NarrowKey.SWAP -> Offset(if (appLeft) 1f else -1f, 0f)
-        NarrowKey.EXIT -> Offset.Zero
     }
     Canvas(
         Modifier.size(height).onSizeChanged { box = it }.liquidPress(interaction, sx = 1.08f, sy = 0.92f)
             .clickable(interaction, null) {
                 haptics.press()
-                if (primary && !reduce) blob.poke(box.width / 2f, box.height / 2f, dir.x * 900f, dir.y * 900f, box.width.toFloat())
+                if (!reduce) blob.poke(box.width / 2f, box.height / 2f, dir.x * 900f, dir.y * 900f, box.width.toFloat())
                 if (!reduce) {
                     scope.launch {
                         slide.snapTo(0f)
@@ -191,20 +186,14 @@ private fun InkKey(key: NarrowKey, height: Dp, primary: Boolean = true, appLeft:
             }
     ) {
         blob.frame
-        val r = size.width / 2
-        if (primary) {
-            drawPath(blob.blob.path(path), c.ink)
-        } else {
-            drawRoundRect(c.surface, cornerRadius = CornerRadius(r))
-            drawRoundRect(c.line, cornerRadius = CornerRadius(r), style = Stroke(1.dp.toPx()))
-        }
+        drawPath(blob.blob.path(path), c.ink)
         val s = size.width * 0.24f
-        glyph(key, center + dir * (slide.value * 6.dp.toPx()), s, if (primary) c.onInk else c.ink, appLeft)
+        glyph(key, center + dir * (slide.value * 6.dp.toPx()), s, c.onInk)
     }
 }
 
 /** 버튼 그림(메뉴 아이콘과 같은 둥근 선). [s]는 반지름 정도의 크기. */
-internal fun DrawScope.glyph(key: NarrowKey, at: Offset, s: Float, color: Color, appLeft: Boolean = true) {
+internal fun DrawScope.glyph(key: NarrowKey, at: Offset, s: Float, color: Color) {
     val st = Stroke(width = s * 0.22f, cap = StrokeCap.Round, join = StrokeJoin.Round)
     val (x, y) = at
     fun path(vararg p: Float) = Path().apply {
@@ -220,20 +209,5 @@ internal fun DrawScope.glyph(key: NarrowKey, at: Offset, s: Float, color: Color,
         NarrowKey.NEXT -> drawPath(path(-s, -s * 0.45f, 0f, s * 0.45f, s, -s * 0.45f), color, style = st)
         NarrowKey.LEFT -> drawPath(path(s * 0.45f, -s, -s * 0.45f, 0f, s * 0.45f, s), color, style = st)
         NarrowKey.RIGHT -> drawPath(path(-s * 0.45f, -s, s * 0.45f, 0f, -s * 0.45f, s), color, style = st)
-        // 반대쪽으로 옮기기: 작은 화면 틀과, 앱이 갈 쪽을 가리키는 화살표
-        NarrowKey.SWAP -> {
-            val sign = if (appLeft) 1f else -1f
-            drawRoundRect(color, Offset(x - s * 0.9f, y - s * 1.1f), Size(s * 1.8f, s * 2.2f), CornerRadius(s * 0.3f), style = st)
-            drawPath(path(-sign * s * 0.35f, 0f, sign * s * 0.45f, 0f), color, style = st)
-            drawPath(path(sign * s * 0.15f, -s * 0.32f, sign * s * 0.47f, 0f, sign * s * 0.15f, s * 0.32f), color, style = st)
-        }
-        // 좁은 화면 끄기: 양옆으로 펼치는 화살표와 양쪽 벽
-        NarrowKey.EXIT -> {
-            drawPath(path(-s, 0f, s, 0f), color, style = st)
-            drawPath(path(-s * 0.6f, -s * 0.4f, -s, 0f, -s * 0.6f, s * 0.4f), color, style = st)
-            drawPath(path(s * 0.6f, -s * 0.4f, s, 0f, s * 0.6f, s * 0.4f), color, style = st)
-            drawLine(color, Offset(x - s * 1.25f, y - s * 0.8f), Offset(x - s * 1.25f, y + s * 0.8f), st.width, StrokeCap.Round)
-            drawLine(color, Offset(x + s * 1.25f, y - s * 0.8f), Offset(x + s * 1.25f, y + s * 0.8f), st.width, StrokeCap.Round)
-        }
     }
 }

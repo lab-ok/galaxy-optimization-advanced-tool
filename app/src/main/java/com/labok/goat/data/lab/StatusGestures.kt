@@ -314,6 +314,7 @@ class StatusGestureService : AccessibilityService() {
         private var downY = 0f
         private var lastUp = 0L
         private var handled = false
+
         /** 이 화면의 상단바가 보이는지(접근성 창 목록으로 판단, [checkBars]). */
         var barVisible = true
         var laidHeight = -1

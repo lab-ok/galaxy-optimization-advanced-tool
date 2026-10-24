@@ -173,8 +173,8 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             val firstDpi = if (state.foldable) outerDpi else current?.let { state.plan?.targetFor(it.screen)?.dpi } ?: state.dpi?.current
             val outerMm = if (first != null && firstDpi != null) ScreenGeometry.dpToMm(REF_DP, firstDpi, state.rulerPpi[first.key] ?: first.ppi) else null
             val innerMm = if (inner != null && innerDpi != null) ScreenGeometry.dpToMm(REF_DP, innerDpi, state.rulerPpi[inner.screen.key] ?: inner.screen.ppi) else null
-            InfoRow(if (state.foldable) "외부 화면" else "이 화면", outerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, firstDpi, first!!.ppi) } ?: "정보 없음")
-            if (state.foldable) InfoRow("내부 화면", innerMm?.let { "%.2f mm · %d dpi · %.0f ppi".format(it, innerDpi, inner!!.screen.ppi) } ?: "정보 없음")
+            InfoRow(if (state.foldable) "외부 화면" else "이 화면", outerMm?.let { "%.2f\u00A0mm · %d\u00A0dpi · %.0f\u00A0ppi".format(it, firstDpi, first!!.ppi) } ?: "정보 없음")
+            if (state.foldable) InfoRow("내부 화면", innerMm?.let { "%.2f\u00A0mm · %d\u00A0dpi · %.0f\u00A0ppi".format(it, innerDpi, inner!!.screen.ppi) } ?: "정보 없음")
             // 화면이 하나면 두 화면 비교는 없다
             if (state.foldable && outerMm != null && innerMm != null) {
                 val diff = (innerMm - outerMm) / outerMm * 100f

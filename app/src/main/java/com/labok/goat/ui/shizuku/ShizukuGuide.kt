@@ -201,14 +201,17 @@ private fun SettingsPath(vararg steps: String) {
     ) {
         steps.forEachIndexed { i, step ->
             val last = i == steps.lastIndex
-            Box(
-                Modifier
-                    .then(if (last) Modifier.background(c.ink, CircleShape) else Modifier.border(1.dp, c.line, CircleShape))
-                    .padding(horizontal = 10.dp, vertical = 3.dp)
-            ) {
-                Text(step, color = if (last) c.onInk else c.ink, style = MaterialTheme.typography.labelMedium, fontWeight = if (last) FontWeight.Bold else FontWeight.Medium)
+            // '›'는 뒤 칸과 한 묶음으로 둔다: 줄이 바뀔 때 '›'만 앞줄 끝에 남지 않게(1.24.8 점검, 좁은 폭·큰 글자)
+            Row(horizontalArrangement = Arrangement.spacedBy(Gap.Tight), verticalAlignment = Alignment.CenterVertically) {
+                if (i > 0) Text("›", color = c.muted, style = MaterialTheme.typography.labelMedium)
+                Box(
+                    Modifier
+                        .then(if (last) Modifier.background(c.ink, CircleShape) else Modifier.border(1.dp, c.line, CircleShape))
+                        .padding(horizontal = 10.dp, vertical = 3.dp)
+                ) {
+                    Text(step, color = if (last) c.onInk else c.ink, style = MaterialTheme.typography.labelMedium, fontWeight = if (last) FontWeight.Bold else FontWeight.Medium)
+                }
             }
-            if (!last) Text("›", color = c.muted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.align(Alignment.CenterVertically))
         }
     }
 }

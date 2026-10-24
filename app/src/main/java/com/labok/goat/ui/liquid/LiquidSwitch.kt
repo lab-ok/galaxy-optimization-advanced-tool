@@ -1,6 +1,6 @@
 package com.labok.goat.ui.liquid
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -40,8 +41,10 @@ fun LiquidSwitch(
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val inset = with(LocalDensity.current) { 4.dp.toPx() }
-    val track by animateColorAsState(if (checked) c.ink else c.line, label = "track")
-    val knob by animateColorAsState(if (checked) c.onInk else c.ink, label = "knob")
+    // 트랙과 손잡이 색을 따로 바꾸면 전환 한가운데서 둘이 같은 색이 되어 손잡이가 사라졌다(1.24.8 점검).
+    // 트랙은 한 진행값으로 바꾸고, 손잡이는 트랙이 절반을 넘는 순간 반대색으로 바꿔 늘 트랙과 대비되게 둔다
+    // 진행값은 그리기 단계에서만 읽어 전환 중에 다시 구성하지 않고 다시 그리기만 한다
+    val progress = animateFloatAsState(if (checked) 1f else 0f, label = "switch")
     var box by remember { mutableStateOf(IntSize.Zero) }
     val blob = rememberSoftBlob()
     val path = remember { Path() }
@@ -66,6 +69,9 @@ fun LiquidSwitch(
         blob.frame
         val h = size.height
         val alpha = if (enabled) 1f else 0.4f
+        val p = progress.value
+        val track = lerp(c.line, c.ink, p)
+        val knob = if (p < 0.5f) c.ink else c.onInk
         drawRoundRect(track.copy(alpha = track.alpha * alpha), cornerRadius = CornerRadius(h / 2))
         if (!checked) drawRoundRect(c.line, cornerRadius = CornerRadius(h / 2), style = Stroke(1.dp.toPx()))
         drawPath(blob.blob.path(path), knob.copy(alpha = alpha))

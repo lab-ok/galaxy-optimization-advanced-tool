@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.data.display.PermissionReset
 import com.labok.goat.data.settings.SettingsRepository
+import com.labok.goat.data.update.UpdateNotice
 import com.labok.goat.domain.DpiPolicy
 import com.labok.goat.domain.PanelSpec
 import com.labok.goat.domain.ScreenGeometry
@@ -133,12 +134,12 @@ internal fun todosOf(state: UiState): List<Todo> = buildList {
             Todo(
                 "external",
                 Copy.EXTERNAL_TITLE,
-                "다른 설정에서 ${if (state.foldable) "${e.role.label} 화면 " else ""}DPI가 ${e.from} → ${e.to}(으)로 변경되었습니다. ${Copy.EXTERNAL_BODY}",
+                "다른 설정에서 ${if (state.foldable) "${e.role.label} 화면 " else ""}DPI가 ${e.from} → ${e.to}${UpdateNotice.ro("${e.to}")} 변경되었습니다. ${Copy.EXTERNAL_BODY}",
                 TodoAction.ADOPT,
                 "${e.to} 기준으로 설정",
                 blocking = true,
                 second = TodoAction.RESTORE,
-                secondLabel = "${e.from}(으)로 복원"
+                secondLabel = "${e.from}${UpdateNotice.ro("${e.from}")} 복원"
             )
         )
     }
@@ -264,15 +265,18 @@ internal fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
         // 조절바는 값만 바꾸고, [적용]을 눌러야 화면에 반영한다(끄는 도중 화면이 계속 바뀌지 않게).
         // 처음 설치해 저장된 값이 없을 때도 지금 값을 바로 적용할 수 있게 버튼을 보인다.
         val pending = state.hasPermission && (state.target == null || outer != state.target || adjust != state.adjust)
+        // 처음 적용하면 접히는 동안 목표가 생겨 '되돌리기'가 잠깐 나타났다(1.24.8 점검). 보이는 동안 정한 버튼 구성을 접힐 때도 쓴다
+        val revertShown = remember { booleanArrayOf(false) }
+        if (pending) revertShown[0] = state.target != null
         AnimatedVisibility(pending, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
             Column {
                 Spacer(Modifier.height(Gap.Item))
                 Text(Copy.SIZE_PENDING, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(Gap.Item))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (state.target != null) {
+                    if (revertShown[0]) {
                         LiquidButton(Copy.SIZE_REVERT, modifier = Modifier.weight(1f), primary = false, onClick = {
-                            outer = state.target
+                            state.target?.let { outer = it }
                             adjust = state.adjust
                         })
                     }

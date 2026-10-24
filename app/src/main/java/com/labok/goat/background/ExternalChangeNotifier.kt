@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import com.labok.goat.R
 import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.update.UpdateNotice
 import com.labok.goat.domain.DpiFixer
 import com.labok.goat.domain.ExternalChange
 import com.labok.goat.ui.MainActivity
@@ -25,7 +26,7 @@ object ExternalChangeNotifier {
     const val ACTION_RESTORE = "com.labok.goat.EXTERNAL_RESTORE"
 
     /** 화면이 하나인 폰([foldable]이 false)에는 외부·내부 구분을 붙이지 않는다(앱 안 카드와 같은 문구). */
-    fun text(change: ExternalChange, foldable: Boolean = true) = "다른 설정에서 ${if (foldable) "${change.role.label} 화면 " else ""}DPI가 ${change.from}에서 ${change.to}(으)로 변경되었습니다."
+    fun text(change: ExternalChange, foldable: Boolean = true) = "다른 설정에서 ${if (foldable) "${change.role.label} 화면 " else ""}DPI가 ${change.from}에서 ${change.to}${UpdateNotice.ro("${change.to}")} 변경되었습니다."
 
     fun show(context: Context, change: ExternalChange) {
         if (!canNotify(context)) return
@@ -47,7 +48,7 @@ object ExternalChangeNotifier {
             .setContentIntent(open)
             .setAutoCancel(true)
             .addAction(0, "${change.to} 기준으로 설정", action(ACTION_ADOPT, 1))
-            .addAction(0, "${change.from}(으)로 복원", action(ACTION_RESTORE, 2))
+            .addAction(0, "${change.from}${UpdateNotice.ro("${change.from}")} 복원", action(ACTION_RESTORE, 2))
             .build()
         nm.notify(NOTIFICATION_ID, n)
     }

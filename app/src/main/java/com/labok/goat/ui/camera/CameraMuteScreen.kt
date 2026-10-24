@@ -83,7 +83,7 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                     Spacer(Modifier.height(Gap.Item))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(Copy.FEATURE_CAMERA_MUTE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                            Text(Copy.FEATURE_CAMERA_MUTE, fontWeight = FontWeight.SemiBold, color = if (ready && state != CameraMute.State.NONE) c.ink else c.muted)
                             Text(
                                 when (state) {
                                     CameraMute.State.MUTED -> Copy.CAMERA_STATE_MUTED
@@ -105,8 +105,11 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                             }
                         }, enabled = ready && !busy && state != CameraMute.State.NONE, label = Copy.FEATURE_CAMERA_MUTE)
                     }
-                    Spacer(Modifier.height(Gap.Item))
-                    Text(Copy.SWITCH_KEEP_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                    // 강제 설정이 없어 켤 수 없는 기기에는 '켜 두면' 안내를 보이지 않는다(1.24.8 점검)
+                    if (state != CameraMute.State.NONE) {
+                        Spacer(Modifier.height(Gap.Item))
+                        Text(Copy.SWITCH_KEEP_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }
@@ -152,7 +155,7 @@ internal fun CameraMuteHelpSheet() {
         HelpTopic(
             "2. 꼭 지켜 주세요",
             "촬영음은 몰래 촬영을 막기 위한 장치입니다. 다른 사람을 동의 없이 찍거나 몰래 찍으면 법에 따라 처벌받습니다. " +
-                "조용한 곳에서 내 물건·문서·음식을 찍을 때처럼 예절을 지키는 데만 쓰세요."
+                "조용한 곳에서 내 물건, 문서, 음식을 찍을 때처럼 예절을 지키는 데만 쓰세요."
         )
         HelpTopic(
             "3. Shizuku가 필요한 이유",

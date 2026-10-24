@@ -96,7 +96,7 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     Spacer(Modifier.height(Gap.Item))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(Copy.DOZE_SWITCH_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                            Text(Copy.DOZE_SWITCH_TITLE, fontWeight = FontWeight.SemiBold, color = if (ready && state != Doze.State.UNKNOWN) c.ink else c.muted)
                             Text(
                                 when (state) {
                                     Doze.State.OFF -> Copy.DOZE_STATE_OFF

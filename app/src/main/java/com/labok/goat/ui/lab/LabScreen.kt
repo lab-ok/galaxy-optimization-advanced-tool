@@ -3,6 +3,7 @@ package com.labok.goat.ui.lab
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -82,7 +83,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             )
         }
         Spacer(Modifier.height(Gap.Card))
-        GlassCard {
+        // 비교 결과 줄이 생길 때 아래 카드가 튀지 않게 높이를 이어 준다(1.24.8 점검)
+        GlassCard(Modifier.animateContentSize()) {
             Text("설정 변경 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 "① [바꾸기 전 저장]을 누릅니다.\n② 설정 → 디스플레이 → 앱 화면 크게/작게에서 앱 하나의 값을 바꿉니다.\n③ 돌아와 [바꾼 뒤 비교]를 누르면 바뀐 설정 키를 파일로 저장하고 공유 창을 엽니다.",

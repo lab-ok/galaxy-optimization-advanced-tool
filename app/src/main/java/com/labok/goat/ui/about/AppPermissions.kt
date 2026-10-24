@@ -69,7 +69,7 @@ internal object AppPermissions {
         Item(
             Manifest.permission.SYSTEM_ALERT_WINDOW,
             "다른 앱 위에 표시",
-            "상태 표시줄의 상단바 숨기기에서 다른 앱 위에 투명한 창을 띄워 상단바를 숨길 때 씁니다. Shizuku가 연결되면 GOAT가 자동으로 허용합니다.",
+            "상태 표시줄의 상단바 숨기기와 실험실 앱 폭 좁히기의 여백 버튼을 다른 앱 위에 띄울 때 씁니다. Shizuku가 연결되면 GOAT가 자동으로 허용합니다.",
             How.USER,
             optional = true
         ),
@@ -77,7 +77,7 @@ internal object AppPermissions {
         Item(
             ACCESSIBILITY,
             "접근성 서비스",
-            "볼륨 버튼 회전을 켜면 화면 방향에 맞춰 볼륨 키를 바꾸려고 볼륨 키 입력만 받습니다. 화면 내용은 읽지 않습니다.",
+            "볼륨 버튼 회전은 볼륨 키 입력만 받습니다. 실험실의 상단바 누르기는 상단바 위 얇은 띠로 누름을 받고, 맨 위로 올릴 때만 스크롤 영역을 찾습니다. 화면 글자는 읽지 않습니다.",
             How.GOAT,
             optional = true
         ),

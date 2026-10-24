@@ -76,7 +76,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
     // 염소 표정: 누르면 찡그리고, 많이 누르면 울고, 더 누르면 화낸다
     val mood = rememberGoatMood()
     val goat = goatPainter(mood.mood, mood.variant)
-    val ring = rememberGoatRing()
+    val ring = rememberGoatRing(active = visible)
     val text = remember { Animatable(0f) }
     val paths = remember { Path() to Path() }
 

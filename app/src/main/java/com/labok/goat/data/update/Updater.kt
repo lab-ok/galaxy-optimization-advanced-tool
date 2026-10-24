@@ -88,8 +88,7 @@ object Updater {
     }
 
     /** [newestOf]의 고르기(시험할 수 있게 뗐다): 미리 보기는 [withTest]일 때만, 그중 가장 높은 판. */
-    internal fun newest(list: List<Release>, withTest: Boolean): Release? =
-        list.filter { withTest || !it.test }.fold(null as Release?) { best, r -> if (best == null || isNewer(r.version, best.version)) r else best }
+    internal fun newest(list: List<Release>, withTest: Boolean): Release? = list.filter { withTest || !it.test }.fold(null as Release?) { best, r -> if (best == null || isNewer(r.version, best.version)) r else best }
 
     private fun parse(o: JSONObject): Release? {
         val assets = o.optJSONArray("assets") ?: return null

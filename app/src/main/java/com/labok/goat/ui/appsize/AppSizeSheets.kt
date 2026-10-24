@@ -59,7 +59,7 @@ internal fun AppSizeHelpSheet(foldable: Boolean = true, onConnect: () -> Unit) {
         )
         HelpTopic(
             "${n()}. 크기가 여섯 단계로 정해진 이유",
-            "삼성 시스템이 ${AppDensityPolicy.STEPS.joinToString("·")} 여섯 값만 허용합니다. 다른 값을 넣으면 시스템이 거부하므로, " +
+            "삼성 시스템이 ${AppDensityPolicy.STEPS.joinToString(", ")} 여섯 값만 허용합니다. 다른 값을 넣으면 시스템이 거부하므로, " +
                 "1단위로 조절할 수는 없습니다. '기본'은 앱별 설정을 지우고 기기 전체 크기를 따르게 합니다.",
             art = { StepsArt() }
         )

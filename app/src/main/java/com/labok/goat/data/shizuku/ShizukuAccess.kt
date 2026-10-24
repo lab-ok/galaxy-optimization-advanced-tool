@@ -11,8 +11,6 @@ import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.InputDevice
-import android.view.KeyCharacterMap
-import android.view.KeyEvent
 import android.view.MotionEvent
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
@@ -270,24 +268,8 @@ object ShizukuAccess {
         true
     }.getOrDefault(false)
 
-    /** 입력 관리자(셸 권한). 키 입력을 보낼 때 쓴다([injectKey]). */
+    /** 입력 관리자(셸 권한). 손가락 쓸기를 보낼 때 쓴다([injectSwipe]). */
     private fun input(): Any = HiddenApi.asInterface("android.hardware.input.IInputManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("input")))
-
-    /**
-     * [code] 키를 한 번 누르고 뗀다(셸 권한, 작업 스레드). 뒤로·홈·최근 앱처럼 시스템이 처리하는 키를 보낸다. 보냈으면 true.
-     * `input keyevent`보다 빠르다(셸 프로세스를 새로 띄우지 않는다).
-     */
-    fun injectKey(code: Int): Boolean = runCatching {
-        val (im, inject) = injector()
-        val down = SystemClock.uptimeMillis()
-        listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).all { action ->
-            val e = KeyEvent(
-                down, SystemClock.uptimeMillis(), action, code, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
-                KeyEvent.FLAG_FROM_SYSTEM or KeyEvent.FLAG_VIRTUAL_HARD_KEY, InputDevice.SOURCE_KEYBOARD
-            )
-            inject.invoke(im, e, 0) == true
-        }
-    }.getOrDefault(false)
 
     private fun injector(): Pair<Any, Method> {
         val im = input()

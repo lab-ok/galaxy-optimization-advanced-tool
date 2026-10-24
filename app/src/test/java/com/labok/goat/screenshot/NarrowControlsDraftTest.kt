@@ -43,7 +43,17 @@ class NarrowControlsDraftTest {
         val b = Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888)
         val cv = android.graphics.Canvas(b)
         cv.drawRoundRect(0f, 0f, 96f, 96f, 26f, 26f, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color })
-        cv.drawText(letter, 48f, 64f, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = android.graphics.Color.WHITE; textSize = 48f; textAlign = Paint.Align.CENTER; isFakeBoldText = true })
+        cv.drawText(
+            letter,
+            48f,
+            64f,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                this.color = android.graphics.Color.WHITE
+                textSize = 48f
+                textAlign = Paint.Align.CENTER
+                isFakeBoldText = true
+            }
+        )
         return b.asImageBitmap()
     }
 
@@ -58,7 +68,7 @@ class NarrowControlsDraftTest {
             LiquidTheme {
                 Row(Modifier.fillMaxSize().background(Color.Black)) {
                     // 여백 139px = 61.8dp(360dpi)
-                    NarrowControls(appLeft = false, modifier = Modifier.width(61.8.dp), compact = compact, recents = icons)
+                    NarrowControls(modifier = Modifier.width(61.8.dp), compact = compact, recents = icons)
                     Box(
                         Modifier.fillMaxHeight().width(492.9.dp).background(
                             Brush.linearGradient(listOf(Color(0xFFF2735A), Color(0xFF8C3FA6), Color(0xFF1A1F4D)))
