@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.26.0",
+        "2026-10-24",
+        "듀얼 메신저·보안 폴더에 생긴 GOAT를 자동으로 지웁니다.",
+        listOf(
+            "변경" to listOf(
+                "예전 업데이트로 듀얼 메신저·보안 폴더에 하나 더 깔린 GOAT를 Shizuku가 연결되면 자동으로 지웁니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.25.0",
         "2026-10-24",
         "업데이트할 때 GOAT가 하나 더 생기던 문제를 고치고 화면을 다듬었습니다.",

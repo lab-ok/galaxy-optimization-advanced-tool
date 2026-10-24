@@ -2,6 +2,14 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.26.0 · 2026-10-24
+
+<sub>듀얼 메신저·보안 폴더에 생긴 GOAT를 자동으로 지웁니다.</sub>
+
+#### 변경
+
+- <sub>예전 업데이트로 듀얼 메신저·보안 폴더에 하나 더 깔린 GOAT를 Shizuku가 연결되면 자동으로 지웁니다.</sub>
+
 ### GOAT 1.25.0 · 2026-10-24
 
 <sub>업데이트할 때 GOAT가 하나 더 생기던 문제를 고치고 화면을 다듬었습니다.</sub>

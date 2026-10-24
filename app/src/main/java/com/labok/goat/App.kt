@@ -29,6 +29,7 @@ import com.labok.goat.data.tweaks.Doze
 import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.data.tweaks.Gos
 import com.labok.goat.data.tweaks.Resolution
+import com.labok.goat.data.update.OtherUserCleanup
 import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.liquid.UiHaptics
 import com.labok.goat.ui.liquid.UiInk
@@ -101,6 +102,8 @@ class App : Application() {
         ForceDark.watch(this)
         // 앱 폭 좁히기(실험실): 삼성이 부팅 때 호환성 설정을 지우므로 Shizuku가 연결될 때 고른 앱을 다시 건다
         NarrowApps.watch(this)
+        // 예전 업데이트가 듀얼 메신저·보안 폴더에도 깐 GOAT를 Shizuku가 연결되면 지운다(기본 사용자에서만)
+        OtherUserCleanup.watch(this)
         // 좁힌 앱 컨트롤러: 업데이트·강제 종료 뒤에도 상주 서비스가 맨 앞 앱을 따라가도록 다시 띄운다
         if (NarrowBar.enabled(this)) GoatService.sync(this)
         // 상단바 제스처(접근성 서비스): 강제 종료로 시스템이 뺐으면 다시 켠다
