@@ -117,7 +117,24 @@ class StatusGestureService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event?.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED || event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) checkBars()
+        when (event?.eventType) {
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED, AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> checkBars()
+            AccessibilityEvent.TYPE_VIEW_CLICKED, AccessibilityEvent.TYPE_VIEW_FOCUSED -> onInputTouched(event)
+        }
+    }
+
+    /**
+     * 상단바 숨기기가 포커스를 쥔 동안 다른 앱의 입력란이 눌리면, 포커스를 바로 넘기고 그 입력란을 다시 눌러 키보드를 띄운다
+     * (포커스 없는 창의 키보드 요청은 실패해 두세 번 눌러야 했다, 소장님 신고 10-25). 숨기기가 꺼져 있으면 아무것도 하지 않는다.
+     */
+    private fun onInputTouched(event: AccessibilityEvent) {
+        if (!StatusBarHider.holdingFocus || event.packageName == packageName) return
+        val node = event.source ?: return
+        if (!node.isEditable) return
+        StatusBarHider.yieldForInput(this) {
+            node.refresh()
+            node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+        }
     }
 
     /**

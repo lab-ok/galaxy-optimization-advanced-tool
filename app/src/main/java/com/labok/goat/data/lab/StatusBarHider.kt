@@ -11,6 +11,7 @@ import android.graphics.PixelFormat
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.Gravity
 import android.view.KeyEvent
@@ -82,6 +83,32 @@ object StatusBarHider {
     /** 앱 폭 좁히기가 켠 것인지(사용자가 직접 켠 숨기기는 좁히기가 끄지 않는다). */
     @Volatile private var auto = false
 
+    /**
+     * 입력란 때문에 포커스를 내려놓은 뒤 이 시각(uptime ms)까지는 다시 숨기지 않는다. 키보드가 뜨기 전에 다시 숨으면
+     * 다음 누름도 키보드 요청이 실패해 두세 번 눌러야 했다(1.26.1 실기기 로그: 포커스 해제 1초 뒤 다시 숨김).
+     */
+    @Volatile private var inputGraceUntil = 0L
+
+    /** 포커스가 앱으로 넘어가면 할 일(입력란을 다시 눌러 키보드를 띄운다, 접근성 서비스가 넘겨 준다). */
+    private var afterYield: (() -> Unit)? = null
+
+    /** 이 창이 지금 포커스를 쥐고 있는지(메인 스레드). */
+    val holdingFocus: Boolean get() = view?.hasWindowFocus() == true
+
+    /**
+     * 다른 앱의 입력란이 눌렸을 때(접근성 이벤트, 메인 스레드): 포커스를 바로 내려놓고, 앱이 포커스를 받으면 [retrigger]로
+     * 입력란을 다시 눌러 첫 누름에 키보드가 뜨게 한다. 키보드 요청 실패 기록을 기다리던 예전 방식보다 빠르다.
+     */
+    fun yieldForInput(context: Context, retrigger: () -> Unit) {
+        val v = view ?: return
+        if (!onFlow.value || !v.hasWindowFocus()) return
+        inputGraceUntil = SystemClock.uptimeMillis() + INPUT_GRACE_MS
+        afterYield = retrigger
+        lastKeyBack = false
+        stepAside(context.applicationContext, v)
+        LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 바로 포커스 해제")
+    }
+
     /** 좁힌 앱 때문에 상단바를 숨기고 있는지(상단바 제스처 띠가 숨은 동안에도 꾹 누르기를 받으려고 본다). */
     val autoHiding: Boolean get() = auto && onFlow.value
 
@@ -148,6 +175,10 @@ object StatusBarHider {
                     regrabGen++
                     hideBars(this)
                 } else {
+                    afterYield?.let { r ->
+                        afterYield = null
+                        main.postDelayed({ runCatching { r() } }, RETRIGGER_MS)
+                    }
                     sendPendingBack()
                     if (onFlow.value) scheduleRegrab(context, afterBack = lastKeyBack)
                     lastKeyBack = false
@@ -229,6 +260,7 @@ object StatusBarHider {
                         main.post {
                             if (view !== v || !onFlow.value) return@post
                             lastKeyBack = false
+                            inputGraceUntil = SystemClock.uptimeMillis() + INPUT_GRACE_MS
                             stepAside(context, v)
                             LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 키보드를 띄우려고 포커스 해제")
                         }
@@ -273,11 +305,17 @@ object StatusBarHider {
                         lastWhy = state?.why
                         when {
                             // 다시 띄웠는데도 포커스가 안 오면(다른 앱 위 표시를 막는 설정 화면 등) 점점 느리게 확인한다
+                            // 입력란 때문에 내려놓았으면 키보드가 뜰 때까지(다시 누를 때까지) 잠시 기다린다
+                            state?.app == true && SystemClock.uptimeMillis() < inputGraceUntil -> check(POLL_MS)
                             state?.app == true -> {
                                 regrab(context, ++tries)
                                 check((POLL_MS * tries).coerceAtMost(OFF_POLL_MS))
                             }
-                            state != null -> check(POLL_MS)
+                            state != null -> {
+                                // 키보드가 열렸으면(또는 시스템 창) 기다림은 끝: 키보드를 닫으면 바로 다시 숨는다
+                                inputGraceUntil = 0L
+                                check(POLL_MS)
+                            }
                             // Shizuku가 없으면 뒤로 가기 뒤에만 다시 숨는다(키보드 입력 중에는 빼앗지 않는다)
                             else -> {
                                 LogRepository.from(context).add("상단바 숨기기: Shizuku가 없어 ${if (afterBack) "뒤로 가기 뒤라 다시 숨김" else "다시 숨기지 않음"}")
@@ -339,6 +377,8 @@ object StatusBarHider {
     }
 
     private const val AUTO_REGRAB_MS = 900L
+    private const val INPUT_GRACE_MS = 6000L
+    private const val RETRIGGER_MS = 120L
     private val OUTSIDE_CHECKS_MS = longArrayOf(350L, 500L)
     private const val REGRAB_MS = 600L
     private const val POLL_MS = 2_000L

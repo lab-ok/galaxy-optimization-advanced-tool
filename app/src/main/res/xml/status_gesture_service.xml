@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 실험실 상단바 제스처(StatusGestureService): 상단바 위에 얇은 띠를 깔아 두 번 누르기(맨 위로)·꾹 누르기(좁히기)를 받는다.
-     맨 위로 올릴 때만 지금 앱의 스크롤 영역을 찾는다(화면 글자는 읽지 않는다) -->
+     맨 위로 올릴 때만 지금 앱의 스크롤 영역을 찾는다(화면 글자는 읽지 않는다). 상단바를 숨긴 동안 입력란이 눌렸는지 보려고
+     누름·초점 이벤트도 받는다(입력란인지만 본다) -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged|typeViewClicked|typeViewFocused"
     android:accessibilityFlags="flagRetrieveInteractiveWindows"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:canPerformGestures="true"
