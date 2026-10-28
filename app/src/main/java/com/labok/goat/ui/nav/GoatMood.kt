@@ -108,7 +108,7 @@ fun rememberGoatMood(): GoatMoodState {
 }
 
 /**
- * 염소 캐릭터 그림 20장(2026-10-18, docs: ~/claude_workspace/goat/branding/goat_girl_icons_261018).
+ * 염소 캐릭터 그림 20장(2026-10-18, docs: ~/claude_workspace/develop/goat/branding/goat_girl_icons_261018).
  * 평소([Mood.CALM])는 편한 표정 가운데 랜덤, 툭툭 치면 당황([Mood.SQUINT])·울음([Mood.CRY])·화남([Mood.ANGRY]) 묶음에서 고른다.
  */
 private val CALM_FACES = intArrayOf(
