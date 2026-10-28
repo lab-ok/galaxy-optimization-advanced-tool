@@ -30,6 +30,7 @@ import kotlin.math.sqrt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import rikka.shizuku.Shizuku
 
 /**
  * 자동 플렉스 모드(폴드8 전용, 실험실). 폴드8은 반쯤 접힌 채 멈추는 힌지가 빠져 시스템이 '반쯤 접힘' 상태를 내지 않는다.
@@ -64,6 +65,36 @@ object AutoFlex {
     fun engineNeeded(context: Context) = enabled(context) || dimLock(context)
 
     internal const val DIM_ANGLE = 50f
+
+    /**
+     * 이보다 더 닫히면(완전히 접어 커버 화면을 쓰는 중) 밝기 고정을 풀고 자동 밝기로 돌린다. 예전에는 다 닫아도 50° 안쪽이라
+     * 커버 화면을 쓰는 내내 자동 밝기가 꺼져 있었다(소장님 신고 10-28: 화면 밝기 자동이 저절로 꺼짐, 10-18 로그에 '가까이 접어 밝기 고정').
+     */
+    internal const val DIM_CLOSED_ANGLE = 15f
+
+    /** 밝기 고정을 걸지: 가까이 접혔지만(두 화면이 마주 봄) 완전히 닫히지는 않았을 때만. */
+    internal fun dimWanted(angle: Float) = angle < DIM_ANGLE && angle > DIM_CLOSED_ANGLE
+
+    /**
+     * GOAT가 밝기 고정으로 자동 밝기를 꺼 둔 채 앱이 다시 시작됐으면(업데이트·강제 종료·기능 끔) 자동 밝기를 되돌린다.
+     * 꺼 둔 사실을 설정 파일에 적어 두어, 메모리만 쓰던 예전처럼 영영 꺼진 채 남지 않게 한다. 작업 스레드에서 부른다.
+     */
+    /** 앱 시작 때 부른다: 자동 밝기를 꺼 둔 기록이 남아 있으면 Shizuku가 연결될 때 되돌린다(상주 서비스가 안 돌 때도). */
+    fun watchStuckBrightness(context: Context) {
+        val app = context.applicationContext
+        if (!prefs(app).getBoolean("dimmed", false)) return
+        Shizuku.addBinderReceivedListenerSticky { Thread { restoreBrightnessIfStuck(app) }.start() }
+    }
+
+    fun restoreBrightnessIfStuck(context: Context) {
+        val p = prefs(context)
+        if (!p.getBoolean("dimmed", false)) return
+        if (engine?.isDimmed == true) return
+        if (ShizukuAccess.shell("settings put system screen_brightness_mode 1")?.ok == true) {
+            p.edit().putBoolean("dimmed", false).apply()
+            LogRepository.from(context).add("밝기 고정이 풀리지 않은 채 남아 있어 자동 밝기로 되돌림")
+        }
+    }
 
     /** 범위에서 이만큼(ms) 각도가 [STABLE_DEG]° 넘게 움직이지 않아야 플렉스 모드를 켠다. */
     internal const val STABLE_MS = 600L
@@ -345,28 +376,33 @@ object AutoFlex {
         // 켜기를 기다리기 시작한 각도(멈춰 있는지 보려고)
         private var dwellAngle = 0f
 
-        // 밝기 고정: GOAT가 자동 밝기를 꺼 둔 상태인지
+        // 밝기 고정: GOAT가 자동 밝기를 꺼 둔 상태인지(앱이 다시 시작돼도 되돌릴 수 있게 설정 파일에도 적는다)
         private var dimmed = false
+        val isDimmed get() = dimmed
 
         private fun dimCheck(a: Float) {
             if (!dimLock(context) && !dimmed) return
-            val want = dimLock(context) && a < DIM_ANGLE
-            // 경계에서 깜빡이지 않게 풀 때는 2° 더 펴야 한다
+            val want = dimLock(context) && dimWanted(a)
+            // 경계에서 깜빡이지 않게 풀 때는 2° 더 펴야 한다. 완전히 닫히면(커버 화면) 바로 푼다
             if (want && !dimmed) {
                 val mode = ShizukuAccess.shell("settings get system screen_brightness_mode")?.out?.trim()
                 if (mode == "1" && ShizukuAccess.shell("settings put system screen_brightness_mode 0")?.ok == true) {
                     dimmed = true
+                    prefs(context).edit().putBoolean("dimmed", true).apply()
                     LogRepository.from(context).add("가까이 접어 밝기 고정")
                 }
-            } else if (dimmed && (!dimLock(context) || a >= DIM_ANGLE + 2)) {
+            } else if (dimmed && (!dimLock(context) || a >= DIM_ANGLE + 2 || a <= DIM_CLOSED_ANGLE)) {
                 undim()
             }
         }
 
         private fun undim() {
             if (!dimmed) return
-            ShizukuAccess.shell("settings put system screen_brightness_mode 1")
-            dimmed = false
+            if (ShizukuAccess.shell("settings put system screen_brightness_mode 1")?.ok == true) {
+                dimmed = false
+                prefs(context).edit().putBoolean("dimmed", false).apply()
+                LogRepository.from(context).add("밝기 고정 풀고 자동 밝기로 되돌림")
+            }
         }
 
         // 다음 바뀜은 진동 없이(까딱은 따로 울리고, 멈춤·설정 바뀜은 손놀림이 아니라서)
@@ -415,6 +451,7 @@ object AutoFlex {
                 }
             )
             if (context.getSystemService(PowerManager::class.java).isInteractive) listen()
+            worker.post { restoreBrightnessIfStuck(context) }
             worker.post { syncApps(context) }
         }
 

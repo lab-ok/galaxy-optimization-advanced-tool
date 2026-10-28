@@ -12,6 +12,7 @@ import com.labok.goat.background.GoatService
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.DpiManager
+import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.data.lab.NarrowApps
 import com.labok.goat.data.lab.NarrowBar
@@ -102,6 +103,8 @@ class App : Application() {
         ForceDark.watch(this)
         // 앱 폭 좁히기(실험실): 삼성이 부팅 때 호환성 설정을 지우므로 Shizuku가 연결될 때 고른 앱을 다시 건다
         NarrowApps.watch(this)
+        // 밝기 고정(실험실 자동 플렉스)이 자동 밝기를 꺼 둔 채 앱이 다시 시작됐으면 되돌린다
+        AutoFlex.watchStuckBrightness(this)
         // 예전 업데이트가 듀얼 메신저·보안 폴더에도 깐 GOAT를 Shizuku가 연결되면 지운다(기본 사용자에서만)
         OtherUserCleanup.watch(this)
         // 좁힌 앱 컨트롤러: 업데이트·강제 종료 뒤에도 상주 서비스가 맨 앞 앱을 따라가도록 다시 띄운다
