@@ -3,18 +3,12 @@ package com.labok.goat.ui.lab
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -132,8 +126,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     // 앱 목록에서 보고 있는 모드 탭과, 모드 고르기를 열어 둔 줄
     var filter by remember { mutableIntStateOf(AutoFlex.MODE_FLEX) }
     var openRow by remember { mutableStateOf<String?>(null) }
-    var gesturesOpen by remember { mutableStateOf(false) }
-    var wheel by remember { mutableStateOf(AutoFlex.wheel.read(context)) }
     // 이 설정 화면을 보는 동안에는 자동 플렉스를 멈춰 화면이 바뀌지 않게 한다. 시험은 [플렉스 모드 테스트하기]가 여는
     // 시험 화면(FlexTestActivity)에서만 하므로, 이 화면이 앞에 있을 때(RESUMED)만 멈춘다
     var resumed by remember { mutableStateOf(true) }
@@ -344,53 +336,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                 }
             }
         }
-        // 스크롤 휠 위치(공식 설정과 같은 값): 패널 옆 스크롤 휠을 왼쪽·오른쪽 중 어디에 둘지
-        item(key = "wheel") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.LAB_FLEX_WHEEL_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.LAB_FLEX_WHEEL_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidChips(
-                        options = listOf("1", "2"),
-                        selected = wheel ?: "2",
-                        label = { if (it == "1") "왼쪽" else "오른쪽" },
-                        onSelect = { v ->
-                            scope.launch {
-                                val ok = withContext(Dispatchers.IO) { AutoFlex.wheel.write(context, v) }
-                                if (ok) wheel = v else Toast.makeText(context, Copy.LAB_WRITE_FAILED, Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    )
-                }
-            }
-        }
-        // 터치패드 제스처 도움말(공식 화면과 같은 내용)
-        item(key = "gestures") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard(padding = Gap.Flush) {
-                    Row(Modifier.fillMaxWidth().clickable { gesturesOpen = !gesturesOpen }.padding(Gap.CardPadding), verticalAlignment = Alignment.CenterVertically) {
-                        Text(Copy.LAB_FLEX_GESTURES_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
-                        val turn by animateFloatAsState(if (gesturesOpen) 180f else 0f, Springs.pop(), label = "gestureChevron")
-                        Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
-                    }
-                    // 전체 이름으로 부른다: 그냥 부르면 ColumnScope 확장판이 잡혀 지금과 다른 함수가 된다
-                    AnimatedVisibility(
-                        gesturesOpen,
-                        enter = expandVertically(spring(UiMotion.ratio(0.75f), UiMotion.stiffness(300f, 0.75f))) + fadeIn(),
-                        exit = shrinkVertically(spring(UiMotion.ratio(0.9f), UiMotion.stiffness(420f, 0.9f))) + fadeOut()
-                    ) {
-                        Column(Modifier.padding(start = Gap.CardPadding, end = Gap.CardPadding, bottom = Gap.CardPadding)) {
-                            FLEX_GESTURES.forEachIndexed { i, (title, body) ->
-                                if (i > 0) Spacer(Modifier.height(Gap.Item))
-                                Text(title, color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                Text(body, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     LazyColumn(
@@ -401,19 +346,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         content = list
     )
 }
-
-/** "YouTube, 전화 외 6개"처럼 패널을 띄우는 앱을 최근 사용 순으로 두 개까지 적고 나머지는 개수로. */
-/** 터치패드 제스처(삼성 공식 '터치패드 제스처 도움말'과 같은 내용). */
-private val FLEX_GESTURES = listOf(
-    "누르기" to "마우스 왼쪽 클릭처럼 고르기, 앱 열기, 버튼 누르기를 합니다.",
-    "두 손가락으로 누르기" to "마우스 오른쪽 클릭처럼 더 보기 메뉴를 엽니다.",
-    "두 손가락으로 밀기" to "원하는 방향으로 화면을 스크롤합니다.",
-    "두 손가락으로 확대/축소" to "확대하거나 축소합니다.",
-    "길게 누르기" to "화면에서 항목을 고릅니다.",
-    "길게 누른 채 움직이기" to "항목을 옮기거나 글자를 고릅니다.",
-    "세 손가락으로 누르기" to "이전 화면으로 돌아갑니다.",
-    "네 손가락으로 누르기" to "최근 앱 화면을 엽니다."
-)
 
 /** 자동 플렉스 모드 사용 방법(점 세 개 메뉴 → 사용 방법). */
 @Composable

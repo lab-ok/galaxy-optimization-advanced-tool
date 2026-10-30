@@ -164,9 +164,6 @@ object AutoFlex {
 
     internal fun syncDue(context: Context) = System.currentTimeMillis() - prefs(context).getLong("synced", 0L) > 60 * 60 * 1000L
 
-    /** 스크롤 휠 위치(삼성 설정 global.flex_mode_scroll_wheel_pos, 1 왼쪽·2 오른쪽으로 보임). */
-    val wheel = LabSetting("global", "flex_mode_scroll_wheel_pos", "플렉스 스크롤 휠 위치")
-
     fun min(context: Context) = prefs(context).getInt("min", DEFAULT_MIN)
     fun max(context: Context) = prefs(context).getInt("max", DEFAULT_MAX)
 

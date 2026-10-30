@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.30.0",
+        "2026-10-30",
+        "자동 플렉스 모드 화면을 정리했습니다.",
+        listOf(
+            "변경" to listOf(
+                "자동 플렉스 모드 화면에서 쓰지 않는 스크롤 휠 위치와 터치패드 제스처 도움말을 뺐습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.29.0",
         "2026-10-30",
         "폴드8용 자동 플렉스 모드를 정식 기능으로 넣었습니다.",
