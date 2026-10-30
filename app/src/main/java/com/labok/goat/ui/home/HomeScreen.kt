@@ -85,7 +85,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.labok.goat.BuildConfig
 import com.labok.goat.background.ExternalChangeNotifier
 import com.labok.goat.data.lab.LabUnlock
-import com.labok.goat.data.lab.SideSplitTest
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.about.AboutSheet
 import com.labok.goat.ui.about.ChangelogSheet
@@ -121,7 +120,6 @@ import com.labok.goat.ui.lab.LabScreen
 import com.labok.goat.ui.lab.LabScreenModeScreen
 import com.labok.goat.ui.lab.LabScrollTopScreen
 import com.labok.goat.ui.lab.StatusIconsHelpSheet
-import com.labok.goat.ui.lab.shareResult
 import com.labok.goat.ui.liquid.LiquidMenu
 import com.labok.goat.ui.liquid.LiquidToast
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -203,13 +201,6 @@ internal fun HomeScreen(
     // 화면에 보이는 기능. 사이드바에서 고르면 방울 이동을 보여 준 뒤 사이드바가 닫히면서 바뀐다(물방울 번짐 전환).
     var shown by rememberSaveable { mutableStateOf(NavItem.HOME) }
     // 점검 도구용 진입: 이름이 맞을 때만 그 화면·시트를 연다(실험실 항목은 열린 경우에만)
-    // 가로 까딱 분할 자동 시험이 끝나면 결과 파일 공유 창을 바로 띄운다(결과를 자동으로 보내게)
-    val sideTest by SideSplitTest.state.collectAsStateWithLifecycle()
-    LaunchedEffect(sideTest.shareReady) {
-        val uri = sideTest.shareReady ?: return@LaunchedEffect
-        SideSplitTest.consumeShare()
-        shareResult(context, uri)
-    }
     LaunchedEffect(openScreen, openSheet) {
         val item = openScreen?.let { n -> runCatching { NavItem.valueOf(n) }.getOrNull() }
         if (item != null && (item !in NavItem.LAB_ITEMS || LabUnlock.unlocked)) {

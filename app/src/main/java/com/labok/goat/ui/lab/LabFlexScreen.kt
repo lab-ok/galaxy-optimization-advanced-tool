@@ -69,7 +69,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.AutoFlex
-import com.labok.goat.data.lab.SideSplitTest
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.AppEntry
 import com.labok.goat.ui.appsize.Section
@@ -84,7 +83,6 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
-import com.labok.goat.ui.liquid.LiquidProgressButton
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -117,7 +115,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     val active by AutoFlex.active.collectAsStateWithLifecycle()
     val latched by AutoFlex.latched.collectAsStateWithLifecycle()
     var click by remember { mutableStateOf(AutoFlex.click(context)) }
-    var sideClick by remember { mutableStateOf(AutoFlex.sideClick(context)) }
     var dim by remember { mutableStateOf(AutoFlex.dimLock(context)) }
     val supported = remember { AutoFlex.supported() && AutoFlex.hasHingeSensor(context) }
     // 자동 플렉스가 꺼져 있어도 게이지에 지금 각도가 보이게 화면에서 직접 읽는다(켜져 있으면 서비스가 읽은 값을 쓴다)
@@ -129,7 +126,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var query by remember { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
     val horizontal = rememberHingeHorizontal(supported)
-    // 앱별 모드(기본값 플렉스 모드가 아닌 앱만)
+    // 앱별 모드(기본값과 다르게 고른 앱만, 기본은 유튜브·카메라·갤러리만 플렉스 모드)
     var modes by remember { mutableStateOf(AutoFlex.modes(context)) }
     var appsOpen by remember { mutableStateOf(false) }
     // 앱 목록에서 보고 있는 모드 탭과, 모드 고르기를 열어 둔 줄
@@ -256,36 +253,6 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     }
                     Spacer(Modifier.height(Gap.Item))
                     FlexPanelArt(kkaddak = true)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidSwitchRow(Copy.LAB_FLEX_SIDE_CLICK, Copy.LAB_FLEX_SIDE_CLICK_BODY, sideClick, enabled) { v ->
-                        sideClick = v
-                        AutoFlex.setSideClick(context, v)
-                    }
-                }
-            }
-        }
-        // 가로 까딱 분할 자동 시험: 까딱 없이 여러 경우를 돌려 결과 파일을 만들고, 끝나면 공유 창을 띄운다
-        item(key = "side-split-test") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text(Copy.LAB_SIDE_TEST_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.LAB_SIDE_TEST_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    val test by SideSplitTest.state.collectAsStateWithLifecycle()
-                    LiquidProgressButton(
-                        Copy.LAB_SIDE_TEST_RUN,
-                        progress = if (test.running) test.progress ?: 0f else null,
-                        status = test.status,
-                        enabled = shizuku == ShizukuAccess.State.READY,
-                        disabledHint = Copy.DISABLED_SHIZUKU,
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { if (!test.running) SideSplitTest.start(context) }
-                    )
-                    val last = remember(test.running) { SideSplitTest.lastFile(context) }
-                    last?.let { uri ->
-                        Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.LAB_SHARE, primary = false, modifier = Modifier.fillMaxWidth(), onClick = { shareResult(context, uri) })
-                    }
                 }
             }
         }
@@ -305,7 +272,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         // 앱별로 접었을 때 동작: 요약 줄(모드별 앱 수)을 누르면 펼쳐진다. 펼치면 위쪽 탭으로 모드를 골라 그 모드의 앱만 보고,
         // 줄을 누르면 그 줄 아래에 모드 고르기가 열린다(한 번에 한 줄만)
         val q = query.trim()
-        fun modeOf(app: AppEntry) = modes[app.pkg] ?: AutoFlex.MODE_FLEX
+        fun modeOf(app: AppEntry) = modes[app.pkg] ?: AutoFlex.defaultMode(app.pkg)
         val counts = AutoFlex.MODES.associateWith { m -> apps.orEmpty().count { modeOf(it) == m } }
         item(key = "apps") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
@@ -479,8 +446,8 @@ internal fun FlexHelpSheet() {
         )
         HelpTopic(
             "6. 앱마다 다른 점",
-            "갤러리·유튜브·카메라처럼 플렉스 화면을 직접 지원하는 앱은 접으면 자동으로 위아래로 나뉩니다. " +
-                "그 밖의 앱은 폴드8에서 삼성 터치패널이 뜨지 않아, '앱별로 접었을 때 동작'에서 그 앱을 '터치패널'로 고르면 아래 화면에 GOAT가 만든 터치패널이 나옵니다."
+            "기본으로는 유튜브·카메라·갤러리처럼 플렉스 화면을 직접 지원하는 앱만 접으면 위아래로 나뉘고, 그 밖의 앱은 접어도 그대로입니다. " +
+                "플렉스 화면을 지원하는 다른 앱이 있으면 '앱별로 접었을 때 동작'에서 그 앱을 '플렉스 모드'로 바꾸면 됩니다."
         )
         HelpTopic(
             "7. 끄기·되돌리기",

@@ -106,8 +106,9 @@ object AutoFlex {
     }
 
     /**
-     * 앱별로 접었을 때 할 일. 기본은 [MODE_FLEX](반쯤 접힘만 알려 앱에 들어 있는 플렉스 모드를 쓴다).
-     * [MODE_OFF]는 그 앱에서는 접어도 아무것도 하지 않는다. 예전 터치패널(1)·분할 화면(2) 값은 플렉스 모드로 읽는다(1.11.9에서 뺐다).
+     * 앱별로 접었을 때 할 일. [MODE_FLEX]는 반쯤 접힘만 알려 앱에 들어 있는 플렉스 모드를 쓰고, [MODE_OFF]는 접어도 아무것도 하지 않는다.
+     * 기본은 [DEFAULT_FLEX_APPS](유튜브·카메라·갤러리)만 플렉스 모드, 나머지 앱은 사용 안 함이다(소장님 지정 10-30, 정식 기능 준비).
+     * 예전 터치패널(1)·분할 화면(2) 값은 플렉스 모드로 읽는다(1.11.9에서 뺐다).
      */
     const val MODE_FLEX = 0
     const val MODE_OFF = 3
@@ -118,16 +119,24 @@ object AutoFlex {
         else -> "플렉스 모드"
     }
 
-    fun mode(context: Context, pkg: String): Int = prefs(context).getInt("mode:$pkg", MODE_FLEX).takeIf { it in MODES } ?: MODE_FLEX
+    /** 따로 고르지 않아도 플렉스 모드로 쓰는 앱: 유튜브, 삼성 카메라, 삼성 갤러리. */
+    val DEFAULT_FLEX_APPS = setOf("com.google.android.youtube", "com.sec.android.app.camera", "com.sec.android.gallery3d")
 
-    /** 기본값이 아닌 모드를 고른 앱(패키지 → 모드). */
+    fun defaultMode(pkg: String) = if (pkg in DEFAULT_FLEX_APPS) MODE_FLEX else MODE_OFF
+
+    fun mode(context: Context, pkg: String): Int = prefs(context).getInt("mode:$pkg", defaultMode(pkg)).takeIf { it in MODES } ?: defaultMode(pkg)
+
+    /** 기본값과 다른 모드를 고른 앱(패키지 → 모드). */
     fun modes(context: Context): Map<String, Int> = prefs(context).all
         .filterKeys { it.startsWith("mode:") }
-        .mapNotNull { (k, v) -> (v as? Int)?.takeIf { it != MODE_FLEX && it in MODES }?.let { k.removePrefix("mode:") to it } }
+        .mapNotNull { (k, v) ->
+            val pkg = k.removePrefix("mode:")
+            (v as? Int)?.let { if (it in MODES) it else MODE_FLEX }?.takeIf { it != defaultMode(pkg) }?.let { pkg to it }
+        }
         .toMap()
 
     fun setMode(context: Context, pkg: String, mode: Int) {
-        prefs(context).edit().apply { if (mode == MODE_FLEX) remove("mode:$pkg") else putInt("mode:$pkg", mode) }.apply()
+        prefs(context).edit().apply { if (mode == defaultMode(pkg)) remove("mode:$pkg") else putInt("mode:$pkg", mode) }.apply()
         LogRepository.from(context).add("자동 플렉스: $pkg 접으면 ${modeLabel(mode)}")
     }
 
@@ -175,17 +184,6 @@ object AutoFlex {
         prefs(context).edit().putBoolean("click", on).apply()
         LogRepository.from(context).add("까딱으로 플렉스 모드 ${if (on) "켜짐" else "꺼짐"}")
         engine?.recheck()
-    }
-
-    /**
-     * 가로 까딱 분할: 접는 선이 세로로 놓이게(책처럼) 든 채 까딱하면 삼성 공식 화면 분할을 열고([FlexPanel.sideSplit]),
-     * 한 번 더 하면 푼다. 세로(접는 선이 가로)에서의 까딱은 [click] 그대로다.
-     */
-    fun sideClick(context: Context) = prefs(context).getBoolean("sideClick", false)
-
-    fun setSideClick(context: Context, on: Boolean) {
-        prefs(context).edit().putBoolean("sideClick", on).apply()
-        LogRepository.from(context).add("가로 까딱 분할 ${if (on) "켜짐" else "꺼짐"}")
     }
 
     /**
@@ -526,15 +524,9 @@ object AutoFlex {
             dimCheck(a)
             if (!enabled(context)) return
             val click = click(context)
-            val side = sideClick(context)
             var hit = false
-            val clicked = (click || side) && !pausedFlow.value && clicks.feed(a, SystemClock.elapsedRealtime())
-            if (clicked && !horizontalFlow.value && side) {
-                // 가로 까딱(접는 선이 세로): 플렉스 모드는 건드리지 않고 공식 화면 분할만 열고 푼다
-                LogRepository.from(context).add("가로 까딱: 화면 분할 바꾸기")
-                buzz(context, true)
-                FlexPanel.sideSplit(context)
-            } else if (clicked && horizontalFlow.value && click) {
+            val clicked = click && !pausedFlow.value && clicks.feed(a, SystemClock.elapsedRealtime())
+            if (clicked && horizontalFlow.value) {
                 // '사용 안 함'으로 둔 앱에서는 까딱해도 켜지 않고 울리지도 않는다(켜 둔 것을 끄는 까딱은 그대로 받는다)
                 if (!latchedFlow.value && FlexPanel.frontIsOff(context)) {
                     LogRepository.from(context).add("까딱: 사용 안 함 앱이라 무시")

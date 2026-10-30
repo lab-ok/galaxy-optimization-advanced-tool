@@ -37,7 +37,7 @@ object SettingsSearch {
             NavItem.AIRPLANE to AirplaneRadios.Radio.entries.map { "${it.label} 켜 두기" },
             NavItem.VOLUME_ROTATE to listOf(Copy.VOLUME_ON, Copy.VOLUME_INVERT, Copy.VOLUME_CAMERA, Copy.VOLUME_CLOSED, Copy.VOLUME_OPEN),
             NavItem.STATUS_ICONS to listOf(Copy.LAB_STATUS_HIDE, Copy.LAB_PRIVACY_DOT_SWITCH) + IconBlacklist.Slot.entries.map { "${it.label} 숨기기" },
-            NavItem.LAB_FLEX to listOf(Copy.LAB_FLEX_DIM, Copy.LAB_FLEX_CLICK, Copy.LAB_FLEX_SIDE_CLICK, Copy.LAB_FLEX_APPS_TITLE, Copy.LAB_FLEX_RANGE_TITLE),
+            NavItem.LAB_FLEX to listOf(Copy.LAB_FLEX_DIM, Copy.LAB_FLEX_CLICK, Copy.LAB_FLEX_APPS_TITLE, Copy.LAB_FLEX_RANGE_TITLE),
             NavItem.LAB_NARROW to listOf(Copy.LAB_NARROW_MASTER, Copy.LAB_NARROW_GESTURE, Copy.LAB_NARROW_BAR, "16:9", "검은 여백"),
             NavItem.LAB_SCROLL_TOP to listOf(Copy.LAB_SCROLL_TOP_SWITCH, "상단바 두 번"),
             NavItem.LAB_SCREEN to listOf(Copy.LAB_SCREEN_MODE_0, Copy.LAB_SCREEN_MODE_1, Copy.LAB_SCREEN_MODE_3, Copy.LAB_SCREEN_MODE_4, Copy.LAB_SCREEN_MODE_5),

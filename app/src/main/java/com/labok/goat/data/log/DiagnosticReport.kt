@@ -8,7 +8,6 @@ import android.os.Process
 import com.labok.goat.AppInfo
 import com.labok.goat.data.display.DpiManager
 import com.labok.goat.data.lab.BatteryHistory
-import com.labok.goat.data.lab.FlexPanel
 import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.plan
@@ -67,10 +66,6 @@ object DiagnosticReport {
 
         appendLine("## 볼륨 버튼 회전")
         appendLine(runCatching { VolumeRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
-        appendLine()
-
-        appendLine("## 화면 분할 명령(가로 까딱)")
-        appendLine(runCatching { FlexPanel.diagnoseSplit() }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
         appendLine("## 크래시 기록")
