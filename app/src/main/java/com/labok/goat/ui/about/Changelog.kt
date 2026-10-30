@@ -44,6 +44,21 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.29.0",
+        "2026-10-30",
+        "폴드8용 자동 플렉스 모드를 정식 기능으로 넣었습니다.",
+        listOf(
+            "추가" to listOf(
+                "자동 플렉스 모드: 폴드8을 노트북처럼 반쯤 접으면 플렉스 모드를 대신 켜 줍니다(편의 기능 메뉴).",
+                "기본으로 유튜브·카메라·갤러리에서 동작하고, 다른 앱은 앱별로 켤 수 있습니다.",
+                "살짝 접었다 펴는 '까딱'으로 켜고 끄기, 가까이 접을 때 밝기 고정을 고를 수 있습니다."
+            ),
+            "변경" to listOf(
+                "숨은 기능을 다듬었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.28.1",
         "2026-10-30",
         "숨은 기능을 다듬었습니다(시험 버전).",

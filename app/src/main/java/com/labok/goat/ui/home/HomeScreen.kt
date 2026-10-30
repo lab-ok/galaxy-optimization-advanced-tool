@@ -303,12 +303,11 @@ internal fun HomeScreen(
             // 화면 표시: 크기(해상도) → 움직임(주사율·애니메이션) → 색(다크) 순. 해상도는 화면 배율 바로 뒤라 이어서 읽힌다.
             add(NavSection(Copy.MENU_SECTION_DISPLAY, shownOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, NavItem.STATUS_ICONS)))
             // 편의 기능: 화면(회전) → 연결(비행기 모드 무선) → 소리(촬영음) 순. 시스템: 성능(GOS) → 배터리(잠자기) → 정리(기본 앱) 순
-            add(NavSection(Copy.MENU_SECTION_TOOLS, shownOf(NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE, NavItem.AIRPLANE, NavItem.CAMERA_MUTE)))
+            add(NavSection(Copy.MENU_SECTION_TOOLS, shownOf(NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE, NavItem.AUTO_FLEX, NavItem.AIRPLANE, NavItem.CAMERA_MUTE)))
             add(NavSection(Copy.MENU_SECTION_SYSTEM, shownOf(NavItem.GOS, NavItem.DOZE, NavItem.APP_CLEANUP)))
             // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구도 함께 둔다(공유 화면 진단·설정 비교를 공개 빌드에서도 쓰려고).
             // lab 빌드는 잠금과 상관없이 조사 도구를 보인다
-            // 실험실은 자주 쓰는 자동 플렉스를 맨 앞에 둔다
-            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_FLEX, NavItem.LAB_NARROW, NavItem.LAB_SCROLL_TOP, NavItem.LAB_SCREEN, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
+            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_NARROW, NavItem.LAB_SCROLL_TOP, NavItem.LAB_SCREEN, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
                 listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || LabUnlock.unlocked })
             if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }
@@ -382,7 +381,7 @@ internal fun HomeScreen(
             )
             NavItem.HOME -> listOf(Copy.MENU_REPORT to report)
             // 자동 플렉스는 Shizuku가 필요해 Shizuku 연결 안내(앱별 화면 배율 설정과 같은 시트)를 연다
-            NavItem.LAB_FLEX -> listOf(
+            NavItem.AUTO_FLEX -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.FLEX_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report
@@ -577,7 +576,7 @@ internal fun HomeScreen(
                             NavItem.AIRPLANE -> LabAirplaneScreen(inner)
                             NavItem.STATUS_ICONS -> LabIconsScreen(inner)
                             NavItem.LAB_SCREEN -> LabScreenModeScreen(inner)
-                            NavItem.LAB_FLEX -> LabFlexScreen(inner)
+                            NavItem.AUTO_FLEX -> LabFlexScreen(inner)
                             NavItem.LAB_NARROW -> LabNarrowScreen(inner)
                             NavItem.LAB_SCROLL_TOP -> LabScrollTopScreen(inner)
                             NavItem.LAB_TOOLS -> LabScreen(inner)

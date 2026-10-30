@@ -28,14 +28,14 @@ import com.labok.goat.ui.liquid.Text
  */
 object NewBadge {
     const val STATUS_BAR_HIDE = "status_bar_hide"
-    const val FLEX_APP_MODES = "flex_app_modes"
+    const val AUTO_FLEX = "auto_flex"
     const val INK_TONES = "ink_tones"
     const val VOLUME_ROTATE = "volume_rotate"
     const val SHARE_PROBE = "share_probe"
 
     val NAV: Map<NavItem, List<String>> = mapOf(
         NavItem.STATUS_ICONS to listOf(STATUS_BAR_HIDE),
-        NavItem.LAB_FLEX to listOf(FLEX_APP_MODES),
+        NavItem.AUTO_FLEX to listOf(AUTO_FLEX),
         NavItem.SETTINGS to listOf(INK_TONES),
         NavItem.VOLUME_ROTATE to listOf(VOLUME_ROTATE),
         NavItem.LAB_TOOLS to listOf(SHARE_PROBE)

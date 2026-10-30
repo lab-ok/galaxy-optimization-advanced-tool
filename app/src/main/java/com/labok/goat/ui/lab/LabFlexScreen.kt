@@ -279,7 +279,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                 GlassCard(padding = Gap.Flush) {
                     Row(Modifier.fillMaxWidth().clickable { appsOpen = !appsOpen }.padding(Gap.CardPadding), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            NewTag(NewBadge.FLEX_APP_MODES, Modifier.padding(bottom = Gap.Item))
+                            NewTag(NewBadge.AUTO_FLEX, Modifier.padding(bottom = Gap.Item))
                             Text(Copy.LAB_FLEX_APPS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                             Text(
                                 if (apps == null) "앱 목록을 불러오는 중…" else AutoFlex.MODES.filter { counts[it]!! > 0 }.joinToString(" · ") { "${AutoFlex.modeLabel(it)} ${counts[it]}" },

@@ -117,12 +117,14 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 화면을 돌리면 볼륨 버튼의 올리기·내리기를 화면 방향에 맞춘다(접근성 서비스, 1.16.1 실험실에서 정식으로). */
     VOLUME_ROTATE(Copy.FEATURE_VOLUME_ROTATE, NavIcon.VOLUME),
 
+    /** 폴드8을 반쯤 접으면 플렉스 모드를 대신 켠다(Shizuku 셸, 힌지 각도, 1.29.0 실험실에서 정식으로). */
+    AUTO_FLEX(Copy.FEATURE_AUTO_FLEX, NavIcon.FLEX),
+
     /** 상태 표시줄의 고른 아이콘을 숨긴다(시스템 설정 권한, 실험실에서 정식으로). */
     STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.EYE_OFF),
 
     /** 숨은 실험실: 염소를 열 번 누르면 나타난다(시험 중인 기능을 둔다). */
     LAB_SCREEN(Copy.FEATURE_LAB_SCREEN, NavIcon.PALETTE),
-    LAB_FLEX(Copy.FEATURE_LAB_FLEX, NavIcon.FLEX),
 
     /** 실험실: 고른 앱을 세로로 길고 좁게(16:9) 띄우고 양옆을 검은 여백으로 둔다(Shizuku, 앱 호환성 설정). */
     LAB_NARROW(Copy.FEATURE_LAB_NARROW, NavIcon.NARROW),
@@ -145,7 +147,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_FLEX, LAB_NARROW, LAB_SCROLL_TOP, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_NARROW, LAB_SCROLL_TOP, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
     }
 }
 

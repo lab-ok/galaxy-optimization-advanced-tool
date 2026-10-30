@@ -42,7 +42,7 @@ object FeatureSupport {
     fun unsupported(context: Context, item: NavItem): Boolean = when (item) {
         NavItem.REFRESH -> !RefreshRate.supported(context)
         NavItem.RESOLUTION -> !Resolution.supported(context)
-        NavItem.LAB_FLEX -> !AutoFlex.supported()
+        NavItem.AUTO_FLEX -> !AutoFlex.supported()
         NavItem.LAB_NARROW -> !NarrowApps.supported()
         NavItem.APP_SIZE -> DensityShell.rejected(context) || noted(context, item)
         NavItem.GOS, NavItem.CAMERA_MUTE -> noted(context, item)

@@ -208,7 +208,7 @@ object Copy {
     const val FEATURE_STATUS_ICONS = "상태 표시줄"
     const val FEATURE_LAB_SCREEN = "화면 모드"
     const val LAB_OPENED = "실험실이 열렸습니다. 사이드바에서 찾을 수 있습니다."
-    const val FEATURE_LAB_FLEX = "자동 플렉스 모드"
+    const val FEATURE_AUTO_FLEX = "자동 플렉스 모드"
     const val FEATURE_LAB_NARROW = "앱 폭 좁히기"
     const val LAB_NARROW_BODY = "상단바를 꾹 누르면 모든 앱을 세로로 길고 좁게 띄우고 양옆은 검은 여백으로 둡니다."
     const val LAB_NARROW_NOTE = "열려 있는 앱도 닫히지 않고 바로 바뀝니다. 가로로 고정된 앱은 그대로입니다."

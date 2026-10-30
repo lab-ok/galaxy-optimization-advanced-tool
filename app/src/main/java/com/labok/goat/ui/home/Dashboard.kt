@@ -75,6 +75,7 @@ import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.ResolutionState
 import com.labok.goat.data.lab.AirplaneRadios
+import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.rotate.ShakeRotate
@@ -230,6 +231,7 @@ internal fun Dashboard(
                 }.let { if (it.isEmpty()) Copy.AIRPLANE_DASH_NONE else Copy.airplaneDash(it) }
             }
             NavItem.VOLUME_ROTATE -> if (VolumeRotate.enabled(context)) Copy.VOLUME_DASH_ON + if (VolumeRotate.invert(context)) " · 반대 방향" else "" else Copy.VOLUME_DASH_OFF
+            NavItem.AUTO_FLEX -> if (AutoFlex.enabled(context)) "켜짐 · ${AutoFlex.min(context)}~${AutoFlex.max(context)}°" + (if (AutoFlex.click(context)) " · 까딱" else "") else "꺼짐"
             else -> ""
         }
     }
@@ -256,6 +258,7 @@ internal fun Dashboard(
                     AirplaneRadios.Radio.entries.any { AirplaneRadios.kept(raw, it) }
                 }
             NavItem.VOLUME_ROTATE -> VolumeRotate.enabled(context)
+            NavItem.AUTO_FLEX -> AutoFlex.enabled(context)
             else -> false
         }
     }
