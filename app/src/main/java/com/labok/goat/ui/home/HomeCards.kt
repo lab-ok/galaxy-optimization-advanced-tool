@@ -48,14 +48,14 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidDots
 import com.labok.goat.ui.liquid.LiquidSlider
-import com.labok.goat.ui.liquid.LiquidSwitch
+import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.delay
 /** 상태: 폴드 기기 그림 + 지금 화면의 크기 + 한 줄 설명. */
 @Composable
-internal fun StatusCard(state: UiState) {
+internal fun StatusCard(state: UiState, onAuto: (Boolean) -> Unit) {
     val c = LocalLiquid.current
     val role = state.effective?.role
     val unfolded = role == ScreenPolicy.Role.INNER
@@ -108,6 +108,9 @@ internal fun StatusCard(state: UiState) {
                 Text(line, color = c.ink, style = MaterialTheme.typography.bodyMedium)
             }
         }
+        // 켜고 끄기는 다른 기능처럼 그림 카드 안에 둔다(1.19.0 소장님 지정, DPI 화면만 따로 카드에 남아 있었다 10-30)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidSwitchRow(Copy.AUTO_TITLE, Copy.AUTO_BODY, state.auto, enabled = true, onChange = onAuto)
     }
 }
 
@@ -300,21 +303,6 @@ internal fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
 
 /** 세로 ÷ 가로(미리보기용). 내부 화면은 실제 방향(Fold8은 가로로 긴 화면)으로 계산한다. */
 private fun aspect(p: PanelSpec.Resolved, cover: PanelSpec.Resolved, isInner: Boolean): Float = ScreenGeometry.orientedSize(p.screen.key, cover.screen.key, isInner)?.let { (w, h) -> h / w } ?: 2f
-
-@Composable
-internal fun AutoCard(on: Boolean, onChange: (Boolean) -> Unit) {
-    val c = LocalLiquid.current
-    GlassCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(Copy.AUTO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                Text(Copy.AUTO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            }
-            Spacer(Modifier.width(12.dp))
-            LiquidSwitch(on, onChange, label = Copy.AUTO_TITLE)
-        }
-    }
-}
 
 @Composable
 internal fun ResetSheet(

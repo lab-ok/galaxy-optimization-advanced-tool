@@ -44,6 +44,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.28.0",
+        "2026-10-30",
+        "고급 화면 배율 설정의 자동 적용 스위치를 그림 카드 안으로 옮겼습니다.",
+        listOf(
+            "변경" to listOf(
+                "고급 화면 배율 설정의 자동 적용 스위치를 다른 기능처럼 맨 위 그림 카드 안으로 옮겼습니다.",
+                "숨은 기능을 다듬었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.27.1",
         "2026-10-28",
         "숨은 기능을 다듬었습니다(시험 버전).",
