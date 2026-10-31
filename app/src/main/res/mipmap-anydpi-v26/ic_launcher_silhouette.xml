@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 흰 염소 옆모습 실루엣 아이콘(1.31.0, 시안 6 '걷는 염소'). docs/branding/goat/silhouette.py로 만든다 -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_bg_silhouette" />
+    <foreground android:drawable="@drawable/ic_launcher_fg_silhouette" />
+    <monochrome android:drawable="@drawable/ic_launcher_mono_silhouette" />
+</adaptive-icon>
