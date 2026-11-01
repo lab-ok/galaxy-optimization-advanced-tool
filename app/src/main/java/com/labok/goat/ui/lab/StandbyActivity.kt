@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
@@ -106,7 +107,15 @@ class StandbyActivity : ComponentActivity() {
             val uiAlpha by animateFloatAsState(if (showUi) 1f else 0f, tween(300), label = "ui")
             Box(Modifier.fillMaxSize().background(Color.Black).clickable(remember { MutableInteractionSource() }, null) { showUi = !showUi }) {
                 HorizontalPager(pager, Modifier.fillMaxSize(), beyondViewportPageCount = 1) { page ->
-                    StandbyClock(page, now, battery.first, battery.second)
+                    // 넘길 때 옆 시계는 살짝 작아지고 흐려지며 들어온다(겹쳐 보이는 깊이감)
+                    Box(
+                        Modifier.fillMaxSize().graphicsLayer {
+                            val off = kotlin.math.abs((pager.currentPage - page) + pager.currentPageOffsetFraction).coerceAtMost(1f)
+                            alpha = 1f - off * 0.65f
+                            scaleX = 1f - off * 0.08f
+                            scaleY = 1f - off * 0.08f
+                        }
+                    ) { StandbyClock(page, now, battery.first, battery.second) }
                 }
                 if (uiAlpha > 0.01f) {
                     Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {

@@ -122,52 +122,47 @@ object TentMode {
     }.getOrElse { "${it.javaClass.simpleName}: ${it.message}".take(200) }
 
     /**
-     * 바깥 화면 가장자리 구역 색(앰비언트용). 위·아래는 [n]칸, 왼쪽·오른쪽은 [n]/2칸, 띠 두께는 짧은 변의 15%.
-     * 화면을 찍은 방향(가로) 그대로의 위·아래·왼쪽·오른쪽이다. 실패하면 null.
+     * 바깥 화면을 한 장 찍어 아주 작게 줄인 그림(앰비언트용, 11-02 소장님: 바깥 화면을 뒤집어 흐리게 쏘기).
+     * 원시 RGBA에서 [w]칸 폭으로 건너뛰며 평균 내 줄인다(가로세로 비율 유지). 실패하면 null.
      */
-    class Zones(val top: IntArray, val bottom: IntArray, val left: IntArray, val right: IntArray)
-
-    fun edgeZones(physId: String, n: Int = 8): Zones? {
+    fun smallFrame(physId: String, w: Int = 48): android.graphics.Bitmap? {
         val p = ShizukuAccess.stream("screencap -d $physId") ?: return null
         return runCatching {
             val bytes = p.inputStream.use { it.readBytes() }
             p.waitFor()
             if (bytes.size < 16) return null
             fun int(o: Int) = (bytes[o].toInt() and 0xFF) or ((bytes[o + 1].toInt() and 0xFF) shl 8) or ((bytes[o + 2].toInt() and 0xFF) shl 16) or ((bytes[o + 3].toInt() and 0xFF) shl 24)
-            val w = int(0)
-            val h = int(4)
-            val head = bytes.size - w * h * 4
-            if (w <= 0 || h <= 0 || head < 12) return null
-            val band = (minOf(w, h) * 0.15f).toInt().coerceAtLeast(2)
-            fun avg(x0: Int, y0: Int, x1: Int, y1: Int): Int {
-                var r = 0L
-                var g = 0L
-                var b = 0L
-                var c = 0L
-                val step = 6
-                var y = y0
-                while (y < y1) {
-                    var x = x0
-                    while (x < x1) {
-                        val o = head + (y * w + x) * 4
-                        r += bytes[o].toInt() and 0xFF
-                        g += bytes[o + 1].toInt() and 0xFF
-                        b += bytes[o + 2].toInt() and 0xFF
-                        c++
-                        x += step
+            val sw = int(0)
+            val sh = int(4)
+            val head = bytes.size - sw * sh * 4
+            if (sw <= 0 || sh <= 0 || head < 12) return null
+            val h = (w * sh / sw).coerceAtLeast(1)
+            val px = IntArray(w * h)
+            val cw = sw / w
+            val ch = sh / h
+            for (y in 0 until h) {
+                for (x in 0 until w) {
+                    var r = 0
+                    var g = 0
+                    var b = 0
+                    var c = 0
+                    var yy = y * ch
+                    while (yy < (y + 1) * ch) {
+                        var xx = x * cw
+                        while (xx < (x + 1) * cw) {
+                            val o = head + (yy * sw + xx) * 4
+                            r += bytes[o].toInt() and 0xFF
+                            g += bytes[o + 1].toInt() and 0xFF
+                            b += bytes[o + 2].toInt() and 0xFF
+                            c++
+                            xx += 4
+                        }
+                        yy += 4
                     }
-                    y += step
+                    px[y * w + x] = if (c == 0) 0xFF000000.toInt() else (0xFF shl 24) or ((r / c) shl 16) or ((g / c) shl 8) or (b / c)
                 }
-                if (c == 0L) return 0xFF000000.toInt()
-                return (0xFF shl 24) or ((r / c).toInt() shl 16) or ((g / c).toInt() shl 8) or (b / c).toInt()
             }
-            val m = (n / 2).coerceAtLeast(1)
-            Zones(
-                IntArray(n) { i -> avg(w * i / n, 0, w * (i + 1) / n, band) },
-                IntArray(n) { i -> avg(w * i / n, h - band, w * (i + 1) / n, h) },
-                IntArray(m) { i -> avg(0, h * i / m, band, h * (i + 1) / m) },
-                IntArray(m) { i -> avg(w - band, h * i / m, w, h * (i + 1) / m) }
-            )
+            android.graphics.Bitmap.createBitmap(px, w, h, android.graphics.Bitmap.Config.ARGB_8888)
         }.getOrNull()
     }
 

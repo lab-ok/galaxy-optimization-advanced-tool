@@ -114,7 +114,7 @@ object TentDuo {
             val t0 = System.currentTimeMillis()
             while (active) {
                 val s = System.currentTimeMillis()
-                TentMode.edgeZones(phys)?.let { v.setZones(it) }
+                TentMode.smallFrame(phys)?.let { v.setFrame(it) }
                 frames++
                 if (frames == 40) log(context, "앰비언트: 초당 %.1f번 읽음".format(frames * 1000f / (System.currentTimeMillis() - t0)))
                 Thread.sleep((250 - (System.currentTimeMillis() - s)).coerceAtLeast(30))

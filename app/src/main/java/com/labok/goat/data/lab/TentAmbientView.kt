@@ -1,119 +1,171 @@
 package com.labok.goat.data.lab
 
 import android.content.Context
-import android.graphics.BlendMode
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
-import android.graphics.RadialGradient
-import android.graphics.Shader
+import android.view.Surface
 import android.view.View
+import androidx.core.graphics.ColorUtils
+import kotlin.math.pow
 
 /**
- * 텐트 모드 앰비언트(반사광) 화면. 안쪽 화면의 한쪽 절반(기본 왼쪽, 책상·벽을 비추는 면)에만 빛을 그리고 나머지 절반은 검게 둔다
- * (11-02 소장님: 반사광이라 왼쪽에만, 오른쪽은 실제로 살짝 보이는 화면).
+ * 텐트 모드 앰비언트(반사광). 바깥 화면을 아주 작게 찍은 그림을 텐트 방향에 맞게 돌리고 뒤집어, 세게 흐려서 안쪽 화면의
+ * 왼쪽 패널(펼쳐 세로로 들었을 때의 왼쪽 절반)에 비춘다(11-02 소장님 제안: 바깥 화면을 반전해 블러로 쏘기). 오른쪽 패널은 검게 둔다.
+ * 구역 평균보다 화면의 색 배치가 그대로 살아나 방향마다 다채롭다.
  *
- * 텐트(ㅅ)로 세우면 안쪽 화면의 가운데 접는 선이 꼭대기가 된다. 그래서 바깥 화면 가장자리 색을 이렇게 옮긴다:
- * - 바깥 위쪽 → 접는 선 쪽(빛 절반의 가운데 쪽 가장자리), 바깥 아래쪽 → 책상 쪽(바깥 가장자리)
- * - 바깥 왼쪽·오른쪽 → 텐트 양 옆 끝(빛 절반의 위·아래 끝). 안쪽 면은 반대를 보고 있어 좌우를 뒤집는다.
- * 실제 방향은 실기 '방향 확인'으로 맞춘다([swap]: 빛을 오른쪽 절반으로, [mirror]: 양 옆 끝을 뒤집기).
- * 색은 바로 바꾸지 않고 매 프레임 목표 색으로 조금씩 다가가 부드럽게 넘어간다.
+ * - 방향: 텐트(ㅅ)는 접는 선이 꼭대기라, 바깥 위 → 접는 선 쪽, 바깥 아래 → 책상 쪽, 바깥 왼쪽·오른쪽 → 패널 위·아래 끝(뒤집어서).
+ *   [swap]은 빛을 오른쪽 패널로, [mirror]는 패널 위·아래를 뒤집는다(실기 방향 확인용).
+ * - 회전: 안쪽 화면이 가로·세로로 돌아도 늘 같은 물리적 왼쪽 패널이 되게 화면 회전을 되돌려 '펼친 세로' 좌표로 그린다.
+ * - 색(상황별 예시로 정함): 채도 1.35배, 밝기 최대 72%(흰 화면도 눈부시지 않게), 어두운 장면은 어둡게,
+ *   화면이 거의 검으면(시계 등) [mood] 무드등. 프레임 사이는 0.4초 동안 이전 그림에서 새 그림으로 서서히 넘어간다.
  */
 class TentAmbientView(context: Context, private val swap: Boolean, private val mirror: Boolean) : View(context) {
-    private class Spot(var x: Float, var y: Float) {
-        val cur = floatArrayOf(0f, 0f, 0f)
-        val tgt = floatArrayOf(0f, 0f, 0f)
-    }
+    private var cur: Bitmap? = null
+    private var prev: Bitmap? = null
+    private var since = 0L
+    private val paint = Paint(Paint.FILTER_BITMAP_FLAG)
+    private val fade = Paint(Paint.FILTER_BITMAP_FLAG)
+    private val matrix = Matrix()
 
-    private var spots: List<Spot> = emptyList()
-    private var top = 0
-    private var bottom = 0
-    private var side = 0
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { blendMode = BlendMode.PLUS }
+    /** 화면이 거의 검을 때 켜는 무드등 색. */
+    var mood: Int = Color.rgb(255, 150, 70)
 
     init {
         setBackgroundColor(Color.BLACK)
     }
 
-    /** 바깥 화면 구역 색을 새 목표로 정한다(아무 스레드에서나). */
-    fun setZones(z: TentMode.Zones) = post {
-        if (z.top.size != top || z.left.size != side) layoutSpots(z.top.size, z.left.size)
-        val all = z.top.toList() + z.bottom.toList() + z.left.toList() + z.right.toList()
-        spots.forEachIndexed { i, s ->
-            val c = all.getOrNull(i) ?: return@forEachIndexed
-            s.tgt[0] = Color.red(c).toFloat()
-            s.tgt[1] = Color.green(c).toFloat()
-            s.tgt[2] = Color.blue(c).toFloat()
+    /** 바깥 화면 작은 그림을 새로 받는다(아무 스레드에서나). 색을 다듬고 흐려 둔 뒤 그린다. */
+    fun setFrame(frame: Bitmap) {
+        val graded = gradeAndBlur(frame)
+        post {
+            prev = cur
+            cur = graded
+            since = System.currentTimeMillis()
+            postInvalidateOnAnimation()
         }
-        postInvalidateOnAnimation()
     }
 
-    /** 한 가지 색으로 고르게 비춘다(시계만 띄웠을 때의 따뜻한 무드등 등). */
-    fun setSolid(color: Int) = post {
-        if (spots.isEmpty()) layoutSpots(8, 4)
-        spots.forEach { s ->
-            s.tgt[0] = Color.red(color).toFloat()
-            s.tgt[1] = Color.green(color).toFloat()
-            s.tgt[2] = Color.blue(color).toFloat()
+    /** 한 가지 색으로 비춘다(바깥을 찍지 못할 때). */
+    fun setSolid(color: Int) = setFrame(Bitmap.createBitmap(intArrayOf(color), 1, 1, Bitmap.Config.ARGB_8888))
+
+    /** 색 다듬기 + 상자 흐림 두 번(작은 그림이라 가볍다). 거의 검은 화면이면 무드등 한 색. */
+    private fun gradeAndBlur(src: Bitmap): Bitmap {
+        val w = src.width
+        val h = src.height
+        val px = IntArray(w * h)
+        src.getPixels(px, 0, w, 0, 0, w, h)
+        var sum = 0f
+        for (c in px) sum += (0.299f * Color.red(c) + 0.587f * Color.green(c) + 0.114f * Color.blue(c)) / 255f
+        if (sum / px.size < 0.04f) {
+            val m = Color.rgb(Color.red(mood) * 35 / 100, Color.green(mood) * 35 / 100, Color.blue(mood) * 35 / 100)
+            return Bitmap.createBitmap(intArrayOf(m), 1, 1, Bitmap.Config.ARGB_8888)
         }
-        postInvalidateOnAnimation()
+        val hsl = FloatArray(3)
+        for (i in px.indices) {
+            val c = px[i]
+            val lum = (0.299f * Color.red(c) + 0.587f * Color.green(c) + 0.114f * Color.blue(c)) / 255f
+            ColorUtils.colorToHSL(c, hsl)
+            hsl[1] = (hsl[1] * 1.35f + 0.05f).coerceAtMost(1f)
+            hsl[2] = (0.08f + 0.64f * hsl[2].pow(0.85f)).coerceAtMost(0.72f)
+            val g = ColorUtils.HSLToColor(hsl)
+            // 원래 밝기를 따라 어두운 곳은 어둡게
+            val gain = 0.25f + 0.75f * lum
+            px[i] = Color.rgb((Color.red(g) * gain).toInt(), (Color.green(g) * gain).toInt(), (Color.blue(g) * gain).toInt())
+        }
+        repeat(2) { boxBlur(px, w, h, 3) }
+        return Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888)
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        if (top > 0) layoutSpots(top, side)
-    }
-
-    /** 구역마다 빛 점의 자리를 정한다(위 [n]개·아래 [n]개·양 옆 [m]개씩). */
-    private fun layoutSpots(n: Int, m: Int) {
-        top = n
-        bottom = n
-        side = m
-        val w = width.toFloat().takeIf { it > 0 } ?: 2448f
-        val h = height.toFloat().takeIf { it > 0 } ?: 1848f
-        val half = w / 2
-        val hinge = half
-        val desk = if (swap) w else 0f
-        val inset = half * 0.08f
-        fun along(t: Float) = if (mirror) t * h else (1 - t) * h
-        val hingeX = if (swap) hinge + inset else hinge - inset
-        val deskX = if (swap) desk - inset else desk + inset
-        val list = ArrayList<Spot>()
-        for (i in 0 until n) list += Spot(hingeX, along((i + 0.5f) / n))
-        for (i in 0 until n) list += Spot(deskX, along((i + 0.5f) / n))
-        // 바깥 왼쪽·오른쪽 띠는 위(접는 선)→아래(책상) 순서라, 빛 절반 안에서 접는 선→책상 방향으로 놓는다
-        for (j in 0 until m) list += Spot(hingeX + (deskX - hingeX) * (j + 0.5f) / m, if (mirror) h * 0.06f else h * 0.94f)
-        for (j in 0 until m) list += Spot(hingeX + (deskX - hingeX) * (j + 0.5f) / m, if (mirror) h * 0.94f else h * 0.06f)
-        // 기존 색을 이어받아 자리만 바꾼다
-        val old = spots
-        list.forEachIndexed { i, s ->
-            old.getOrNull(i)?.let { o ->
-                o.cur.copyInto(s.cur)
-                o.tgt.copyInto(s.tgt)
+    private fun boxBlur(px: IntArray, w: Int, h: Int, r: Int) {
+        val tmp = IntArray(px.size)
+        for (pass in 0..1) {
+            val (len, lines) = if (pass == 0) w to h else h to w
+            for (line in 0 until lines) {
+                for (i in 0 until len) {
+                    var rr = 0
+                    var gg = 0
+                    var bb = 0
+                    var n = 0
+                    for (k in -r..r) {
+                        val j = (i + k).coerceIn(0, len - 1)
+                        val c = if (pass == 0) px[line * w + j] else px[j * w + line]
+                        rr += Color.red(c)
+                        gg += Color.green(c)
+                        bb += Color.blue(c)
+                        n++
+                    }
+                    val idx = if (pass == 0) line * w + i else i * w + line
+                    tmp[idx] = Color.rgb(rr / n, gg / n, bb / n)
+                }
             }
+            tmp.copyInto(px)
         }
-        spots = list
     }
 
     override fun onDraw(canvas: Canvas) {
+        val img = cur ?: return
         val w = width.toFloat()
         val h = height.toFloat()
-        val half = w / 2
+        val rot = display?.rotation ?: Surface.ROTATION_0
+        val turned = rot == Surface.ROTATION_90 || rot == Surface.ROTATION_270
+        val nw = if (turned) h else w
+        val nh = if (turned) w else h
         canvas.save()
-        if (swap) canvas.clipRect(half, 0f, w, h) else canvas.clipRect(0f, 0f, half, h)
-        val r = minOf(half, h) * 0.55f
-        var moving = false
-        for (s in spots) {
-            for (k in 0..2) {
-                val d = s.tgt[k] - s.cur[k]
-                if (kotlin.math.abs(d) > 0.5f) moving = true
-                s.cur[k] += d * 0.12f
+        // 화면 회전을 되돌려 '펼친 세로' 좌표로
+        when (rot) {
+            Surface.ROTATION_90 -> {
+                canvas.translate(0f, nw)
+                canvas.rotate(-90f)
             }
-            // 반사광답게 조금 밝게(1.25배) 하되 색은 그대로
-            val c = Color.rgb((s.cur[0] * 1.25f).toInt().coerceAtMost(255), (s.cur[1] * 1.25f).toInt().coerceAtMost(255), (s.cur[2] * 1.25f).toInt().coerceAtMost(255))
-            paint.shader = RadialGradient(s.x, s.y, r, intArrayOf(c, c and 0x00FFFFFF), null, Shader.TileMode.CLAMP)
-            canvas.drawCircle(s.x, s.y, r, paint)
+            Surface.ROTATION_180 -> {
+                canvas.translate(nw, nh)
+                canvas.rotate(180f)
+            }
+            Surface.ROTATION_270 -> {
+                canvas.translate(nh, 0f)
+                canvas.rotate(90f)
+            }
         }
+        val half = nw / 2
+        val left = if (swap) half else 0f
+        canvas.clipRect(left, 0f, left + half, nh)
+        val t = ((System.currentTimeMillis() - since) / 400f).coerceIn(0f, 1f)
+        prev?.takeIf { t < 1f }?.let {
+            fade.alpha = 255
+            canvas.drawBitmap(it, panelMatrix(it, left, half, nh), fade)
+        }
+        paint.alpha = (255 * t).toInt()
+        canvas.drawBitmap(img, panelMatrix(img, left, half, nh), paint)
         canvas.restore()
-        if (moving) postInvalidateOnAnimation()
+        if (t < 1f) postInvalidateOnAnimation()
+    }
+
+    /**
+     * 바깥 그림(가로 bw × 세로 bh, 위=접는 선)을 패널(폭 [pw], 높이 [ph], 왼쪽 끝 [left])에 놓는 변환.
+     * 바깥 세로축(위→아래)은 패널 가로축(접는 선 쪽→책상 쪽), 바깥 가로축(왼→오)은 패널 세로축(아래→위, 안쪽 면이라 뒤집음).
+     */
+    private fun panelMatrix(b: Bitmap, left: Float, pw: Float, ph: Float): Matrix {
+        val bw = b.width.toFloat()
+        val bh = b.height.toFloat()
+        matrix.reset()
+        // 그림을 90° 돌려 바깥 위가 오른쪽(접는 선 쪽)으로 오게: (x, y) → (bh - y, x)
+        matrix.postRotate(90f)
+        matrix.postTranslate(bh, 0f)
+        // 이제 폭 bh × 높이 bw. 바깥 왼쪽이 위로 와 있다 → 안쪽 면이라 위아래 뒤집기(mirror면 그대로)
+        if (!mirror) {
+            matrix.postScale(1f, -1f)
+            matrix.postTranslate(0f, bw)
+        }
+        matrix.postScale(pw / bh, ph / bw)
+        // 빛을 오른쪽 패널에 둘 때는 접는 선이 패널 왼쪽이 되도록 좌우를 뒤집는다
+        if (swap) {
+            matrix.postScale(-1f, 1f)
+            matrix.postTranslate(pw, 0f)
+        }
+        matrix.postTranslate(left, 0f)
+        return matrix
     }
 }
