@@ -314,6 +314,7 @@ object Copy {
     const val GOAT_STYLE_ART = "지금"
     const val GOAT_STYLE_CLASSIC = "이전"
     const val GOAT_STYLE_SILHOUETTE = "실루엣"
+    const val GOAT_STYLE_GEAR = "톱니"
     const val INK_TITLE = "잉크 색"
     const val INK_BODY = "방울·선택 표시·버튼의 색입니다. 갤럭시 테마를 고르면 색상 팔레트의 색 가운데 하나를 고릅니다."
     const val INK_TONE = "팔레트 색"

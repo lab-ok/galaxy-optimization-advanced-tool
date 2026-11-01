@@ -106,7 +106,7 @@
             android:exported="true"
             android:configChanges="density|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden"
             android:windowSoftInputMode="adjustResize" />
-        <!-- 런처 항목: 앱 설정의 염소 아이콘 모양(UiGoat)에 따라 셋 가운데 하나만 켠다. 기본은 이전 아이콘 -->
+        <!-- 런처 항목: 앱 설정의 염소 아이콘 모양(UiGoat)에 따라 넷 가운데 하나만 켠다. 기본은 이전 아이콘 -->
         <activity-alias
             android:name=".LauncherArt"
             android:enabled="false"
@@ -134,6 +134,17 @@
             android:enabled="false"
             android:exported="true"
             android:icon="@mipmap/ic_launcher_silhouette"
+            android:targetActivity=".ui.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherGear"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_gear"
             android:targetActivity=".ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

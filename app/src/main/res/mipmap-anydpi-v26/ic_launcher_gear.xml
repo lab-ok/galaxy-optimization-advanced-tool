@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 설정 톱니 안의 염소 아이콘(1.36.0, 설정 톱니 시안 9). docs/branding/goat/gear_icon.py로 만든다 -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_bg_gear" />
+    <foreground android:drawable="@drawable/ic_launcher_fg_gear" />
+    <monochrome android:drawable="@drawable/ic_launcher_mono_gear" />
+</adaptive-icon>

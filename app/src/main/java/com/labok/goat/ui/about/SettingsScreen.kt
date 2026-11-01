@@ -327,7 +327,7 @@ private fun InkTones() {
     }
 }
 
-/** 염소 아이콘 고르기: 앱 아이콘 그림 세 개(이전·지금·실루엣)를 리퀴드 칩으로 두고, 고른 쪽으로 방울이 옮겨 간다. */
+/** 염소 아이콘 고르기: 앱 아이콘 그림 네 개(이전·지금·실루엣·톱니)를 리퀴드 칩으로 두고, 고른 쪽으로 방울이 옮겨 간다. */
 @Composable
 private fun GoatStylePicker() {
     val context = LocalContext.current
@@ -337,17 +337,19 @@ private fun GoatStylePicker() {
         mapOf(
             UiGoat.Style.CLASSIC to R.mipmap.ic_launcher_classic,
             UiGoat.Style.ART to R.mipmap.ic_launcher,
-            UiGoat.Style.SILHOUETTE to R.mipmap.ic_launcher_silhouette
+            UiGoat.Style.SILHOUETTE to R.mipmap.ic_launcher_silhouette,
+            UiGoat.Style.GEAR to R.mipmap.ic_launcher_gear
         ).mapValues { (_, res) -> context.getDrawable(res)?.toBitmap(px, px)?.asImageBitmap() }
     }
     LiquidChips(
-        options = listOf(UiGoat.Style.CLASSIC, UiGoat.Style.ART, UiGoat.Style.SILHOUETTE),
+        options = listOf(UiGoat.Style.CLASSIC, UiGoat.Style.ART, UiGoat.Style.SILHOUETTE, UiGoat.Style.GEAR),
         selected = UiGoat.style,
         label = {
             when (it) {
                 UiGoat.Style.ART -> Copy.GOAT_STYLE_ART
                 UiGoat.Style.CLASSIC -> Copy.GOAT_STYLE_CLASSIC
                 UiGoat.Style.SILHOUETTE -> Copy.GOAT_STYLE_SILHOUETTE
+                UiGoat.Style.GEAR -> Copy.GOAT_STYLE_GEAR
             }
         },
         onSelect = { UiGoat.set(context, it) },

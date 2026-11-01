@@ -9,12 +9,12 @@ import androidx.compose.runtime.setValue
 
 /**
  * 염소 아이콘 모양(앱 설정): 1.14.0 전의 선 그림 염소([Style.CLASSIC], 기본), 캐릭터 그림([Style.ART]),
- * 흰 염소 옆모습 실루엣([Style.SILHOUETTE], 1.31.0, 시안 6 '걷는 염소').
+ * 흰 염소 옆모습 실루엣([Style.SILHOUETTE], 1.31.0, 시안 6 '걷는 염소'), 설정 톱니 안의 염소([Style.GEAR], 1.36.0, 설정 톱니 시안 9).
  * 앱 안 로고([com.labok.goat.ui.nav.goatPainter])와 앱 아이콘을 함께 바꾼다. 앱 아이콘은 런처 항목(activity-alias)
  * 가운데 하나만 켜서 바꾸므로, 런처에 따라 홈 화면에 놓은 아이콘이 빠져 다시 놓아야 할 수 있다.
  */
 object UiGoat {
-    enum class Style { ART, CLASSIC, SILHOUETTE }
+    enum class Style { ART, CLASSIC, SILHOUETTE, GEAR }
 
     var style by mutableStateOf(Style.CLASSIC)
         private set
@@ -43,7 +43,8 @@ object UiGoat {
     private val LAUNCHERS = mapOf(
         Style.ART to "com.labok.goat.LauncherArt",
         Style.CLASSIC to "com.labok.goat.LauncherClassic",
-        Style.SILHOUETTE to "com.labok.goat.LauncherSilhouette"
+        Style.SILHOUETTE to "com.labok.goat.LauncherSilhouette",
+        Style.GEAR to "com.labok.goat.LauncherGear"
     )
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences("ui_goat", Context.MODE_PRIVATE)

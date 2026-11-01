@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.36.0",
+        "2026-11-01",
+        "염소 아이콘에 설정 톱니 모양을 더했습니다.",
+        listOf(
+            "추가" to listOf(
+                "앱 설정 → 염소 아이콘에서 '톱니'를 고를 수 있습니다. 은색 톱니 안에 염소가 있는 무채색 아이콘으로, 앱 아이콘과 앱 안 로고가 함께 바뀝니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.35.0",
         "2026-11-01",
         "삼성 카메라에서 플렉스 모드가 켜지지 않던 문제를 고쳤습니다.",

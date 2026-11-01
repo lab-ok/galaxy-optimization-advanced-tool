@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- docs/branding/goat에서 만든 SVG를 변환한 것(svg2vd). 손으로 고치지 말고 SVG를 고친 뒤 다시 변환한다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M0.0,0.0h108.0v108.0h-108.0Z"><aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="-108.0" android:startY="0.0" android:endX="-108.0" android:endY="108.0"><item android:offset="0.0" android:color="#FF4A4A4D"/><item android:offset="1.0" android:color="#FF1B1B1D"/></gradient></aapt:attr></path>
+</vector>
