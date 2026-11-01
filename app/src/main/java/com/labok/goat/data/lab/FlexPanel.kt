@@ -62,13 +62,28 @@ object FlexPanel {
     private const val MODE_NOTIFICATION = 3101
 
     /** 화면에 보이는 전체 화면 일반 앱 작업(번호, 패키지). 시스템 UI·GOAT·홈은 뺀다. */
-    private fun frontTask(context: Context): Pair<String, String>? = Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)[^\n]*visible=true[^\n]*mode=(?:fullscreen|multi-window)""")
-        .findAll(ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out.orEmpty())
-        .map { it.groupValues[1] to it.groupValues[2] }
-        .firstOrNull { (_, pkg) -> pkg != "com.android.systemui" && !pkg.startsWith(context.packageName) }
+    private fun frontTask(context: Context): Pair<String, String>? = frontTasks(context)?.firstOrNull()
 
-    /** 지금 앞에 있는 앱을 '사용 안 함'으로 두었는지(자동 플렉스가 켜기·진동 전에 본다). */
-    fun frontIsOff(context: Context): Boolean = ShizukuAccess.status.value == ShizukuAccess.State.READY && frontTask(context)?.second?.let { AutoFlex.mode(context, it) == AutoFlex.MODE_OFF } == true
+    /** 보이는 일반 앱 작업들. 셸을 못 읽으면 null, 홈 화면처럼 보이는 앱이 없으면 빈 목록이다. */
+    private fun frontTasks(context: Context): List<Pair<String, String>>? {
+        val out = ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out ?: return null
+        return Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)[^\n]*visible=true[^\n]*mode=(?:fullscreen|multi-window)""")
+            .findAll(out)
+            .map { it.groupValues[1] to it.groupValues[2] }
+            .filter { (_, pkg) -> pkg != "com.android.systemui" && !pkg.startsWith(context.packageName) }
+            .toList()
+    }
+
+    /**
+     * 지금 앞에 있는 앱을 '사용 안 함'으로 두었거나, 홈 화면처럼 앞에 앱이 없는지(자동 플렉스가 켜기·진동 전에 본다).
+     * 홈 화면에서 반쯤 접어도 플렉스 모드 진동이 났다(11-01 소장님 신고, 1.31.0): 앞 앱이 없으면 반쯤 접힘을 걸고 울렸다.
+     * 셸을 못 읽은 경우는 모르는 것이라 '사용 안 함'으로 치지 않는다.
+     */
+    fun frontIsOff(context: Context): Boolean {
+        if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return false
+        val front = frontTasks(context) ?: return false
+        return front.firstOrNull()?.second?.let { AutoFlex.mode(context, it) == AutoFlex.MODE_OFF } ?: true
+    }
 
     /** 접을 때: 앞 앱에 고른 모드를 적용한다. */
     fun apply(context: Context) = queue.execute { applyNow(context) }
@@ -89,7 +104,7 @@ object FlexPanel {
         if (applied != null || ShizukuAccess.status.value != ShizukuAccess.State.READY) return
         val front = frontTask(context)
         if (front == null) {
-            LogRepository.from(context).add("자동 플렉스: 포그라운드 앱이 없어 플렉스 모드만 켬")
+            LogRepository.from(context).add("자동 플렉스: 앞에 앱이 없어(홈 화면) 아무것도 하지 않음")
             return
         }
         val pm = context.packageManager

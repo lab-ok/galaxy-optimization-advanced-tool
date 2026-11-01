@@ -524,9 +524,9 @@ object AutoFlex {
             var hit = false
             val clicked = click && !pausedFlow.value && clicks.feed(a, SystemClock.elapsedRealtime())
             if (clicked && horizontalFlow.value) {
-                // '사용 안 함'으로 둔 앱에서는 까딱해도 켜지 않고 울리지도 않는다(켜 둔 것을 끄는 까딱은 그대로 받는다)
+                // '사용 안 함'으로 둔 앱과 홈 화면에서는 까딱해도 켜지 않고 울리지도 않는다(켜 둔 것을 끄는 까딱은 그대로 받는다)
                 if (!latchedFlow.value && FlexPanel.frontIsOff(context)) {
-                    LogRepository.from(context).add("까딱: 사용 안 함 앱이라 무시")
+                    LogRepository.from(context).add("까딱: 사용 안 함 앱이거나 홈 화면이라 무시")
                 } else {
                     latchedFlow.value = !latchedFlow.value
                     hit = true
@@ -582,11 +582,11 @@ object AutoFlex {
         private fun set(on: Boolean) {
             if (on == activeFlow.value) return
             if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return
-            // '사용 안 함'으로 둔 앱: 반쯤 접힘을 걸지 않고 울리지도 않는다. 켜진 것으로만 두어 알림에서 다른 모드로 바꿀 수 있게 한다
+            // '사용 안 함'으로 둔 앱과 홈 화면: 반쯤 접힘을 걸지 않고 울리지도 않는다. 켜진 것으로만 두어 알림에서 다른 모드로 바꿀 수 있게 한다
             if (on && FlexPanel.frontIsOff(context)) {
                 activeFlow.value = true
                 FlexPanel.apply(context)
-                LogRepository.from(context).add("자동 플렉스: 사용 안 함 앱이라 반쯤 접힘·진동 없이 둠")
+                LogRepository.from(context).add("자동 플렉스: 사용 안 함 앱이거나 홈 화면이라 반쯤 접힘·진동 없이 둠")
                 quiet = false
                 return
             }
