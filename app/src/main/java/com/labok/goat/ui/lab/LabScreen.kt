@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe
+import com.labok.goat.data.lab.TentMode
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
@@ -65,6 +66,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
     var apiStatus by remember { mutableStateOf("") }
     var shareProgress by remember { mutableStateOf<Float?>(null) }
     var shareStatus by remember { mutableStateOf("") }
+    var tentInfo by remember { mutableStateOf("") }
 
     Column(
         Modifier
@@ -154,6 +156,36 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                     uri?.let { share(context, it) }
                 }
             })
+        }
+        Spacer(Modifier.height(Gap.Card))
+        // 텐트 모드 시험(11-01 소장님): 폴드를 반쯤 접어 엎어 세우고 바깥은 시계·유튜브, 안쪽은 간접조명으로 두 화면을 함께 쓸 수 있는지 본다
+        GlassCard(Modifier.animateContentSize()) {
+            Text("텐트 모드 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(
+                "폴드를 반쯤 접어 텐트처럼 엎어 세우고 누르세요. 바깥 화면은 시계·유튜브, 안쪽 화면은 책상을 비추는 조명이 됩니다. 뒤로 가면 끝납니다. 결과는 화면을 누르면 보이고 로그에도 남습니다.",
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton("① 듀얼 화면(공식)", modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_OFFICIAL) })
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton("② 듀얼 화면(Shizuku)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_SHIZUKU) })
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton("③ 유튜브 뒷조명", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_YOUTUBE) })
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton("기기 상태·화면 목록 보기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
+                scope.launch {
+                    tentInfo = withContext(Dispatchers.IO) {
+                        val states = TentMode.states() ?: "Shizuku 연결이 필요합니다."
+                        val shown = TentMode.displays(context).joinToString("\n") { "화면 ${it.first}: ${it.second.x}x${it.second.y} 상태 ${it.third}" }
+                        "$states\n$shown\n물리 화면 ${TentMode.physicalIds()}"
+                    }
+                }
+            })
+            if (tentInfo.isNotEmpty()) {
+                Spacer(Modifier.height(Gap.Item))
+                Text(tentInfo, color = c.ink, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp))
+            }
         }
         Spacer(Modifier.height(Gap.Card))
         GlassCard {
