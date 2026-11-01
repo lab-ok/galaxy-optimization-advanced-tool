@@ -30,7 +30,8 @@ import kotlin.math.pow
 /**
  * 앰비언트 모드(실험실, 11-02 소장님). 닫힌 폴드를 펼치기 시작하면 안쪽 화면이 바깥 화면 색으로 은은하게 빛나는 간접등이 된다.
  * - 펼치기 시작하면(세밀한 각도 [START_DEG] 넘게, 커지는 중) 바깥 화면을 기본 화면으로 둔 두 화면 동시 표시(폴드8 상태 5)로 바꾸고,
- *   안쪽 화면 두 패널에 바깥 화면을 흐리게 비춘다([TentAmbientView] both). 막 펼칠 때 가장 밝고 각도가 커질수록 어두워져 90°에서 사라진다.
+ *   안쪽 화면 왼쪽 패널에만(텐트 모드의 '빛을 오른쪽 절반으로'를 따른다) 바깥 화면을 흐리게 비춘다([TentAmbientView] opening).
+ *   막 펼칠 때 가장 밝고 각도가 커질수록 어두워져 90°에서 사라진다(11-02 실기: 양쪽에 나오고 약함 → 왼쪽만·더 밝게).
  * - [END_DEG]에 닿으면 빛을 거두고 기기 상태를 풀어, 시스템이 원래대로 안쪽 화면으로 넘어가게 둔다. 다시 닫거나 화면이 꺼지면 바로 끝낸다.
  * - 펼치는 동안 플렉스 모드를 멈춘다(상태를 되돌리면 동시 표시가 풀린다). 텐트 모드가 켜져 있으면 움직이지 않는다.
  * 세밀한 각도는 [FineHinge](Shizuku로 시스템 로그). 기본 힌지 센서는 0·90·180°만 와서 닫힘 확인에만 쓴다.
@@ -50,10 +51,10 @@ object AmbientOpen {
         GoatService.sync(context)
     }
 
-    /** 펼친 각도에 따른 밝기: 막 펼칠 때 1, 90°에서 0. 처음엔 천천히, 끝으로 갈수록 빨리 줄어든다. */
+    /** 펼친 각도에 따른 밝기: 막 펼칠 때 1, 90°에서 0. 오래 밝게 머물다 끝으로 갈수록 빨리 줄어든다. */
     fun levelFor(angle: Float): Float {
         val x = ((angle - START_DEG) / (90f - START_DEG)).coerceIn(0f, 1f)
-        return 1f - x.pow(1.6f)
+        return 1f - x.pow(2.2f)
     }
 
     fun buildNotification(context: Context): Notification {
@@ -222,7 +223,7 @@ object AmbientOpen {
             val angle = lastFine.takeIf { !it.isNaN() } ?: a
             main.post {
                 if (!glowing) return@post
-                val v = TentAmbientView(context, swap = false, mirror = false, both = true)
+                val v = TentAmbientView(context, TentDuo.swap(context), TentDuo.mirror(context), opening = true)
                 first?.let { v.setFrame(it) } ?: v.setSolid(v.mood)
                 v.level = levelFor(angle)
                 var r = TentMode.addPresentation(context, inner, v, bright = true)
