@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.data.lab.AmbientOpen
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe
@@ -157,6 +158,22 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                     apiProgress = null
                     uri?.let { share(context, it) }
                 }
+            })
+        }
+        Spacer(Modifier.height(Gap.Card))
+        // 앰비언트 모드(11-02 소장님: 실험용 옵션으로 따로). 닫힌 폴드를 펼치기 시작하면 안쪽 화면이 간접등처럼 빛나다 90°에서 사라진다
+        GlassCard {
+            Text("앰비언트 모드", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(
+                "닫힌 폴드를 펼치기 시작하면 안쪽 화면이 바깥 화면 색으로 은은하게 빛납니다. 막 펼칠 때 가장 밝고, 펼칠수록 어두워져 90°에서 사라진 뒤 안쪽 화면으로 넘어갑니다. Shizuku가 필요합니다(실험용).",
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(Gap.Item))
+            var ambientOn by remember { mutableStateOf(AmbientOpen.enabled(context)) }
+            LiquidSwitchRow("앰비언트 모드", "펼칠 때 간접등을 켭니다.", ambientOn, enabled = true, onChange = {
+                ambientOn = it
+                AmbientOpen.setEnabled(context, it)
             })
         }
         Spacer(Modifier.height(Gap.Card))

@@ -2,6 +2,7 @@ package com.labok.goat.ui.lab
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -72,7 +74,8 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
     val change by rememberUpdatedState(onRange)
     val finish by rememberUpdatedState(onRangeFinished)
     // 센서 값은 쉬지 않고 들어오므로 스프링을 매번 새로 걸지 않고(걸면 시작하기도 전에 취소돼 바늘이 멈춰 있었다),
-    // 프레임마다 목표 쪽으로 물처럼 따라간다(감쇠 있는 용수철: 살짝 지나쳤다 돌아온다)
+    // 프레임마다 목표 쪽으로 물처럼 따라간다. 세밀한 각도가 1초에 8번 계단처럼 와서, 감쇠가 약하면(0.55) 계단마다 지나쳤다 돌아와
+    // 바늘·숫자가 덜덜 떨렸다(11-02 소장님: 버벅임). 거의 임계 감쇠(0.9)로 매끄럽게 따라가고, 다 따라가면 값을 고정해 그리기를 멈춘다
     val target by rememberUpdatedState(angle)
     var pos by remember { mutableFloatStateOf(angle ?: 180f) }
     LaunchedEffect(reduce) {
@@ -87,8 +90,13 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
                 pos = t
                 continue
             }
+            if (abs(t - pos) < 0.05f && abs(vel) < 0.5f) {
+                vel = 0f
+                if (pos != t) pos = t
+                continue
+            }
             val k = 120f * UiMotion.speed * UiMotion.speed
-            val damp = 2f * sqrt(k) * UiMotion.ratio(0.55f)
+            val damp = 2f * sqrt(k) * UiMotion.ratio(0.9f)
             vel += (k * (t - pos) - damp * vel) * dt
             pos += vel * dt
         }
@@ -97,7 +105,19 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
     var held by remember { mutableIntStateOf(0) }
     // 세밀 조절: 펼쳐진 동안의 가운데 값(반원 꼭대기)
     var fineBase by remember { mutableStateOf<Int?>(null) }
-    val fineK by animateFloatAsState(if (fineBase != null) 1f else 0f, Springs.water(reduce), label = "gaugeFine")
+    // 세밀 조절이 펼쳐질 때는 빠르고 단단하게(0.2초 남짓) 열어 손잡이가 패널과 함께 곧바로 꼭대기로 간다(11-02 소장님: 가운데로 가는 게 늦음).
+    // 닫힐 때는 물처럼 출렁이며 돌아온다
+    val fineK by animateFloatAsState(
+        if (fineBase != null) 1f else 0f,
+        if (reduce) {
+            snap()
+        } else if (fineBase != null) {
+            spring(UiMotion.ratio(0.86f), UiMotion.stiffness(900f, 0.86f))
+        } else {
+            Springs.water()
+        },
+        label = "gaugeFine"
+    )
     val grow = listOf(
         animateFloatAsState(if (held == 1) 1f else 0f, Springs.water(reduce), label = "gaugeLo"),
         animateFloatAsState(if (held == 2) 1f else 0f, Springs.water(reduce), label = "gaugeHi")
@@ -131,12 +151,22 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
         return if (held == i + 1) v + (fineDeg(base, v) - v) * fineK else v.toFloat()
     }
 
-    // 물방울 손잡이: 손가락(값)을 용수철로 늦게 따라가고, 빨리 움직일수록 반원을 따라 길게 늘어났다가 멈추면 출렁이며 돌아온다
+    // 물방울 손잡이: 빨리 움직일수록 반원을 따라 길게 늘어났다가 멈추면 출렁이며 돌아온다. 끄는 동안에는 손가락을 거의 바로
+    // 따라가고(단단하고 덜 튀는 용수철), 놓거나 범위를 다시 정할 때만 물처럼 출렁인다. 끄는 동안에도 출렁이게 두면 1°마다
+    // 새로 걸린 용수철이 늦게 쫓아와 손잡이가 손가락보다 뒤처지고 떨렸다(11-02 소장님: 버벅임)
     val springs = remember { listOf(Animatable(min.toFloat()), Animatable(max.toFloat())) }
     listOf(min, max).forEachIndexed { i, v ->
         val goal = shownDeg(i, v)
+        val dragging = held == i + 1
         LaunchedEffect(goal, reduce) {
-            if (reduce) springs[i].snapTo(goal) else springs[i].animateTo(goal, spring(UiMotion.ratio(0.5f), UiMotion.stiffness(700f, 0.5f)))
+            if (reduce || (dragging && fineBase != null)) {
+                // 세밀 조절 중인 손잡이는 펼쳐지는 패널([fineK])과 같은 박자로 꼭대기에 붙는다
+                springs[i].snapTo(goal)
+            } else if (dragging) {
+                springs[i].animateTo(goal, spring(UiMotion.ratio(0.85f), UiMotion.stiffness(2200f, 0.5f)))
+            } else {
+                springs[i].animateTo(goal, spring(UiMotion.ratio(0.5f), UiMotion.stiffness(700f, 0.5f)))
+            }
         }
     }
     Box(
@@ -291,10 +321,17 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
         }
         // 가운데 큰 각도 숫자와 지금 상태
         Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(angle?.let { "${pos.roundToInt()}°" } ?: "—", color = c.ink, fontSize = 48.sp, lineHeight = 52.sp, fontWeight = FontWeight.Bold)
+            // 숫자는 따로 떼어 정수가 바뀔 때만 다시 그린다(바늘이 움직이는 매 프레임 게이지 전체를 다시 만들지 않게)
+            AngleLabel(angle != null, { pos }, c.ink)
             Text(if (active) "플렉스 모드" else "보통", color = if (active) c.ink else c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal)
         }
     }
+}
+
+@Composable
+private fun AngleLabel(known: Boolean, pos: () -> Float, color: androidx.compose.ui.graphics.Color) {
+    val shown by remember { derivedStateOf { pos().roundToInt() } }
+    Text(if (known) "$shown°" else "—", color = color, fontSize = 48.sp, lineHeight = 52.sp, fontWeight = FontWeight.Bold)
 }
 
 /** 잡았을 때 값 방울이 반원 바깥으로 떠오르는 거리(dp, 기본 조절바와 같다). */

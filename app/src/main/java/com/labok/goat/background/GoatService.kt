@@ -9,6 +9,7 @@ import android.os.IBinder
 import androidx.core.app.ServiceCompat
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.ForegroundWatcher
+import com.labok.goat.data.lab.AmbientOpen
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.NarrowBar
 import com.labok.goat.data.log.LogRepository
@@ -29,6 +30,7 @@ class GoatService : Service() {
     private val permission = Shizuku.OnRequestPermissionResultListener { _, _ -> watchApps() }
     private var shake: ShakeEngine? = null
     private var flex: AutoFlex.Engine? = null
+    private var ambient: AmbientOpen.Engine? = null
     private var shizukuHooked = false
     private var lastRunning: String? = null
 
@@ -42,11 +44,12 @@ class GoatService : Service() {
         val rotate = ShakeRotate.enabled(this) && ShakeRotate.canWrite(this)
         val autoFlex = AutoFlex.engineNeeded(this)
         val narrowBar = NarrowBar.enabled(this)
-        if (!apps && !rotate && !autoFlex && !narrowBar) {
+        val ambientOpen = AmbientOpen.enabled(this)
+        if (!apps && !rotate && !autoFlex && !narrowBar && !ambientOpen) {
             stopSelf()
             return START_NOT_STICKY
         }
-        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "플렉스 모드".takeIf { autoFlex }, "앱 폭 좁히기".takeIf { narrowBar }).joinToString("·")
+        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "플렉스 모드".takeIf { autoFlex }, "앱 폭 좁히기".takeIf { narrowBar }, "앰비언트 모드".takeIf { ambientOpen }).joinToString("·")
         if (running != lastRunning) {
             LogRepository.from(this).add("GOAT 상주 서비스: $running")
             lastRunning = running
@@ -55,7 +58,7 @@ class GoatService : Service() {
         startForegroundNow()
 
         // 자동 플렉스는 반쯤 접힘을 Shizuku로 걸어서, Shizuku 연결을 지켜본다(좁힌 앱 컨트롤러는 맨 앞 앱을 Shizuku로 따라간다)
-        if (apps || autoFlex || narrowBar) {
+        if (apps || autoFlex || narrowBar || ambientOpen) {
             if (!shizukuHooked) {
                 ShizukuAccess.watch(this)
                 Shizuku.addBinderReceivedListenerSticky(binderReceived)
@@ -73,6 +76,12 @@ class GoatService : Service() {
         } else {
             flex?.stop()
             flex = null
+        }
+        if (ambientOpen) {
+            if (ambient == null) ambient = AmbientOpen.Engine(this).also { it.start() }
+        } else {
+            ambient?.stop()
+            ambient = null
         }
 
         if (rotate) {
@@ -118,6 +127,8 @@ class GoatService : Service() {
         shake = null
         flex?.stop()
         flex = null
+        ambient?.stop()
+        ambient = null
         unhookShizuku()
         AppDensityNotifier.cancel(this)
         super.onDestroy()
@@ -131,7 +142,8 @@ class GoatService : Service() {
             val any = AppDensityNotifier.enabled(context) ||
                 (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) ||
                 AutoFlex.engineNeeded(context) ||
-                NarrowBar.enabled(context)
+                NarrowBar.enabled(context) ||
+                AmbientOpen.enabled(context)
             val intent = Intent(context, GoatService::class.java)
             if (any) {
                 runCatching { context.startForegroundService(intent) }
@@ -147,8 +159,10 @@ class GoatService : Service() {
             ShakeRotate.buildNotification(context)
         } else if (AutoFlex.engineNeeded(context)) {
             AutoFlex.buildNotification(context)
-        } else {
+        } else if (NarrowBar.enabled(context)) {
             NarrowBar.buildNotification(context)
+        } else {
+            AmbientOpen.buildNotification(context)
         }
     }
 }

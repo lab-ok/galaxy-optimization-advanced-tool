@@ -104,7 +104,7 @@ object TentMode {
      * (FLAG_PRESENTATION) 앱이 그릴 수 있다. 접근성 서비스(GOAT 상단바 제스처)가 켜져 있으면 그 문맥으로 띄워 다른 앱이 앞에 와도 남게 하고,
      * 없으면 [context]로 띄운다. 성공하면 닫는 함수, 실패하면 이유 문자열. 메인 스레드에서 부른다.
      */
-    fun addPresentation(context: Context, displayId: Int, view: View): Any = runCatching {
+    fun addPresentation(context: Context, displayId: Int, view: View, bright: Boolean = false): Any = runCatching {
         val owner: Context = StatusGestureService.current ?: context
         val d = owner.getSystemService(DisplayManager::class.java).getDisplay(displayId) ?: error("화면 $displayId 없음")
         val p = Presentation(owner, d, android.R.style.Theme_Material_NoActionBar).apply {
@@ -113,6 +113,8 @@ object TentMode {
             window?.apply {
                 addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
                 clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+                // 간접등: 그 화면 밝기를 최대로(창이 닫히면 시스템 밝기로 돌아간다)
+                if (bright) attributes = attributes.apply { screenBrightness = 1f }
             }
             show()
             window?.setLayout(-1, -1)
