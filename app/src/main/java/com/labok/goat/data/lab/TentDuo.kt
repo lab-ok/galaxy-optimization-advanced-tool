@@ -39,6 +39,9 @@ object TentDuo {
     private var light: TentAmbientView? = null
     private var sampler: Thread? = null
     private var hingeListener: SensorEventListener? = null
+    private var fine: FineHinge? = null
+
+    @Volatile private var fineAngle = Float.NaN
     private var autoBefore: Int? = null
 
     /** 빛을 오른쪽 절반으로 옮길지(방향 확인 뒤 소장님이 고른다). */
@@ -81,7 +84,12 @@ object TentDuo {
         val inner = TentMode.otherDisplay(context, Display.DEFAULT_DISPLAY)
         log(context, "시작: 안쪽 화면 $inner · " + TentMode.displays(context).joinToString { "${it.first}:${it.second.x}x${it.second.y}" })
         if (check || AmbientOpen.clock(context)) {
-            context.startActivity(Intent(context, StandbyActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(StandbyActivity.EXTRA_CHECK, check))
+            // 바깥(기본) 화면으로 못 박아 연다. 펼칠 때 빛 창이 안쪽 화면에 있으면 시스템이 안쪽(화면 1)으로 열려다 막아
+            // 세션 전체가 실패했다(11-02 실기 SecurityException launchDisplayId=1). 시계가 안 떠도 빛은 계속 켠다
+            val opts = android.app.ActivityOptions.makeBasic().setLaunchDisplayId(Display.DEFAULT_DISPLAY).toBundle()
+            runCatching {
+                context.startActivity(Intent(context, StandbyActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(StandbyActivity.EXTRA_CHECK, check), opts)
+            }.onFailure { log(context, "시계 띄우기 실패(빛은 계속): ${it.javaClass.simpleName} ${it.message}") }
         }
         var view: TentAmbientView? = null
         if (inner != null) {
@@ -136,14 +144,28 @@ object TentDuo {
         }
     }
 
-    /** 펴거나 닫으면 끝낸다(기본 힌지 센서는 폴드8에서 0·90·180 정도로 거칠게 온다). */
+    /**
+     * 펴거나 닫으면 끝낸다. 기본 힌지 센서는 폴드8에서 0·90·180°로만 와서, 30~50°로 반쯤 펴 세워 두어도 0°라고 해
+     * 시작하자마자 꺼졌다(11-02 실기 "자꾸 꺼짐"). 세밀한 각도([FineHinge])로 판단하고, 기본 센서의 0°는 세밀한 각도도
+     * 닫힘 가까이(20° 아래)였을 때만 믿는다. 180°(다 폄)는 그대로 믿는다.
+     */
     private fun watchHinge(context: Context) {
         val sm = context.getSystemService(SensorManager::class.java)
+        fineAngle = Float.NaN
+        fine = FineHinge { a ->
+            fineAngle = a
+            if (a >= 170f || a <= 6f) main.post { stop(context, "세밀한 힌지 ${a.toInt()}°") }
+        }.also { it.start() }
         val hinge = sm.getDefaultSensor(Sensor.TYPE_HINGE_ANGLE) ?: return
         val l = object : SensorEventListener {
             override fun onSensorChanged(e: SensorEvent) {
                 val a = e.values[0]
-                if (a >= 170f || a <= 10f) stop(context, "힌지 ${a.toInt()}°")
+                val f = fineAngle
+                if (a >= 179f) {
+                    stop(context, "힌지 ${a.toInt()}°")
+                } else if (a <= 1f && (f.isNaN() || f < 20f)) {
+                    stop(context, "힌지 ${a.toInt()}°(세밀 ${if (f.isNaN()) "-" else f.toInt().toString()}°)")
+                }
             }
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
         }
@@ -166,6 +188,8 @@ object TentDuo {
             StandbyActivity.current?.finish()
             hingeListener?.let { app.getSystemService(SensorManager::class.java).unregisterListener(it) }
             hingeListener = null
+            fine?.stop()
+            fine = null
         }
         worker.execute {
             Thread.sleep(450)
