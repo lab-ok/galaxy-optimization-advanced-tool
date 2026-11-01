@@ -145,6 +145,7 @@ object ShakeRotate {
             if (!lock(context, currentRotation(context))) return false
             prefs(context).edit().putBoolean("on", true).putInt("auto_before", auto).apply()
             log.add("흔들어서 화면 회전 켜짐(자동 회전 ${if (auto == 1) "켜져 있었음" else "꺼져 있었음"} → 잠금)")
+            applySuggestions(context)
             start(context)
         } else {
             val auto = prefs(context).getInt("auto_before", 1)
@@ -152,8 +153,43 @@ object ShakeRotate {
             GoatService.sync(context)
             runCatching { Settings.System.putInt(cr, Settings.System.ACCELEROMETER_ROTATION, auto) }
             log.add("흔들어서 화면 회전 꺼짐(자동 회전 ${if (auto == 1) "켜기" else "끄기"}로 되돌림)")
+            applySuggestions(context)
         }
         return true
+    }
+
+    /**
+     * 흔들기 회전 중에는 시스템 회전 제안 버튼(자동 회전이 꺼진 채 폰을 돌리면 잠깐 뜨는 버튼)을 숨길지. 기본 켜짐.
+     * 흔들기 회전은 자동 회전을 끈 채 쓰므로 이 버튼이 자주 튀어나와 거슬렸다(11-01 소장님: GOAT 설정으로 넣기).
+     */
+    fun hideSuggestions(context: Context): Boolean = prefs(context).getBoolean("hide_suggest", true)
+
+    fun setHideSuggestions(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("hide_suggest", on).apply()
+        applySuggestions(context)
+    }
+
+    /**
+     * 보안 설정 show_rotation_suggestions를 지금 상태에 맞춘다: 흔들기 회전이 켜져 있고 숨기기를 골랐으면 0, 아니면 숨기기 전 값으로 되돌린다.
+     * 숨기기 전 값은 한 번만 저장해 두었다가 되돌릴 때 쓴다. 기기에 따라 재부팅하면 기본값으로 돌아가므로 [start]에서도 다시 맞춘다.
+     */
+    fun applySuggestions(context: Context) {
+        if (!canWrite(context)) return
+        val cr = context.contentResolver
+        val p = prefs(context)
+        runCatching {
+            if (enabled(context) && hideSuggestions(context)) {
+                if (!p.contains("suggest_before")) p.edit().putInt("suggest_before", Settings.Secure.getInt(cr, SHOW_ROTATION_SUGGESTIONS, 1)).apply()
+                if (Settings.Secure.getInt(cr, SHOW_ROTATION_SUGGESTIONS, 1) != 0) {
+                    Settings.Secure.putInt(cr, SHOW_ROTATION_SUGGESTIONS, 0)
+                    LogRepository.from(context).add("흔들어서 화면 회전: 회전 제안 버튼 숨김")
+                }
+            } else if (p.contains("suggest_before")) {
+                Settings.Secure.putInt(cr, SHOW_ROTATION_SUGGESTIONS, p.getInt("suggest_before", 1))
+                p.edit().remove("suggest_before").apply()
+                LogRepository.from(context).add("흔들어서 화면 회전: 회전 제안 버튼 되돌림")
+            }
+        }
     }
 
     /**
@@ -161,6 +197,7 @@ object ShakeRotate {
      * 알림창 앱별 배율 조절과 같은 서비스·알림 하나를 쓴다([GoatService]).
      */
     fun start(context: Context) {
+        applySuggestions(context)
         if (enabled(context) && canWrite(context)) GoatService.sync(context)
     }
 
@@ -205,6 +242,9 @@ object ShakeRotate {
             .setContentIntent(open)
             .build()
     }
+
+    /** 시스템 회전 제안 버튼 표시(보안 설정, 공개 상수가 없어 문자열로 쓴다). */
+    private const val SHOW_ROTATION_SUGGESTIONS = "show_rotation_suggestions"
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 }

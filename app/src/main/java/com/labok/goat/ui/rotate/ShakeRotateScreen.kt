@@ -56,7 +56,6 @@ import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
-import com.labok.goat.ui.components.settingsIntent
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidSlider
@@ -279,18 +278,15 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                 }
             }
         }
-        // 회전 제안 버튼: 흔들기 회전은 자동 회전을 끈 채 쓰므로 폰을 돌리면 시스템 회전 버튼이 잠깐 뜬다. 삼성 설정에 끄기가 있어
-        // GOAT가 직접 끄지 않고 그 설정으로 바로 가는 버튼만 둔다(11-01 소장님: 바로가기). 자동 회전 설정이 없으면 디스플레이 설정을 연다
+        // 회전 제안 버튼: 흔들기 회전은 자동 회전을 끈 채 쓰므로 폰을 돌리면 시스템 회전 버튼이 잠깐 뜬다. 켜 두면 흔들기 회전 중에만 숨기고
+        // 끄면 원래대로 둔다(11-01 소장님: 바로가기 대신 GOAT 설정으로)
         item(key = "rotateButton") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    Text(Copy.SHAKE_ROTATE_BUTTON_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text(Copy.SHAKE_ROTATE_BUTTON_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Text(Copy.SHAKE_ROTATE_BUTTON_HOW, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.SHAKE_ROTATE_BUTTON_OPEN, primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
-                        runCatching { context.startActivity(settingsIntent(AUTO_ROTATE_SETTINGS)) }
-                            .onFailure { runCatching { context.startActivity(settingsIntent(Settings.ACTION_DISPLAY_SETTINGS)) } }
+                    var hide by remember { mutableStateOf(ShakeRotate.hideSuggestions(context)) }
+                    LiquidSwitchRow(Copy.SHAKE_ROTATE_BUTTON_TITLE, Copy.SHAKE_ROTATE_BUTTON_BODY, hide, enabled = true, onChange = {
+                        hide = it
+                        ShakeRotate.setHideSuggestions(context, it)
                     })
                 }
             }
@@ -409,6 +405,3 @@ internal fun ShakeRotateHelpSheet() {
         )
     }
 }
-
-/** 자동 회전 설정 화면(안드로이드 12부터, 공개 상수가 없어 문자열로 쓴다). */
-private const val AUTO_ROTATE_SETTINGS = "android.settings.AUTO_ROTATE_SETTINGS"

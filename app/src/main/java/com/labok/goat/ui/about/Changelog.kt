@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.39.0",
+        "2026-11-01",
+        "흔들어서 화면 회전 중에는 회전 버튼을 숨깁니다.",
+        listOf(
+            "변경" to listOf(
+                "흔들어서 화면 회전: '회전 버튼 숨기기'를 켜 두면(기본) 폰을 돌릴 때 뜨는 회전 버튼이 나오지 않습니다. 흔들기 회전을 끄면 원래대로 돌아갑니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.38.0",
         "2026-11-01",
         "흔들어서 화면 회전에 회전 버튼 설정 바로가기를 넣었습니다.",
