@@ -61,28 +61,27 @@ object FlexPanel {
     private const val MODE_CHANNEL = "auto_flex_mode"
     private const val MODE_NOTIFICATION = 3101
 
-    /** 화면에 보이는 전체 화면 일반 앱 작업(번호, 패키지). 시스템 UI·GOAT·홈은 뺀다. */
-    private fun frontTask(context: Context): Pair<String, String>? = frontTasks(context)?.firstOrNull()
-
-    /** 보이는 일반 앱 작업들. 셸을 못 읽으면 null, 홈 화면처럼 보이는 앱이 없으면 빈 목록이다. */
-    private fun frontTasks(context: Context): List<Pair<String, String>>? {
-        val out = ShizukuAccess.shell("dumpsys activity activities | grep -E 'Task\\{'")?.out ?: return null
-        return Regex("""Task\{[0-9a-f]+ #(\d+) type=standard A=\d+:([\w.]+)[^\n]*visible=true[^\n]*mode=(?:fullscreen|multi-window)""")
-            .findAll(out)
-            .map { it.groupValues[1] to it.groupValues[2] }
-            .filter { (_, pkg) -> pkg != "com.android.systemui" && !pkg.startsWith(context.packageName) }
-            .toList()
+    /**
+     * 앞(포커스된) 작업의 앱 패키지. 못 읽으면 null, 홈·최근 앱 화면이나 시스템 UI·GOAT처럼 앞에 다룰 앱이 없으면 "".
+     * 예전에는 `dumpsys activity activities`의 작업 줄에서 `A=` 뒤를 패키지로 읽었는데, 그것은 작업 친화(taskAffinity)라
+     * 삼성 카메라처럼 패키지와 다른 앱(android.task.camera)은 '사용 안 함'으로 잘못 보아 플렉스 모드가 걸리지 않았다(11-01 소장님 신고, 1.34.0).
+     */
+    private fun frontPkg(context: Context): String? {
+        val t = ShizukuAccess.focusedTask() ?: return null
+        val pkg = t.basePkg ?: t.pkg
+        if (t.home || pkg == null || pkg == "com.android.systemui" || pkg.startsWith(context.packageName)) return ""
+        return pkg
     }
 
     /**
      * 지금 앞에 있는 앱을 '사용 안 함'으로 두었거나, 홈 화면처럼 앞에 앱이 없는지(자동 플렉스가 켜기·진동 전에 본다).
      * 홈 화면에서 반쯤 접어도 플렉스 모드 진동이 났다(11-01 소장님 신고, 1.31.0): 앞 앱이 없으면 반쯤 접힘을 걸고 울렸다.
-     * 셸을 못 읽은 경우는 모르는 것이라 '사용 안 함'으로 치지 않는다.
+     * 앞 작업을 못 읽은 경우는 모르는 것이라 '사용 안 함'으로 치지 않는다.
      */
     fun frontIsOff(context: Context): Boolean {
         if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return false
-        val front = frontTasks(context) ?: return false
-        return front.firstOrNull()?.second?.let { AutoFlex.mode(context, it) == AutoFlex.MODE_OFF } ?: true
+        val pkg = frontPkg(context) ?: return false
+        return pkg.isEmpty() || AutoFlex.mode(context, pkg) == AutoFlex.MODE_OFF
     }
 
     /** 접을 때: 앞 앱에 고른 모드를 적용한다. */
@@ -102,14 +101,14 @@ object FlexPanel {
 
     private fun applyNow(context: Context) {
         if (applied != null || ShizukuAccess.status.value != ShizukuAccess.State.READY) return
-        val front = frontTask(context)
-        if (front == null) {
+        val front = frontPkg(context)
+        if (front.isNullOrEmpty()) {
             LogRepository.from(context).add("자동 플렉스: 앞에 앱이 없어(홈 화면) 아무것도 하지 않음")
             return
         }
         val pm = context.packageManager
-        val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(front.second, 0)).toString() }.getOrDefault(front.second)
-        val mode = AutoFlex.mode(context, front.second)
+        val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(front, 0)).toString() }.getOrDefault(front)
+        val mode = AutoFlex.mode(context, front)
         // 사용 안 함: 걸어 둔 반쯤 접힘을 풀어 이 앱에서는 아무것도 바뀌지 않게 한다(알림으로 다른 모드로 바꿀 수 있게 알림은 남긴다).
         // 플렉스 모드는 알림으로 바꿔 들어온 경우를 위해 반쯤 접힘을 다시 건다
         if (mode == AutoFlex.MODE_OFF) {
@@ -117,9 +116,9 @@ object FlexPanel {
         } else if (!forced) {
             forceHalfOpened(context)
         }
-        applied = Applied(mode, front.second, label).also { notifyMode(context, it) }
+        applied = Applied(mode, front, label).also { notifyMode(context, it) }
         // 어느 앱에서 켜졌는지 남긴다(11-01: 진동이 울린 때 앞 앱을 진단 로그로 알 수 없었다)
-        LogRepository.from(context).add("자동 플렉스: $label(${front.second})에 ${AutoFlex.modeLabel(mode)}")
+        LogRepository.from(context).add("자동 플렉스: $label($front)에 ${AutoFlex.modeLabel(mode)}")
     }
 
     private fun releaseNow(context: Context) {
@@ -131,7 +130,7 @@ object FlexPanel {
     /** 켜져 있는 동안 지금 앱·모드를 보여 주고, 알림 버튼으로 모드를 바꿀 수 있게 한다. */
     private fun notifyMode(context: Context, s: Applied) {
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(MODE_CHANNEL, "자동 플렉스 모드 바꾸기", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
+        nm.createNotificationChannel(NotificationChannel(MODE_CHANNEL, "플렉스 모드 바꾸기", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
         val b = NotificationCompat.Builder(context, MODE_CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setContentTitle("${s.label} · ${AutoFlex.modeLabel(s.mode)}")

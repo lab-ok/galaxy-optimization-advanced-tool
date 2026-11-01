@@ -44,6 +44,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.35.0",
+        "2026-11-01",
+        "삼성 카메라에서 플렉스 모드가 켜지지 않던 문제를 고쳤습니다.",
+        listOf(
+            "변경" to listOf(
+                "플렉스 모드: 삼성 카메라처럼 앱 이름을 잘못 읽던 앱에서도 앱별 설정대로 동작합니다.",
+                "메뉴 이름을 '자동 플렉스 모드'에서 '플렉스 모드'로 바꿨습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.34.0",
         "2026-11-01",
         "반쯤 접은 채 폰을 돌릴 때마다 자동 플렉스 모드가 울리던 문제를 고쳤습니다.",

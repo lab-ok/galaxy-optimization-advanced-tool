@@ -339,11 +339,11 @@ object AutoFlex {
 
     fun buildNotification(context: Context): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "자동 플렉스 모드", NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) })
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "플렉스 모드", NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) })
         val open = PendingIntent.getActivity(context, 21, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
-            .setContentTitle(if (enabled(context)) "자동 플렉스 모드" else "가까이 접으면 밝기 고정")
+            .setContentTitle(if (enabled(context)) "플렉스 모드" else "가까이 접으면 밝기 고정")
             .setContentText(if (enabled(context)) "반쯤 접으면 플렉스 모드로 바뀝니다" else "50° 안쪽으로 접으면 밝기를 고정합니다")
             .setOngoing(true)
             .setOnlyAlertOnce(true)
