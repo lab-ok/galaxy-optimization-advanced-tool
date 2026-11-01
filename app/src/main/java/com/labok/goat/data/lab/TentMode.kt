@@ -51,7 +51,16 @@ object TentMode {
     /** [pkg]의 첫 화면을 [displayId] 화면에 띄운다(Shizuku 셸이라 어느 화면에나 띄울 수 있다). 성공하면 null. */
     fun launchOnDisplay(context: Context, pkg: String, displayId: Int): String? {
         val comp = context.packageManager.getLaunchIntentForPackage(pkg)?.component?.flattenToShortString() ?: return "$pkg 앱이 없습니다."
-        val r = ShizukuAccess.shell("am start --display $displayId -n $comp") ?: return "Shizuku 연결이 필요합니다."
+        return launchComponent(context, comp, displayId)
+    }
+
+    /**
+     * 화면 이름 [comp]를 [displayId] 화면에 띄운다. 앱이 다른 화면에 직접 띄우면 권한 거부가 나서(폴드8 실기 11-01) Shizuku 셸로 띄운다.
+     * 유튜브의 첫 화면 이름에는 `$`가 들어 있어(Shell$HomeActivity) 셸이 변수로 읽지 않게 작은따옴표로 감싼다.
+     */
+    fun launchComponent(context: Context, comp: String, displayId: Int): String? {
+        val pkg = comp.substringBefore('/')
+        val r = ShizukuAccess.shell("am start --display $displayId -n '$comp'") ?: return "Shizuku 연결이 필요합니다."
         val err = if (r.ok && !r.out.contains("Error")) null else (r.err + r.out).trim().take(200)
         LogRepository.from(context).add("텐트 모드 시험: $pkg 을(를) 화면 $displayId 에 띄움" + (err?.let { " 실패($it)" } ?: ""))
         return err

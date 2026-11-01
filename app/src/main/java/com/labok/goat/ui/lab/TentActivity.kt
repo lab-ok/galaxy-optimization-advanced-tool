@@ -2,7 +2,6 @@ package com.labok.goat.ui.lab
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
-import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -28,13 +27,19 @@ import androidx.window.area.WindowAreaPresentationSessionCallback
 import androidx.window.area.WindowAreaSessionPresenter
 import androidx.window.core.ExperimentalWindowApi
 import com.labok.goat.data.lab.TentMode
+import com.labok.goat.data.log.DiagnosticReport
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.log.PublicLogFile
 import java.util.concurrent.Executor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * 텐트 모드 시험 화면(실험실, 11-01 소장님). 안쪽 화면에 뜨고, 바깥 화면에는 [mode]에 따라 시계나 유튜브를 띄운다.
@@ -78,6 +83,101 @@ class TentActivity : ComponentActivity() {
             MODE_OFFICIAL -> startOfficial()
             MODE_SHIZUKU -> startShizuku(youtube = false)
             MODE_YOUTUBE -> startShizuku(youtube = true)
+            MODE_ALL -> runAll()
+        }
+    }
+
+    /**
+     * 전체 시험(11-01 소장님: 텐트 자세 그대로 다 시험하고 바로 진단을 보내게): ① 공식 듀얼 화면 5초 → ② 두 화면 동시 표시 + 바깥 시계 6초
+     * → ③ 바깥 유튜브 + 뒷조명 10초를 차례로 하고, 기기 상태를 되돌린 뒤 진단 파일(시험 기록 포함)을 저장해 공유 창을 연다.
+     */
+    @OptIn(ExperimentalWindowApi::class)
+    private fun runAll() {
+        val trail = StringBuilder()
+        fun note(t: String) {
+            trail.append(t).append('\n')
+            say(t)
+        }
+        scope.launch {
+            note("== ① 공식 듀얼 화면 ==")
+            val controller = runCatching { WindowAreaController.getOrCreate() }.getOrNull()
+            val infos = controller?.let { withTimeoutOrNull(3000) { it.windowAreaInfos.first() } }
+            val info = infos?.firstOrNull { it.type == WindowAreaInfo.Type.TYPE_REAR_FACING }
+            val cap = info?.getCapability(WindowAreaCapability.Operation.OPERATION_PRESENT_ON_AREA)
+            note("영역 ${infos?.size ?: "없음"} · 상태 ${cap?.status ?: "없음"}")
+            if (controller != null && info != null && cap?.status == WindowAreaCapability.Status.WINDOW_AREA_STATUS_AVAILABLE) {
+                controller.presentContentOnWindowArea(
+                    info.token,
+                    this@TentActivity,
+                    { runOnUiThread(it) },
+                    object : WindowAreaPresentationSessionCallback {
+                        override fun onSessionStarted(session: WindowAreaSessionPresenter) {
+                            this@TentActivity.session = session
+                            session.setContentView(clockView(session.context))
+                            note("시작함 · 바깥 화면에 시계")
+                        }
+
+                        override fun onSessionEnded(t: Throwable?) {
+                            session = null
+                            note("끝남" + (t?.let { " (${it.message})" } ?: ""))
+                        }
+
+                        override fun onContainerVisibilityChanged(isVisible: Boolean) = note("바깥 화면 ${if (isVisible) "보임" else "안 보임"}")
+                    }
+                )
+                delay(5000)
+                runCatching { session?.close() }
+                delay(800)
+            }
+            withContext(Dispatchers.IO) {
+                note("== ② 두 화면 동시 표시 + 바깥 시계 ==")
+                note("기기 상태: " + (TentMode.states()?.let { s -> Regex("identifier=(\\d+), name='([^']*)'").findAll(s).joinToString { "${it.groupValues[1]}:${it.groupValues[2]}" } } ?: "읽지 못함"))
+                val err = TentMode.enterConcurrent(this@TentActivity)
+                if (err != null) {
+                    note("실패: $err")
+                } else {
+                    forcedState = true
+                    Thread.sleep(1000)
+                    val here = display?.displayId ?: 0
+                    val other = TentMode.otherDisplay(this@TentActivity, here)
+                    note("화면들 " + TentMode.displays(this@TentActivity).joinToString { "${it.first}:${it.second.x}x${it.second.y}/${it.third}" } + " · 지금 $here · 바깥 $other")
+                    if (other != null) {
+                        note("시계 띄우기: " + (TentMode.launchComponent(this@TentActivity, "$packageName/${TentClockActivity::class.java.name}", other) ?: "성공"))
+                        Thread.sleep(6000)
+                        note("== ③ 바깥 유튜브 + 뒷조명 ==")
+                        note("유튜브 띄우기: " + (TentMode.launchOnDisplay(this@TentActivity, YOUTUBE, other) ?: "성공"))
+                        Thread.sleep(3000)
+                        val size = TentMode.displays(this@TentActivity).firstOrNull { it.first == other }?.second
+                        val ids = TentMode.physicalIds()
+                        note("물리 화면 $ids · 바깥 크기 ${size?.x}x${size?.y}")
+                        val phys = ids.firstOrNull { id ->
+                            TentMode.edgeColor(id)?.let { (_, w, hh) -> size == null || (w == size.x && hh == size.y) || (w == size.y && hh == size.x) } == true
+                        }
+                        note("바깥 화면 물리 번호: ${phys ?: "찾지 못함"}")
+                        if (phys != null) {
+                            repeat(20) {
+                                TentMode.edgeColor(phys)?.let { (c, _, _) ->
+                                    val target = boost(c)
+                                    runOnUiThread { root.background = glow(target) }
+                                    if (it % 4 == 0) note("색 #%06X".format(c and 0xFFFFFF))
+                                }
+                                Thread.sleep(500)
+                            }
+                        }
+                    }
+                    TentMode.reset(this@TentActivity)
+                    forcedState = false
+                    note("기기 상태 원래대로")
+                }
+                val text = "== 텐트 모드 전체 시험 ==\n$trail\n" + DiagnosticReport.build(this@TentActivity)
+                val uri = PublicLogFile.saveNew(this@TentActivity, PublicLogFile.timestampedName("goat-tent-test"), text)
+                withContext(Dispatchers.Main) {
+                    if (uri == null) return@withContext say("진단 파일을 저장하지 못했습니다.")
+                    val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    runCatching { startActivity(Intent.createChooser(send, "텐트 모드 시험 결과 보내기")) }
+                    finish()
+                }
+            }
         }
     }
 
@@ -146,11 +246,7 @@ class TentActivity : ComponentActivity() {
             val all = TentMode.displays(this).joinToString { "${it.first}:${it.second.x}x${it.second.y}/${it.third}" }
             if (other == null) return@post say("바깥 화면을 찾지 못했습니다 · 화면들 $all")
             if (!youtube) {
-                runOnUiThread {
-                    runCatching {
-                        startActivity(Intent(this, TentClockActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK), ActivityOptions.makeBasic().setLaunchDisplayId(other).toBundle())
-                    }.onFailure { say("바깥 화면에 시계를 띄우지 못했습니다: ${it.message}") }
-                }
+                TentMode.launchComponent(this, "$packageName/${TentClockActivity::class.java.name}", other)?.let { return@post say("바깥 화면에 시계를 띄우지 못했습니다: $it") }
                 return@post say("두 화면 동시 표시: 바깥 화면 $other 에 시계 · 화면들 $all")
             }
             TentMode.launchOnDisplay(this, YOUTUBE, other)?.let { return@post say("유튜브를 바깥 화면에 띄우지 못했습니다: $it") }
@@ -206,6 +302,7 @@ class TentActivity : ComponentActivity() {
         const val MODE_OFFICIAL = "official"
         const val MODE_SHIZUKU = "shizuku"
         const val MODE_YOUTUBE = "youtube"
+        const val MODE_ALL = "all"
         private const val YOUTUBE = "com.google.android.youtube"
 
         /** 따뜻한 주황 간접조명 색. */

@@ -219,9 +219,10 @@
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
             android:configChanges="density|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden" />
+        <!-- 바깥 화면 시계는 Shizuku 셸(am start 화면 지정)로 띄우므로 내보낸다(시계만 보여 주는 화면이라 위험이 없다) -->
         <activity
             android:name=".ui.lab.TentClockActivity"
-            android:exported="false"
+            android:exported="true"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
             android:configChanges="density|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden" />
