@@ -169,13 +169,9 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("전체 시험 후 진단 보내기", modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_ALL) })
             Spacer(Modifier.height(Gap.Item))
-            Text("텐트 자세로 세워 두고 누르면 ①②③을 차례로 약 30초 동안 시험한 뒤 진단 파일 공유 창이 뜹니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text("텐트 자세로 세워 두고 누르면 ①~④를 차례로 약 40초 동안 시험한 뒤 진단 파일 공유 창이 뜹니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("① 듀얼 화면(공식)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_OFFICIAL) })
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton("② 듀얼 화면(Shizuku)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_SHIZUKU) })
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton("③ 유튜브 뒷조명", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_YOUTUBE) })
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("기기 상태·화면 목록 보기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
                 scope.launch {

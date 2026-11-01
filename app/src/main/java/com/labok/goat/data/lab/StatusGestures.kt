@@ -112,6 +112,7 @@ class StatusGestureService : AccessibilityService() {
     }
 
     override fun onServiceConnected() {
+        current = this
         displays.registerDisplayListener(listener, main)
         refresh()
     }
@@ -383,6 +384,21 @@ class StatusGestureService : AccessibilityService() {
             }
             return true
         }
+    }
+
+    override fun onDestroy() {
+        if (current === this) current = null
+        super.onDestroy()
+    }
+
+    companion object {
+        /**
+         * 연결된 서비스(없으면 null). 텐트 모드 시험이 두 화면 동시 표시 상태에서 다른 화면에 Presentation 창을 띄울 때 쓴다
+         * (접근성 서비스 문맥은 다른 앱이 앞에 있어도 창을 유지한다. duo-fold-live가 폴드8에서 같은 방식을 쓴다).
+         */
+        @Volatile
+        var current: StatusGestureService? = null
+            private set
     }
 }
 

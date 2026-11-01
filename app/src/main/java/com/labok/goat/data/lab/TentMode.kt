@@ -1,9 +1,14 @@
 package com.labok.goat.data.lab
 
+import android.app.Presentation
 import android.content.Context
+import android.graphics.PixelFormat
 import android.graphics.Point
 import android.hardware.display.DisplayManager
 import android.view.Display
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 
@@ -21,10 +26,11 @@ object TentMode {
         .firstOrNull { m -> m.groupValues[2].uppercase().let { "CONCURRENT" in it || "DUAL" in it } }
         ?.groupValues?.get(1)?.toInt()
 
-    /** 두 화면 동시 표시 상태로 바꾼다. 성공하면 null, 실패하면 이유. */
-    fun enterConcurrent(context: Context): String? {
+    /** 두 화면 동시 표시 상태로 바꾼다. [outer]면 바깥 화면을 기본 화면으로 두는 상태(CONCURRENT_OUTER_DEFAULT). 성공하면 null, 실패하면 이유. */
+    fun enterConcurrent(context: Context, outer: Boolean = false): String? {
         val states = states() ?: return "Shizuku 연결이 필요합니다."
-        val id = concurrentStateId(states) ?: return "이 기기에는 두 화면 동시 표시 상태가 없습니다.\n$states".take(600)
+        val id = (if (outer) Regex("identifier=(\\d+), name='CONCURRENT_OUTER_DEFAULT'").find(states)?.groupValues?.get(1)?.toInt() else concurrentStateId(states))
+            ?: return "이 기기에는 두 화면 동시 표시 상태가 없습니다.\n$states".take(600)
         val r = ShizukuAccess.shell("cmd device_state state $id") ?: return "Shizuku 연결이 필요합니다."
         val err = if (r.ok) null else r.err.ifBlank { r.out }.trim().take(200).ifBlank { "실패" }
         LogRepository.from(context).add("텐트 모드 시험: 두 화면 동시 표시(상태 $id)" + (err?.let { " 실패($it)" } ?: ""))
@@ -35,6 +41,11 @@ object TentMode {
     fun reset(context: Context) {
         val r = ShizukuAccess.shell("cmd device_state state reset")
         LogRepository.from(context).add("텐트 모드 시험: 기기 상태 원래대로" + if (r?.ok == true) "" else " 실패")
+    }
+
+    /** 화면 플래그 요약(시험 기록용): 번호와 Presentation 여부. */
+    fun flagsLine(context: Context): String = context.getSystemService(DisplayManager::class.java).displays.joinToString { d ->
+        "${d.displayId}:flags=0x${Integer.toHexString(d.flags)}${if (d.flags and Display.FLAG_PRESENTATION != 0) "(presentation)" else ""}"
     }
 
     /** 켜져 있는 화면들(번호, 크기). */
@@ -66,6 +77,50 @@ object TentMode {
         return err
     }
 
+    /**
+     * [displayId] 화면에 '다른 앱 위에 표시' 창으로 [view]를 꽉 차게 띄운다. 두 화면 동시 표시 상태에서 다른 화면에 앱(액티비티)을 띄우는 것은
+     * 셸도 권한 거부라(폴드8 실기 11-01) 창으로 그린다. 성공하면 창을 닫는 함수, 실패하면 이유 문자열.
+     */
+    fun addOverlay(context: Context, displayId: Int, view: View): Any = runCatching {
+        val d = context.getSystemService(DisplayManager::class.java).getDisplay(displayId) ?: error("화면 $displayId 없음")
+        val ctx = context.createDisplayContext(d).createWindowContext(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null)
+        val wm = ctx.getSystemService(WindowManager::class.java)
+        val lp = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED,
+            PixelFormat.OPAQUE
+        ).apply { screenBrightness = 1f }
+        (view.parent as? ViewGroup)?.removeView(view)
+        wm.addView(view, lp)
+        val remove: () -> Unit = { runCatching { wm.removeViewImmediate(view) } }
+        remove
+    }.getOrElse { "${it.javaClass.simpleName}: ${it.message}".take(200) }
+
+    /**
+     * [displayId] 화면에 Presentation 창으로 [view]를 꽉 차게 띄운다. 두 화면 동시 표시 상태의 둘째 화면은 Presentation 화면이라
+     * (FLAG_PRESENTATION) 앱이 그릴 수 있다. 접근성 서비스(GOAT 상단바 제스처)가 켜져 있으면 그 문맥으로 띄워 다른 앱이 앞에 와도 남게 하고,
+     * 없으면 [context]로 띄운다. 성공하면 닫는 함수, 실패하면 이유 문자열. 메인 스레드에서 부른다.
+     */
+    fun addPresentation(context: Context, displayId: Int, view: View): Any = runCatching {
+        val owner: Context = StatusGestureService.current ?: context
+        val d = owner.getSystemService(DisplayManager::class.java).getDisplay(displayId) ?: error("화면 $displayId 없음")
+        val p = Presentation(owner, d, android.R.style.Theme_Material_NoActionBar).apply {
+            (view.parent as? ViewGroup)?.removeView(view)
+            setContentView(view)
+            window?.apply {
+                addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
+                clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            }
+            show()
+            window?.setLayout(-1, -1)
+        }
+        val close: () -> Unit = { runCatching { p.dismiss() } }
+        close
+    }.getOrElse { "${it.javaClass.simpleName}: ${it.message}".take(200) }
+
     /** SurfaceFlinger의 물리 화면 번호들(screencap -d에 쓴다). */
     fun physicalIds(): List<String> = Regex("Display (\\d+) ").findAll(ShizukuAccess.shell("dumpsys SurfaceFlinger --display-id")?.out.orEmpty()).map { it.groupValues[1] }.toList()
 
@@ -73,7 +128,7 @@ object TentMode {
      * 물리 화면 [physId]를 한 장 찍어(원시 RGBA) 가장자리 띠의 평균 색을 돌려준다. 앰비라이트처럼 영상 가장자리 색을 따라가려고
      * 바깥 15% 띠만 본다. 크기도 함께 돌려줘 어느 물리 화면이 바깥 화면인지 맞춰 볼 수 있게 한다. 실패하면 null.
      */
-    fun edgeColor(physId: String): Triple<Int, Int, Int>? {
+    fun edgeColor(physId: String, edgeOnly: Boolean = true): Triple<Int, Int, Int>? {
         val p = ShizukuAccess.stream("screencap -d $physId") ?: return null
         return runCatching {
             val bytes = p.inputStream.use { it.readBytes() }
@@ -96,7 +151,7 @@ object TentMode {
             while (y < h) {
                 var x = 0
                 while (x < w) {
-                    if (x < bandX || x >= w - bandX || y < bandY || y >= h - bandY) {
+                    if (!edgeOnly || x < bandX || x >= w - bandX || y < bandY || y >= h - bandY) {
                         val o = head + (y * w + x) * 4
                         r += bytes[o].toInt() and 0xFF
                         g += bytes[o + 1].toInt() and 0xFF
