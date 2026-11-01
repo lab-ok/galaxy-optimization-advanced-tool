@@ -22,6 +22,7 @@ import androidx.window.area.WindowAreaInfo
 import androidx.window.area.WindowAreaPresentationSessionCallback
 import androidx.window.area.WindowAreaSessionPresenter
 import androidx.window.core.ExperimentalWindowApi
+import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.StatusGestureService
 import com.labok.goat.data.lab.TentMode
 import com.labok.goat.data.log.DiagnosticReport
@@ -55,6 +56,9 @@ class TentActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 시험하는 동안 플렉스 모드를 멈춘다: 플렉스 모드가 접힘 상태를 되돌리면 시험이 건 두 화면 동시 표시 상태가 풀리고,
+        // 텐트 자세에서 플렉스 진동이 울렸다(폴드8 3차 시험 11-01). 동시 표시 상태를 걸기 전에 멈춰야 되돌림이 끼어들지 않는다
+        AutoFlex.setPaused(PAUSE_KEY, true)
         setShowWhenLocked(true)
         setTurnScreenOn(true)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -327,6 +331,7 @@ class TentActivity : ComponentActivity() {
                 Thread.sleep(500)
             }
         }
+        note("뒷조명 뒤 찍은 색: ${screensLine()}")
         runOnUiThread { close?.invoke() }
         TentMode.reset(this)
         forcedState = false
@@ -346,6 +351,7 @@ class TentActivity : ComponentActivity() {
         scope.cancel()
         runCatching { session?.close() }
         if (forcedState) Thread { TentMode.reset(applicationContext) }.start()
+        AutoFlex.setPaused(PAUSE_KEY, false)
         super.onDestroy()
     }
 
@@ -353,6 +359,7 @@ class TentActivity : ComponentActivity() {
         const val EXTRA_MODE = "mode"
         const val MODE_OFFICIAL = "official"
         const val MODE_ALL = "all"
+        private const val PAUSE_KEY = "tent"
         private const val YOUTUBE = "com.google.android.youtube"
 
         /** 따뜻한 주황 간접조명 색. */
