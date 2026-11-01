@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe
+import com.labok.goat.data.lab.TentDuo
 import com.labok.goat.data.lab.TentMode
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.ui.components.Gap
@@ -36,6 +37,7 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidButtonPair
 import com.labok.goat.ui.liquid.LiquidProgressButton
+import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.nav.NewBadge
@@ -167,7 +169,25 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
-            LiquidButton("전체 시험 후 진단 보내기", modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_ALL) })
+            LiquidButton("텐트 모드 시작", modifier = Modifier.fillMaxWidth(), onClick = { TentDuo.start(context) })
+            Spacer(Modifier.height(Gap.Item))
+            Text("텐트로 세우고 누르면 바깥은 가로 스탠바이 시계(옆으로 넘겨 11종), 안쪽 한쪽 절반은 바깥 화면 색을 따라가는 반사광이 됩니다. 펴거나 닫거나 [끝내기]로 끝납니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton("방향 확인", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentDuo.start(context, check = true) })
+            Spacer(Modifier.height(Gap.Item))
+            var tentSwap by remember { mutableStateOf(TentDuo.swap(context)) }
+            LiquidSwitchRow("빛을 오른쪽 절반으로", "방향 확인에서 빛이 보이는 면 반대쪽에 나오면 켭니다.", tentSwap, enabled = true, onChange = {
+                tentSwap = it
+                TentDuo.setSwap(context, it)
+            })
+            Spacer(Modifier.height(Gap.Section))
+            var tentMirror by remember { mutableStateOf(TentDuo.mirror(context)) }
+            LiquidSwitchRow("양 옆 끝 뒤집기", "방향 확인에서 초록·노랑이 반대로 나오면 켭니다.", tentMirror, enabled = true, onChange = {
+                tentMirror = it
+                TentDuo.setMirror(context, it)
+            })
+            Spacer(Modifier.height(Gap.Section))
+            LiquidButton("전체 시험 후 진단 보내기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_ALL) })
             Spacer(Modifier.height(Gap.Item))
             Text("텐트 자세로 세워 두고 누르면 ①~④를 차례로 약 40초 동안 시험한 뒤 진단 파일 공유 창이 뜹니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
