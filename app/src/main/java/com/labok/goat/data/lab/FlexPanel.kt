@@ -118,6 +118,8 @@ object FlexPanel {
             forceHalfOpened(context)
         }
         applied = Applied(mode, front.second, label).also { notifyMode(context, it) }
+        // 어느 앱에서 켜졌는지 남긴다(11-01: 진동이 울린 때 앞 앱을 진단 로그로 알 수 없었다)
+        LogRepository.from(context).add("자동 플렉스: $label(${front.second})에 ${AutoFlex.modeLabel(mode)}")
     }
 
     private fun releaseNow(context: Context) {

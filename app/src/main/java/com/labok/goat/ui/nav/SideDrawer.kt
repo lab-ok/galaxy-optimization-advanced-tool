@@ -1,6 +1,7 @@
 package com.labok.goat.ui.nav
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -185,7 +186,10 @@ fun SideDrawerContent(
     var query by remember { mutableStateOf("") }
     LaunchedEffect(visible) { if (!visible) query = "" }
 
-    // 등장: 항목이 차례로(머리는 DrawerHeader가 물방울로 맺힌다)
+    // 등장: 항목이 차례로(머리는 DrawerHeader가 물방울로 맺힌다).
+    // 항목마다 55ms씩 늦게 띄우던 것은 메뉴가 늘며 1.3초 넘게 걸려 느렸다(11-01 소장님): 전체를 [ENTER_MAX_MS] 안에 끝내고,
+    // 한 항목이 [ENTER_FADE]칸에 걸쳐 나타나게 해 간격이 좁아도 툭 튀지 않게 한다
+    val enterEnd = items.size + sections.size + 2f + ENTER_FADE
     val enter = remember { Animatable(0f) }
     LaunchedEffect(visible) {
         if (!visible) {
@@ -193,15 +197,15 @@ fun SideDrawerContent(
             return@LaunchedEffect
         }
         if (reduce) {
-            enter.snapTo(items.size + sections.size + 2f)
+            enter.snapTo(enterEnd)
             return@LaunchedEffect
         }
-        enter.animateTo(items.size + sections.size + 2f, tween(120 + 55 * (items.size + 2), easing = LinearEasing))
+        enter.animateTo(enterEnd, tween(minOf(120 + 20 * (items.size + sections.size + 2), ENTER_MAX_MS), easing = FastOutSlowInEasing))
     }
     // 열려 있는 동안 항목이 늘면(염소를 열 번 눌러 실험실이 생길 때) 새 항목도 마저 나타나게 끝값을 늘린다.
     // 늘리지 않으면 새 항목은 등장 값이 0에 머물러 투명한 채로 남는다
     LaunchedEffect(items.size, sections.size) {
-        val end = items.size + sections.size + 2f
+        val end = enterEnd
         if (visible && enter.value > 0f && enter.targetValue < end) enter.animateTo(end, tween(if (reduce) 0 else 220, easing = LinearEasing))
     }
 
@@ -273,7 +277,7 @@ fun SideDrawerContent(
                                     section.title,
                                     color = c.muted,
                                     style = MaterialTheme.typography.labelMedium,
-                                    modifier = Modifier.padding(start = 22.dp, bottom = 6.dp).graphicsLayer { alpha = (enter.value - titleOrder).coerceIn(0f, 1f) }
+                                    modifier = Modifier.padding(start = 22.dp, bottom = 6.dp).graphicsLayer { alpha = ((enter.value - titleOrder) / ENTER_FADE).coerceIn(0f, 1f) }
                                 )
                             }
                             section.items.forEach { item ->
@@ -290,7 +294,7 @@ fun SideDrawerContent(
                                             (1f - abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
                                         }
                                     },
-                                    appear = { (enter.value - order).coerceIn(0f, 1f) },
+                                    appear = { ((enter.value - order) / ENTER_FADE).coerceIn(0f, 1f) },
                                     modifier = Modifier.onGloballyPositioned {
                                         tops[item] = it.positionInParent().y
                                         rowH = it.size.height.toFloat()
@@ -317,7 +321,7 @@ fun SideDrawerContent(
                                     (1f - abs(blob.blob.cy - rowH / 2 - top) / rowH).coerceIn(0f, 1f)
                                 }
                             },
-                            appear = { (enter.value - settingsOrder).coerceIn(0f, 1f) },
+                            appear = { ((enter.value - settingsOrder) / ENTER_FADE).coerceIn(0f, 1f) },
                             modifier = Modifier.onGloballyPositioned { tops[NavItem.SETTINGS] = it.positionInParent().y },
                             onClick = { onSelect(NavItem.SETTINGS, null) }
                         )
@@ -808,3 +812,7 @@ private fun DrawScope.flex(c: Color, s: Stroke) {
 
 /** 덮이는 서랍·시트의 불투명도: 흐려진 뒤 화면이 살짝 비친다. */
 internal const val GLASS_ALPHA = 0.84f
+
+/** 사이드 메뉴 항목 등장 전체 시간 상한(ms)과 한 항목이 나타나는 폭(항목 칸 수). */
+private const val ENTER_MAX_MS = 380
+private const val ENTER_FADE = 3f
