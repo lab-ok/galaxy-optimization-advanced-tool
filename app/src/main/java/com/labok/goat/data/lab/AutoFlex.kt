@@ -402,6 +402,10 @@ object AutoFlex {
 
         // 다음 바뀜은 진동 없이(까딱은 따로 울리고, 멈춤·설정 바뀜은 손놀림이 아니라서)
         @Volatile private var quiet = false
+
+        // 이번에 반쯤 접은 동안 이미 울렸는지. 반쯤 접은 채 폰을 세로(책)↔가로(노트북)로 돌리기만 해도 껐다 켜지며 매번 울렸다
+        // (11-01 소장님, 유튜브): 한 번 접어 범위에 든 동안은 한 번만 울리고, 범위를 벗어나면(펴거나 닫으면) 다시 울릴 수 있게 한다
+        @Volatile private var buzzedThisFold = false
         private var last: Float? = null
 
         // 세밀한 각도(시스템 로그). 최근 1초 안에 값이 왔으면 거친 센서 값(0·90·180)은 무시한다
@@ -518,6 +522,7 @@ object AutoFlex {
         private fun onAngle(a: Float) {
             angleFlow.value = a
             last = a
+            if (!inRange(a, min(context), max(context))) buzzedThisFold = false
             dimCheck(a)
             if (!enabled(context)) return
             val click = click(context)
@@ -601,7 +606,10 @@ object AutoFlex {
                         "${if (latchedFlow.value) "까딱" else "범위"} · ${if (horizontalFlow.value) "가로" else "세로"}"
                 )
                 // 실사용에서는 들어올 때만 울린다(펴거나 닫으며 빠져나갈 때마다 울리면 거슬린다). 설정 화면은 따로 둘 다 울린다
-                if (!quiet && on) rangeBuzz(context, true)
+                if (!quiet && on && !buzzedThisFold) {
+                    rangeBuzz(context, true)
+                    buzzedThisFold = true
+                }
             }
             quiet = false
         }

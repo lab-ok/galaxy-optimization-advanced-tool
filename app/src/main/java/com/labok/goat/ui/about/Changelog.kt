@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.34.0",
+        "2026-11-01",
+        "반쯤 접은 채 폰을 돌릴 때마다 자동 플렉스 모드가 울리던 문제를 고쳤습니다.",
+        listOf(
+            "변경" to listOf(
+                "자동 플렉스 모드: 반쯤 접은 채 세로·가로로 돌려도 한 번 접을 때 한 번만 울립니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.33.0",
         "2026-11-01",
         "사이드 메뉴가 더 빨리 열립니다.",
