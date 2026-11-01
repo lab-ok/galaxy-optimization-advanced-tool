@@ -61,12 +61,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.FirstBaseline
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -77,6 +78,7 @@ import java.time.LocalDateTime
 import java.time.format.TextStyle as JTextStyle
 import java.util.Locale
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.delay
@@ -118,19 +120,34 @@ private fun Dp.ratio(px: Float): TextUnit = (value * px / 1248f).sp
 /**
  * 시각 글자(11-02 명품화, AndroidNumericText·NumberFlow 방식 참고): 바뀐 글자만 바뀐다. 나가는 글자는 글자 높이의 40%만큼
  * 위로 떠오르며 작아지고·흐려지고·사라지고, 들어오는 글자는 아래에서 같은 길을 거꾸로 밟아 또렷해진다. 움직임은 스프링(감쇠 0.86)이라
- * 끝에서 아주 살짝 넘쳤다 자리 잡고, 오른쪽 글자부터 45ms씩 늦게 출발해 물결처럼 이어진다. 글자 폭이 달라지면 폭도 스프링으로 바뀐다.
+ * 끝에서 아주 살짝 넘쳤다 자리 잡고, 오른쪽 글자부터 45ms씩 늦게 출발해 물결처럼 이어진다. 숫자는 고정폭 칸에 들어가 자리가 흔들리지 않는다.
  */
 @Composable
 private fun RollingText(text: String, style: TextStyle, color: Color, modifier: Modifier = Modifier) {
+    val cell = rememberDigitWidth(style)
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         text.forEachIndexed { i, ch ->
-            key(i) { MorphChar(ch, style, color, (text.length - 1 - i) * 45L) }
+            key(i) { MorphChar(ch, style, color, (text.length - 1 - i) * 45L, if (ch.isDigit()) cell else null) }
         }
     }
 }
 
+/**
+ * 숫자 한 칸의 고정 폭: 0~9 가운데 가장 넓은 글자 폭(11-02 소장님: 고정폭으로, 넘어갈 때 다시 정렬되지 않게).
+ * 잘라 넣은 글꼴에는 고정폭 숫자(tnum) 기능이 없어, 칸 폭을 직접 재서 모든 숫자를 같은 폭 칸 가운데에 둔다.
+ */
 @Composable
-private fun MorphChar(ch: Char, style: TextStyle, color: Color, delayMs: Long) {
+private fun rememberDigitWidth(style: TextStyle): Dp {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    return remember(style, density) {
+        val px = ('0'..'9').maxOf { measurer.measure(it.toString(), style).size.width }
+        with(density) { px.toDp() }
+    }
+}
+
+@Composable
+private fun MorphChar(ch: Char, style: TextStyle, color: Color, delayMs: Long, cell: Dp? = null) {
     var cur by remember { mutableStateOf(ch) }
     var old by remember { mutableStateOf<Char?>(null) }
     val p = remember { Animatable(1f) }
@@ -143,7 +160,7 @@ private fun MorphChar(ch: Char, style: TextStyle, color: Color, delayMs: Long) {
         p.animateTo(1f, spring(dampingRatio = 0.86f, stiffness = 150f))
         old = null
     }
-    Box(Modifier.animateContentSize(spring(dampingRatio = 0.9f, stiffness = 260f)), contentAlignment = Alignment.Center) {
+    Box(if (cell != null) Modifier.width(cell) else Modifier.animateContentSize(spring(dampingRatio = 0.9f, stiffness = 260f)), contentAlignment = Alignment.Center) {
         old?.let { o -> Text(o.toString(), color = color, style = style, modifier = Modifier.graphicsLayer { morph(p.value, out = true) }) }
         Text(cur.toString(), color = color, style = style, modifier = Modifier.graphicsLayer { morph(p.value, out = false) })
     }
@@ -192,7 +209,7 @@ internal fun StandbyClock(index: Int, now: LocalDateTime, battery: Int?, chargin
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
         val h = maxHeight
         when (index) {
-            0 -> LiquidClock(now, h)
+            0 -> LiquidClock(now, h, maxWidth / maxHeight)
             1 -> DigitalClock(now, h, battery, charging)
             2 -> FloatClock(now, h)
             3 -> SolarClock(now, h)
@@ -220,123 +237,223 @@ private fun CornerSeconds(now: LocalDateTime, h: Dp, modifier: Modifier = Modifi
 }
 
 /**
- * 리퀴드(GOAT 고유, 11-02 소장님: 액체자석 시계처럼). 그라데이션 없는 검은 바탕에 흰 액체 하나만 숫자로 모인다.
- * - 점도(11-02 더 높게): 스프링을 약하게(8), 감쇠를 임계보다 크게(6.4) 해 튕기지 않고 꿀처럼 천천히 흘러 자리 잡는다.
- *   흐림·자르기를 세게 해 방울끼리 끈적하게 붙고, 떨림도 줄였다.
- * - 균형: 방울과 목표 점을 모두 왼쪽→오른쪽, 위→아래 순서로 짝지어 엇갈리지 않고 가까운 자리로 흐른다. 웅덩이도 좌우 가운데.
+ * 리퀴드(GOAT 고유, 11-02 소장님: 자석 액체 시계처럼). 순수 검은 바탕에 흰 자성 액체가 얇은 선으로 숫자를 만든다.
+ * - 기하학 숫자: 실제 자석 액체 시계(전자석 격자)처럼 숫자를 7개 막대(세그먼트)로 만들고, 막대마다 정해진 자리에 방울을 붙든다.
+ * - 바뀐 숫자만: 시각이 바뀌면 바뀐 칸에서 꺼질 막대의 방울만 떨어져 나와 새로 켤 막대로 흐른다(가까운 방울부터, 18ms 간격으로 줄지어).
+ *   남거나 모자란 방울은 바닥 웅덩이와 주고받는다. 그대로인 막대·숫자·쌍점은 움직이지 않는다.
+ * - 점도(11-02 크게): 스프링 3.5, 감쇠 4.6(임계 이상)이라 튕기지 않고 2~3초 동안 꿀처럼 느리게 흐른다.
+ * - 두께: 방울을 작게(높이의 1.2%) 해 얇은 선으로 이어지게 하고, 흐림·자르기로 방울끼리 끈적하게 붙인다.
  */
 @Composable
-private fun LiquidClock(now: LocalDateTime, h: Dp) {
-    val context = LocalContext.current
-    val text = "${hh(now)}:${mm(now)}"
-    val drops = remember { FerroDrops(FERRO_COUNT) }
-    LaunchedEffect(text) { drops.retarget(ferroTargets(context, text, FERRO_COUNT)) }
+private fun LiquidClock(now: LocalDateTime, h: Dp, aspect: Float) {
+    val text = "%02d".format(now.hour) + mm(now)
+    val ferro = remember(aspect) { Ferro(aspect) }
+    LaunchedEffect(text, ferro) { ferro.show(text, System.nanoTime() / 1e9f) }
     var frame by remember { mutableLongStateOf(0L) }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(ferro) {
         var last = 0L
         while (true) {
             withFrameNanos { t ->
                 val dt = if (last == 0L) 0.016f else ((t - last) / 1e9f).coerceIn(0.001f, 0.05f)
                 last = t
-                drops.step(dt, t / 1e9f)
+                ferro.step(dt, t / 1e9f)
                 frame = t
             }
         }
     }
-    val goo = remember {
-        val blur = android.graphics.RenderEffect.createBlurEffect(34f, 34f, android.graphics.Shader.TileMode.DECAL)
-        val m = android.graphics.ColorMatrix(floatArrayOf(1f, 0f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 0f, 30f, -12f * 255f))
+    val density = LocalDensity.current
+    val goo = remember(h, density) {
+        val r = with(density) { h.toPx() } * FERRO_R
+        val blur = android.graphics.RenderEffect.createBlurEffect(r * 0.9f, r * 0.9f, android.graphics.Shader.TileMode.DECAL)
+        val m = android.graphics.ColorMatrix(floatArrayOf(1f, 0f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 0f, 22f, -9f * 255f))
         android.graphics.RenderEffect.createChainEffect(android.graphics.RenderEffect.createColorFilterEffect(android.graphics.ColorMatrixColorFilter(m)), blur).asComposeRenderEffect()
     }
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         Canvas(Modifier.fillMaxSize().graphicsLayer { renderEffect = goo }) {
             if (frame < 0) return@Canvas
-            val r = size.height * 0.02f
-            for (i in 0 until drops.n) drawCircle(Ink, r, Offset(drops.x[i] * size.width, drops.y[i] * size.height))
+            val u = size.height
+            val r = u * FERRO_R
+            for (i in 0 until ferro.n) drawCircle(Ink, r, Offset(ferro.x[i] * u, ferro.y[i] * u))
         }
         DateLine(now, h, Modifier.align(Alignment.TopStart).padding(start = h * 0.09f, top = h * 0.07f))
         CornerSeconds(now, h, Modifier.align(Alignment.TopEnd).padding(end = h * 0.09f, top = h * 0.07f))
     }
 }
 
-private const val FERRO_COUNT = 640
+/** 방울 반지름(화면 높이 비율). */
+private const val FERRO_R = 0.012f
 
-/** 자성 액체 방울들: 화면 비율 좌표(0~1). 목표 점으로 무겁게 끌려가고 아주 조금 떤다. 목표가 없는 방울은 바닥 가운데에 고인다. */
-private class FerroDrops(val n: Int) {
-    val x = FloatArray(n) { 0.2f + 0.6f * it / n }
-    val y = FloatArray(n) { 0.95f }
+/** 막대 하나에 붙드는 방울 수. */
+private const val FERRO_PER_SEG = 12
+
+/** 0~9를 켜는 막대(비트 0~6 = a 위, b 오른쪽 위, c 오른쪽 아래, d 아래, e 왼쪽 아래, f 왼쪽 위, g 가운데). */
+private val SEGMENTS = intArrayOf(0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F)
+
+/**
+ * 자성 액체 방울들. 좌표는 화면 높이를 1로 둔 단위(가로는 0~[aspect]). 칸 4개(시·시·분·분)의 막대마다 방울 [FERRO_PER_SEG]개를 붙들고,
+ * 쌍점 방울과 바닥 웅덩이가 따로 있다. 방울 수는 모든 칸이 8일 때도 모자라지 않게 잡았다.
+ */
+private class Ferro(private val aspect: Float) {
+    private val cellW = 0.28f
+    private val cellH = 0.5f
+    private val top = 0.24f
+    private val inset = 0.03f
+    private val colonN = 10
+    val n = 4 * 7 * FERRO_PER_SEG + colonN + 48
+    val x = FloatArray(n)
+    val y = FloatArray(n)
     private val vx = FloatArray(n)
     private val vy = FloatArray(n)
-    private val tx = FloatArray(n) { 0.2f + 0.6f * it / n }
-    private val ty = FloatArray(n) { 0.95f }
+    private val tx = FloatArray(n)
+    private val ty = FloatArray(n)
+
+    // 줄지어 흐르게: 새 목표([nx], [ny])로 떠날 시각(초). 음수면 떠날 일 없음
+    private val nx = FloatArray(n)
+    private val ny = FloatArray(n)
+    private val leave = FloatArray(n) { -1f }
     private val seed = FloatArray(n) { (it * 2654435761L % 1000) / 1000f }
 
-    /** 방울과 목표를 모두 왼→오, 위→아래 순으로 짝지어 엇갈리지 않게 한다. 남는 방울은 바닥 웅덩이로. */
-    fun retarget(pts: List<Pair<Float, Float>>) {
-        val order = (0 until n).sortedWith(compareBy({ x[it] }, { y[it] }))
-        val sorted = pts.sortedWith(compareBy({ it.first }, { it.second }))
-        val use = sorted.size.coerceAtMost(n)
-        // 숫자에 쓸 방울은 가로로 고르게 뽑는다(웅덩이도 좌우 균형)
-        val chosen = BooleanArray(n)
-        for (k in 0 until use) chosen[order[(k.toLong() * n / use.coerceAtLeast(1)).toInt().coerceAtMost(n - 1)]] = true
-        var t = 0
-        var pool = 0
-        val poolCount = n - chosen.count { it }
-        for (i in order) {
-            if (chosen[i] && t < use) {
-                tx[i] = sorted[t].first
-                ty[i] = sorted[t].second
-                t++
-            } else {
-                val f = (pool + 0.5f) / poolCount.coerceAtLeast(1)
-                tx[i] = 0.18f + 0.64f * f
-                ty[i] = 0.955f + 0.012f * sin(f * 9f)
-                pool++
-            }
+    // 칸·막대별로 붙든 방울(없으면 null)과 지금 칸에 보이는 숫자
+    private val owner = Array(4) { arrayOfNulls<IntArray>(7) }
+    private val shown = IntArray(4) { -1 }
+    private val pool = ArrayList<Int>()
+
+    init {
+        val cx = aspect / 2
+        for (i in 0 until n) {
+            x[i] = cx - 0.55f + 1.1f * i / n
+            y[i] = POOL_Y
+            tx[i] = x[i]
+            ty[i] = y[i]
+        }
+        // 쌍점: 가운데 위·아래 작은 방울 덩어리(움직이지 않는다)
+        for (k in 0 until colonN) {
+            val upper = k < colonN / 2
+            val a = (k % (colonN / 2)) * (2 * PI.toFloat() / (colonN / 2))
+            tx[k] = cx + 0.012f * cos(a)
+            ty[k] = top + cellH * (if (upper) 0.3f else 0.72f) + 0.012f * sin(a)
+        }
+        for (i in colonN until n) pool += i
+    }
+
+    /** 칸 [slot]의 왼쪽 끝(가운데 쌍점 양옆으로 두 칸씩). */
+    private fun cellLeft(slot: Int): Float {
+        val cx = aspect / 2
+        val pair = 0.06f
+        val colon = 0.09f
+        return when (slot) {
+            0 -> cx - colon - pair - 2 * cellW
+            1 -> cx - colon - cellW
+            2 -> cx + colon
+            else -> cx + colon + cellW + pair
         }
     }
 
+    /** 칸 [slot] 막대 [seg]의 [k]번째 방울 자리. */
+    private fun point(slot: Int, seg: Int, k: Int): Pair<Float, Float> {
+        val l = cellLeft(slot)
+        val w = cellW
+        val hh = cellH
+        val f = k / (FERRO_PER_SEG - 1f)
+        val (x0, y0, x1, y1) = when (seg) {
+            0 -> floatArrayOf(inset, 0f, w - inset, 0f)
+            1 -> floatArrayOf(w, inset, w, hh / 2 - inset)
+            2 -> floatArrayOf(w, hh / 2 + inset, w, hh - inset)
+            3 -> floatArrayOf(inset, hh, w - inset, hh)
+            4 -> floatArrayOf(0f, hh / 2 + inset, 0f, hh - inset)
+            5 -> floatArrayOf(0f, inset, 0f, hh / 2 - inset)
+            else -> floatArrayOf(inset, hh / 2, w - inset, hh / 2)
+        }
+        return (l + x0 + (x1 - x0) * f) to (top + y0 + (y1 - y0) * f)
+    }
+
+    /** [digits](4자리)를 보인다. 바뀐 칸만 막대를 주고받는다. [now]는 프레임과 같은 시계(초). */
+    fun show(digits: String, now: Float) {
+        // 방울을 내놓는 칸부터 처리해 웅덩이가 모자라지 않게
+        val order = (0 until 4).sortedBy { s ->
+            val d = digits[s].digitToInt()
+            Integer.bitCount(SEGMENTS[d]) - (if (shown[s] < 0) 0 else Integer.bitCount(SEGMENTS[shown[s]]))
+        }
+        for (s in order) {
+            val d = digits[s].digitToInt()
+            if (d == shown[s]) continue
+            val oldMask = if (shown[s] < 0) 0 else SEGMENTS[shown[s]]
+            val newMask = SEGMENTS[d]
+            shown[s] = d
+            val supply = ArrayList<Int>()
+            for (seg in 0 until 7) {
+                if (oldMask and (1 shl seg) != 0 && newMask and (1 shl seg) == 0) {
+                    owner[s][seg]?.let { supply.addAll(it.toList()) }
+                    owner[s][seg] = null
+                }
+            }
+            val need = ArrayList<Pair<Int, Int>>()
+            for (seg in 0 until 7) if (newMask and (1 shl seg) != 0 && oldMask and (1 shl seg) == 0) for (k in 0 until FERRO_PER_SEG) need += seg to k
+            // 모자라면 웅덩이에서 이 칸에 가까운 방울을 데려온다
+            if (need.size > supply.size) {
+                val mid = cellLeft(s) + cellW / 2
+                pool.sortBy { abs(x[it] - mid) }
+                val take = pool.take(need.size - supply.size)
+                pool.removeAll(take.toSet())
+                supply.addAll(take)
+            }
+            // 가까운 짝부터: 목표마다 남은 방울 가운데 가장 가까운 것을 붙인다. 가까운 것부터 먼저 떠난다
+            val pairs = ArrayList<Triple<Int, Int, Float>>()
+            val left = supply.toMutableList()
+            val segDrops = HashMap<Int, IntArray>()
+            for ((seg, k) in need) {
+                val (px, py) = point(s, seg, k)
+                val best = left.minBy { (x[it] - px) * (x[it] - px) + (y[it] - py) * (y[it] - py) }
+                left.remove(best)
+                segDrops.getOrPut(seg) { IntArray(FERRO_PER_SEG) }[k] = best
+                pairs += Triple(best, seg * FERRO_PER_SEG + k, (x[best] - px) * (x[best] - px) + (y[best] - py) * (y[best] - py))
+            }
+            segDrops.forEach { (seg, arr) -> owner[s][seg] = arr }
+            pairs.sortedBy { it.third }.forEachIndexed { order2, (drop, slotK, _) ->
+                val (px, py) = point(s, slotK / FERRO_PER_SEG, slotK % FERRO_PER_SEG)
+                send(drop, px, py, now + order2 * 0.018f)
+            }
+            // 남는 방울은 웅덩이로
+            pool.addAll(left)
+        }
+        // 웅덩이: 지금 들어 있는 방울을 왼→오 순서로 바닥에 고르게 편다(새로 들어온 것만 크게 움직인다)
+        val cx = aspect / 2
+        pool.sortBy { x[it] }
+        pool.forEachIndexed { k, i ->
+            val px = cx - 0.5f + 1f * (k + 0.5f) / pool.size
+            val py = POOL_Y
+            if (leave[i] < 0f && abs(tx[i] - px) + abs(ty[i] - py) > 0.0005f) send(i, px, py, now + 0.4f)
+        }
+    }
+
+    private fun send(i: Int, px: Float, py: Float, at: Float) {
+        nx[i] = px
+        ny[i] = py
+        leave[i] = at
+    }
+
     fun step(dt: Float, t: Float) {
-        val k = 8f
-        val damp = 6.4f
+        val k = 3.5f
+        val damp = 4.6f
         for (i in 0 until n) {
-            val wob = 0.0016f
-            val gx = tx[i] + wob * sin(t * 1.3f + seed[i] * 40f)
-            val gy = ty[i] + wob * cos(t * 1.1f + seed[i] * 31f)
+            if (leave[i] in 0f..t) {
+                tx[i] = nx[i]
+                ty[i] = ny[i]
+                leave[i] = -1f
+            }
+            val wob = 0.0009f
+            val gx = tx[i] + wob * sin(t * 1.1f + seed[i] * 40f)
+            val gy = ty[i] + wob * cos(t * 0.9f + seed[i] * 31f)
             vx[i] += ((gx - x[i]) * k - vx[i] * damp) * dt
             vy[i] += ((gy - y[i]) * k - vy[i] * damp) * dt
             x[i] += vx[i] * dt
             y[i] += vy[i] * dt
         }
     }
-}
 
-/** [text] 모양의 목표 점(비율 좌표). 숫자를 작은 그림에 그려 채워진 칸을 고르게 골라 쓴다. 숫자는 화면 가운데·폭 86% 안. */
-private fun ferroTargets(context: android.content.Context, text: String, n: Int): List<Pair<Float, Float>> {
-    val bw = 240
-    val bh = 150
-    val bmp = android.graphics.Bitmap.createBitmap(bw, bh, android.graphics.Bitmap.Config.ALPHA_8)
-    val c = android.graphics.Canvas(bmp)
-    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        typeface = androidx.core.content.res.ResourcesCompat.getFont(context, R.font.standby_inter_heavy)
-        textSize = bh * 0.66f
-        textAlign = android.graphics.Paint.Align.CENTER
+    private companion object {
+        const val POOL_Y = 0.93f
     }
-    val tw = paint.measureText(text)
-    if (tw > bw * 0.86f) paint.textSize *= bw * 0.86f / tw
-    val fm = paint.fontMetrics
-    c.drawText(text, bw / 2f, bh * 0.47f - (fm.ascent + fm.descent) / 2f, paint)
-    val filled = ArrayList<Pair<Float, Float>>()
-    for (yy in 0 until bh) {
-        for (xx in 0 until bw) {
-            if ((bmp.getPixel(xx, yy) ushr 24) > 128) filled += (xx / bw.toFloat()) to (yy / bh.toFloat())
-        }
-    }
-    bmp.recycle()
-    if (filled.isEmpty()) return emptyList()
-    val use = (n * 0.86f).toInt()
-    val stride = filled.size / use.toFloat()
-    return if (stride <= 1f) filled else List(use) { filled[(it * stride).toInt()] }
 }
 
 /** 디지털: 꽉 찬 굵은 숫자, 숨 쉬는 쌍점, 왼쪽 위 날짜, 오른쪽 아래 배터리. */
@@ -344,9 +461,30 @@ private fun ferroTargets(context: android.content.Context, text: String, n: Int)
 private fun DigitalClock(now: LocalDateTime, h: Dp, battery: Int?, charging: Boolean) {
     Box(Modifier.fillMaxSize()) {
         DateLine(now, h, Modifier.align(Alignment.TopStart).padding(start = h * 0.09f, top = h * 0.07f))
-        TimeRow(now, TextStyle(fontFamily = InterHeavy, fontSize = h.ratio(580f), letterSpacing = (-0.03).sp), Ink, Modifier.align(Alignment.Center))
-        battery?.let {
-            Text((if (charging) "충전 " else "") + "$it%", color = if (charging) Color(0xFF7FD48A) else Mute, fontSize = h.ratio(40f), modifier = Modifier.align(Alignment.BottomEnd).padding(end = h * 0.09f, bottom = h * 0.07f))
+        TimeRow(now, TextStyle(fontFamily = InterHeavy, fontSize = h.ratio(500f), letterSpacing = (-0.03).sp), Ink, Modifier.align(Alignment.Center))
+        battery?.let { BatteryPill(it, charging, h, Modifier.align(Alignment.BottomEnd).padding(end = h * 0.09f, bottom = h * 0.07f)) }
+    }
+}
+
+/** 배터리 알약: 작은 배터리 모양(채움 = 잔량, 20% 아래 빨강, 충전 중 초록)과 숫자. */
+@Composable
+private fun BatteryPill(level: Int, charging: Boolean, h: Dp, modifier: Modifier = Modifier) {
+    val col = when {
+        charging -> Color(0xFF7FD48A)
+        level <= 20 -> Color(0xFFFF6B5E)
+        else -> Color(0xFFBDBDC2)
+    }
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text("$level%", color = col, style = TextStyle(fontFamily = InterBold, fontSize = h.ratio(38f)))
+        Spacer(Modifier.width(h * 0.015f))
+        Canvas(Modifier.width(h * 0.07f).height(h * 0.032f)) {
+            val cap = size.width * 0.08f
+            val body = Size(size.width - cap, size.height)
+            val cr = androidx.compose.ui.geometry.CornerRadius(size.height * 0.28f)
+            drawRoundRect(col.copy(alpha = 0.55f), Offset.Zero, body, cr, style = Stroke(size.height * 0.09f))
+            val pad = size.height * 0.16f
+            drawRoundRect(col, Offset(pad, pad), Size((body.width - 2 * pad) * level / 100f, body.height - 2 * pad), androidx.compose.ui.geometry.CornerRadius(size.height * 0.14f))
+            drawRoundRect(col.copy(alpha = 0.55f), Offset(body.width + cap * 0.15f, size.height * 0.3f), Size(cap * 0.85f, size.height * 0.4f), androidx.compose.ui.geometry.CornerRadius(cap))
         }
     }
 }
@@ -354,7 +492,7 @@ private fun DigitalClock(now: LocalDateTime, h: Dp, battery: Int?, charging: Boo
 /** 플로트: 파스텔 그라데이션 숫자가 각자 다른 박자로 둥실 떠 있고, 아래에 같은 색 빛이 번진다. 바뀔 때는 통통 튀어 나온다. */
 @Composable
 private fun FloatClock(now: LocalDateTime, h: Dp) {
-    val digits = hh(now) + mm(now)
+    val digits = "%02d".format(now.hour) + mm(now)
     val grads = listOf(
         listOf(Color(0xFFFF9EB8), Color(0xFFFFCB86)),
         listOf(Color(0xFF9CCFFF), Color(0xFFAA94FF)),
@@ -367,6 +505,7 @@ private fun FloatClock(now: LocalDateTime, h: Dp) {
         DateLine(now, h, Modifier.align(Alignment.TopStart).padding(start = h * 0.09f, top = h * 0.07f))
         CornerSeconds(now, h, Modifier.align(Alignment.TopEnd).padding(end = h * 0.09f, top = h * 0.07f), Color(0xFFB9A8FF))
     }
+    val floatCell = rememberDigitWidth(TextStyle(fontFamily = OutfitBlack, fontSize = h.ratio(560f)))
     Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         digits.forEachIndexed { i, ch ->
             key(i) {
@@ -374,7 +513,8 @@ private fun FloatClock(now: LocalDateTime, h: Dp) {
                 AnimatedContent(
                     targetState = ch,
                     transitionSpec = { (scaleIn(spring(dampingRatio = 0.5f, stiffness = 220f), 0.55f) + fadeIn(tween(260))) togetherWith (scaleOut(tween(240), 1.25f) + fadeOut(tween(240))) },
-                    modifier = Modifier.graphicsLayer { translationY = bob * density },
+                    modifier = Modifier.width(floatCell).graphicsLayer { translationY = bob * density },
+                    contentAlignment = Alignment.Center,
                     label = "float"
                 ) { c ->
                     val style = TextStyle(fontFamily = OutfitBlack, fontSize = h.ratio(560f), brush = Brush.verticalGradient(grads[i % grads.size]))
@@ -392,7 +532,7 @@ private fun FloatClock(now: LocalDateTime, h: Dp) {
                     }
                 }
             }
-            if (i == hh(now).length - 1) Spacer(Modifier.width(h * 0.06f))
+            if (i == 1) Spacer(Modifier.width(h * 0.06f))
         }
     }
 }
@@ -423,6 +563,7 @@ private fun SolarClock(now: LocalDateTime, h: Dp) {
 /** 아날로그: 정밀한 분 눈금, 12·3·6·9만 숫자, 매 프레임 부드럽게 미끄러지는 초침, 오른쪽에 요일·날짜·작은 디지털 시각. */
 @Composable
 private fun AnalogClock(now: LocalDateTime, h: Dp) {
+    val dateMeasurer = rememberTextMeasurer()
     var ms by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) withFrameNanos { ms = System.currentTimeMillis() } }
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
@@ -444,15 +585,45 @@ private fun AnalogClock(now: LocalDateTime, h: Dp) {
                         StrokeCap.Round
                     )
                 }
+                // 시 자리 야광 점(12시는 두 개) — 실제 손목시계의 인덱스처럼 눈금 안쪽에
+                for (k in 0 until 12) {
+                    if (k == 3) continue
+                    val a = Math.toRadians(k * 30.0 - 90)
+                    val rr = r * 0.78f
+                    val p = Offset(c.x + rr * cos(a).toFloat(), c.y + rr * sin(a).toFloat())
+                    if (k == 0) {
+                        drawCircle(Color(0xFFDCE8D8), r * 0.022f, p + Offset(-r * 0.03f, 0f))
+                        drawCircle(Color(0xFFDCE8D8), r * 0.022f, p + Offset(r * 0.03f, 0f))
+                    } else {
+                        drawCircle(Color(0xFFDCE8D8), r * 0.022f, p)
+                    }
+                }
+                // 3시 날짜 창
+                val dw = r * 0.2f
+                val dh = r * 0.13f
+                val dc = Offset(c.x + r * 0.68f, c.y)
+                drawRoundRect(Color(0xFF050506), Offset(dc.x - dw / 2, dc.y - dh / 2), Size(dw, dh), androidx.compose.ui.geometry.CornerRadius(r * 0.015f))
+                drawRoundRect(Color(0xFF3A3A3E), Offset(dc.x - dw / 2, dc.y - dh / 2), Size(dw, dh), androidx.compose.ui.geometry.CornerRadius(r * 0.015f), style = Stroke(r * 0.006f))
+                val dayLayout = dateMeasurer.measure("${now.dayOfMonth}", TextStyle(fontFamily = InterBold, fontSize = (dh * 0.62f / density / fontScale).sp, color = Color(0xFFEDEDED)))
+                drawText(dayLayout, topLeft = Offset(dc.x - dayLayout.size.width / 2f, dc.y - dayLayout.size.height / 2f))
                 val sec = (ms / 1000.0 % 60).toFloat()
                 val min = now.minute + sec / 60f
                 val hour = now.hour % 12 + min / 60f
-                fun hand(deg: Float, len: Float, w: Float, col: Color, tail: Float = 0f) = rotate(deg, c) {
-                    drawLine(col, Offset(c.x, c.y + tail), Offset(c.x, c.y - len), w, StrokeCap.Round)
+
+                // 바늘: 아래 그림자(빛이 위에서 비치는 느낌) → 금속 바늘 → 가운데 야광 띠
+                fun hand(deg: Float, len: Float, w: Float, col: Color, tail: Float = 0f, lume: Boolean = false) {
+                    rotate(deg, c) {
+                        drawLine(Color(0x66000000), Offset(c.x + w * 0.4f, c.y + tail + w * 0.6f), Offset(c.x + w * 0.4f, c.y - len + w * 0.6f), w * 1.1f, StrokeCap.Round)
+                        drawLine(col, Offset(c.x, c.y + tail), Offset(c.x, c.y - len), w, StrokeCap.Round)
+                        if (lume) drawLine(Color(0xFFDCE8D8), Offset(c.x, c.y - len * 0.3f), Offset(c.x, c.y - len * 0.94f), w * 0.42f, StrokeCap.Round)
+                    }
                 }
-                hand(hour * 30f, r * 0.52f, r * 0.045f, Color(0xFFF4F4F4))
-                hand(min * 6f, r * 0.8f, r * 0.028f, Color(0xFFF4F4F4))
-                hand(sec * 6f, r * 0.88f, r * 0.01f, Color(0xFFFF9F0A), r * 0.16f)
+                hand(hour * 30f, r * 0.52f, r * 0.05f, Color(0xFFBFC0C4), lume = true)
+                hand(min * 6f, r * 0.8f, r * 0.034f, Color(0xFFBFC0C4), lume = true)
+                rotate(sec * 6f, c) {
+                    drawLine(Color(0xFFFF9F0A), Offset(c.x, c.y + r * 0.18f), Offset(c.x, c.y - r * 0.88f), r * 0.009f, StrokeCap.Round)
+                    drawCircle(Color(0xFFFF9F0A), r * 0.028f, Offset(c.x, c.y + r * 0.16f))
+                }
                 drawCircle(Color(0xFFFF9F0A), r * 0.032f, c)
                 drawCircle(Color(0xFF0B0B0C), r * 0.012f, c)
             }
@@ -521,9 +692,19 @@ private fun FlipCard(value: String, h: Dp, modifier: Modifier, scale: Float = 1f
         @Composable
         fun Half(text: String, top: Boolean, mod: Modifier = Modifier, dark: Float = 0f) {
             Box(
-                mod.fillMaxWidth().height(half).clip(RoundedCornerShape(h * 0.04f * scale)).background(if (top) Color(0xFF232325) else Color(0xFF1B1B1D)).clipToBounds()
+                mod.fillMaxWidth().height(half).clip(RoundedCornerShape(h * 0.04f * scale))
+                    .background(Brush.verticalGradient(if (top) listOf(Color(0xFF2A2A2D), Color(0xFF202022)) else listOf(Color(0xFF1C1C1E), Color(0xFF161618))))
+                    .clipToBounds()
                     .drawWithContent {
                         drawContent()
+                        // 접는 선 쪽 그늘과 양옆 경첩 핀(실제 플립 시계처럼)
+                        val edge = if (top) size.height else 0f
+                        drawRect(Brush.verticalGradient(listOf(Color(0x00000000), Color(0x30000000)), if (top) size.height * 0.8f else size.height * 0.2f, edge), Offset(0f, if (top) size.height * 0.8f else 0f), Size(size.width, size.height * 0.2f))
+                        val pinW = size.width * 0.025f
+                        val pinH = size.height * 0.12f
+                        val pinY = if (top) size.height - pinH else 0f
+                        drawRect(Color(0xFF0A0A0B), Offset(0f, pinY), Size(pinW, pinH))
+                        drawRect(Color(0xFF0A0A0B), Offset(size.width - pinW, pinY), Size(pinW, pinH))
                         if (dark > 0f) drawRect(Color.Black.copy(alpha = dark))
                     }
             ) {
@@ -573,7 +754,7 @@ private fun FlipCard(value: String, h: Dp, modifier: Modifier, scale: Float = 1f
 private fun NightClock(now: LocalDateTime, h: Dp) {
     Box(Modifier.fillMaxSize()) {
         DateLine(now, h, Modifier.align(Alignment.TopStart).padding(start = h * 0.09f, top = h * 0.07f), Color(0xFF5A0707))
-        TimeRow(now, TextStyle(fontFamily = InterHeavy, fontSize = h.ratio(560f), letterSpacing = (-0.03).sp), Color(0xFF8E0A0A), Modifier.align(Alignment.Center))
+        TimeRow(now, TextStyle(fontFamily = InterHeavy, fontSize = h.ratio(500f), letterSpacing = (-0.03).sp), Color(0xFF8E0A0A), Modifier.align(Alignment.Center))
     }
 }
 
@@ -588,7 +769,7 @@ private fun WidgetClock(now: LocalDateTime, h: Dp, battery: Int?, charging: Bool
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TimeRow(now, TextStyle(fontFamily = InterBold, fontSize = h.ratio(380f), letterSpacing = (-0.02).sp), Ink)
+            TimeRow(now, TextStyle(fontFamily = InterBold, fontSize = h.ratio(290f), letterSpacing = (-0.02).sp), Ink)
             Text("${dayKo(now)}  ${dateKo(now)}", color = Mute, fontSize = h.ratio(54f))
         }
         Column(Modifier.weight(0.85f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(pad * 0.6f)) {
@@ -634,8 +815,23 @@ private fun RingClock(now: LocalDateTime, h: Dp, battery: Int?, charging: Boolea
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(h * 0.84f)) {
             val w = size.minDimension * 0.012f
-            val r = size.minDimension / 2 - w * 2
+            val r = size.minDimension / 2 - w * 8
             drawCircle(Color(0xFF1E1E20), r, style = Stroke(w))
+            // 바깥 분 눈금: 지난 초까지는 밝게, 5초마다 길게
+            val done = ((ms % 60000) / 1000).toInt()
+            for (k in 0 until 60) {
+                val a = Math.toRadians(k * 6.0 - 90)
+                val long = k % 5 == 0
+                val r1 = r + w * 3f
+                val r2 = r1 + w * (if (long) 4f else 2f)
+                drawLine(
+                    if (k <= done) Color(0xFF8C8C92) else Color(0xFF2A2A2D),
+                    Offset(center.x + r1 * cos(a).toFloat(), center.y + r1 * sin(a).toFloat()),
+                    Offset(center.x + r2 * cos(a).toFloat(), center.y + r2 * sin(a).toFloat()),
+                    w * (if (long) 0.5f else 0.3f),
+                    StrokeCap.Round
+                )
+            }
             val sweep = 360f * ((ms % 60000) / 60000f)
             drawArc(Color(0xFFF2F2F2), -90f, sweep, false, Offset(center.x - r, center.y - r), Size(2 * r, 2 * r), style = Stroke(w, cap = StrokeCap.Round))
             val a = Math.toRadians((sweep - 90).toDouble())
@@ -644,7 +840,7 @@ private fun RingClock(now: LocalDateTime, h: Dp, battery: Int?, charging: Boolea
             drawCircle(Color.White, w * 1.1f, tip)
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            TimeRow(now, TextStyle(fontFamily = ManropeThin, fontSize = h.ratio(270f)), Ink)
+            TimeRow(now, TextStyle(fontFamily = ManropeThin, fontSize = h.ratio(230f)), Ink)
             Text("${dayKo(now)} · ${dateKo(now)}", color = Mute, fontSize = h.ratio(44f))
             Text((if (charging) "충전 " else "") + (battery?.let { "$it%" } ?: ""), color = if (charging) Color(0xFF82DC8C) else Mute, fontSize = h.ratio(40f))
         }

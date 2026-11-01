@@ -26,11 +26,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.labok.goat.data.lab.AmbientOpen
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe
-import com.labok.goat.data.lab.TentDuo
 import com.labok.goat.data.lab.TentMode
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.ui.components.Gap
@@ -38,7 +36,6 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidButtonPair
 import com.labok.goat.ui.liquid.LiquidProgressButton
-import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.nav.NewBadge
@@ -161,49 +158,15 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             })
         }
         Spacer(Modifier.height(Gap.Card))
-        // 앰비언트 모드(11-02 소장님: 실험용 옵션으로 따로). 닫힌 폴드를 펼치기 시작하면 안쪽 화면이 간접등처럼 빛나다 90°에서 사라진다
-        GlassCard {
-            Text("앰비언트 모드", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(
-                "닫힌 폴드를 펼치기 시작하면 안쪽 화면이 바깥 화면 색으로 은은하게 빛납니다. 막 펼칠 때 가장 밝고, 펼칠수록 어두워져 90°에서 사라진 뒤 안쪽 화면으로 넘어갑니다. Shizuku가 필요합니다(실험용).",
-                color = c.muted,
-                style = MaterialTheme.typography.bodySmall
-            )
-            Spacer(Modifier.height(Gap.Item))
-            var ambientOn by remember { mutableStateOf(AmbientOpen.enabled(context)) }
-            LiquidSwitchRow("앰비언트 모드", "펼칠 때 간접등을 켭니다.", ambientOn, enabled = true, onChange = {
-                ambientOn = it
-                AmbientOpen.setEnabled(context, it)
-            })
-        }
-        Spacer(Modifier.height(Gap.Card))
         // 텐트 모드 시험(11-01 소장님): 폴드를 반쯤 접어 엎어 세우고 바깥은 시계·유튜브, 안쪽은 간접조명으로 두 화면을 함께 쓸 수 있는지 본다
         GlassCard(Modifier.animateContentSize()) {
-            Text("텐트 모드 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text("텐트 모드 진단", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
-                "폴드를 반쯤 접어 텐트처럼 엎어 세우고 누르세요. 바깥 화면은 시계·유튜브, 안쪽 화면은 책상을 비추는 조명이 됩니다. 뒤로 가면 끝납니다. 결과는 화면을 누르면 보이고 로그에도 남습니다.",
+                "텐트 모드는 앰비언트 모드 메뉴로 옮겼습니다. 여기에는 두 화면 동시 표시를 시험하고 진단 파일을 보내는 도구만 둡니다.",
                 color = c.muted,
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
-            LiquidButton("텐트 모드 시작", modifier = Modifier.fillMaxWidth(), onClick = { TentDuo.start(context) })
-            Spacer(Modifier.height(Gap.Item))
-            Text("텐트로 세우고 누르면 바깥은 가로 스탠바이 시계(옆으로 넘겨 11종), 안쪽 한쪽 절반은 바깥 화면 색을 따라가는 반사광이 됩니다. 펴거나 닫거나 [끝내기]로 끝납니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton("방향 확인", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentDuo.start(context, check = true) })
-            Spacer(Modifier.height(Gap.Item))
-            var tentSwap by remember { mutableStateOf(TentDuo.swap(context)) }
-            LiquidSwitchRow("빛을 오른쪽 절반으로", "방향 확인에서 빛이 보이는 면 반대쪽에 나오면 켭니다.", tentSwap, enabled = true, onChange = {
-                tentSwap = it
-                TentDuo.setSwap(context, it)
-            })
-            Spacer(Modifier.height(Gap.Section))
-            var tentMirror by remember { mutableStateOf(TentDuo.mirror(context)) }
-            LiquidSwitchRow("양 옆 끝 뒤집기", "방향 확인에서 초록·노랑이 반대로 나오면 켭니다.", tentMirror, enabled = true, onChange = {
-                tentMirror = it
-                TentDuo.setMirror(context, it)
-            })
-            Spacer(Modifier.height(Gap.Section))
             LiquidButton("전체 시험 후 진단 보내기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentActivity.start(context, TentActivity.MODE_ALL) })
             Spacer(Modifier.height(Gap.Item))
             Text("텐트 자세로 세워 두고 누르면 ①~④를 차례로 약 40초 동안 시험한 뒤 진단 파일 공유 창이 뜹니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)

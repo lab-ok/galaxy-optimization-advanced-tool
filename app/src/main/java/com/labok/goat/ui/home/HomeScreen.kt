@@ -109,6 +109,7 @@ import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.help.GrantGuideSheet
 import com.labok.goat.ui.help.HelpSheet
 import com.labok.goat.ui.lab.AirplaneHelpSheet
+import com.labok.goat.ui.lab.AmbientScreen
 import com.labok.goat.ui.lab.FlexHelpSheet
 import com.labok.goat.ui.lab.LabAirplaneScreen
 import com.labok.goat.ui.lab.LabBatteryScreen
@@ -307,7 +308,7 @@ internal fun HomeScreen(
             add(NavSection(Copy.MENU_SECTION_SYSTEM, shownOf(NavItem.GOS, NavItem.DOZE, NavItem.APP_CLEANUP)))
             // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구도 함께 둔다(공유 화면 진단·설정 비교를 공개 빌드에서도 쓰려고).
             // lab 빌드는 잠금과 상관없이 조사 도구를 보인다
-            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_NARROW, NavItem.LAB_SCROLL_TOP, NavItem.LAB_SCREEN, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
+            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_NARROW, NavItem.LAB_SCROLL_TOP, NavItem.LAB_SCREEN, NavItem.LAB_AMBIENT, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
                 listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || LabUnlock.unlocked })
             if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
         }
@@ -401,7 +402,7 @@ internal fun HomeScreen(
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report
             )
-            NavItem.LAB_SCREEN, NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_NOTE, NavItem.LAB_SCROLL_TOP -> listOf(Copy.MENU_REPORT to report)
+            NavItem.LAB_SCREEN, NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_AMBIENT, NavItem.LAB_NOTE, NavItem.LAB_SCROLL_TOP -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -581,6 +582,7 @@ internal fun HomeScreen(
                             NavItem.LAB_SCROLL_TOP -> LabScrollTopScreen(inner)
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                             NavItem.LAB_BATTERY -> LabBatteryScreen(inner)
+                            NavItem.LAB_AMBIENT -> AmbientScreen(inner)
                             NavItem.LAB_NOTE -> LabNoteScreen(inner)
                             NavItem.VOLUME_ROTATE -> VolumeRotateScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.SETTINGS -> SettingsScreen(inner, onAbout = { sheet = Sheet.ABOUT }, onChangelog = { sheet = Sheet.CHANGELOG }, onPermissions = { sheet = Sheet.PERMISSIONS })

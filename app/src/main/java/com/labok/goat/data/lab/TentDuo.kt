@@ -22,7 +22,9 @@ import java.util.concurrent.Executors
  * 3. 안쪽 화면에는 [TentAmbientView]를 Presentation(접근성 서비스가 있으면 그 문맥) 또는 '다른 앱 위에 표시' 창으로 띄워
  *    바깥 화면 가장자리 색을 구역별로 계속 읽어 한쪽 절반에 방향별 반사광으로 비춘다(모든 앱).
  * 4. 펴거나(힌지 170° 넘게) 닫거나(10° 아래) [끝내기]를 누르면 상태·회전·플렉스 모드를 모두 되돌린다.
- * 폴드8 시험(1.39.1~1.39.4)으로 상태 5·Presentation·화면 찍기가 되는 것을 확인했다. 텐트 자세 자동 감지는 다음 단계(지금은 실험실 버튼).
+ * 폴드8 시험(1.39.1~1.39.4)으로 상태 5·Presentation·화면 찍기가 되는 것을 확인했다.
+ * 11-02 소장님: 앰비언트 모드와 합침. 닫힌 폴드를 반쯤 펴서 세우면 [AmbientOpen]이 이어받아 시작하고([fromOpening], 이미 상태 5),
+ * 시계는 앰비언트 모드의 옵션([AmbientOpen.clock])일 때만 띄운다. 빛은 켤 때 서서히 밝아지고 끌 때 서서히 사라진다.
  */
 object TentDuo {
     private const val PREF = "tent_duo"
@@ -34,6 +36,7 @@ object TentDuo {
     var active = false
         private set
     private var closeAmbient: (() -> Unit)? = null
+    private var light: TentAmbientView? = null
     private var sampler: Thread? = null
     private var hingeListener: SensorEventListener? = null
     private var autoBefore: Int? = null
@@ -46,27 +49,29 @@ object TentDuo {
     fun mirror(context: Context) = prefs(context).getBoolean("mirror", false)
     fun setMirror(context: Context, on: Boolean) = prefs(context).edit().putBoolean("mirror", on).apply()
 
-    /** 텐트 모드를 시작한다. [check]면 시계 대신 방향 확인 화면을 띄운다. */
-    fun start(context: Context, check: Boolean = false) {
+    /** 텐트 모드를 시작한다. [check]면 시계 대신 방향 확인 화면을 띄운다. [fromOpening]이면 이미 두 화면 동시 표시 상태다. */
+    fun start(context: Context, check: Boolean = false, fromOpening: Boolean = false) {
         val app = context.applicationContext
         if (active) return
         active = true
         worker.execute {
-            runCatching { enter(app, check) }.onFailure {
+            runCatching { enter(app, check, fromOpening) }.onFailure {
                 log(app, "시작 실패: ${it.javaClass.simpleName} ${it.message}")
                 stop(app, "시작 실패")
             }
         }
     }
 
-    private fun enter(context: Context, check: Boolean) {
+    private fun enter(context: Context, check: Boolean, fromOpening: Boolean) {
         // 플렉스 모드가 접힘 상태를 되돌리면 동시 표시가 풀린다(3차 시험): 상태를 걸기 전에 멈춘다
         AutoFlex.setPaused(PAUSE_KEY, true)
-        TentMode.enterConcurrent(context, outer = true)?.let { err ->
-            log(context, "두 화면 동시 표시 실패: $err")
-            return stop(context, "동시 표시 실패")
+        if (!fromOpening) {
+            TentMode.enterConcurrent(context, outer = true)?.let { err ->
+                log(context, "두 화면 동시 표시 실패: $err")
+                return stop(context, "동시 표시 실패")
+            }
+            Thread.sleep(1200)
         }
-        Thread.sleep(1200)
         // 바깥 화면(기본 화면)이 가로로 돌게 자동 회전을 켠다(끝낼 때 되돌림)
         runCatching {
             val cr = context.contentResolver
@@ -75,13 +80,18 @@ object TentDuo {
         }
         val inner = TentMode.otherDisplay(context, Display.DEFAULT_DISPLAY)
         log(context, "시작: 안쪽 화면 $inner · " + TentMode.displays(context).joinToString { "${it.first}:${it.second.x}x${it.second.y}" })
-        context.startActivity(Intent(context, StandbyActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(StandbyActivity.EXTRA_CHECK, check))
+        if (check || AmbientOpen.clock(context)) {
+            context.startActivity(Intent(context, StandbyActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP).putExtra(StandbyActivity.EXTRA_CHECK, check))
+        }
         var view: TentAmbientView? = null
         if (inner != null) {
             val latch = CountDownLatch(1)
             main.post {
                 val v = TentAmbientView(context, swap(context), mirror(context))
-                var r = TentMode.addPresentation(context, inner, v)
+                // 켤 때 서서히 밝아진다
+                v.level = 0f
+                v.post { v.level = 1f }
+                var r = TentMode.addPresentation(context, inner, v, bright = true)
                 if (r !is Function0<*>) {
                     log(context, "Presentation 실패($r) → 다른 앱 위에 표시 창")
                     r = TentMode.addOverlay(context, inner, v)
@@ -89,6 +99,7 @@ object TentDuo {
                 @Suppress("UNCHECKED_CAST")
                 if (r is Function0<*>) {
                     closeAmbient = r as () -> Unit
+                    light = v
                     view = v
                 } else {
                     log(context, "안쪽 빛 창 실패: $r")
@@ -146,13 +157,18 @@ object TentDuo {
         if (!active && closeAmbient == null) return
         active = false
         main.post {
-            closeAmbient?.invoke()
+            // 빛은 0.4초 동안 서서히 사라진 뒤 닫는다
+            light?.level = 0f
+            light = null
+            val close = closeAmbient
             closeAmbient = null
+            main.postDelayed({ close?.invoke() }, 420)
             StandbyActivity.current?.finish()
             hingeListener?.let { app.getSystemService(SensorManager::class.java).unregisterListener(it) }
             hingeListener = null
         }
         worker.execute {
+            Thread.sleep(450)
             sampler = null
             TentMode.reset(app)
             autoBefore?.let { b -> runCatching { Settings.System.putInt(app.contentResolver, Settings.System.ACCELEROMETER_ROTATION, b) } }

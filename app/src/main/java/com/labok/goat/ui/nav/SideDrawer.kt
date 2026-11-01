@@ -139,6 +139,9 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 배터리 상태와 15분 기록(잔량 그래프·시간당 소모량). */
     LAB_BATTERY(Copy.FEATURE_LAB_BATTERY, NavIcon.BATTERY),
 
+    /** 실험실: 앰비언트 모드(텐트 모드와 합침). 펼칠 때·세워 둘 때 안쪽 화면이 바깥 화면 색 간접등이 된다. */
+    LAB_AMBIENT(Copy.FEATURE_LAB_AMBIENT, NavIcon.GLOW),
+
     /** 실험실: 긴 글을 붙여넣으면 TXT 파일로 만들어 공유한다(다른 앱 공유 메뉴의 'TXT로 공유'와 같은 일). */
     LAB_NOTE(Copy.FEATURE_LAB_NOTE, NavIcon.NOTE),
 
@@ -148,11 +151,11 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_NARROW, LAB_SCROLL_TOP, LAB_BATTERY, LAB_NOTE, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_NARROW, LAB_SCROLL_TOP, LAB_BATTERY, LAB_AMBIENT, LAB_NOTE, LAB_TOOLS)
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR, NARROW, TOP }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR, NARROW, TOP, GLOW }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -426,6 +429,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.GEAR -> gear(color, s)
             NavIcon.NARROW -> narrow(color, s)
             NavIcon.TOP -> top(color, s)
+            NavIcon.GLOW -> glow(color, s)
         }
     }
 }
@@ -609,6 +613,20 @@ private fun DrawScope.moon(c: Color, s: Stroke) {
     drawPath(crescent, c, style = s)
     drawCircle(c, u(1.1f), p(18.6f, 7f))
     drawCircle(c, u(0.8f), p(20.4f, 11.6f))
+}
+
+/** 앰비언트 모드: 텐트(ㅅ)로 세운 폴드와 그 아래로 퍼지는 빛 세 줄기. */
+private fun DrawScope.glow(c: Color, s: Stroke) {
+    val tent = Path().apply {
+        moveTo(u(5f), u(15.5f))
+        lineTo(u(12f), u(4f))
+        lineTo(u(19f), u(15.5f))
+    }
+    drawPath(tent, c, style = s)
+    drawLine(c, p(3f, 19.5f), p(21f, 19.5f), s.width, StrokeCap.Round)
+    drawLine(c, p(9.5f, 12.5f), p(8.5f, 16.5f), s.width, StrokeCap.Round)
+    drawLine(c, p(12f, 12f), p(12f, 16.5f), s.width, StrokeCap.Round)
+    drawLine(c, p(14.5f, 12.5f), p(15.5f, 16.5f), s.width, StrokeCap.Round)
 }
 
 /** 해상도 낮추기: 화면 틀 안의 굵은 픽셀 네 칸(점이 줄어 굵어짐)과 옆의 작은 픽셀 두 칸. */

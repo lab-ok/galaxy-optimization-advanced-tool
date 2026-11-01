@@ -24,8 +24,8 @@ import kotlin.math.pow
  * - 방향: 텐트(ㅅ)는 접는 선이 꼭대기라, 바깥 위 → 접는 선 쪽, 바깥 아래 → 책상 쪽, 바깥 왼쪽·오른쪽 → 패널 위·아래 끝(뒤집어서).
  *   [swap]은 빛을 오른쪽 패널로, [mirror]는 패널 위·아래를 뒤집는다(실기 방향 확인용).
  * - 회전: 안쪽 화면이 가로·세로로 돌아도 늘 같은 물리적 왼쪽 패널이 되게 화면 회전을 되돌려 '펼친 세로' 좌표로 그린다.
- * - 색(상황별 예시로 정함, 11-02 더 밝게): 채도 1.35배, 밝기 최대 86%, 어두운 장면은 어둡게,
- *   화면이 거의 검으면(시계 등) [mood] 무드등. 프레임 사이는 0.4초 동안 이전 그림에서 새 그림으로 서서히 넘어간다.
+ * - 색(11-02 소장님: 거의 무조건 밝게): 채도 1.45배, 밝기는 50~92%로 끌어올려 화면 색만 따라가고,
+ *   화면이 거의 검으면(시계 등) [mood] 무드등을 그대로 켠다. 프레임 사이는 0.4초 동안 이전 그림에서 새 그림으로 서서히 넘어간다.
  * - 경계(11-02 소장님: 딱 자르지 말고 번지게): 빛 패널 끝의 색을 접는 선 너머로 늘여 칠하고, 접는 선 앞뒤로 서서히 사라지게 가린다.
  * - [opening]이면 펼치는 동안의 간접등([AmbientOpen]): 바깥 화면(세로)을 텐트처럼 돌리지 않고 왼쪽 패널에 좌우만 뒤집어 비춘다
  *   (바깥 화면이 왼쪽 패널 뒷면이라 바깥 왼쪽=접는 선 쪽). 색은 어두운 곳도 깎지 않고 더 밝고 진하게 다듬는다. [level]은 전체 밝기(0~1).
@@ -80,22 +80,15 @@ class TentAmbientView(context: Context, private val swap: Boolean, private val m
         src.getPixels(px, 0, w, 0, 0, w, h)
         var sum = 0f
         for (c in px) sum += (0.299f * Color.red(c) + 0.587f * Color.green(c) + 0.114f * Color.blue(c)) / 255f
-        if (sum / px.size < 0.04f) {
-            val pct = if (opening) 100 else 55
-            val m = Color.rgb(Color.red(mood) * pct / 100, Color.green(mood) * pct / 100, Color.blue(mood) * pct / 100)
-            return Bitmap.createBitmap(intArrayOf(m), 1, 1, Bitmap.Config.ARGB_8888)
-        }
+        if (sum / px.size < 0.04f) return Bitmap.createBitmap(intArrayOf(mood), 1, 1, Bitmap.Config.ARGB_8888)
         val hsl = FloatArray(3)
         for (i in px.indices) {
             val c = px[i]
-            val lum = (0.299f * Color.red(c) + 0.587f * Color.green(c) + 0.114f * Color.blue(c)) / 255f
             ColorUtils.colorToHSL(c, hsl)
-            hsl[1] = (hsl[1] * (if (opening) 1.45f else 1.35f) + 0.05f).coerceAtMost(1f)
-            hsl[2] = if (opening) (0.32f + 0.62f * hsl[2].pow(0.7f)).coerceAtMost(0.9f) else (0.12f + 0.78f * hsl[2].pow(0.8f)).coerceAtMost(0.86f)
-            val g = ColorUtils.HSLToColor(hsl)
-            // 원래 밝기를 따라 어두운 곳은 어둡게(예전보다 덜 깎아 전체가 밝다). 펼칠 때 간접등은 깎지 않는다
-            val gain = if (opening) 1f else 0.42f + 0.58f * lum
-            px[i] = Color.rgb((Color.red(g) * gain).toInt(), (Color.green(g) * gain).toInt(), (Color.blue(g) * gain).toInt())
+            // 11-02 소장님: 앰비언트는 거의 무조건 밝게. 어두운 곳도 깎지 않고 밝기를 최소 50% 위로 끌어올린다(색만 따라간다)
+            hsl[1] = (hsl[1] * 1.45f + 0.05f).coerceAtMost(1f)
+            hsl[2] = (0.5f + 0.42f * hsl[2].pow(0.6f)).coerceAtMost(0.92f)
+            px[i] = ColorUtils.HSLToColor(hsl)
         }
         repeat(2) { boxBlur(px, w, h, 3) }
         return Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888)

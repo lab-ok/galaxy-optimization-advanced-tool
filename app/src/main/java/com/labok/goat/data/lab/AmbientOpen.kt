@@ -33,7 +33,9 @@ import kotlin.math.pow
  *   안쪽 화면 왼쪽 패널에만(텐트 모드의 '빛을 오른쪽 절반으로'를 따른다) 바깥 화면을 흐리게 비춘다([TentAmbientView] opening).
  *   막 펼칠 때 가장 밝고 각도가 커질수록 어두워져 90°에서 사라진다(11-02 실기: 양쪽에 나오고 약함 → 왼쪽만·더 밝게).
  * - [END_DEG]에 닿으면 빛을 거두고 기기 상태를 풀어, 시스템이 원래대로 안쪽 화면으로 넘어가게 둔다. 다시 닫거나 화면이 꺼지면 바로 끝낸다.
- * - 펼치는 동안 플렉스 모드를 멈춘다(상태를 되돌리면 동시 표시가 풀린다). 텐트 모드가 켜져 있으면 움직이지 않는다.
+ * - 펼치다 [HOLD_MS] 동안 멈춰 세워 두면(텐트) 텐트 세션([TentDuo])이 이어받아 빛을 계속 켜 둔다(11-02 소장님: 앰비언트 모드일 때 계속 켜지게,
+ *   유튜브 등 모든 앱에서). 시계는 옵션([clock])이다. 완전히 펴거나 닫으면 끝난다.
+ * - 펼치는 동안 플렉스 모드를 멈춘다(상태를 되돌리면 동시 표시가 풀린다). 텐트 세션 중에는 움직이지 않는다.
  * 세밀한 각도는 [FineHinge](Shizuku로 시스템 로그). 기본 힌지 센서는 0·90·180°만 와서 닫힘 확인에만 쓴다.
  */
 object AmbientOpen {
@@ -42,6 +44,7 @@ object AmbientOpen {
     private const val CHANNEL_ID = "ambient_open"
     const val START_DEG = 8f
     const val END_DEG = 88f
+    private const val HOLD_MS = 1500L
 
     /** 앰비언트 모드를 켜 두었는지(기본 꺼짐). */
     fun enabled(context: Context) = prefs(context).getBoolean("on", false)
@@ -50,6 +53,10 @@ object AmbientOpen {
         prefs(context).edit().putBoolean("on", on).apply()
         GoatService.sync(context)
     }
+
+    /** 앰비언트가 켜질 때 바깥 화면에 스탠바이 시계도 띄울지(기본 켬). */
+    fun clock(context: Context) = prefs(context).getBoolean("clock", true)
+    fun setClock(context: Context, on: Boolean) = prefs(context).edit().putBoolean("clock", on).apply()
 
     /** 펼친 각도에 따른 밝기: 막 펼칠 때 1, 90°에서 0. 오래 밝게 머물다 끝으로 갈수록 빨리 줄어든다. */
     fun levelFor(angle: Float): Float {
@@ -111,6 +118,12 @@ object AmbientOpen {
 
         // 펼치다 멈추고 오래 들고 있으면(각도가 안 바뀌면 새 값이 없다) 상태를 오래 붙잡지 않게 끝낸다
         private val timeout = Runnable { finish("8초 지남") }
+
+        // 펼치다 멈춰 세워 두면 텐트 세션으로 넘긴다(세밀한 각도는 1.5° 넘게 바뀔 때만 와서 시간으로 본다)
+        private val hold = Runnable {
+            val a = lastFine
+            if (glowing && !a.isNaN() && a in 25f..END_DEG) handOff(a)
+        }
 
         fun start() {
             if (started) return
@@ -181,6 +194,8 @@ object AmbientOpen {
             lastFine = a
             lastFineAt = now
             if (glowing) {
+                worker.removeCallbacks(hold)
+                worker.postDelayed(hold, HOLD_MS)
                 view?.level = levelFor(a)
                 if (a >= END_DEG) {
                     finish("${a.toInt()}°")
@@ -239,6 +254,7 @@ object AmbientOpen {
             }
             log(context, "펼치기 시작(${a.toInt()}°) → 안쪽 간접등, ${SystemClock.elapsedRealtime() - glowAt}ms")
             worker.postDelayed(timeout, 8000)
+            worker.postDelayed(hold, HOLD_MS)
             val phys = outerPhys ?: return
             thread(isDaemon = true, name = "ambient-open-frames") {
                 while (glowing) {
@@ -249,11 +265,27 @@ object AmbientOpen {
             }
         }
 
+        /** 세워 둔 채 멈췄다: 상태 5는 그대로 두고 텐트 세션이 빛·시계를 이어받는다. 이 빛은 새 빛이 밝아진 뒤 닫는다. */
+        private fun handOff(a: Float) {
+            glowing = false
+            worker.removeCallbacks(timeout)
+            worker.removeCallbacks(hold)
+            TentDuo.start(context, fromOpening = true)
+            val c = close
+            close = null
+            view?.let { v -> main.postDelayed({ v.level = 0f }, 700) }
+            view = null
+            main.postDelayed({ c?.invoke() }, 1200)
+            worker.postDelayed({ AutoFlex.setPaused(PAUSE_KEY, false) }, 800)
+            log(context, "${a.toInt()}°에 세워 둠 → 앰비언트 계속 켬")
+        }
+
         /** 빛을 거두고 기기 상태를 풀어 시스템이 화면을 정하게 둔다. */
         private fun finish(why: String) {
             if (!glowing) return
             glowing = false
             worker.removeCallbacks(timeout)
+            worker.removeCallbacks(hold)
             val c = close
             close = null
             view = null

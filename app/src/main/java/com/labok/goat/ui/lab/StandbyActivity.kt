@@ -151,6 +151,10 @@ class StandbyActivity : ComponentActivity() {
         private const val PREF = "standby"
         private const val KEY_STYLE = "style"
 
+        /** 고른 시계 스타일 번호(앰비언트 모드 화면의 썸네일에서도 고른다). */
+        fun style(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getInt(KEY_STYLE, 0).coerceIn(0, StandbyClocks.COUNT - 1)
+        fun setStyle(context: Context, i: Int) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putInt(KEY_STYLE, i).apply()
+
         /** 떠 있는 스탠바이 화면(텐트 모드를 끝낼 때 닫는다). */
         @Volatile
         var current: StandbyActivity? = null
