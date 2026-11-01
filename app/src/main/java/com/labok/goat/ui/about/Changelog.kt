@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.38.0",
+        "2026-11-01",
+        "흔들어서 화면 회전에 회전 버튼 설정 바로가기를 넣었습니다.",
+        listOf(
+            "추가" to listOf(
+                "흔들어서 화면 회전 화면에서 폰을 돌리면 뜨는 회전 버튼을 끄는 삼성 설정으로 바로 갈 수 있습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.37.0",
         "2026-11-01",
         "알림에도 고른 염소 아이콘이 나옵니다.",
