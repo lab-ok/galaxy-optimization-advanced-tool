@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import com.labok.goat.BuildConfig
 import com.labok.goat.R
 import com.labok.goat.ui.MainActivity
+import com.labok.goat.ui.liquid.UiGoat
 
 /**
  * 업데이트를 마친 뒤 알림: 안드로이드는 업데이트된 앱이 스스로 화면을 열지 못하게 막으므로, GOAT가 시작한 업데이트가
@@ -41,6 +42,7 @@ object UpdateNotice {
         )
         val n = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
+            .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle(doneText())
             .setContentText("눌러서 열기")
             .setContentIntent(open)

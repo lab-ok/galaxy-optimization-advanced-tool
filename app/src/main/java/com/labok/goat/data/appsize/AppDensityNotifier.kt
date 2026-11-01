@@ -16,6 +16,7 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.appsize.DensityStepActivity
+import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.text.Copy
 
 /**
@@ -85,6 +86,7 @@ object AppDensityNotifier {
         val open = PendingIntent.getActivity(context, 10, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
+            .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle("앱별 화면 배율")
             .setContentText(status ?: "앱을 열면 여기서 배율을 바꿉니다")
             .setOngoing(true)

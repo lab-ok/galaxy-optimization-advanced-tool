@@ -11,6 +11,7 @@ import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.liquid.UiGoat
 import java.util.concurrent.Executors
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
@@ -133,6 +134,7 @@ object FlexPanel {
         nm.createNotificationChannel(NotificationChannel(MODE_CHANNEL, "플렉스 모드 바꾸기", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
         val b = NotificationCompat.Builder(context, MODE_CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_goat)
+            .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle("${s.label} · ${AutoFlex.modeLabel(s.mode)}")
             .setContentText("접은 동안 이 앱에서 쓸 방식을 바꿀 수 있습니다")
             .setOngoing(true)

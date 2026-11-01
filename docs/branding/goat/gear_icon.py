@@ -19,6 +19,7 @@ GRADS = ('<defs>'
          '</defs>')
 GOAT = '#1C1C1E'
 GOAT_FAR = '#4A4A4E'
+GOAT_SCALE = 0.66
 
 
 def circ(cx, cy, r):
@@ -44,7 +45,8 @@ def art(k, ox, oy, disk=True, goat=GOAT, far=GOAT_FAR, ring='url(#steel)'):
     s = f'<path d="{fine_teeth(cx, cy, T(196), T(214), 44)} {circ(cx, cy, T(172))}" fill="{ring}" fill-rule="evenodd"/>'
     if disk:
         s += f'<circle cx="{cx:.2f}" cy="{cy:.2f}" r="{T(158):.2f}" fill="#FFFFFF"/>'
-    g = 0.5 * k
+    # 염소 크기: 시안은 0.5배였는데 1.37.0에서 0.66배로 키웠다(소장님 11-01 '톱니 아이콘 염소 더 크게'). 흰 원판(반지름 158) 안에 들어간다
+    g = GOAT_SCALE * k
     s += Goat(g, ox + T(254) - 250 * g, oy + T(262) - 245 * g).walking().replace('#FFFFFF', goat).replace('#D8D2DE', far)
     return s
 

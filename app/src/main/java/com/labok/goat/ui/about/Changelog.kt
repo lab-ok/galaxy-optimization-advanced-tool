@@ -44,6 +44,18 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.37.0",
+        "2026-11-01",
+        "알림에도 고른 염소 아이콘이 나옵니다.",
+        listOf(
+            "변경" to listOf(
+                "GOAT 알림에 앱 설정 → 염소 아이콘에서 고른 아이콘이 함께 나옵니다. 아이콘을 바꾸면 떠 있는 알림도 바로 바뀝니다.",
+                "앱 기본 아이콘(알림 모서리·앱 정보)을 톱니로 바꿨습니다.",
+                "톱니 아이콘의 염소를 더 크게 했습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.36.0",
         "2026-11-01",
         "염소 아이콘에 설정 톱니 모양을 더했습니다.",

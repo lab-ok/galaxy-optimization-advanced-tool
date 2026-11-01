@@ -45,6 +45,7 @@ import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.lab.NarrowControls
 import com.labok.goat.ui.lab.NarrowKey
 import com.labok.goat.ui.liquid.LiquidTheme
+import com.labok.goat.ui.liquid.UiGoat
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
@@ -278,6 +279,7 @@ object NarrowBar {
         val open = PendingIntent.getActivity(context, 22, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
+            .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle("좁힌 앱 컨트롤러")
             .setContentText("좁힌 앱 옆 여백에 넘기기 버튼을 띄웁니다")
             .setOngoing(true)

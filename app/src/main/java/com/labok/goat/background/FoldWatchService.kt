@@ -25,6 +25,7 @@ import com.labok.goat.domain.DpiPolicy
 import com.labok.goat.domain.ScreenLearner
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.MainActivity
+import com.labok.goat.ui.liquid.UiGoat
 
 /**
  * 접기/펼치기 감시. 폴링하지 않고 DisplayManager.DisplayListener 이벤트만 받는다.
@@ -120,6 +121,7 @@ class FoldWatchService : Service() {
         )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
+            .setLargeIcon(UiGoat.notificationIcon(this))
             .setContentTitle("고급 화면 배율 설정")
             .setContentText("접고 펼 때 배율을 확인하는 중")
             .setContentIntent(open)

@@ -25,6 +25,7 @@ import androidx.core.app.NotificationCompat
 import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -366,6 +367,7 @@ object StatusBarHider {
         )
         val n: Notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
+            .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle("상단바 숨기는 중")
             .setContentText("뒤로 가기를 써도 곧 다시 숨깁니다. 키보드가 열려 있는 동안에는 보입니다")
             .setOngoing(true)

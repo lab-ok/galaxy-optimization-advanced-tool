@@ -92,11 +92,12 @@
         </intent>
     </queries>
 
+    <!-- 앱 자체 아이콘(알림 모서리·앱 정보에 쓰임)은 실행 중에 바꿀 수 없어 톱니로 고정한다(1.37.0). 홈 화면 아이콘은 아래 런처 항목이 정한다 -->
     <application
         android:name=".App"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher_gear"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Goat">
