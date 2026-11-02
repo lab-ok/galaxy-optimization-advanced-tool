@@ -51,7 +51,7 @@ object ReflectionField {
             // 35~65%에서 확산이 분명해지고, 아래쪽은 색 분위기만 남는다. 단계 사이는 두 흐림 단계를 섞어 경계가 없다
             // 기본 필드(128칸)는 패널에서 14배 넘게 늘어나므로 최소 1.3칸은 흐려 칸 격자가 보이지 않게 한다(11-02 실기 "원소스 픽셀 다 보임").
             // 접는 선 바로 아래 선명한 부분은 근거리 띠(고해상도)가 맡는다
-            val r = maxOf(radiusAt(d, spec), 1.3f)
+            val r = maxOf(radiusAt(d, spec), 1.8f)
             var i = 0
             while (i < LEVELS.size - 2 && LEVELS[i + 1] < r) i++
             val t = ((r - LEVELS[i]) / (LEVELS[i + 1] - LEVELS[i])).coerceIn(0f, 1f)

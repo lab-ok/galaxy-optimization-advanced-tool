@@ -534,7 +534,8 @@ private fun NearLayer(state: FlexPanelState, alpha: Float) {
     val cf = remember { reflectionGrade() }
     Canvas(
         Modifier.fillMaxWidth().fillMaxHeight(com.labok.goat.data.lab.ReflectionField.NEAR_FRAC).graphicsLayer {
-            renderEffect = androidx.compose.ui.graphics.BlurEffect(2.dp.toPx(), 2.dp.toPx(), androidx.compose.ui.graphics.TileMode.Clamp)
+            // 11-02 소장님 "상위 블러 조금 더": 2dp → 3.5dp
+            renderEffect = androidx.compose.ui.graphics.BlurEffect(3.5f.dp.toPx(), 3.5f.dp.toPx(), androidx.compose.ui.graphics.TileMode.Clamp)
         }
     ) {
         drawImage(n, dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()), alpha = alpha, filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium, colorFilter = cf)
