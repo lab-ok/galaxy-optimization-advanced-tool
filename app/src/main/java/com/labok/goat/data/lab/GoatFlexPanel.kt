@@ -104,8 +104,40 @@ object GoatFlexPanel {
         io.execute {
             val c = MediaRemote.controller(app, pkg)
             LogRepository.from(app).add("GOAT 플렉스 패널: $label 띄움 · 미디어 세션 ${c?.packageName ?: "없음"} · 받은 길 ${MediaRemote.way} · 동작 0x${java.lang.Long.toHexString(c?.playbackState?.actions ?: 0)}")
-            main.post { attach(app, pkg, label, c) }
+            main.post {
+                // 상태 머신: 퇴장 중·등장 중·보이는 중이면 창을 새로 만들지 않고 그 자리에서 다시 보이게 한다(깜박임·중복 창 방지)
+                if (view != null && phase != Phase.HIDDEN) {
+                    controller = c
+                    this.pkg = pkg
+                    state.app = label
+                    state.hasSession = c != null
+                    main.removeCallbacks(exitGuard)
+                    phase = Phase.ENTERING
+                    state.visible = true
+                } else {
+                    attach(app, pkg, label, c)
+                }
+            }
         }
+    }
+
+    /** 패널 생명주기. 바꾸는 곳은 [show]·[hide]·[onEntered]·[onExited]·[detach] 한 군데씩이다. */
+    private enum class Phase { HIDDEN, ENTERING, VISIBLE, EXITING }
+
+    private var phase = Phase.HIDDEN
+    private var exitContext: Context? = null
+
+    // 퇴장 애니메이션 끝 알림이 오지 않을 때(창이 이미 떨어짐 등)만 쓰는 안전장치
+    private val exitGuard = Runnable { exitContext?.let { if (phase == Phase.EXITING) detach(it) } }
+
+    /** 등장 애니메이션이 끝났다(화면이 알림). */
+    private fun onEntered() {
+        if (phase == Phase.ENTERING) phase = Phase.VISIBLE
+    }
+
+    /** 퇴장 애니메이션이 끝났다(화면이 알림): 이때 창을 뗀다. 그 사이 다시 보이게 했으면 떼지 않는다. */
+    private fun onExited(context: Context) {
+        if (phase == Phase.EXITING) detach(context)
     }
 
     /** 설정 화면에서 패널 모양을 8초 동안 미리 본다(지금 재생 중인 미디어가 있으면 그 정보로). */
@@ -118,14 +150,19 @@ object GoatFlexPanel {
     fun hide(context: Context) {
         val app = context.applicationContext
         main.post {
-            if (view == null) return@post
+            if (view == null || phase == Phase.EXITING || phase == Phase.HIDDEN) return@post
+            phase = Phase.EXITING
+            exitContext = app
             state.visible = false
-            main.postDelayed({ if (!state.visible) detach(app) }, 280)
+            main.removeCallbacks(exitGuard)
+            main.postDelayed(exitGuard, 900)
         }
     }
 
     private fun attach(context: Context, p: String, label: String, c: MediaController?) {
         detach(context)
+        // 첫 프레임은 보이지 않는 상태(투명·아래)로 그리고, 붙은 뒤에 등장을 시작한다(완성된 패널이 한 프레임 번쩍 보이지 않게)
+        state.visible = false
         if (!Settings.canDrawOverlays(context)) {
             io.execute { ShizukuAccess.shell("appops set ${context.packageName} SYSTEM_ALERT_WINDOW allow") }
         }
@@ -176,7 +213,13 @@ object GoatFlexPanel {
                     show = { shown(context, it) },
                     onClose = { hide(context) },
                     onPlayPause = { playPause(context) },
-                    onSeek = { dir -> seek(context, dir, b.width(), b.height()) },
+                    onSeek = { dir ->
+                        // 두 번 누르기 자리는 지금 화면 크기로(회전했을 수 있다)
+                        val pt = android.graphics.Point()
+                        @Suppress("DEPRECATION")
+                        context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)?.getRealSize(pt)
+                        seek(context, dir, pt.x, pt.y)
+                    },
                     onSeekTo = { f -> seekTo(f) },
                     onSpeed = { speed(context) },
                     onSpeedSet = { s -> setSpeed(context, s) },
@@ -186,13 +229,15 @@ object GoatFlexPanel {
                         hide(context)
                         io.execute { FlexPanel.resetPosture(context) }
                     },
-                    onLock = { setLock(wctx, b.height() / 2, !state.locked) }
+                    onLock = { setLock(wctx, realHeight(context.getSystemService(DisplayManager::class.java)) / 2, !state.locked) },
+                    onEntered = { onEntered() },
+                    onExited = { onExited(context) }
                 )
             }
         }
         val lp = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
-            b.height() / 2,
+            realHeight(context.getSystemService(DisplayManager::class.java)) / 2,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
@@ -208,7 +253,31 @@ object GoatFlexPanel {
             return
         }
         view = v
-        state.visible = true
+        // 화면이 돌면(가로↔세로) 창 높이를 지금 화면의 절반으로 다시 맞춘다. 붙일 때 크기로 고정했더니 회전 뒤 패널이 화면의 80%를 덮었다(11-02 에뮬레이터)
+        val dm = context.getSystemService(DisplayManager::class.java)
+        val relayout = object : DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) = Unit
+            override fun onDisplayRemoved(displayId: Int) = Unit
+            override fun onDisplayChanged(displayId: Int) {
+                if (displayId != Display.DEFAULT_DISPLAY || view !== v) return
+                // 창 문맥의 크기는 회전을 늦게 따라와(에뮬레이터에서 그대로였다) 화면의 실제 크기로 잰다
+                val half = realHeight(dm) / 2
+                if (lp.height != half) {
+                    lp.height = half
+                    runCatching { wm.updateViewLayout(v, lp) }
+                    shield?.let { sh ->
+                        (sh.layoutParams as? WindowManager.LayoutParams)?.let { slp ->
+                            slp.height = half
+                            runCatching { wm.updateViewLayout(sh, slp) }
+                        }
+                    }
+                }
+            }
+        }
+        dm.registerDisplayListener(relayout, main)
+        displayListener = relayout
+        phase = Phase.ENTERING
+        main.post { if (phase == Phase.ENTERING) state.visible = true }
         startAmbient(context, saver)
         // 볼륨·밝기 초기값
         val am = context.getSystemService(AudioManager::class.java)
@@ -240,7 +309,21 @@ object GoatFlexPanel {
         runCatching { wm.addView(v, lp) }.onSuccess { shield = v }
     }
 
+    private var displayListener: DisplayManager.DisplayListener? = null
+
+    /** 기본 화면의 지금 높이(회전 반영). */
+    private fun realHeight(dm: DisplayManager): Int {
+        val pt = android.graphics.Point()
+        @Suppress("DEPRECATION")
+        dm.getDisplay(Display.DEFAULT_DISPLAY)?.getRealSize(pt)
+        return pt.y
+    }
+
     private fun detach(context: Context) {
+        phase = Phase.HIDDEN
+        displayListener?.let { l -> runCatching { context.getSystemService(DisplayManager::class.java).unregisterDisplayListener(l) } }
+        displayListener = null
+        main.removeCallbacks(exitGuard)
         main.removeCallbacks(tick)
         shield?.let { s -> runCatching { s.context.getSystemService(WindowManager::class.java).removeView(s) } }
         shield = null
@@ -388,94 +471,225 @@ object GoatFlexPanel {
             return
         }
         kotlin.concurrent.thread(name = "goat-ambient", isDaemon = true) {
-            var period = 450L
-            var stable = 0
-            var last: Int? = null
-            var n = 0
-            var spent = 0L
+            // 11-02 소장님: 넷플릭스·디즈니+에서 앰비언트가 5초에 한 번쯤만 바뀐다. 예전에는 대표색이 비슷하면 '정지'로 보고 2초로 늦췄고
+            // (절전이면 4초) 보호 화면에서는 포스터 색이 늘 같아 곧바로 느린 주기로 빠졌다. 이제는 화면 이미지 자체의 공간 변화량으로
+            // 정지를 판단하고, 움직이면 0.25초마다, 8번 연속 거의 같을 때만 1초로 늦춘다(절전 1.5배). 캡처→분석→필드→반영 시각을 5초마다 기록한다
+            var period = ACTIVE_MS
+            var still = 0
+            var prevFrame: IntArray? = null
+            val tel = Telemetry()
+            if (mode == 3) startAnalysis(context, token, tel)
             while (ambToken == token) {
                 val t0 = SystemClock.elapsedRealtime()
-                var src: String
+                if (mode == 3) {
+                    // 캡처 줄: 위 절반(영상 쪽)만 찍어 '최신 하나'로 넘기고(앞 것이 아직 안 쓰였으면 버린다) 바로 다음 캡처로 간다.
+                    // 패널(아래 절반)은 찍지 않아 패널 색이 다시 들어가는 일이 없다. 분석은 [startAnalysis] 줄이 한다
+                    val f = TentMode.topFrame(64, 0.5f)
+                    val t1 = SystemClock.elapsedRealtime()
+                    tel.capture(t1 - t0, f != null)
+                    var changed = false
+                    if (f != null) {
+                        val px0 = IntArray(f.width * f.height)
+                        f.getPixels(px0, 0, f.width, 0, 0, f.width, f.height)
+                        if (latest.getAndSet(Frame(px0, f.width, f.height, t1)) != null) tel.dropped++
+                        // 공간 변화량: 같은 자리 칸끼리 색 차이(평균색이 비슷한 다른 장면도 잡는다)
+                        changed = (prevFrame?.let { frameDiff(it, px0) } ?: 1f) > 0.008f
+                        prevFrame = px0
+                    } else {
+                        tel.fallback++
+                    }
+                    still = if (changed) 0 else still + 1
+                    period = if (still >= 8) STILL_MS else ACTIVE_MS
+                } else {
+                    // 포스터·고정 색: 포스터가 바뀔 때만 다시 보면 된다
+                    val pal = if (mode == 2) artPaletteNow() else null
+                    val src = if (pal != null) "포스터" else "앱 색"
+                    post(context, token, tel, src, pal, if (pal != null) artFieldNow() else null, false, t0)
+                    period = 2000L
+                }
+                tel.maybeLog(context, period, saver, state.ambSource)
+                // 처리에 걸린 시간을 뺀 만큼만 쉰다(밀리면 쉬지 않고 바로 최신 프레임을 찍는다)
+                val spent = SystemClock.elapsedRealtime() - t0
+                val wait = ((if (saver) period * 3 / 2 else period) - spent).coerceAtLeast(0L)
+                if (wait > 0) Thread.sleep(wait)
+            }
+        }
+    }
+
+    private class Frame(val px: IntArray, val w: Int, val h: Int, val at: Long)
+
+    /** 캡처 줄이 넘긴 최신 프레임(분석 줄이 가져가면 비운다). 분석이 밀리면 덮어써서 오래된 프레임이 쌓이지 않는다. */
+    private val latest = java.util.concurrent.atomic.AtomicReference<Frame?>(null)
+
+    /**
+     * 분석 줄(화면 분석 모드): 최신 프레임을 가져와 보호 화면 판정 → 대표색 → 반사 필드를 만들고 메인 스레드에 넘긴다.
+     * 보호 화면이면 포스터 → 앱 색으로 대신한다. 캡처 줄과 따로 돌아 캡처를 기다리게 하지 않는다.
+     */
+    private fun startAnalysis(context: Context, token: Int, tel: Telemetry) {
+        latest.set(null)
+        kotlin.concurrent.thread(name = "goat-ambient-analyze", isDaemon = true) {
+            var prev: IntArray? = null
+            while (ambToken == token) {
+                val fr = latest.getAndSet(null)
+                if (fr == null) {
+                    Thread.sleep(15)
+                    continue
+                }
+                val t1 = SystemClock.elapsedRealtime()
+                val changed = prev?.let { frameDiff(it, fr.px) > 0.008f } ?: true
+                prev = fr.px
+                if (changed) tel.changed++
+                // 보호 화면 판정: 거의 다 검은데(85% 넘게) 앱이 재생 중이면 보호 콘텐츠로 본다. 자막·조작 버튼만 찍혀
+                // 보호 화면과 분석이 번갈아 바뀌던 것을 막는다(가설, 실기 기록으로 확인한다)
+                val dark = darkFraction(fr.px)
+                val playing = controller?.playbackState?.state == PlaybackState.STATE_PLAYING
+                val pal0 = AmbientColor.extract(fr.px, fr.w, fr.h)
+                val protectedNow = pal0.protectedLike || (dark > 0.85f && playing)
                 var pal: AmbientColor.Palette? = null
                 var field: Field? = null
-                if (mode == 3) {
-                    // 위 절반(영상 쪽)만 읽는다. 패널(아래 절반)은 찍지 않아 패널 색이 다시 들어가는 일이 없다
-                    val f = TentMode.topFrame(64, 0.5f)
-                    if (f != null) {
-                        val w = f.width
-                        val h = f.height
-                        val px = IntArray(w * h)
-                        f.getPixels(px, 0, w, 0, 0, w, h)
-                        val p = AmbientColor.extract(px, w, h)
-                        if (!p.protectedLike) {
-                            pal = p
-                            field = makeField(px, w, h)
-                        }
-                        n++
-                        spent += SystemClock.elapsedRealtime() - t0
-                        if (n == 10) LogRepository.from(context).add("GOAT 플렉스 패널: 화면 분석 평균 ${spent / n}ms/회 (${f.width}x${f.height})")
-                    }
-                    src = if (pal != null) "화면 분석" else "보호 화면"
+                var keep = false
+                var src: String
+                if (!protectedNow) {
+                    pal = pal0
+                    if (changed || state.fieldPx == null) field = makeField(fr.px, fr.w, fr.h) else keep = true
+                    src = "화면 분석"
                 } else {
-                    src = ""
-                }
-                if (pal == null && mode >= 2) {
+                    tel.black++
+                    src = "보호 화면"
                     pal = artPaletteNow()
                     if (pal != null) {
-                        src = if (src.isEmpty()) "포스터" else "$src · 포스터"
+                        src += " · 포스터"
                         field = artFieldNow()
-                    }
-                }
-                if (pal == null) src = if (src.isEmpty()) "앱 색" else "$src · 앱 색"
-                val p = pal
-                val fNew = field
-                main.post {
-                    if (ambToken != token) return@post
-                    state.ambSource = src
-                    // 반사 필드는 거의 같으면 바꾸지 않는다(정지 화면에서 다시 그리지 않게)
-                    if (fNew == null) {
-                        if (state.field != null) {
-                            state.fieldPrev = null
-                            state.field = null
-                            state.fieldPx = null
-                        }
-                    } else if (state.fieldPx == null || fieldChange(state.fieldPx!!, fNew.px) > 0.012f) {
-                        if (SystemClock.elapsedRealtime() - clarityLogAt > 1000) {
-                            clarityLogAt = SystemClock.elapsedRealtime()
-                            // 반사의 거리별 선명도(위 10%·가운데 50%·아래 90%)를 1초에 한 번까지 남긴다(실기 검증용)
-                            val c = listOf(0.1f, 0.5f, 0.9f).map { ReflectionField.clarity(fNew.px, fNew.w, (fNew.h * it).toInt()) }
-                            LogRepository.from(context).add("GOAT 플렉스 패널: 반사 선명도 위 %.3f · 가운데 %.3f · 아래 %.3f".format(c[0], c[1], c[2]))
-                        }
-                        state.fieldPrev = state.field
-                        state.fieldPx = fNew.px
-                        state.fieldW = fNew.w
-                        state.fieldH = fNew.h
-                        state.field = fNew.image
-                    }
-                    if (p != null) {
-                        state.ambLeft = p.left
-                        state.ambCenter = p.center
-                        state.ambRight = p.right
-                        state.ambAll = p.overall
                     } else {
-                        val b = state.tint.toArgb()
-                        state.ambLeft = b
-                        state.ambCenter = b
-                        state.ambRight = b
-                        state.ambAll = b
+                        src += " · 앱 색"
                     }
+                    tel.fallback++
                 }
-                if (mode != 3) {
-                    // 포스터·고정 색은 포스터가 바뀔 때만 다시 보면 된다
-                    period = 2000L
-                } else {
-                    val now = p?.overall
-                    stable = if (now != null && last != null && AmbientColor.distance(now, last!!) < 0.02f) stable + 1 else 0
-                    last = now
-                    period = if (stable > 5) 2000L else 700L
-                }
-                Thread.sleep(if (saver) period * 2 else period)
+                tel.analyze(SystemClock.elapsedRealtime() - t1)
+                post(context, token, tel, src, pal, field, keep, fr.at)
             }
+        }
+    }
+
+    /** 분석 결과를 메인 스레드에서 화면 상태에 넣는다. [capturedAt]부터 반영까지 걸린 시간을 계측한다. */
+    private fun post(context: Context, token: Int, tel: Telemetry, src: String, p: AmbientColor.Palette?, fNew: Field?, keep: Boolean, capturedAt: Long) {
+        main.post {
+            if (ambToken != token) return@post
+            tel.applied(SystemClock.elapsedRealtime() - capturedAt)
+            state.ambSource = src
+            if (fNew == null && !keep) {
+                if (state.field != null) {
+                    state.fieldPrev = null
+                    state.field = null
+                    state.fieldPx = null
+                }
+            } else if (fNew != null && (state.fieldPx == null || fieldChange(state.fieldPx!!, fNew.px) > 0.006f)) {
+                if (SystemClock.elapsedRealtime() - clarityLogAt > 1000) {
+                    clarityLogAt = SystemClock.elapsedRealtime()
+                    val c = listOf(0.1f, 0.5f, 0.9f).map { ReflectionField.clarity(fNew.px, fNew.w, (fNew.h * it).toInt()) }
+                    LogRepository.from(context).add("GOAT 플렉스 패널: 반사 선명도 위 %.3f · 가운데 %.3f · 아래 %.3f".format(c[0], c[1], c[2]))
+                }
+                tel.fieldUpdates++
+                lastFieldAt = SystemClock.elapsedRealtime()
+                android.util.Log.i("GOATAMB", "field-applied captured=$capturedAt now=$lastFieldAt")
+                state.fieldPrev = state.field
+                state.fieldPx = fNew.px
+                state.fieldW = fNew.w
+                state.fieldH = fNew.h
+                state.field = fNew.image
+            }
+            val c = p?.let { intArrayOf(it.left, it.center, it.right, it.overall) } ?: IntArray(4) { state.tint.toArgb() }
+            state.ambLeft = c[0]
+            state.ambCenter = c[1]
+            state.ambRight = c[2]
+            state.ambAll = c[3]
+        }
+    }
+
+    private const val ACTIVE_MS = 250L
+    private const val STILL_MS = 1000L
+
+    @Volatile private var lastFieldAt = 0L
+
+    /** 두 프레임(같은 크기)의 같은 자리 칸 색 차이 평균(0~1). */
+    private fun frameDiff(a: IntArray, b: IntArray): Float {
+        if (a.size != b.size) return 1f
+        var s = 0L
+        for (i in a.indices) {
+            val x = a[i]
+            val y = b[i]
+            s += kotlin.math.abs((x shr 16 and 0xFF) - (y shr 16 and 0xFF)) + kotlin.math.abs((x shr 8 and 0xFF) - (y shr 8 and 0xFF)) + kotlin.math.abs((x and 0xFF) - (y and 0xFF))
+        }
+        return s / (a.size * 3f * 255f)
+    }
+
+    /** 거의 검은 칸의 비율. */
+    private fun darkFraction(px: IntArray): Float {
+        var d = 0
+        for (c in px) if ((c shr 16 and 0xFF) < 16 && (c shr 8 and 0xFF) < 16 && (c and 0xFF) < 16) d++
+        return d / px.size.toFloat()
+    }
+
+    /** 앰비언트 파이프라인 계측: 5초마다 한 줄로 남긴다(캡처·분석·화면 변화·필드 갱신·반영 지연·대체 경로). */
+    private class Telemetry {
+        var since = SystemClock.elapsedRealtime()
+        var captures = 0
+        var ok = 0
+        var captureMs = 0L
+        var analyzeMs = 0L
+        var analyzed = 0
+        var changed = 0
+        var black = 0
+        var fallback = 0
+        var dropped = 0
+
+        @Volatile var fieldUpdates = 0
+
+        @Volatile var appliedMs = 0L
+
+        @Volatile var applies = 0
+
+        fun capture(ms: Long, success: Boolean) {
+            captures++
+            if (success) ok++
+            captureMs += ms
+        }
+
+        fun analyze(ms: Long) {
+            analyzed++
+            analyzeMs += ms
+        }
+
+        fun applied(ms: Long) {
+            appliedMs += ms
+            applies++
+        }
+
+        fun maybeLog(context: Context, period: Long, saver: Boolean, src: String) {
+            val now = SystemClock.elapsedRealtime()
+            val span = now - since
+            if (span < 5000) return
+            LogRepository.from(context).add(
+                (
+                    "GOAT 앰비언트 파이프라인 %.1f초: 캡처 %d회(성공 %d·평균 %dms·버림 %d) · 분석 평균 %dms · 화면 변화 %d회 · 보호(검음) %d회 · 대체 %d회 · 필드 갱신 %d회 · 캡처→반영 평균 %dms · 주기 %dms%s · %s"
+                    ).format(
+                    span / 1000f, captures, ok, if (captures > 0) captureMs / captures else 0, dropped, if (analyzed > 0) analyzeMs / analyzed else 0,
+                    changed, black, fallback, fieldUpdates, if (applies > 0) appliedMs / applies else 0, period, if (saver) "(절전 1.5배)" else "", src
+                ).take(300)
+            )
+            since = now
+            captures = 0
+            ok = 0
+            captureMs = 0
+            analyzeMs = 0
+            analyzed = 0
+            changed = 0
+            black = 0
+            fallback = 0
+            dropped = 0
+            fieldUpdates = 0
+            appliedMs = 0
+            applies = 0
         }
     }
 

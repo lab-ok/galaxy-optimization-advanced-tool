@@ -506,6 +506,7 @@ object AutoFlex {
             (sm.getDefaultSensor(Sensor.TYPE_GRAVITY) ?: sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER))?.let {
                 sm.registerListener(gravity, it, SensorManager.SENSOR_DELAY_NORMAL, worker)
             }
+            context.getSystemService(android.hardware.display.DisplayManager::class.java).registerDisplayListener(displays, worker)
             fine.start()
         }
 
@@ -513,6 +514,7 @@ object AutoFlex {
             if (!listening) return
             context.getSystemService(SensorManager::class.java).unregisterListener(this)
             context.getSystemService(SensorManager::class.java).unregisterListener(gravity)
+            runCatching { context.getSystemService(android.hardware.display.DisplayManager::class.java).unregisterDisplayListener(displays) }
             fine.stop()
             listening = false
             angleFlow.value = null
@@ -552,7 +554,7 @@ object AutoFlex {
             val click = click(context)
             var hit = false
             val clicked = click && !pausedFlow.value && clicks.feed(a, SystemClock.elapsedRealtime())
-            if (clicked && horizontalFlow.value) {
+            if (clicked && orientationOk()) {
                 // '사용 안 함'으로 둔 앱과 홈 화면에서는 까딱해도 켜지 않고 울리지도 않는다(켜 둔 것을 끄는 까딱은 그대로 받는다)
                 if (!latchedFlow.value && FlexPanel.frontIsOff(context)) {
                     LogRepository.from(context).add("까딱: 사용 안 함 앱이거나 홈 화면이라 무시")
@@ -573,13 +575,40 @@ object AutoFlex {
             decide(a, if (hit || latchedFlow.value) 0L else STABLE_MS)
         }
 
+        /**
+         * 방향 조건(11-02 소장님: 의도하지 않은 화면 방향에서 켜짐): 접는 선이 가로로 놓였고(중력, [horizontalFlow])
+         * 화면도 세로 모양이어야 한다. 폴드8 테이블탑에서 앱 창은 세로(1848×2448, 진단으로 확인)라, 화면이 가로 모양이면
+         * 책처럼 든 것이거나 회전이 어긋난 것이다. 예전에는 까딱으로 잠그면 방향 검사를 건너뛰어 가로 화면에서도 켜졌다.
+         */
+        private fun orientationOk(): Boolean = horizontalFlow.value && screenPortrait()
+
+        /** 기본 화면(안쪽)이 지금 세로 모양인지(논리 크기 기준, 회전 반영). 못 읽으면 막지 않는다. */
+        private fun screenPortrait(): Boolean = runCatching {
+            val d = context.getSystemService(android.hardware.display.DisplayManager::class.java).getDisplay(android.view.Display.DEFAULT_DISPLAY)
+            val p = android.graphics.Point()
+            @Suppress("DEPRECATION")
+            d.getRealSize(p)
+            p.y >= p.x
+        }.getOrDefault(true)
+
+        // 화면이 돌면(가로↔세로) 지금 각도로 다시 정한다. 회전 중 센서 이벤트와 겹쳐도 같은 일꾼 스레드에서 차례로 처리한다
+        private val displays = object : android.hardware.display.DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) = Unit
+            override fun onDisplayRemoved(displayId: Int) = Unit
+            override fun onDisplayChanged(displayId: Int) {
+                if (displayId == android.view.Display.DEFAULT_DISPLAY) worker.post { decide(last, 300L) }
+            }
+        }
+
         private fun decide(a: Float?, delay: Long) {
             val next = when {
                 !enabled(context) -> false
                 pausedFlow.value -> false
+                // 까딱으로 잠가도 방향 조건은 지킨다(가로 화면·세로로 든 접는 선에서는 켜지 않는다)
+                !orientationOk() -> false
                 latchedFlow.value -> true
                 a == null -> false
-                else -> inRange(a, min(context), max(context)) && horizontalFlow.value && cameFromOpen
+                else -> inRange(a, min(context), max(context)) && cameFromOpen
             }
             if (next == want && worker.hasCallbacks(apply)) {
                 // 켜기를 기다리는 동안 각도가 크게 움직이면(펴거나 닫는 중) 기다림을 처음부터 다시 센다
@@ -611,6 +640,12 @@ object AutoFlex {
         private fun set(on: Boolean) {
             if (on == activeFlow.value) return
             if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return
+            // 적용 직전에 방향을 다시 본다(기다리는 동안 돌렸을 수 있다)
+            if (on && !orientationOk()) {
+                LogRepository.from(context).add("자동 플렉스: 켜기 직전 방향 조건 불충족(접는 선 ${if (horizontalFlow.value) "가로" else "세로"} · 화면 ${if (screenPortrait()) "세로" else "가로"})이라 켜지 않음")
+                want = false
+                return
+            }
             // '사용 안 함'으로 둔 앱과 홈 화면: 반쯤 접힘을 걸지 않고 울리지도 않는다. 켜진 것으로만 두어 알림에서 다른 모드로 바꿀 수 있게 한다
             if (on && FlexPanel.frontIsOff(context)) {
                 activeFlow.value = true

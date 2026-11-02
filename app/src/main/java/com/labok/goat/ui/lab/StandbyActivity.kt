@@ -186,9 +186,22 @@ private fun DirectionCheck(onClose: () -> Unit) {
     }
 }
 
-/** 반사 시험 무늬(위 절반이 패널에 비치는 원본). */
+/** 반사 시험 무늬(위 절반이 패널에 비치는 원본). 6은 1.5초마다 색이 확 바뀌는 무늬(반응 지연 실측용, 바뀐 시각을 logcat GOATAMB에 남긴다). */
 @androidx.compose.runtime.Composable
 private fun ReflectionPattern(kind: Int) {
+    if (kind == 6) {
+        val colors = listOf(Color(0xFFE02020), Color(0xFF20B040), Color(0xFF2040E0), Color(0xFFE0C020))
+        var i by remember { mutableStateOf(0) }
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(1500)
+                i = (i + 1) % colors.size
+                android.util.Log.i("GOATAMB", "pattern-change $i")
+            }
+        }
+        Box(Modifier.fillMaxSize().background(colors[i]))
+        return
+    }
     androidx.compose.foundation.Canvas(Modifier.fillMaxSize().background(Color.Black)) {
         val w = size.width
         val h = size.height

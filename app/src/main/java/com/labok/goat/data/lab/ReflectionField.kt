@@ -53,7 +53,9 @@ object ReflectionField {
             val t = ((r - LEVELS[i]) / (LEVELS[i + 1] - LEVELS[i])).coerceIn(0f, 1f)
             val a = levels[i]
             val b = levels[i + 1]
-            val energy = spec.energyTop + (spec.energyBottom - spec.energyTop) * d
+            // 접는 선 바로 아래(위 8%)는 광원에 붙어 번쩍이지 않게 세기를 75%에서 부드럽게 올린다(따로 빛 띠를 만들지 않는다)
+            val ramp = 0.75f + 0.25f * smooth((d / 0.08f).coerceIn(0f, 1f))
+            val energy = (spec.energyTop + (spec.energyBottom - spec.energyTop) * d) * ramp
             val alpha = (energy * 255f).roundToInt().coerceIn(0, 255)
             for (x in 0 until w) {
                 val ca = a[y * w + x]
@@ -66,6 +68,8 @@ object ReflectionField {
         }
         return out
     }
+
+    private fun smooth(t: Float) = t * t * (3f - 2f * t)
 
     private fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).roundToInt().coerceIn(0, 255)
 
