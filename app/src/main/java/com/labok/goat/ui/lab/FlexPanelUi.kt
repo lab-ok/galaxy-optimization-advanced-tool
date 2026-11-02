@@ -61,9 +61,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.nativeCanvas
@@ -93,6 +95,10 @@ class FlexPanelState {
     var position by mutableLongStateOf(0L)
     var duration by mutableLongStateOf(0L)
     var speed by mutableFloatStateOf(1f)
+    var canSpeed by mutableStateOf(false)
+
+    /** 속도를 바꿨는데 앱이 받지 않았을 때 보여 줄 말(비면 없음). */
+    var speedNote by mutableStateOf("")
     var canSeek by mutableStateOf(false)
     var hasSession by mutableStateOf(false)
     var volume by mutableFloatStateOf(0.5f)
@@ -163,7 +169,8 @@ private val LocalTileGlint = androidx.compose.runtime.compositionLocalOf { Color
 private fun glintOf(refl: Color?): Color {
     if (refl == null) return Color.White
     val o = AmbientColor.toOklab(android.graphics.Color.rgb((refl.red * 255).toInt(), (refl.green * 255).toInt(), (refl.blue * 255).toInt()))
-    return Color(AmbientColor.fromOklab(0.93f, o[1] * 0.7f, o[2] * 0.7f))
+    // 11-02 실사용 검수: 0.93·채도 70%는 밝은 잉크(#EBEBEB)와 거의 같아 광택이 구별되지 않았다. 조금 낮은 밝기와 채도를 살려 색이 보이게
+    return Color(AmbientColor.fromOklab(0.84f, o[1] * 1.1f, o[2] * 1.1f))
 }
 
 // ---- 디자인 토큰(11-02 GPT 역설계 권장값 + 소장님 글래스 고도화 지시) ----
@@ -311,6 +318,8 @@ fun FlexPanelUi(
     ) {
         androidx.compose.runtime.CompositionLocalProvider(
             com.labok.goat.ui.liquid.LocalReduceMotion provides !state.motion,
+            // 조절바는 GOAT 본체의 리퀴드 조절바(LiquidSlider)를 그대로 쓴다 — 패널은 늘 어두운 리퀴드 팔레트
+            com.labok.goat.ui.liquid.LocalLiquid provides com.labok.goat.ui.liquid.DarkLiquid,
             LocalTileInk provides state.ink
         ) {
             AmbientBackdrop(state, shown)
@@ -447,10 +456,10 @@ private fun PanelBody(
             }
         }
         if (show("progress") || bar != 0) {
-            GlassTile(state, amb, Modifier.fillMaxWidth().weight(0.75f), null) {
+            GlassTile(state, amb, Modifier.fillMaxWidth().weight(0.9f), null, clipContent = false) {
                 when (bar) {
-                    1 -> GlassSlider(state.brightness, LocalTileInk.current, { "밝기 ${(it * 100).toInt()}%" }, live = true) { onBrightness(it) }
-                    2 -> GlassSlider(state.volume, LocalTileInk.current, { "볼륨 ${(it * 100).toInt()}%" }, live = true) { onVolume(it) }
+                    1 -> PanelSlider(state.brightness, 100, { "$it%" }, "밝기", live = true) { onBrightness(it) }
+                    2 -> PanelSlider(state.volume, 100, { "$it%" }, "음량", live = true) { onVolume(it) }
                     3 -> SpeedRow(state.speed) {
                         onSpeedSet(it)
                         setBar(0)
@@ -458,7 +467,12 @@ private fun PanelBody(
                     else -> {
                         if (state.canSeek) {
                             val f = (state.position.toFloat() / state.duration).coerceIn(0f, 1f)
-                            GlassSlider(f, LocalTileInk.current, { clock((state.duration * it).toLong()) + " / " + clock(state.duration) }, live = false) { onSeekTo(it) }
+                            Row(Modifier.fillMaxSize().padding(end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.weight(1f)) {
+                                    PanelSlider(f, 1000, { clock(state.duration * it / 1000) }, "재생 위치", live = false) { onSeekTo(it) }
+                                }
+                                Text(clock(state.position) + " / " + clock(state.duration), color = Glass.Muted, fontSize = 12.sp)
+                            }
                         } else {
                             // 진행 정보가 없으면 가짜 진행률을 그리지 않고 이유만 적는다
                             GlassSlider(0f, Glass.Muted, { if (state.hasSession) "이 앱은 위치 이동을 지원하지 않습니다" else "재생 위치 정보를 받지 못했습니다" }, live = false, enabled = false) {}
@@ -467,23 +481,77 @@ private fun PanelBody(
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().weight(0.85f), horizontalArrangement = Arrangement.spacedBy(gap)) {
+        // 아래 줄: 아이콘만 크게 두던 것을(11-02 소장님 "버튼 존나 큰데 정보도 없어") 낮은 알약 모양으로 줄이고, 이름과 지금 값을 함께 보여 준다.
+        // 속도는 누르면 고르기 줄이 열린다(예전에는 누를 때마다 몰래 다음 속도로 넘어가 무엇이 바뀌는지 알기 어려웠다)
+        Row(Modifier.fillMaxWidth().weight(0.6f), horizontalArrangement = Arrangement.spacedBy(gap)) {
             if (show("speed")) {
-                GlassTile(state, amb, Modifier.weight(1f), onSpeed, onLong = { setBar(if (bar == 3) 0 else 3) }, selected = bar == 3, label = "속도 ${state.speed}x · 길게 눌러 고르기", enabled = state.hasSession) {
-                    Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        Icon(22) { gauge(it) }
-                        if (state.speed != 1f) Text(" ${state.speed}x", color = Glass.Ink, fontSize = 13.sp)
-                    }
+                val speedValue = if (state.speedNote.isNotEmpty()) {
+                    state.speedNote
+                } else if (!state.hasSession) {
+                    "세션 없음"
+                } else {
+                    speedText(state.speed)
+                }
+                GlassTile(state, amb, Modifier.weight(1f), { setBar(if (bar == 3) 0 else 3) }, onLong = onSpeed, selected = bar == 3, label = "재생 속도", enabled = state.hasSession) {
+                    InfoChip("재생 속도", speedValue) { gauge(it) }
                 }
             }
-            if (show("brightness")) GlassTile(state, amb, Modifier.weight(1f), { setBar(if (bar == 1) 0 else 1) }, selected = bar == 1, label = "밝기") { Icon(22) { sun(it) } }
-            if (show("volume")) GlassTile(state, amb, Modifier.weight(1f), { setBar(if (bar == 2) 0 else 2) }, selected = bar == 2, label = "볼륨") { Icon(22) { speaker(it) } }
-            if (show("fullscreen")) GlassTile(state, amb, Modifier.weight(1f), onFullscreen, label = "전체 화면") { Icon(22) { expand(it) } }
+            if (show("brightness")) GlassTile(state, amb, Modifier.weight(1f), { setBar(if (bar == 1) 0 else 1) }, selected = bar == 1, label = "밝기") { InfoChip("밝기", "${(state.brightness * 100).toInt()}%") { sun(it) } }
+            if (show("volume")) GlassTile(state, amb, Modifier.weight(1f), { setBar(if (bar == 2) 0 else 2) }, selected = bar == 2, label = "음량") { InfoChip("음량", "${(state.volume * 100).toInt()}%") { speaker(it) } }
+            if (show("fullscreen")) GlassTile(state, amb, Modifier.weight(1f), onFullscreen, label = "전체 화면") { InfoChip("전체 화면", "크게 보기") { expand(it) } }
         }
     }
 }
 
-/** 속도 고르기 줄(속도 타일을 길게 누르면). */
+/** 속도 글자: 1 → "1.0x", 1.25 → "1.25x". */
+private fun speedText(s: Float) = if (kotlin.math.abs(s * 10 - kotlin.math.round(s * 10)) < 0.01f) "%.1fx".format(s) else "%.2fx".format(s)
+
+/** 아래 줄 타일 내용: 작은 아이콘 + 이름(흐리게) + 지금 값(굵게). 좁으면 값만 남긴다. */
+@Composable
+private fun InfoChip(title: String, value: String, icon: DrawScope.(Color) -> Unit) {
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+        val narrow = maxWidth < 110.dp
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(18) { icon(it) }
+            Spacer(Modifier.width(8.dp))
+            Column {
+                if (!narrow) Text(title, color = LocalTileInk.current.copy(alpha = 0.66f), fontSize = 10.sp, maxLines = 1)
+                Text(value, color = LocalTileInk.current, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+/**
+ * 패널 조절바: GOAT 본체의 리퀴드 조절바([com.labok.goat.ui.liquid.LiquidSlider])를 그대로 쓴다(11-02 소장님 "조절바 리퀴드로").
+ * 끄는 동안 손잡이가 납작해지고 값 방울이 떠오른다. [steps] 칸으로 나눠 0~1 값을 주고받는다. [live]면 끄는 동안 바로 반영한다.
+ */
+@Composable
+private fun PanelSlider(value: Float, steps: Int, text: (Int) -> String, desc: String, live: Boolean, onChange: (Float) -> Unit) {
+    var v by remember { mutableIntStateOf((value * steps).toInt()) }
+    var dragging by remember { mutableStateOf(false) }
+    LaunchedEffect(value) { if (!dragging) v = (value * steps).toInt() }
+    // 끄는 동안 값 방울이 손잡이 위로 떠오르므로(약 26dp) 조절바를 타일 아래쪽에 붙여 방울이 타일 모서리에 잘리지 않게 한다
+    Box(Modifier.fillMaxSize().padding(start = 14.dp, end = 14.dp, bottom = 2.dp), contentAlignment = Alignment.BottomCenter) {
+        com.labok.goat.ui.liquid.LiquidSlider(
+            value = v,
+            range = 0..steps,
+            onValueChange = {
+                dragging = true
+                v = it
+                if (live) onChange(it / steps.toFloat())
+            },
+            onValueChangeFinished = {
+                dragging = false
+                onChange(v / steps.toFloat())
+            },
+            valueText = text,
+            description = desc
+        )
+    }
+}
+
+/** 속도 고르기 줄(속도 타일을 누르면). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SpeedRow(now: Float, onPick: (Float) -> Unit) {
@@ -545,6 +613,8 @@ private fun GlassTile(
     enabled: Boolean = true,
     label: String? = null,
     onLong: (() -> Unit)? = null,
+    /** false면 내용(조절바의 값 방울 등)이 타일 모서리 밖으로 나와도 잘리지 않는다. 재질은 그래도 둥근 모양 안에만 그린다. */
+    clipContent: Boolean = true,
     content: @Composable BoxScope.() -> Unit
 ) {
     val src = remember { MutableInteractionSource() }
@@ -578,116 +648,120 @@ private fun GlassTile(
             // 진동 끔 → 진동만 없고 젤리는 그대로, 움직임 끔 → 스프링 없이 눌린 모양으로 바로 바뀜(눌림은 여전히 보임)
             .then(if (onClick != null && enabled) Modifier.panelPress(src, state.haptics, state.motion) else Modifier)
             .graphicsLayer { alpha = if (enabled) 1f else 0.45f }
-            .clip(shape)
+            .then(if (clipContent) Modifier.clip(shape) else Modifier)
             .drawBehind {
-                // 재생(주 버튼)도 같은 액상 유리. 잉크로 칠하지 않고 밀도(조금 더 밝은 바탕)·가운데 빛·더 또렷한 가장자리로 구분한다(11-02 소장님)
-                val base = if (primary) Glass.TintPrimary else Glass.Tint
-                if (q == 0) {
-                    drawRect(if (selected || pressed) lerp(base, Color.White, 0.18f) else base)
-                    return@drawBehind
-                }
-                // 1 유리 색조(낮은 불투명도, 고대비면 거의 불투명)
-                drawRect(
-                    base.copy(
-                        alpha = if (hc) {
-                            0.97f
-                        } else if (primary) {
-                            tn.absorption + 0.12f
-                        } else {
-                            tn.absorption
-                        }
-                    )
-                )
-                // 2 공간 반사: 바닥과 같은 반사 필드를 패널 좌표 그대로(카드 위치만큼 옮겨) 그려 카드 경계에서 끊기지 않는다.
-                //   유리는 반사를 절반쯤 통과시키고, 잉크로 찬 버튼은 표면 광택처럼 옅게 받는다
-                val fieldImg = state.field
-                if (q >= 2 && kk > 0f && fieldImg != null) {
-                    val wk = (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * tn.reflection).coerceAtMost(1f)
-                    val off = androidx.compose.ui.unit.IntOffset(-pos.x.toInt(), -pos.y.toInt())
-                    // 반사가 유리를 통과한다: 보통 합성으로 색 분포를 보이고, 밝은 부분은 '빛 더하기(스크린)'로 한 번 더 얹어 어두운 카드에서도 죽지 않게
-                    drawImage(fieldImg, dstOffset = off, dstSize = rootSize, alpha = wk, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
-                    drawImage(fieldImg, dstOffset = off, dstSize = rootSize, alpha = wk * 0.45f, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low, blendMode = androidx.compose.ui.graphics.BlendMode.Screen)
-                    // 내부 굴절: 같은 반사를 살짝 아래·옆으로 밀어 옅게 한 번 더(두께 있는 액체 속을 지나 굽은 빛)
-                    if (q >= 3 || primary) {
-                        val shift = androidx.compose.ui.unit.IntOffset(-pos.x.toInt() + (rootSize.width * 0.012f).toInt(), -pos.y.toInt() + (rootSize.height * 0.03f).toInt())
-                        drawImage(fieldImg, dstOffset = shift, dstSize = rootSize, alpha = wk * 0.25f, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+                // 재질은 늘 둥근 모양 안에만(내용을 자르지 않는 타일도 바탕·반사·테두리는 모서리를 따른다)
+                val tileClip = androidx.compose.ui.graphics.Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawBehind)) }
+                clipPath(tileClip) {
+                    // 재생(주 버튼)도 같은 액상 유리. 잉크로 칠하지 않고 밀도(조금 더 밝은 바탕)·가운데 빛·더 또렷한 가장자리로 구분한다(11-02 소장님)
+                    val base = if (primary) Glass.TintPrimary else Glass.Tint
+                    if (q == 0) {
+                        drawRect(if (selected || pressed) lerp(base, Color.White, 0.18f) else base)
+                        return@clipPath
                     }
-                } else if (q >= 2 && kk > 0f) {
-                    val c = ambientAt(xFrac, amb[0], amb[1], amb[2])
-                    val wk = kk * ambWeight(c)
-                    drawRect(Brush.verticalGradient(listOf(c.copy(alpha = 0.34f * wk), c.copy(alpha = 0.10f * wk))))
-                }
-                // 3 재질 결
-                if (q >= 3) drawRect(ShaderBrush(ImageShader(grain, TileMode.Repeated, TileMode.Repeated)))
-                // 4 위쪽 하이라이트(누르면 아래로 내려가며 약해진다)
-                if (q >= 2) {
-                    val top = size.height * (0.0f + 0.08f * press)
-                    drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.13f * (1f - 0.5f * press)), Color.Transparent), top, top + size.height * 0.5f))
-                }
-                // 5 안쪽 반사(왼쪽 위의 은은한 빛)
-                if (q >= 3) {
-                    val o = Offset(size.width * 0.18f, size.height * 0.1f)
-                    drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.07f), Color.Transparent), o, size.minDimension * 0.9f), size.minDimension * 0.9f, o)
-                }
-                // 가운데 액체 몸통: 가운데가 은은히 밝고 가장자리로 갈수록 살짝 가라앉는다(주 버튼은 조금 더 밝게)
-                if (q >= 2) {
-                    val ctr = Offset(size.width / 2, size.height * 0.42f)
-                    val rr = size.maxDimension * 0.7f
-                    drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.10f else 0.05f), Color.Transparent), ctr, rr), rr, ctr)
-                    // 안쪽 가장자리 그늘(두께감): 둥근 테두리 안쪽으로 얇은 그늘
-                    val r0 = minOf(Glass.radius.toPx(), size.minDimension / 2f)
-                    drawRoundRect(Color.Black.copy(alpha = 0.22f), Offset(2.dp.toPx(), 2.dp.toPx()), Size(size.width - 4.dp.toPx(), size.height - 4.dp.toPx()), CornerRadius(r0 - 2.dp.toPx()), style = Stroke(3.dp.toPx()))
-                }
-                // 7 누름: 살짝 어두워진다 / 선택: 주변광으로 밝아진다
-                if (press > 0f) drawRect(Color.Black.copy(alpha = 0.16f * press))
-                if (selected) drawRect(Color.White.copy(alpha = 0.10f))
-                // 6 테두리 빛: 위는 밝고 아래는 어두운 얇은 선
-                val refl = state.sampleAt(xFrac, (pos.y / rootSize.height).coerceIn(0f, 1f))
-                val edge = if (selected) (refl ?: ambientAt(xFrac, amb[0], amb[1], amb[2])).copy(alpha = 0.9f) else lerp(Color.White, refl ?: Color.White, 0.35f)
-                // 모서리 반지름은 실제 그려진 모양과 같게(작은 타일은 높이의 절반) — 가장자리 빛·그늘이 둥근 모서리를 그대로 따라간다
-                val r = minOf(Glass.radius.toPx(), size.minDimension / 2f)
-                drawRoundRect(
-                    Brush.linearGradient(
-                        listOf(
-                            edge.copy(
-                                alpha = if (hc) {
-                                    0.9f
-                                } else if (selected) {
-                                    0.85f
-                                } else if (primary) {
-                                    0.42f
-                                } else {
-                                    0.28f
-                                }
-                            ),
-                            edge.copy(
-                                alpha = if (hc) {
-                                    0.6f
-                                } else if (selected) {
-                                    0.4f
-                                } else {
-                                    0.06f
-                                }
-                            )
+                    // 1 유리 색조(낮은 불투명도, 고대비면 거의 불투명)
+                    drawRect(
+                        base.copy(
+                            alpha = if (hc) {
+                                0.97f
+                            } else if (primary) {
+                                tn.absorption + 0.12f
+                            } else {
+                                tn.absorption
+                            }
                         )
-                    ),
-                    Offset(0.5f, 0.5f),
-                    Size(size.width - 1f, size.height - 1f),
-                    CornerRadius(r),
-                    style = Stroke(if (selected) 1.5.dp.toPx() else 1.dp.toPx())
-                )
-                // 모서리 광택: 왼쪽 위 둥근 모서리를 따라 맺히는 짧은 빛(그 자리 반사색으로 살짝 물든다). 누르면 약해진다
-                if (q >= 2 && !hc) {
-                    val inset = 1.5.dp.toPx()
-                    drawArc(
-                        lerp(Color.White, refl ?: Color.White, 0.3f).copy(alpha = (if (primary) 0.30f else 0.22f) * (1f - 0.5f * press)),
-                        185f,
-                        80f,
-                        false,
-                        Offset(inset, inset),
-                        Size(2f * r - 2f * inset, 2f * r - 2f * inset),
-                        style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round)
                     )
+                    // 2 공간 반사: 바닥과 같은 반사 필드를 패널 좌표 그대로(카드 위치만큼 옮겨) 그려 카드 경계에서 끊기지 않는다.
+                    //   유리는 반사를 절반쯤 통과시키고, 잉크로 찬 버튼은 표면 광택처럼 옅게 받는다
+                    val fieldImg = state.field
+                    if (q >= 2 && kk > 0f && fieldImg != null) {
+                        val wk = (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * tn.reflection).coerceAtMost(1f)
+                        val off = androidx.compose.ui.unit.IntOffset(-pos.x.toInt(), -pos.y.toInt())
+                        // 반사가 유리를 통과한다: 보통 합성으로 색 분포를 보이고, 밝은 부분은 '빛 더하기(스크린)'로 한 번 더 얹어 어두운 카드에서도 죽지 않게
+                        drawImage(fieldImg, dstOffset = off, dstSize = rootSize, alpha = wk, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+                        drawImage(fieldImg, dstOffset = off, dstSize = rootSize, alpha = wk * 0.45f, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low, blendMode = androidx.compose.ui.graphics.BlendMode.Screen)
+                        // 내부 굴절: 같은 반사를 살짝 아래·옆으로 밀어 옅게 한 번 더(두께 있는 액체 속을 지나 굽은 빛)
+                        if (q >= 3 || primary) {
+                            val shift = androidx.compose.ui.unit.IntOffset(-pos.x.toInt() + (rootSize.width * 0.012f).toInt(), -pos.y.toInt() + (rootSize.height * 0.03f).toInt())
+                            drawImage(fieldImg, dstOffset = shift, dstSize = rootSize, alpha = wk * 0.25f, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+                        }
+                    } else if (q >= 2 && kk > 0f) {
+                        val c = ambientAt(xFrac, amb[0], amb[1], amb[2])
+                        val wk = kk * ambWeight(c)
+                        drawRect(Brush.verticalGradient(listOf(c.copy(alpha = 0.34f * wk), c.copy(alpha = 0.10f * wk))))
+                    }
+                    // 3 재질 결
+                    if (q >= 3) drawRect(ShaderBrush(ImageShader(grain, TileMode.Repeated, TileMode.Repeated)))
+                    // 4 위쪽 하이라이트(누르면 아래로 내려가며 약해진다)
+                    if (q >= 2) {
+                        val top = size.height * (0.0f + 0.08f * press)
+                        drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.13f * (1f - 0.5f * press)), Color.Transparent), top, top + size.height * 0.5f))
+                    }
+                    // 5 안쪽 반사(왼쪽 위의 은은한 빛)
+                    if (q >= 3) {
+                        val o = Offset(size.width * 0.18f, size.height * 0.1f)
+                        drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.07f), Color.Transparent), o, size.minDimension * 0.9f), size.minDimension * 0.9f, o)
+                    }
+                    // 가운데 액체 몸통: 가운데가 은은히 밝고 가장자리로 갈수록 살짝 가라앉는다(주 버튼은 조금 더 밝게)
+                    if (q >= 2) {
+                        val ctr = Offset(size.width / 2, size.height * 0.42f)
+                        val rr = size.maxDimension * 0.7f
+                        drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.10f else 0.05f), Color.Transparent), ctr, rr), rr, ctr)
+                        // 안쪽 가장자리 그늘(두께감): 둥근 테두리 안쪽으로 얇은 그늘
+                        val r0 = minOf(Glass.radius.toPx(), size.minDimension / 2f)
+                        drawRoundRect(Color.Black.copy(alpha = 0.22f), Offset(2.dp.toPx(), 2.dp.toPx()), Size(size.width - 4.dp.toPx(), size.height - 4.dp.toPx()), CornerRadius(r0 - 2.dp.toPx()), style = Stroke(3.dp.toPx()))
+                    }
+                    // 7 누름: 살짝 어두워진다 / 선택: 주변광으로 밝아진다
+                    if (press > 0f) drawRect(Color.Black.copy(alpha = 0.16f * press))
+                    if (selected) drawRect(Color.White.copy(alpha = 0.10f))
+                    // 6 테두리 빛: 위는 밝고 아래는 어두운 얇은 선
+                    val refl = state.sampleAt(xFrac, (pos.y / rootSize.height).coerceIn(0f, 1f))
+                    val edge = if (selected) (refl ?: ambientAt(xFrac, amb[0], amb[1], amb[2])).copy(alpha = 0.9f) else lerp(Color.White, refl ?: Color.White, 0.35f)
+                    // 모서리 반지름은 실제 그려진 모양과 같게(작은 타일은 높이의 절반) — 가장자리 빛·그늘이 둥근 모서리를 그대로 따라간다
+                    val r = minOf(Glass.radius.toPx(), size.minDimension / 2f)
+                    drawRoundRect(
+                        Brush.linearGradient(
+                            listOf(
+                                edge.copy(
+                                    alpha = if (hc) {
+                                        0.9f
+                                    } else if (selected) {
+                                        0.85f
+                                    } else if (primary) {
+                                        0.42f
+                                    } else {
+                                        0.28f
+                                    }
+                                ),
+                                edge.copy(
+                                    alpha = if (hc) {
+                                        0.6f
+                                    } else if (selected) {
+                                        0.4f
+                                    } else {
+                                        0.06f
+                                    }
+                                )
+                            )
+                        ),
+                        Offset(0.5f, 0.5f),
+                        Size(size.width - 1f, size.height - 1f),
+                        CornerRadius(r),
+                        style = Stroke(if (selected) 1.5.dp.toPx() else 1.dp.toPx())
+                    )
+                    // 모서리 광택: 왼쪽 위 둥근 모서리를 따라 맺히는 짧은 빛(그 자리 반사색으로 살짝 물든다). 누르면 약해진다
+                    if (q >= 2 && !hc) {
+                        val inset = 1.5.dp.toPx()
+                        drawArc(
+                            lerp(Color.White, refl ?: Color.White, 0.3f).copy(alpha = (if (primary) 0.30f else 0.22f) * (1f - 0.5f * press)),
+                            185f,
+                            80f,
+                            false,
+                            Offset(inset, inset),
+                            Size(2f * r - 2f * inset, 2f * r - 2f * inset),
+                            style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                    }
                 }
             }
             .then(

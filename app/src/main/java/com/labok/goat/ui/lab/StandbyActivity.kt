@@ -229,6 +229,15 @@ private fun ReflectionPattern(kind: Int) {
             8 -> listOf(Color(0xFFE02020), Color(0xFF20B040), Color(0xFF2040E0), Color(0xFFE0C020)).forEachIndexed { i, c ->
                 drawRect(c, topLeft = androidx.compose.ui.geometry.Offset(w * i / 4f, 0f), size = androidx.compose.ui.geometry.Size(w / 4f, h))
             }
+            // 10: 레터박스 — 위 30%만 영상(네 색 띠 + 흰 표식), 그 아래는 검은 띠(유튜브 세로 화면처럼). 반사가 영상 아래 끝부터 또렷하게 시작하는지 본다
+            10 -> {
+                listOf(Color(0xFFE02020), Color(0xFF20B040), Color(0xFF2040E0), Color(0xFFE0C020)).forEachIndexed { i, c ->
+                    drawRect(c, topLeft = androidx.compose.ui.geometry.Offset(w * i / 4f, 0f), size = androidx.compose.ui.geometry.Size(w / 4f, h * 0.3f))
+                }
+                for (f in listOf(0.1f, 0.3f, 0.5f, 0.7f, 0.9f)) {
+                    drawRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(w * (f - 0.01f), 0f), size = androidx.compose.ui.geometry.Size(w * 0.02f, h * 0.3f))
+                }
+            }
             else -> Unit
         }
     }

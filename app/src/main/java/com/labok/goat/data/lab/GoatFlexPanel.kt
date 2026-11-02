@@ -375,6 +375,7 @@ object GoatFlexPanel {
         owner = null
         controller = null
         ambToken++
+        blackSince = 0L
         state.art = null
         state.field = null
         state.fieldPx = null
@@ -399,7 +400,10 @@ object GoatFlexPanel {
                     ?.let { state.art = it.asImageBitmap() }
             }
             state.playing = ps?.state == PlaybackState.STATE_PLAYING
-            state.speed = ps?.playbackSpeed?.takeIf { it > 0f } ?: state.speed
+            // 방금 속도를 바꿨으면 앱이 새 속도를 알려 줄 때까지(최대 1.5초) 옛 값으로 되돌리지 않는다. 예전에는 0.5초마다 옛 속도로
+            // 덮어써 눌러도 바뀌지 않는 것처럼 보였다(11-02 소장님 "재생속도 조절 안되는 느낌")
+            if (SystemClock.elapsedRealtime() > speedHoldUntil) state.speed = ps?.playbackSpeed?.takeIf { it > 0f } ?: state.speed
+            state.canSpeed = ps != null && ps.actions and PlaybackState.ACTION_SET_PLAYBACK_SPEED != 0L
             state.position = ps?.let { if (it.state == PlaybackState.STATE_PLAYING) it.position + ((SystemClock.elapsedRealtime() - it.lastPositionUpdateTime) * it.playbackSpeed).toLong() else it.position } ?: 0L
             state.canSeek = ps != null && ps.actions and PlaybackState.ACTION_SEEK_TO != 0L && state.duration > 0
         }
@@ -477,17 +481,38 @@ object GoatFlexPanel {
 
     private val speeds = listOf(1f, 1.25f, 1.5f, 2f, 0.5f, 0.75f)
 
+    @Volatile private var speedHoldUntil = 0L
+
     private fun speed(context: Context) {
-        val c = controller ?: return
         val next = speeds[(speeds.indexOfFirst { kotlin.math.abs(it - state.speed) < 0.01f } + 1).mod(speeds.size)]
-        io.execute { runCatching { c.transportControls.setPlaybackSpeed(next) }.onFailure { LogRepository.from(context).add("GOAT 플렉스 패널: 속도 바꾸기 실패(${it.message})".take(300)) } }
-        state.speed = next
+        setSpeed(context, next)
     }
 
+    /**
+     * 속도를 바꾸고 0.9초 뒤 앱이 실제로 받았는지 확인한다. 앱이 속도 변경을 지원하지 않거나(세션 동작에 SET_PLAYBACK_SPEED 없음)
+     * 받고도 그대로면 화면 값을 실제 속도로 되돌리고 그 사실을 보여 준다(누를 때마다 값만 바뀌고 영상은 그대로인 일이 없게).
+     */
     private fun setSpeed(context: Context, s: Float) {
         val c = controller ?: return
-        io.execute { runCatching { c.transportControls.setPlaybackSpeed(s) }.onFailure { LogRepository.from(context).add("GOAT 플렉스 패널: 속도 바꾸기 실패(${it.message})".take(300)) } }
+        speedHoldUntil = SystemClock.elapsedRealtime() + 1500
         state.speed = s
+        state.speedNote = ""
+        io.execute {
+            val r = runCatching { c.transportControls.setPlaybackSpeed(s) }
+            Thread.sleep(900)
+            val actual = c.playbackState?.playbackSpeed ?: 0f
+            val supported = (c.playbackState?.actions ?: 0L) and PlaybackState.ACTION_SET_PLAYBACK_SPEED != 0L
+            val ok = r.isSuccess && kotlin.math.abs(actual - s) < 0.01f
+            LogRepository.from(context).add("GOAT 플렉스 패널: 속도 ${s}x 요청 · 앱이 알린 속도 ${actual}x · 지원 표시 $supported · ${if (ok) "반영" else "반영 안 됨"}${r.exceptionOrNull()?.let { " (${it.message})" } ?: ""}".take(300))
+            main.post {
+                if (controller !== c) return@post
+                if (!ok) {
+                    speedHoldUntil = 0L
+                    if (actual > 0f) state.speed = actual
+                    state.speedNote = if (supported) "앱이 속도를 바꾸지 않았습니다" else "이 앱은 속도 변경을 받지 않습니다"
+                }
+            }
+        }
     }
 
     // ---- 앰비언트 엔진 연결 ----
@@ -585,7 +610,19 @@ object GoatFlexPanel {
                 val dark = darkFraction(fr.px)
                 val playing = controller?.playbackState?.state == PlaybackState.STATE_PLAYING
                 val pal0 = AmbientColor.extract(fr.px, fr.w, fr.h)
-                val protectedNow = pal0.protectedLike || (dark > 0.85f && playing)
+                // 11-02 실사용 검수: 유튜브 어두운 장면(실제 검은 영상)이 보호 화면으로 잘못 잡혀 연출로 바뀔 수 있었다. 화면만으로는
+                // 검은 영상과 DRM을 구분할 수 없어, 보호 콘텐츠 앱(넷플릭스·디즈니+·쿠팡플레이 등)은 바로, 그 밖의 앱은 재생 중
+                // 거의 검은 화면이 4초 넘게 이어질 때만 보호 화면으로 본다(짧은 암전은 그대로 어둡게 비친다)
+                val blackish = pal0.protectedLike || (dark > 0.85f && playing)
+                blackSince = if (!blackish) {
+                    0L
+                } else if (blackSince == 0L) {
+                    t1
+                } else {
+                    blackSince
+                }
+                val drmApp = DRM_APPS.any { pkg?.startsWith(it) == true }
+                val protectedNow = blackish && (drmApp || t1 - blackSince >= 4000L)
                 var pal: AmbientColor.Palette? = null
                 var field: Field? = null
                 var keep = false
@@ -593,7 +630,17 @@ object GoatFlexPanel {
                 if (!protectedNow) {
                     slowBlend = false
                     pal = pal0
-                    if (changed || state.fieldPx == null) field = makeField(fr.px, fr.w, fr.h) else keep = true
+                    if (changed || state.fieldPx == null) {
+                        // 위·아래 검은 띠를 빼고 실제 내용 줄만 비춘다(접는 선 바로 아래에 영상 아래쪽 끝이 또렷하게 오게)
+                        val band = ReflectionField.contentBand(fr.px, fr.w, fr.h)
+                        field = if (band.first == 0 && band.last == fr.h - 1) {
+                            makeField(fr.px, fr.w, fr.h)
+                        } else {
+                            makeField(fr.px.copyOfRange(band.first * fr.w, (band.last + 1) * fr.w), fr.w, band.last - band.first + 1)
+                        }
+                    } else {
+                        keep = true
+                    }
                     src = "화면 분석"
                 } else {
                     tel.black++
@@ -639,6 +686,11 @@ object GoatFlexPanel {
             state.ambAll = c[3]
         }
     }
+
+    /** 화면이 검게 찍히는 보호 콘텐츠 앱(접두사). 이 앱들은 검은 화면을 바로 보호 화면으로 본다. */
+    private val DRM_APPS = listOf("com.netflix.", "com.disney.", "com.coupang.mobile.play", "com.amazon.avod", "net.cj.cjhv.gs.tving", "kr.co.captv.pooqV2", "com.frograms.wplay")
+
+    @Volatile private var blackSince = 0L
 
     private const val ACTIVE_MS = 250L
     private const val STILL_MS = 1000L
