@@ -1,7 +1,6 @@
 package com.labok.goat.data.lab
 
 import kotlin.math.abs
-import kotlin.math.pow
 import kotlin.math.roundToInt
 
 /**
@@ -23,11 +22,28 @@ object ReflectionField {
         val blurMax: Float = 14f,
         val gamma: Float = 1.2f,
         val energyTop: Float = 1f,
-        val energyBottom: Float = 0.72f
+        val energyBottom: Float = 0.72f,
+        /** 기본 필드 한 칸이 패널에서 몇 dp인지(가로). 블러 곡선(dp)을 칸 단위로 바꿀 때 쓴다. 폴드 안쪽 화면 1848px·128칸·밀도 약 2.6 기준. */
+        val cellDp: Float = 5.4f
     )
 
+    /**
+     * 거리 블러 곡선(11-02 소장님 확정: "5%까지 10dp, 10%에 24dp, 25%에 48dp 이런 식"으로 적극적으로). 패널 위치 [d](0 = 접는 선,
+     * 1 = 맨 아래)의 블러 반지름(dp). 점 사이는 직선으로 잇는다. 기본 필드와 근거리 띠가 이 한 곡선을 같이 쓴다.
+     */
+    private val CURVE_D = floatArrayOf(0f, 0.05f, 0.10f, 0.25f, 0.50f, 0.75f, 1f)
+    private val CURVE_DP = floatArrayOf(3f, 10f, 24f, 48f, 80f, 100f, 120f)
+
+    fun blurDp(d: Float): Float {
+        val x = d.coerceIn(0f, 1f)
+        var i = 0
+        while (i < CURVE_D.size - 2 && CURVE_D[i + 1] < x) i++
+        val t = (x - CURVE_D[i]) / (CURVE_D[i + 1] - CURVE_D[i])
+        return CURVE_DP[i] + (CURVE_DP[i + 1] - CURVE_DP[i]) * t
+    }
+
     /** 미리 만들어 두는 흐림 단계(원본 칸 반지름). r(d)는 이 사이를 섞는다. */
-    private val LEVELS = floatArrayOf(0f, 1f, 2f, 3.5f, 5.5f, 8f, 11f, 15f)
+    private val LEVELS = floatArrayOf(0f, 1f, 2f, 3.5f, 5.5f, 8f, 11f, 15f, 19f, 24f)
 
     /**
      * [px](w×h, 위 화면의 반사에 쓸 부분)로 반사 필드를 만든다. 반환은 w×spec.outH ARGB.
@@ -47,11 +63,8 @@ object ReflectionField {
         val out = IntArray(w * outH)
         for (y in 0 until outH) {
             val d = y / (outH - 1f)
-            // 거리 곡선(11-02 최종): 위 12%까지는 거의 흐리지 않고(원본 구조가 또렷), 12~90% 사이에서 부드럽게(smoothstep) 커져
-            // 35~65%에서 확산이 분명해지고, 아래쪽은 색 분위기만 남는다. 단계 사이는 두 흐림 단계를 섞어 경계가 없다
-            // 기본 필드(128칸)는 패널에서 14배 넘게 늘어나므로 최소 1.3칸은 흐려 칸 격자가 보이지 않게 한다(11-02 실기 "원소스 픽셀 다 보임").
-            // 접는 선 바로 아래 선명한 부분은 근거리 띠(고해상도)가 맡는다
-            val r = maxOf(radiusAt(d, spec), 2.2f)
+            // 블러 곡선([blurDp])을 칸 단위로. 접는 선 바로 아래 선명한 부분은 근거리 띠(고해상도)가 덮는다. 단계 사이는 두 흐림 단계를 섞어 경계가 없다
+            val r = radiusAt(d, spec).coerceAtMost(LEVELS.last())
             var i = 0
             while (i < LEVELS.size - 2 && LEVELS[i + 1] < r) i++
             val t = ((r - LEVELS[i]) / (LEVELS[i + 1] - LEVELS[i])).coerceIn(0f, 1f)
@@ -70,12 +83,8 @@ object ReflectionField {
         return out
     }
 
-    /** 패널 위치 [d](0=접는 선, 1=맨 아래)의 흐림 반지름(필드 칸 단위). */
-    fun radiusAt(d: Float, spec: Spec = Spec()): Float {
-        // 거리 구간(11-02 Ultimate UX 참고값): 위 0~18% 원본 구조, 18~60% 점점 흐림, 60~100% 넓은 확산 — 한 곡선이라 경계가 없다
-        val u = smooth(((d - 0.18f) / 0.72f).coerceIn(0f, 1f))
-        return spec.blurMin + (spec.blurMax - spec.blurMin) * u.pow(spec.gamma)
-    }
+    /** 패널 위치 [d](0=접는 선, 1=맨 아래)의 흐림 반지름(필드 칸 단위) = [blurDp] ÷ 칸 크기(dp). */
+    fun radiusAt(d: Float, spec: Spec = Spec()): Float = blurDp(d) / spec.cellDp
 
     /** 패널 위치 [d]의 반사 세기. 접는 선 바로 아래(위 8%)는 번쩍이지 않게 75%에서 부드럽게 올린다(따로 빛 띠를 만들지 않는다). */
     fun energyAt(d: Float, spec: Spec = Spec()): Float {
@@ -83,11 +92,11 @@ object ReflectionField {
         return (spec.energyTop + (spec.energyBottom - spec.energyTop) * d) * ramp
     }
 
-    /** 근거리 띠의 최소 흐림(고해상도 칸). */
-    const val NEAR_MIN_BLUR = 1.5f
+    /** 근거리 띠가 덮는 패널 높이 비율(접는 선부터). 적극적인 곡선에서는 위 10%까지만 선명해 고해상도가 필요하다(25% → 10%). */
+    const val NEAR_FRAC = 0.10f
 
-    /** 근거리 띠가 덮는 패널 높이 비율(접는 선부터). */
-    const val NEAR_FRAC = 0.25f
+    /** 근거리 띠 흐림 단계(고해상도 칸). 10%에서 24dp ≈ 폴드 26칸까지. */
+    private val NEAR_LEVELS = floatArrayOf(0f, 1.5f, 3f, 5f, 8f, 12f, 18f, 26f)
 
     /**
      * 근거리 고해상도 반사 띠(11-02 "근거리 반사 화질" 지시). 기본 필드는 96칸이라 접는 선 바로 아래가 흐림 0이어도 한 칸이
@@ -96,19 +105,18 @@ object ReflectionField {
      * 흐림과 세기는 기본 필드와 같은 거리 곡선을 그대로 따르고(반지름은 [scale]배 칸), 띠 아래쪽 절반에서 투명해져
      * 기본 필드로 경계 없이 넘어간다. 반환은 w×h ARGB(알파 = 세기 × 띠 가장자리 페이드).
      */
-    fun buildNear(px: IntArray, w: Int, h: Int, scale: Int, spec: Spec = Spec()): IntArray {
+    fun buildNear(px: IntArray, w: Int, h: Int, cellDp: Float, spec: Spec = Spec()): IntArray {
         require(w > 0 && h > 1 && px.size >= w * h)
         val flipped = IntArray(w * h)
         for (y in 0 until h) System.arraycopy(px, (h - 1 - y) * w, flipped, y * w, w)
-        val lv = floatArrayOf(0f, 1f, 2f, 3f)
+        val lv = NEAR_LEVELS
         val levels = lv.map { r -> if (r <= 0f) flipped else blur(flipped, w, h, r) }
         val out = IntArray(w * h)
         for (y in 0 until h) {
             val db = y / (h - 1f)
             val d = db * NEAR_FRAC
-            // 11-02 소장님 "가장 가까운 부분 블러 조금 더": 접는 선 바로 아래도 최소 1.5칸(고해상도, 폴드에서 약 7px)은 흐린다.
-            // 완전 선명하면 반사가 아니라 화면을 복사해 붙인 것처럼 보였다
-            val r = maxOf(NEAR_MIN_BLUR, radiusAt(d, spec) * scale).coerceAtMost(lv.last())
+            // 줄마다 같은 블러 곡선(dp)을 근거리 칸 단위로: 0%에서 3dp, 5%에서 10dp, 10%에서 24dp — 아래로 갈수록 적극적으로 커진다
+            val r = (blurDp(d) / cellDp).coerceAtMost(lv.last())
             var i = 0
             while (i < lv.size - 2 && lv[i + 1] < r) i++
             val t = ((r - lv[i]) / (lv[i + 1] - lv[i])).coerceIn(0f, 1f)

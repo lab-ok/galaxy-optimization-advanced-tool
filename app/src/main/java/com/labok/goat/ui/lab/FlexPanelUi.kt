@@ -545,11 +545,9 @@ internal fun reflectionGrade(): androidx.compose.ui.graphics.ColorFilter {
 private fun NearLayer(state: FlexPanelState, alpha: Float) {
     val n = state.near ?: return
     val cf = remember { reflectionGrade() }
+    // 블러는 반사를 만들 때 줄마다 거리 곡선대로 이미 들어가 있다(GPU 일정 블러는 곡선과 어긋나 뺐다, 11-02)
     Canvas(
-        Modifier.fillMaxWidth().fillMaxHeight(com.labok.goat.data.lab.ReflectionField.NEAR_FRAC).graphicsLayer {
-            // 11-02 소장님 "상위 블러 조금 더": 2dp → 3.5dp
-            renderEffect = androidx.compose.ui.graphics.BlurEffect(5f.dp.toPx(), 5f.dp.toPx(), androidx.compose.ui.graphics.TileMode.Clamp)
-        }
+        Modifier.fillMaxWidth().fillMaxHeight(com.labok.goat.data.lab.ReflectionField.NEAR_FRAC)
     ) {
         drawImage(n, dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()), alpha = alpha, filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium, colorFilter = cf)
     }

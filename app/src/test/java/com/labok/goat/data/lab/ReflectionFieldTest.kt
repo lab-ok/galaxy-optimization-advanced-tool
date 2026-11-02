@@ -25,10 +25,8 @@ class ReflectionFieldTest {
         val mid = ReflectionField.clarity(f, w, (outH * 0.5f).toInt())
         val bot = ReflectionField.clarity(f, w, (outH * 0.9f).toInt())
         assertTrue("선명도 위 $top > 가운데 $mid > 아래 $bot", top > mid && mid > bot)
-        // 기본 필드는 칸 격자가 보이지 않게 위쪽도 최소 1.3칸 흐린다(11-02) — 그래도 줄무늬가 원본의 8% 넘게 남고, 아래는 30% 아래로 퍼진다.
-        // 접는 선 바로 아래 선명함은 근거리 띠(nearRawKeepsSourceDetail)가 맡는다
+        // 위가 원본에 가장 가깝고 아래는 30% 아래로 퍼진다(접는 선 바로 아래 선명함은 근거리 띠가 맡는다)
         val src = ReflectionField.clarity(leftRedRightBlue(), w, 0)
-        assertTrue("위쪽 줄무늬가 남아야 함: $top / 원본 $src", top > src * 0.08f)
         assertTrue("아래는 퍼져야 함: $bot / 원본 $src", bot < src * 0.3f)
     }
 
@@ -85,5 +83,33 @@ class ReflectionFieldTest {
         // 뒤집혀 맨 위 줄이 흰색이고(색은 원본 그대로), 아래 끝은 투명으로 사라진다
         assertTrue(out[0] and 0xFFFFFF == 0xFFFFFF)
         assertTrue("위는 보이고(${out[0] ushr 24}) 아래 끝은 투명(${out[(nh - 1) * nw] ushr 24})", (out[0] ushr 24) > 150 && (out[(nh - 1) * nw] ushr 24) == 0)
+    }
+
+    @Test
+    fun blurCurveMatchesAgreedTable() {
+        // 11-02 소장님 확정: 5%까지 10dp, 10%에 24dp, 25%에 48dp … 아래로 갈수록 적극적으로
+        val table = listOf(0f to 3f, 0.05f to 10f, 0.10f to 24f, 0.25f to 48f, 0.50f to 80f, 0.75f to 100f, 1f to 120f)
+        for ((d, dp) in table) org.junit.Assert.assertEquals("d=$d", dp, ReflectionField.blurDp(d), 0.01f)
+        // 사이도 끊김 없이 커진다
+        var prev = 0f
+        for (k in 0..100) {
+            val v = ReflectionField.blurDp(k / 100f)
+            assertTrue(v >= prev)
+            prev = v
+        }
+    }
+
+    @Test
+    fun nearBandSharpAtHingeAndBlursDownward() {
+        val nw = 96
+        val nh = 40
+        // 세로 줄무늬(원본 맨 아래 줄 = 접는 선 쪽)
+        val px = IntArray(nw * nh) { i -> if ((i % nw) % 6 < 3) 0xFFFFFFFF.toInt() else 0xFF000000.toInt() }
+        val out = ReflectionField.buildNear(px, nw, nh, cellDp = 3f)
+        val top = ReflectionField.clarity(out, nw, 0)
+        val mid = ReflectionField.clarity(out, nw, nh / 2)
+        val src = ReflectionField.clarity(px, nw, 0)
+        assertTrue("접는 선 바로 아래는 원본 구조가 남는다: $top / $src", top > src * 0.3f)
+        assertTrue("아래로 갈수록 흐려진다: $top > $mid", top > mid)
     }
 }

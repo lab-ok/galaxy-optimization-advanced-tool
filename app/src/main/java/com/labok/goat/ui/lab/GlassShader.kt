@@ -130,8 +130,8 @@ float2 edgeNormal(float2 p, float2 b, float r) {
 
 // 반사는 CPU에서 색 보정 없이 온다(실기 속도). 근거리 띠는 5탭 블러를 하고, 합친 뒤 색 보정(채도 1.3·대비 1.12)을 한 번에 한다
 half4 back(float2 c) {
-    float o = 3.6 * density; // 상위 블러 조금 더(11-02): 1.6 → 2.6 → 3.6dp
-    half4 n = near.eval(c) * 0.36 + (near.eval(c + float2(o, 0.0)) + near.eval(c - float2(o, 0.0)) + near.eval(c + float2(0.0, o)) + near.eval(c - float2(0.0, o))) * 0.16;
+    // 블러는 반사를 만들 때 줄마다 거리 곡선대로 들어가 있다(바닥과 같은 곡선). 여기서 따로 흐리지 않는다
+    half4 n = near.eval(c);
     half4 f = field.eval(c);
     half4 m = n + f * (1.0 - n.a);
     if (m.a < 0.001) return m;

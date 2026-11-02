@@ -628,6 +628,7 @@ object GoatFlexPanel {
      * - 고정 색: 앱 대표 색.
      */
     private fun startAmbient(context: Context, saver: Boolean, mode: Int) {
+        context.resources.displayMetrics.let { screenWdp = it.widthPixels / it.density }
         state.ambMode = mode
         val token = ++ambToken
         state.ambientOn = mode != 0
@@ -749,6 +750,11 @@ object GoatFlexPanel {
         val o = i * 4
         (0xFF shl 24) or ((b[o].toInt() and 0xFF) shl 16) or ((b[o + 1].toInt() and 0xFF) shl 8) or (b[o + 2].toInt() and 0xFF)
     }
+
+    /** 반사 그림 가로 [cols]칸 중 한 칸이 패널(화면 폭)에서 몇 dp인지. 블러 곡선(dp)을 칸 단위로 바꾼다. */
+    @Volatile private var screenWdp = 1848f / 2.625f
+
+    private fun cellDpFor(cols: Int) = screenWdp / cols.coerceAtLeast(1)
 
     private fun le(b: ByteArray, o: Int) = (b[o].toInt() and 0xFF) or ((b[o + 1].toInt() and 0xFF) shl 8) or ((b[o + 2].toInt() and 0xFF) shl 16) or ((b[o + 3].toInt() and 0xFF) shl 24)
 
@@ -996,9 +1002,8 @@ object GoatFlexPanel {
     /** 미러 2판: 이미 잘라 온 근거리 원본 띠([nw]×[nh], 맨 아래 줄이 접는 선 쪽)로 근거리 반사를 만든다. */
     private fun withNearBand(base: Field, near: IntArray, nw: Int, nh: Int, scale: Int): Field {
         if (nh < 8) return base
-        // 11-02 실기: 768칸 띠를 CPU로 색 보정·블러하느라 한 장에 31~137ms 걸려 프레임 대부분을 버렸다. 이제 CPU는 뒤집기·세기만 하고
-        // 색 보정(채도·대비)과 블러는 GPU(셰이더·RenderEffect)가 한다
-        return Field(base.px, base.w, base.h, ReflectionField.buildNearRaw(near, nw, nh), nw, nh)
+        // 색 보정은 GPU가 하고, 블러는 줄마다 거리 곡선대로 CPU에서(미끄러지는 창 흐림이라 빠르다). 띠는 위 10%로 좁혀 칸 수도 줄었다
+        return Field(base.px, base.w, base.h, ReflectionField.buildNear(near, nw, nh, cellDpFor(nw)), nw, nh)
     }
 
     private fun Field.withHinge(row: IntArray) = Field(px, w, h, near, nw, nh, row)
@@ -1024,7 +1029,7 @@ object GoatFlexPanel {
         if (nh < 8) return base
         val from = bot - nh + 1
         val src = IntArray(hi.w * nh) { i -> AmbientColor.grade(hi.px[from * hi.w + i]) }
-        val near = ReflectionField.buildNear(src, hi.w, nh, scale)
+        val near = ReflectionField.buildNear(src, hi.w, nh, cellDpFor(hi.w))
         return Field(base.px, base.w, base.h, near, hi.w, nh)
     }
 
@@ -1273,7 +1278,7 @@ object GoatFlexPanel {
     /** 다듬은 색으로 반사 필드를 만들고 그림으로 바꾼다(작업 스레드). */
     private fun makeField(px: IntArray, w: Int, h: Int): Field {
         // 색 보정(채도·대비)은 GPU가 그릴 때 한다(11-02 실기 속도: 칸마다 OKLab 보정이 프레임당 수십 ms였다)
-        val spec = ReflectionField.Spec()
+        val spec = ReflectionField.Spec(cellDp = cellDpFor(w))
         val f = ReflectionField.build(px, w, h, spec)
         return Field(f, w, spec.outH)
     }
