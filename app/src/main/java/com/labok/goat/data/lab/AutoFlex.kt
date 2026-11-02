@@ -555,12 +555,21 @@ object AutoFlex {
             p.y >= p.x
         }.getOrDefault(true)
 
+        private var lastPortrait: Boolean? = null
+
         // 화면이 돌면(가로↔세로) 지금 각도로 다시 정한다. 회전 중 센서 이벤트와 겹쳐도 같은 일꾼 스레드에서 차례로 처리한다
         private val displays = object : android.hardware.display.DisplayManager.DisplayListener {
             override fun onDisplayAdded(displayId: Int) = Unit
             override fun onDisplayRemoved(displayId: Int) = Unit
             override fun onDisplayChanged(displayId: Int) {
-                if (displayId == android.view.Display.DEFAULT_DISPLAY) worker.post { decide(last, 300L) }
+                // 삼성은 주사율·밝기가 바뀔 때도(만질 때마다 120Hz로 오른다) 이 알림이 와서, 화면 모양이 바뀐 때만 다시 정한다
+                if (displayId != android.view.Display.DEFAULT_DISPLAY) return
+                worker.post {
+                    val portrait = screenPortrait()
+                    if (portrait == lastPortrait) return@post
+                    lastPortrait = portrait
+                    decide(last, 300L)
+                }
             }
         }
 

@@ -154,7 +154,11 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
     // 물방울 손잡이: 빨리 움직일수록 반원을 따라 길게 늘어났다가 멈추면 출렁이며 돌아온다. 끄는 동안에는 손가락을 거의 바로
     // 따라가고(단단하고 덜 튀는 용수철), 놓거나 범위를 다시 정할 때만 물처럼 출렁인다. 끄는 동안에도 출렁이게 두면 1°마다
     // 새로 걸린 용수철이 늦게 쫓아와 손잡이가 손가락보다 뒤처지고 떨렸다(11-02 소장님: 버벅임)
+    // 끄는 동안에는 용수철 없이 손가락 자리에 바로 붙인다. 1.41.0의 단단한 용수철(2200)도 휙휙 끌면 1°마다 다시 걸리며 뒤처졌다
+    // (11-02 소장님 "휙휙 움직이면 버벅이면서 잘 안 따라옴"). 늘어나는 모양은 끄는 속도([dragVel])로 따로 낸다
     val springs = remember { listOf(Animatable(min.toFloat()), Animatable(max.toFloat())) }
+    val dragVel = remember { listOf(Animatable(0f), Animatable(0f)) }
+    val dragAt = remember { longArrayOf(0L, 0L) }
     listOf(min, max).forEachIndexed { i, v ->
         val goal = shownDeg(i, v)
         val dragging = held == i + 1
@@ -163,7 +167,13 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
                 // 세밀 조절 중인 손잡이는 펼쳐지는 패널([fineK])과 같은 박자로 꼭대기에 붙는다
                 springs[i].snapTo(goal)
             } else if (dragging) {
-                springs[i].animateTo(goal, spring(UiMotion.ratio(0.85f), UiMotion.stiffness(2200f, 0.5f)))
+                val now = System.nanoTime()
+                val dt = ((now - dragAt[i]) / 1e9f).coerceIn(0.008f, 0.1f)
+                dragAt[i] = now
+                val speed = (goal - springs[i].value) / dt
+                springs[i].snapTo(goal)
+                dragVel[i].snapTo(speed)
+                dragVel[i].animateTo(0f, spring(UiMotion.ratio(0.9f), UiMotion.stiffness(400f, 0.9f)))
             } else {
                 springs[i].animateTo(goal, spring(UiMotion.ratio(0.5f), UiMotion.stiffness(700f, 0.5f)))
             }
@@ -267,7 +277,7 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
                 val g = grow[i].value
                 val tw = measurer.measure("$v°", handleStyle).size.width
                 // 늘어남: 각속도(°/초)에 비례해 반원 방향으로 길어지고 두께는 조금 얇아진다
-                val stretch = (abs(springs[i].velocity) / 400f).coerceAtMost(0.6f)
+                val stretch = (maxOf(abs(springs[i].velocity), abs(dragVel[i].value)) / 400f).coerceAtMost(0.6f)
                 // 기본 조절바와 같다: 잡으면 손잡이가 납작하고 넓어지고(30→24dp), 값 방울이 반원 바깥으로 떠올라 큰 글자로 값을 보여 준다
                 val w = (tw + (22 + 8 * g).dp.toPx()) * shrink * (1 + stretch)
                 val h = (28 - 4 * g).dp.toPx() * shrink * (1 - stretch * 0.3f)

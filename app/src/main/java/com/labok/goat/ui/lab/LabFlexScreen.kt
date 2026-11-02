@@ -261,7 +261,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
             }
         }
         item(key = "range") { Box(Modifier.widthIn(max = ContentMaxWidth)) { rangeCard() } }
-        // GOAT 패널 옵션은 점 세 개 메뉴 → 「GOAT 패널 설정」 시트로 옮겼다(11-02 소장님)
+        // GOAT 패널 옵션은 점 세 개 메뉴 → 「패널 설정」 시트로 옮겼다(11-02 소장님)
         // 앱별로 접었을 때 동작: 요약 줄(모드별 앱 수)을 누르면 펼쳐진다. 펼치면 위쪽 탭으로 모드를 골라 그 모드의 앱만 보고,
         // 줄을 누르면 그 줄 아래에 모드 고르기가 열린다(한 번에 한 줄만)
         val q = query.trim()
@@ -440,7 +440,7 @@ private val liquidPlace: FiniteAnimationSpec<IntOffset>
 private val liquidFade: FiniteAnimationSpec<Float>
     get() = spring(1f, UiMotion.stiffness(400f, 1f))
 
-/** GOAT 패널 설정 시트(플렉스 모드 화면의 점 세 개 메뉴 → 「GOAT 패널 설정」, 11-02 소장님). */
+/** GOAT 패널 설정 시트(플렉스 모드 화면의 점 세 개 메뉴 → 「패널 설정」, 11-02 소장님). */
 @Composable
 internal fun GoatPanelSheet() {
     SheetColumn(title = Copy.MENU_GOAT_PANEL) { GoatPanelCard() }
