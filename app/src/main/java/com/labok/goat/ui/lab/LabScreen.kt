@@ -163,7 +163,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
         GlassCard {
             Text("OTT 플렉스 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
-                "누른 뒤 10초 안에 넷플릭스·디즈니+ 같은 OTT 앱에서 영상을 틀고, 가로로 들어 반쯤 접어 두세요. 진동이 울릴 때마다 다음 단계로 넘어가며 약 20초 동안 반쯤 접힘·가로 맞춤·삼성 패널 등록 여부를 바꿔 시험합니다. 끝나면 알림을 눌러 결과를 보내 주세요.",
+                "누른 뒤 10초 안에 넷플릭스·디즈니+ 같은 OTT 앱에서 영상을 틀고, 가로로 들어 반쯤 접어 두세요. 진동이 울릴 때마다 다음 단계로 넘어가며 약 25초 동안 반쯤 접힘·가로 맞춤·삼성 패널 등록·앱 방향 요청 무시를 바꿔 시험합니다. 끝나면 알림을 눌러 결과를 보내 주세요.",
                 color = c.muted,
                 style = MaterialTheme.typography.bodySmall
             )

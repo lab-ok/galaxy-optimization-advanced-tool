@@ -26,7 +26,7 @@ import kotlin.concurrent.thread
  * OTT 앱은 화면 찍기가 막혀 있어(보안 창) 화면 대신 시스템 상태를 기록한다. 버튼을 누르고 10초 안에 OTT 앱에서 영상을 틀고
  * 가로로 들어 반쯤 접어 두면, 진동으로 단계마다 알리며 아래를 차례로 시험한다.
  * 1. 시작 상태 → 2. 반쯤 접힘 강제 → 3. 화면이 세로로 돌아갔으면 가로로 되돌림 → 4. 삼성 플렉스 패널에 등록하고 다시 접힘
- * → 5. 등록을 풀고 다시 접힘. 단계마다 앞 앱, 화면 회전(실제·설정), 기기 상태, 앱 창의 크기·방향·회전, 앱이 요청한 방향,
+ * → 5. 등록을 풀고 다시 접힘 → 6. 앱의 방향 요청을 무시하게 하고 다시 접힘(끝나면 원래 값으로). 단계마다 앞 앱, 화면 회전(실제·설정), 기기 상태, 앱 창의 크기·방향·회전, 앱이 요청한 방향,
  * 보안 창 여부, 패널 등록 여부를 남긴다. 끝나면 모두 되돌리고 진단 파일을 저장해 알림을 누르면 보낼 수 있게 한다.
  */
 object OttFlexTest {
@@ -64,6 +64,7 @@ object OttFlexTest {
         val userBefore = android.provider.Settings.System.getInt(cr, android.provider.Settings.System.USER_ROTATION, 0)
         val pkg = ShizukuAccess.focusedTask()?.let { it.basePkg ?: it.pkg }.orEmpty()
         val wasRegistered = pkg in FlexPanel.registered(context)
+        val ignoreBefore = ShizukuAccess.shell("cmd window get-ignore-orientation-request -d 0")?.out?.let { Regex("ignoreOrientationRequest (true|false)").find(it)?.groupValues?.get(1) }
         note("앞 앱 $pkg · 자동 회전 $autoBefore · 설정 회전 $userBefore · 패널 등록 $wasRegistered · 가로로 듦 ${AutoFlex.horizontal.value} · 각도 ${AutoFlex.angle.value}")
         try {
             snapshot(context, pkg, "1. 시작", ::note)
@@ -99,7 +100,17 @@ object OttFlexTest {
             FlexPanel.forceHalfOpened(context)
             Thread.sleep(2500)
             snapshot(context, pkg, "5. 패널 등록 없이 반쯤 접힘", ::note)
+
+            // 6. 앱이 요청한 방향을 무시하게 해(화면 회전을 따르게) 앱이 가로·가로 접는 선을 받는지 본다
+            buzz(context)
+            FlexPanel.resetPosture(context)
+            ShizukuAccess.shell("cmd window set-ignore-orientation-request -d 0 true")
+            Thread.sleep(800)
+            FlexPanel.forceHalfOpened(context)
+            Thread.sleep(2500)
+            snapshot(context, pkg, "6. 방향 요청 무시 + 반쯤 접힘", ::note)
         } finally {
+            ignoreBefore?.let { ShizukuAccess.shell("cmd window set-ignore-orientation-request -d 0 $it") }
             FlexPanel.resetPosture(context)
             if (pkg.isNotEmpty() && (pkg in FlexPanel.registered(context)) != wasRegistered) FlexPanel.setApp(context, pkg, wasRegistered)
             runCatching {
@@ -147,13 +158,16 @@ object OttFlexTest {
         } else {
             note("   창: $pkg 창을 찾지 못함")
         }
-        val acts = ShizukuAccess.shell("dumpsys activity activities")?.out.orEmpty()
-        val a = acts.indexOf("$pkg/")
-        if (a >= 0) {
-            val block = acts.substring(a, minOf(acts.length, a + 4000))
-            val o = Regex("(mRequestedOrientation|requestedOrientation|screenOrientation|mOrientation)=\\S+").findAll(block).map { it.value }.distinct().take(4).toList()
-            note("   요청 방향: ${o.ifEmpty { listOf("찾지 못함") }.joinToString(" · ")}")
+        // 앱 활동 기록(ActivityRecord) 줄부터 아래 80줄에서 앱이 요청한 방향과 시스템이 덮어쓴 방향을 찾는다
+        val acts = ShizukuAccess.shell("dumpsys activity activities")?.out.orEmpty().lines()
+        val at = acts.indexOfFirst { "ActivityRecord{" in it && "$pkg/" in it }
+        if (at >= 0) {
+            val o = acts.subList(at, minOf(acts.size, at + 80)).flatMap { l -> Regex("(requestedOrientation|overrideOrientation|screenOrientation)=\\S+").findAll(l).map { it.value }.toList() }.distinct().take(4)
+            note("   요청 방향: ${acts[at].trim().take(100)} · ${o.ifEmpty { listOf("찾지 못함") }.joinToString(" · ")}")
+        } else {
+            note("   요청 방향: 활동 기록을 찾지 못함")
         }
+        ShizukuAccess.shell("cmd window get-ignore-orientation-request -d 0")?.out?.trim()?.let { note("   방향 요청 무시: $it") }
         val rot = ShizukuAccess.shell("dumpsys window displays | grep -m4 -oE 'mUserRotationMode=[^ ]+|mUserRotation=[^ ]+|mCurrentAppOrientation=[^ ]+|mLastOrientation=[^ ]+'")?.out?.trim().orEmpty()
         if (rot.isNotEmpty()) note("   회전 상태: " + rot.lines().joinToString(" · ") { it.trim() }.take(260))
     }
