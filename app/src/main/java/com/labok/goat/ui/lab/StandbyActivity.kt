@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -189,6 +190,18 @@ private fun DirectionCheck(onClose: () -> Unit) {
 /** 반사 시험 무늬(위 절반이 패널에 비치는 원본). 6은 1.5초마다 색이 확 바뀌는 무늬(반응 지연 실측용, 바뀐 시각을 logcat GOATAMB에 남긴다). */
 @androidx.compose.runtime.Composable
 private fun ReflectionPattern(kind: Int) {
+    if (kind == 14) {
+        // 14: 계속 움직이는 화면 — 색상환이 6초에 한 바퀴 천천히 돈다(영상처럼 쉬지 않고 바뀜). 시간 보간 '전환 뒤 멈춤'이 0에 가까운지 본다
+        val tr = androidx.compose.animation.core.rememberInfiniteTransition(label = "p14")
+        val t: Float by tr.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = androidx.compose.animation.core.infiniteRepeatable(tween(6000, easing = androidx.compose.animation.core.LinearEasing)),
+            label = "hue"
+        )
+        Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color.hsv(t, 0.8f, 0.9f), Color.hsv((t + 120f) % 360f, 0.8f, 0.9f), Color.hsv((t + 240f) % 360f, 0.8f, 0.9f)))))
+        return
+    }
     if (kind == 6) {
         val colors = listOf(Color(0xFFE02020), Color(0xFF20B040), Color(0xFF2040E0), Color(0xFFE0C020))
         var i by remember { mutableStateOf(0) }

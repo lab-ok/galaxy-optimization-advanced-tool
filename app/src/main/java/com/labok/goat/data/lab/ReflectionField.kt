@@ -49,17 +49,13 @@ object ReflectionField {
             val d = y / (outH - 1f)
             // 거리 곡선(11-02 최종): 위 12%까지는 거의 흐리지 않고(원본 구조가 또렷), 12~90% 사이에서 부드럽게(smoothstep) 커져
             // 35~65%에서 확산이 분명해지고, 아래쪽은 색 분위기만 남는다. 단계 사이는 두 흐림 단계를 섞어 경계가 없다
-            val u = smooth(((d - 0.12f) / 0.78f).coerceIn(0f, 1f))
-            val r = spec.blurMin + (spec.blurMax - spec.blurMin) * u.pow(spec.gamma)
+            val r = radiusAt(d, spec)
             var i = 0
             while (i < LEVELS.size - 2 && LEVELS[i + 1] < r) i++
             val t = ((r - LEVELS[i]) / (LEVELS[i + 1] - LEVELS[i])).coerceIn(0f, 1f)
             val a = levels[i]
             val b = levels[i + 1]
-            // 접는 선 바로 아래(위 8%)는 광원에 붙어 번쩍이지 않게 세기를 75%에서 부드럽게 올린다(따로 빛 띠를 만들지 않는다)
-            val ramp = 0.75f + 0.25f * smooth((d / 0.08f).coerceIn(0f, 1f))
-            val energy = (spec.energyTop + (spec.energyBottom - spec.energyTop) * d) * ramp
-            val alpha = (energy * 255f).roundToInt().coerceIn(0, 255)
+            val alpha = (energyAt(d, spec) * 255f).roundToInt().coerceIn(0, 255)
             for (x in 0 until w) {
                 val ca = a[y * w + x]
                 val cb = b[y * w + x]
@@ -67,6 +63,80 @@ object ReflectionField {
                 val gg = lerp(ca shr 8 and 0xFF, cb shr 8 and 0xFF, t)
                 val bb = lerp(ca and 0xFF, cb and 0xFF, t)
                 out[y * w + x] = (alpha shl 24) or (rr shl 16) or (gg shl 8) or bb
+            }
+        }
+        return out
+    }
+
+    /** 패널 위치 [d](0=접는 선, 1=맨 아래)의 흐림 반지름(필드 칸 단위). */
+    fun radiusAt(d: Float, spec: Spec = Spec()): Float {
+        val u = smooth(((d - 0.12f) / 0.78f).coerceIn(0f, 1f))
+        return spec.blurMin + (spec.blurMax - spec.blurMin) * u.pow(spec.gamma)
+    }
+
+    /** 패널 위치 [d]의 반사 세기. 접는 선 바로 아래(위 8%)는 번쩍이지 않게 75%에서 부드럽게 올린다(따로 빛 띠를 만들지 않는다). */
+    fun energyAt(d: Float, spec: Spec = Spec()): Float {
+        val ramp = 0.75f + 0.25f * smooth((d / 0.08f).coerceIn(0f, 1f))
+        return (spec.energyTop + (spec.energyBottom - spec.energyTop) * d) * ramp
+    }
+
+    /** 근거리 띠가 덮는 패널 높이 비율(접는 선부터). */
+    const val NEAR_FRAC = 0.25f
+
+    /**
+     * 근거리 고해상도 반사 띠(11-02 "근거리 반사 화질" 지시). 기본 필드는 96칸이라 접는 선 바로 아래가 흐림 0이어도 한 칸이
+     * 약 19px로 "저해상도 영상을 확대한 것"처럼 보였다. 패널 위 [NEAR_FRAC]만큼은 4배 해상도(384칸) 원본으로 따로 만들어
+     * 기본 필드 위에 얹는다. [px]는 위 화면에서 접는 선 쪽 끝 띠(w×h, 고해상도 칸, 맨 아래 줄이 접는 선 쪽).
+     * 흐림과 세기는 기본 필드와 같은 거리 곡선을 그대로 따르고(반지름은 [scale]배 칸), 띠 아래쪽 절반에서 투명해져
+     * 기본 필드로 경계 없이 넘어간다. 반환은 w×h ARGB(알파 = 세기 × 띠 가장자리 페이드).
+     */
+    fun buildNear(px: IntArray, w: Int, h: Int, scale: Int, spec: Spec = Spec()): IntArray {
+        require(w > 0 && h > 1 && px.size >= w * h)
+        val flipped = IntArray(w * h)
+        for (y in 0 until h) System.arraycopy(px, (h - 1 - y) * w, flipped, y * w, w)
+        val lv = floatArrayOf(0f, 1f, 2f, 3f)
+        val levels = lv.map { r -> if (r <= 0f) flipped else blur(flipped, w, h, r) }
+        val out = IntArray(w * h)
+        for (y in 0 until h) {
+            val db = y / (h - 1f)
+            val d = db * NEAR_FRAC
+            val r = (radiusAt(d, spec) * scale).coerceAtMost(lv.last())
+            var i = 0
+            while (i < lv.size - 2 && lv[i + 1] < r) i++
+            val t = ((r - lv[i]) / (lv[i + 1] - lv[i])).coerceIn(0f, 1f)
+            val feather = 1f - smooth(((db - 0.5f) / 0.5f).coerceIn(0f, 1f))
+            val alpha = (energyAt(d, spec) * feather * 255f).roundToInt().coerceIn(0, 255)
+            val a = levels[i]
+            val b = levels[i + 1]
+            for (x in 0 until w) {
+                val ca = a[y * w + x]
+                val cb = b[y * w + x]
+                out[y * w + x] = (alpha shl 24) or (lerp(ca shr 16 and 0xFF, cb shr 16 and 0xFF, t) shl 16) or (lerp(ca shr 8 and 0xFF, cb shr 8 and 0xFF, t) shl 8) or lerp(ca and 0xFF, cb and 0xFF, t)
+            }
+        }
+        return out
+    }
+
+    /** [px](w×h)를 [k]×[k] 칸 평균으로 줄인다(고해상도 캡처 → 기본 필드용). */
+    fun boxDown(px: IntArray, w: Int, h: Int, k: Int): IntArray {
+        val ow = w / k
+        val oh = h / k
+        val out = IntArray(ow * oh)
+        for (oy in 0 until oh) {
+            for (ox in 0 until ow) {
+                var r = 0
+                var g = 0
+                var b = 0
+                for (dy in 0 until k) {
+                    for (dx in 0 until k) {
+                        val c = px[(oy * k + dy) * w + ox * k + dx]
+                        r += c shr 16 and 0xFF
+                        g += c shr 8 and 0xFF
+                        b += c and 0xFF
+                    }
+                }
+                val n = k * k
+                out[oy * ow + ox] = (0xFF shl 24) or ((r / n) shl 16) or ((g / n) shl 8) or (b / n)
             }
         }
         return out

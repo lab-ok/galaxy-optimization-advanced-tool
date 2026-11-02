@@ -380,7 +380,11 @@ object GoatFlexPanel {
         state.field = null
         state.fieldPx = null
         lastTarget = null
-        synchronized(blendLock) { blender = FieldBlender() }
+        synchronized(blendLock) {
+            blender = FieldBlender()
+            nearBlender = FieldBlender()
+        }
+        state.near = null
         brightnessModeBefore?.let { m -> io.execute { ShizukuAccess.shell("settings put system screen_brightness_mode $m") } }
         brightnessModeBefore = null
         LogRepository.from(context).add("GOAT 플렉스 패널: 닫음")
@@ -544,13 +548,16 @@ object GoatFlexPanel {
             var still = 0
             var prevFrame: IntArray? = null
             val tel = Telemetry()
+            activeTel = tel
             if (mode == 3) startAnalysis(context, token, tel)
             while (ambToken == token) {
                 val t0 = SystemClock.elapsedRealtime()
                 if (mode == 3) {
                     // 캡처 줄: 위 절반(영상 쪽)만 찍어 '최신 하나'로 넘기고(앞 것이 아직 안 쓰였으면 버린다) 바로 다음 캡처로 간다.
                     // 패널(아래 절반)은 찍지 않아 패널 색이 다시 들어가는 일이 없다. 분석은 [startAnalysis] 줄이 한다
-                    val f = TentMode.topFrame(96, 0.5f)
+                    // 4배 해상도(384칸)로 한 번 찍는다: 근거리 띠는 그대로 쓰고, 기본 필드는 4×4 평균으로 줄여 쓴다(11-02 근거리 화질 지시).
+                    // 셸 캡처는 화면 전체 바이트를 어차피 흘려 받으므로, 칸을 늘려도 캡처 시간은 거의 같다(실측은 파이프라인 로그)
+                    val f = TentMode.topFrame(NEAR_W, 0.5f)
                     val t1 = SystemClock.elapsedRealtime()
                     tel.capture(t1 - t0, f != null)
                     var changed = false
@@ -596,12 +603,15 @@ object GoatFlexPanel {
         kotlin.concurrent.thread(name = "goat-ambient-analyze", isDaemon = true) {
             var prev: IntArray? = null
             while (ambToken == token) {
-                val fr = latest.getAndSet(null)
-                if (fr == null) {
+                val hi = latest.getAndSet(null)
+                if (hi == null) {
                     Thread.sleep(15)
                     continue
                 }
                 val t1 = SystemClock.elapsedRealtime()
+                // 기본 필드·판정은 4×4 평균으로 줄인 96칸으로(예전과 같은 크기), 근거리 띠만 고해상도 원본으로
+                val k = (hi.w / 96).coerceAtLeast(1)
+                val fr = if (k == 1) hi else Frame(ReflectionField.boxDown(hi.px, hi.w, hi.h, k), hi.w / k, hi.h / k, hi.at)
                 val changed = prev?.let { frameDiff(it, fr.px) > 0.008f } ?: true
                 prev = fr.px
                 if (changed) tel.changed++
@@ -633,11 +643,12 @@ object GoatFlexPanel {
                     if (changed || state.fieldPx == null) {
                         // 위·아래 검은 띠를 빼고 실제 내용 줄만 비춘다(접는 선 바로 아래에 영상 아래쪽 끝이 또렷하게 오게)
                         val band = ReflectionField.contentBand(fr.px, fr.w, fr.h)
-                        field = if (band.first == 0 && band.last == fr.h - 1) {
+                        val baseField = if (band.first == 0 && band.last == fr.h - 1) {
                             makeField(fr.px, fr.w, fr.h)
                         } else {
                             makeField(fr.px.copyOfRange(band.first * fr.w, (band.last + 1) * fr.w), fr.w, band.last - band.first + 1)
                         }
+                        field = withNear(baseField, hi, band.first * k, ((band.last + 1) * k - 1).coerceAtMost(hi.h - 1), k)
                     } else {
                         keep = true
                     }
@@ -746,6 +757,18 @@ object GoatFlexPanel {
             analyzeMs += ms
         }
 
+        @Volatile var stallMs = 0L
+
+        @Volatile var stalls = 0
+
+        @Volatile var interval = 0f
+
+        /** 전환이 끝나 다음 샘플을 기다리며 멈춰 있던 시간. */
+        fun stall(ms: Long) {
+            stallMs += ms
+            stalls++
+        }
+
         fun applied(ms: Long) {
             appliedMs += ms
             applies++
@@ -763,6 +786,17 @@ object GoatFlexPanel {
                     changed, black, fallback, fieldUpdates, if (applies > 0) appliedMs / applies else 0, period, if (saver) "(절전 1.5배)" else "", src
                 ).take(300)
             )
+            // 시간 보간 계측(11-02 근거리·시간 보간 지시): 샘플 간격 추정과, 전환이 끝나 다음 샘플을 기다리며 멈춰 있던 시간
+            LogRepository.from(context).add(
+                "GOAT 앰비언트 시간 보간: 샘플 간격 추정 %dms · 전환 뒤 멈춤 %d회 평균 %dms(필드 갱신 %d회 중)".format(
+                    interval.toInt(),
+                    stalls,
+                    if (stalls > 0) stallMs / stalls else 0,
+                    fieldUpdates
+                )
+            )
+            stallMs = 0
+            stalls = 0
             since = now
             captures = 0
             ok = 0
@@ -781,7 +815,26 @@ object GoatFlexPanel {
 
     private var clarityLogAt = 0L
 
-    private class Field(val px: IntArray, val w: Int, val h: Int)
+    private class Field(val px: IntArray, val w: Int, val h: Int, val near: IntArray? = null, val nw: Int = 0, val nh: Int = 0)
+
+    /** 근거리 띠용 캡처 폭(기본 필드 96칸의 4배). */
+    private const val NEAR_W = 384
+
+    /**
+     * 기본 필드에 근거리 고해상도 띠를 붙인다. [top]~[bot]은 고해상도 원본에서 실제 내용이 있는 줄(레터박스 제외)이고,
+     * 그 아래쪽 끝(접는 선 쪽) [ReflectionField.NEAR_FRAC]만큼을 띠로 쓴다 — 기본 필드가 같은 내용 줄을 패널 전체에 펴므로
+     * 띠는 정확히 패널 위 NEAR_FRAC 자리에 겹친다(같은 좌표계).
+     */
+    private fun withNear(base: Field, hi: Frame, top: Int, bot: Int, scale: Int): Field {
+        if (scale <= 1) return base
+        val rows = bot - top + 1
+        val nh = (rows * ReflectionField.NEAR_FRAC).toInt()
+        if (nh < 8) return base
+        val from = bot - nh + 1
+        val src = IntArray(hi.w * nh) { i -> AmbientColor.grade(hi.px[from * hi.w + i]) }
+        val near = ReflectionField.buildNear(src, hi.w, nh, scale)
+        return Field(base.px, base.w, base.h, near, hi.w, nh)
+    }
 
     /** 보호 화면 연출 중이면 목표 사이를 천천히(τ 0.9초) 이어 1초 간격 목표가 끊기지 않고 흐르게 한다. */
     @Volatile private var slowBlend = false
@@ -839,6 +892,16 @@ object GoatFlexPanel {
     // 상태에서 다시 시작했다(전환이 끊기고 뒤처짐). 이제 [FieldBlender]가 지금 보이는 상태에서 새 목표로 이어 가고,
     // 전환 줄이 움직이는 동안만 약 60fps로 작은 그림(96×56)을 세 장 돌려 쓰며 갱신한다. 다 오면 멈춘다
     private var blender = FieldBlender()
+
+    /** 근거리 고해상도 띠의 시간 전환(기본 필드와 같은 스프링·같은 샘플 간격). */
+    private var nearBlender = FieldBlender()
+    private val nearBmp = arrayOfNulls<android.graphics.Bitmap>(3)
+    private val nearPx = arrayOfNulls<IntArray>(3)
+
+    /** 전환이 끝나 멈춘 시각(0 = 움직이는 중). 다음 목표가 오면 그 사이 멈춘 시간을 계측한다. */
+    @Volatile private var idleSince = 0L
+
+    @Volatile private var activeTel: Telemetry? = null
     private val blendLock = Any()
     private val blendKick = java.util.concurrent.Semaphore(0)
     private var blendFor = -1
@@ -847,7 +910,21 @@ object GoatFlexPanel {
 
     /** 새 반사 목표를 전환 줄에 넘긴다(null이면 투명으로 사라진다). 메인 스레드. */
     private fun blendTo(token: Int, f: Field?) {
-        synchronized(blendLock) { if (f == null) blender.fadeOut() else blender.setTarget(f.px, f.w, f.h, if (slowBlend) 900f else 0f) }
+        val now = SystemClock.uptimeMillis()
+        synchronized(blendLock) {
+            if (f == null) {
+                blender.fadeOut()
+                nearBlender.fadeOut()
+            } else {
+                blender.setTarget(f.px, f.w, f.h, now, slowBlend)
+                if (f.near != null) nearBlender.setTarget(f.near, f.nw, f.nh, now, slowBlend) else nearBlender.fadeOut()
+            }
+        }
+        // 전환이 끝나 멈춰 있던 시간(다음 샘플이 오기 전 정지 구간). 1.5초 넘게 멈춘 건 실제 정지 화면으로 보고 빼다
+        val idle = idleSince
+        if (idle > 0L && now - idle < 1500L) activeTel?.stall(now - idle)
+        activeTel?.interval = blender.interval
+        idleSince = 0L
         if (blendFor != token) {
             blendFor = token
             startBlend(token)
@@ -859,8 +936,9 @@ object GoatFlexPanel {
         var last = SystemClock.uptimeMillis()
         var slot = 0
         while (ambToken == token) {
-            val idle = synchronized(blendLock) { !blender.active && blender.w > 0 && !pendingFirst(token) }
+            val idle = synchronized(blendLock) { !blender.active && !nearBlender.active && blender.w > 0 && !pendingFirst(token) }
             if (idle) {
+                if (idleSince == 0L) idleSince = SystemClock.uptimeMillis()
                 blendKick.tryAcquire(500, java.util.concurrent.TimeUnit.MILLISECONDS)
                 blendKick.drainPermits()
                 last = SystemClock.uptimeMillis()
@@ -872,6 +950,8 @@ object GoatFlexPanel {
             var w = 0
             var h = 0
             var clear = false
+            var nearClear: Boolean
+            var nearImg: androidx.compose.ui.graphics.ImageBitmap?
             val px: IntArray
             synchronized(blendLock) {
                 w = blender.w
@@ -884,14 +964,30 @@ object GoatFlexPanel {
                 px = blendPx[slot]!!
                 blender.step(dt, px)
                 clear = blender.isClear()
+                val nw = nearBlender.w
+                val nh = nearBlender.h
+                if (nw > 0) {
+                    if (nearPx[slot]?.size != nw * nh) {
+                        nearPx[slot] = IntArray(nw * nh)
+                        nearBmp[slot] = android.graphics.Bitmap.createBitmap(nw, nh, android.graphics.Bitmap.Config.ARGB_8888)
+                    }
+                    nearBlender.step(dt, nearPx[slot]!!)
+                    nearClear = nearBlender.isClear()
+                    nearBmp[slot]!!.setPixels(nearPx[slot]!!, 0, nw, 0, 0, nw, nh)
+                    nearImg = if (nearClear) null else nearBmp[slot]!!.asImageBitmap()
+                } else {
+                    nearImg = null
+                }
             }
             val bmp = blendBmp[slot]!!
             bmp.setPixels(px, 0, w, 0, 0, w, h)
             val img = bmp.asImageBitmap()
+            val ni = nearImg
             slot = (slot + 1) % 3
             shownFirst = token
             main.post {
                 if (ambToken != token) return@post
+                state.near = ni
                 if (clear) {
                     state.field = null
                     state.fieldPx = null

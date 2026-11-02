@@ -131,6 +131,9 @@ class FlexPanelState {
      * 바닥·카드·잉크가 이 한 장을 같은 좌표계(패널 전체)로 나눠 쓴다. 없으면 좌·중·우 색으로 대신한다.
      */
     var field by mutableStateOf<ImageBitmap?>(null)
+
+    /** 근거리 고해상도 반사 띠(패널 위 [com.labok.goat.data.lab.ReflectionField.NEAR_FRAC]만큼, 기본 필드 위에 얹는다). */
+    var near by mutableStateOf<ImageBitmap?>(null)
     var fieldPx: IntArray? = null
     var fieldW = 0
     var fieldH = 0
@@ -190,6 +193,7 @@ private object Glass {
     val Tint = Color(0xFF171717)
     val TintPrimary = Color(0xFF222222)
     val Ink = Color(0xFFEBEBEB)
+
     // 11-02: 장면 색 틴트가 들어간 밝은 카드(주황·파랑) 위에서 #8D8D8D 보조 글자가 묻혔다 — 더 밝은 회색으로
     val Muted = Color(0xFFC4C4C4)
     val Line = Color(0xFF424242)
@@ -353,6 +357,10 @@ private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
             val w = (0.92f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f)
             val dst = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt())
             drawImage(field, dstSize = dst, alpha = w, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+            // 근거리 띠: 같은 좌표계로 패널 위쪽에 고해상도 반사를 얹는다(띠 아래쪽은 투명해져 기본 필드로 이어진다)
+            state.near?.let { n ->
+                drawImage(n, dstSize = androidx.compose.ui.unit.IntSize(dst.width, (dst.height * com.labok.goat.data.lab.ReflectionField.NEAR_FRAC).toInt()), alpha = w, filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium)
+            }
         } else if (kk > 0f) {
             drawRect(Brush.horizontalGradient(listOf(c[0].copy(alpha = 0.38f * kk * ambWeight(c[0])), c[1].copy(alpha = 0.30f * kk * ambWeight(c[1])), c[2].copy(alpha = 0.38f * kk * ambWeight(c[2])))))
             // 영상(위)에서 흘러내리는 빛
@@ -693,6 +701,9 @@ private fun GlassTile(
                         val off = androidx.compose.ui.unit.IntOffset(-pos.x.toInt(), -pos.y.toInt())
                         // 반사가 유리를 통과한다: 보통 합성으로 색 분포를 보이고, 밝은 부분은 '빛 더하기(스크린)'로 한 번 더 얹어 어두운 카드에서도 죽지 않게
                         drawImage(fieldImg, dstOffset = off, dstSize = rootSize, alpha = wk, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+                        state.near?.let { n ->
+                            drawImage(n, dstOffset = off, dstSize = androidx.compose.ui.unit.IntSize(rootSize.width, (rootSize.height * com.labok.goat.data.lab.ReflectionField.NEAR_FRAC).toInt()), alpha = wk, filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium)
+                        }
                         drawImage(fieldImg, dstOffset = off, dstSize = rootSize, alpha = wk * 0.45f, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low, blendMode = androidx.compose.ui.graphics.BlendMode.Screen)
                         // 내부 굴절: 같은 반사를 살짝 아래·옆으로 밀어 옅게 한 번 더(두께 있는 액체 속을 지나 굽은 빛)
                         if (q >= 3 || primary) {
