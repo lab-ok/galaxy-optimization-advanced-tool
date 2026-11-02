@@ -277,6 +277,9 @@ object GoatFlexPanel {
             gravity = Gravity.BOTTOM
             layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
             title = "GOAT flex panel"
+            // 시스템 막대(아래 3버튼 내비게이션 등) 높이만큼 창이 위로 밀려, 패널 위 경계가 접는 선보다 높게 왔다(11-02 에뮬레이터 세로 화면에서
+            // 92px). 화면 실제 크기 기준으로 맨 아래에 붙여 패널 위 경계가 정확히 화면 절반(접는 선)에 오게 한다
+            fitInsetsTypes = 0
         }
         runCatching { wm.addView(v, lp) }.onFailure {
             LogRepository.from(context).add("GOAT 플렉스 패널: 창을 띄우지 못함(${it.message})".take(300))
@@ -659,7 +662,7 @@ object GoatFlexPanel {
                     // Cinematic Ambient Fallback: 보호 화면은 영상을 볼 수 없으므로(DRM, 우회하지 않음) 포스터(없으면 앱 색)로 만든
                     // 반사에 느리고 절제된 빛 흐름을 얹는다. 실제 영상 반사가 아니라는 것을 머리글에 밝힌다
                     val base = artFieldSource() ?: tintSource()
-                    field = makeField(cinematic(base.first, base.second, base.third, SystemClock.elapsedRealtime()), base.second, base.third)
+                    field = fieldFrom(cinematic(base.first, base.second, base.third, SystemClock.elapsedRealtime()), base.second, base.third)
                     slowBlend = true
                     src = if (pal != null) "보호 화면 · 포스터 연출(실제 영상 아님)" else "보호 화면 · 앱 색 연출(실제 영상 아님)"
                     tel.fallback++
@@ -842,12 +845,22 @@ object GoatFlexPanel {
     /** 포스터를 화면 반사와 같은 96칸 원본(위 화면 자리)으로 줄인 것. */
     private fun artFieldSource(): Triple<IntArray, Int, Int>? {
         val art = state.art ?: return null
+        // 11-02 소장님 "포스터도 선명도 올려야": 화면 반사와 같은 384칸(4배)으로 줄여 근거리 띠까지 만든다(예전 96칸은 확대하면 뭉개졌다).
+        // 세로는 4의 배수로 맞춘다(4×4 평균으로 기본 필드를 만들 때 남는 줄이 없게)
         val bmp = art.asAndroidBitmap()
-        val h = (96 * bmp.height / bmp.width.coerceAtLeast(1)).coerceIn(8, 96)
-        val small = android.graphics.Bitmap.createScaledBitmap(bmp.copy(android.graphics.Bitmap.Config.ARGB_8888, false), 96, h, true)
-        val px = IntArray(96 * h)
-        small.getPixels(px, 0, 96, 0, 0, 96, h)
-        return Triple(px, 96, h)
+        val h = ((NEAR_W * bmp.height / bmp.width.coerceAtLeast(1)).coerceIn(32, NEAR_W) / 4) * 4
+        val small = android.graphics.Bitmap.createScaledBitmap(bmp.copy(android.graphics.Bitmap.Config.ARGB_8888, false), NEAR_W, h, true)
+        val px = IntArray(NEAR_W * h)
+        small.getPixels(px, 0, NEAR_W, 0, 0, NEAR_W, h)
+        return Triple(px, NEAR_W, h)
+    }
+
+    /** 고해상도 원본(폭 [w], 384 또는 96)으로 기본 필드 + 근거리 띠를 만든다. 96칸이면 띠 없이 기본 필드만. */
+    private fun fieldFrom(px: IntArray, w: Int, h: Int): Field {
+        val k = (w / 96).coerceAtLeast(1)
+        if (k == 1) return makeField(px, w, h)
+        val base = makeField(ReflectionField.boxDown(px, w, h, k), w / k, h / k)
+        return withNear(base, Frame(px, w, h, 0L), 0, h - 1, k)
     }
 
     /** 포스터가 없을 때: 앱 색으로 가운데 밝고 양옆이 가라앉은 원본. */
@@ -1033,13 +1046,9 @@ object GoatFlexPanel {
     private fun artFieldNow(): Field? {
         val art = state.art ?: return null
         if (art === artFieldFor) return artField
-        val bmp = art.asAndroidBitmap()
-        // 화면 반사와 같은 96칸(크기가 같아야 포스터 ↔ 화면 사이도 끊기지 않고 이어서 전환된다)
-        val h = (96 * bmp.height / bmp.width.coerceAtLeast(1)).coerceIn(8, 96)
-        val small = android.graphics.Bitmap.createScaledBitmap(bmp.copy(android.graphics.Bitmap.Config.ARGB_8888, false), 96, h, true)
-        val px = IntArray(96 * h)
-        small.getPixels(px, 0, 96, 0, 0, 96, h)
-        artField = makeField(px, 96, h)
+        // 화면 반사와 같은 크기(기본 96칸 + 384칸 근거리 띠)로 만들어 포스터 ↔ 화면 사이도 끊기지 않고 이어서 전환된다
+        val src = artFieldSource() ?: return null
+        artField = fieldFrom(src.first, src.second, src.third)
         artFieldFor = art
         return artField
     }

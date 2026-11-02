@@ -80,6 +80,9 @@ object ReflectionField {
         return (spec.energyTop + (spec.energyBottom - spec.energyTop) * d) * ramp
     }
 
+    /** 근거리 띠의 최소 흐림(고해상도 칸). */
+    const val NEAR_MIN_BLUR = 1.5f
+
     /** 근거리 띠가 덮는 패널 높이 비율(접는 선부터). */
     const val NEAR_FRAC = 0.25f
 
@@ -100,7 +103,9 @@ object ReflectionField {
         for (y in 0 until h) {
             val db = y / (h - 1f)
             val d = db * NEAR_FRAC
-            val r = (radiusAt(d, spec) * scale).coerceAtMost(lv.last())
+            // 11-02 소장님 "가장 가까운 부분 블러 조금 더": 접는 선 바로 아래도 최소 1.5칸(고해상도, 폴드에서 약 7px)은 흐린다.
+            // 완전 선명하면 반사가 아니라 화면을 복사해 붙인 것처럼 보였다
+            val r = maxOf(NEAR_MIN_BLUR, radiusAt(d, spec) * scale).coerceAtMost(lv.last())
             var i = 0
             while (i < lv.size - 2 && lv[i + 1] < r) i++
             val t = ((r - lv[i]) / (lv[i + 1] - lv[i])).coerceIn(0f, 1f)

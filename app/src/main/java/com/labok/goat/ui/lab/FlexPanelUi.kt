@@ -28,12 +28,18 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -337,8 +343,30 @@ fun FlexPanelUi(
             LocalTileInk provides state.ink
         ) {
             AmbientBackdrop(state, shown)
+            HingeBleed(state)
             PanelBody(state, shown, seekSec, show, bar, { bar = it }, onClose, onPlayPause, onSeek, onSeekTo, onSpeed, onSpeedSet, onBrightness, onVolume, onFullscreen, onLock)
         }
+    }
+}
+
+/**
+ * 접는 선 경계 흐림(11-02 소장님 "맨 끝 상단에 경계선 블러 처리해서 자연스럽게"). 위 화면과 패널 사이에 딱 끊기는 선이 보였다.
+ * 반사의 맨 위 줄(= 접는 선 바로 위 화면 색)을 패널 위 18dp에 펴서 위는 불투명, 아래로 갈수록 투명하게 깔아 화면이 패널로
+ * 번져 들어가는 것처럼 잇는다. 패널 자체를 투명하게 하면 밑에 있는 앱 화면이 비쳐 지저분해서 이 방식을 골랐다.
+ */
+@Composable
+private fun HingeBleed(state: FlexPanelState) {
+    val img = state.near ?: state.field ?: return
+    if (!state.ambientOn) return
+    Canvas(Modifier.fillMaxWidth().height(18.dp).graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }) {
+        drawImage(
+            img,
+            srcOffset = androidx.compose.ui.unit.IntOffset.Zero,
+            srcSize = androidx.compose.ui.unit.IntSize(img.width, 2),
+            dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()),
+            filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium
+        )
+        drawRect(Brush.verticalGradient(listOf(Color.Black, Color.Black.copy(alpha = 0.5f), Color.Transparent)), blendMode = androidx.compose.ui.graphics.BlendMode.DstIn)
     }
 }
 
@@ -421,7 +449,12 @@ private fun PanelBody(
 ) {
     val gap = Glass.gap
     // 위쪽은 접는 선이라 여백을 크게(힌지 보호 구역)
-    Column(Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 26.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(gap)) {
+    // 창이 시스템 막대를 무시하고 화면 맨 아래까지 덮으므로(접는 선 정렬), 3버튼 내비게이션이 있으면 그 높이만큼 내용을 올린다
+    Column(
+        Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+            .padding(start = 16.dp, end = 16.dp, top = 26.dp, bottom = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(gap)
+    ) {
         Row(Modifier.fillMaxWidth().weight(0.9f), horizontalArrangement = Arrangement.spacedBy(gap)) {
             GlassTile(state, amb, Modifier.weight(0.7f), onClose, label = "패널 닫기") { Icon { close(it) } }
             // 컨텍스트 카드: 앱 아이콘·앱 이름 · 제목(2줄까지) · 재생 상태 · 앰비언트 출처 · 꺾쇠
