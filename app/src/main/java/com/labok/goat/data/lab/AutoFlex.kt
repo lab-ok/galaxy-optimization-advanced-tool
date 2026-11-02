@@ -141,6 +141,13 @@ object AutoFlex {
         LogRepository.from(context).add("자동 플렉스: $pkg 접으면 ${modeLabel(mode)}")
     }
 
+    /**
+     * 자체 플렉스 화면(위 영상·아래 조작)을 가진 앱. 삼성 플렉스 패널에 등록하지 않고, GOAT가 예전에 등록했으면 푼다.
+     * 넷플릭스·디즈니+는 반쯤 접으면 영상만 위로 가고 아래 조작이 안 떴다(11-02 소장님, 눌러도 안 뜸). 삼성 안내에 따르면
+     * 자체 화면 앱에는 패널이 뜨지 않는데, GOAT가 모든 앱을 패널에 등록해 두어 앱 자체 화면 대신 빈 패널 배치가 걸린 것으로 추정한다.
+     */
+    val SELF_LAYOUT_APPS = setOf("com.netflix.mediaclient", "com.disney.disneyplus", "com.amazon.avod.thirdpartyclient")
+
     /** 패널을 띄우지 않을 앱(사용자가 끈 앱). 나머지 앱은 모두 패널을 띄운다. */
     fun excluded(context: Context): Set<String> = prefs(context).getStringSet("excluded", emptySet()).orEmpty()
 
@@ -154,8 +161,9 @@ object AutoFlex {
             FlexPanel.restoreApps(context)
             return
         }
-        val skip = excluded(context)
+        val skip = excluded(context) + SELF_LAYOUT_APPS
         val mine = FlexPanel.registered(context)
+        mine.filter { it in SELF_LAYOUT_APPS }.forEach { FlexPanel.setApp(context, it, false) }
         AppList.launcherApps(context)
             .map { it.pkg }
             .filter { it != context.packageName && it !in skip && it !in mine }

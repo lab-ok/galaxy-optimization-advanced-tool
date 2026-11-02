@@ -120,6 +120,22 @@ object FlexPanel {
         applied = Applied(mode, front, label).also { notifyMode(context, it) }
         // 어느 앱에서 켜졌는지 남긴다(11-01: 진동이 울린 때 앞 앱을 진단 로그로 알 수 없었다)
         LogRepository.from(context).add("자동 플렉스: $label($front)에 ${AutoFlex.modeLabel(mode)}")
+        if (mode != AutoFlex.MODE_OFF && front in AutoFlex.SELF_LAYOUT_APPS) logWindow(context, front)
+    }
+
+    /**
+     * 자체 플렉스 화면 앱이 접힘을 어떻게 받는지 진단(11-02 넷플릭스·디즈니+ 아래 조작 안 뜸): 1.5초 뒤 앞 창·창 크기·보안 창 여부와
+     * 삼성 플렉스 관련 줄을 로그에 남긴다.
+     */
+    private fun logWindow(context: Context, pkg: String) {
+        Thread.sleep(1500)
+        val log = LogRepository.from(context)
+        val win = ShizukuAccess.shell("dumpsys window windows | grep -A40 'Window{.* $pkg' | grep -iE 'Window\\{|mFrame=|SECURE|flex|mBounds|WindowingMode' | head -12")?.out.orEmpty()
+        val flex = ShizukuAccess.shell("dumpsys window | grep -iE 'flex|folding|posture|halfopen|HALF_OPENED' | head -12")?.out.orEmpty()
+        val reg = ShizukuAccess.shell("settings list global | grep -i flex; settings list secure | grep -i flex")?.out.orEmpty()
+        (win.lines() + listOf("--") + flex.lines() + listOf("--") + reg.lines()).filter { it.isNotBlank() }.take(30).forEach {
+            log.add("플렉스 진단($pkg): ${it.trim()}".take(300))
+        }
     }
 
     private fun releaseNow(context: Context) {
