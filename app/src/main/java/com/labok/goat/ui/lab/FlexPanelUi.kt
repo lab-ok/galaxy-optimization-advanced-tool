@@ -407,7 +407,7 @@ private fun HingeBleed(state: FlexPanelState) {
 
 /**
  * 포스터 블러(11-02 소장님 "고화질 포스터에 블러를 전체적으로 먹여서"): 포스터를 가로 240칸으로 줄이고 상자 흐림 3번(가우시안 근사,
- * 반지름 3칸)을 한 번만 걸어 둔다. 크게 펴도 계단 없이 부드럽다. 포스터가 바뀔 때만 다시 만든다.
+ * 반지름 9칸)을 한 번만 걸어 둔다. 크게 펴도 계단 없이 부드럽다. 포스터가 바뀔 때만 다시 만든다.
  */
 @Composable
 private fun rememberPosterBlur(art: ImageBitmap?, icon: Boolean): ImageBitmap? = remember(art, icon) {
@@ -434,7 +434,8 @@ private fun rememberPosterBlur(art: ImageBitmap?, icon: Boolean): ImageBitmap? =
                 AmbientColor.fromOklab((o[0] * 1.15f + 0.06f).coerceAtMost(0.82f), o[1] * 1.5f, o[2] * 1.5f)
             }
         } else {
-            com.labok.goat.data.lab.ReflectionField.blur(px, w, h, 3f)
+            // 1.42.16 실화면에서 반지름 3칸은 포스터 형태가 거의 그대로 보였다 — 전체적으로 흐리게 9칸(소장님 "블러 전체적으로")
+            com.labok.goat.data.lab.ReflectionField.blur(px, w, h, 9f)
         }
         android.graphics.Bitmap.createBitmap(out, w, h, android.graphics.Bitmap.Config.ARGB_8888).asImageBitmap()
     }
