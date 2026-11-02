@@ -83,7 +83,7 @@ internal class GlassShader {
         shader.setFloatUniform("dispersion", 0.10f)
         shader.setFloatUniform("lightDir", -0.6f, -0.8f)
         shader.setFloatUniform("specular", if (primary) 1f else 0.85f)
-        shader.setFloatUniform("reflect", reflect)
+        shader.setFloatUniform("reflAmount", reflect)
         shader.setFloatUniform("density", density)
     }
 
@@ -102,7 +102,7 @@ uniform float refraction;
 uniform float dispersion;
 uniform float2 lightDir;
 uniform float specular;
-uniform float reflect;
+uniform float reflAmount; // 반사 세기. GLSL 내장 함수 이름 reflect와 겹치면 컴파일이 실패한다(1.42.15~16은 이 때문에 셰이더가 한 번도 돌지 않았다)
 uniform float density;
 
 // 모서리는 원호가 아니라 초타원(|x|^N + |y|^N = r^N, SuperellipseShape.EXPONENT와 같은 N) — 잘라낸 모양과 같은 윤곽
@@ -163,7 +163,7 @@ half4 main(float2 coord) {
         col = clamp(mix(float3(lum), col, 1.0 + 0.35 * mix(0.3, 1.0, room)), 0.0, 1.0);
         refl = half4(half3(col) * refl.a, refl.a);
     }
-    refl = refl * half(reflect);
+    refl = refl * half(reflAmount);
 
     // 3) 테두리 빛: 법선·광원 내적, 광원 쪽과 반대쪽(안쪽 벽 반사) 두 lobe. 1px 실선 + 안쪽 8px 부드러운 빛
     float facing = dot(n, -lightDir);
@@ -172,10 +172,12 @@ half4 main(float2 coord) {
     float hair = clamp(1.0 - abs(sd + density) / (1.5 * density), 0.0, 1.0);
     float inner = -sd - density;
     float glow = clamp(inner / (2.0 * density), 0.0, 1.0) * pow(clamp(1.0 - (inner - 2.0 * density) / (8.0 * density), 0.0, 1.0), 1.5);
-    float spec = specular * (hair * 0.55 * (lobeF + lobeB) + glow * 0.12 * lobeF);
+    // 11-02 소장님 "왼쪽 위 회색 선 거슬린다": 테두리 1px 실선(hair)은 뺐다. 안쪽 부드러운 빛만 아주 옅게 남긴다
+    // 어두운 장면에서는 광원 쪽 안쪽 빛도 왼쪽 위 회색 호로 보여 함께 뺐다. 테두리는 굴절·Fresnel·안쪽 그늘로만 드러난다
+    float spec = 0.0 * specular * (glow * lobeF + hair * lobeB);
 
     // 4) Fresnel: 가장자리로 갈수록 반사가 밝아진다(시야각 효과 근사)
-    float fres = pow(x, 4.0) * 0.10;
+    float fres = pow(x, 4.0) * 0.05;
 
     // 5) 안쪽 가장자리 그늘(두께감): 테두리 바로 안쪽이 살짝 어둡다
     float shade = clamp(1.0 - abs(-sd - 4.0 * density) / (4.0 * density), 0.0, 1.0) * 0.18 * (1.0 - lobeF);

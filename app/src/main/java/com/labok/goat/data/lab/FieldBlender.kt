@@ -61,7 +61,7 @@ class FieldBlender {
         if (lastArrival >= 0) {
             // 화면이 멈췄다 다시 움직인 긴 공백은 간격 추정에 넣지 않는다(정지 뒤 첫 샘플 하나로 전환이 늘어지지 않게)
             val gap = (nowMs - lastArrival).toFloat()
-            if (gap in 60f..MAX_INTERVAL) {
+            if (gap in 30f..MAX_INTERVAL) {
                 gaps.addLast(gap)
                 if (gaps.size > 5) gaps.removeFirst()
             }
@@ -150,7 +150,7 @@ class FieldBlender {
     companion object {
         const val DONE = 0.002f
         const val DEFAULT_INTERVAL = 250f
-        const val MIN_INTERVAL = 150f
+        const val MIN_INTERVAL = 60f
         const val MAX_INTERVAL = 1200f
 
         /** 보호 화면 연출: ωT = 2.4가 약 0.9초가 되게. */

@@ -18,7 +18,7 @@ import kotlin.math.roundToInt
  */
 object ReflectionField {
     data class Spec(
-        val outH: Int = 56,
+        val outH: Int = 72,
         val blurMin: Float = 0f,
         val blurMax: Float = 14f,
         val gamma: Float = 1.2f,

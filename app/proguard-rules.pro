@@ -11,6 +11,11 @@
     public static void main(java.lang.String[]);
 }
 
+# 실시간 앰비언트 화면 미러 도우미: Shizuku 셸에서 `app_process ... com.labok.goat.data.lab.MirrorCapture`로 띄운다(앱이 main을 직접 부르지 않음).
+-keep class com.labok.goat.data.lab.MirrorCapture {
+    public static void main(java.lang.String[]);
+}
+
 # Shizuku 셸 실행: 공개 함수가 없어 리플렉션으로 Shizuku.newProcess(String[], String[], String)를 부른다(ShizukuAccess.newProcess).
 # 앱 코드에서 직접 부르지 않으므로 R8이 지우지 않게 남긴다. 돌려받는 ShizukuRemoteProcess도 함께 둔다.
 -keep class rikka.shizuku.Shizuku {

@@ -74,6 +74,31 @@ object GoatFlexPanel {
     fun setQuality(c: Context, v: Int) = prefs(c).edit().putInt("quality", v).apply()
     fun ambientMode(c: Context) = prefs(c).getInt("ambient", 3)
     fun setAmbientMode(c: Context, v: Int) = prefs(c).edit().putInt("ambient", v).apply()
+
+    /**
+     * 앱별 앰비언트(11-02 소장님: 패널에서 실시간·포스터·앱 색상·없음을 바로 고르게). 고른 적이 없으면 전체 설정을 따르되,
+     * 보호 콘텐츠 앱(넷플릭스 등)은 화면이 검게 찍혀 실시간이 의미가 없으므로 기본을 포스터로 한다.
+     */
+    fun ambientModeFor(c: Context, pkg: String): Int {
+        val p = prefs(c)
+        if (pkg.isNotEmpty() && p.contains("ambient_$pkg")) return p.getInt("ambient_$pkg", 3)
+        val g = ambientMode(c)
+        return if (g == 3 && DRM_APPS.any { pkg.startsWith(it) }) 2 else g
+    }
+
+    fun setAmbientModeFor(c: Context, pkg: String, v: Int) = prefs(c).edit().putInt("ambient_$pkg", v).apply()
+
+    /** 패널에서 앰비언트를 바꿨다: 이 앱에 저장하고 앰비언트를 새 방식으로 다시 시작한다(메인 스레드). */
+    fun pickAmbient(context: Context, mode: Int) {
+        val app = context.applicationContext
+        pkg?.let { if (it.isNotEmpty()) setAmbientModeFor(app, it, mode) }
+        state.ambPicker = false
+        state.ambMode = mode
+        resetAmbientState()
+        startAmbient(app, lastSaver, mode)
+    }
+
+    @Volatile private var lastSaver = false
     fun intensity(c: Context) = prefs(c).getInt("intensity", 1)
     fun setIntensity(c: Context, v: Int) = prefs(c).edit().putInt("intensity", v).apply()
     fun haptics(c: Context) = prefs(c).getBoolean("haptics", true)
@@ -371,7 +396,8 @@ object GoatFlexPanel {
         main.postDelayed({ if (view === v) relayout.fit() }, 350)
         phase = Phase.ENTERING
         main.post { if (phase == Phase.ENTERING) state.visible = true }
-        startAmbient(context, saver)
+        lastSaver = saver
+        startAmbient(context, saver, ambientModeFor(context, p))
         // 볼륨·밝기 초기값
         val am = context.getSystemService(AudioManager::class.java)
         state.volume = am.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / am.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
@@ -601,8 +627,8 @@ object GoatFlexPanel {
      * - 포스터: 미디어 세션 포스터에서 뽑는다. 없으면 앱 색.
      * - 고정 색: 앱 대표 색.
      */
-    private fun startAmbient(context: Context, saver: Boolean) {
-        val mode = ambientMode(context)
+    private fun startAmbient(context: Context, saver: Boolean, mode: Int) {
+        state.ambMode = mode
         val token = ++ambToken
         state.ambientOn = mode != 0
         if (mode == 0) {
@@ -619,6 +645,8 @@ object GoatFlexPanel {
             val tel = Telemetry()
             activeTel = tel
             if (mode == 3) startAnalysis(context, token, tel)
+            // 실시간 미러(11-02): 셸 도우미가 화면을 작은 가상 화면으로 미러링해 초당 최대 20장을 계속 보낸다. 실패하면 아래 예전 캡처로
+            if (mode == 3 && runMirror(context, token, tel, saver)) return@thread
             while (ambToken == token) {
                 val t0 = SystemClock.elapsedRealtime()
                 if (mode == 3) {
@@ -660,6 +688,60 @@ object GoatFlexPanel {
 
     private class Frame(val px: IntArray, val w: Int, val h: Int, val at: Long)
 
+    /**
+     * [MirrorCapture] 도우미를 Shizuku 셸로 띄우고 프레임을 계속 읽어 [latest]에 넣는다. 패널이 닫히면(토큰 바뀜) 도우미를 끝낸다.
+     * 화면이 돌면 도우미가 스스로 끝나므로 다시 띄운다. 한 장도 못 받고 두 번 실패하면 false(예전 screencap 캡처로 넘어간다).
+     */
+    private fun runMirror(context: Context, token: Int, tel: Telemetry, saver: Boolean): Boolean {
+        val apk = context.applicationInfo.sourceDir ?: return false
+        var gotAny = false
+        var failures = 0
+        while (ambToken == token) {
+            val p = ShizukuAccess.stream(MirrorCapture.command(apk, NEAR_W, if (saver) 12 else 20, 0.5f)) ?: return gotAny
+            kotlin.concurrent.thread(name = "goat-mirror-watch", isDaemon = true) {
+                while (ambToken == token && runCatching { p.exitValue() }.isFailure) Thread.sleep(200)
+                runCatching { p.destroy() }
+            }
+            var frames = 0
+            runCatching {
+                val inp = java.io.DataInputStream(java.io.BufferedInputStream(p.inputStream, 1 shl 16))
+                val head = ByteArray(12)
+                var bytes = ByteArray(0)
+                var last = SystemClock.elapsedRealtime()
+                while (ambToken == token) {
+                    inp.readFully(head)
+                    if (le(head, 0) != MirrorCapture.MAGIC) error("형식이 맞지 않음")
+                    val w = le(head, 4)
+                    val h = le(head, 8)
+                    if (bytes.size != w * h * 4) bytes = ByteArray(w * h * 4)
+                    inp.readFully(bytes)
+                    val px = IntArray(w * h) { i ->
+                        val o = i * 4
+                        (0xFF shl 24) or ((bytes[o].toInt() and 0xFF) shl 16) or ((bytes[o + 1].toInt() and 0xFF) shl 8) or (bytes[o + 2].toInt() and 0xFF)
+                    }
+                    val now = SystemClock.elapsedRealtime()
+                    tel.capture(now - last, true)
+                    last = now
+                    if (latest.getAndSet(Frame(px, w, h, now)) != null) tel.dropped++
+                    frames++
+                    gotAny = true
+                    tel.maybeLog(context, 0, saver, state.ambSource + " · 실시간 미러")
+                }
+            }
+            runCatching { p.destroy() }
+            if (frames == 0) {
+                failures++
+                if (failures >= 2) {
+                    LogRepository.from(context).add("GOAT 플렉스 패널: 실시간 미러를 띄우지 못해 예전 캡처로 바꿈")
+                    return gotAny
+                }
+            }
+        }
+        return true
+    }
+
+    private fun le(b: ByteArray, o: Int) = (b[o].toInt() and 0xFF) or ((b[o + 1].toInt() and 0xFF) shl 8) or ((b[o + 2].toInt() and 0xFF) shl 16) or ((b[o + 3].toInt() and 0xFF) shl 24)
+
     /** 캡처 줄이 넘긴 최신 프레임(분석 줄이 가져가면 비운다). 분석이 밀리면 덮어써서 오래된 프레임이 쌓이지 않는다. */
     private val latest = java.util.concurrent.atomic.AtomicReference<Frame?>(null)
 
@@ -679,7 +761,7 @@ object GoatFlexPanel {
                 }
                 val t1 = SystemClock.elapsedRealtime()
                 // 기본 필드·판정은 4×4 평균으로 줄인 96칸으로(예전과 같은 크기), 근거리 띠만 고해상도 원본으로
-                val k = (hi.w / 96).coerceAtLeast(1)
+                val k = (hi.w / BASE_W).coerceAtLeast(1)
                 val fr = if (k == 1) hi else Frame(ReflectionField.boxDown(hi.px, hi.w, hi.h, k), hi.w / k, hi.h / k, hi.at)
                 val changed = prev?.let { frameDiff(it, fr.px) > 0.008f } ?: true
                 prev = fr.px
@@ -891,8 +973,11 @@ object GoatFlexPanel {
 
     private fun Field.withHinge(row: IntArray) = Field(px, w, h, near, nw, nh, row)
 
-    /** 근거리 띠용 캡처 폭(기본 필드 96칸의 4배). */
-    private const val NEAR_W = 384
+    /** 근거리 띠용 캡처 폭(기본 필드의 4배). 11-02 소장님 "블러할 때 화질 더 올려줘": 384 → 512칸(미러는 GPU가 줄여 주므로 캡처 비용은 그대로) */
+    private const val NEAR_W = 512
+
+    /** 기본 반사 필드 폭(4×4 평균): 96 → 128칸. */
+    private const val BASE_W = 128
 
     /**
      * 기본 필드에 근거리 고해상도 띠를 붙인다. [top]~[bot]은 고해상도 원본에서 실제 내용이 있는 줄(레터박스 제외)이고,
@@ -928,7 +1013,7 @@ object GoatFlexPanel {
 
     /** 고해상도 원본(폭 [w], 384 또는 96)으로 기본 필드 + 근거리 띠를 만든다. 96칸이면 띠 없이 기본 필드만. */
     private fun fieldFrom(px: IntArray, w: Int, h: Int): Field {
-        val k = (w / 96).coerceAtLeast(1)
+        val k = (w / BASE_W).coerceAtLeast(1)
         if (k == 1) return makeField(px, w, h)
         val base = makeField(ReflectionField.boxDown(px, w, h, k), w / k, h / k)
         return withNear(base, Frame(px, w, h, 0L), 0, h - 1, k)
@@ -937,7 +1022,7 @@ object GoatFlexPanel {
     /** 포스터가 없을 때: 앱 색으로 가운데 밝고 양옆이 가라앉은 원본. */
     private fun tintSource(): Triple<IntArray, Int, Int> {
         val t = state.tint.toArgb()
-        val w = 96
+        val w = BASE_W
         val h = 48
         val px = IntArray(w * h) { i ->
             val x = (i % w) / (w - 1f)

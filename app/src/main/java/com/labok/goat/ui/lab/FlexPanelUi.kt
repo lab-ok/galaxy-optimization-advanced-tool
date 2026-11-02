@@ -17,6 +17,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -35,6 +36,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -127,6 +129,10 @@ class FlexPanelState {
 
     /** 앰비언트 색이 어디서 왔는지(화면 분석·포스터·앱 색·끔, 보호 콘텐츠면 그 사실). */
     var ambSource by mutableStateOf("")
+
+    /** 지금 앰비언트 방식(0 없음·1 앱 색상·2 포스터·3 실시간)과, 머리글 칩을 눌러 연 고르기 탭이 열려 있는지. */
+    var ambMode by mutableIntStateOf(3)
+    var ambPicker by mutableStateOf(false)
 
     /** 첫 앰비언트 결과(화면 분석·포스터·앱 색)가 들어왔는지. 그 전에는 대체 그라데이션·빛을 그리지 않고 중립 유리로 둔다. */
     var ambReady by mutableStateOf(false)
@@ -431,7 +437,8 @@ private fun rememberPosterBlur(art: ImageBitmap?, icon: Boolean): ImageBitmap? =
             val blurred = com.labok.goat.data.lab.ReflectionField.blur(px, w, h, 22f)
             IntArray(blurred.size) { i ->
                 val o = AmbientColor.toOklab(blurred[i])
-                AmbientColor.fromOklab((o[0] * 1.15f + 0.06f).coerceAtMost(0.82f), o[1] * 1.5f, o[2] * 1.5f)
+                // 11-02 소장님 "앱 아이콘 색으로 패널색 잡는 건 좀 더 어둡게": 밝기는 낮추고(최대 0.42) 색은 살린다
+                AmbientColor.fromOklab((o[0] * 0.62f).coerceAtMost(0.42f), o[1] * 1.35f, o[2] * 1.35f)
             }
         } else {
             // 1.42.16 실화면에서 반지름 3칸은 포스터 형태가 거의 그대로 보였다 — 전체적으로 흐리게 9칸(소장님 "블러 전체적으로")
@@ -590,7 +597,14 @@ private fun PanelBody(
                         }
                     }
                     if (state.ambSource.isNotEmpty()) {
-                        Text(state.ambSource, color = Glass.Muted, fontSize = 10.sp, modifier = Modifier.clip(RoundedCornerShape(50)).background(Color(0x22FFFFFF)).padding(horizontal = 8.dp, vertical = 3.dp))
+                        // 누르면 앰비언트 고르기 탭이 열린다(11-02 소장님)
+                        Text(
+                            state.ambSource,
+                            color = Glass.Ink,
+                            fontSize = 10.sp,
+                            modifier = Modifier.clip(RoundedCornerShape(50)).background(if (state.ambPicker) Color(0x44FFFFFF) else Color(0x22FFFFFF))
+                                .clickable { state.ambPicker = !state.ambPicker }.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
                         Spacer(Modifier.width(8.dp))
                     }
                     Icon(16) { chevron(it) }
@@ -613,9 +627,12 @@ private fun PanelBody(
                 SeekBadge(state, back = false)
             }
         }
-        if (show("progress")) {
+        if (show("progress") || state.ambPicker) {
             GlassTile(state, amb, Modifier.fillMaxWidth().weight(0.9f), null, clipContent = false, shape = SuperellipseShape.Capsule) {
-                if (state.canSeek) {
+                val ctx = androidx.compose.ui.platform.LocalContext.current
+                if (state.ambPicker) {
+                    AmbientTabs(state.ambMode) { m -> com.labok.goat.data.lab.GoatFlexPanel.pickAmbient(ctx, m) }
+                } else if (state.canSeek) {
                     val f = (state.position.toFloat() / state.duration).coerceIn(0f, 1f)
                     Row(Modifier.fillMaxSize().padding(end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.weight(1f)) {
@@ -643,6 +660,36 @@ private fun PanelBody(
                     GlassTile(state, amb, Modifier.weight(1f), null, label = "음량", clipContent = false, shape = SuperellipseShape.Capsule) {
                         InlineSlider(state.volume, "음량", { speaker(it) }) { onVolume(it) }
                     }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 앰비언트 고르기 리퀴드 탭(11-02 소장님 "실시간 앰비언트·포스터(썸네일)·앱 색상·없음 4개"). 선택 표시 알약이 스프링으로 미끄러지며,
+ * 움직이는 동안 진행 방향으로 살짝 늘어났다가(젤리) 자리에서 돌아온다.
+ */
+@Composable
+private fun AmbientTabs(mode: Int, onPick: (Int) -> Unit) {
+    val items = listOf(3 to "실시간", 2 to "포스터", 1 to "앱 색상", 0 to "없음")
+    val sel = items.indexOfFirst { it.first == mode }.coerceAtLeast(0)
+    val pos by animateFloatAsState(sel.toFloat(), spring(dampingRatio = 0.72f, stiffness = 520f), label = "tab")
+    val ink = LocalTileInk.current
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 7.dp)) {
+        val segW = maxWidth / items.size
+        val stretch = 1f + (kotlin.math.abs(pos - sel) * 0.35f).coerceAtMost(0.35f)
+        Box(
+            Modifier.offset(x = segW * pos).width(segW).fillMaxHeight().graphicsLayer { scaleX = stretch }
+                .clip(SuperellipseShape.Capsule).background(ink.copy(alpha = 0.92f))
+        )
+        Row(Modifier.fillMaxSize()) {
+            items.forEachIndexed { i, (m, label) ->
+                Box(
+                    Modifier.weight(1f).fillMaxHeight().clip(SuperellipseShape.Capsule).clickable { onPick(m) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(label, color = if (i == sel) Color(0xFF111111) else ink, fontSize = 13.sp, fontWeight = if (i == sel) FontWeight.Bold else FontWeight.Medium, maxLines = 1)
                 }
             }
         }
@@ -757,7 +804,13 @@ private fun GlassTile(
     val sceneTint = remember(amb[3], state.ambientOn) { if (state.ambientOn) sceneTintOf(amb[3]) else null }
     val posterBlurTile = rememberPosterBlur(posterSource(state), state.art == null)
     // 리퀴드 글래스 셰이더(API 33+, 카드마다 하나). 만들 수 없으면(구형 기기·셰이더 컴파일 실패) 예전 겹친 레이어로 그린다
-    val glass = remember { if (android.os.Build.VERSION.SDK_INT >= 33) runCatching { GlassShader() }.getOrNull() else null }
+    val glass = remember {
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            runCatching { GlassShader() }.onFailure { android.util.Log.w("GOATGLASS", "셰이더 생성 실패: ${it.message}") }.getOrNull()
+        } else {
+            null
+        }
+    }
     val q = state.quality
     val kk = if (state.ambientOn) ambK(state.intensity) else 0f
     val hc = state.highContrast
@@ -952,9 +1005,10 @@ private fun GlassTile(
         // 불투명도와 번짐 반경을 정한다. 밝은 반사 위에서는 진하고 넓게, 어두운 반사 위에서는 거의 없게. 글자 자체는 그대로 선명하다
         val bgLuma = if (state.ambientOn) backLuma(state.sampleAt(xFrac, ((pos.y + rootSize.height * 0f + 1f) / rootSize.height).coerceIn(0f, 1f)) ?: amb[3], primary) else 0.1f
         val shadow = androidx.compose.ui.graphics.Shadow(
-            color = Color.Black.copy(alpha = 0.22f + 0.5f * bgLuma),
-            offset = Offset(0f, with(androidx.compose.ui.platform.LocalDensity.current) { (0.5f + bgLuma).dp.toPx() }),
-            blurRadius = with(androidx.compose.ui.platform.LocalDensity.current) { (3f + 7f * bgLuma).dp.toPx() }
+            // 11-02 소장님 "각 요소에 검은색 그림자 블러 더": 기본 세기와 번짐을 올렸다
+            color = Color.Black.copy(alpha = 0.42f + 0.45f * bgLuma),
+            offset = Offset(0f, with(androidx.compose.ui.platform.LocalDensity.current) { (0.8f + bgLuma).dp.toPx() }),
+            blurRadius = with(androidx.compose.ui.platform.LocalDensity.current) { (6f + 8f * bgLuma).dp.toPx() }
         )
         androidx.compose.runtime.CompositionLocalProvider(
             LocalTileInk provides tileInk,
@@ -1053,9 +1107,9 @@ private fun Icon(sizeDp: Int = 30, draw: DrawScope.(Color) -> Unit) {
     val bg = LocalTileBg.current
     Box(contentAlignment = Alignment.Center) {
         // 반사 밝기에 따라: 어두운 반사 위 alpha 0.12·반경 1.7배, 밝은 반사 위 alpha 0.5·반경 2.4배
-        Canvas(Modifier.size((sizeDp * (1.7f + 0.7f * bg)).dp)) {
+        Canvas(Modifier.size((sizeDp * (2.1f + 0.7f * bg)).dp)) {
             val r = size.minDimension / 2f
-            val a = 0.12f + 0.38f * bg
+            val a = 0.26f + 0.36f * bg
             drawCircle(Brush.radialGradient(0f to Color.Black.copy(alpha = a), 0.45f to Color.Black.copy(alpha = a * 0.6f), 1f to Color.Transparent, center = center, radius = r), r)
         }
         IconInk(sizeDp, ink, glint, draw)
