@@ -100,13 +100,16 @@ object GoatFlexPanel {
 
     @Volatile private var lastSaver = false
 
-    /** 바닥 반사 블러(%, 30~200, 기본 100): 거리 블러 곡선 전체에 곱한다(11-02 소장님 "전체 블러·버튼 블러 설정 옵션"). */
-    fun floorBlur(c: Context) = prefs(c).getInt("floor_blur", 100)
-    fun setFloorBlur(c: Context, v: Int) = prefs(c).edit().putInt("floor_blur", v.coerceIn(30, 200)).apply()
+    /**
+     * 바닥 반사 블러(%, 10~200, 기본 30): 거리 블러 곡선 전체에 곱한다(11-02 소장님 "전체 블러·버튼 블러 설정 옵션").
+     * 기본 30%·버튼 60dp는 소장님이 실기에서 맞춘 값(11-02 "이게 내가 원하는 설정이야 이걸 기본값으로")이다.
+     */
+    fun floorBlur(c: Context) = prefs(c).getInt("floor_blur", 30)
+    fun setFloorBlur(c: Context, v: Int) = prefs(c).edit().putInt("floor_blur", v.coerceIn(10, 200)).apply()
 
-    /** 버튼 유리 블러(dp, 0~60, 기본 12): 카드 안에서만 반사를 한 번 더 흐린다(11-02 "더 세게 먹일 수 있게" → 상한 30 → 60). */
-    fun buttonBlur(c: Context) = prefs(c).getInt("button_blur", 12)
-    fun setButtonBlur(c: Context, v: Int) = prefs(c).edit().putInt("button_blur", v.coerceIn(0, 60)).apply()
+    /** 버튼 유리 블러(dp, 0~100, 기본 60): 카드 안에서만 반사를 한 번 더 흐린다. */
+    fun buttonBlur(c: Context) = prefs(c).getInt("button_blur", 60)
+    fun setButtonBlur(c: Context, v: Int) = prefs(c).edit().putInt("button_blur", v.coerceIn(0, 100)).apply()
 
     fun intensity(c: Context) = prefs(c).getInt("intensity", 1)
     fun setIntensity(c: Context, v: Int) = prefs(c).edit().putInt("intensity", v).apply()
@@ -768,7 +771,7 @@ object GoatFlexPanel {
     private fun cellDpFor(cols: Int) = screenWdp / cols.coerceAtLeast(1)
 
     /** 실험실 「바닥 반사 블러」 배율(앰비언트를 시작할 때 읽는다). */
-    @Volatile private var floorScale = 1f
+    @Volatile private var floorScale = 0.3f
 
     private fun le(b: ByteArray, o: Int) = (b[o].toInt() and 0xFF) or ((b[o + 1].toInt() and 0xFF) shl 8) or ((b[o + 2].toInt() and 0xFF) shl 16) or ((b[o + 3].toInt() and 0xFF) shl 24)
 

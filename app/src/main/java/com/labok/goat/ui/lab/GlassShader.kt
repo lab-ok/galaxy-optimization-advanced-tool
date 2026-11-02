@@ -52,7 +52,7 @@ internal class GlassShader {
         reflect: Float,
         primary: Boolean,
         press: Float,
-        frostDp: Float = 12f
+        frostDp: Float = 60f
     ) {
         if (field !== fieldSrc) {
             fieldSrc = field

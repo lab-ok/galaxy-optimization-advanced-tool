@@ -515,11 +515,11 @@ private fun GoatPanelCard() {
         var buttonBlur by remember { mutableIntStateOf(GoatFlexPanel.buttonBlur(context)) }
         Spacer(Modifier.height(Gap.Section))
         Text("바닥 반사 블러", color = c.ink, style = MaterialTheme.typography.labelMedium)
-        Text("접는 선에서 멀어질수록 흐려지는 정도 전체를 키우거나 줄입니다. 100%가 기본입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("접는 선에서 멀어질수록 흐려지는 정도 전체를 키우거나 줄입니다. 기본은 30%입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Item))
         LiquidSlider(
             value = floorBlur,
-            range = 30..200,
+            range = 10..200,
             onValueChange = { floorBlur = it },
             onValueChangeFinished = { GoatFlexPanel.setFloorBlur(context, floorBlur) },
             valueText = { "$it%" },
@@ -527,11 +527,11 @@ private fun GoatPanelCard() {
         )
         Spacer(Modifier.height(Gap.Section))
         Text("버튼 유리 블러", color = c.ink, style = MaterialTheme.typography.labelMedium)
-        Text("버튼 안에 비치는 반사를 얼마나 뿌옇게 할지 정합니다. 0이면 바닥과 같고, 기본은 12dp입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("버튼 안에 비치는 반사를 얼마나 뿌옇게 할지 정합니다. 0이면 바닥과 같고, 기본은 60dp입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Item))
         LiquidSlider(
             value = buttonBlur,
-            range = 0..60,
+            range = 0..100,
             onValueChange = { buttonBlur = it },
             onValueChangeFinished = { GoatFlexPanel.setButtonBlur(context, buttonBlur) },
             valueText = { "${it}dp" },

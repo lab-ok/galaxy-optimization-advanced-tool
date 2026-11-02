@@ -138,7 +138,7 @@ class FlexPanelState {
     var ambFps by mutableFloatStateOf(0f)
 
     /** 버튼 유리 블러(dp, 실험실 설정). */
-    var frostDp by mutableFloatStateOf(12f)
+    var frostDp by mutableFloatStateOf(60f)
 
     /** 첫 앰비언트 결과(화면 분석·포스터·앱 색)가 들어왔는지. 그 전에는 대체 그라데이션·빛을 그리지 않고 중립 유리로 둔다. */
     var ambReady by mutableStateOf(false)
