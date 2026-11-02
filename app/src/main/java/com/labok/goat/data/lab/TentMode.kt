@@ -127,8 +127,9 @@ object TentMode {
      * 바깥 화면을 한 장 찍어 아주 작게 줄인 그림(앰비언트용, 11-02 소장님: 바깥 화면을 뒤집어 흐리게 쏘기).
      * 원시 RGBA에서 [w]칸 폭으로 건너뛰며 평균 내 줄인다(가로세로 비율 유지). 실패하면 null.
      */
-    fun smallFrame(physId: String, w: Int = 48): android.graphics.Bitmap? {
-        val p = ShizukuAccess.stream("screencap -d $physId") ?: return null
+    fun smallFrame(physId: String?, w: Int = 48): android.graphics.Bitmap? {
+        // physId가 null이면 기본 화면(GOAT 플렉스 패널: 지금 보는 안쪽 화면)
+        val p = ShizukuAccess.stream(if (physId == null) "screencap" else "screencap -d $physId") ?: return null
         return runCatching {
             val bytes = p.inputStream.use { it.readBytes() }
             p.waitFor()
@@ -166,6 +167,68 @@ object TentMode {
             }
             android.graphics.Bitmap.createBitmap(px, w, h, android.graphics.Bitmap.Config.ARGB_8888)
         }.getOrNull()
+    }
+
+    /**
+     * 기본 화면의 위쪽 [top](0~1) 부분만 아주 작게(가로 [w]칸) 찍는다(GOAT 플렉스 패널 앰비언트). [smallFrame]은 원시 화면 전체(약 18MB)를
+     * 한꺼번에 읽어 패널이 떠 있는 동안 CPU를 크게 썼다(에뮬레이터 측정 약 236%). 여기서는 머리(16바이트) 뒤로 필요한 줄만 읽고 나머지 줄은
+     * 건너뛰며, 위쪽을 다 읽으면 바로 끊는다. 실패하면 null.
+     */
+    fun topFrame(w: Int = 64, top: Float = 0.5f): android.graphics.Bitmap? {
+        val p = ShizukuAccess.stream("screencap") ?: return null
+        return runCatching {
+            val input = java.io.DataInputStream(java.io.BufferedInputStream(p.inputStream, 1 shl 16))
+            val head = ByteArray(16)
+            input.readFully(head)
+            fun int(o: Int) = (head[o].toInt() and 0xFF) or ((head[o + 1].toInt() and 0xFF) shl 8) or ((head[o + 2].toInt() and 0xFF) shl 16) or ((head[o + 3].toInt() and 0xFF) shl 24)
+            val sw = int(0)
+            val sh = int(4)
+            if (sw <= 0 || sh <= 0 || sw > 8192 || sh > 8192) return null
+            val rows = (sh * top).toInt().coerceIn(1, sh)
+            val h = (w * rows / sw).coerceAtLeast(1)
+            val cw = (sw / w).coerceAtLeast(1)
+            val ch = (rows / h).coerceAtLeast(1)
+            val rowStep = (ch / 4).coerceAtLeast(1)
+            val r = IntArray(w * h)
+            val g = IntArray(w * h)
+            val b = IntArray(w * h)
+            val n = IntArray(w * h)
+            val row = ByteArray(sw * 4)
+            for (y in 0 until rows) {
+                if (y % rowStep != 0) {
+                    var left = (sw * 4).toLong()
+                    while (left > 0) {
+                        val k = input.skip(left)
+                        if (k <= 0) {
+                            input.readByte()
+                            left--
+                        } else {
+                            left -= k
+                        }
+                    }
+                    continue
+                }
+                input.readFully(row)
+                val oy = (y / ch).coerceAtMost(h - 1)
+                var x = 0
+                while (x < sw) {
+                    val ox = (x / cw).coerceAtMost(w - 1)
+                    val i = oy * w + ox
+                    val o = x * 4
+                    r[i] += row[o].toInt() and 0xFF
+                    g[i] += row[o + 1].toInt() and 0xFF
+                    b[i] += row[o + 2].toInt() and 0xFF
+                    n[i]++
+                    x += 4
+                }
+            }
+            runCatching { p.destroy() }
+            val px = IntArray(w * h) { i -> if (n[i] == 0) 0xFF000000.toInt() else (0xFF shl 24) or ((r[i] / n[i]) shl 16) or ((g[i] / n[i]) shl 8) or (b[i] / n[i]) }
+            android.graphics.Bitmap.createBitmap(px, w, h, android.graphics.Bitmap.Config.ARGB_8888)
+        }.getOrElse {
+            runCatching { p.destroy() }
+            null
+        }
     }
 
     /** SurfaceFlinger의 물리 화면 번호들(screencap -d에 쓴다). */

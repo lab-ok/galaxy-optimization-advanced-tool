@@ -482,6 +482,45 @@ private fun GoatPanelCard() {
         })
         Spacer(Modifier.height(Gap.Item))
         Text("자동은 앱의 재생 정보로 바로 옮기고, 안 되면 영상 좌우 두 번 누르기(10초 고정)로 대신합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        // 품질·앰비언트 프리셋(11-02 고도화). 화면 분석은 보호 콘텐츠(넷플릭스 등 DRM)에서는 검게 찍혀 포스터·앱 색으로 대신한다
+        var quality by remember { mutableIntStateOf(GoatFlexPanel.quality(context)) }
+        var ambient by remember { mutableIntStateOf(GoatFlexPanel.ambientMode(context)) }
+        var intensity by remember { mutableIntStateOf(GoatFlexPanel.intensity(context)) }
+        Spacer(Modifier.height(Gap.Section))
+        Text("유리 품질", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidChips(options = GoatFlexPanel.QUALITIES, selected = quality, label = { GoatFlexPanel.qualityLabel(it) }, onSelect = {
+            quality = it
+            GoatFlexPanel.setQuality(context, it)
+        })
+        Spacer(Modifier.height(Gap.Section))
+        Text("앰비언트", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidChips(options = GoatFlexPanel.AMBIENT_MODES, selected = ambient, label = { GoatFlexPanel.ambientLabel(it) }, onSelect = {
+            ambient = it
+            GoatFlexPanel.setAmbientMode(context, it)
+        })
+        Spacer(Modifier.height(Gap.Item))
+        Text("화면 분석은 위 화면을 아주 작게 찍어 기기 안에서만 색을 뽑습니다(저장·전송 없음). 넷플릭스처럼 보호된 영상은 시스템이 검게 찍어 분석할 수 없어 포스터나 앱 색으로 대신합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Section))
+        Text("앰비언트 강도", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidChips(options = GoatFlexPanel.INTENSITIES, selected = intensity, label = { GoatFlexPanel.intensityLabel(it) }, onSelect = {
+            intensity = it
+            GoatFlexPanel.setIntensity(context, it)
+        })
+        var haptic by remember { mutableStateOf(GoatFlexPanel.haptics(context)) }
+        Spacer(Modifier.height(Gap.Item))
+        LiquidSwitchRow("누를 때 진동", "타일을 누르면 짧게 진동합니다(시스템 진동 설정을 따릅니다).", haptic, enabled = true, onChange = {
+            haptic = it
+            GoatFlexPanel.setHaptics(context, it)
+        })
+        var motionOn by remember { mutableStateOf(GoatFlexPanel.motion(context)) }
+        Spacer(Modifier.height(Gap.Section))
+        LiquidSwitchRow("표면 애니메이션", "빛 일렁임·눌림·등장 움직임. 시스템 '애니메이션 줄이기'면 꺼집니다.", motionOn, enabled = true, onChange = {
+            motionOn = it
+            GoatFlexPanel.setMotion(context, it)
+        })
         listOf("progress" to "진행 막대", "speed" to "재생 속도", "brightness" to "밝기", "volume" to "볼륨", "fullscreen" to "전체 화면").forEach { (key, name) ->
             var on by remember { mutableStateOf(GoatFlexPanel.shown(context, key)) }
             Spacer(Modifier.height(Gap.Section))

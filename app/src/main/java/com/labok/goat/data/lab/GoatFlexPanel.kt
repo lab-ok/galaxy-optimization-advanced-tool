@@ -15,8 +15,11 @@ import android.provider.Settings
 import android.view.Display
 import android.view.Gravity
 import android.view.WindowManager
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -59,6 +62,24 @@ object GoatFlexPanel {
     fun setSeekMode(c: Context, v: Int) = prefs(c).edit().putInt("seek_mode", v).apply()
     fun seekSec(c: Context) = prefs(c).getInt("seek_sec", 10)
     fun setSeekSec(c: Context, v: Int) = prefs(c).edit().putInt("seek_sec", v).apply()
+
+    // 품질·앰비언트 프리셋(11-02 고도화). 유리 품질 0 끔·1 낮음·2 균형·3 높음, 앰비언트 0 끔·1 고정 색·2 포스터·3 화면 분석, 강도 0 은은·1 균형·2 몰입
+    val QUALITIES = listOf(0, 1, 2, 3)
+    fun qualityLabel(v: Int) = listOf("끔", "낮음", "균형", "높음")[v]
+    val AMBIENT_MODES = listOf(0, 1, 2, 3)
+    fun ambientLabel(v: Int) = listOf("끔", "고정 색", "포스터", "화면 분석")[v]
+    val INTENSITIES = listOf(0, 1, 2)
+    fun intensityLabel(v: Int) = listOf("은은", "균형", "몰입")[v]
+    fun quality(c: Context) = prefs(c).getInt("quality", 2)
+    fun setQuality(c: Context, v: Int) = prefs(c).edit().putInt("quality", v).apply()
+    fun ambientMode(c: Context) = prefs(c).getInt("ambient", 3)
+    fun setAmbientMode(c: Context, v: Int) = prefs(c).edit().putInt("ambient", v).apply()
+    fun intensity(c: Context) = prefs(c).getInt("intensity", 1)
+    fun setIntensity(c: Context, v: Int) = prefs(c).edit().putInt("intensity", v).apply()
+    fun haptics(c: Context) = prefs(c).getBoolean("haptics", true)
+    fun setHaptics(c: Context, v: Boolean) = prefs(c).edit().putBoolean("haptics", v).apply()
+    fun motion(c: Context) = prefs(c).getBoolean("motion", true)
+    fun setMotion(c: Context, v: Boolean) = prefs(c).edit().putBoolean("motion", v).apply()
 
     /** 타일 보이기(키: progress·speed·brightness·volume·fullscreen). */
     fun shown(c: Context, key: String) = prefs(c).getBoolean("show_$key", true)
@@ -119,6 +140,19 @@ object GoatFlexPanel {
             "youtube" in p -> androidx.compose.ui.graphics.Color(0xFFB0201C)
             else -> androidx.compose.ui.graphics.Color(0xFF3A4A6B)
         }
+        // 설정·접근성(줄이기 동작·고대비)·절전 반영
+        val saver = context.getSystemService(android.os.PowerManager::class.java).isPowerSaveMode
+        state.quality = if (saver) quality(context).coerceAtMost(1) else quality(context)
+        state.intensity = intensity(context)
+        state.haptics = haptics(context)
+        state.motion = motion(context) && Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
+        state.highContrast = Settings.Secure.getInt(context.contentResolver, "high_text_contrast_enabled", 0) == 1
+        state.appIcon = runCatching { context.packageManager.getApplicationIcon(p).toBitmap(96, 96).asImageBitmap() }.getOrNull()
+        val brand = state.tint.toArgb()
+        state.ambLeft = brand
+        state.ambCenter = brand
+        state.ambRight = brand
+        state.ambAll = brand
         refresh()
         val d = context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY) ?: return
         val wctx = context.createDisplayContext(d).createWindowContext(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null)
@@ -138,6 +172,7 @@ object GoatFlexPanel {
                     onSeek = { dir -> seek(context, dir, b.width(), b.height()) },
                     onSeekTo = { f -> seekTo(f) },
                     onSpeed = { speed(context) },
+                    onSpeedSet = { s -> setSpeed(context, s) },
                     onBrightness = { v -> brightness(context, v) },
                     onVolume = { v -> volume(context, v) },
                     onFullscreen = {
@@ -167,6 +202,7 @@ object GoatFlexPanel {
         }
         view = v
         state.visible = true
+        startAmbient(context, saver)
         // 볼륨·밝기 초기값
         val am = context.getSystemService(AudioManager::class.java)
         state.volume = am.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / am.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
@@ -208,6 +244,7 @@ object GoatFlexPanel {
         owner?.destroy()
         owner = null
         controller = null
+        ambToken++
         state.art = null
         brightnessModeBefore?.let { m -> io.execute { ShizukuAccess.shell("settings put system screen_brightness_mode $m") } }
         brightnessModeBefore = null
@@ -311,6 +348,110 @@ object GoatFlexPanel {
         val next = speeds[(speeds.indexOfFirst { kotlin.math.abs(it - state.speed) < 0.01f } + 1).mod(speeds.size)]
         io.execute { runCatching { c.transportControls.setPlaybackSpeed(next) }.onFailure { LogRepository.from(context).add("GOAT 플렉스 패널: 속도 바꾸기 실패(${it.message})".take(300)) } }
         state.speed = next
+    }
+
+    private fun setSpeed(context: Context, s: Float) {
+        val c = controller ?: return
+        io.execute { runCatching { c.transportControls.setPlaybackSpeed(s) }.onFailure { LogRepository.from(context).add("GOAT 플렉스 패널: 속도 바꾸기 실패(${it.message})".take(300)) } }
+        state.speed = s
+    }
+
+    // ---- 앰비언트 엔진 연결 ----
+    @Volatile private var ambToken = 0
+    private var artPalette: AmbientColor.Palette? = null
+    private var artFor: androidx.compose.ui.graphics.ImageBitmap? = null
+
+    /**
+     * 앰비언트 색을 고른다(패널이 떠 있는 동안 따로 한 줄). 설정에 따라:
+     * - 화면 분석: Shizuku 셸 화면 찍기로 지금 화면을 아주 작게(64칸) 받아 위 절반(영상 쪽)만 [AmbientColor.extract]한다. 기기 안에서만 계산하고
+     *   저장·전송하지 않는다. 보호 콘텐츠(DRM·보안 창)는 시스템이 검게 찍어 주므로 분석하지 않고 포스터 → 앱 색으로 대신하며 그 사실을 표시한다.
+     *   변화가 없으면 0.45초 → 1.5초로 늦추고(절전이면 두 배), 패널이 닫히면 멈춘다.
+     * - 포스터: 미디어 세션 포스터에서 뽑는다. 없으면 앱 색.
+     * - 고정 색: 앱 대표 색.
+     */
+    private fun startAmbient(context: Context, saver: Boolean) {
+        val mode = ambientMode(context)
+        val token = ++ambToken
+        state.ambientOn = mode != 0
+        if (mode == 0) {
+            state.ambSource = "앰비언트 끔"
+            return
+        }
+        kotlin.concurrent.thread(name = "goat-ambient", isDaemon = true) {
+            var period = 450L
+            var stable = 0
+            var last: Int? = null
+            var n = 0
+            var spent = 0L
+            while (ambToken == token) {
+                val t0 = SystemClock.elapsedRealtime()
+                var src: String
+                var pal: AmbientColor.Palette? = null
+                if (mode == 3) {
+                    // 위 절반(영상 쪽)만 읽는다. 패널(아래 절반)은 찍지 않아 패널 색이 다시 들어가는 일이 없다
+                    val f = TentMode.topFrame(64, 0.5f)
+                    if (f != null) {
+                        val w = f.width
+                        val h = f.height
+                        val px = IntArray(w * h)
+                        f.getPixels(px, 0, w, 0, 0, w, h)
+                        val p = AmbientColor.extract(px, w, h)
+                        if (!p.protectedLike) pal = p
+                        n++
+                        spent += SystemClock.elapsedRealtime() - t0
+                        if (n == 10) LogRepository.from(context).add("GOAT 플렉스 패널: 화면 분석 평균 ${spent / n}ms/회 (${f.width}x${f.height})")
+                    }
+                    src = if (pal != null) "화면 분석" else "보호 화면"
+                } else {
+                    src = ""
+                }
+                if (pal == null && mode >= 2) {
+                    pal = artPaletteNow()
+                    if (pal != null) src = if (src.isEmpty()) "포스터" else "$src · 포스터"
+                }
+                if (pal == null) src = if (src.isEmpty()) "앱 색" else "$src · 앱 색"
+                val p = pal
+                main.post {
+                    if (ambToken != token) return@post
+                    state.ambSource = src
+                    if (p != null) {
+                        state.ambLeft = p.left
+                        state.ambCenter = p.center
+                        state.ambRight = p.right
+                        state.ambAll = p.overall
+                    } else {
+                        val b = state.tint.toArgb()
+                        state.ambLeft = b
+                        state.ambCenter = b
+                        state.ambRight = b
+                        state.ambAll = b
+                    }
+                }
+                if (mode != 3) {
+                    // 포스터·고정 색은 포스터가 바뀔 때만 다시 보면 된다
+                    period = 2000L
+                } else {
+                    val now = p?.overall
+                    stable = if (now != null && last != null && AmbientColor.distance(now, last!!) < 0.02f) stable + 1 else 0
+                    last = now
+                    period = if (stable > 5) 2000L else 700L
+                }
+                Thread.sleep(if (saver) period * 2 else period)
+            }
+        }
+    }
+
+    /** 세션 포스터의 색(포스터가 바뀌었을 때만 다시 계산). */
+    private fun artPaletteNow(): AmbientColor.Palette? {
+        val art = state.art ?: return null
+        if (art === artFor) return artPalette
+        val bmp = art.asAndroidBitmap()
+        val small = android.graphics.Bitmap.createScaledBitmap(bmp, 48, (48 * bmp.height / bmp.width.coerceAtLeast(1)).coerceAtLeast(1), true)
+        val px = IntArray(small.width * small.height)
+        small.getPixels(px, 0, small.width, 0, 0, small.width, small.height)
+        artPalette = AmbientColor.extract(px, small.width, small.height)
+        artFor = art
+        return artPalette
     }
 
     private fun brightness(context: Context, v: Float) {
