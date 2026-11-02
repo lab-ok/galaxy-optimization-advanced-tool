@@ -70,7 +70,8 @@ object ReflectionField {
 
     /** 패널 위치 [d](0=접는 선, 1=맨 아래)의 흐림 반지름(필드 칸 단위). */
     fun radiusAt(d: Float, spec: Spec = Spec()): Float {
-        val u = smooth(((d - 0.12f) / 0.78f).coerceIn(0f, 1f))
+        // 거리 구간(11-02 Ultimate UX 참고값): 위 0~18% 원본 구조, 18~60% 점점 흐림, 60~100% 넓은 확산 — 한 곡선이라 경계가 없다
+        val u = smooth(((d - 0.18f) / 0.72f).coerceIn(0f, 1f))
         return spec.blurMin + (spec.blurMax - spec.blurMin) * u.pow(spec.gamma)
     }
 
@@ -230,24 +231,6 @@ object ReflectionField {
             b += c and 0xFF
         }
         return (0xFF shl 24) or ((r / w) shl 16) or ((g / w) shl 8) or (b / w)
-    }
-
-    /**
-     * 위 화면에서 실제 내용이 있는 줄 범위(위·아래 끝의 거의 검은 줄을 뺀 것). 유튜브처럼 영상 아래에 검은 띠(레터박스)가 있으면
-     * 접는 선 바로 위가 검은 띠라, 힌지 아래 가장 선명한 자리에 검은 줄만 비치고 실제 영상은 흐린 자리로 밀려났다(11-02 실기 영상).
-     * 내용이 남은 줄이 전체의 1/4보다 적으면(어두운 장면) 자르지 않는다.
-     */
-    fun contentBand(px: IntArray, w: Int, h: Int): IntRange {
-        fun blank(y: Int): Boolean {
-            var mx = 0f
-            for (x in 0 until w) mx = maxOf(mx, luma(px[y * w + x]))
-            return mx < 0.07f
-        }
-        var top = 0
-        while (top < h - 1 && blank(top)) top++
-        var bot = h - 1
-        while (bot > top && blank(bot)) bot--
-        return if (bot - top + 1 < h / 4) 0 until h else top..bot
     }
 
     fun luma(c: Int) = (0.299f * (c shr 16 and 0xFF) + 0.587f * (c shr 8 and 0xFF) + 0.114f * (c and 0xFF)) / 255f

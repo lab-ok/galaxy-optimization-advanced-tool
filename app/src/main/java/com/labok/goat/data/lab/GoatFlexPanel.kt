@@ -250,6 +250,8 @@ object GoatFlexPanel {
         controller = c
         state.app = label
         state.hasSession = c != null
+        // 이전 패널·이전 앱의 색·포스터 상태가 새 패널 첫 프레임에 보이지 않게 중립으로 되돌린다(11-02 첫 등장 분홍빛 깜박임)
+        resetAmbientState()
         state.tint = when {
             "netflix" in p -> androidx.compose.ui.graphics.Color(0xFF8E0E14)
             "disney" in p -> androidx.compose.ui.graphics.Color(0xFF1B3D8F)
@@ -441,6 +443,20 @@ object GoatFlexPanel {
         brightnessModeBefore?.let { m -> io.execute { ShizukuAccess.shell("settings put system screen_brightness_mode $m") } }
         brightnessModeBefore = null
         LogRepository.from(context).add("GOAT 플렉스 패널: 닫음")
+    }
+
+    private fun resetAmbientState() {
+        state.ambReady = false
+        state.posterShown = false
+        state.ambSource = ""
+        state.ambLeft = com.labok.goat.ui.lab.NEUTRAL
+        state.ambCenter = com.labok.goat.ui.lab.NEUTRAL
+        state.ambRight = com.labok.goat.ui.lab.NEUTRAL
+        state.ambAll = com.labok.goat.ui.lab.NEUTRAL
+        state.field = null
+        state.fieldPx = null
+        state.near = null
+        state.hinge = null
     }
 
     /** 세션에서 제목·진행·재생 상태를 읽어 화면 상태에 넣는다(메인 스레드). */
@@ -694,14 +710,10 @@ object GoatFlexPanel {
                     slowBlend = false
                     pal = pal0
                     if (changed || state.fieldPx == null) {
-                        // 위·아래 검은 띠를 빼고 실제 내용 줄만 비춘다(접는 선 바로 아래에 영상 아래쪽 끝이 또렷하게 오게)
-                        val band = ReflectionField.contentBand(fr.px, fr.w, fr.h)
-                        val baseField = if (band.first == 0 && band.last == fr.h - 1) {
-                            makeField(fr.px, fr.w, fr.h)
-                        } else {
-                            makeField(fr.px.copyOfRange(band.first * fr.w, (band.last + 1) * fr.w), fr.w, band.last - band.first + 1)
-                        }
-                        field = withNear(baseField, hi, band.first * k, ((band.last + 1) * k - 1).coerceAtMost(hi.h - 1), k)
+                        // 위 화면을 실제 기하 그대로 비춘다(11-02 소장님: 여백이 있으면 굳이 붙일 필요 없다 — 1.42.10~15는 검은 띠를 빼고
+                        // 영상 끝을 접는 선에 붙였는데, 자막이 나타나면 내용 범위가 바뀌어 반사가 위아래로 밀려 더 부자연스러웠다).
+                        // 진짜 거울처럼 접는 선 바로 위 화면이 그대로 접는 선 바로 아래에 오고, 검은 여백이면 그 자리는 어둡게 비친다
+                        field = withNear(makeField(fr.px, fr.w, fr.h), hi, 0, hi.h - (hi.h % k) - 1, k)
                     } else {
                         keep = true
                     }
@@ -729,8 +741,10 @@ object GoatFlexPanel {
             if (ambToken != token) return@post
             tel.applied(SystemClock.elapsedRealtime() - capturedAt)
             state.ambSource = src
+            state.ambReady = true
             // 포스터를 쓰는 경우(포스터 모드·보호 화면의 포스터 연출)는 반사 대신 포스터 원본을 똑바로 보여 준다(11-02 소장님)
-            state.posterShown = "포스터" in src || posterPreview
+            // 앱 색 대체도 단색 대신 앱 아이콘을 크게 흐린 빛으로 보여 준다(11-02 소장님)
+            state.posterShown = "포스터" in src || "앱 색" in src || posterPreview
             if (fNew == null && !keep) {
                 if (state.field != null) blendTo(token, null)
             } else if (fNew != null && (slowBlend || lastTarget == null || fieldChange(lastTarget!!, fNew.px) > 0.006f)) {
@@ -978,7 +992,6 @@ object GoatFlexPanel {
 
     @Volatile private var activeTel: Telemetry? = null
     private val blendLock = Any()
-    private val blendKick = java.util.concurrent.Semaphore(0)
     private var blendFor = -1
     private val blendBmp = arrayOfNulls<android.graphics.Bitmap>(3)
     private val blendPx = arrayOfNulls<IntArray>(3)
@@ -1004,91 +1017,135 @@ object GoatFlexPanel {
         if (blendFor != token) {
             blendFor = token
             startBlend(token)
+        } else {
+            kickBlend()
         }
-        blendKick.release()
     }
 
-    private fun startBlend(token: Int) = kotlin.concurrent.thread(name = "goat-ambient-blend", isDaemon = true) {
-        var last = SystemClock.uptimeMillis()
-        var slot = 0
-        while (ambToken == token) {
-            val idle = synchronized(blendLock) { !blender.active && !nearBlender.active && !hingeBlender.active && blender.w > 0 && !pendingFirst(token) }
-            if (idle) {
-                if (idleSince == 0L) idleSince = SystemClock.uptimeMillis()
-                blendKick.tryAcquire(500, java.util.concurrent.TimeUnit.MILLISECONDS)
-                blendKick.drainPermits()
-                last = SystemClock.uptimeMillis()
-                continue
-            }
-            val now = SystemClock.uptimeMillis()
-            val dt = (now - last).coerceIn(1L, 50L).toFloat()
-            last = now
-            var w = 0
-            var h = 0
-            var clear = false
-            var nearClear: Boolean
-            var nearImg: androidx.compose.ui.graphics.ImageBitmap?
-            var hingeImg: androidx.compose.ui.graphics.ImageBitmap? = null
-            val px: IntArray
-            synchronized(blendLock) {
-                w = blender.w
-                h = blender.h
-                if (w <= 0) return@thread
-                if (blendPx[slot]?.size != w * h) {
-                    blendPx[slot] = IntArray(w * h)
-                    blendBmp[slot] = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
-                }
-                px = blendPx[slot]!!
-                blender.step(dt, px)
-                clear = blender.isClear()
-                val nw = nearBlender.w
-                val nh = nearBlender.h
-                if (nw > 0) {
-                    if (nearPx[slot]?.size != nw * nh) {
-                        nearPx[slot] = IntArray(nw * nh)
-                        nearBmp[slot] = android.graphics.Bitmap.createBitmap(nw, nh, android.graphics.Bitmap.Config.ARGB_8888)
+    // ---- 전환 줄: 화면 VSync(Choreographer)에 맞춰 돈다(11-02 "Continuous Real-Time Ambient Rendering") ----
+    // 예전에는 Thread.sleep(16) 루프라 화면 새로 고침과 박자가 어긋나 프레임 간격이 들쭉날쭉했다. 이제 전용 HandlerThread의
+    // Choreographer 프레임 콜백으로 VSync마다 한 걸음씩 나아가고, 다 오면(정지 화면) 콜백을 더 걸지 않아 쉰다
+    private var blendThread: android.os.HandlerThread? = null
+    private var blendHandler: android.os.Handler? = null
+    private var blendCallback: android.view.Choreographer.FrameCallback? = null
+
+    @Volatile private var blendScheduled = false
+    private var blendSlot = 0
+
+    private fun startBlend(token: Int) {
+        blendThread?.quitSafely()
+        val ht = android.os.HandlerThread("goat-ambient-blend").apply { start() }
+        blendThread = ht
+        val h = android.os.Handler(ht.looper)
+        blendHandler = h
+        h.post {
+            val ch = android.view.Choreographer.getInstance()
+            var lastNanos = 0L
+            val cb = object : android.view.Choreographer.FrameCallback {
+                override fun doFrame(frameTimeNanos: Long) {
+                    blendScheduled = false
+                    if (ambToken != token) {
+                        ht.quitSafely()
+                        return
                     }
-                    nearBlender.step(dt, nearPx[slot]!!)
-                    nearClear = nearBlender.isClear()
-                    nearBmp[slot]!!.setPixels(nearPx[slot]!!, 0, nw, 0, 0, nw, nh)
-                    nearImg = if (nearClear) null else nearBmp[slot]!!.asImageBitmap()
-                } else {
-                    nearImg = null
-                }
-                val hw = hingeBlender.w
-                if (hw > 0) {
-                    if (hingePx[slot]?.size != hw) {
-                        hingePx[slot] = IntArray(hw)
-                        hingeBmp[slot] = android.graphics.Bitmap.createBitmap(hw, 1, android.graphics.Bitmap.Config.ARGB_8888)
+                    val dt = if (lastNanos == 0L) 16f else ((frameTimeNanos - lastNanos) / 1_000_000f).coerceIn(1f, 50f)
+                    lastNanos = frameTimeNanos
+                    val moving = blendFrame(token, dt)
+                    if (moving) {
+                        blendScheduled = true
+                        ch.postFrameCallback(this)
+                    } else {
+                        if (idleSince == 0L) idleSince = SystemClock.uptimeMillis()
+                        lastNanos = 0L
                     }
-                    hingeBlender.step(dt, hingePx[slot]!!)
-                    hingeBmp[slot]!!.setPixels(hingePx[slot]!!, 0, hw, 0, 0, hw, 1)
-                    hingeImg = hingeBmp[slot]!!.asImageBitmap()
                 }
             }
-            val bmp = blendBmp[slot]!!
-            bmp.setPixels(px, 0, w, 0, 0, w, h)
-            val img = bmp.asImageBitmap()
-            val ni = nearImg
-            val hg = hingeImg
-            slot = (slot + 1) % 3
-            shownFirst = token
-            main.post {
-                if (ambToken != token) return@post
-                state.near = ni
-                if (hg != null) state.hinge = hg
-                if (clear) {
-                    state.field = null
-                    state.fieldPx = null
-                } else {
-                    state.fieldPx = px
-                    state.fieldW = w
-                    state.fieldH = h
-                    state.field = img
-                }
-            }
-            Thread.sleep(16)
+            blendCallback = cb
+            blendScheduled = true
+            ch.postFrameCallback(cb)
         }
+    }
+
+    /** 새 목표가 왔다: 전환 줄이 쉬고 있으면 다음 VSync부터 다시 돈다. */
+    private fun kickBlend() {
+        val h = blendHandler ?: return
+        h.post {
+            val cb = blendCallback ?: return@post
+            if (!blendScheduled) {
+                blendScheduled = true
+                android.view.Choreographer.getInstance().postFrameCallback(cb)
+            }
+        }
+    }
+
+    /** 한 VSync 걸음: 기본 필드·근거리 띠·경계 줄을 같은 dt로 나아가 메인에 넘긴다. 아직 움직이면 true. */
+    private fun blendFrame(token: Int, dt: Float): Boolean {
+        val slot = blendSlot
+        var w = 0
+        var h = 0
+        var clear = false
+        var nearClear: Boolean
+        var nearImg: androidx.compose.ui.graphics.ImageBitmap?
+        var hingeImg: androidx.compose.ui.graphics.ImageBitmap? = null
+        val px: IntArray
+        synchronized(blendLock) {
+            w = blender.w
+            h = blender.h
+            if (w <= 0) return false
+            if (blendPx[slot]?.size != w * h) {
+                blendPx[slot] = IntArray(w * h)
+                blendBmp[slot] = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+            }
+            px = blendPx[slot]!!
+            blender.step(dt, px)
+            clear = blender.isClear()
+            val nw = nearBlender.w
+            val nh = nearBlender.h
+            if (nw > 0) {
+                if (nearPx[slot]?.size != nw * nh) {
+                    nearPx[slot] = IntArray(nw * nh)
+                    nearBmp[slot] = android.graphics.Bitmap.createBitmap(nw, nh, android.graphics.Bitmap.Config.ARGB_8888)
+                }
+                nearBlender.step(dt, nearPx[slot]!!)
+                nearClear = nearBlender.isClear()
+                nearBmp[slot]!!.setPixels(nearPx[slot]!!, 0, nw, 0, 0, nw, nh)
+                nearImg = if (nearClear) null else nearBmp[slot]!!.asImageBitmap()
+            } else {
+                nearImg = null
+            }
+            val hw = hingeBlender.w
+            if (hw > 0) {
+                if (hingePx[slot]?.size != hw) {
+                    hingePx[slot] = IntArray(hw)
+                    hingeBmp[slot] = android.graphics.Bitmap.createBitmap(hw, 1, android.graphics.Bitmap.Config.ARGB_8888)
+                }
+                hingeBlender.step(dt, hingePx[slot]!!)
+                hingeBmp[slot]!!.setPixels(hingePx[slot]!!, 0, hw, 0, 0, hw, 1)
+                hingeImg = hingeBmp[slot]!!.asImageBitmap()
+            }
+        }
+        val bmp = blendBmp[slot]!!
+        bmp.setPixels(px, 0, w, 0, 0, w, h)
+        val img = bmp.asImageBitmap()
+        val ni = nearImg
+        val hg = hingeImg
+        blendSlot = (slot + 1) % 3
+        shownFirst = token
+        main.post {
+            if (ambToken != token) return@post
+            state.near = ni
+            if (hg != null) state.hinge = hg
+            if (clear) {
+                state.field = null
+                state.fieldPx = null
+            } else {
+                state.fieldPx = px
+                state.fieldW = w
+                state.fieldH = h
+                state.field = img
+            }
+        }
+        return synchronized(blendLock) { blender.active || nearBlender.active || hingeBlender.active } || pendingFirst(token)
     }
 
     /** 첫 목표는 전환 없이 바로 한 번 그려야 한다(step이 첫 프레임에서 '다 옴'을 돌려줘도). */

@@ -157,8 +157,9 @@ object AmbientColor {
      */
     fun grade(argb: Int): Int {
         val o = toOklab(argb)
-        val c = hypot(o[1], o[2]) * 1.15f
-        val k = (if (c > 0.22f) 0.22f / c else 1f) * 1.15f
+        // 11-02 Ultimate UX: 실제 영상에서 회색·탁한 녹색으로 약하게 보였다 — 채도 1.3배, 상한 0.26(파란 하늘은 분명한 청색으로)
+        val c = hypot(o[1], o[2]) * 1.3f
+        val k = (if (c > 0.26f) 0.26f / c else 1f) * 1.3f
         // 대비 1.12배(가운데 0.48 기준): 반사가 넓은 색 얼룩이 아니라 밝고 어두운 구조로 보이게(11-02 실사용 검수)
         val l = (0.48f + (o[0] * 0.97f - 0.48f) * 1.12f).coerceIn(0f, 0.84f)
         return fromOklab(l, o[1] * k, o[2] * k)

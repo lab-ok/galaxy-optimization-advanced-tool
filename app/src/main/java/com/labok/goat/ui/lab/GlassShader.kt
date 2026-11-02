@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
  * - Kyant0/AndroidLiquidGlass(Apache-2.0): 둥근 사각형 SDF, 가장자리 띠 안에서만 샘플 위치를 안쪽으로 당기는 굴절
  * - QWEA0/Liquid-Glass-Android(MIT): 광원 쪽·반대쪽 두 lobe의 테두리 빛, 1px 실선 + 안쪽 glow, 되접힘 고리를 막는 제곱 프로파일과 상한
  * - skydoves/Cloudy(Apache-2.0): 모서리 이음매가 부드러운 법선
+ * 모서리 거리 함수는 GOAT 초타원 모양([SuperellipseShape])에 맞춰 원 대신 N-노름으로 바꿨다.
  *
  * GOAT는 카드 뒤 배경(반사 필드)을 스스로 그리므로 실제 화면을 캡처할 필요가 없다. 반사 필드(96칸)와 근거리 띠(384칸)를
  * 패널 좌표계로 늘린 BitmapShader 두 개를 입력으로 받아, 카드 하나를 셰이더 한 번으로 그린다.
@@ -104,15 +105,25 @@ uniform float specular;
 uniform float reflect;
 uniform float density;
 
+// 모서리는 원호가 아니라 초타원(|x|^N + |y|^N = r^N, SuperellipseShape.EXPONENT와 같은 N) — 잘라낸 모양과 같은 윤곽
+const float N = 4.0;
+
+float lenN(float2 v) {
+    return pow(pow(v.x, N) + pow(v.y, N), 1.0 / N);
+}
+
 float sdRoundRect(float2 p, float2 b, float r) {
     float2 q = abs(p) - b + r;
-    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+    return lenN(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
 }
 
 float2 edgeNormal(float2 p, float2 b, float r) {
     float2 q = abs(p) - b + r;
     float2 s = float2(p.x >= 0.0 ? 1.0 : -1.0, p.y >= 0.0 ? 1.0 : -1.0);
-    if (max(q.x, q.y) > 0.0) return s * normalize(max(q, 0.0));
+    if (max(q.x, q.y) > 0.0) {
+        float2 v = max(q, 0.0);
+        return s * normalize(float2(pow(v.x, N - 1.0), pow(v.y, N - 1.0)) + float2(1e-5, 1e-5));
+    }
     float w = clamp(0.5 + 0.5 * (q.x - q.y) / (8.0 * density), 0.0, 1.0);
     return normalize(float2(s.x * w, s.y * (1.0 - w)) + float2(0.0, 1e-4));
 }
@@ -142,7 +153,17 @@ half4 main(float2 coord) {
     half4 g = back(coord + disp);
     half rr = back(coord + disp * (1.0 - dispersion)).r;
     half bb = back(coord + disp * (1.0 + dispersion)).b;
-    half4 refl = half4(rr, g.g, bb, g.a) * half(reflect);
+    half4 refl = half4(rr, g.g, bb, g.a);
+    // vibrancy(QWEA0 곡선): 이미 진한 색·아주 밝은 색은 덜 올리고 탁한 색을 살린다. premultiplied라 알파로 나눠 계산
+    if (refl.a > 0.001) {
+        float3 col = float3(refl.rgb) / float(refl.a);
+        float lum = dot(col, float3(0.2126, 0.7152, 0.0722));
+        float satNow = max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b));
+        float room = (1.0 - smoothstep(0.2, 0.85, satNow)) * (1.0 - smoothstep(0.75, 0.98, lum));
+        col = clamp(mix(float3(lum), col, 1.0 + 0.35 * mix(0.3, 1.0, room)), 0.0, 1.0);
+        refl = half4(half3(col) * refl.a, refl.a);
+    }
+    refl = refl * half(reflect);
 
     // 3) 테두리 빛: 법선·광원 내적, 광원 쪽과 반대쪽(안쪽 벽 반사) 두 lobe. 1px 실선 + 안쪽 8px 부드러운 빛
     float facing = dot(n, -lightDir);

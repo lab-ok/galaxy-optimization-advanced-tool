@@ -47,7 +47,13 @@ class FieldBlender {
     fun setTarget(px: IntArray, w: Int, h: Int, nowMs: Long, slow: Boolean = false) {
         val s = shown
         if (s == null || this.w != w || this.h != h) {
-            shown = FloatArray(w * h * 4).also { a -> for (i in 0 until w * h) unpack(px[i], a, i * 4) }
+            // 첫 목표(또는 크기 변경)는 색은 그대로, 세기(알파)는 0에서 시작해 스프링으로 나타난다(첫 등장 때 반사가 툭 바뀌지 않게, 11-02)
+            shown = FloatArray(w * h * 4).also { a ->
+                for (i in 0 until w * h) {
+                    unpack(px[i], a, i * 4)
+                    a[i * 4] = 0f
+                }
+            }
             vel = FloatArray(w * h * 4)
             this.w = w
             this.h = h

@@ -13,11 +13,16 @@ class FieldBlenderTest {
     private fun gray(v: Int) = (0xFF shl 24) or (v shl 16) or (v shl 8) or v
 
     @Test
-    fun firstTargetShowsImmediately() {
+    fun firstTargetFadesInWithoutColorJump() {
         val b = FieldBlender()
         b.setTarget(solid(0xFF102030.toInt()), 4, 4, 0)
         val out = IntArray(16)
-        assertFalse(b.step(16f, out))
+        assertTrue(b.step(16f, out))
+        // 첫 프레임: 색은 목표 그대로, 세기만 0에서 올라오는 중
+        assertEquals(0x102030, out[0] and 0xFFFFFF)
+        assertTrue("처음엔 투명에 가깝다: ${out[0] ushr 24}", (out[0] ushr 24) < 128)
+        var n = 0
+        while (b.step(16f, out) && n < 200) n++
         assertEquals(0xFF102030.toInt(), out[0])
     }
 

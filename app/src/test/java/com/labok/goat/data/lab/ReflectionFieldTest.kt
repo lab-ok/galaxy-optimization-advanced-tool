@@ -73,16 +73,4 @@ class ReflectionFieldTest {
         val c = ReflectionField.sample(f, w, ReflectionField.Spec().outH, 0.5f, 0.5f)
         assertTrue(ReflectionField.luma(c) < 0.02f)
     }
-
-    @Test
-    fun contentBandSkipsLetterbox() {
-        val w = 8
-        val h = 20
-        // 위 4줄·아래 6줄 검은 띠, 가운데 10줄 영상
-        val px = IntArray(w * h) { i -> if (i / w in 4..13) 0xFF808040.toInt() else 0xFF000000.toInt() }
-        org.junit.Assert.assertEquals(4..13, ReflectionField.contentBand(px, w, h))
-        // 거의 다 검으면(어두운 장면) 자르지 않는다
-        val dark = IntArray(w * h) { i -> if (i / w == 10) 0xFF808080.toInt() else 0xFF000000.toInt() }
-        org.junit.Assert.assertEquals(0 until h, ReflectionField.contentBand(dark, w, h))
-    }
 }
