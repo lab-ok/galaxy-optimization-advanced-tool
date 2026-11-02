@@ -140,6 +140,9 @@ class FlexPanelState {
     /** 버튼 유리 블러(dp, 실험실 설정). */
     var frostDp by mutableFloatStateOf(60f)
 
+    /** 버튼 유리 블러를 미리 흐린 반사(기본 해상도). 있으면 셰이더가 이것만 한 번 읽는다. */
+    var frost by mutableStateOf<ImageBitmap?>(null)
+
     /** 첫 앰비언트 결과(화면 분석·포스터·앱 색)가 들어왔는지. 그 전에는 대체 그라데이션·빛을 그리지 않고 중립 유리로 둔다. */
     var ambReady by mutableStateOf(false)
 
@@ -195,6 +198,9 @@ private fun inkWith(base: Color, refl: Color?, k: Float): Color {
     val bright = Color(AmbientColor.fromOklab(0.86f, o[1] * 0.9f, o[2] * 0.9f))
     return lerp(base, bright, (k * (ch / 0.1f).coerceAtMost(1f)).coerceIn(0f, 0.35f))
 }
+
+/** 두 색이 눈에 띄게 다른지(어느 채널이든 2/255 넘게). */
+private fun visiblyDiffers(a: Color, b: Color): Boolean = kotlin.math.abs(a.red - b.red) > 2f / 255f || kotlin.math.abs(a.green - b.green) > 2f / 255f || kotlin.math.abs(a.blue - b.blue) > 2f / 255f
 
 /** 앰비언트가 준비되기 전의 중립 색(GOAT 다크 유리 면 #171717). */
 internal const val NEUTRAL = 0xFF171717.toInt()
@@ -343,7 +349,8 @@ fun FlexPanelUi(
                 val dt = if (last == 0L) 0.016f else ((t - last) / 1e9f).coerceIn(0.001f, 0.1f)
                 last = t
                 val next = List(4) { i -> Color(sm[i].step(targets[i], dt)) }
-                if (next != shown) {
+                // 눈에 띄는 변화(채널 2/255 이상)일 때만 바꾼다: 아주 작은 변화마다 패널 전체가 다시 구성되던 것을 줄인다(11-02 최적화)
+                if (next.indices.any { visiblyDiffers(next[it], shown[it]) }) {
                     shown = next
                     still = 0
                 } else {
@@ -970,7 +977,7 @@ private fun GlassTile(
                             wk,
                             primary,
                             press,
-                            state.frostDp
+                            if (useField) state.frost else null
                         )
                         drawRect(ShaderBrush(glass.shader))
                     } else if (posterImg != null && q >= 2 && kk > 0f) {

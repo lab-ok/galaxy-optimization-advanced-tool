@@ -301,6 +301,7 @@ object GoatFlexPanel {
         state.quality = if (saver) quality(context).coerceAtMost(1) else quality(context)
         state.intensity = intensity(context)
         state.frostDp = buttonBlur(context).toFloat()
+        frostDpNow = state.frostDp
         state.haptics = haptics(context)
         state.motion = motion(context) && Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
         state.highContrast = Settings.Secure.getInt(context.contentResolver, "high_text_contrast_enabled", 0) == 1
@@ -1131,6 +1132,49 @@ object GoatFlexPanel {
     /** 접는 선 경계 줄의 시간 전환. */
     private var hingeBlender = FieldBlender()
     private val hingeBmp = arrayOfNulls<android.graphics.Bitmap>(3)
+
+    // 버튼 유리 블러를 미리 흐린 반사(기본 해상도). 셰이더가 픽셀마다 19탭을 하던 것을 한 번 읽기로 바꿨다(11-02 패널 최적화)
+    private val frostBmp = arrayOfNulls<android.graphics.Bitmap>(3)
+
+    @Volatile private var frostDpNow = 60f
+
+    /**
+     * 기본 반사([base], w×h) 위에 근거리 띠([near], nw×nh, 패널 위 NEAR_FRAC)를 기본 해상도로 줄여 겹치고, [rCells]칸으로 흐린다.
+     * 알파(거리 세기)는 겹친 값을 그대로 둔다. 128×96칸이라 프레임마다 해도 1ms 안팎이다.
+     */
+    private fun frostOf(base: IntArray, w: Int, h: Int, near: IntArray?, nw: Int, nh: Int, rCells: Float): IntArray {
+        val comp = base.copyOf()
+        if (near != null && nw >= w && nh > 0) {
+            val k = nw / w
+            val rows = (h * ReflectionField.NEAR_FRAC).toInt().coerceAtLeast(1)
+            for (y in 0 until rows) {
+                val ny = ((y + 0.5f) / rows * nh).toInt().coerceIn(0, nh - 1)
+                for (x in 0 until w) {
+                    var a = 0
+                    var r = 0
+                    var g = 0
+                    var b = 0
+                    for (j in 0 until k) {
+                        val c = near[ny * nw + x * k + j]
+                        a += c ushr 24
+                        r += c shr 16 and 0xFF
+                        g += c shr 8 and 0xFF
+                        b += c and 0xFF
+                    }
+                    val na = a / k / 255f
+                    val bc = comp[y * w + x]
+                    val ba = (bc ushr 24) / 255f
+                    val oa = na + ba * (1 - na)
+                    fun mix(nc: Int, bcc: Int) = ((nc / k) * na + bcc * ba * (1 - na)).let { if (oa > 0f) (it / oa).toInt().coerceIn(0, 255) else 0 }
+                    comp[y * w + x] = ((oa * 255).toInt() shl 24) or (mix(r, bc shr 16 and 0xFF) shl 16) or (mix(g, bc shr 8 and 0xFF) shl 8) or mix(b, bc and 0xFF)
+                }
+            }
+        }
+        if (rCells < 0.3f) return comp
+        val bl = ReflectionField.blur(comp, w, h, rCells.coerceAtMost(40f))
+        for (i in bl.indices) bl[i] = (comp[i] and 0xFF000000.toInt()) or (bl[i] and 0xFFFFFF)
+        return bl
+    }
     private val hingePx = arrayOfNulls<IntArray>(3)
     private val nearBmp = arrayOfNulls<android.graphics.Bitmap>(3)
     private val nearPx = arrayOfNulls<IntArray>(3)
@@ -1275,6 +1319,16 @@ object GoatFlexPanel {
         val bmp = blendBmp[slot]!!
         bmp.setPixels(px, 0, w, 0, 0, w, h)
         val img = bmp.asImageBitmap()
+        // 버튼 유리 블러(미리 흐림): 버튼 블러가 0이면 만들지 않는다(셰이더가 원래 반사를 읽는다)
+        val fd = frostDpNow
+        val frostImg = if (fd > 0f && !clear) {
+            val f = frostOf(px, w, h, synchronized(blendLock) { if (nearBlender.w > 0) nearPx[slot] else null }, nearBlender.w, nearBlender.h, fd / cellDpFor(w))
+            if (frostBmp[slot]?.width != w || frostBmp[slot]?.height != h) frostBmp[slot] = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+            frostBmp[slot]!!.setPixels(f, 0, w, 0, 0, w, h)
+            frostBmp[slot]!!.asImageBitmap()
+        } else {
+            null
+        }
         val ni = nearImg
         val hg = hingeImg
         blendSlot = (slot + 1) % 3
@@ -1282,6 +1336,7 @@ object GoatFlexPanel {
         main.post {
             if (ambToken != token) return@post
             state.near = ni
+            state.frost = frostImg
             if (hg != null) state.hinge = hg
             if (clear) {
                 state.field = null

@@ -30,6 +30,9 @@ internal class GlassShader {
     private var nearSrc: ImageBitmap? = null
     private var fieldShader: BitmapShader? = null
     private var nearShader: BitmapShader? = null
+    private var frostSrc: ImageBitmap? = null
+    private var frostShader: BitmapShader? = null
+    private val frostMatrix = Matrix()
     private val empty: BitmapShader by lazy {
         BitmapShader(android.graphics.Bitmap.createBitmap(1, 1, android.graphics.Bitmap.Config.ARGB_8888), Shader.TileMode.DECAL, Shader.TileMode.DECAL)
     }
@@ -52,8 +55,12 @@ internal class GlassShader {
         reflect: Float,
         primary: Boolean,
         press: Float,
-        frostDp: Float = 60f
+        frost: ImageBitmap? = null
     ) {
+        if (frost !== frostSrc) {
+            frostSrc = frost
+            frostShader = frost?.let { bmpShader(it) }
+        }
         if (field !== fieldSrc) {
             fieldSrc = field
             fieldShader = field?.let { bmpShader(it) }
@@ -73,6 +80,13 @@ internal class GlassShader {
             nearMatrix.postTranslate(-pos.x, -pos.y)
             nearShader?.setLocalMatrix(nearMatrix)
         }
+        frost?.let { f ->
+            frostMatrix.setScale(panelW / f.width, panelH / f.height)
+            frostMatrix.postTranslate(-pos.x, -pos.y)
+            frostShader?.setLocalMatrix(frostMatrix)
+        }
+        shader.setInputShader("frost", frostShader ?: empty)
+        shader.setFloatUniform("useFrost", if (frost != null) 1f else 0f)
         shader.setInputShader("field", fieldShader ?: empty)
         shader.setInputShader("near", nearShader ?: empty)
         shader.setFloatUniform("size", w, h)
@@ -86,7 +100,6 @@ internal class GlassShader {
         shader.setFloatUniform("specular", if (primary) 1f else 0.85f)
         shader.setFloatUniform("reflAmount", reflect)
         shader.setFloatUniform("density", density)
-        shader.setFloatUniform("frostR", frostDp * density)
     }
 
     private fun bmpShader(b: ImageBitmap) = BitmapShader(b.asAndroidBitmap(), Shader.TileMode.DECAL, Shader.TileMode.DECAL).apply {
@@ -106,7 +119,8 @@ uniform float2 lightDir;
 uniform float specular;
 uniform float reflAmount; // 반사 세기. GLSL 내장 함수 이름 reflect와 겹치면 컴파일이 실패한다(1.42.15~16은 이 때문에 셰이더가 한 번도 돌지 않았다)
 uniform float density;
-uniform float frostR; // 버튼 유리 블러 반지름(px)
+uniform shader frost;
+uniform float useFrost; // 1이면 미리 흐린 반사(frost) 한 장만 읽는다(11-02 최적화: 픽셀당 텍스처 114회 → 3회)
 
 // 모서리는 원호가 아니라 초타원(|x|^N + |y|^N = r^N, SuperellipseShape.EXPONENT와 같은 N) — 잘라낸 모양과 같은 윤곽
 const float N = 4.0;
@@ -138,19 +152,10 @@ half4 back0(float2 c) {
     return n + f * (1.0 - n.a);
 }
 
-// 버튼 유리 블러(11-02 소장님 "버튼들은 블러 더"): 바닥 반사(거리 곡선)는 그대로 두고, 카드 안에서만 반지름 frostR의
-// 다중 탭 가우시안 근사로 한 번 더 흐린다 — 바닥보다 뿌연 액상 유리
-// 19탭(가운데 + 안쪽 고리 6 + 바깥 고리 12): 반지름을 크게(최대 60dp) 걸어도 알갱이 없이 부드럽게(11-02 "버튼 블러 더 세게")
+// 버튼 유리 블러: 엔진이 프레임마다 미리 흐려 둔 반사(frost)를 한 번만 읽는다(예전에는 여기서 19탭 × 분산 3채널 = 텍스처 114회).
+// 버튼 블러가 0이면 원래 반사(근거리 띠 + 기본)를 읽는다
 half4 back(float2 c) {
-    half4 m = back0(c) * 0.12;
-    for (int k = 0; k < 6; k++) {
-        float a = float(k) * 1.0472 + 0.2618;
-        m += back0(c + float2(cos(a), sin(a)) * frostR * 0.45) * 0.06;
-    }
-    for (int k = 0; k < 12; k++) {
-        float a = float(k) * 0.5236;
-        m += back0(c + float2(cos(a), sin(a)) * frostR) * 0.0433;
-    }
+    half4 m = useFrost > 0.5 ? frost.eval(c) : back0(c);
     if (m.a < 0.001) return m;
     float3 col = float3(m.rgb) / float(m.a);
     float lum = dot(col, float3(0.2126, 0.7152, 0.0722));
