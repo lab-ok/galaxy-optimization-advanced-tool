@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.ApiProbe
+import com.labok.goat.data.lab.GoatFlexPanel
 import com.labok.goat.data.lab.OttFlexTest
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe
@@ -169,6 +170,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             )
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("OTT 플렉스 시험 시작", modifier = Modifier.fillMaxWidth(), onClick = { OttFlexTest.start(context) })
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton("GOAT 패널 미리 보기(8초)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { GoatFlexPanel.preview(context) })
         }
         Spacer(Modifier.height(Gap.Card))
         // 텐트 모드 시험(11-01 소장님): 폴드를 반쯤 접어 엎어 세우고 바깥은 시계·유튜브, 안쪽은 간접조명으로 두 화면을 함께 쓸 수 있는지 본다

@@ -118,6 +118,7 @@ object FlexPanel {
             forceHalfOpened(context)
         }
         applied = Applied(mode, front, label).also { notifyMode(context, it) }
+        if (mode == AutoFlex.MODE_PANEL) GoatFlexPanel.show(context, front, label)
         // 어느 앱에서 켜졌는지 남긴다(11-01: 진동이 울린 때 앞 앱을 진단 로그로 알 수 없었다)
         LogRepository.from(context).add("자동 플렉스: $label($front)에 ${AutoFlex.modeLabel(mode)}")
         if (mode != AutoFlex.MODE_OFF && front in AutoFlex.SELF_LAYOUT_APPS) logWindow(context, front)
@@ -139,8 +140,9 @@ object FlexPanel {
     }
 
     private fun releaseNow(context: Context) {
-        applied ?: return
+        val was = applied ?: return
         applied = null
+        if (was.mode == AutoFlex.MODE_PANEL) GoatFlexPanel.hide(context)
         context.getSystemService(NotificationManager::class.java).cancel(MODE_NOTIFICATION)
     }
 

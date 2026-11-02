@@ -113,10 +113,14 @@ object AutoFlex {
      */
     const val MODE_FLEX = 0
     const val MODE_OFF = 3
-    val MODES = listOf(MODE_FLEX, MODE_OFF)
+
+    /** GOAT 패널([GoatFlexPanel]): 반쯤 접힘을 알리고 아래 절반에 GOAT 조작 패널을 띄운다(11-02, 넷플릭스·디즈니+처럼 자체 조작이 안 뜨는 앱용). */
+    const val MODE_PANEL = 4
+    val MODES = listOf(MODE_FLEX, MODE_PANEL, MODE_OFF)
 
     fun modeLabel(mode: Int) = when (mode) {
         MODE_OFF -> "사용 안 함"
+        MODE_PANEL -> "GOAT 패널"
         else -> "플렉스 모드"
     }
 

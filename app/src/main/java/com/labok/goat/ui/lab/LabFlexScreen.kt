@@ -63,6 +63,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.AutoFlex
+import com.labok.goat.data.lab.GoatFlexPanel
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.appsize.AppEntry
 import com.labok.goat.ui.appsize.Section
@@ -261,6 +262,8 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
             }
         }
         item(key = "range") { Box(Modifier.widthIn(max = ContentMaxWidth)) { rangeCard() } }
+        // GOAT 패널 옵션(11-02 소장님: 모든 가능성을 열어두고 조절할 수 있게). 앱별 모드를 'GOAT 패널'로 고른 앱에서 쓴다
+        item(key = "goatPanel") { Box(Modifier.widthIn(max = ContentMaxWidth)) { GoatPanelCard() } }
         // 앱별로 접었을 때 동작: 요약 줄(모드별 앱 수)을 누르면 펼쳐진다. 펼치면 위쪽 탭으로 모드를 골라 그 모드의 앱만 보고,
         // 줄을 누르면 그 줄 아래에 모드 고르기가 열린다(한 번에 한 줄만)
         val q = query.trim()
@@ -447,4 +450,47 @@ internal fun shareResult(context: Context, uri: Uri) {
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     runCatching { context.startActivity(Intent.createChooser(send, Copy.LAB_SHARE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+}
+
+/** GOAT 패널 옵션: 이동 시간·이동 방식·보일 타일, 미리 보기. */
+@Composable
+private fun GoatPanelCard() {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    var sec by remember { mutableIntStateOf(GoatFlexPanel.seekSec(context)) }
+    var how by remember { mutableIntStateOf(GoatFlexPanel.seekMode(context)) }
+    GlassCard {
+        Text("GOAT 패널", fontWeight = FontWeight.SemiBold, color = c.ink)
+        Text(
+            "아래 앱 목록에서 'GOAT 패널'로 고른 앱은 반쯤 접으면 아래 절반에 GOAT 조작 패널(재생·이동·진행·속도·밝기·볼륨·잠금)이 뜹니다. 넷플릭스·디즈니+처럼 자체 조작이 안 뜨는 앱에 씁니다.",
+            color = c.muted,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Spacer(Modifier.height(Gap.Item))
+        Text("이동 시간", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidChips(options = GoatFlexPanel.SEEK_SECONDS, selected = sec, label = { "${it}초" }, onSelect = {
+            sec = it
+            GoatFlexPanel.setSeekSec(context, it)
+        })
+        Spacer(Modifier.height(Gap.Section))
+        Text("이동 방식", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidChips(options = GoatFlexPanel.SEEK_MODES, selected = how, label = { GoatFlexPanel.seekModeLabel(it) }, onSelect = {
+            how = it
+            GoatFlexPanel.setSeekMode(context, it)
+        })
+        Spacer(Modifier.height(Gap.Item))
+        Text("자동은 앱의 재생 정보로 바로 옮기고, 안 되면 영상 좌우 두 번 누르기(10초 고정)로 대신합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        listOf("progress" to "진행 막대", "speed" to "재생 속도", "brightness" to "밝기", "volume" to "볼륨", "fullscreen" to "전체 화면").forEach { (key, name) ->
+            var on by remember { mutableStateOf(GoatFlexPanel.shown(context, key)) }
+            Spacer(Modifier.height(Gap.Section))
+            LiquidSwitchRow("$name 타일", "패널에 $name 타일을 보입니다.", on, enabled = true, onChange = {
+                on = it
+                GoatFlexPanel.setShown(context, key, it)
+            })
+        }
+        Spacer(Modifier.height(Gap.Section))
+        LiquidButton("패널 미리 보기(8초)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { GoatFlexPanel.preview(context) })
+    }
 }

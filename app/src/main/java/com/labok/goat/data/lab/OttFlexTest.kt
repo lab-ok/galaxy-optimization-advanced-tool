@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.concurrent.thread
+import kotlinx.coroutines.flow.first
 
 /**
  * OTT 플렉스 시험(실험실, 11-02 소장님: 넷플릭스·디즈니+ 등에서 지원할 수 있는 것을 모두 시험하고 로그를 붙여 보내게).
@@ -168,9 +169,31 @@ object OttFlexTest {
             note("   요청 방향: 활동 기록을 찾지 못함")
         }
         ShizukuAccess.shell("cmd window get-ignore-orientation-request -d 0")?.out?.trim()?.let { note("   방향 요청 무시: $it") }
+        note("   앱이 받는 접힘 정보(GOAT 창 기준): ${foldInfo(context)}")
+        note("   미디어 세션: ${MediaRemote.describe(context)}".take(600))
         val rot = ShizukuAccess.shell("dumpsys window displays | grep -m4 -oE 'mUserRotationMode=[^ ]+|mUserRotation=[^ ]+|mCurrentAppOrientation=[^ ]+|mLastOrientation=[^ ]+'")?.out?.trim().orEmpty()
         if (rot.isNotEmpty()) note("   회전 상태: " + rot.lines().joinToString(" · ") { it.trim() }.take(260))
     }
+
+    /**
+     * 앱이 받는 접힘 정보를 GOAT 창(다른 앱 위 창 문맥)으로 직접 받아 본다(Jetpack WindowManager, 앱들이 플렉스 화면을 정할 때 쓰는 것).
+     * 반쯤 접힘·가로 접는 선이 나오면 시스템 신호는 정상이고, 그런데도 앱 화면이 안 바뀌면 앱 쪽 한계다.
+     */
+    private fun foldInfo(context: Context): String = runCatching {
+        val d = context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY) ?: return "화면 없음"
+        val wctx = context.createDisplayContext(d).createWindowContext(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null)
+        val info = kotlinx.coroutines.runBlocking {
+            kotlinx.coroutines.withTimeoutOrNull(2000) { androidx.window.layout.WindowInfoTracker.getOrCreate(wctx).windowLayoutInfo(wctx).first() }
+        } ?: return "2초 안에 받지 못함"
+        info.displayFeatures.joinToString(" | ") { f ->
+            val ff = f as? androidx.window.layout.FoldingFeature
+            if (ff == null) {
+                "기타 ${f.bounds}"
+            } else {
+                "상태 ${ff.state} · 접는 선 ${ff.orientation} · 나눔 ${ff.isSeparating} · 가림 ${ff.occlusionType} · 위치 ${ff.bounds}"
+            }
+        }.ifEmpty { "접힘 정보 없음(펼침으로 봄)" }
+    }.getOrElse { "읽기 실패: ${it.javaClass.simpleName} ${it.message}" }
 
     private fun rotation(context: Context) = runCatching { context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY).rotation }.getOrDefault(-1)
 
