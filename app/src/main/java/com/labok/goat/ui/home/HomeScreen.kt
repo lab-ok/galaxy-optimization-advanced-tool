@@ -169,7 +169,7 @@ import kotlinx.coroutines.launch
 private const val WIDE_DP = 600
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, ICONS_HELP, AIRPLANE_HELP, VOLUME_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, GOAT_PANEL, ICONS_HELP, AIRPLANE_HELP, VOLUME_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -383,6 +383,7 @@ internal fun HomeScreen(
             NavItem.HOME -> listOf(Copy.MENU_REPORT to report)
             // 자동 플렉스는 Shizuku가 필요해 Shizuku 연결 안내(앱별 화면 배율 설정과 같은 시트)를 연다
             NavItem.AUTO_FLEX -> listOf(
+                Copy.MENU_GOAT_PANEL to { sheet = Sheet.GOAT_PANEL },
                 Copy.MENU_HELP to { sheet = Sheet.FLEX_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
                 Copy.MENU_REPORT to report
@@ -673,6 +674,7 @@ internal fun HomeScreen(
                     Sheet.SHAKE_CALIBRATE -> ShakeCalibrationSheet(onClose = { sheet = null })
                     Sheet.CAMERA_HELP -> CameraMuteHelpSheet()
                     Sheet.FLEX_HELP -> FlexHelpSheet()
+                    Sheet.GOAT_PANEL -> com.labok.goat.ui.lab.GoatPanelSheet()
                     Sheet.ANIM_HELP -> AnimationHelpSheet()
                     Sheet.BLOAT_HELP -> BloatHelpSheet()
                     Sheet.REFRESH_HELP -> RefreshHelpSheet()

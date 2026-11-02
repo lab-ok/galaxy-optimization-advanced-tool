@@ -263,8 +263,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
             }
         }
         item(key = "range") { Box(Modifier.widthIn(max = ContentMaxWidth)) { rangeCard() } }
-        // GOAT 패널 옵션(11-02 소장님: 모든 가능성을 열어두고 조절할 수 있게). 앱별 모드를 'GOAT 패널'로 고른 앱에서 쓴다
-        item(key = "goatPanel") { Box(Modifier.widthIn(max = ContentMaxWidth)) { GoatPanelCard() } }
+        // GOAT 패널 옵션은 점 세 개 메뉴 → 「GOAT 패널 설정」 시트로 옮겼다(11-02 소장님)
         // 앱별로 접었을 때 동작: 요약 줄(모드별 앱 수)을 누르면 펼쳐진다. 펼치면 위쪽 탭으로 모드를 골라 그 모드의 앱만 보고,
         // 줄을 누르면 그 줄 아래에 모드 고르기가 열린다(한 번에 한 줄만)
         val q = query.trim()
@@ -367,8 +366,8 @@ internal fun FlexHelpSheet() {
         )
         HelpTopic(
             "3. 켜고 사용",
-            "맨 위 스위치를 켜 '사용 중'으로 바꾼 뒤 휴대폰을 옆으로 돌려 접는 선이 가로로 놓이게 하고, 노트북처럼 천천히 접습니다. 각도가 범위에 들어오면 진동과 함께 " +
-                "플렉스 모드가 켜지고, 펴거나 닫아 범위를 벗어나면 원래대로 돌아옵니다. 책처럼 세로로 접을 때는 켜지지 않습니다."
+            "맨 위 스위치를 켜 '사용 중'으로 바꾼 뒤, 세로 화면 상태에서 펼친 화면을 천천히 접습니다. 각도가 범위에 들어오면 진동과 함께 " +
+                "플렉스 모드가 켜지고, 펴거나 닫아 범위를 벗어나면 원래대로 돌아옵니다. 켜진 뒤에는 기울이거나 돌려도 풀리지 않습니다. 가로 화면에서 접을 때는 켜지지 않습니다."
         )
         HelpTopic(
             "4. 각도 범위 맞추기",
@@ -453,7 +452,13 @@ internal fun shareResult(context: Context, uri: Uri) {
     runCatching { context.startActivity(Intent.createChooser(send, Copy.LAB_SHARE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
 }
 
-/** GOAT 패널 옵션: 이동 시간·이동 방식·보일 타일, 미리 보기. */
+/** GOAT 패널 설정 시트(플렉스 모드 화면의 점 세 개 메뉴 → 「GOAT 패널 설정」, 11-02 소장님). */
+@Composable
+internal fun GoatPanelSheet() {
+    SheetColumn(title = Copy.MENU_GOAT_PANEL) { GoatPanelCard() }
+}
+
+/** GOAT 패널 옵션: 이동 시간·이동 방식·보일 타일, 앰비언트·블러, 미리 보기. */
 @Composable
 private fun GoatPanelCard() {
     val c = LocalLiquid.current

@@ -178,6 +178,7 @@ object Copy {
     const val SHAKE_NOTIFY_NOTE = "켜 두는 동안 별도 알림 없이 GOAT 알림 하나에 함께 표시됩니다."
     const val MENU_HELP = "사용 방법"
     const val MENU_GUIDE = "권한 설정"
+    const val MENU_GOAT_PANEL = "GOAT 패널 설정"
     const val MENU_SECTION_LAB = "실험실"
     const val HOME_HERO_NONE = "아직 켠 기능이 없습니다"
     const val HOME_SETUP_TITLE = "처음 한 번만 준비해 주세요"
