@@ -104,9 +104,9 @@ object GoatFlexPanel {
     fun floorBlur(c: Context) = prefs(c).getInt("floor_blur", 100)
     fun setFloorBlur(c: Context, v: Int) = prefs(c).edit().putInt("floor_blur", v.coerceIn(30, 200)).apply()
 
-    /** 버튼 유리 블러(dp, 0~30, 기본 12): 카드 안에서만 반사를 한 번 더 흐린다. */
+    /** 버튼 유리 블러(dp, 0~60, 기본 12): 카드 안에서만 반사를 한 번 더 흐린다(11-02 "더 세게 먹일 수 있게" → 상한 30 → 60). */
     fun buttonBlur(c: Context) = prefs(c).getInt("button_blur", 12)
-    fun setButtonBlur(c: Context, v: Int) = prefs(c).edit().putInt("button_blur", v.coerceIn(0, 30)).apply()
+    fun setButtonBlur(c: Context, v: Int) = prefs(c).edit().putInt("button_blur", v.coerceIn(0, 60)).apply()
 
     fun intensity(c: Context) = prefs(c).getInt("intensity", 1)
     fun setIntensity(c: Context, v: Int) = prefs(c).edit().putInt("intensity", v).apply()

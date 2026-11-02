@@ -37,7 +37,8 @@ object ReflectionField {
 
     // 11-02 소장님 2차: "맨 위 블러 좀 더 빼서 선명하게, 10%까지는 살짝 더 선명하게"
     // 3차: "전체적으로 블러 좀 더 빼서 선명하게(버튼은 따로 더 흐리게)" — 전체를 약 30% 낮췄다. 버튼 유리 블러는 셰이더가 따로 한다
-    private val CURVE_DP = floatArrayOf(1.5f, 5f, 12f, 30f, 52f, 68f, 80f)
+    // 4차: "그라데이션 블러의 적극성을 낮추자" → B안(거의 일정하게 완만히 커짐)을 기본으로
+    private val CURVE_DP = floatArrayOf(1.5f, 3.5f, 6f, 13f, 24f, 34f, 42f)
 
     fun blurDp(d: Float): Float {
         val x = d.coerceIn(0f, 1f)

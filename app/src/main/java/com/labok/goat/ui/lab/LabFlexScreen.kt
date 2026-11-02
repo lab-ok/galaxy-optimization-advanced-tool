@@ -531,7 +531,7 @@ private fun GoatPanelCard() {
         Spacer(Modifier.height(Gap.Item))
         LiquidSlider(
             value = buttonBlur,
-            range = 0..30,
+            range = 0..60,
             onValueChange = { buttonBlur = it },
             onValueChangeFinished = { GoatFlexPanel.setButtonBlur(context, buttonBlur) },
             valueText = { "${it}dp" },

@@ -88,7 +88,7 @@ class ReflectionFieldTest {
     @Test
     fun blurCurveMatchesAgreedTable() {
         // 11-02 소장님 확정(2차): 위 10%까지는 조금 더 선명하게, 25%부터 적극적으로
-        val table = listOf(0f to 1.5f, 0.05f to 5f, 0.10f to 12f, 0.25f to 30f, 0.50f to 52f, 0.75f to 68f, 1f to 80f)
+        val table = listOf(0f to 1.5f, 0.05f to 3.5f, 0.10f to 6f, 0.25f to 13f, 0.50f to 24f, 0.75f to 34f, 1f to 42f)
         for ((d, dp) in table) org.junit.Assert.assertEquals("d=$d", dp, ReflectionField.blurDp(d), 0.01f)
         // 사이도 끊김 없이 커진다
         var prev = 0f

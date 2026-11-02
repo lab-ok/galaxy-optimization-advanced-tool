@@ -139,14 +139,17 @@ half4 back0(float2 c) {
 }
 
 // 버튼 유리 블러(11-02 소장님 "버튼들은 블러 더"): 바닥 반사(거리 곡선)는 그대로 두고, 카드 안에서만 반지름 frostR의
-// 13탭(가운데 + 안쪽 고리 6 + 바깥 고리 6) 가우시안 근사로 한 번 더 흐린다 — 바닥보다 뿌연 액상 유리
+// 다중 탭 가우시안 근사로 한 번 더 흐린다 — 바닥보다 뿌연 액상 유리
+// 19탭(가운데 + 안쪽 고리 6 + 바깥 고리 12): 반지름을 크게(최대 60dp) 걸어도 알갱이 없이 부드럽게(11-02 "버튼 블러 더 세게")
 half4 back(float2 c) {
-    half4 m = back0(c) * 0.16;
+    half4 m = back0(c) * 0.12;
     for (int k = 0; k < 6; k++) {
-        float a = float(k) * 1.0472;
-        float2 d = float2(cos(a), sin(a));
-        m += back0(c + d * frostR * 0.5) * 0.09;
-        m += back0(c + float2(d.x * 0.866 - d.y * 0.5, d.x * 0.5 + d.y * 0.866) * frostR) * 0.05;
+        float a = float(k) * 1.0472 + 0.2618;
+        m += back0(c + float2(cos(a), sin(a)) * frostR * 0.45) * 0.06;
+    }
+    for (int k = 0; k < 12; k++) {
+        float a = float(k) * 0.5236;
+        m += back0(c + float2(cos(a), sin(a)) * frostR) * 0.0433;
     }
     if (m.a < 0.001) return m;
     float3 col = float3(m.rgb) / float(m.a);
