@@ -714,8 +714,9 @@ object GoatFlexPanel {
         var gotAny = false
         var failures = 0
         while (ambToken == token) {
-            // 근거리 띠 768칸 원본 + 기본 128칸(도우미가 줄여 보냄). 프레임 상한 60장(절전 30장) — 11-02 소장님 "프레임 60으로"
-            val p = ShizukuAccess.stream(MirrorCapture.command(apk, MIRROR_W, if (saver) 30 else 60, 0.5f, ReflectionField.NEAR_FRAC, BASE_W)) ?: return gotAny
+            // 근거리 띠 768칸 원본 + 기본 128칸(도우미가 줄여 보냄). 11-02 소장님 "fps는 10fps로 고정": 캡처는 초당 10장으로 고정하고
+            // (절전 모드도 같음), 그 사이는 전환 줄이 화면 VSync마다 스프링으로 이어 움직임은 부드럽다
+            val p = ShizukuAccess.stream(MirrorCapture.command(apk, MIRROR_W, MIRROR_FPS, 0.5f, ReflectionField.NEAR_FRAC, BASE_W)) ?: return gotAny
             kotlin.concurrent.thread(name = "goat-mirror-watch", isDaemon = true) {
                 while (ambToken == token && runCatching { p.exitValue() }.isFailure) Thread.sleep(200)
                 runCatching { p.destroy() }
@@ -1042,6 +1043,9 @@ object GoatFlexPanel {
 
     /** 실시간 미러 폭: 근거리 띠를 이 해상도 그대로 받는다(11-02 "블러 윗부분 원본이 도드라짐" → 512에서 768). 기본은 6×6 평균으로 128칸 */
     private const val MIRROR_W = 768
+
+    /** 실시간 미러 캡처 장수(초당, 고정). */
+    private const val MIRROR_FPS = 10
 
     /**
      * 기본 필드에 근거리 고해상도 띠를 붙인다. [top]~[bot]은 고해상도 원본에서 실제 내용이 있는 줄(레터박스 제외)이고,
