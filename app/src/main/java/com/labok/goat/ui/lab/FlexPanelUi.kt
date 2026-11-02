@@ -165,6 +165,15 @@ private val LocalTileInk = androidx.compose.runtime.compositionLocalOf { Color(0
 /** 잉크 가장자리 광택 색: 그 자리 반사를 밝힌 색(반사가 없으면 흰색). */
 private val LocalTileGlint = androidx.compose.runtime.compositionLocalOf { Color.White }
 
+/** 장면 전체 색 → 카드 틴트(어두운 유리 밝기 0.26, 채도는 0.07까지). 색이 거의 없으면 null. */
+private fun sceneTintOf(c: Color): Color? {
+    val o = AmbientColor.toOklab(android.graphics.Color.rgb((c.red * 255).toInt(), (c.green * 255).toInt(), (c.blue * 255).toInt()))
+    val ch = hypot(o[1], o[2])
+    if (ch < 0.025f) return null
+    val k = minOf(1f, 0.07f / ch)
+    return Color(AmbientColor.fromOklab(0.26f, o[1] * k, o[2] * k))
+}
+
 /** 반사색을 광택용으로 밝힌다(무채색이면 흰색). */
 private fun glintOf(refl: Color?): Color {
     if (refl == null) return Color.White
@@ -181,7 +190,8 @@ private object Glass {
     val Tint = Color(0xFF171717)
     val TintPrimary = Color(0xFF222222)
     val Ink = Color(0xFFEBEBEB)
-    val Muted = Color(0xFF8D8D8D)
+    // 11-02: 장면 색 틴트가 들어간 밝은 카드(주황·파랑) 위에서 #8D8D8D 보조 글자가 묻혔다 — 더 밝은 회색으로
+    val Muted = Color(0xFFC4C4C4)
     val Line = Color(0xFF424242)
     val Accent = Color(0xFFEBEBEB)
     val Brand = Color(0xFFE50914)
@@ -633,6 +643,7 @@ private fun GlassTile(
     val press by animateFloatAsState(if (pressed) 1f else 0f, if (state.motion) spring(dampingRatio = 0.7f, stiffness = 900f) else snap(), label = "press")
     val shape = RoundedCornerShape(Glass.radius)
     val tn = tone(state.intensity)
+    val sceneTint = remember(amb[3], state.ambientOn) { if (state.ambientOn) sceneTintOf(amb[3]) else null }
     val q = state.quality
     val kk = if (state.ambientOn) ambK(state.intensity) else 0f
     val hc = state.highContrast
@@ -654,7 +665,10 @@ private fun GlassTile(
                 val tileClip = androidx.compose.ui.graphics.Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawBehind)) }
                 clipPath(tileClip) {
                     // 재생(주 버튼)도 같은 액상 유리. 잉크로 칠하지 않고 밀도(조금 더 밝은 바탕)·가운데 빛·더 또렷한 가장자리로 구분한다(11-02 소장님)
-                    val base = if (primary) Glass.TintPrimary else Glass.Tint
+                    // 카드 표면 틴트: 장면 전체 색을 어두운 유리 색으로 낮춰 섞는다(파란 장면이면 청색, 따뜻한 장면이면 주황 기운이
+                    // 카드 자체에서 느껴지게, 11-02 실사용 검수). 무채색 장면은 거의 섞이지 않는다
+                    val plain = if (primary) Glass.TintPrimary else Glass.Tint
+                    val base = if (sceneTint != null) lerp(plain, sceneTint, 0.38f * (kk / 1.2f).coerceAtMost(1.3f)) else plain
                     if (q == 0) {
                         drawRect(if (selected || pressed) lerp(base, Color.White, 0.18f) else base)
                         return@clipPath

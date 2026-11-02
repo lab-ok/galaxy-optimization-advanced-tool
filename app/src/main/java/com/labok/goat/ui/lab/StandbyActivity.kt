@@ -238,6 +238,22 @@ private fun ReflectionPattern(kind: Int) {
                     drawRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(w * (f - 0.01f), 0f), size = androidx.compose.ui.geometry.Size(w * 0.02f, h * 0.3f))
                 }
             }
+            // 11: 격자 — 화면 폭의 1/12 간격 흰 세로선과 가로선. 반사에서 세로선 간격이 그대로 유지되는지(늘어나거나 줄지 않는지) 본다
+            11 -> {
+                var x = w / 24f
+                while (x < w) {
+                    drawRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(x - w * 0.006f, 0f), size = androidx.compose.ui.geometry.Size(w * 0.012f, h))
+                    x += w / 12f
+                }
+                var y = h / 24f
+                while (y < h) {
+                    drawRect(Color(0xFF808080), topLeft = androidx.compose.ui.geometry.Offset(0f, y - 2f), size = androidx.compose.ui.geometry.Size(w, 4f))
+                    y += h / 12f
+                }
+            }
+            // 12: 따뜻한 장면(주황) / 13: 차가운 장면(파랑) — 카드 틴트가 장면 색을 따라가는지 본다
+            12 -> drawRect(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(0xFFFF9A3C), Color(0xFFB0441A))))
+            13 -> drawRect(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(0xFF3C8CFF), Color(0xFF1A2E8A))))
             else -> Unit
         }
     }

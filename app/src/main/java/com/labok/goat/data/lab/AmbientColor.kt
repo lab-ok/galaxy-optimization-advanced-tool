@@ -159,7 +159,9 @@ object AmbientColor {
         val o = toOklab(argb)
         val c = hypot(o[1], o[2]) * 1.15f
         val k = (if (c > 0.22f) 0.22f / c else 1f) * 1.15f
-        return fromOklab(min(o[0] * 0.97f, 0.84f), o[1] * k, o[2] * k)
+        // 대비 1.12배(가운데 0.48 기준): 반사가 넓은 색 얼룩이 아니라 밝고 어두운 구조로 보이게(11-02 실사용 검수)
+        val l = (0.48f + (o[0] * 0.97f - 0.48f) * 1.12f).coerceIn(0f, 0.84f)
+        return fromOklab(l, o[1] * k, o[2] * k)
     }
 
     /** 두 색의 지각 거리(OKLab ΔE). */
