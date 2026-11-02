@@ -21,20 +21,24 @@ import kotlin.system.exitProcess
  *
  * 보호 콘텐츠(DRM·보안 창)는 미러에서도 시스템이 검게 채운다. 우회하지 않는다.
  *
- * 출력 형식: 프레임마다 머리 12바이트(ASCII "GMRF", 폭 int, 높이 int, 리틀 엔디언) + RGBA 바이트(폭×높이×4).
+ * 출력 형식(2판, 11-02 "블러 윗부분 원본 화질"): 프레임마다 머리 20바이트(ASCII "GMR2", 근거리 폭·높이, 기본 폭·높이, int 리틀 엔디언)
+ * + 근거리 띠 RGBA(위쪽 영역의 아래 끝 [nearFrac]만큼을 미러 해상도 그대로) + 기본 RGBA(위쪽 영역 전체를 [baseW]칸으로 상자 평균).
+ * 접는 선 가까이는 원본을 선명하게, 나머지는 작게 보내 파이프로 흐르는 양은 예전과 비슷하다.
  * GOAT가 파이프를 닫으면(패널 닫힘) 쓰기가 실패해 스스로 끝난다. 화면 크기가 바뀌면(회전) 끝내고 GOAT가 다시 띄운다.
  * 띄우는 명령은 [command].
  */
 object MirrorCapture {
-    const val MAGIC = 0x46524D47 // "GMRF" little-endian
+    const val MAGIC = 0x32524D47 // "GMR2" little-endian
 
-    fun command(apkPath: String, width: Int, fps: Int, top: Float): String = "CLASSPATH=$apkPath app_process /system/bin --nice-name=goat_mirror ${MirrorCapture::class.java.name} $width $fps $top"
+    fun command(apkPath: String, width: Int, fps: Int, top: Float, nearFrac: Float, baseW: Int): String = "CLASSPATH=$apkPath app_process /system/bin --nice-name=goat_mirror ${MirrorCapture::class.java.name} $width $fps $top $nearFrac $baseW"
 
     @JvmStatic
     fun main(args: Array<String>) {
         val width = args.getOrNull(0)?.toIntOrNull() ?: 384
         val fps = args.getOrNull(1)?.toIntOrNull() ?: 20
         val top = args.getOrNull(2)?.toFloatOrNull() ?: 0.5f
+        val nearFrac = args.getOrNull(3)?.toFloatOrNull() ?: 0.25f
+        val baseW = args.getOrNull(4)?.toIntOrNull() ?: 128
         Looper.prepareMainLooper()
         val (sw, sh) = displaySize() ?: fail("화면 크기를 읽지 못했습니다")
         val w = width
@@ -43,10 +47,19 @@ object MirrorCapture {
         val reader = ImageReader.newInstance(w, h, PixelFormat.RGBA_8888, 2)
         val vd = runCatching { createMirror("goat-mirror", w, h, reader.surface) }.getOrElse { fail("가상 화면을 만들지 못했습니다: ${it.javaClass.simpleName} ${it.message}") }
         val out = BufferedOutputStream(FileOutputStream(FileDescriptor.out), 1 shl 16)
-        val buf = ByteArray(12 + w * rows * 4)
+        val nearRows = (rows * nearFrac).toInt().coerceIn(1, rows)
+        val k = (w / baseW).coerceAtLeast(1)
+        val bw = w / k
+        val bh = rows / k
+        val head = 20
+        val buf = ByteArray(head + w * nearRows * 4 + bw * bh * 4)
         writeIntLE(buf, 0, MAGIC)
         writeIntLE(buf, 4, w)
-        writeIntLE(buf, 8, rows)
+        writeIntLE(buf, 8, nearRows)
+        writeIntLE(buf, 12, bw)
+        writeIntLE(buf, 16, bh)
+        val row = ByteArray(w * 4)
+        val acc = IntArray(bw * 4)
         val minGap = 1000L / fps.coerceIn(1, 60)
         var last = 0L
         val handler = Handler(Looper.getMainLooper())
@@ -59,11 +72,36 @@ object MirrorCapture {
                 val plane = img.planes[0]
                 val bb = plane.buffer
                 val rowStride = plane.rowStride
-                var o = 12
-                for (y in 0 until rows) {
+                // 근거리 띠: 위쪽 영역의 아래 끝 nearRows줄을 그대로
+                var o = head
+                for (y in rows - nearRows until rows) {
                     bb.position(y * rowStride)
                     bb.get(buf, o, w * 4)
                     o += w * 4
+                }
+                // 기본: 위쪽 영역 전체를 k×k 상자 평균
+                for (by in 0 until bh) {
+                    java.util.Arrays.fill(acc, 0)
+                    for (dy in 0 until k) {
+                        bb.position((by * k + dy) * rowStride)
+                        bb.get(row, 0, w * 4)
+                        var x = 0
+                        while (x < bw * k) {
+                            val a = (x / k) * 4
+                            val s = x * 4
+                            acc[a] += row[s].toInt() and 0xFF
+                            acc[a + 1] += row[s + 1].toInt() and 0xFF
+                            acc[a + 2] += row[s + 2].toInt() and 0xFF
+                            x++
+                        }
+                    }
+                    val n = k * k
+                    for (bx in 0 until bw) {
+                        buf[o++] = (acc[bx * 4] / n).toByte()
+                        buf[o++] = (acc[bx * 4 + 1] / n).toByte()
+                        buf[o++] = (acc[bx * 4 + 2] / n).toByte()
+                        buf[o++] = 0xFF.toByte()
+                    }
                 }
                 out.write(buf)
                 out.flush()

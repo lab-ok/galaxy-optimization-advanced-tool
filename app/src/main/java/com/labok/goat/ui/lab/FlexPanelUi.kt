@@ -444,9 +444,30 @@ private fun rememberPosterBlur(art: ImageBitmap?, icon: Boolean): ImageBitmap? =
             // 1.42.16 실화면에서 반지름 3칸은 포스터 형태가 거의 그대로 보였다 — 전체적으로 흐리게 9칸(소장님 "블러 전체적으로")
             com.labok.goat.data.lab.ReflectionField.blur(px, w, h, 9f)
         }
+        autoDim(out)
         android.graphics.Bitmap.createBitmap(out, w, h, android.graphics.Bitmap.Config.ARGB_8888).asImageBitmap()
     }
 }
+
+/**
+ * 밝기 자동 낮춤(11-02 소장님 "포스터나 앱 색이 너무 밝으면 자동으로 좀 낮춰줘"). 흐린 그림의 평균 밝기(OKLab L)가 [MAX_MEAN]을 넘으면
+ * 평균이 그 값이 되게 모든 칸의 밝기를 같은 비율로 낮추고, 아주 밝은 칸은 [MAX_PEAK]에서 부드럽게 눌러 패널이 하얗게 뜨지 않게 한다.
+ * 색(채도)은 그대로라 포스터 분위기는 남는다. 어두운 그림은 건드리지 않는다.
+ */
+private fun autoDim(px: IntArray) {
+    val labs = Array(px.size) { AmbientColor.toOklab(px[it]) }
+    val mean = labs.sumOf { it[0].toDouble() }.toFloat() / labs.size.coerceAtLeast(1)
+    val k = if (mean > MAX_MEAN) MAX_MEAN / mean else 1f
+    for (i in px.indices) {
+        val o = labs[i]
+        var l = o[0] * k
+        if (l > MAX_PEAK) l = MAX_PEAK + (l - MAX_PEAK) * 0.3f
+        if (k < 1f || o[0] > MAX_PEAK) px[i] = AmbientColor.fromOklab(l, o[1], o[2])
+    }
+}
+
+private const val MAX_MEAN = 0.42f
+private const val MAX_PEAK = 0.62f
 
 /** 포스터 자리에 보일 그림: 포스터를 쓸 때는 포스터, 앱 색 대체일 때는 앱 아이콘. 그 밖에는 null(반사를 그린다). */
 private fun posterSource(state: FlexPanelState): ImageBitmap? = if (state.posterShown) state.art ?: state.appIcon else null
@@ -1107,9 +1128,10 @@ private fun Icon(sizeDp: Int = 30, draw: DrawScope.(Color) -> Unit) {
     val bg = LocalTileBg.current
     Box(contentAlignment = Alignment.Center) {
         // 반사 밝기에 따라: 어두운 반사 위 alpha 0.12·반경 1.7배, 밝은 반사 위 alpha 0.5·반경 2.4배
-        Canvas(Modifier.size((sizeDp * (2.1f + 0.7f * bg)).dp)) {
+        // 11-02 소장님 "아이콘 그림자 반 이상 옅게": 0.26~0.62 → 0.1~0.24, 반경도 줄였다
+        Canvas(Modifier.size((sizeDp * (1.8f + 0.5f * bg)).dp)) {
             val r = size.minDimension / 2f
-            val a = 0.26f + 0.36f * bg
+            val a = 0.10f + 0.14f * bg
             drawCircle(Brush.radialGradient(0f to Color.Black.copy(alpha = a), 0.45f to Color.Black.copy(alpha = a * 0.6f), 1f to Color.Transparent, center = center, radius = r), r)
         }
         IconInk(sizeDp, ink, glint, draw)

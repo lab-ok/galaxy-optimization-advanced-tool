@@ -686,7 +686,8 @@ object GoatFlexPanel {
         }
     }
 
-    private class Frame(val px: IntArray, val w: Int, val h: Int, val at: Long)
+    /** 캡처 한 장. [near]가 있으면(미러 2판) [px]는 이미 기본 해상도이고, [near]는 접는 선 쪽 띠를 원본 해상도로 담는다. */
+    private class Frame(val px: IntArray, val w: Int, val h: Int, val at: Long, val near: IntArray? = null, val nw: Int = 0, val nh: Int = 0)
 
     /**
      * [MirrorCapture] 도우미를 Shizuku 셸로 띄우고 프레임을 계속 읽어 [latest]에 넣는다. 패널이 닫히면(토큰 바뀜) 도우미를 끝낸다.
@@ -697,7 +698,8 @@ object GoatFlexPanel {
         var gotAny = false
         var failures = 0
         while (ambToken == token) {
-            val p = ShizukuAccess.stream(MirrorCapture.command(apk, NEAR_W, if (saver) 12 else 20, 0.5f)) ?: return gotAny
+            // 근거리 띠 768칸 원본 + 기본 128칸(도우미가 줄여 보냄). 프레임 상한 30장(절전 15장) — 11-02 소장님 "프레임 더"
+            val p = ShizukuAccess.stream(MirrorCapture.command(apk, MIRROR_W, if (saver) 15 else 30, 0.5f, ReflectionField.NEAR_FRAC, BASE_W)) ?: return gotAny
             kotlin.concurrent.thread(name = "goat-mirror-watch", isDaemon = true) {
                 while (ambToken == token && runCatching { p.exitValue() }.isFailure) Thread.sleep(200)
                 runCatching { p.destroy() }
@@ -705,24 +707,27 @@ object GoatFlexPanel {
             var frames = 0
             runCatching {
                 val inp = java.io.DataInputStream(java.io.BufferedInputStream(p.inputStream, 1 shl 16))
-                val head = ByteArray(12)
-                var bytes = ByteArray(0)
+                val head = ByteArray(20)
+                var nb = ByteArray(0)
+                var bb = ByteArray(0)
                 var last = SystemClock.elapsedRealtime()
                 while (ambToken == token) {
                     inp.readFully(head)
                     if (le(head, 0) != MirrorCapture.MAGIC) error("형식이 맞지 않음")
-                    val w = le(head, 4)
-                    val h = le(head, 8)
-                    if (bytes.size != w * h * 4) bytes = ByteArray(w * h * 4)
-                    inp.readFully(bytes)
-                    val px = IntArray(w * h) { i ->
-                        val o = i * 4
-                        (0xFF shl 24) or ((bytes[o].toInt() and 0xFF) shl 16) or ((bytes[o + 1].toInt() and 0xFF) shl 8) or (bytes[o + 2].toInt() and 0xFF)
-                    }
+                    val nw = le(head, 4)
+                    val nh = le(head, 8)
+                    val bw = le(head, 12)
+                    val bh = le(head, 16)
+                    if (nb.size != nw * nh * 4) nb = ByteArray(nw * nh * 4)
+                    if (bb.size != bw * bh * 4) bb = ByteArray(bw * bh * 4)
+                    inp.readFully(nb)
+                    inp.readFully(bb)
+                    val near = rgbaToArgb(nb, nw * nh)
+                    val base = rgbaToArgb(bb, bw * bh)
                     val now = SystemClock.elapsedRealtime()
                     tel.capture(now - last, true)
                     last = now
-                    if (latest.getAndSet(Frame(px, w, h, now)) != null) tel.dropped++
+                    if (latest.getAndSet(Frame(base, bw, bh, now, near, nw, nh)) != null) tel.dropped++
                     frames++
                     gotAny = true
                     tel.maybeLog(context, 0, saver, state.ambSource + " · 실시간 미러")
@@ -738,6 +743,11 @@ object GoatFlexPanel {
             }
         }
         return true
+    }
+
+    private fun rgbaToArgb(b: ByteArray, n: Int) = IntArray(n) { i ->
+        val o = i * 4
+        (0xFF shl 24) or ((b[o].toInt() and 0xFF) shl 16) or ((b[o + 1].toInt() and 0xFF) shl 8) or (b[o + 2].toInt() and 0xFF)
     }
 
     private fun le(b: ByteArray, o: Int) = (b[o].toInt() and 0xFF) or ((b[o + 1].toInt() and 0xFF) shl 8) or ((b[o + 2].toInt() and 0xFF) shl 16) or ((b[o + 3].toInt() and 0xFF) shl 24)
@@ -761,8 +771,9 @@ object GoatFlexPanel {
                 }
                 val t1 = SystemClock.elapsedRealtime()
                 // 기본 필드·판정은 4×4 평균으로 줄인 96칸으로(예전과 같은 크기), 근거리 띠만 고해상도 원본으로
-                val k = (hi.w / BASE_W).coerceAtLeast(1)
-                val fr = if (k == 1) hi else Frame(ReflectionField.boxDown(hi.px, hi.w, hi.h, k), hi.w / k, hi.h / k, hi.at)
+                // 미러 2판은 기본(128칸)과 근거리 원본 띠가 따로 온다. 예전 screencap은 고해상도 한 장을 여기서 줄인다
+                val k = if (hi.near != null) (hi.nw / hi.w).coerceAtLeast(1) else (hi.w / BASE_W).coerceAtLeast(1)
+                val fr = if (hi.near != null || k == 1) hi else Frame(ReflectionField.boxDown(hi.px, hi.w, hi.h, k), hi.w / k, hi.h / k, hi.at)
                 val changed = prev?.let { frameDiff(it, fr.px) > 0.008f } ?: true
                 prev = fr.px
                 if (changed) tel.changed++
@@ -795,7 +806,11 @@ object GoatFlexPanel {
                         // 위 화면을 실제 기하 그대로 비춘다(11-02 소장님: 여백이 있으면 굳이 붙일 필요 없다 — 1.42.10~15는 검은 띠를 빼고
                         // 영상 끝을 접는 선에 붙였는데, 자막이 나타나면 내용 범위가 바뀌어 반사가 위아래로 밀려 더 부자연스러웠다).
                         // 진짜 거울처럼 접는 선 바로 위 화면이 그대로 접는 선 바로 아래에 오고, 검은 여백이면 그 자리는 어둡게 비친다
-                        field = withNear(makeField(fr.px, fr.w, fr.h), hi, 0, hi.h - (hi.h % k) - 1, k)
+                        field = if (hi.near != null) {
+                            withNearBand(makeField(fr.px, fr.w, fr.h), hi.near, hi.nw, hi.nh, k)
+                        } else {
+                            withNear(makeField(fr.px, fr.w, fr.h), hi, 0, hi.h - (hi.h % k) - 1, k)
+                        }
                     } else {
                         keep = true
                     }
@@ -969,7 +984,14 @@ object GoatFlexPanel {
     private class Field(val px: IntArray, val w: Int, val h: Int, val near: IntArray? = null, val nw: Int = 0, val nh: Int = 0, val hinge: IntArray? = null)
 
     /** 접는 선 바로 위 화면 한 줄(고해상도, 다듬지 않은 실제 색). 레터박스 검은 여백이면 검은색 그대로다. */
-    private fun hingeRow(hi: Frame): IntArray = hi.px.copyOfRange((hi.h - 1) * hi.w, hi.h * hi.w)
+    private fun hingeRow(hi: Frame): IntArray = hi.near?.let { it.copyOfRange((hi.nh - 1) * hi.nw, hi.nh * hi.nw) } ?: hi.px.copyOfRange((hi.h - 1) * hi.w, hi.h * hi.w)
+
+    /** 미러 2판: 이미 잘라 온 근거리 원본 띠([nw]×[nh], 맨 아래 줄이 접는 선 쪽)로 근거리 반사를 만든다. */
+    private fun withNearBand(base: Field, near: IntArray, nw: Int, nh: Int, scale: Int): Field {
+        if (nh < 8) return base
+        val src = IntArray(nw * nh) { i -> AmbientColor.grade(near[i]) }
+        return Field(base.px, base.w, base.h, ReflectionField.buildNear(src, nw, nh, scale), nw, nh)
+    }
 
     private fun Field.withHinge(row: IntArray) = Field(px, w, h, near, nw, nh, row)
 
@@ -978,6 +1000,9 @@ object GoatFlexPanel {
 
     /** 기본 반사 필드 폭(4×4 평균): 96 → 128칸. */
     private const val BASE_W = 128
+
+    /** 실시간 미러 폭: 근거리 띠를 이 해상도 그대로 받는다(11-02 "블러 윗부분 원본이 도드라짐" → 512에서 768). 기본은 6×6 평균으로 128칸 */
+    private const val MIRROR_W = 768
 
     /**
      * 기본 필드에 근거리 고해상도 띠를 붙인다. [top]~[bot]은 고해상도 원본에서 실제 내용이 있는 줄(레터박스 제외)이고,
