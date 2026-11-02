@@ -144,6 +144,14 @@ object Updater {
         check(context, quiet = true)
     }
 
+    /**
+     * 내려받은 APK를 지운다(앱이 업데이트된 뒤 부른다). 예전에는 다음 업데이트를 받을 때에야 지워서 설치가 끝난 APK가
+     * 캐시에 남아 앱 용량이 약 5MB 더 잡혔다(11-02 소장님 "앱 용량 11메가").
+     */
+    fun clearDownloads(context: Context) {
+        File(context.cacheDir, "update").listFiles()?.forEach { it.delete() }
+    }
+
     /** 내려받아 설치한다(작업 스레드). */
     fun update(context: Context, release: Release) {
         val log = LogRepository.from(context)

@@ -12,6 +12,7 @@ import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.data.tweaks.AnimationKeepWorker
 import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.data.update.UpdateNotice
+import com.labok.goat.data.update.Updater
 import com.labok.goat.domain.DpiFixer
 
 /**
@@ -58,7 +59,10 @@ class BootReceiver : BroadcastReceiver() {
                 if (!unlocked) return
                 val reason = if (action == Intent.ACTION_BOOT_COMPLETED) "boot" else "update"
                 log.add(if (reason == "boot") "부팅 감지" else "앱 업데이트 감지")
-                if (reason == "update") UpdateNotice.onReplaced(context)
+                if (reason == "update") {
+                    Updater.clearDownloads(context)
+                    UpdateNotice.onReplaced(context)
+                }
                 DpiWorker.enqueue(context, reason)
                 FoldWatchService.syncWithSettings(context)
                 DensityWatchWorker.sync(context)
