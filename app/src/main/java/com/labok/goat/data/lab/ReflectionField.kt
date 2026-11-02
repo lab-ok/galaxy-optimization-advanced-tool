@@ -63,8 +63,8 @@ object ReflectionField {
             val sy = ((outH - 1 - y) * (h - 1f) / (outH - 1)).roundToInt().coerceIn(0, h - 1)
             System.arraycopy(px, sy * w, base, y * w, w)
         }
-        // 2) 흐림 단계들
-        val levels = LEVELS.map { r -> if (r <= 0f) base else blur(base, w, outH, r) }
+        // 2) 흐림 단계들 — 이번 곡선·배율에서 실제로 쓰는 단계까지만 만든다(11-02 실기: 쓰지 않는 큰 반지름까지 늘 만들어 분석이 느렸다)
+        val levels = lazyLevels(LEVELS, (0 until outH).maxOf { radiusAt(it / (outH - 1f), spec) }) { r -> blur(base, w, outH, r) }.let { lv -> List(LEVELS.size) { i -> lv(i) ?: base } }
         // 3) 줄마다 r(d)에 맞는 두 단계를 섞고 에너지를 알파로
         val out = IntArray(w * outH)
         for (y in 0 until outH) {
@@ -116,7 +116,8 @@ object ReflectionField {
         val flipped = IntArray(w * h)
         for (y in 0 until h) System.arraycopy(px, (h - 1 - y) * w, flipped, y * w, w)
         val lv = NEAR_LEVELS
-        val levels = lv.map { r -> if (r <= 0f) flipped else blur(flipped, w, h, r) }
+        val need = (0 until h).maxOf { blurDp(it / (h - 1f) * NEAR_FRAC) * spec.blurScale / cellDp }
+        val levels = lazyLevels(lv, need) { r -> blur(flipped, w, h, r) }.let { get -> List(lv.size) { i -> get(i) ?: flipped } }
         val out = IntArray(w * h)
         for (y in 0 until h) {
             val db = y / (h - 1f)
@@ -179,6 +180,18 @@ object ReflectionField {
             }
         }
         return out
+    }
+
+    /**
+     * 흐림 단계 [lv] 가운데 최대 반지름 [need]를 덮는 데 필요한 것까지만 만든다(그 위 단계는 null → 쓰이지 않음).
+     * 반지름 0 단계는 원본이라 만들지 않는다.
+     */
+    private fun lazyLevels(lv: FloatArray, need: Float, make: (Float) -> IntArray): (Int) -> IntArray? {
+        var last = 0
+        while (last < lv.size - 1 && lv[last] < need) last++
+        val made = arrayOfNulls<IntArray>(lv.size)
+        for (i in 1..last.coerceAtMost(lv.size - 1)) made[i] = make(lv[i])
+        return { i -> made[i] }
     }
 
     private fun smooth(t: Float) = t * t * (3f - 2f * t)
