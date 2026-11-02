@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.ApiProbe
+import com.labok.goat.data.lab.OttFlexTest
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe
 import com.labok.goat.data.lab.TentMode
@@ -156,6 +157,18 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                     uri?.let { share(context, it) }
                 }
             })
+        }
+        Spacer(Modifier.height(Gap.Card))
+        // OTT 플렉스 시험(11-02 소장님): 넷플릭스·디즈니+ 등에서 플렉스 모드로 할 수 있는 것을 차례로 시험하고 결과를 보낸다(OTT는 화면 찍기가 막혀 상태만 기록)
+        GlassCard {
+            Text("OTT 플렉스 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(
+                "누른 뒤 10초 안에 넷플릭스·디즈니+ 같은 OTT 앱에서 영상을 틀고, 가로로 들어 반쯤 접어 두세요. 진동이 울릴 때마다 다음 단계로 넘어가며 약 20초 동안 반쯤 접힘·가로 맞춤·삼성 패널 등록 여부를 바꿔 시험합니다. 끝나면 알림을 눌러 결과를 보내 주세요.",
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton("OTT 플렉스 시험 시작", modifier = Modifier.fillMaxWidth(), onClick = { OttFlexTest.start(context) })
         }
         Spacer(Modifier.height(Gap.Card))
         // 텐트 모드 시험(11-01 소장님): 폴드를 반쯤 접어 엎어 세우고 바깥은 시계·유튜브, 안쪽은 간접조명으로 두 화면을 함께 쓸 수 있는지 본다

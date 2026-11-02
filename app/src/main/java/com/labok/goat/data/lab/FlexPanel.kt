@@ -180,11 +180,35 @@ object FlexPanel {
         val states = ShizukuAccess.shell("cmd device_state print-states") ?: return "Shizuku 연결이 필요합니다."
         val id = Regex("identifier=(\\d+), name='HALF_OPENED'").find(states.out)?.groupValues?.get(1)
             ?: return "이 기기에는 반쯤 접힘 상태가 없습니다."
+        val before = displayRotation(context)
         val r = ShizukuAccess.shell("cmd device_state state $id") ?: return "Shizuku 연결이 필요합니다."
         val err = if (r.ok) null else r.err.ifBlank { r.out }.trim().take(120).ifBlank { "실패" }
         if (err == null) forced = true
         LogRepository.from(context).add("실험실 플렉스: 반쯤 접힘 강제" + (err?.let { " 실패($it)" } ?: ""))
+        if (err == null) keepLandscape(context, before)
         return err
+    }
+
+    private fun displayRotation(context: Context) = runCatching {
+        context.getSystemService(android.hardware.display.DisplayManager::class.java).getDisplay(android.view.Display.DEFAULT_DISPLAY).rotation
+    }.getOrDefault(-1)
+
+    /**
+     * 반쯤 접힘을 걸면 화면이 세로로 돌아가는지 본다(11-02 진단: 넷플릭스 창이 가로로 들고 있는데도 세로(port, 1848x2448)여서
+     * 앱이 접는 선을 세로로 받아 자체 플렉스 화면을 띄우지 않은 것으로 추정). 접기 전에 가로였는데 0.7초 뒤 세로가 됐으면 가로로 되돌린다.
+     */
+    private fun keepLandscape(context: Context, before: Int) {
+        if (before != 1 && before != 3) return
+        Thread.sleep(700)
+        val after = displayRotation(context)
+        LogRepository.from(context).add("실험실 플렉스: 접기 전 회전 $before → 접은 뒤 $after")
+        if (after == 1 || after == 3) return
+        runCatching {
+            android.provider.Settings.System.putInt(context.contentResolver, android.provider.Settings.System.USER_ROTATION, before)
+        }
+        ShizukuAccess.shell("cmd window user-rotation lock $before")
+        Thread.sleep(500)
+        LogRepository.from(context).add("실험실 플렉스: 가로($before)로 되돌림 → 지금 ${displayRotation(context)}")
     }
 
     /** 강제한 접힘 상태를 풀어 실제 힌지 상태로 돌아간다. */
