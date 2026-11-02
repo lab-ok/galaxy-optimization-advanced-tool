@@ -698,8 +698,8 @@ object GoatFlexPanel {
         var gotAny = false
         var failures = 0
         while (ambToken == token) {
-            // 근거리 띠 768칸 원본 + 기본 128칸(도우미가 줄여 보냄). 프레임 상한 30장(절전 15장) — 11-02 소장님 "프레임 더"
-            val p = ShizukuAccess.stream(MirrorCapture.command(apk, MIRROR_W, if (saver) 15 else 30, 0.5f, ReflectionField.NEAR_FRAC, BASE_W)) ?: return gotAny
+            // 근거리 띠 768칸 원본 + 기본 128칸(도우미가 줄여 보냄). 프레임 상한 60장(절전 30장) — 11-02 소장님 "프레임 60으로"
+            val p = ShizukuAccess.stream(MirrorCapture.command(apk, MIRROR_W, if (saver) 30 else 60, 0.5f, ReflectionField.NEAR_FRAC, BASE_W)) ?: return gotAny
             kotlin.concurrent.thread(name = "goat-mirror-watch", isDaemon = true) {
                 while (ambToken == token && runCatching { p.exitValue() }.isFailure) Thread.sleep(200)
                 runCatching { p.destroy() }
