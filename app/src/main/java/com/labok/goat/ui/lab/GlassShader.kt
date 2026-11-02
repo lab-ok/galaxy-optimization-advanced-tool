@@ -85,6 +85,7 @@ internal class GlassShader {
         shader.setFloatUniform("specular", if (primary) 1f else 0.85f)
         shader.setFloatUniform("reflAmount", reflect)
         shader.setFloatUniform("density", density)
+        shader.setFloatUniform("frostR", 12f * density)
     }
 
     private fun bmpShader(b: ImageBitmap) = BitmapShader(b.asAndroidBitmap(), Shader.TileMode.DECAL, Shader.TileMode.DECAL).apply {
@@ -104,6 +105,7 @@ uniform float2 lightDir;
 uniform float specular;
 uniform float reflAmount; // 반사 세기. GLSL 내장 함수 이름 reflect와 겹치면 컴파일이 실패한다(1.42.15~16은 이 때문에 셰이더가 한 번도 돌지 않았다)
 uniform float density;
+uniform float frostR; // 버튼 유리 블러 반지름(px)
 
 // 모서리는 원호가 아니라 초타원(|x|^N + |y|^N = r^N, SuperellipseShape.EXPONENT와 같은 N) — 잘라낸 모양과 같은 윤곽
 const float N = 4.0;
@@ -129,11 +131,22 @@ float2 edgeNormal(float2 p, float2 b, float r) {
 }
 
 // 반사는 CPU에서 색 보정 없이 온다(실기 속도). 근거리 띠는 5탭 블러를 하고, 합친 뒤 색 보정(채도 1.3·대비 1.12)을 한 번에 한다
-half4 back(float2 c) {
-    // 블러는 반사를 만들 때 줄마다 거리 곡선대로 들어가 있다(바닥과 같은 곡선). 여기서 따로 흐리지 않는다
+half4 back0(float2 c) {
     half4 n = near.eval(c);
     half4 f = field.eval(c);
-    half4 m = n + f * (1.0 - n.a);
+    return n + f * (1.0 - n.a);
+}
+
+// 버튼 유리 블러(11-02 소장님 "버튼들은 블러 더"): 바닥 반사(거리 곡선)는 그대로 두고, 카드 안에서만 반지름 frostR의
+// 13탭(가운데 + 안쪽 고리 6 + 바깥 고리 6) 가우시안 근사로 한 번 더 흐린다 — 바닥보다 뿌연 액상 유리
+half4 back(float2 c) {
+    half4 m = back0(c) * 0.16;
+    for (int k = 0; k < 6; k++) {
+        float a = float(k) * 1.0472;
+        float2 d = float2(cos(a), sin(a));
+        m += back0(c + d * frostR * 0.5) * 0.09;
+        m += back0(c + float2(d.x * 0.866 - d.y * 0.5, d.x * 0.5 + d.y * 0.866) * frostR) * 0.05;
+    }
     if (m.a < 0.001) return m;
     float3 col = float3(m.rgb) / float(m.a);
     float lum = dot(col, float3(0.2126, 0.7152, 0.0722));

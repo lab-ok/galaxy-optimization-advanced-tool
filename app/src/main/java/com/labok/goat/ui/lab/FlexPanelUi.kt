@@ -143,6 +143,9 @@ class FlexPanelState {
     /** 반사 대신 포스터 원본을 보여 줄 때(포스터 모드·보호 화면 포스터 연출). */
     var posterShown by mutableStateOf(false)
 
+    /** 무엇을 보일지: 1 앱 아이콘(앱 색상), 2 포스터(포스터·썸네일). */
+    var posterKind by mutableIntStateOf(0)
+
     // 설정(시작할 때 넣는다)
     var quality by mutableIntStateOf(2)
     var intensity by mutableIntStateOf(1)
@@ -473,7 +476,16 @@ private const val MAX_MEAN = 0.42f
 private const val MAX_PEAK = 0.62f
 
 /** 포스터 자리에 보일 그림: 포스터를 쓸 때는 포스터, 앱 색 대체일 때는 앱 아이콘. 그 밖에는 null(반사를 그린다). */
-private fun posterSource(state: FlexPanelState): ImageBitmap? = if (state.posterShown) state.art ?: state.appIcon else null
+private fun posterSource(state: FlexPanelState): ImageBitmap? = when {
+    !state.posterShown -> null
+    // 앱 색상: 포스터가 있어도 앱 아이콘만
+    state.posterKind == 1 -> state.appIcon
+    // 포스터: 포스터(없을 때만 앱 아이콘으로 대신 — 그때 출처 표시는 "앱 색"이 된다)
+    else -> state.art ?: state.appIcon
+}
+
+/** 지금 보일 그림이 앱 아이콘인지(아이콘은 크게 흐리고 어둡게 처리한다). */
+private fun iconShown(state: FlexPanelState) = state.posterKind == 1 || state.art == null
 
 /**
  * 포스터 표시: 흐린 포스터를 패널 전체에 꽉 채운다(뒤집지 않음). [area]는 패널 전체 크기, [origin]은 그 패널의 왼쪽 위
@@ -563,7 +575,7 @@ private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
     // 시간 전환은 엔진의 FieldBlender가 한다(지금 보이는 상태에서 새 목표로 이어 감). 여기서는 받은 그림을 그대로 그린다
     val field = state.field
     val poster = posterSource(state)
-    val posterBlur = rememberPosterBlur(poster, state.art == null)
+    val posterBlur = rememberPosterBlur(poster, iconShown(state))
     val gradeCf = remember { reflectionGrade() }
     Canvas(Modifier.fillMaxSize()) {
         if (kk > 0f && poster != null) {
@@ -875,7 +887,7 @@ private fun GlassTile(
     val press by animateFloatAsState(if (pressed) 1f else 0f, if (state.motion) spring(dampingRatio = 0.7f, stiffness = 900f) else snap(), label = "press")
     val tn = tone(state.intensity)
     val sceneTint = remember(amb[3], state.ambientOn) { if (state.ambientOn) sceneTintOf(amb[3]) else null }
-    val posterBlurTile = rememberPosterBlur(posterSource(state), state.art == null)
+    val posterBlurTile = rememberPosterBlur(posterSource(state), iconShown(state))
     // 리퀴드 글래스 셰이더(API 33+, 카드마다 하나). 만들 수 없으면(구형 기기·셰이더 컴파일 실패) 예전 겹친 레이어로 그린다
     val appCtx = androidx.compose.ui.platform.LocalContext.current.applicationContext
     val glass = remember {

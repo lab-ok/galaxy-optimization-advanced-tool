@@ -32,7 +32,9 @@ object ReflectionField {
      * 1 = 맨 아래)의 블러 반지름(dp). 점 사이는 직선으로 잇는다. 기본 필드와 근거리 띠가 이 한 곡선을 같이 쓴다.
      */
     private val CURVE_D = floatArrayOf(0f, 0.05f, 0.10f, 0.25f, 0.50f, 0.75f, 1f)
-    private val CURVE_DP = floatArrayOf(3f, 10f, 24f, 48f, 80f, 100f, 120f)
+    // 11-02 소장님 2차: "맨 위 블러 좀 더 빼서 선명하게, 10%까지는 살짝 더 선명하게"
+    // 3차: "전체적으로 블러 좀 더 빼서 선명하게(버튼은 따로 더 흐리게)" — 전체를 약 30% 낮췄다. 버튼 유리 블러는 셰이더가 따로 한다
+    private val CURVE_DP = floatArrayOf(1.5f, 5f, 12f, 30f, 52f, 68f, 80f)
 
     fun blurDp(d: Float): Float {
         val x = d.coerceIn(0f, 1f)

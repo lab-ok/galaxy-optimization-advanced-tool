@@ -850,6 +850,14 @@ object GoatFlexPanel {
             // 포스터를 쓰는 경우(포스터 모드·보호 화면의 포스터 연출)는 반사 대신 포스터 원본을 똑바로 보여 준다(11-02 소장님)
             // 앱 색 대체도 단색 대신 앱 아이콘을 크게 흐린 빛으로 보여 준다(11-02 소장님)
             state.posterShown = "포스터" in src || "앱 색" in src || posterPreview
+            // 무엇을 보일지 따로 정한다(11-02 소장님 "앱 색상이 포스터랑 합쳐져 있니?" — 예전에는 앱 색상에서도 포스터가 있으면 포스터를 보였다)
+            state.posterKind = if ("포스터" in src || posterPreview) {
+                2
+            } else if ("앱 색" in src) {
+                1
+            } else {
+                0
+            }
             if (fNew == null && !keep) {
                 if (state.field != null) blendTo(token, null)
             } else if (fNew != null && (slowBlend || lastTarget == null || fieldChange(lastTarget!!, fNew.px) > CHANGE_MIN)) {
