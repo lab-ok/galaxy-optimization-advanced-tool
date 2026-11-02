@@ -53,7 +53,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -69,7 +68,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -79,6 +77,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.AmbientColor
+import com.labok.goat.ui.liquid.liquidPress
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
@@ -120,18 +119,57 @@ class FlexPanelState {
     var haptics by mutableStateOf(true)
     var motion by mutableStateOf(true)
     var highContrast by mutableStateOf(false)
+
+    /**
+     * 공간 반사 필드([com.labok.goat.data.lab.ReflectionField]): 위 화면이 바닥에 비친 상(위아래 뒤집힘, 아래로 갈수록 흐려짐).
+     * 바닥·카드·잉크가 이 한 장을 같은 좌표계(패널 전체)로 나눠 쓴다. 없으면 좌·중·우 색으로 대신한다.
+     */
+    var field by mutableStateOf<ImageBitmap?>(null)
+    var fieldPrev by mutableStateOf<ImageBitmap?>(null)
+    var fieldPx: IntArray? = null
+    var fieldW = 0
+    var fieldH = 0
+
+    /** GOAT 잉크(앱 설정 UiInk의 다크 모드 색). 반사가 이 위에 얇게 비친다. */
+    var ink by mutableStateOf(Color(0xFFEBEBEB))
 }
 
+/** 반사 필드에서 패널 자리(0~1)의 색. 필드가 없으면 null. */
+private fun FlexPanelState.sampleAt(fx: Float, fy: Float): Color? {
+    val px = fieldPx ?: return null
+    if (fieldW <= 0 || fieldH <= 0) return null
+    return Color(com.labok.goat.data.lab.ReflectionField.sample(px, fieldW, fieldH, fx, fy))
+}
+
+/**
+ * 잉크 반사: 기본 잉크 위에 그 자리의 반사색이 얇게 비친다(표면보다 훨씬 절제). [k]는 아이콘·강조 0.22, 글자 0.07.
+ * 반사색은 밝기를 끌어올려 잉크가 어두워지지 않게(가독성) 하고, 무채색·어두운 반사는 거의 물들이지 않는다.
+ */
+private fun inkWith(base: Color, refl: Color?, k: Float): Color {
+    if (refl == null || k <= 0f) return base
+    val o = AmbientColor.toOklab(android.graphics.Color.rgb((refl.red * 255).toInt(), (refl.green * 255).toInt(), (refl.blue * 255).toInt()))
+    val ch = hypot(o[1], o[2])
+    if (ch < 0.02f) return base
+    val bright = Color(AmbientColor.fromOklab(0.86f, o[1] * 0.9f, o[2] * 0.9f))
+    return lerp(base, bright, (k * (ch / 0.1f).coerceAtMost(1f)).coerceIn(0f, 0.35f))
+}
+
+/** 카드 안 내용(아이콘·막대)이 받을 잉크색. */
+private val LocalTileInk = androidx.compose.runtime.compositionLocalOf { Color(0xFFEBEBEB) }
+
 // ---- 디자인 토큰(11-02 GPT 역설계 권장값 + 소장님 글래스 고도화 지시) ----
+// GOAT 리퀴드 다크 팔레트(LiquidTheme의 DarkLiquid)를 그대로 쓴다: 바탕 #0F0F0F, 면 #171717, 선 #424242, 잉크(UiInk), 둥글기 LiquidShape.card.
+// 11-02 소장님: 기존 리퀴드 UI와 다른 디자인처럼 보이면 실패 — 1.42.5의 남색 토큰을 GOAT 토큰으로 바꿨다
 private object Glass {
-    val Floor = Color(0xFF1B2130)
-    val Tint = Color(0xFF35435F)
-    val TintPrimary = Color(0xFF455C84)
-    val Ink = Color(0xFFF7F9FF)
-    val Muted = Color(0xFFB6C2D8)
-    val Accent = Color(0xFFFF5268)
+    val Floor = Color(0xFF0F0F0F)
+    val Tint = Color(0xFF171717)
+    val TintPrimary = Color(0xFF222222)
+    val Ink = Color(0xFFEBEBEB)
+    val Muted = Color(0xFF8D8D8D)
+    val Line = Color(0xFF424242)
+    val Accent = Color(0xFFEBEBEB)
     val Brand = Color(0xFFE50914)
-    val radius = 20.dp
+    val radius = com.labok.goat.ui.liquid.LiquidShape.card
     val gap = 8.dp
 }
 
@@ -224,8 +262,13 @@ fun FlexPanelUi(
             translationY = (1f - k) * size.height * 0.3f
         }.background(Glass.Floor)
     ) {
-        AmbientBackdrop(state, shown)
-        PanelBody(state, shown, seekSec, show, bar, { bar = it }, onClose, onPlayPause, onSeek, onSeekTo, onSpeed, onSpeedSet, onBrightness, onVolume, onFullscreen, onLock)
+        androidx.compose.runtime.CompositionLocalProvider(
+            com.labok.goat.ui.liquid.LocalReduceMotion provides !state.motion,
+            LocalTileInk provides state.ink
+        ) {
+            AmbientBackdrop(state, shown)
+            PanelBody(state, shown, seekSec, show, bar, { bar = it }, onClose, onPlayPause, onSeek, onSeekTo, onSpeed, onSpeedSet, onBrightness, onVolume, onFullscreen, onLock)
+        }
     }
 }
 
@@ -236,23 +279,18 @@ fun FlexPanelUi(
 @Composable
 private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
     val kk = if (state.ambientOn) ambK(state.intensity) else 0f
-    if (state.ambientOn) {
-        state.art?.let { img ->
-            Image(
-                img,
-                null,
-                Modifier.fillMaxSize().graphicsLayer {
-                    alpha = 0.45f * kk.coerceAtMost(1f)
-                    renderEffect = BlurEffect(100f, 100f, TileMode.Clamp)
-                    scaleX = 1.3f
-                    scaleY = 1.3f
-                },
-                contentScale = ContentScale.Crop
-            )
-        }
-    }
+    val field = state.field
+    // 새 반사 필드로 0.5초 동안 서서히 넘어간다(필드가 바뀔 때만 프레임을 돈다)
+    val fade = remember(field) { androidx.compose.animation.core.Animatable(if (state.motion && state.fieldPrev != null) 0f else 1f) }
+    LaunchedEffect(field) { if (fade.value < 1f) fade.animateTo(1f, tween(500)) }
     Canvas(Modifier.fillMaxSize()) {
-        if (kk > 0f) {
+        if (kk > 0f && field != null) {
+            // 공간 반사: 위 화면이 바닥에 비친 상을 패널 전체에 깐다(쌍선형 확대). 회색·밝은 화면은 덜 비친다
+            val w = (0.92f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f)
+            val dst = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt())
+            state.fieldPrev?.takeIf { fade.value < 1f }?.let { drawImage(it, dstSize = dst, alpha = w * (1f - fade.value), filterQuality = androidx.compose.ui.graphics.FilterQuality.Low) }
+            drawImage(field, dstSize = dst, alpha = w * fade.value, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+        } else if (kk > 0f) {
             drawRect(Brush.horizontalGradient(listOf(c[0].copy(alpha = 0.38f * kk * ambWeight(c[0])), c[1].copy(alpha = 0.30f * kk * ambWeight(c[1])), c[2].copy(alpha = 0.38f * kk * ambWeight(c[2])))))
             // 영상(위)에서 흘러내리는 빛
             drawRect(Brush.verticalGradient(listOf(c[3].copy(alpha = (0.5f * kk * ambWeight(c[3])).coerceAtMost(0.75f)), Color.Transparent), 0f, size.height * 0.55f))
@@ -260,7 +298,7 @@ private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
         drawRect(Brush.verticalGradient(listOf(Color(0x00000000), Color(0x73000000))))
     }
     // 떠다니는 빛 두 덩이: 한 번 그려 둔 층을 옮기기만 한다(움직이는 동안 다시 그리지 않아 가볍다). 품질 '높음'·애니메이션 켬일 때만 움직인다
-    if (kk > 0f) GlowLayer(c, kk, state.motion && state.quality >= 3)
+    if (kk > 0f && field == null) GlowLayer(c, kk, state.motion && state.quality >= 3)
 }
 
 /** 빛 두 덩이 층. [moving]일 때만 무한 애니메이션을 만든다(멈춰 있으면 프레임을 요청하지 않는다). */
@@ -311,7 +349,6 @@ private fun PanelBody(
     onLock: () -> Unit
 ) {
     val gap = Glass.gap
-    val accent = adaptiveAccent(state.ambAll, state.ambientOn)
     // 위쪽은 접는 선이라 여백을 크게(힌지 보호 구역)
     Column(Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 26.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(gap)) {
         Row(Modifier.fillMaxWidth().weight(0.9f), horizontalArrangement = Arrangement.spacedBy(gap)) {
@@ -328,7 +365,7 @@ private fun PanelBody(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         if (state.title.isNotEmpty()) {
-                            Text(state.title, color = Glass.Ink, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(state.title, color = state.ink, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             Text(
                                 listOf(state.subtitle.ifEmpty { state.app }, if (state.playing) "재생 중" else "일시정지됨").joinToString(" · "),
                                 color = Glass.Muted,
@@ -337,7 +374,7 @@ private fun PanelBody(
                                 overflow = TextOverflow.Ellipsis
                             )
                         } else {
-                            Text(state.app, color = Glass.Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                            Text(state.app, color = state.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                             Text(if (state.hasSession) "제목 정보 없음 · 조작은 됩니다" else "재생 정보 없음 · 화면 누르기로 조작", color = Glass.Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
@@ -351,7 +388,7 @@ private fun PanelBody(
             GlassTile(state, amb, Modifier.weight(0.7f), onLock, selected = state.locked, label = if (state.locked) "영상 잠금 풀기" else "영상 터치 잠금") { Icon(22) { lock(it, state.locked) } }
         }
         Row(Modifier.fillMaxWidth().weight(1.65f), horizontalArrangement = Arrangement.spacedBy(gap)) {
-            GlassTile(state, amb, Modifier.weight(1f), { onSeek(-1) }, primary = true, label = "${seekSec}초 뒤로") {
+            GlassTile(state, amb, Modifier.weight(1f), { onSeek(-1) }, label = "${seekSec}초 뒤로") {
                 Icon(34) { seekIcon(it, backward = true, sec = seekSec) }
                 SeekBadge(state, back = true)
             }
@@ -360,7 +397,7 @@ private fun PanelBody(
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(40) { if (playing) pause(it) else play(it) } }
                 }
             }
-            GlassTile(state, amb, Modifier.weight(1f), { onSeek(1) }, primary = true, label = "${seekSec}초 앞으로") {
+            GlassTile(state, amb, Modifier.weight(1f), { onSeek(1) }, label = "${seekSec}초 앞으로") {
                 Icon(34) { seekIcon(it, backward = false, sec = seekSec) }
                 SeekBadge(state, back = false)
             }
@@ -368,8 +405,8 @@ private fun PanelBody(
         if (show("progress") || bar != 0) {
             GlassTile(state, amb, Modifier.fillMaxWidth().weight(0.75f), null) {
                 when (bar) {
-                    1 -> GlassSlider(state.brightness, Glass.Ink, { "밝기 ${(it * 100).toInt()}%" }, live = true) { onBrightness(it) }
-                    2 -> GlassSlider(state.volume, Glass.Ink, { "볼륨 ${(it * 100).toInt()}%" }, live = true) { onVolume(it) }
+                    1 -> GlassSlider(state.brightness, LocalTileInk.current, { "밝기 ${(it * 100).toInt()}%" }, live = true) { onBrightness(it) }
+                    2 -> GlassSlider(state.volume, LocalTileInk.current, { "볼륨 ${(it * 100).toInt()}%" }, live = true) { onVolume(it) }
                     3 -> SpeedRow(state.speed) {
                         onSpeedSet(it)
                         setBar(0)
@@ -377,7 +414,7 @@ private fun PanelBody(
                     else -> {
                         if (state.canSeek) {
                             val f = (state.position.toFloat() / state.duration).coerceIn(0f, 1f)
-                            GlassSlider(f, accent, { clock((state.duration * it).toLong()) + " / " + clock(state.duration) }, live = false) { onSeekTo(it) }
+                            GlassSlider(f, LocalTileInk.current, { clock((state.duration * it).toLong()) + " / " + clock(state.duration) }, live = false) { onSeekTo(it) }
                         } else {
                             // 진행 정보가 없으면 가짜 진행률을 그리지 않고 이유만 적는다
                             GlassSlider(0f, Glass.Muted, { if (state.hasSession) "이 앱은 위치 이동을 지원하지 않습니다" else "재생 위치 정보를 받지 못했습니다" }, live = false, enabled = false) {}
@@ -471,6 +508,8 @@ private fun GlassTile(
     val view = LocalView.current
     var hint by remember { mutableStateOf(false) }
     var xFrac by remember { mutableFloatStateOf(0.5f) }
+    var pos by remember { mutableStateOf(Offset.Zero) }
+    var rootSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize(1, 1)) }
     LaunchedEffect(hint) {
         if (hint) {
             delay(1200)
@@ -485,18 +524,22 @@ private fun GlassTile(
     Box(
         modifier.fillMaxHeight()
             .onGloballyPositioned { co ->
-                val rootW = co.findRootCoordinates().size.width.coerceAtLeast(1)
-                xFrac = ((co.positionInRoot().x + co.size.width / 2f) / rootW).coerceIn(0f, 1f)
+                val root = co.findRootCoordinates().size
+                rootSize = androidx.compose.ui.unit.IntSize(root.width.coerceAtLeast(1), root.height.coerceAtLeast(1))
+                pos = co.positionInRoot()
+                xFrac = ((pos.x + co.size.width / 2f) / rootSize.width).coerceIn(0f, 1f)
             }
+            // GOAT 리퀴드 눌림(젤리: 옆으로 퍼지고 위아래로 눌렸다 pop 스프링으로 돌아옴, 리퀴드 햅틱). 진동을 끄면 같은 모양을 진동 없이
+            .then(if (state.haptics && onClick != null && enabled) Modifier.liquidPress(src, sx = 1.04f, sy = 0.94f) else Modifier)
             .graphicsLayer {
-                val s = 1f - 0.045f * press
+                val s = if (state.haptics) 1f else 1f - 0.045f * press
                 scaleX = s
                 scaleY = s
                 alpha = if (enabled) 1f else 0.45f
             }
             .clip(shape)
             .drawBehind {
-                val base = if (primary) Glass.TintPrimary else Glass.Tint
+                val base = if (primary) state.ink else Glass.Tint
                 if (q == 0) {
                     drawRect(if (selected || pressed) lerp(base, Color.White, 0.18f) else base)
                     return@drawBehind
@@ -505,16 +548,21 @@ private fun GlassTile(
                 drawRect(
                     base.copy(
                         alpha = if (hc) {
-                            0.95f
+                            0.97f
                         } else if (primary) {
-                            0.62f
+                            0.94f
                         } else {
-                            0.5f
+                            0.62f
                         }
                     )
                 )
-                // 2 주변광: 자기 가로 위치의 앰비언트 색이 위쪽에서 비친다
-                if (q >= 2 && kk > 0f) {
+                // 2 공간 반사: 바닥과 같은 반사 필드를 패널 좌표 그대로(카드 위치만큼 옮겨) 그려 카드 경계에서 끊기지 않는다.
+                //   유리는 반사를 절반쯤 통과시키고, 잉크로 찬 버튼은 표면 광택처럼 옅게 받는다
+                val fieldImg = state.field
+                if (q >= 2 && kk > 0f && fieldImg != null) {
+                    val wk = (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * (if (primary) 0.22f else 0.55f)).coerceAtMost(0.8f)
+                    drawImage(fieldImg, dstOffset = androidx.compose.ui.unit.IntOffset(-pos.x.toInt(), -pos.y.toInt()), dstSize = rootSize, alpha = wk, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+                } else if (q >= 2 && kk > 0f) {
                     val c = ambientAt(xFrac, amb[0], amb[1], amb[2])
                     val wk = kk * ambWeight(c)
                     drawRect(Brush.verticalGradient(listOf(c.copy(alpha = 0.34f * wk), c.copy(alpha = 0.10f * wk))))
@@ -535,7 +583,8 @@ private fun GlassTile(
                 if (press > 0f) drawRect(Color.Black.copy(alpha = 0.16f * press))
                 if (selected) drawRect(Color.White.copy(alpha = 0.10f))
                 // 6 테두리 빛: 위는 밝고 아래는 어두운 얇은 선
-                val edge = if (selected) ambientAt(xFrac, amb[0], amb[1], amb[2]).copy(alpha = 0.9f) else Color.White
+                val refl = state.sampleAt(xFrac, (pos.y / rootSize.height).coerceIn(0f, 1f))
+                val edge = if (selected) (refl ?: ambientAt(xFrac, amb[0], amb[1], amb[2])).copy(alpha = 0.9f) else lerp(Color.White, refl ?: Color.White, 0.35f)
                 val r = Glass.radius.toPx()
                 drawRoundRect(
                     Brush.verticalGradient(
@@ -576,7 +625,6 @@ private fun GlassTile(
                             hint = true
                         }
                     }) {
-                        if (state.haptics) view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                         onClick()
                     }
                 } else {
@@ -585,7 +633,12 @@ private fun GlassTile(
             ),
         contentAlignment = Alignment.Center
     ) {
-        content()
+        val tileInk = if (primary) {
+            Glass.Floor
+        } else {
+            inkWith(state.ink, state.sampleAt(xFrac, ((pos.y + 1f) / rootSize.height).coerceIn(0f, 1f)), 0.22f * (if (state.ambientOn) 1f else 0f))
+        }
+        androidx.compose.runtime.CompositionLocalProvider(LocalTileInk provides tileInk) { content() }
         if (hint && label != null) {
             Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xCC000000)).padding(horizontal = 8.dp, vertical = 3.dp)) {
                 Text(label, color = Glass.Ink, fontSize = 11.sp)
@@ -637,8 +690,8 @@ private fun GlassSlider(value: Float, color: Color, label: (Float) -> String, li
                 val hx = size.width * shown
                 val hr = (if (drag != null) 11 else 8).dp.toPx()
                 drawCircle(Color(0x40000000), hr + 2.dp.toPx(), Offset(hx, y + 1.dp.toPx()))
-                drawCircle(Color.White, hr, Offset(hx, y))
-                drawCircle(color, hr * 0.45f, Offset(hx, y))
+                drawCircle(color, hr, Offset(hx, y))
+                drawCircle(Glass.Floor, hr * 0.32f, Offset(hx, y))
                 // 끄는 동안 손잡이 위 값 풍선
                 if (drag != null) {
                     val text = label(shown)
@@ -661,9 +714,17 @@ private fun GlassSlider(value: Float, color: Color, label: (Float) -> String, li
     }
 }
 
+/**
+ * 아이콘(잉크): 카드가 준 잉크색(반사가 얇게 비친 색)으로 그리고, 그린 잉크 위에만 위쪽에서 들어오는 은은한 광택을 얹는다
+ * (화면 밖 층에서 SrcAtop으로 합성해 잉크 모양 안에만 맺힌다).
+ */
 @Composable
 private fun Icon(sizeDp: Int = 30, draw: DrawScope.(Color) -> Unit) {
-    Canvas(Modifier.size(sizeDp.dp)) { draw(Glass.Ink) }
+    val ink = LocalTileInk.current
+    Canvas(Modifier.size(sizeDp.dp).graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }) {
+        draw(ink)
+        drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.32f), Color.Transparent), 0f, size.height * 0.6f), blendMode = androidx.compose.ui.graphics.BlendMode.SrcAtop)
+    }
 }
 
 private fun DrawScope.stroke() = Stroke(width = size.minDimension * 0.08f, cap = StrokeCap.Round)

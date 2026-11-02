@@ -147,6 +147,13 @@ object GoatFlexPanel {
         state.haptics = haptics(context)
         state.motion = motion(context) && Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
         state.highContrast = Settings.Secure.getInt(context.contentResolver, "high_text_contrast_enabled", 0) == 1
+        // GOAT 잉크(설정의 잉크 색, 다크 모드 단계). 패널은 늘 어두운 리퀴드 바탕이다
+        runCatching { com.labok.goat.ui.liquid.UiInk.load(context) }
+        state.ink = if (com.labok.goat.ui.liquid.UiInk.mode == com.labok.goat.ui.liquid.UiInk.Mode.THEME) {
+            androidx.compose.ui.graphics.Color(context.getColor(com.labok.goat.ui.liquid.UiInk.tone.colorRes(true)))
+        } else {
+            androidx.compose.ui.graphics.Color(0xFFEBEBEB)
+        }
         state.appIcon = runCatching { context.packageManager.getApplicationIcon(p).toBitmap(96, 96).asImageBitmap() }.getOrNull()
         val brand = state.tint.toArgb()
         state.ambLeft = brand
@@ -246,6 +253,9 @@ object GoatFlexPanel {
         controller = null
         ambToken++
         state.art = null
+        state.field = null
+        state.fieldPrev = null
+        state.fieldPx = null
         brightnessModeBefore?.let { m -> io.execute { ShizukuAccess.shell("settings put system screen_brightness_mode $m") } }
         brightnessModeBefore = null
         LogRepository.from(context).add("GOAT 플렉스 패널: 닫음")
@@ -387,6 +397,7 @@ object GoatFlexPanel {
                 val t0 = SystemClock.elapsedRealtime()
                 var src: String
                 var pal: AmbientColor.Palette? = null
+                var field: Field? = null
                 if (mode == 3) {
                     // 위 절반(영상 쪽)만 읽는다. 패널(아래 절반)은 찍지 않아 패널 색이 다시 들어가는 일이 없다
                     val f = TentMode.topFrame(64, 0.5f)
@@ -396,7 +407,10 @@ object GoatFlexPanel {
                         val px = IntArray(w * h)
                         f.getPixels(px, 0, w, 0, 0, w, h)
                         val p = AmbientColor.extract(px, w, h)
-                        if (!p.protectedLike) pal = p
+                        if (!p.protectedLike) {
+                            pal = p
+                            field = makeField(px, w, h)
+                        }
                         n++
                         spent += SystemClock.elapsedRealtime() - t0
                         if (n == 10) LogRepository.from(context).add("GOAT 플렉스 패널: 화면 분석 평균 ${spent / n}ms/회 (${f.width}x${f.height})")
@@ -407,13 +421,37 @@ object GoatFlexPanel {
                 }
                 if (pal == null && mode >= 2) {
                     pal = artPaletteNow()
-                    if (pal != null) src = if (src.isEmpty()) "포스터" else "$src · 포스터"
+                    if (pal != null) {
+                        src = if (src.isEmpty()) "포스터" else "$src · 포스터"
+                        field = artFieldNow()
+                    }
                 }
                 if (pal == null) src = if (src.isEmpty()) "앱 색" else "$src · 앱 색"
                 val p = pal
+                val fNew = field
                 main.post {
                     if (ambToken != token) return@post
                     state.ambSource = src
+                    // 반사 필드는 거의 같으면 바꾸지 않는다(정지 화면에서 다시 그리지 않게)
+                    if (fNew == null) {
+                        if (state.field != null) {
+                            state.fieldPrev = null
+                            state.field = null
+                            state.fieldPx = null
+                        }
+                    } else if (state.fieldPx == null || fieldChange(state.fieldPx!!, fNew.px) > 0.012f) {
+                        if (SystemClock.elapsedRealtime() - clarityLogAt > 1000) {
+                            clarityLogAt = SystemClock.elapsedRealtime()
+                            // 반사의 거리별 선명도(위 10%·가운데 50%·아래 90%)를 1초에 한 번까지 남긴다(실기 검증용)
+                            val c = listOf(0.1f, 0.5f, 0.9f).map { ReflectionField.clarity(fNew.px, fNew.w, (fNew.h * it).toInt()) }
+                            LogRepository.from(context).add("GOAT 플렉스 패널: 반사 선명도 위 %.3f · 가운데 %.3f · 아래 %.3f".format(c[0], c[1], c[2]))
+                        }
+                        state.fieldPrev = state.field
+                        state.fieldPx = fNew.px
+                        state.fieldW = fNew.w
+                        state.fieldH = fNew.h
+                        state.field = fNew.image
+                    }
                     if (p != null) {
                         state.ambLeft = p.left
                         state.ambCenter = p.center
@@ -439,6 +477,48 @@ object GoatFlexPanel {
                 Thread.sleep(if (saver) period * 2 else period)
             }
         }
+    }
+
+    private var clarityLogAt = 0L
+
+    private class Field(val px: IntArray, val w: Int, val h: Int, val image: androidx.compose.ui.graphics.ImageBitmap)
+
+    /** 다듬은 색으로 반사 필드를 만들고 그림으로 바꾼다(작업 스레드). */
+    private fun makeField(px: IntArray, w: Int, h: Int): Field {
+        val graded = IntArray(px.size) { AmbientColor.grade(px[it]) }
+        val spec = ReflectionField.Spec()
+        val f = ReflectionField.build(graded, w, h, spec)
+        val bmp = android.graphics.Bitmap.createBitmap(f, w, spec.outH, android.graphics.Bitmap.Config.ARGB_8888)
+        return Field(f, w, spec.outH, bmp.asImageBitmap())
+    }
+
+    /** 두 필드의 평균 색 차이(0~1). */
+    private fun fieldChange(a: IntArray, b: IntArray): Float {
+        if (a.size != b.size) return 1f
+        var s = 0L
+        var i = 0
+        while (i < a.size) {
+            s += kotlin.math.abs((a[i] shr 16 and 0xFF) - (b[i] shr 16 and 0xFF)) + kotlin.math.abs((a[i] shr 8 and 0xFF) - (b[i] shr 8 and 0xFF)) + kotlin.math.abs((a[i] and 0xFF) - (b[i] and 0xFF))
+            i += 7
+        }
+        return s / ((a.size / 7f) * 3f * 255f)
+    }
+
+    private var artField: Field? = null
+    private var artFieldFor: androidx.compose.ui.graphics.ImageBitmap? = null
+
+    /** 포스터로 만든 반사 필드(포스터가 바뀔 때만). 보호 화면에서 화면 대신 쓴다. */
+    private fun artFieldNow(): Field? {
+        val art = state.art ?: return null
+        if (art === artFieldFor) return artField
+        val bmp = art.asAndroidBitmap()
+        val h = (64 * bmp.height / bmp.width.coerceAtLeast(1)).coerceIn(8, 64)
+        val small = android.graphics.Bitmap.createScaledBitmap(bmp.copy(android.graphics.Bitmap.Config.ARGB_8888, false), 64, h, true)
+        val px = IntArray(64 * h)
+        small.getPixels(px, 0, 64, 0, 0, 64, h)
+        artField = makeField(px, 64, h)
+        artFieldFor = art
+        return artField
     }
 
     /** 세션 포스터의 색(포스터가 바뀌었을 때만 다시 계산). */

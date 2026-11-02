@@ -75,6 +75,12 @@ class StandbyActivity : ComponentActivity() {
                 DirectionCheck(onClose = { TentDuo.stop(this, "방향 확인 끝") })
                 return@setContent
             }
+            // 반사 시험 화면(GOAT 플렉스 패널 공간 반사 검증용): 1 왼쪽 빨강·오른쪽 파랑(줄무늬), 2 위 흰색·아래 검정, 3 여러 색, 4 전체 검정, 5 전체 흰색
+            val pattern = intent.getIntExtra(EXTRA_PATTERN, 0)
+            if (pattern > 0) {
+                ReflectionPattern(pattern)
+                return@setContent
+            }
             val now by produceState(LocalDateTime.now()) {
                 while (true) {
                     value = LocalDateTime.now()
@@ -148,6 +154,7 @@ class StandbyActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_CHECK = "check"
+        const val EXTRA_PATTERN = "pattern"
         private const val PREF = "standby"
         private const val KEY_STYLE = "style"
 
@@ -176,5 +183,32 @@ private fun DirectionCheck(onClose: () -> Unit) {
             color = Color.White,
             fontSize = 18.sp
         )
+    }
+}
+
+/** 반사 시험 무늬(위 절반이 패널에 비치는 원본). */
+@androidx.compose.runtime.Composable
+private fun ReflectionPattern(kind: Int) {
+    androidx.compose.foundation.Canvas(Modifier.fillMaxSize().background(Color.Black)) {
+        val w = size.width
+        val h = size.height
+        when (kind) {
+            1 -> {
+                drawRect(Color(0xFFE02020), size = androidx.compose.ui.geometry.Size(w / 2, h))
+                drawRect(Color(0xFF2040E0), topLeft = androidx.compose.ui.geometry.Offset(w / 2, 0f), size = androidx.compose.ui.geometry.Size(w / 2, h))
+                var x = 0f
+                while (x < w) {
+                    drawRect(Color(0xFF101010), topLeft = androidx.compose.ui.geometry.Offset(x, 0f), size = androidx.compose.ui.geometry.Size(w / 32f, h))
+                    x += w / 8f
+                }
+            }
+            2 -> drawRect(Color(0xFFF0F0F0), size = androidx.compose.ui.geometry.Size(w, h / 4))
+            3 -> {
+                drawRect(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color(0xFFFF3B30), Color(0xFFFFCC00), Color(0xFF34C759), Color(0xFF007AFF), Color(0xFFAF52DE))))
+                drawCircle(Color(0xFFFFFFFF), h * 0.12f, androidx.compose.ui.geometry.Offset(w * 0.3f, h * 0.3f))
+            }
+            5 -> drawRect(Color.White)
+            else -> Unit
+        }
     }
 }

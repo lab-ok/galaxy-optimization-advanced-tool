@@ -151,6 +151,14 @@ object AmbientColor {
         return fromOklab(o[0].coerceIn(0.30f, 0.72f), o[1] * k, o[2] * k)
     }
 
+    /** 반사 필드용 색 다듬기: 어두운 곳은 그대로 어둡게, 밝기는 0.80까지, 채도는 0.17까지(눈부심·네온 방지). */
+    fun grade(argb: Int): Int {
+        val o = toOklab(argb)
+        val c = hypot(o[1], o[2])
+        val k = if (c > 0.17f) 0.17f / c else 1f
+        return fromOklab(min(o[0] * 0.95f, 0.80f), o[1] * k, o[2] * k)
+    }
+
     /** 두 색의 지각 거리(OKLab ΔE). */
     fun distance(x: Int, y: Int): Float {
         val a = toOklab(x)
