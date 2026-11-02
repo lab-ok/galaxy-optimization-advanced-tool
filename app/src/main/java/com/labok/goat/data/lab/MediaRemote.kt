@@ -26,6 +26,9 @@ import rikka.shizuku.SystemServiceHelper
 object MediaRemote {
     @Volatile private var lastWay = ""
 
+    /** 마지막으로 세션을 받은 길(진단용). */
+    val way get() = lastWay
+
     /** [pkg] 앱의 세션(없으면 지금 재생 중인 아무 세션). */
     fun controller(context: Context, pkg: String?): MediaController? {
         val all = controllers(context)
@@ -35,10 +38,12 @@ object MediaRemote {
     private fun controllers(context: Context): List<MediaController> {
         if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return emptyList()
         val viaShell = runCatching { shellTokens() }.onFailure { lastWay = "셸 실패(${it.javaClass.simpleName})" }.getOrNull()
-        if (viaShell != null) {
+        // 셸 길이 오류 없이 빈 목록을 주는 기기가 있다(11-02 폴드8 안드로이드 17: 넷플릭스 재생 중인데 '세션 없음'). 비었으면 알림 접근 길도 본다
+        if (!viaShell.isNullOrEmpty()) {
             lastWay = "셸"
             return viaShell.map { MediaController(context, it) }
         }
+        if (viaShell != null) lastWay = "셸 빈 목록"
         return runCatching {
             val me = ComponentName(context, GoatMediaListener::class.java)
             val msm = context.getSystemService(MediaSessionManager::class.java)

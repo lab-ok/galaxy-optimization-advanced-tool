@@ -103,7 +103,7 @@ object GoatFlexPanel {
         val app = context.applicationContext
         io.execute {
             val c = MediaRemote.controller(app, pkg)
-            LogRepository.from(app).add("GOAT 플렉스 패널: $label 띄움 · 미디어 세션 ${c?.packageName ?: "없음"} · 동작 0x${java.lang.Long.toHexString(c?.playbackState?.actions ?: 0)}")
+            LogRepository.from(app).add("GOAT 플렉스 패널: $label 띄움 · 미디어 세션 ${c?.packageName ?: "없음"} · 받은 길 ${MediaRemote.way} · 동작 0x${java.lang.Long.toHexString(c?.playbackState?.actions ?: 0)}")
             main.post { attach(app, pkg, label, c) }
         }
     }
