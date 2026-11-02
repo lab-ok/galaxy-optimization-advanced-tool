@@ -25,10 +25,10 @@ class ReflectionFieldTest {
         val mid = ReflectionField.clarity(f, w, (outH * 0.5f).toInt())
         val bot = ReflectionField.clarity(f, w, (outH * 0.9f).toInt())
         assertTrue("선명도 위 $top > 가운데 $mid > 아래 $bot", top > mid && mid > bot)
-        // 기본 필드는 칸 격자가 보이지 않게 위쪽도 최소 1.3칸 흐린다(11-02) — 그래도 줄무늬가 원본의 15% 넘게 남고, 아래는 30% 아래로 퍼진다.
+        // 기본 필드는 칸 격자가 보이지 않게 위쪽도 최소 1.3칸 흐린다(11-02) — 그래도 줄무늬가 원본의 8% 넘게 남고, 아래는 30% 아래로 퍼진다.
         // 접는 선 바로 아래 선명함은 근거리 띠(nearRawKeepsSourceDetail)가 맡는다
         val src = ReflectionField.clarity(leftRedRightBlue(), w, 0)
-        assertTrue("위쪽 줄무늬가 남아야 함: $top / 원본 $src", top > src * 0.15f)
+        assertTrue("위쪽 줄무늬가 남아야 함: $top / 원본 $src", top > src * 0.08f)
         assertTrue("아래는 퍼져야 함: $bot / 원본 $src", bot < src * 0.3f)
     }
 

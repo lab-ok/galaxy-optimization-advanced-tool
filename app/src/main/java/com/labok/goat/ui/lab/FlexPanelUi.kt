@@ -510,10 +510,11 @@ private fun DrawScope.drawPoster(blur: ImageBitmap?, origin: Offset, area: Size,
  */
 @Volatile private var glassLogged = false
 
-private fun glassLog(ok: Boolean) {
+private fun glassLog(context: android.content.Context, ok: Boolean) {
     if (glassLogged) return
     glassLogged = true
-    android.util.Log.i("GOAT", "GOAT 플렉스 패널: 리퀴드 글래스 셰이더 ${if (ok) "동작" else "만들지 못해 예전 방식으로 그림"} (Android ${android.os.Build.VERSION.SDK_INT})")
+    // 앱 로그(진단 파일의 「앱 로그」)에 남긴다 — logcat은 진단 파일에 최근 300줄만 들어가 1.42.23에서 빠졌다
+    com.labok.goat.data.log.LogRepository.from(context).add("GOAT 플렉스 패널: 리퀴드 글래스 셰이더 ${if (ok) "동작" else "만들지 못해 예전 방식으로 그림"} (Android ${android.os.Build.VERSION.SDK_INT})")
 }
 
 /** 반사 색 보정(채도 1.3·대비 1.12, 가운데 0.48) — 예전 CPU의 AmbientColor.grade를 GPU 색 행렬로 근사. 바닥·근거리 띠가 같이 쓴다. */
@@ -547,7 +548,7 @@ private fun NearLayer(state: FlexPanelState, alpha: Float) {
     Canvas(
         Modifier.fillMaxWidth().fillMaxHeight(com.labok.goat.data.lab.ReflectionField.NEAR_FRAC).graphicsLayer {
             // 11-02 소장님 "상위 블러 조금 더": 2dp → 3.5dp
-            renderEffect = androidx.compose.ui.graphics.BlurEffect(3.5f.dp.toPx(), 3.5f.dp.toPx(), androidx.compose.ui.graphics.TileMode.Clamp)
+            renderEffect = androidx.compose.ui.graphics.BlurEffect(5f.dp.toPx(), 5f.dp.toPx(), androidx.compose.ui.graphics.TileMode.Clamp)
         }
     ) {
         drawImage(n, dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()), alpha = alpha, filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium, colorFilter = cf)
@@ -878,9 +879,10 @@ private fun GlassTile(
     val sceneTint = remember(amb[3], state.ambientOn) { if (state.ambientOn) sceneTintOf(amb[3]) else null }
     val posterBlurTile = rememberPosterBlur(posterSource(state), state.art == null)
     // 리퀴드 글래스 셰이더(API 33+, 카드마다 하나). 만들 수 없으면(구형 기기·셰이더 컴파일 실패) 예전 겹친 레이어로 그린다
+    val appCtx = androidx.compose.ui.platform.LocalContext.current.applicationContext
     val glass = remember {
         if (android.os.Build.VERSION.SDK_INT >= 33) {
-            runCatching { GlassShader() }.onFailure { android.util.Log.w("GOATGLASS", "셰이더 생성 실패: ${it.message}") }.getOrNull().also { glassLog(it != null) }
+            runCatching { GlassShader() }.onFailure { android.util.Log.w("GOATGLASS", "셰이더 생성 실패: ${it.message}") }.getOrNull().also { glassLog(appCtx, it != null) }
         } else {
             null
         }
