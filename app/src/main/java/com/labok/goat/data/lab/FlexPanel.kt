@@ -85,11 +85,47 @@ object FlexPanel {
         return pkg.isEmpty() || AutoFlex.mode(context, pkg) == AutoFlex.MODE_OFF
     }
 
-    /** 접을 때: 앞 앱에 고른 모드를 적용한다. */
-    fun apply(context: Context) = queue.execute { applyNow(context) }
+    /** 접을 때: 앞 앱에 고른 모드를 적용하고, 접혀 있는 동안 앞 앱이 바뀌는지 지켜본다. */
+    fun apply(context: Context) = queue.execute {
+        folded = true
+        applyNow(context)
+        watchFront(context)
+    }
 
     /** 펼 때: 적용한 모드를 푼다. */
-    fun release(context: Context) = queue.execute { releaseNow(context) }
+    fun release(context: Context) = queue.execute {
+        folded = false
+        releaseNow(context)
+    }
+
+    // 접혀 있는지(apply~release). 앞 앱 감시는 이 동안만 돈다
+    @Volatile private var folded = false
+    private val watcher = Executors.newSingleThreadScheduledExecutor()
+    private var watching: java.util.concurrent.ScheduledFuture<*>? = null
+    private const val WATCH_MS = 700L
+
+    /**
+     * 접힌 채로 앞 앱이 바뀌면(홈으로 나가기·다른 앱으로 전환·다시 돌아오기) 새 앞 앱 기준으로 다시 적용한다.
+     * 예전에는 펼 때만 풀어서, YouTube에서 홈으로 나가도 GOAT 패널이 남았다(11-02 소장님 신고, 1.43.0).
+     */
+    private fun watchFront(context: Context) {
+        if (watching != null) return
+        watching = watcher.scheduleWithFixedDelay({
+            queue.execute {
+                if (!folded) {
+                    watching?.cancel(false)
+                    watching = null
+                    return@execute
+                }
+                val now = frontPkg(context) ?: return@execute
+                val was = applied?.pkg.orEmpty()
+                if (now == was) return@execute
+                LogRepository.from(context).add("자동 플렉스: 앞 앱이 바뀜(${was.ifEmpty { "홈" }} → ${now.ifEmpty { "홈" }}), 다시 적용")
+                releaseNow(context)
+                applyNow(context)
+            }
+        }, WATCH_MS, WATCH_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+    }
 
     /** 켜져 있는 동안(알림에서) 지금 앱의 모드를 바꿔 바로 다시 적용한다. */
     fun switchMode(context: Context, mode: Int) = queue.execute {
