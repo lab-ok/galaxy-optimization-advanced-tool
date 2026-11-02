@@ -672,7 +672,7 @@ private fun PanelBody(
                     if (state.ambSource.isNotEmpty()) {
                         // 누르면 앰비언트 고르기 탭이 열린다(11-02 소장님)
                         Text(
-                            if (state.ambMode == 3 && state.ambFps > 0f && state.ambSource.startsWith("화면")) "실시간 · ${state.ambFps.toInt()}fps" else state.ambSource,
+                            if (state.ambMode == 3 && state.ambFps > 0f && state.ambSource.startsWith("화면") && com.labok.goat.data.lab.LabUnlock.unlocked) "실시간 · ${state.ambFps.toInt()}fps" else state.ambSource,
                             color = Glass.Ink,
                             fontSize = 10.sp,
                             modifier = Modifier.clip(RoundedCornerShape(50)).background(if (state.ambPicker) Color(0x44FFFFFF) else Color(0x22FFFFFF))
