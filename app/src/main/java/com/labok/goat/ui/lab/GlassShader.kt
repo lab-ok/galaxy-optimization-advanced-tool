@@ -51,7 +51,8 @@ internal class GlassShader {
         density: Float,
         reflect: Float,
         primary: Boolean,
-        press: Float
+        press: Float,
+        frostDp: Float = 12f
     ) {
         if (field !== fieldSrc) {
             fieldSrc = field
@@ -85,7 +86,7 @@ internal class GlassShader {
         shader.setFloatUniform("specular", if (primary) 1f else 0.85f)
         shader.setFloatUniform("reflAmount", reflect)
         shader.setFloatUniform("density", density)
-        shader.setFloatUniform("frostR", 12f * density)
+        shader.setFloatUniform("frostR", frostDp * density)
     }
 
     private fun bmpShader(b: ImageBitmap) = BitmapShader(b.asAndroidBitmap(), Shader.TileMode.DECAL, Shader.TileMode.DECAL).apply {

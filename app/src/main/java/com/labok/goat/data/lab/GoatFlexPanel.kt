@@ -99,6 +99,15 @@ object GoatFlexPanel {
     }
 
     @Volatile private var lastSaver = false
+
+    /** 바닥 반사 블러(%, 30~200, 기본 100): 거리 블러 곡선 전체에 곱한다(11-02 소장님 "전체 블러·버튼 블러 설정 옵션"). */
+    fun floorBlur(c: Context) = prefs(c).getInt("floor_blur", 100)
+    fun setFloorBlur(c: Context, v: Int) = prefs(c).edit().putInt("floor_blur", v.coerceIn(30, 200)).apply()
+
+    /** 버튼 유리 블러(dp, 0~30, 기본 12): 카드 안에서만 반사를 한 번 더 흐린다. */
+    fun buttonBlur(c: Context) = prefs(c).getInt("button_blur", 12)
+    fun setButtonBlur(c: Context, v: Int) = prefs(c).edit().putInt("button_blur", v.coerceIn(0, 30)).apply()
+
     fun intensity(c: Context) = prefs(c).getInt("intensity", 1)
     fun setIntensity(c: Context, v: Int) = prefs(c).edit().putInt("intensity", v).apply()
     fun haptics(c: Context) = prefs(c).getBoolean("haptics", true)
@@ -288,6 +297,7 @@ object GoatFlexPanel {
         val saver = context.getSystemService(android.os.PowerManager::class.java).isPowerSaveMode
         state.quality = if (saver) quality(context).coerceAtMost(1) else quality(context)
         state.intensity = intensity(context)
+        state.frostDp = buttonBlur(context).toFloat()
         state.haptics = haptics(context)
         state.motion = motion(context) && Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
         state.highContrast = Settings.Secure.getInt(context.contentResolver, "high_text_contrast_enabled", 0) == 1
@@ -629,6 +639,7 @@ object GoatFlexPanel {
      */
     private fun startAmbient(context: Context, saver: Boolean, mode: Int) {
         context.resources.displayMetrics.let { screenWdp = it.widthPixels / it.density }
+        floorScale = floorBlur(context) / 100f
         state.ambMode = mode
         val token = ++ambToken
         state.ambientOn = mode != 0
@@ -755,6 +766,9 @@ object GoatFlexPanel {
     @Volatile private var screenWdp = 1848f / 2.625f
 
     private fun cellDpFor(cols: Int) = screenWdp / cols.coerceAtLeast(1)
+
+    /** 실험실 「바닥 반사 블러」 배율(앰비언트를 시작할 때 읽는다). */
+    @Volatile private var floorScale = 1f
 
     private fun le(b: ByteArray, o: Int) = (b[o].toInt() and 0xFF) or ((b[o + 1].toInt() and 0xFF) shl 8) or ((b[o + 2].toInt() and 0xFF) shl 16) or ((b[o + 3].toInt() and 0xFF) shl 24)
 
@@ -1011,7 +1025,7 @@ object GoatFlexPanel {
     private fun withNearBand(base: Field, near: IntArray, nw: Int, nh: Int, scale: Int): Field {
         if (nh < 8) return base
         // 색 보정은 GPU가 하고, 블러는 줄마다 거리 곡선대로 CPU에서(미끄러지는 창 흐림이라 빠르다). 띠는 위 10%로 좁혀 칸 수도 줄었다
-        return Field(base.px, base.w, base.h, ReflectionField.buildNear(near, nw, nh, cellDpFor(nw)), nw, nh)
+        return Field(base.px, base.w, base.h, ReflectionField.buildNear(near, nw, nh, cellDpFor(nw), ReflectionField.Spec(blurScale = floorScale)), nw, nh)
     }
 
     private fun Field.withHinge(row: IntArray) = Field(px, w, h, near, nw, nh, row)
@@ -1037,7 +1051,7 @@ object GoatFlexPanel {
         if (nh < 8) return base
         val from = bot - nh + 1
         val src = IntArray(hi.w * nh) { i -> AmbientColor.grade(hi.px[from * hi.w + i]) }
-        val near = ReflectionField.buildNear(src, hi.w, nh, cellDpFor(hi.w))
+        val near = ReflectionField.buildNear(src, hi.w, nh, cellDpFor(hi.w), ReflectionField.Spec(blurScale = floorScale))
         return Field(base.px, base.w, base.h, near, hi.w, nh)
     }
 
@@ -1286,7 +1300,7 @@ object GoatFlexPanel {
     /** 다듬은 색으로 반사 필드를 만들고 그림으로 바꾼다(작업 스레드). */
     private fun makeField(px: IntArray, w: Int, h: Int): Field {
         // 색 보정(채도·대비)은 GPU가 그릴 때 한다(11-02 실기 속도: 칸마다 OKLab 보정이 프레임당 수십 ms였다)
-        val spec = ReflectionField.Spec(cellDp = cellDpFor(w))
+        val spec = ReflectionField.Spec(cellDp = cellDpFor(w), blurScale = floorScale)
         val f = ReflectionField.build(px, w, h, spec)
         return Field(f, w, spec.outH)
     }

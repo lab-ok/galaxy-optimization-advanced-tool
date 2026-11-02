@@ -137,6 +137,9 @@ class FlexPanelState {
     /** 실제 반사 갱신 수(초당, 5초 평균). 실시간일 때 머리글 칩에 표시해 실제 속도를 바로 확인한다. */
     var ambFps by mutableFloatStateOf(0f)
 
+    /** 버튼 유리 블러(dp, 실험실 설정). */
+    var frostDp by mutableFloatStateOf(12f)
+
     /** 첫 앰비언트 결과(화면 분석·포스터·앱 색)가 들어왔는지. 그 전에는 대체 그라데이션·빛을 그리지 않고 중립 유리로 둔다. */
     var ambReady by mutableStateOf(false)
 
@@ -966,7 +969,8 @@ private fun GlassTile(
                             density,
                             wk,
                             primary,
-                            press
+                            press,
+                            state.frostDp
                         )
                         drawRect(ShaderBrush(glass.shader))
                     } else if (posterImg != null && q >= 2 && kk > 0f) {

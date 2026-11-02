@@ -24,7 +24,9 @@ object ReflectionField {
         val energyTop: Float = 1f,
         val energyBottom: Float = 0.72f,
         /** 기본 필드 한 칸이 패널에서 몇 dp인지(가로). 블러 곡선(dp)을 칸 단위로 바꿀 때 쓴다. 폴드 안쪽 화면 1848px·128칸·밀도 약 2.6 기준. */
-        val cellDp: Float = 5.4f
+        val cellDp: Float = 5.4f,
+        /** 바닥 반사 블러 배율(실험실 설정 「바닥 반사 블러」, 1 = 기본 곡선). */
+        val blurScale: Float = 1f
     )
 
     /**
@@ -32,6 +34,7 @@ object ReflectionField {
      * 1 = 맨 아래)의 블러 반지름(dp). 점 사이는 직선으로 잇는다. 기본 필드와 근거리 띠가 이 한 곡선을 같이 쓴다.
      */
     private val CURVE_D = floatArrayOf(0f, 0.05f, 0.10f, 0.25f, 0.50f, 0.75f, 1f)
+
     // 11-02 소장님 2차: "맨 위 블러 좀 더 빼서 선명하게, 10%까지는 살짝 더 선명하게"
     // 3차: "전체적으로 블러 좀 더 빼서 선명하게(버튼은 따로 더 흐리게)" — 전체를 약 30% 낮췄다. 버튼 유리 블러는 셰이더가 따로 한다
     private val CURVE_DP = floatArrayOf(1.5f, 5f, 12f, 30f, 52f, 68f, 80f)
@@ -86,7 +89,7 @@ object ReflectionField {
     }
 
     /** 패널 위치 [d](0=접는 선, 1=맨 아래)의 흐림 반지름(필드 칸 단위) = [blurDp] ÷ 칸 크기(dp). */
-    fun radiusAt(d: Float, spec: Spec = Spec()): Float = blurDp(d) / spec.cellDp
+    fun radiusAt(d: Float, spec: Spec = Spec()): Float = blurDp(d) * spec.blurScale / spec.cellDp
 
     /** 패널 위치 [d]의 반사 세기. 접는 선 바로 아래(위 8%)는 번쩍이지 않게 75%에서 부드럽게 올린다(따로 빛 띠를 만들지 않는다). */
     fun energyAt(d: Float, spec: Spec = Spec()): Float {
@@ -118,7 +121,7 @@ object ReflectionField {
             val db = y / (h - 1f)
             val d = db * NEAR_FRAC
             // 줄마다 같은 블러 곡선(dp)을 근거리 칸 단위로: 0%에서 3dp, 5%에서 10dp, 10%에서 24dp — 아래로 갈수록 적극적으로 커진다
-            val r = (blurDp(d) / cellDp).coerceAtMost(lv.last())
+            val r = (blurDp(d) * spec.blurScale / cellDp).coerceAtMost(lv.last())
             var i = 0
             while (i < lv.size - 2 && lv[i + 1] < r) i++
             val t = ((r - lv[i]) / (lv[i + 1] - lv[i])).coerceIn(0f, 1f)

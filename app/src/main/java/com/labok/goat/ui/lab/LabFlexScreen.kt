@@ -78,6 +78,7 @@ import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
+import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -509,6 +510,33 @@ private fun GoatPanelCard() {
             intensity = it
             GoatFlexPanel.setIntensity(context, it)
         })
+        // 블러 설정(11-02 소장님): 바닥 반사 블러는 거리 블러 곡선 전체 배율, 버튼 유리 블러는 카드 안에서만 더 흐리는 반지름
+        var floorBlur by remember { mutableIntStateOf(GoatFlexPanel.floorBlur(context)) }
+        var buttonBlur by remember { mutableIntStateOf(GoatFlexPanel.buttonBlur(context)) }
+        Spacer(Modifier.height(Gap.Section))
+        Text("바닥 반사 블러", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Text("접는 선에서 멀어질수록 흐려지는 정도 전체를 키우거나 줄입니다. 100%가 기본입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidSlider(
+            value = floorBlur,
+            range = 30..200,
+            onValueChange = { floorBlur = it },
+            onValueChangeFinished = { GoatFlexPanel.setFloorBlur(context, floorBlur) },
+            valueText = { "$it%" },
+            description = "바닥 반사 블러"
+        )
+        Spacer(Modifier.height(Gap.Section))
+        Text("버튼 유리 블러", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Text("버튼 안에 비치는 반사를 얼마나 뿌옇게 할지 정합니다. 0이면 바닥과 같고, 기본은 12dp입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidSlider(
+            value = buttonBlur,
+            range = 0..30,
+            onValueChange = { buttonBlur = it },
+            onValueChangeFinished = { GoatFlexPanel.setButtonBlur(context, buttonBlur) },
+            valueText = { "${it}dp" },
+            description = "버튼 유리 블러"
+        )
         var haptic by remember { mutableStateOf(GoatFlexPanel.haptics(context)) }
         Spacer(Modifier.height(Gap.Item))
         LiquidSwitchRow("누를 때 진동", "타일을 누르면 짧게 진동합니다(시스템 진동 설정을 따릅니다).", haptic, enabled = true, onChange = {
