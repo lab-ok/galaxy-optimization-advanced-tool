@@ -342,14 +342,8 @@ object GoatFlexPanel {
                         seek(context, dir, pt.x, pt.y)
                     },
                     onSeekTo = { f -> seekTo(f) },
-                    onSpeed = { speed(context) },
-                    onSpeedSet = { s -> setSpeed(context, s) },
                     onBrightness = { v -> brightness(context, v) },
                     onVolume = { v -> volume(context, v) },
-                    onFullscreen = {
-                        hide(context)
-                        io.execute { FlexPanel.resetPosture(context) }
-                    },
                     onLock = { setLock(wctx, realHeight(context.getSystemService(DisplayManager::class.java)) / 2, !state.locked) },
                     onEntered = { onEntered() },
                     onExited = { onExited(context) }
@@ -515,8 +509,7 @@ object GoatFlexPanel {
             state.playing = ps?.state == PlaybackState.STATE_PLAYING
             // 방금 속도를 바꿨으면 앱이 새 속도를 알려 줄 때까지(최대 1.5초) 옛 값으로 되돌리지 않는다. 예전에는 0.5초마다 옛 속도로
             // 덮어써 눌러도 바뀌지 않는 것처럼 보였다(11-02 소장님 "재생속도 조절 안되는 느낌")
-            if (SystemClock.elapsedRealtime() > speedHoldUntil) state.speed = ps?.playbackSpeed?.takeIf { it > 0f } ?: state.speed
-            state.canSpeed = ps != null && ps.actions and PlaybackState.ACTION_SET_PLAYBACK_SPEED != 0L
+            state.speed = ps?.playbackSpeed?.takeIf { it > 0f } ?: state.speed
             state.position = ps?.let { if (it.state == PlaybackState.STATE_PLAYING) it.position + ((SystemClock.elapsedRealtime() - it.lastPositionUpdateTime) * it.playbackSpeed).toLong() else it.position } ?: 0L
             state.canSeek = ps != null && ps.actions and PlaybackState.ACTION_SEEK_TO != 0L && state.duration > 0
         }
@@ -590,42 +583,6 @@ object GoatFlexPanel {
         if (d <= 0) return
         io.execute { c.transportControls.seekTo((d * fraction).toLong()) }
         state.position = (d * fraction).toLong()
-    }
-
-    private val speeds = listOf(1f, 1.25f, 1.5f, 2f, 0.5f, 0.75f)
-
-    @Volatile private var speedHoldUntil = 0L
-
-    private fun speed(context: Context) {
-        val next = speeds[(speeds.indexOfFirst { kotlin.math.abs(it - state.speed) < 0.01f } + 1).mod(speeds.size)]
-        setSpeed(context, next)
-    }
-
-    /**
-     * 속도를 바꾸고 0.9초 뒤 앱이 실제로 받았는지 확인한다. 앱이 속도 변경을 지원하지 않거나(세션 동작에 SET_PLAYBACK_SPEED 없음)
-     * 받고도 그대로면 화면 값을 실제 속도로 되돌리고 그 사실을 보여 준다(누를 때마다 값만 바뀌고 영상은 그대로인 일이 없게).
-     */
-    private fun setSpeed(context: Context, s: Float) {
-        val c = controller ?: return
-        speedHoldUntil = SystemClock.elapsedRealtime() + 1500
-        state.speed = s
-        state.speedNote = ""
-        io.execute {
-            val r = runCatching { c.transportControls.setPlaybackSpeed(s) }
-            Thread.sleep(900)
-            val actual = c.playbackState?.playbackSpeed ?: 0f
-            val supported = (c.playbackState?.actions ?: 0L) and PlaybackState.ACTION_SET_PLAYBACK_SPEED != 0L
-            val ok = r.isSuccess && kotlin.math.abs(actual - s) < 0.01f
-            LogRepository.from(context).add("GOAT 플렉스 패널: 속도 ${s}x 요청 · 앱이 알린 속도 ${actual}x · 지원 표시 $supported · ${if (ok) "반영" else "반영 안 됨"}${r.exceptionOrNull()?.let { " (${it.message})" } ?: ""}".take(300))
-            main.post {
-                if (controller !== c) return@post
-                if (!ok) {
-                    speedHoldUntil = 0L
-                    if (actual > 0f) state.speed = actual
-                    state.speedNote = if (supported) "앱이 속도를 바꾸지 않았습니다" else "이 앱은 속도 변경을 받지 않습니다"
-                }
-            }
-        }
     }
 
     // ---- 앰비언트 엔진 연결 ----
@@ -1242,6 +1199,13 @@ object GoatFlexPanel {
                     blendScheduled = false
                     if (ambToken != token) {
                         ht.quitSafely()
+                        return
+                    }
+                    // 최대 60Hz로 한 걸음(11-02 플렉스 최적화): 폴드8 안쪽 화면은 120Hz라 VSync마다 하면 두 배를 일했다.
+                    // 캡처는 초당 10장이라 60Hz 보간으로 충분히 부드럽다. 건너뛴 VSync는 다음 걸음의 dt에 그대로 합쳐진다
+                    if (lastNanos != 0L && frameTimeNanos - lastNanos < 15_000_000L) {
+                        blendScheduled = true
+                        ch.postFrameCallback(this)
                         return
                     }
                     val dt = if (lastNanos == 0L) 16f else ((frameTimeNanos - lastNanos) / 1_000_000f).coerceIn(1f, 50f)

@@ -107,10 +107,7 @@ class FlexPanelState {
     var position by mutableLongStateOf(0L)
     var duration by mutableLongStateOf(0L)
     var speed by mutableFloatStateOf(1f)
-    var canSpeed by mutableStateOf(false)
 
-    /** 속도를 바꿨는데 앱이 받지 않았을 때 보여 줄 말(비면 없음). */
-    var speedNote by mutableStateOf("")
     var canSeek by mutableStateOf(false)
     var hasSession by mutableStateOf(false)
     var volume by mutableFloatStateOf(0.5f)
@@ -278,16 +275,6 @@ private fun tone(i: Int) = TONES[i.coerceIn(0, TONES.size - 1)]
 
 private fun ambK(i: Int) = tone(i).k
 
-/** 주변광 색에서 고른 강조색: 색이 거의 없으면 기본 강조색. */
-private fun adaptiveAccent(c: Int, on: Boolean): Color {
-    if (!on) return Glass.Accent
-    val o = AmbientColor.toOklab(c)
-    val ch = hypot(o[1], o[2])
-    if (ch < 0.035f) return Glass.Accent
-    val k = 0.15f / ch
-    return Color(AmbientColor.fromOklab(0.72f, o[1] * k, o[2] * k))
-}
-
 /**
  * 주변광 색의 비침 세기 보정: 무채색(회색·흰 화면)은 적게, 밝은 색도 조금 덜 비친다. 밝은 설정 화면 위에서 패널 전체가 회색으로
  * 바래 어두운 유리 느낌이 사라졌다(11-02 에뮬레이터 비교). 색이 있는 장면만 또렷하게 번진다.
@@ -318,16 +305,12 @@ fun FlexPanelUi(
     onPlayPause: () -> Unit,
     onSeek: (Int) -> Unit,
     onSeekTo: (Float) -> Unit,
-    onSpeed: () -> Unit,
-    onSpeedSet: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
     onVolume: (Float) -> Unit,
-    onFullscreen: () -> Unit,
     onLock: () -> Unit,
     onEntered: () -> Unit = {},
     onExited: () -> Unit = {}
 ) {
-    var bar by remember { mutableIntStateOf(0) }
     // 앰비언트 색을 프레임마다 목표 쪽으로(엔진의 시간 안정화). 다 따라가면 갱신하지 않는다
     // 실시간 반응(11-02): 보통 변화 0.6초·장면 전환 0.18초로 따라간다(예전 1.2초·0.3초). 새 목표가 오면 그 자리에서 바로 다시 겨냥한다
     // 11-02 첫 등장 깜박임: 예전에는 슬레이트 블루(#3A4A6B)에서 시작해 앱 틴트(YouTube 빨강)와 섞이며 분홍·자주로 보였다가
@@ -393,7 +376,7 @@ fun FlexPanelUi(
         ) {
             AmbientBackdrop(state, shown)
             HingeBleed(state)
-            PanelBody(state, shown, seekSec, show, bar, { bar = it }, onClose, onPlayPause, onSeek, onSeekTo, onSpeed, onSpeedSet, onBrightness, onVolume, onFullscreen, onLock)
+            PanelBody(state, shown, seekSec, show, onClose, onPlayPause, onSeek, onSeekTo, onBrightness, onVolume, onLock)
         }
     }
 }
@@ -643,17 +626,12 @@ private fun PanelBody(
     amb: List<Color>,
     seekSec: Int,
     show: (String) -> Boolean,
-    bar: Int,
-    setBar: (Int) -> Unit,
     onClose: () -> Unit,
     onPlayPause: () -> Unit,
     onSeek: (Int) -> Unit,
     onSeekTo: (Float) -> Unit,
-    onSpeed: () -> Unit,
-    onSpeedSet: (Float) -> Unit,
     onBrightness: (Float) -> Unit,
     onVolume: (Float) -> Unit,
-    onFullscreen: () -> Unit,
     onLock: () -> Unit
 ) {
     val gap = Glass.gap
@@ -1288,13 +1266,6 @@ private fun DrawScope.seekIcon(c: Color, backward: Boolean, sec: Int) {
     val fm = p.fontMetrics
     drawContext.canvas.nativeCanvas.drawText("$sec", center.x, center.y - (fm.ascent + fm.descent) / 2f, p)
 }
-
-private fun DrawScope.gauge(c: Color) {
-    val s = size.minDimension
-    drawArc(c, 150f, 240f, false, Offset(s * 0.12f, s * 0.12f), Size(s * 0.76f, s * 0.76f), style = stroke())
-    drawLine(c, Offset(s / 2, s / 2), Offset(s * 0.68f, s * 0.32f), s * 0.08f, StrokeCap.Round)
-}
-
 private fun DrawScope.sun(c: Color) {
     val s = size.minDimension
     val center = Offset(s / 2, s / 2)
@@ -1344,17 +1315,6 @@ private fun DrawScope.lock(c: Color, locked: Boolean) {
     if (!locked) drawLine(c, Offset(s * 0.68f + shift, s * 0.34f), Offset(s * 0.68f + shift, s * 0.4f), s * 0.08f, StrokeCap.Round)
     if (locked) drawLine(c, Offset(s * 0.32f, s * 0.34f), Offset(s * 0.32f, s * 0.46f), s * 0.08f, StrokeCap.Round)
     if (locked) drawLine(c, Offset(s * 0.68f, s * 0.34f), Offset(s * 0.68f, s * 0.46f), s * 0.08f, StrokeCap.Round)
-}
-
-private fun DrawScope.expand(c: Color) {
-    val s = size.minDimension
-    val w = s * 0.08f
-    drawLine(c, Offset(s * 0.2f, s * 0.2f), Offset(s * 0.42f, s * 0.42f), w, StrokeCap.Round)
-    drawLine(c, Offset(s * 0.2f, s * 0.2f), Offset(s * 0.38f, s * 0.2f), w, StrokeCap.Round)
-    drawLine(c, Offset(s * 0.2f, s * 0.2f), Offset(s * 0.2f, s * 0.38f), w, StrokeCap.Round)
-    drawLine(c, Offset(s * 0.8f, s * 0.8f), Offset(s * 0.58f, s * 0.58f), w, StrokeCap.Round)
-    drawLine(c, Offset(s * 0.8f, s * 0.8f), Offset(s * 0.62f, s * 0.8f), w, StrokeCap.Round)
-    drawLine(c, Offset(s * 0.8f, s * 0.8f), Offset(s * 0.8f, s * 0.62f), w, StrokeCap.Round)
 }
 
 /**

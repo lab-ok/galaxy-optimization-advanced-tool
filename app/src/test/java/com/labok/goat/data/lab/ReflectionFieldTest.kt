@@ -74,18 +74,6 @@ class ReflectionFieldTest {
     }
 
     @Test
-    fun nearRawKeepsSourceDetailFlippedWithFade() {
-        val nw = 16
-        val nh = 10
-        // 맨 아래 줄(접는 선 쪽)만 흰색
-        val px = IntArray(nw * nh) { i -> if (i / nw == nh - 1) 0xFFFFFFFF.toInt() else 0xFF000000.toInt() }
-        val out = ReflectionField.buildNearRaw(px, nw, nh)
-        // 뒤집혀 맨 위 줄이 흰색이고(색은 원본 그대로), 아래 끝은 투명으로 사라진다
-        assertTrue(out[0] and 0xFFFFFF == 0xFFFFFF)
-        assertTrue("위는 보이고(${out[0] ushr 24}) 아래 끝은 투명(${out[(nh - 1) * nw] ushr 24})", (out[0] ushr 24) > 150 && (out[(nh - 1) * nw] ushr 24) == 0)
-    }
-
-    @Test
     fun blurCurveMatchesAgreedTable() {
         // 11-02 소장님 확정(2차): 위 10%까지는 조금 더 선명하게, 25%부터 적극적으로
         val table = listOf(0f to 1.5f, 0.05f to 3.5f, 0.10f to 6f, 0.25f to 13f, 0.50f to 24f, 0.75f to 34f, 1f to 42f)

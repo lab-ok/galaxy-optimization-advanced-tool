@@ -140,23 +140,6 @@ object ReflectionField {
         return out
     }
 
-    /**
-     * 근거리 띠 빠른 판(11-02 실기 속도): 뒤집고 세기(거리 에너지 × 띠 아래쪽 페이드)만 알파로 넣는다. 색 보정과 블러는 GPU가 한다.
-     * 768×127칸 기준 1~2ms(예전 색 보정·블러 포함 판은 실기 31~137ms).
-     */
-    fun buildNearRaw(px: IntArray, w: Int, h: Int, spec: Spec = Spec()): IntArray {
-        require(w > 0 && h > 1 && px.size >= w * h)
-        val out = IntArray(w * h)
-        for (y in 0 until h) {
-            val db = y / (h - 1f)
-            val feather = 1f - smooth(((db - 0.5f) / 0.5f).coerceIn(0f, 1f))
-            val a = ((energyAt(db * NEAR_FRAC, spec) * feather * 255f).roundToInt().coerceIn(0, 255)) shl 24
-            val sy = (h - 1 - y) * w
-            for (x in 0 until w) out[y * w + x] = a or (px[sy + x] and 0xFFFFFF)
-        }
-        return out
-    }
-
     /** [px](w×h)를 [k]×[k] 칸 평균으로 줄인다(고해상도 캡처 → 기본 필드용). */
     fun boxDown(px: IntArray, w: Int, h: Int, k: Int): IntArray {
         val ow = w / k

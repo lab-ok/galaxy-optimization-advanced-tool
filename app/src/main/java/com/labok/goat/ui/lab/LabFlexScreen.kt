@@ -1,8 +1,6 @@
 package com.labok.goat.ui.lab
 
-import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
@@ -441,16 +439,6 @@ private val liquidPlace: FiniteAnimationSpec<IntOffset>
     get() = spring(UiMotion.ratio(0.62f), UiMotion.stiffness(260f, 0.62f))
 private val liquidFade: FiniteAnimationSpec<Float>
     get() = spring(1f, UiMotion.stiffness(400f, 1f))
-
-/** 시험 결과 파일을 공유 창으로 보낸다. */
-internal fun shareResult(context: Context, uri: Uri) {
-    val send = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_STREAM, uri)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-    runCatching { context.startActivity(Intent.createChooser(send, Copy.LAB_SHARE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-}
 
 /** GOAT 패널 설정 시트(플렉스 모드 화면의 점 세 개 메뉴 → 「GOAT 패널 설정」, 11-02 소장님). */
 @Composable
