@@ -134,6 +134,9 @@ class FlexPanelState {
     var ambMode by mutableIntStateOf(3)
     var ambPicker by mutableStateOf(false)
 
+    /** 실제 반사 갱신 수(초당, 5초 평균). 실시간일 때 머리글 칩에 표시해 실제 속도를 바로 확인한다. */
+    var ambFps by mutableFloatStateOf(0f)
+
     /** 첫 앰비언트 결과(화면 분석·포스터·앱 색)가 들어왔는지. 그 전에는 대체 그라데이션·빛을 그리지 않고 중립 유리로 둔다. */
     var ambReady by mutableStateOf(false)
 
@@ -501,6 +504,43 @@ private fun DrawScope.drawPoster(blur: ImageBitmap?, origin: Offset, area: Size,
     drawIntoCanvas { cv -> cv.restore() }
 }
 
+/** 반사 색 보정(채도 1.3·대비 1.12, 가운데 0.48) — 예전 CPU의 AmbientColor.grade를 GPU 색 행렬로 근사. 바닥·근거리 띠가 같이 쓴다. */
+internal fun reflectionGrade(): androidx.compose.ui.graphics.ColorFilter {
+    val sat = 1.3f
+    val lr = 0.2126f * (1 - sat)
+    val lg = 0.7152f * (1 - sat)
+    val lb = 0.0722f * (1 - sat)
+    val c = 1.12f
+    val t = 0.48f * (1 - c) * 255f
+    return androidx.compose.ui.graphics.ColorFilter.colorMatrix(
+        androidx.compose.ui.graphics.ColorMatrix(
+            floatArrayOf(
+                c * (lr + sat), c * lg, c * lb, 0f, t,
+                c * lr, c * (lg + sat), c * lb, 0f, t,
+                c * lr, c * lg, c * (lb + sat), 0f, t,
+                0f, 0f, 0f, 1f, 0f
+            )
+        )
+    )
+}
+
+/**
+ * 근거리 고해상도 띠(바닥): GPU에서 블러(약 2dp)와 색 보정(채도 1.3·대비 1.12, 기본 필드와 같은 보정)을 걸어 그린다.
+ * CPU는 뒤집기·세기만 해서 실기 프레임마다 분석이 밀리지 않는다(11-02).
+ */
+@Composable
+private fun NearLayer(state: FlexPanelState, alpha: Float) {
+    val n = state.near ?: return
+    val cf = remember { reflectionGrade() }
+    Canvas(
+        Modifier.fillMaxWidth().fillMaxHeight(com.labok.goat.data.lab.ReflectionField.NEAR_FRAC).graphicsLayer {
+            renderEffect = androidx.compose.ui.graphics.BlurEffect(2.dp.toPx(), 2.dp.toPx(), androidx.compose.ui.graphics.TileMode.Clamp)
+        }
+    ) {
+        drawImage(n, dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()), alpha = alpha, filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium, colorFilter = cf)
+    }
+}
+
 /**
  * 앰비언트 바닥: 포스터를 크게 흐려 깔고(있으면), 좌·중·우 색의 넓은 가로 그라데이션, 위쪽(영상 쪽)에서 흘러내리는 빛,
  * 천천히 떠다니는 빛 두 덩이, 아래로 갈수록 어둡게. 강도 단계로 세기를 바꾼다.
@@ -512,6 +552,7 @@ private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
     val field = state.field
     val poster = posterSource(state)
     val posterBlur = rememberPosterBlur(poster, state.art == null)
+    val gradeCf = remember { reflectionGrade() }
     Canvas(Modifier.fillMaxSize()) {
         if (kk > 0f && poster != null) {
             drawPoster(posterBlur, Offset.Zero, size, (0.92f * kk).coerceAtMost(1f))
@@ -519,11 +560,9 @@ private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
             // 공간 반사: 위 화면이 바닥에 비친 상을 패널 전체에 깐다(쌍선형 확대). 회색·밝은 화면은 덜 비친다
             val w = (0.92f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f)
             val dst = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt())
-            drawImage(field, dstSize = dst, alpha = w, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+            drawImage(field, dstSize = dst, alpha = w, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low, colorFilter = gradeCf)
             // 근거리 띠: 같은 좌표계로 패널 위쪽에 고해상도 반사를 얹는다(띠 아래쪽은 투명해져 기본 필드로 이어진다)
-            state.near?.let { n ->
-                drawImage(n, dstSize = androidx.compose.ui.unit.IntSize(dst.width, (dst.height * com.labok.goat.data.lab.ReflectionField.NEAR_FRAC).toInt()), alpha = w, filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium)
-            }
+            // 근거리 띠는 아래 NearLayer가 GPU 블러·색 보정으로 따로 그린다
         } else if (kk > 0f && state.ambReady) {
             drawRect(Brush.horizontalGradient(listOf(c[0].copy(alpha = 0.38f * kk * ambWeight(c[0])), c[1].copy(alpha = 0.30f * kk * ambWeight(c[1])), c[2].copy(alpha = 0.38f * kk * ambWeight(c[2])))))
             // 영상(위)에서 흘러내리는 빛
@@ -531,6 +570,7 @@ private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
         }
         drawRect(Brush.verticalGradient(listOf(Color(0x00000000), Color(0x73000000))))
     }
+    if (kk > 0f && field != null && poster == null) NearLayer(state, (0.92f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f))
     // 떠다니는 빛 두 덩이: 한 번 그려 둔 층을 옮기기만 한다(움직이는 동안 다시 그리지 않아 가볍다). 품질 '높음'·애니메이션 켬일 때만 움직인다
     if (kk > 0f && field == null && state.ambReady) GlowLayer(c, kk, state.motion && state.quality >= 3)
 }
@@ -620,7 +660,7 @@ private fun PanelBody(
                     if (state.ambSource.isNotEmpty()) {
                         // 누르면 앰비언트 고르기 탭이 열린다(11-02 소장님)
                         Text(
-                            state.ambSource,
+                            if (state.ambMode == 3 && state.ambFps > 0f && state.ambSource.startsWith("화면")) "실시간 · ${state.ambFps.toInt()}fps" else state.ambSource,
                             color = Glass.Ink,
                             fontSize = 10.sp,
                             modifier = Modifier.clip(RoundedCornerShape(50)).background(if (state.ambPicker) Color(0x44FFFFFF) else Color(0x22FFFFFF))

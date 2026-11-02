@@ -25,9 +25,10 @@ class ReflectionFieldTest {
         val mid = ReflectionField.clarity(f, w, (outH * 0.5f).toInt())
         val bot = ReflectionField.clarity(f, w, (outH * 0.9f).toInt())
         assertTrue("선명도 위 $top > 가운데 $mid > 아래 $bot", top > mid && mid > bot)
-        // 위쪽은 줄무늬(공간 패턴)가 원본 선명도의 70% 넘게 남고, 아래는 30% 아래로 퍼진다
+        // 기본 필드는 칸 격자가 보이지 않게 위쪽도 최소 1.3칸 흐린다(11-02) — 그래도 줄무늬가 원본의 25% 넘게 남고, 아래는 30% 아래로 퍼진다.
+        // 접는 선 바로 아래 선명함은 근거리 띠(nearRawKeepsSourceDetail)가 맡는다
         val src = ReflectionField.clarity(leftRedRightBlue(), w, 0)
-        assertTrue("위쪽 줄무늬가 남아야 함: $top / 원본 $src", top > src * 0.7f)
+        assertTrue("위쪽 줄무늬가 남아야 함: $top / 원본 $src", top > src * 0.25f)
         assertTrue("아래는 퍼져야 함: $bot / 원본 $src", bot < src * 0.3f)
     }
 
@@ -72,5 +73,17 @@ class ReflectionFieldTest {
         val f = ReflectionField.build(IntArray(w * h) { 0xFF000000.toInt() }, w, h)
         val c = ReflectionField.sample(f, w, ReflectionField.Spec().outH, 0.5f, 0.5f)
         assertTrue(ReflectionField.luma(c) < 0.02f)
+    }
+
+    @Test
+    fun nearRawKeepsSourceDetailFlippedWithFade() {
+        val nw = 16
+        val nh = 10
+        // 맨 아래 줄(접는 선 쪽)만 흰색
+        val px = IntArray(nw * nh) { i -> if (i / nw == nh - 1) 0xFFFFFFFF.toInt() else 0xFF000000.toInt() }
+        val out = ReflectionField.buildNearRaw(px, nw, nh)
+        // 뒤집혀 맨 위 줄이 흰색이고(색은 원본 그대로), 아래 끝은 투명으로 사라진다
+        assertTrue(out[0] and 0xFFFFFF == 0xFFFFFF)
+        assertTrue("위는 보이고(${out[0] ushr 24}) 아래 끝은 투명(${out[(nh - 1) * nw] ushr 24})", (out[0] ushr 24) > 150 && (out[(nh - 1) * nw] ushr 24) == 0)
     }
 }

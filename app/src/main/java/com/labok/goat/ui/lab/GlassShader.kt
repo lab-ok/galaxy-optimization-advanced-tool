@@ -128,10 +128,18 @@ float2 edgeNormal(float2 p, float2 b, float r) {
     return normalize(float2(s.x * w, s.y * (1.0 - w)) + float2(0.0, 1e-4));
 }
 
+// 반사는 CPU에서 색 보정 없이 온다(실기 속도). 근거리 띠는 5탭 블러를 하고, 합친 뒤 색 보정(채도 1.3·대비 1.12)을 한 번에 한다
 half4 back(float2 c) {
-    half4 n = near.eval(c);
+    float o = 1.6 * density;
+    half4 n = near.eval(c) * 0.36 + (near.eval(c + float2(o, 0.0)) + near.eval(c - float2(o, 0.0)) + near.eval(c + float2(0.0, o)) + near.eval(c - float2(0.0, o))) * 0.16;
     half4 f = field.eval(c);
-    return n + f * (1.0 - n.a);
+    half4 m = n + f * (1.0 - n.a);
+    if (m.a < 0.001) return m;
+    float3 col = float3(m.rgb) / float(m.a);
+    float lum = dot(col, float3(0.2126, 0.7152, 0.0722));
+    col = mix(float3(lum), col, 1.3);
+    col = clamp((col - 0.48) * 1.12 + 0.48, 0.0, 1.0);
+    return half4(half3(col) * m.a, m.a);
 }
 
 half4 main(float2 coord) {

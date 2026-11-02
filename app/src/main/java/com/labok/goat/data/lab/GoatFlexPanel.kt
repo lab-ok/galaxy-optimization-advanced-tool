@@ -663,7 +663,7 @@ object GoatFlexPanel {
                         f.getPixels(px0, 0, f.width, 0, 0, f.width, f.height)
                         if (latest.getAndSet(Frame(px0, f.width, f.height, t1)) != null) tel.dropped++
                         // 공간 변화량: 같은 자리 칸끼리 색 차이(평균색이 비슷한 다른 장면도 잡는다)
-                        changed = (prevFrame?.let { frameDiff(it, px0) } ?: 1f) > 0.008f
+                        changed = (prevFrame?.let { frameDiff(it, px0) } ?: 1f) > CHANGE_MIN
                         prevFrame = px0
                     } else {
                         tel.fallback++
@@ -774,14 +774,16 @@ object GoatFlexPanel {
                 // 미러 2판은 기본(128칸)과 근거리 원본 띠가 따로 온다. 예전 screencap은 고해상도 한 장을 여기서 줄인다
                 val k = if (hi.near != null) (hi.nw / hi.w).coerceAtLeast(1) else (hi.w / BASE_W).coerceAtLeast(1)
                 val fr = if (hi.near != null || k == 1) hi else Frame(ReflectionField.boxDown(hi.px, hi.w, hi.h, k), hi.w / k, hi.h / k, hi.at)
-                val changed = prev?.let { frameDiff(it, fr.px) > 0.008f } ?: true
+                // 11-02 실기 로그: 0.8% 기준이면 영상 프레임 대부분이 '변화 없음'으로 버려져 반사가 초당 3~6번만 바뀌었다 → 0.15%
+                val changed = prev?.let { frameDiff(it, fr.px) > CHANGE_MIN } ?: true
                 prev = fr.px
                 if (changed) tel.changed++
                 // 보호 화면 판정: 거의 다 검은데(85% 넘게) 앱이 재생 중이면 보호 콘텐츠로 본다. 자막·조작 버튼만 찍혀
                 // 보호 화면과 분석이 번갈아 바뀌던 것을 막는다(가설, 실기 기록으로 확인한다)
                 val dark = darkFraction(fr.px)
                 val playing = controller?.playbackState?.state == PlaybackState.STATE_PLAYING
-                val pal0 = AmbientColor.extract(fr.px, fr.w, fr.h)
+                // 대표색은 4×4로 줄인 그림으로(실기 속도: 전체 칸으로 하면 프레임당 수 ms~수십 ms)
+                val pal0 = if (fr.w >= 64 && fr.h >= 16) AmbientColor.extract(ReflectionField.boxDown(fr.px, fr.w, fr.h, 4), fr.w / 4, fr.h / 4) else AmbientColor.extract(fr.px, fr.w, fr.h)
                 // 11-02 실사용 검수: 유튜브 어두운 장면(실제 검은 영상)이 보호 화면으로 잘못 잡혀 연출로 바뀔 수 있었다. 화면만으로는
                 // 검은 영상과 DRM을 구분할 수 없어, 보호 콘텐츠 앱(넷플릭스·디즈니+·쿠팡플레이 등)은 바로, 그 밖의 앱은 재생 중
                 // 거의 검은 화면이 4초 넘게 이어질 때만 보호 화면으로 본다(짧은 암전은 그대로 어둡게 비친다)
@@ -844,7 +846,7 @@ object GoatFlexPanel {
             state.posterShown = "포스터" in src || "앱 색" in src || posterPreview
             if (fNew == null && !keep) {
                 if (state.field != null) blendTo(token, null)
-            } else if (fNew != null && (slowBlend || lastTarget == null || fieldChange(lastTarget!!, fNew.px) > 0.006f)) {
+            } else if (fNew != null && (slowBlend || lastTarget == null || fieldChange(lastTarget!!, fNew.px) > CHANGE_MIN)) {
                 if (SystemClock.elapsedRealtime() - clarityLogAt > 1000) {
                     clarityLogAt = SystemClock.elapsedRealtime()
                     val c = listOf(0.1f, 0.5f, 0.9f).map { ReflectionField.clarity(fNew.px, fNew.w, (fNew.h * it).toInt()) }
@@ -868,6 +870,9 @@ object GoatFlexPanel {
     private val DRM_APPS = listOf("com.netflix.", "com.disney.", "com.coupang.mobile.play", "com.amazon.avod", "net.cj.cjhv.gs.tving", "kr.co.captv.pooqV2", "com.frograms.wplay")
 
     @Volatile private var blackSince = 0L
+
+    /** 반사를 다시 만들 최소 화면 변화(같은 자리 칸 색 차이 평균). */
+    private const val CHANGE_MIN = 0.0015f
 
     private const val ACTIVE_MS = 250L
     private const val STILL_MS = 1000L
@@ -961,6 +966,8 @@ object GoatFlexPanel {
                     fieldUpdates
                 )
             )
+            val fps = fieldUpdates * 1000f / span.coerceAtLeast(1)
+            main.post { state.ambFps = fps }
             stallMs = 0
             stalls = 0
             since = now
@@ -989,8 +996,9 @@ object GoatFlexPanel {
     /** 미러 2판: 이미 잘라 온 근거리 원본 띠([nw]×[nh], 맨 아래 줄이 접는 선 쪽)로 근거리 반사를 만든다. */
     private fun withNearBand(base: Field, near: IntArray, nw: Int, nh: Int, scale: Int): Field {
         if (nh < 8) return base
-        val src = IntArray(nw * nh) { i -> AmbientColor.grade(near[i]) }
-        return Field(base.px, base.w, base.h, ReflectionField.buildNear(src, nw, nh, scale), nw, nh)
+        // 11-02 실기: 768칸 띠를 CPU로 색 보정·블러하느라 한 장에 31~137ms 걸려 프레임 대부분을 버렸다. 이제 CPU는 뒤집기·세기만 하고
+        // 색 보정(채도·대비)과 블러는 GPU(셰이더·RenderEffect)가 한다
+        return Field(base.px, base.w, base.h, ReflectionField.buildNearRaw(near, nw, nh), nw, nh)
     }
 
     private fun Field.withHinge(row: IntArray) = Field(px, w, h, near, nw, nh, row)
@@ -1264,9 +1272,9 @@ object GoatFlexPanel {
 
     /** 다듬은 색으로 반사 필드를 만들고 그림으로 바꾼다(작업 스레드). */
     private fun makeField(px: IntArray, w: Int, h: Int): Field {
-        val graded = IntArray(px.size) { AmbientColor.grade(px[it]) }
+        // 색 보정(채도·대비)은 GPU가 그릴 때 한다(11-02 실기 속도: 칸마다 OKLab 보정이 프레임당 수십 ms였다)
         val spec = ReflectionField.Spec()
-        val f = ReflectionField.build(graded, w, h, spec)
+        val f = ReflectionField.build(px, w, h, spec)
         return Field(f, w, spec.outH)
     }
 

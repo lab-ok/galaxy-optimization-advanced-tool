@@ -18,7 +18,7 @@ import kotlin.math.roundToInt
  */
 object ReflectionField {
     data class Spec(
-        val outH: Int = 72,
+        val outH: Int = 96,
         val blurMin: Float = 0f,
         val blurMax: Float = 14f,
         val gamma: Float = 1.2f,
@@ -49,7 +49,9 @@ object ReflectionField {
             val d = y / (outH - 1f)
             // 거리 곡선(11-02 최종): 위 12%까지는 거의 흐리지 않고(원본 구조가 또렷), 12~90% 사이에서 부드럽게(smoothstep) 커져
             // 35~65%에서 확산이 분명해지고, 아래쪽은 색 분위기만 남는다. 단계 사이는 두 흐림 단계를 섞어 경계가 없다
-            val r = radiusAt(d, spec)
+            // 기본 필드(128칸)는 패널에서 14배 넘게 늘어나므로 최소 1.3칸은 흐려 칸 격자가 보이지 않게 한다(11-02 실기 "원소스 픽셀 다 보임").
+            // 접는 선 바로 아래 선명한 부분은 근거리 띠(고해상도)가 맡는다
+            val r = maxOf(radiusAt(d, spec), 1.3f)
             var i = 0
             while (i < LEVELS.size - 2 && LEVELS[i + 1] < r) i++
             val t = ((r - LEVELS[i]) / (LEVELS[i + 1] - LEVELS[i])).coerceIn(0f, 1f)
@@ -123,6 +125,23 @@ object ReflectionField {
         return out
     }
 
+    /**
+     * 근거리 띠 빠른 판(11-02 실기 속도): 뒤집고 세기(거리 에너지 × 띠 아래쪽 페이드)만 알파로 넣는다. 색 보정과 블러는 GPU가 한다.
+     * 768×127칸 기준 1~2ms(예전 색 보정·블러 포함 판은 실기 31~137ms).
+     */
+    fun buildNearRaw(px: IntArray, w: Int, h: Int, spec: Spec = Spec()): IntArray {
+        require(w > 0 && h > 1 && px.size >= w * h)
+        val out = IntArray(w * h)
+        for (y in 0 until h) {
+            val db = y / (h - 1f)
+            val feather = 1f - smooth(((db - 0.5f) / 0.5f).coerceIn(0f, 1f))
+            val a = ((energyAt(db * NEAR_FRAC, spec) * feather * 255f).roundToInt().coerceIn(0, 255)) shl 24
+            val sy = (h - 1 - y) * w
+            for (x in 0 until w) out[y * w + x] = a or (px[sy + x] and 0xFFFFFF)
+        }
+        return out
+    }
+
     /** [px](w×h)를 [k]×[k] 칸 평균으로 줄인다(고해상도 캡처 → 기본 필드용). */
     fun boxDown(px: IntArray, w: Int, h: Int, k: Int): IntArray {
         val ow = w / k
@@ -174,39 +193,51 @@ object ReflectionField {
         return cur
     }
 
+    /**
+     * 상자 흐림 한 번(가로→세로). 미끄러지는 창으로 칸마다 더하고 빼기만 해서 반지름과 무관하게 칸당 비용이 같다
+     * (11-02 실기: 칸마다 반지름만큼 다시 더하던 예전 방식은 반지름 15에서 프레임마다 수 ms~수십 ms가 걸렸다).
+     */
     private fun box(src: IntArray, w: Int, h: Int, r: Int): IntArray {
         val tmp = IntArray(src.size)
         val out = IntArray(src.size)
-        // 가로
+        val n = 2 * r + 1
         for (y in 0 until h) {
+            val row = y * w
+            var sr = 0
+            var sg = 0
+            var sb = 0
+            for (k in -r..r) {
+                val c = src[row + k.coerceIn(0, w - 1)]
+                sr += c shr 16 and 0xFF
+                sg += c shr 8 and 0xFF
+                sb += c and 0xFF
+            }
             for (x in 0 until w) {
-                var sr = 0
-                var sg = 0
-                var sb = 0
-                for (k in -r..r) {
-                    val c = src[y * w + (x + k).coerceIn(0, w - 1)]
-                    sr += c shr 16 and 0xFF
-                    sg += c shr 8 and 0xFF
-                    sb += c and 0xFF
-                }
-                val n = 2 * r + 1
-                tmp[y * w + x] = (0xFF shl 24) or ((sr / n) shl 16) or ((sg / n) shl 8) or (sb / n)
+                tmp[row + x] = (0xFF shl 24) or ((sr / n) shl 16) or ((sg / n) shl 8) or (sb / n)
+                val add = src[row + (x + r + 1).coerceAtMost(w - 1)]
+                val sub = src[row + (x - r).coerceAtLeast(0)]
+                sr += (add shr 16 and 0xFF) - (sub shr 16 and 0xFF)
+                sg += (add shr 8 and 0xFF) - (sub shr 8 and 0xFF)
+                sb += (add and 0xFF) - (sub and 0xFF)
             }
         }
-        // 세로
-        for (y in 0 until h) {
-            for (x in 0 until w) {
-                var sr = 0
-                var sg = 0
-                var sb = 0
-                for (k in -r..r) {
-                    val c = tmp[(y + k).coerceIn(0, h - 1) * w + x]
-                    sr += c shr 16 and 0xFF
-                    sg += c shr 8 and 0xFF
-                    sb += c and 0xFF
-                }
-                val n = 2 * r + 1
+        for (x in 0 until w) {
+            var sr = 0
+            var sg = 0
+            var sb = 0
+            for (k in -r..r) {
+                val c = tmp[k.coerceIn(0, h - 1) * w + x]
+                sr += c shr 16 and 0xFF
+                sg += c shr 8 and 0xFF
+                sb += c and 0xFF
+            }
+            for (y in 0 until h) {
                 out[y * w + x] = (0xFF shl 24) or ((sr / n) shl 16) or ((sg / n) shl 8) or (sb / n)
+                val add = tmp[(y + r + 1).coerceAtMost(h - 1) * w + x]
+                val sub = tmp[(y - r).coerceAtLeast(0) * w + x]
+                sr += (add shr 16 and 0xFF) - (sub shr 16 and 0xFF)
+                sg += (add shr 8 and 0xFF) - (sub shr 8 and 0xFF)
+                sb += (add and 0xFF) - (sub and 0xFF)
             }
         }
         return out
