@@ -18,16 +18,16 @@ import kotlin.math.roundToInt
  */
 object ReflectionField {
     data class Spec(
-        val outH: Int = 48,
+        val outH: Int = 56,
         val blurMin: Float = 0f,
-        val blurMax: Float = 10f,
-        val gamma: Float = 1.7f,
+        val blurMax: Float = 14f,
+        val gamma: Float = 1.2f,
         val energyTop: Float = 1f,
-        val energyBottom: Float = 0.62f
+        val energyBottom: Float = 0.72f
     )
 
     /** 미리 만들어 두는 흐림 단계(원본 칸 반지름). r(d)는 이 사이를 섞는다. */
-    private val LEVELS = floatArrayOf(0f, 1f, 2f, 3.5f, 5.5f, 8f, 11f)
+    private val LEVELS = floatArrayOf(0f, 1f, 2f, 3.5f, 5.5f, 8f, 11f, 15f)
 
     /**
      * [px](w×h, 위 화면의 반사에 쓸 부분)로 반사 필드를 만든다. 반환은 w×spec.outH ARGB.
@@ -47,7 +47,10 @@ object ReflectionField {
         val out = IntArray(w * outH)
         for (y in 0 until outH) {
             val d = y / (outH - 1f)
-            val r = spec.blurMin + (spec.blurMax - spec.blurMin) * d.pow(spec.gamma)
+            // 거리 곡선(11-02 최종): 위 12%까지는 거의 흐리지 않고(원본 구조가 또렷), 12~90% 사이에서 부드럽게(smoothstep) 커져
+            // 35~65%에서 확산이 분명해지고, 아래쪽은 색 분위기만 남는다. 단계 사이는 두 흐림 단계를 섞어 경계가 없다
+            val u = smooth(((d - 0.12f) / 0.78f).coerceIn(0f, 1f))
+            val r = spec.blurMin + (spec.blurMax - spec.blurMin) * u.pow(spec.gamma)
             var i = 0
             while (i < LEVELS.size - 2 && LEVELS[i + 1] < r) i++
             val t = ((r - LEVELS[i]) / (LEVELS[i + 1] - LEVELS[i])).coerceIn(0f, 1f)

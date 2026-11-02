@@ -186,7 +186,7 @@ object TentMode {
             if (sw <= 0 || sh <= 0 || sw > 8192 || sh > 8192) return null
             val rows = (sh * top).toInt().coerceIn(1, sh)
             val h = (w * rows / sw).coerceAtLeast(1)
-            val cw = (sw / w).coerceAtLeast(1)
+            // 칸 배정은 실수 비율로(예전에는 정수 나눗셈 1848/64=28이라 오른쪽 56px가 버려지고 반사가 오른쪽으로 갈수록 어긋났다, 11-02)
             val ch = (rows / h).coerceAtLeast(1)
             val rowStep = (ch / 4).coerceAtLeast(1)
             val r = IntArray(w * h)
@@ -209,17 +209,17 @@ object TentMode {
                     continue
                 }
                 input.readFully(row)
-                val oy = (y / ch).coerceAtMost(h - 1)
+                val oy = (y.toLong() * h / rows).toInt().coerceAtMost(h - 1)
                 var x = 0
                 while (x < sw) {
-                    val ox = (x / cw).coerceAtMost(w - 1)
+                    val ox = (x.toLong() * w / sw).toInt().coerceAtMost(w - 1)
                     val i = oy * w + ox
                     val o = x * 4
                     r[i] += row[o].toInt() and 0xFF
                     g[i] += row[o + 1].toInt() and 0xFF
                     b[i] += row[o + 2].toInt() and 0xFF
                     n[i]++
-                    x += 4
+                    x += 3
                 }
             }
             runCatching { p.destroy() }

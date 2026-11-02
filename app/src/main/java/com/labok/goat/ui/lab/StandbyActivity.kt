@@ -221,6 +221,14 @@ private fun ReflectionPattern(kind: Int) {
                 drawCircle(Color(0xFFFFFFFF), h * 0.12f, androidx.compose.ui.geometry.Offset(w * 0.3f, h * 0.3f))
             }
             5 -> drawRect(Color.White)
+            // 7: X축 정합 측정용 — 검은 바탕에 10·30·50·70·90% 자리의 흰 세로 표식(폭 2%). 반사에서 같은 자리에 맺히는지 px로 잰다
+            7 -> for (f in listOf(0.1f, 0.3f, 0.5f, 0.7f, 0.9f)) {
+                drawRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(w * (f - 0.01f), 0f), size = androidx.compose.ui.geometry.Size(w * 0.02f, h))
+            }
+            // 8: 네 색 띠(빨강·초록·파랑·노랑, 각 25%) — 색 경계가 반사에서 같은 x에 오는지 본다
+            8 -> listOf(Color(0xFFE02020), Color(0xFF20B040), Color(0xFF2040E0), Color(0xFFE0C020)).forEachIndexed { i, c ->
+                drawRect(c, topLeft = androidx.compose.ui.geometry.Offset(w * i / 4f, 0f), size = androidx.compose.ui.geometry.Size(w / 4f, h))
+            }
             else -> Unit
         }
     }

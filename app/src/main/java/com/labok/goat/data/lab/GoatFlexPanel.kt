@@ -68,8 +68,8 @@ object GoatFlexPanel {
     fun qualityLabel(v: Int) = listOf("끔", "낮음", "균형", "높음")[v]
     val AMBIENT_MODES = listOf(0, 1, 2, 3)
     fun ambientLabel(v: Int) = listOf("끔", "고정 색", "포스터", "화면 분석")[v]
-    val INTENSITIES = listOf(0, 1, 2)
-    fun intensityLabel(v: Int) = listOf("은은", "균형", "몰입")[v]
+    val INTENSITIES = listOf(0, 1, 2, 3)
+    fun intensityLabel(v: Int) = listOf("은은", "균형", "선명", "몰입")[v.coerceIn(0, 3)]
     fun quality(c: Context) = prefs(c).getInt("quality", 2)
     fun setQuality(c: Context, v: Int) = prefs(c).edit().putInt("quality", v).apply()
     fun ambientMode(c: Context) = prefs(c).getInt("ambient", 3)
@@ -118,6 +118,38 @@ object GoatFlexPanel {
                     attach(app, pkg, label, c)
                 }
             }
+            artFromUri(app, c)
+        }
+    }
+
+    /**
+     * 포스터 진단·보충(11-02 최종 통합 지시): 보호 화면에서 넷플릭스는 포스터, 디즈니+는 앱 색으로 대신되는 차이는 세션이 그림을
+     * 주느냐에 달렸다. 세션 메타데이터에 어떤 그림 키가 있는지 기록하고, 그림(비트맵)은 없고 주소(URI)만 있으면 그 주소에서
+     * 공개 포스터를 받아 쓴다(content:// 또는 https, 3초 제한). 영상 화면은 손대지 않는다(io 스레드).
+     */
+    private fun artFromUri(app: Context, c: MediaController?) {
+        val md = c?.metadata ?: return
+        val bmpKeys = listOf(MediaMetadata.METADATA_KEY_ART, MediaMetadata.METADATA_KEY_ALBUM_ART, MediaMetadata.METADATA_KEY_DISPLAY_ICON)
+        val uriKeys = listOf(MediaMetadata.METADATA_KEY_ART_URI, MediaMetadata.METADATA_KEY_ALBUM_ART_URI, MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
+        val hasBmp = bmpKeys.filter { md.getBitmap(it) != null }.map { it.substringAfterLast('.') }
+        val uris = uriKeys.mapNotNull { k -> md.getString(k)?.takeIf { it.isNotBlank() }?.let { k.substringAfterLast('.') to it } }
+        LogRepository.from(app).add("GOAT 플렉스 패널: 세션 그림 · 비트맵 ${hasBmp.ifEmpty { listOf("없음") }.joinToString()} · 주소 ${uris.map { it.first + "(" + it.second.substringBefore(':') + ")" }.ifEmpty { listOf("없음") }.joinToString()}")
+        if (hasBmp.isNotEmpty()) return
+        val uri = uris.firstOrNull()?.second ?: return
+        val bmp = runCatching {
+            if (uri.startsWith("http")) {
+                val con = java.net.URL(uri).openConnection().apply {
+                    connectTimeout = 3000
+                    readTimeout = 3000
+                }
+                con.getInputStream().use { android.graphics.BitmapFactory.decodeStream(it) }
+            } else {
+                app.contentResolver.openInputStream(android.net.Uri.parse(uri))?.use { android.graphics.BitmapFactory.decodeStream(it) }
+            }
+        }.getOrNull()
+        LogRepository.from(app).add("GOAT 플렉스 패널: 포스터 주소에서 받기 ${if (bmp != null) "성공 ${bmp.width}×${bmp.height}" else "실패"}")
+        if (bmp != null) {
+            main.post { if (controller === c && state.art == null) state.art = bmp.asImageBitmap() }
         }
     }
 
@@ -260,6 +292,12 @@ object GoatFlexPanel {
             override fun onDisplayRemoved(displayId: Int) = Unit
             override fun onDisplayChanged(displayId: Int) {
                 if (displayId != Display.DEFAULT_DISPLAY || view !== v) return
+                fit()
+                // 회전 알림 시점에 실제 크기가 아직 옛 값일 때가 있어(11-02 에뮬레이터: 세로 절반 높이로 남아 패널이 화면의 80%를 덮음) 한 번 더 본다
+                main.postDelayed({ if (view === v) fit() }, 350)
+            }
+
+            fun fit() {
                 // 창 문맥의 크기는 회전을 늦게 따라와(에뮬레이터에서 그대로였다) 화면의 실제 크기로 잰다
                 val half = realHeight(dm) / 2
                 if (lp.height != half) {
@@ -276,6 +314,8 @@ object GoatFlexPanel {
         }
         dm.registerDisplayListener(relayout, main)
         displayListener = relayout
+        // 붙이는 사이에 화면이 돌았으면 알림을 놓친다 — 붙인 직후 한 번 맞춘다
+        main.postDelayed({ if (view === v) relayout.fit() }, 350)
         phase = Phase.ENTERING
         main.post { if (phase == Phase.ENTERING) state.visible = true }
         startAmbient(context, saver)
@@ -337,8 +377,9 @@ object GoatFlexPanel {
         ambToken++
         state.art = null
         state.field = null
-        state.fieldPrev = null
         state.fieldPx = null
+        lastTarget = null
+        synchronized(blendLock) { blender = FieldBlender() }
         brightnessModeBefore?.let { m -> io.execute { ShizukuAccess.shell("settings put system screen_brightness_mode $m") } }
         brightnessModeBefore = null
         LogRepository.from(context).add("GOAT 플렉스 패널: 닫음")
@@ -484,7 +525,7 @@ object GoatFlexPanel {
                 if (mode == 3) {
                     // 캡처 줄: 위 절반(영상 쪽)만 찍어 '최신 하나'로 넘기고(앞 것이 아직 안 쓰였으면 버린다) 바로 다음 캡처로 간다.
                     // 패널(아래 절반)은 찍지 않아 패널 색이 다시 들어가는 일이 없다. 분석은 [startAnalysis] 줄이 한다
-                    val f = TentMode.topFrame(64, 0.5f)
+                    val f = TentMode.topFrame(96, 0.5f)
                     val t1 = SystemClock.elapsedRealtime()
                     tel.capture(t1 - t0, f != null)
                     var changed = false
@@ -550,19 +591,19 @@ object GoatFlexPanel {
                 var keep = false
                 var src: String
                 if (!protectedNow) {
+                    slowBlend = false
                     pal = pal0
                     if (changed || state.fieldPx == null) field = makeField(fr.px, fr.w, fr.h) else keep = true
                     src = "화면 분석"
                 } else {
                     tel.black++
-                    src = "보호 화면"
                     pal = artPaletteNow()
-                    if (pal != null) {
-                        src += " · 포스터"
-                        field = artFieldNow()
-                    } else {
-                        src += " · 앱 색"
-                    }
+                    // Cinematic Ambient Fallback: 보호 화면은 영상을 볼 수 없으므로(DRM, 우회하지 않음) 포스터(없으면 앱 색)로 만든
+                    // 반사에 느리고 절제된 빛 흐름을 얹는다. 실제 영상 반사가 아니라는 것을 머리글에 밝힌다
+                    val base = artFieldSource() ?: tintSource()
+                    field = makeField(cinematic(base.first, base.second, base.third, SystemClock.elapsedRealtime()), base.second, base.third)
+                    slowBlend = true
+                    src = if (pal != null) "보호 화면 · 포스터 연출(실제 영상 아님)" else "보호 화면 · 앱 색 연출(실제 영상 아님)"
                     tel.fallback++
                 }
                 tel.analyze(SystemClock.elapsedRealtime() - t1)
@@ -578,12 +619,8 @@ object GoatFlexPanel {
             tel.applied(SystemClock.elapsedRealtime() - capturedAt)
             state.ambSource = src
             if (fNew == null && !keep) {
-                if (state.field != null) {
-                    state.fieldPrev = null
-                    state.field = null
-                    state.fieldPx = null
-                }
-            } else if (fNew != null && (state.fieldPx == null || fieldChange(state.fieldPx!!, fNew.px) > 0.006f)) {
+                if (state.field != null) blendTo(token, null)
+            } else if (fNew != null && (slowBlend || lastTarget == null || fieldChange(lastTarget!!, fNew.px) > 0.006f)) {
                 if (SystemClock.elapsedRealtime() - clarityLogAt > 1000) {
                     clarityLogAt = SystemClock.elapsedRealtime()
                     val c = listOf(0.1f, 0.5f, 0.9f).map { ReflectionField.clarity(fNew.px, fNew.w, (fNew.h * it).toInt()) }
@@ -592,11 +629,8 @@ object GoatFlexPanel {
                 tel.fieldUpdates++
                 lastFieldAt = SystemClock.elapsedRealtime()
                 android.util.Log.i("GOATAMB", "field-applied captured=$capturedAt now=$lastFieldAt")
-                state.fieldPrev = state.field
-                state.fieldPx = fNew.px
-                state.fieldW = fNew.w
-                state.fieldH = fNew.h
-                state.field = fNew.image
+                lastTarget = fNew.px
+                blendTo(token, fNew)
             }
             val c = p?.let { intArrayOf(it.left, it.center, it.right, it.overall) } ?: IntArray(4) { state.tint.toArgb() }
             state.ambLeft = c[0]
@@ -695,15 +729,141 @@ object GoatFlexPanel {
 
     private var clarityLogAt = 0L
 
-    private class Field(val px: IntArray, val w: Int, val h: Int, val image: androidx.compose.ui.graphics.ImageBitmap)
+    private class Field(val px: IntArray, val w: Int, val h: Int)
+
+    /** 보호 화면 연출 중이면 목표 사이를 천천히(τ 0.9초) 이어 1초 간격 목표가 끊기지 않고 흐르게 한다. */
+    @Volatile private var slowBlend = false
+
+    /** 포스터를 화면 반사와 같은 96칸 원본(위 화면 자리)으로 줄인 것. */
+    private fun artFieldSource(): Triple<IntArray, Int, Int>? {
+        val art = state.art ?: return null
+        val bmp = art.asAndroidBitmap()
+        val h = (96 * bmp.height / bmp.width.coerceAtLeast(1)).coerceIn(8, 96)
+        val small = android.graphics.Bitmap.createScaledBitmap(bmp.copy(android.graphics.Bitmap.Config.ARGB_8888, false), 96, h, true)
+        val px = IntArray(96 * h)
+        small.getPixels(px, 0, 96, 0, 0, 96, h)
+        return Triple(px, 96, h)
+    }
+
+    /** 포스터가 없을 때: 앱 색으로 가운데 밝고 양옆이 가라앉은 원본. */
+    private fun tintSource(): Triple<IntArray, Int, Int> {
+        val t = state.tint.toArgb()
+        val w = 96
+        val h = 48
+        val px = IntArray(w * h) { i ->
+            val x = (i % w) / (w - 1f)
+            val g = 0.55f + 0.45f * (1f - kotlin.math.abs(x - 0.5f) * 2f)
+            scale(t, g)
+        }
+        return Triple(px, w, h)
+    }
+
+    /**
+     * 시네마틱 연출: 가로로 아주 천천히 지나가는 빛(약 9초 주기)과 숨쉬듯 느린 밝기(약 6초)를 원본에 곱한다.
+     * 변화 폭은 ±20% 안이라 눈에 띄는 깜박임이 없다.
+     */
+    internal fun cinematic(px: IntArray, w: Int, h: Int, tMs: Long): IntArray {
+        val ph = (tMs % 9000L) / 9000f * 2f * Math.PI.toFloat()
+        val breath = 0.92f + 0.08f * kotlin.math.sin((tMs % 6000L) / 6000f * 2f * Math.PI.toFloat())
+        return IntArray(w * h) { i ->
+            val x = (i % w) / w.toFloat()
+            val g = breath * (0.86f + 0.2f * (0.5f + 0.5f * kotlin.math.sin(x * 4.4f - ph)))
+            scale(px[i], g)
+        }
+    }
+
+    private fun scale(c: Int, g: Float): Int {
+        val r = ((c shr 16 and 0xFF) * g).toInt().coerceIn(0, 255)
+        val gg = ((c shr 8 and 0xFF) * g).toInt().coerceIn(0, 255)
+        val b = ((c and 0xFF) * g).toInt().coerceIn(0, 255)
+        return (0xFF shl 24) or (r shl 16) or (gg shl 8) or b
+    }
+
+    /** 마지막으로 넘긴 반사 목표(같은 목표를 다시 넘기지 않게). */
+    private var lastTarget: IntArray? = null
+
+    // ---- 반사 필드 시간 전환(11-02 최종 통합 지시) ----
+    // 예전에는 새 필드가 올 때마다 이전 필드와 0.22초 교차 전환을 처음부터 다시 시작해, 0.25초마다 새 필드가 오면 늘 반쯤 섞인
+    // 상태에서 다시 시작했다(전환이 끊기고 뒤처짐). 이제 [FieldBlender]가 지금 보이는 상태에서 새 목표로 이어 가고,
+    // 전환 줄이 움직이는 동안만 약 60fps로 작은 그림(96×56)을 세 장 돌려 쓰며 갱신한다. 다 오면 멈춘다
+    private var blender = FieldBlender()
+    private val blendLock = Any()
+    private val blendKick = java.util.concurrent.Semaphore(0)
+    private var blendFor = -1
+    private val blendBmp = arrayOfNulls<android.graphics.Bitmap>(3)
+    private val blendPx = arrayOfNulls<IntArray>(3)
+
+    /** 새 반사 목표를 전환 줄에 넘긴다(null이면 투명으로 사라진다). 메인 스레드. */
+    private fun blendTo(token: Int, f: Field?) {
+        synchronized(blendLock) { if (f == null) blender.fadeOut() else blender.setTarget(f.px, f.w, f.h, if (slowBlend) 900f else 0f) }
+        if (blendFor != token) {
+            blendFor = token
+            startBlend(token)
+        }
+        blendKick.release()
+    }
+
+    private fun startBlend(token: Int) = kotlin.concurrent.thread(name = "goat-ambient-blend", isDaemon = true) {
+        var last = SystemClock.uptimeMillis()
+        var slot = 0
+        while (ambToken == token) {
+            val idle = synchronized(blendLock) { !blender.active && blender.w > 0 && !pendingFirst(token) }
+            if (idle) {
+                blendKick.tryAcquire(500, java.util.concurrent.TimeUnit.MILLISECONDS)
+                blendKick.drainPermits()
+                last = SystemClock.uptimeMillis()
+                continue
+            }
+            val now = SystemClock.uptimeMillis()
+            val dt = (now - last).coerceIn(1L, 50L).toFloat()
+            last = now
+            var w = 0
+            var h = 0
+            var clear = false
+            val px: IntArray
+            synchronized(blendLock) {
+                w = blender.w
+                h = blender.h
+                if (w <= 0) return@thread
+                if (blendPx[slot]?.size != w * h) {
+                    blendPx[slot] = IntArray(w * h)
+                    blendBmp[slot] = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+                }
+                px = blendPx[slot]!!
+                blender.step(dt, px)
+                clear = blender.isClear()
+            }
+            val bmp = blendBmp[slot]!!
+            bmp.setPixels(px, 0, w, 0, 0, w, h)
+            val img = bmp.asImageBitmap()
+            slot = (slot + 1) % 3
+            shownFirst = token
+            main.post {
+                if (ambToken != token) return@post
+                if (clear) {
+                    state.field = null
+                    state.fieldPx = null
+                } else {
+                    state.fieldPx = px
+                    state.fieldW = w
+                    state.fieldH = h
+                    state.field = img
+                }
+            }
+            Thread.sleep(16)
+        }
+    }
+
+    /** 첫 목표는 전환 없이 바로 한 번 그려야 한다(step이 첫 프레임에서 '다 옴'을 돌려줘도). */
+    @Volatile private var shownFirst = -1
+    private fun pendingFirst(token: Int) = shownFirst != token
 
     /** 다듬은 색으로 반사 필드를 만들고 그림으로 바꾼다(작업 스레드). */
     private fun makeField(px: IntArray, w: Int, h: Int): Field {
         val graded = IntArray(px.size) { AmbientColor.grade(px[it]) }
         val spec = ReflectionField.Spec()
         val f = ReflectionField.build(graded, w, h, spec)
-        val bmp = android.graphics.Bitmap.createBitmap(f, w, spec.outH, android.graphics.Bitmap.Config.ARGB_8888)
-        return Field(f, w, spec.outH, bmp.asImageBitmap())
+        return Field(f, w, spec.outH)
     }
 
     /** 두 필드의 평균 색 차이(0~1). */
@@ -726,11 +886,12 @@ object GoatFlexPanel {
         val art = state.art ?: return null
         if (art === artFieldFor) return artField
         val bmp = art.asAndroidBitmap()
-        val h = (64 * bmp.height / bmp.width.coerceAtLeast(1)).coerceIn(8, 64)
-        val small = android.graphics.Bitmap.createScaledBitmap(bmp.copy(android.graphics.Bitmap.Config.ARGB_8888, false), 64, h, true)
-        val px = IntArray(64 * h)
-        small.getPixels(px, 0, 64, 0, 0, 64, h)
-        artField = makeField(px, 64, h)
+        // 화면 반사와 같은 96칸(크기가 같아야 포스터 ↔ 화면 사이도 끊기지 않고 이어서 전환된다)
+        val h = (96 * bmp.height / bmp.width.coerceAtLeast(1)).coerceIn(8, 96)
+        val small = android.graphics.Bitmap.createScaledBitmap(bmp.copy(android.graphics.Bitmap.Config.ARGB_8888, false), 96, h, true)
+        val px = IntArray(96 * h)
+        small.getPixels(px, 0, 96, 0, 0, 96, h)
+        artField = makeField(px, 96, h)
         artFieldFor = art
         return artField
     }

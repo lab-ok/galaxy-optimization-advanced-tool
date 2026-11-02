@@ -125,7 +125,6 @@ class FlexPanelState {
      * 바닥·카드·잉크가 이 한 장을 같은 좌표계(패널 전체)로 나눠 쓴다. 없으면 좌·중·우 색으로 대신한다.
      */
     var field by mutableStateOf<ImageBitmap?>(null)
-    var fieldPrev by mutableStateOf<ImageBitmap?>(null)
     var fieldPx: IntArray? = null
     var fieldW = 0
     var fieldH = 0
@@ -179,16 +178,32 @@ private object Glass {
     val Line = Color(0xFF424242)
     val Accent = Color(0xFFEBEBEB)
     val Brand = Color(0xFFE50914)
-    val radius = com.labok.goat.ui.liquid.LiquidShape.card
+
+    // 11-02 최종 통합 지시: 카드 모서리를 더 둥글고 유기적으로(GOAT 카드 22dp → 패널 타일 28dp). 작은 타일은 높이의 절반에서 멈춘다
+    val radius = 28.dp
     val gap = 8.dp
 }
 
-/** 강도 단계별 앰비언트 세기(은은·균형·몰입). */
-private fun ambK(i: Int) = when (i) {
-    0 -> 0.45f
-    2 -> 1.35f
-    else -> 0.9f
-}
+/**
+ * 앰비언트 프리셋(은은·균형·선명·몰입). 11-02 최종 통합 지시: 색 존재감을 30~50% 키우되 값을 한 숫자에 몰지 않고 나눴다.
+ * - [k] 바닥 반사·빛의 전체 세기(균형 0.9 → 1.2, +33%)
+ * - [reflection] 카드가 반사를 통과시키는 정도(예전 0.6 고정)
+ * - [absorption] 유리 바탕의 불투명도: 낮을수록 반사가 더 비친다(예전 0.62 고정)
+ * - [ink] 잉크가 반사색에 물드는 정도(예전 0.22 고정)
+ * 채도는 반사 필드를 만들 때(AmbientColor.grade) 1.15배·상한 0.22로 이미 올렸다.
+ */
+private class AmbTone(val k: Float, val reflection: Float, val absorption: Float, val ink: Float)
+
+private val TONES = listOf(
+    AmbTone(0.6f, 0.55f, 0.62f, 0.16f),
+    AmbTone(1.2f, 0.8f, 0.52f, 0.24f),
+    AmbTone(1.45f, 0.92f, 0.46f, 0.28f),
+    AmbTone(1.7f, 1.0f, 0.40f, 0.32f)
+)
+
+private fun tone(i: Int) = TONES[i.coerceIn(0, TONES.size - 1)]
+
+private fun ambK(i: Int) = tone(i).k
 
 /** 주변광 색에서 고른 강조색: 색이 거의 없으면 기본 강조색. */
 private fun adaptiveAccent(c: Int, on: Boolean): Color {
@@ -311,18 +326,14 @@ fun FlexPanelUi(
 @Composable
 private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
     val kk = if (state.ambientOn) ambK(state.intensity) else 0f
+    // 시간 전환은 엔진의 FieldBlender가 한다(지금 보이는 상태에서 새 목표로 이어 감). 여기서는 받은 그림을 그대로 그린다
     val field = state.field
-    // 새 반사 필드로 0.5초 동안 서서히 넘어간다(필드가 바뀔 때만 프레임을 돈다)
-    val fade = remember(field) { androidx.compose.animation.core.Animatable(if (state.motion && state.fieldPrev != null) 0f else 1f) }
-    // 반사 필드는 0.25초마다 바뀔 수 있어 교차 전환도 짧게(0.22초). 길면 새 필드가 올 때마다 처음부터 다시 시작해 늘 뒤처졌다
-    LaunchedEffect(field) { if (fade.value < 1f) fade.animateTo(1f, tween(220)) }
     Canvas(Modifier.fillMaxSize()) {
         if (kk > 0f && field != null) {
             // 공간 반사: 위 화면이 바닥에 비친 상을 패널 전체에 깐다(쌍선형 확대). 회색·밝은 화면은 덜 비친다
             val w = (0.92f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f)
             val dst = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt())
-            state.fieldPrev?.takeIf { fade.value < 1f }?.let { drawImage(it, dstSize = dst, alpha = w * (1f - fade.value), filterQuality = androidx.compose.ui.graphics.FilterQuality.Low) }
-            drawImage(field, dstSize = dst, alpha = w * fade.value, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+            drawImage(field, dstSize = dst, alpha = w, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
         } else if (kk > 0f) {
             drawRect(Brush.horizontalGradient(listOf(c[0].copy(alpha = 0.38f * kk * ambWeight(c[0])), c[1].copy(alpha = 0.30f * kk * ambWeight(c[1])), c[2].copy(alpha = 0.38f * kk * ambWeight(c[2])))))
             // 영상(위)에서 흘러내리는 빛
@@ -391,7 +402,7 @@ private fun PanelBody(
                 Row(Modifier.fillMaxSize().padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                     val icon = state.appIcon
                     if (icon != null) {
-                        Image(icon, null, Modifier.size(30.dp).clip(RoundedCornerShape(8.dp)))
+                        Image(icon, null, Modifier.size(30.dp).clip(RoundedCornerShape(10.dp)))
                     } else {
                         Text(state.app.take(1).uppercase(), color = Glass.Brand, fontSize = 24.sp, fontWeight = FontWeight.Black)
                     }
@@ -551,6 +562,7 @@ private fun GlassTile(
     }
     val press by animateFloatAsState(if (pressed) 1f else 0f, if (state.motion) spring(dampingRatio = 0.7f, stiffness = 900f) else snap(), label = "press")
     val shape = RoundedCornerShape(Glass.radius)
+    val tn = tone(state.intensity)
     val q = state.quality
     val kk = if (state.ambientOn) ambK(state.intensity) else 0f
     val hc = state.highContrast
@@ -580,9 +592,9 @@ private fun GlassTile(
                         alpha = if (hc) {
                             0.97f
                         } else if (primary) {
-                            0.74f
+                            tn.absorption + 0.12f
                         } else {
-                            0.62f
+                            tn.absorption
                         }
                     )
                 )
@@ -590,7 +602,7 @@ private fun GlassTile(
                 //   유리는 반사를 절반쯤 통과시키고, 잉크로 찬 버튼은 표면 광택처럼 옅게 받는다
                 val fieldImg = state.field
                 if (q >= 2 && kk > 0f && fieldImg != null) {
-                    val wk = (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * 0.6f).coerceAtMost(0.8f)
+                    val wk = (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * tn.reflection).coerceAtMost(1f)
                     val off = androidx.compose.ui.unit.IntOffset(-pos.x.toInt(), -pos.y.toInt())
                     // 반사가 유리를 통과한다: 보통 합성으로 색 분포를 보이고, 밝은 부분은 '빛 더하기(스크린)'로 한 번 더 얹어 어두운 카드에서도 죽지 않게
                     drawImage(fieldImg, dstOffset = off, dstSize = rootSize, alpha = wk, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
@@ -623,7 +635,7 @@ private fun GlassTile(
                     val rr = size.maxDimension * 0.7f
                     drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.10f else 0.05f), Color.Transparent), ctr, rr), rr, ctr)
                     // 안쪽 가장자리 그늘(두께감): 둥근 테두리 안쪽으로 얇은 그늘
-                    val r0 = Glass.radius.toPx()
+                    val r0 = minOf(Glass.radius.toPx(), size.minDimension / 2f)
                     drawRoundRect(Color.Black.copy(alpha = 0.22f), Offset(2.dp.toPx(), 2.dp.toPx()), Size(size.width - 4.dp.toPx(), size.height - 4.dp.toPx()), CornerRadius(r0 - 2.dp.toPx()), style = Stroke(3.dp.toPx()))
                 }
                 // 7 누름: 살짝 어두워진다 / 선택: 주변광으로 밝아진다
@@ -632,7 +644,8 @@ private fun GlassTile(
                 // 6 테두리 빛: 위는 밝고 아래는 어두운 얇은 선
                 val refl = state.sampleAt(xFrac, (pos.y / rootSize.height).coerceIn(0f, 1f))
                 val edge = if (selected) (refl ?: ambientAt(xFrac, amb[0], amb[1], amb[2])).copy(alpha = 0.9f) else lerp(Color.White, refl ?: Color.White, 0.35f)
-                val r = Glass.radius.toPx()
+                // 모서리 반지름은 실제 그려진 모양과 같게(작은 타일은 높이의 절반) — 가장자리 빛·그늘이 둥근 모서리를 그대로 따라간다
+                val r = minOf(Glass.radius.toPx(), size.minDimension / 2f)
                 drawRoundRect(
                     Brush.linearGradient(
                         listOf(
@@ -663,6 +676,19 @@ private fun GlassTile(
                     CornerRadius(r),
                     style = Stroke(if (selected) 1.5.dp.toPx() else 1.dp.toPx())
                 )
+                // 모서리 광택: 왼쪽 위 둥근 모서리를 따라 맺히는 짧은 빛(그 자리 반사색으로 살짝 물든다). 누르면 약해진다
+                if (q >= 2 && !hc) {
+                    val inset = 1.5.dp.toPx()
+                    drawArc(
+                        lerp(Color.White, refl ?: Color.White, 0.3f).copy(alpha = (if (primary) 0.30f else 0.22f) * (1f - 0.5f * press)),
+                        185f,
+                        80f,
+                        false,
+                        Offset(inset, inset),
+                        Size(2f * r - 2f * inset, 2f * r - 2f * inset),
+                        style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                }
             }
             .then(
                 if (onClick != null && enabled) {
@@ -685,11 +711,11 @@ private fun GlassTile(
         // 잉크: 주 버튼(재생 상태 아이콘)은 가독성이 먼저라 반사를 더 적게(12%), 그 밖은 22%. 가장자리 광택은 그 자리 반사색
         val refl = state.sampleAt(xFrac, ((pos.y + 1f) / rootSize.height).coerceIn(0f, 1f))
         val on = if (state.ambientOn) 1f else 0f
-        val tileInk = inkWith(state.ink, refl, (if (primary) 0.12f else 0.22f) * on)
+        val tileInk = inkWith(state.ink, refl, (if (primary) 0.12f else tn.ink) * on)
         val glint = if (state.ambientOn) glintOf(refl) else Color.White
         androidx.compose.runtime.CompositionLocalProvider(LocalTileInk provides tileInk, LocalTileGlint provides glint) { content() }
         if (hint && label != null) {
-            Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xCC000000)).padding(horizontal = 8.dp, vertical = 3.dp)) {
+            Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xCC000000)).padding(horizontal = 8.dp, vertical = 3.dp)) {
                 Text(label, color = Glass.Ink, fontSize = 11.sp)
             }
         }
@@ -804,8 +830,8 @@ private fun DrawScope.play(c: Color) {
 
 private fun DrawScope.pause(c: Color) {
     val s = size.minDimension
-    drawRoundRect(c, Offset(s * 0.24f, s * 0.18f), Size(s * 0.18f, s * 0.64f), CornerRadius(s * 0.04f))
-    drawRoundRect(c, Offset(s * 0.58f, s * 0.18f), Size(s * 0.18f, s * 0.64f), CornerRadius(s * 0.04f))
+    drawRoundRect(c, Offset(s * 0.24f, s * 0.18f), Size(s * 0.18f, s * 0.64f), CornerRadius(s * 0.08f))
+    drawRoundRect(c, Offset(s * 0.58f, s * 0.18f), Size(s * 0.18f, s * 0.64f), CornerRadius(s * 0.08f))
 }
 
 /** 10초 이동: 원을 따라 도는 화살표와 가운데 숫자. */
