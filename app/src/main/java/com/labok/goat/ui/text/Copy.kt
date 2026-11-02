@@ -250,7 +250,7 @@ object Copy {
     const val LAB_FLEX_TEST_BOTTOM = "여기는 아래 화면입니다. 앱에서는 이 자리에 조작 패널이 표시됩니다."
     const val LAB_FLEX_TEST_UNFOLD = "범위를 벗어나면 원래대로 돌아옵니다."
     const val LAB_FLEX_TEST_CLOSE = "닫기"
-    const val LAB_FLEX_TEST_TURN = "플렉스 모드는 가로로 접을 때만 켜집니다. 기기를 옆으로 돌려 접는 선이 가로로 놓이게 해 주세요."
+    const val LAB_FLEX_TEST_TURN = "플렉스 모드는 세로 화면에서 접을 때만 켜집니다. 화면을 세로로 돌려 주세요."
     const val LAB_FLEX_DIM = "가까이 접으면 밝기 고정"
     const val LAB_FLEX_DIM_BODY = "50° 안쪽으로 접으면 마주 보는 화면 빛에 밝기가 올라가지 않도록 자동 밝기를 잠시 멈춥니다."
     const val LAB_FLEX_ON_TITLE = "지금 플렉스 모드입니다"

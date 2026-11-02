@@ -62,7 +62,7 @@ internal fun FlexTestScreen(onClose: () -> Unit) {
     val angle = engineAngle ?: localAngle
     val min = remember { AutoFlex.min(context) }
     val max = remember { AutoFlex.max(context) }
-    val horizontal = rememberHingeHorizontal(true)
+    val horizontal = rememberScreenPortrait()
     // 갈라지는 정도: 0 한 화면, 1 위아래 두 칸
     val split by animateFloatAsState(if (active) 1f else 0f, Springs.water(reduce), label = "flexTestSplit")
     Column(Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(16.dp)) {

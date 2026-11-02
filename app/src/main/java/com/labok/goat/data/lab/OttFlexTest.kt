@@ -66,7 +66,7 @@ object OttFlexTest {
         val pkg = ShizukuAccess.focusedTask()?.let { it.basePkg ?: it.pkg }.orEmpty()
         val wasRegistered = pkg in FlexPanel.registered(context)
         val ignoreBefore = ShizukuAccess.shell("cmd window get-ignore-orientation-request -d 0")?.out?.let { Regex("ignoreOrientationRequest (true|false)").find(it)?.groupValues?.get(1) }
-        note("앞 앱 $pkg · 자동 회전 $autoBefore · 설정 회전 $userBefore · 패널 등록 $wasRegistered · 가로로 듦 ${AutoFlex.horizontal.value} · 각도 ${AutoFlex.angle.value}")
+        note("앞 앱 $pkg · 자동 회전 $autoBefore · 설정 회전 $userBefore · 패널 등록 $wasRegistered · 각도 ${AutoFlex.angle.value}")
         try {
             snapshot(context, pkg, "1. 시작", ::note)
             buzz(context)

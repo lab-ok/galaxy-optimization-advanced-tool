@@ -120,7 +120,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
     var max by remember { mutableIntStateOf(AutoFlex.max(context)) }
     var query by remember { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
-    val horizontal = rememberHingeHorizontal(supported)
+    val horizontal = rememberScreenPortrait()
     // 앱별 모드(기본값과 다르게 고른 앱만, 기본은 유튜브·카메라·갤러리만 플렉스 모드)
     var modes by remember { mutableStateOf(AutoFlex.modes(context)) }
     var appsOpen by remember { mutableStateOf(false) }

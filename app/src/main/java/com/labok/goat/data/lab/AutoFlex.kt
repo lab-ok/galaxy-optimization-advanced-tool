@@ -27,7 +27,6 @@ import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.liquid.UiGoat
 import kotlin.math.abs
-import kotlin.math.sqrt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -308,10 +307,6 @@ object AutoFlex {
     private val activeFlow = MutableStateFlow(false)
 
     /**
-     * 접는 선 방향: 플렉스 모드는 노트북처럼 접는 선이 가로로 놓일 때만 쓴다. 중력 중 접는 선(힌지 축) 방향 성분이 작으면
-     * (축이 바닥과 거의 나란하면) 가로로 본다. 폴드의 힌지 축은 기본 방향에서 세로(Y)지만, 화면이 알려 준 방향으로 고쳐 둘 수 있다([setHingeAlongY]).
-     */
-    /**
      * 세밀한 값이 끊겼을 때 기본 센서 값 [coarse]로 바꿔 믿을지. 끝값(0°·180°)이고, 마지막 세밀한 값 [lastFine]도
      * 그쪽 끝 가까이(45° 이하·135° 이상)였을 때만 믿는다. 빨리 펴거나 닫아 로그가 멈춘 경우는 마지막 값이 이미 끝 가까이다.
      */
@@ -322,23 +317,6 @@ object AutoFlex {
         coarse >= 180f -> lastFine >= 135f
         else -> false
     }
-
-    internal fun isHorizontal(gx: Float, gy: Float, gz: Float, alongY: Boolean): Boolean {
-        val g = sqrt(gx * gx + gy * gy + gz * gz)
-        if (g < 1f) return true
-        return abs(if (alongY) gy else gx) < 0.5f * g
-    }
-
-    fun hingeAlongY(context: Context) = prefs(context).getBoolean("hingeY", true)
-
-    fun setHingeAlongY(context: Context, alongY: Boolean) {
-        if (hingeAlongY(context) != alongY) prefs(context).edit().putBoolean("hingeY", alongY).apply()
-    }
-
-    private val horizontalFlow = MutableStateFlow(true)
-
-    /** 지금 접는 선이 가로로 놓였는지(서비스가 듣는 동안). */
-    val horizontal: StateFlow<Boolean> = horizontalFlow.asStateFlow()
 
     private val latchedFlow = MutableStateFlow(false)
 
@@ -487,25 +465,12 @@ object AutoFlex {
             }
         }
 
-        // 접는 선 방향: 세로로 접힌 채(책처럼)는 플렉스 모드를 걸지 않는다. 방향이 바뀌면 지금 각도로 다시 정한다
-        private val gravity = object : SensorEventListener {
-            override fun onSensorChanged(e: SensorEvent) {
-                val h = isHorizontal(e.values[0], e.values[1], e.values[2], hingeAlongY(context))
-                if (h == horizontalFlow.value) return
-                horizontalFlow.value = h
-                decide(last, 300L)
-            }
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
-        }
-
         private fun listen() {
             if (listening) return
             val sm = context.getSystemService(SensorManager::class.java)
             val hinge = sm.getDefaultSensor(Sensor.TYPE_HINGE_ANGLE) ?: return
             listening = sm.registerListener(this, hinge, SensorManager.SENSOR_DELAY_UI, worker)
-            (sm.getDefaultSensor(Sensor.TYPE_GRAVITY) ?: sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER))?.let {
-                sm.registerListener(gravity, it, SensorManager.SENSOR_DELAY_NORMAL, worker)
-            }
+            // 중력 센서는 더 이상 쓰지 않는다(11-02 소장님: 플렉스 모드 기준은 자이로·중력이 아니다 — 기울이면 풀리던 원인)
             context.getSystemService(android.hardware.display.DisplayManager::class.java).registerDisplayListener(displays, worker)
             fine.start()
         }
@@ -513,7 +478,6 @@ object AutoFlex {
         private fun stopListening() {
             if (!listening) return
             context.getSystemService(SensorManager::class.java).unregisterListener(this)
-            context.getSystemService(SensorManager::class.java).unregisterListener(gravity)
             runCatching { context.getSystemService(android.hardware.display.DisplayManager::class.java).unregisterDisplayListener(displays) }
             fine.stop()
             listening = false
@@ -576,11 +540,11 @@ object AutoFlex {
         }
 
         /**
-         * 방향 조건(11-02 소장님: 의도하지 않은 화면 방향에서 켜짐): 접는 선이 가로로 놓였고(중력, [horizontalFlow])
-         * 화면도 세로 모양이어야 한다. 폴드8 테이블탑에서 앱 창은 세로(1848×2448, 진단으로 확인)라, 화면이 가로 모양이면
-         * 책처럼 든 것이거나 회전이 어긋난 것이다. 예전에는 까딱으로 잠그면 방향 검사를 건너뛰어 가로 화면에서도 켜졌다.
+         * 켜는 조건(11-02 소장님 확정): **세로 화면 상태에서 펼친 화면을 일정 각도로 굽혔을 때**가 플렉스 모드다.
+         * 기준은 화면 모양(세로)과 힌지 각도뿐이고, 자이로·중력은 쓰지 않는다. 예전에는 중력으로 '접는 선이 가로인지'까지 봐서
+         * 플렉스 모드 중에 기울이면 풀렸다. 화면 모양도 **켤 때만** 본다 — 이미 켜진 뒤에는 각도(펴거나 닫음)로만 끈다.
          */
-        private fun orientationOk(): Boolean = horizontalFlow.value && screenPortrait()
+        private fun orientationOk(): Boolean = screenPortrait()
 
         /** 기본 화면(안쪽)이 지금 세로 모양인지(논리 크기 기준, 회전 반영). 못 읽으면 막지 않는다. */
         private fun screenPortrait(): Boolean = runCatching {
@@ -600,12 +564,19 @@ object AutoFlex {
             }
         }
 
+        /**
+         * 플렉스 모드 판정 — 한 곳(11-02 소장님 "중복 다 덜어내고 단순화"). 켜짐 조건:
+         * 1) 기능을 켰고 멈춤이 아니다
+         * 2) 켜는 순간 화면이 세로다(켜진 뒤에는 방향으로 끄지 않는다)
+         * 3) 펼친 상태에서 접어 각도 범위에 들어와 잠깐 멈췄다(펴거나 닫는 중 지나치는 것은 제외) — 또는 까딱으로 켜 두었다
+         * 자이로·중력은 쓰지 않는다. 끄는 것은 각도가 범위를 벗어날 때(펴거나 닫음)다.
+         */
         private fun decide(a: Float?, delay: Long) {
             val next = when {
                 !enabled(context) -> false
                 pausedFlow.value -> false
-                // 까딱으로 잠가도 방향 조건은 지킨다(가로 화면·세로로 든 접는 선에서는 켜지 않는다)
-                !orientationOk() -> false
+                // 켜는 순간에만 세로 화면을 본다(까딱으로 잠가도 가로 화면에서는 켜지 않는다). 이미 켜져 있으면 화면 방향으로 끄지 않는다
+                !activeFlow.value && !orientationOk() -> false
                 latchedFlow.value -> true
                 a == null -> false
                 else -> inRange(a, min(context), max(context)) && cameFromOpen
@@ -640,12 +611,7 @@ object AutoFlex {
         private fun set(on: Boolean) {
             if (on == activeFlow.value) return
             if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return
-            // 적용 직전에 방향을 다시 본다(기다리는 동안 돌렸을 수 있다)
-            if (on && !orientationOk()) {
-                LogRepository.from(context).add("자동 플렉스: 켜기 직전 방향 조건 불충족(접는 선 ${if (horizontalFlow.value) "가로" else "세로"} · 화면 ${if (screenPortrait()) "세로" else "가로"})이라 켜지 않음")
-                want = false
-                return
-            }
+            // 방향은 decide 한 곳에서만 본다(화면이 돌면 decide가 다시 돌아 기다리던 켜기를 취소한다)
             // '사용 안 함'으로 둔 앱과 홈 화면: 반쯤 접힘을 걸지 않고 울리지도 않는다. 켜진 것으로만 두어 알림에서 다른 모드로 바꿀 수 있게 한다
             if (on && FlexPanel.frontIsOff(context)) {
                 activeFlow.value = true
@@ -662,7 +628,7 @@ object AutoFlex {
                 // 켜고 끈 까닭을 남긴다(범위·까딱, 그때 각도와 기본 센서 값, 가로 여부): 안 켜지거나 바로 꺼질 때 원인을 볼 수 있게
                 LogRepository.from(context).add(
                     "자동 플렉스 ${if (on) "켬" else "끔"}: 각도 ${last?.toInt()}° · 기본 센서 ${coarseLast?.toInt()}° · " +
-                        "${if (latchedFlow.value) "까딱" else "범위"} · ${if (horizontalFlow.value) "가로" else "세로"}"
+                        "${if (latchedFlow.value) "까딱" else "범위"} · 화면 ${if (screenPortrait()) "세로" else "가로"}"
                 )
                 // 실사용에서는 들어올 때만 울린다(펴거나 닫으며 빠져나갈 때마다 울리면 거슬린다). 설정 화면은 따로 둘 다 울린다
                 if (!quiet && on && !buzzedThisFold) {

@@ -504,6 +504,18 @@ private fun DrawScope.drawPoster(blur: ImageBitmap?, origin: Offset, area: Size,
     drawIntoCanvas { cv -> cv.restore() }
 }
 
+/**
+ * 리퀴드 글래스 셰이더가 실제로 도는지 진단 로그에 한 번 남긴다(11-02: 실기 화면이 에뮬레이터와 달라 보였는데, 진단 파일에는 GOAT 태그만
+ * 들어가 셰이더 실패 여부를 확인할 수 없었다).
+ */
+@Volatile private var glassLogged = false
+
+private fun glassLog(ok: Boolean) {
+    if (glassLogged) return
+    glassLogged = true
+    android.util.Log.i("GOAT", "GOAT 플렉스 패널: 리퀴드 글래스 셰이더 ${if (ok) "동작" else "만들지 못해 예전 방식으로 그림"} (Android ${android.os.Build.VERSION.SDK_INT})")
+}
+
 /** 반사 색 보정(채도 1.3·대비 1.12, 가운데 0.48) — 예전 CPU의 AmbientColor.grade를 GPU 색 행렬로 근사. 바닥·근거리 띠가 같이 쓴다. */
 internal fun reflectionGrade(): androidx.compose.ui.graphics.ColorFilter {
     val sat = 1.3f
@@ -868,7 +880,7 @@ private fun GlassTile(
     // 리퀴드 글래스 셰이더(API 33+, 카드마다 하나). 만들 수 없으면(구형 기기·셰이더 컴파일 실패) 예전 겹친 레이어로 그린다
     val glass = remember {
         if (android.os.Build.VERSION.SDK_INT >= 33) {
-            runCatching { GlassShader() }.onFailure { android.util.Log.w("GOATGLASS", "셰이더 생성 실패: ${it.message}") }.getOrNull()
+            runCatching { GlassShader() }.onFailure { android.util.Log.w("GOATGLASS", "셰이더 생성 실패: ${it.message}") }.getOrNull().also { glassLog(it != null) }
         } else {
             null
         }

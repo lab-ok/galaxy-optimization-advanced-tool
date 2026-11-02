@@ -88,15 +88,6 @@ class LabTweaksTest {
     }
 
     @Test
-    fun hingeHorizontalOnlyWhenAxisFlat() {
-        // 힌지 축이 Y: 세워 든 책 모양(중력이 Y)은 세로, 옆으로 돌리면(중력이 X) 가로, 바닥에 눕히면(중력이 Z) 가로
-        assertFalse(AutoFlex.isHorizontal(0f, 9.8f, 0f, alongY = true))
-        assertTrue(AutoFlex.isHorizontal(9.8f, 0f, 0f, alongY = true))
-        assertTrue(AutoFlex.isHorizontal(0f, 1f, 9.7f, alongY = true))
-        assertFalse(AutoFlex.isHorizontal(9.8f, 0f, 0f, alongY = false))
-    }
-
-    @Test
     fun privacyDotErrorShowsRealReason() {
         val err = "Exception occurred while executing 'put':\njava.lang.SecurityException: Permission denial: writing to settings requires:android.permission.WRITE_DEVICE_CONFIG\n\tat android.os.Parcel"
         assertEquals("SecurityException: Permission denial: writing to settings requires:android.permission.WRITE_DEVICE_CONFIG", PrivacyDot.reason(err))
