@@ -154,7 +154,7 @@ object OttFlexTest {
             val o = Regex("(mRequestedOrientation|requestedOrientation|screenOrientation|mOrientation)=\\S+").findAll(block).map { it.value }.distinct().take(4).toList()
             note("   요청 방향: ${o.ifEmpty { listOf("찾지 못함") }.joinToString(" · ")}")
         }
-        val rot = ShizukuAccess.shell("dumpsys window displays | grep -m4 -oE 'mUserRotationMode=\\S+|mUserRotation=\\S+|mCurrentAppOrientation=\\S+|mLastOrientation=\\S+'")?.out?.trim().orEmpty()
+        val rot = ShizukuAccess.shell("dumpsys window displays | grep -m4 -oE 'mUserRotationMode=[^ ]+|mUserRotation=[^ ]+|mCurrentAppOrientation=[^ ]+|mLastOrientation=[^ ]+'")?.out?.trim().orEmpty()
         if (rot.isNotEmpty()) note("   회전 상태: " + rot.lines().joinToString(" · ") { it.trim() }.take(260))
     }
 
