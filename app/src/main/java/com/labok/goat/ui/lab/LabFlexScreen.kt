@@ -521,7 +521,7 @@ private fun GoatPanelCard() {
             motionOn = it
             GoatFlexPanel.setMotion(context, it)
         })
-        listOf("progress" to "진행 막대", "speed" to "재생 속도", "brightness" to "밝기", "volume" to "볼륨", "fullscreen" to "전체 화면").forEach { (key, name) ->
+        listOf("progress" to "진행 막대", "brightness" to "밝기", "volume" to "음량").forEach { (key, name) ->
             var on by remember { mutableStateOf(GoatFlexPanel.shown(context, key)) }
             Spacer(Modifier.height(Gap.Section))
             LiquidSwitchRow("$name 타일", "패널에 $name 타일을 보입니다.", on, enabled = true, onChange = {

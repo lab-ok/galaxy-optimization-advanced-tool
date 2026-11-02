@@ -174,8 +174,56 @@ object GoatFlexPanel {
 
     /** 설정 화면에서 패널 모양을 8초 동안 미리 본다(지금 재생 중인 미디어가 있으면 그 정보로). */
     fun preview(context: Context) {
+        posterPreview = false
         show(context, "", "GOAT")
         main.postDelayed({ hide(context) }, 8000)
+    }
+
+    /** 실험실: 포스터 표시를 8초 동안 미리 본다(세션 포스터 대신 시험용 포스터를 그려 넣는다). */
+    fun previewPoster(context: Context) {
+        posterPreview = true
+        show(context, "", "GOAT")
+        main.postDelayed({ state.art = samplePoster().asImageBitmap() }, 600)
+        main.postDelayed({
+            hide(context)
+            posterPreview = false
+        }, 8000)
+    }
+
+    @Volatile private var posterPreview = false
+
+    /** 시험용 포스터(세로 2:3): 노을 그라데이션, 해, 산 실루엣, 굵은 제목 — 뒤집혔는지·잘렸는지·가장자리가 부드러운지 한눈에 보인다. */
+    private fun samplePoster(): android.graphics.Bitmap {
+        val w = 600
+        val h = 900
+        val b = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+        val c = android.graphics.Canvas(b)
+        val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        p.shader = android.graphics.LinearGradient(0f, 0f, 0f, h.toFloat(), intArrayOf(0xFF1B1F5E.toInt(), 0xFFE8526B.toInt(), 0xFFFFB347.toInt()), null, android.graphics.Shader.TileMode.CLAMP)
+        c.drawRect(0f, 0f, w.toFloat(), h.toFloat(), p)
+        p.shader = null
+        p.color = 0xFFFFE08A.toInt()
+        c.drawCircle(w * 0.5f, h * 0.62f, w * 0.18f, p)
+        p.color = 0xFF14122A.toInt()
+        val m = android.graphics.Path().apply {
+            moveTo(0f, h * 0.78f)
+            lineTo(w * 0.3f, h * 0.6f)
+            lineTo(w * 0.5f, h * 0.72f)
+            lineTo(w * 0.75f, h * 0.55f)
+            lineTo(w.toFloat(), h * 0.74f)
+            lineTo(w.toFloat(), h.toFloat())
+            lineTo(0f, h.toFloat())
+            close()
+        }
+        c.drawPath(m, p)
+        p.color = 0xFFFFFFFF.toInt()
+        p.textSize = 96f
+        p.typeface = android.graphics.Typeface.DEFAULT_BOLD
+        p.textAlign = android.graphics.Paint.Align.CENTER
+        c.drawText("GOAT", w / 2f, h * 0.18f, p)
+        p.textSize = 34f
+        c.drawText("POSTER TEST ↑", w / 2f, h * 0.26f, p)
+        return b
     }
 
     /** 아래로 내려가며 사라진 뒤 창을 뗀다. */
@@ -386,8 +434,10 @@ object GoatFlexPanel {
         synchronized(blendLock) {
             blender = FieldBlender()
             nearBlender = FieldBlender()
+            hingeBlender = FieldBlender()
         }
         state.near = null
+        state.hinge = null
         brightnessModeBefore?.let { m -> io.execute { ShizukuAccess.shell("settings put system screen_brightness_mode $m") } }
         brightnessModeBefore = null
         LogRepository.from(context).add("GOAT 플렉스 패널: 닫음")
@@ -668,7 +718,7 @@ object GoatFlexPanel {
                     tel.fallback++
                 }
                 tel.analyze(SystemClock.elapsedRealtime() - t1)
-                post(context, token, tel, src, pal, field, keep, fr.at)
+                post(context, token, tel, src, pal, field?.withHinge(hingeRow(hi)), keep, fr.at)
             }
         }
     }
@@ -679,6 +729,8 @@ object GoatFlexPanel {
             if (ambToken != token) return@post
             tel.applied(SystemClock.elapsedRealtime() - capturedAt)
             state.ambSource = src
+            // 포스터를 쓰는 경우(포스터 모드·보호 화면의 포스터 연출)는 반사 대신 포스터 원본을 똑바로 보여 준다(11-02 소장님)
+            state.posterShown = "포스터" in src || posterPreview
             if (fNew == null && !keep) {
                 if (state.field != null) blendTo(token, null)
             } else if (fNew != null && (slowBlend || lastTarget == null || fieldChange(lastTarget!!, fNew.px) > 0.006f)) {
@@ -818,7 +870,12 @@ object GoatFlexPanel {
 
     private var clarityLogAt = 0L
 
-    private class Field(val px: IntArray, val w: Int, val h: Int, val near: IntArray? = null, val nw: Int = 0, val nh: Int = 0)
+    private class Field(val px: IntArray, val w: Int, val h: Int, val near: IntArray? = null, val nw: Int = 0, val nh: Int = 0, val hinge: IntArray? = null)
+
+    /** 접는 선 바로 위 화면 한 줄(고해상도, 다듬지 않은 실제 색). 레터박스 검은 여백이면 검은색 그대로다. */
+    private fun hingeRow(hi: Frame): IntArray = hi.px.copyOfRange((hi.h - 1) * hi.w, hi.h * hi.w)
+
+    private fun Field.withHinge(row: IntArray) = Field(px, w, h, near, nw, nh, row)
 
     /** 근거리 띠용 캡처 폭(기본 필드 96칸의 4배). */
     private const val NEAR_W = 384
@@ -908,6 +965,11 @@ object GoatFlexPanel {
 
     /** 근거리 고해상도 띠의 시간 전환(기본 필드와 같은 스프링·같은 샘플 간격). */
     private var nearBlender = FieldBlender()
+
+    /** 접는 선 경계 줄의 시간 전환. */
+    private var hingeBlender = FieldBlender()
+    private val hingeBmp = arrayOfNulls<android.graphics.Bitmap>(3)
+    private val hingePx = arrayOfNulls<IntArray>(3)
     private val nearBmp = arrayOfNulls<android.graphics.Bitmap>(3)
     private val nearPx = arrayOfNulls<IntArray>(3)
 
@@ -931,6 +993,7 @@ object GoatFlexPanel {
             } else {
                 blender.setTarget(f.px, f.w, f.h, now, slowBlend)
                 if (f.near != null) nearBlender.setTarget(f.near, f.nw, f.nh, now, slowBlend) else nearBlender.fadeOut()
+                f.hinge?.let { hingeBlender.setTarget(it, it.size, 1, now, slowBlend) }
             }
         }
         // 전환이 끝나 멈춰 있던 시간(다음 샘플이 오기 전 정지 구간). 1.5초 넘게 멈춘 건 실제 정지 화면으로 보고 빼다
@@ -949,7 +1012,7 @@ object GoatFlexPanel {
         var last = SystemClock.uptimeMillis()
         var slot = 0
         while (ambToken == token) {
-            val idle = synchronized(blendLock) { !blender.active && !nearBlender.active && blender.w > 0 && !pendingFirst(token) }
+            val idle = synchronized(blendLock) { !blender.active && !nearBlender.active && !hingeBlender.active && blender.w > 0 && !pendingFirst(token) }
             if (idle) {
                 if (idleSince == 0L) idleSince = SystemClock.uptimeMillis()
                 blendKick.tryAcquire(500, java.util.concurrent.TimeUnit.MILLISECONDS)
@@ -965,6 +1028,7 @@ object GoatFlexPanel {
             var clear = false
             var nearClear: Boolean
             var nearImg: androidx.compose.ui.graphics.ImageBitmap?
+            var hingeImg: androidx.compose.ui.graphics.ImageBitmap? = null
             val px: IntArray
             synchronized(blendLock) {
                 w = blender.w
@@ -991,16 +1055,28 @@ object GoatFlexPanel {
                 } else {
                     nearImg = null
                 }
+                val hw = hingeBlender.w
+                if (hw > 0) {
+                    if (hingePx[slot]?.size != hw) {
+                        hingePx[slot] = IntArray(hw)
+                        hingeBmp[slot] = android.graphics.Bitmap.createBitmap(hw, 1, android.graphics.Bitmap.Config.ARGB_8888)
+                    }
+                    hingeBlender.step(dt, hingePx[slot]!!)
+                    hingeBmp[slot]!!.setPixels(hingePx[slot]!!, 0, hw, 0, 0, hw, 1)
+                    hingeImg = hingeBmp[slot]!!.asImageBitmap()
+                }
             }
             val bmp = blendBmp[slot]!!
             bmp.setPixels(px, 0, w, 0, 0, w, h)
             val img = bmp.asImageBitmap()
             val ni = nearImg
+            val hg = hingeImg
             slot = (slot + 1) % 3
             shownFirst = token
             main.post {
                 if (ambToken != token) return@post
                 state.near = ni
+                if (hg != null) state.hinge = hg
                 if (clear) {
                     state.field = null
                     state.fieldPx = null

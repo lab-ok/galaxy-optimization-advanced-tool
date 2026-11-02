@@ -68,10 +68,12 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.nativeCanvas
@@ -124,6 +126,9 @@ class FlexPanelState {
     /** 앰비언트 색이 어디서 왔는지(화면 분석·포스터·앱 색·끔, 보호 콘텐츠면 그 사실). */
     var ambSource by mutableStateOf("")
 
+    /** 반사 대신 포스터 원본을 보여 줄 때(포스터 모드·보호 화면 포스터 연출). */
+    var posterShown by mutableStateOf(false)
+
     // 설정(시작할 때 넣는다)
     var quality by mutableIntStateOf(2)
     var intensity by mutableIntStateOf(1)
@@ -140,6 +145,9 @@ class FlexPanelState {
 
     /** 근거리 고해상도 반사 띠(패널 위 [com.labok.goat.data.lab.ReflectionField.NEAR_FRAC]만큼, 기본 필드 위에 얹는다). */
     var near by mutableStateOf<ImageBitmap?>(null)
+
+    /** 접는 선 바로 위 화면 한 줄(실제 색, 검은 여백이면 검은색). 패널 위 경계를 이 색으로 부드럽게 잇는다. */
+    var hinge by mutableStateOf<ImageBitmap?>(null)
     var fieldPx: IntArray? = null
     var fieldW = 0
     var fieldH = 0
@@ -350,24 +358,95 @@ fun FlexPanelUi(
 }
 
 /**
- * 접는 선 경계 흐림(11-02 소장님 "맨 끝 상단에 경계선 블러 처리해서 자연스럽게"). 위 화면과 패널 사이에 딱 끊기는 선이 보였다.
- * 반사의 맨 위 줄(= 접는 선 바로 위 화면 색)을 패널 위 18dp에 펴서 위는 불투명, 아래로 갈수록 투명하게 깔아 화면이 패널로
- * 번져 들어가는 것처럼 잇는다. 패널 자체를 투명하게 하면 밑에 있는 앱 화면이 비쳐 지저분해서 이 방식을 골랐다.
+ * 접는 선 경계 흐림(11-02 소장님 "패널 맨 위 경계 부드럽게 · 맨 위가 검은 여백이면 자연스럽게 검은색으로, 딱 자르지 말고").
+ * 접는 선 바로 위 **실제 화면 한 줄**(반사용으로 다듬기 전, 레터박스를 빼기 전)을 패널 위 32dp에 펴고, 위는 불투명·아래로 갈수록
+ * 부드러운 곡선으로 투명하게 깐다. 위 화면이 검은 여백이면 검은색이, 영상이면 그 영상 끝 색이 그대로 이어져 경계선이 없다.
+ * 패널 자체를 투명하게 하면 밑에 있는 앱 화면이 비쳐 지저분해서 이 방식을 골랐다.
  */
 @Composable
 private fun HingeBleed(state: FlexPanelState) {
-    val img = state.near ?: state.field ?: return
-    if (!state.ambientOn) return
-    Canvas(Modifier.fillMaxWidth().height(18.dp).graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }) {
+    val img = state.hinge ?: return
+    Canvas(Modifier.fillMaxWidth().height(32.dp).graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }) {
         drawImage(
             img,
-            srcOffset = androidx.compose.ui.unit.IntOffset.Zero,
-            srcSize = androidx.compose.ui.unit.IntSize(img.width, 2),
             dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()),
             filterQuality = androidx.compose.ui.graphics.FilterQuality.Medium
         )
-        drawRect(Brush.verticalGradient(listOf(Color.Black, Color.Black.copy(alpha = 0.5f), Color.Transparent)), blendMode = androidx.compose.ui.graphics.BlendMode.DstIn)
+        // 위 1 → 아래 0을 부드러운 곡선(대략 (1-t)^2)으로: 처음엔 거의 화면 그대로, 아래쪽은 아주 천천히 사라진다
+        drawRect(
+            Brush.verticalGradient(
+                0f to Color.Black,
+                0.25f to Color.Black.copy(alpha = 0.56f),
+                0.5f to Color.Black.copy(alpha = 0.25f),
+                0.75f to Color.Black.copy(alpha = 0.06f),
+                1f to Color.Transparent
+            ),
+            blendMode = androidx.compose.ui.graphics.BlendMode.DstIn
+        )
     }
+}
+
+/** 포스터를 아주 작게(40칸) 줄인 것: 쌍선형으로 크게 펴면 부드럽게 흐린 바탕이 된다(한 번만 만든다). */
+@Composable
+private fun rememberPosterBlur(art: ImageBitmap?): ImageBitmap? = remember(art) {
+    art?.let {
+        val b = it.asAndroidBitmap()
+        val w = 40
+        val h = (w * b.height / b.width.coerceAtLeast(1)).coerceIn(8, 80)
+        android.graphics.Bitmap.createScaledBitmap(b.copy(android.graphics.Bitmap.Config.ARGB_8888, false), w, h, true).asImageBitmap()
+    }
+}
+
+/**
+ * 포스터 표시(11-02 소장님 "포스터는 상하반전 말고 제대로 · 화질 최고 · 경계 부드럽게"). [area]는 패널 전체 크기, [origin]은 그 패널의 왼쪽 위
+ * (카드 안에서 그릴 때는 카드 위치만큼 옮긴다). 바닥은 같은 포스터를 크게 흐려 채우고, 그 위에 포스터 원본을 **뒤집지 않고 전체가 보이게**
+ * 가운데 놓는다(원본 해상도, 고품질 필터). 포스터 네 가장자리는 투명하게 녹여 흐린 바탕과 경계 없이 이어진다.
+ */
+private fun DrawScope.drawPoster(art: ImageBitmap, blur: ImageBitmap?, origin: Offset, area: Size, alpha: Float) {
+    if (alpha <= 0f) return
+    // 1) 흐린 바탕(꽉 채움)
+    blur?.let { b ->
+        val sc = maxOf(area.width / b.width, area.height / b.height)
+        val bw = b.width * sc
+        val bh = b.height * sc
+        drawImage(
+            b,
+            dstOffset = androidx.compose.ui.unit.IntOffset((origin.x + (area.width - bw) / 2).toInt(), (origin.y + (area.height - bh) / 2).toInt()),
+            dstSize = androidx.compose.ui.unit.IntSize(bw.toInt(), bh.toInt()),
+            alpha = alpha * 0.8f,
+            filterQuality = androidx.compose.ui.graphics.FilterQuality.Low
+        )
+    }
+    // 2) 포스터 원본(전체가 보이게, 패널 높이의 96%까지)
+    val sc = minOf(area.width / art.width, area.height * 0.96f / art.height)
+    val pw = art.width * sc
+    val ph = art.height * sc
+    val left = origin.x + (area.width - pw) / 2
+    val top = origin.y + (area.height - ph) / 2
+    val rect = androidx.compose.ui.geometry.Rect(left, top, left + pw, top + ph)
+    drawIntoCanvas { cv -> cv.saveLayer(rect, androidx.compose.ui.graphics.Paint()) }
+    drawImage(
+        art,
+        dstOffset = androidx.compose.ui.unit.IntOffset(left.toInt(), top.toInt()),
+        dstSize = androidx.compose.ui.unit.IntSize(pw.toInt(), ph.toInt()),
+        alpha = alpha,
+        filterQuality = androidx.compose.ui.graphics.FilterQuality.High
+    )
+    // 3) 가장자리 녹이기: 가로·세로로 각각 양 끝 14%를 투명하게(곱해져 모서리는 더 부드럽다)
+    val fx = 0.14f
+    drawRect(
+        Brush.horizontalGradient(0f to Color.Transparent, fx to Color.Black, 1f - fx to Color.Black, 1f to Color.Transparent, startX = left, endX = left + pw),
+        topLeft = rect.topLeft,
+        size = rect.size,
+        blendMode = androidx.compose.ui.graphics.BlendMode.DstIn
+    )
+    drawRect(
+        Brush.verticalGradient(0f to Color.Transparent, fx to Color.Black, 1f - fx to Color.Black, 1f to Color.Transparent, startY = top, endY = top + ph),
+        topLeft = rect.topLeft,
+        size = rect.size,
+        blendMode = androidx.compose.ui.graphics.BlendMode.DstIn
+    )
+    drawIntoCanvas { cv -> cv.restore() }
 }
 
 /**
@@ -379,8 +458,12 @@ private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
     val kk = if (state.ambientOn) ambK(state.intensity) else 0f
     // 시간 전환은 엔진의 FieldBlender가 한다(지금 보이는 상태에서 새 목표로 이어 감). 여기서는 받은 그림을 그대로 그린다
     val field = state.field
+    val poster = state.art?.takeIf { state.posterShown }
+    val posterBlur = rememberPosterBlur(poster)
     Canvas(Modifier.fillMaxSize()) {
-        if (kk > 0f && field != null) {
+        if (kk > 0f && poster != null) {
+            drawPoster(poster, posterBlur, Offset.Zero, size, (0.92f * kk).coerceAtMost(1f))
+        } else if (kk > 0f && field != null) {
             // 공간 반사: 위 화면이 바닥에 비친 상을 패널 전체에 깐다(쌍선형 확대). 회색·밝은 화면은 덜 비친다
             val w = (0.92f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f)
             val dst = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt())
@@ -506,69 +589,48 @@ private fun PanelBody(
                 SeekBadge(state, back = false)
             }
         }
-        if (show("progress") || bar != 0) {
+        if (show("progress")) {
             GlassTile(state, amb, Modifier.fillMaxWidth().weight(0.9f), null, clipContent = false) {
-                when (bar) {
-                    1 -> PanelSlider(state.brightness, 100, { "$it%" }, "밝기", live = true) { onBrightness(it) }
-                    2 -> PanelSlider(state.volume, 100, { "$it%" }, "음량", live = true) { onVolume(it) }
-                    3 -> SpeedRow(state.speed) {
-                        onSpeedSet(it)
-                        setBar(0)
-                    }
-                    else -> {
-                        if (state.canSeek) {
-                            val f = (state.position.toFloat() / state.duration).coerceIn(0f, 1f)
-                            Row(Modifier.fillMaxSize().padding(end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Box(Modifier.weight(1f)) {
-                                    PanelSlider(f, 1000, { clock(state.duration * it / 1000) }, "재생 위치", live = false) { onSeekTo(it) }
-                                }
-                                Text(clock(state.position) + " / " + clock(state.duration), color = Glass.Muted, fontSize = 12.sp)
-                            }
-                        } else {
-                            // 진행 정보가 없으면 가짜 진행률을 그리지 않고 이유만 적는다
-                            GlassSlider(0f, Glass.Muted, { if (state.hasSession) "이 앱은 위치 이동을 지원하지 않습니다" else "재생 위치 정보를 받지 못했습니다" }, live = false, enabled = false) {}
+                if (state.canSeek) {
+                    val f = (state.position.toFloat() / state.duration).coerceIn(0f, 1f)
+                    Row(Modifier.fillMaxSize().padding(end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f)) {
+                            PanelSlider(f, 1000, { clock(state.duration * it / 1000) }, "재생 위치", live = false) { onSeekTo(it) }
                         }
+                        Text(clock(state.position) + " / " + clock(state.duration), color = Glass.Muted, fontSize = 12.sp)
                     }
+                } else {
+                    // 진행 정보가 없으면 가짜 진행률을 그리지 않고 이유만 적는다
+                    GlassSlider(0f, Glass.Muted, { if (state.hasSession) "이 앱은 위치 이동을 지원하지 않습니다" else "재생 위치 정보를 받지 못했습니다" }, live = false, enabled = false) {}
                 }
             }
         }
-        // 아래 줄: 아이콘만 크게 두던 것을(11-02 소장님 "버튼 존나 큰데 정보도 없어") 낮은 알약 모양으로 줄이고, 이름과 지금 값을 함께 보여 준다.
-        // 속도는 누르면 고르기 줄이 열린다(예전에는 누를 때마다 몰래 다음 속도로 넘어가 무엇이 바뀌는지 알기 어려웠다)
-        Row(Modifier.fillMaxWidth().weight(0.6f), horizontalArrangement = Arrangement.spacedBy(gap)) {
-            if (show("speed")) {
-                val speedValue = if (state.speedNote.isNotEmpty()) {
-                    state.speedNote
-                } else if (!state.hasSession) {
-                    "세션 없음"
-                } else {
-                    speedText(state.speed)
+        // 아래 줄: 밝기·음량을 눌러서 여는 대신 그 자리에서 바로 끄는 조절바로 둔다(11-02 소장님). 재생 속도(YouTube 등이 세션으로 받지 않음)와
+        // 전체 화면(실기에서 동작하지 않음)은 뺐다
+        if (show("brightness") || show("volume")) {
+            Row(Modifier.fillMaxWidth().weight(0.9f), horizontalArrangement = Arrangement.spacedBy(gap)) {
+                if (show("brightness")) {
+                    GlassTile(state, amb, Modifier.weight(1f), null, label = "밝기", clipContent = false) {
+                        InlineSlider(state.brightness, "밝기", { sun(it) }) { onBrightness(it) }
+                    }
                 }
-                GlassTile(state, amb, Modifier.weight(1f), { setBar(if (bar == 3) 0 else 3) }, onLong = onSpeed, selected = bar == 3, label = "재생 속도", enabled = state.hasSession) {
-                    InfoChip("재생 속도", speedValue) { gauge(it) }
+                if (show("volume")) {
+                    GlassTile(state, amb, Modifier.weight(1f), null, label = "음량", clipContent = false) {
+                        InlineSlider(state.volume, "음량", { speaker(it) }) { onVolume(it) }
+                    }
                 }
             }
-            if (show("brightness")) GlassTile(state, amb, Modifier.weight(1f), { setBar(if (bar == 1) 0 else 1) }, selected = bar == 1, label = "밝기") { InfoChip("밝기", "${(state.brightness * 100).toInt()}%") { sun(it) } }
-            if (show("volume")) GlassTile(state, amb, Modifier.weight(1f), { setBar(if (bar == 2) 0 else 2) }, selected = bar == 2, label = "음량") { InfoChip("음량", "${(state.volume * 100).toInt()}%") { speaker(it) } }
-            if (show("fullscreen")) GlassTile(state, amb, Modifier.weight(1f), onFullscreen, label = "전체 화면") { InfoChip("전체 화면", "크게 보기") { expand(it) } }
         }
     }
 }
 
-/** 속도 글자: 1 → "1.0x", 1.25 → "1.25x". */
-private fun speedText(s: Float) = if (kotlin.math.abs(s * 10 - kotlin.math.round(s * 10)) < 0.01f) "%.1fx".format(s) else "%.2fx".format(s)
-
-/** 아래 줄 타일 내용: 작은 아이콘 + 이름(흐리게) + 지금 값(굵게). 좁으면 값만 남긴다. */
+/** 아래 줄 조절바: 작은 아이콘 + 리퀴드 조절바(끄는 동안 바로 반영, 손잡이에 % 표시). */
 @Composable
-private fun InfoChip(title: String, value: String, icon: DrawScope.(Color) -> Unit) {
-    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
-        val narrow = maxWidth < 110.dp
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(18) { icon(it) }
-            Spacer(Modifier.width(8.dp))
-            Column {
-                if (!narrow) Text(title, color = LocalTileInk.current.copy(alpha = 0.66f), fontSize = 10.sp, maxLines = 1)
-                Text(value, color = LocalTileInk.current, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-            }
+private fun InlineSlider(value: Float, desc: String, icon: DrawScope.(Color) -> Unit, onChange: (Float) -> Unit) {
+    Row(Modifier.fillMaxSize().padding(start = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(20) { icon(it) }
+        Box(Modifier.weight(1f).fillMaxHeight()) {
+            PanelSlider(value, 100, { "$it%" }, desc, live = true, onChange = onChange)
         }
     }
 }
@@ -599,24 +661,6 @@ private fun PanelSlider(value: Float, steps: Int, text: (Int) -> String, desc: S
             valueText = text,
             description = desc
         )
-    }
-}
-
-/** 속도 고르기 줄(속도 타일을 누르면). */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun SpeedRow(now: Float, onPick: (Float) -> Unit) {
-    Row(Modifier.fillMaxSize().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-        listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f).forEach { s ->
-            val on = kotlin.math.abs(s - now) < 0.01f
-            Text(
-                "${s}x",
-                color = if (on) Color.Black else Glass.Ink,
-                fontSize = 13.sp,
-                fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
-                modifier = Modifier.clip(RoundedCornerShape(50)).background(if (on) Glass.Ink else Color(0x22FFFFFF)).combinedClickable(onClick = { onPick(s) }).padding(horizontal = 12.dp, vertical = 6.dp)
-            )
-        }
     }
 }
 
@@ -685,6 +729,7 @@ private fun GlassTile(
     val shape = RoundedCornerShape(Glass.radius)
     val tn = tone(state.intensity)
     val sceneTint = remember(amb[3], state.ambientOn) { if (state.ambientOn) sceneTintOf(amb[3]) else null }
+    val posterBlurTile = rememberPosterBlur(state.art?.takeIf { state.posterShown })
     val q = state.quality
     val kk = if (state.ambientOn) ambK(state.intensity) else 0f
     val hc = state.highContrast
@@ -729,7 +774,12 @@ private fun GlassTile(
                     // 2 공간 반사: 바닥과 같은 반사 필드를 패널 좌표 그대로(카드 위치만큼 옮겨) 그려 카드 경계에서 끊기지 않는다.
                     //   유리는 반사를 절반쯤 통과시키고, 잉크로 찬 버튼은 표면 광택처럼 옅게 받는다
                     val fieldImg = state.field
-                    if (q >= 2 && kk > 0f && fieldImg != null) {
+                    val posterImg = state.art?.takeIf { state.posterShown }
+                    if (q >= 2 && kk > 0f && posterImg != null) {
+                        // 포스터도 바닥과 같은 좌표계(패널 전체)로 그려 카드 경계에서 끊기지 않는다
+                        val wk = (kk * tn.reflection).coerceAtMost(1f)
+                        drawPoster(posterImg, posterBlurTile, Offset(-pos.x, -pos.y), Size(rootSize.width.toFloat(), rootSize.height.toFloat()), wk)
+                    } else if (q >= 2 && kk > 0f && fieldImg != null) {
                         val wk = (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * tn.reflection).coerceAtMost(1f)
                         val off = androidx.compose.ui.unit.IntOffset(-pos.x.toInt(), -pos.y.toInt())
                         // 반사가 유리를 통과한다: 보통 합성으로 색 분포를 보이고, 밝은 부분은 '빛 더하기(스크린)'로 한 번 더 얹어 어두운 카드에서도 죽지 않게
