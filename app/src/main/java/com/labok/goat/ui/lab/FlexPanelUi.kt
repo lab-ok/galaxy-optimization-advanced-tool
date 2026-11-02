@@ -582,8 +582,8 @@ private fun PanelSlider(value: Float, steps: Int, text: (Int) -> String, desc: S
     var v by remember { mutableIntStateOf((value * steps).toInt()) }
     var dragging by remember { mutableStateOf(false) }
     LaunchedEffect(value) { if (!dragging) v = (value * steps).toInt() }
-    // 끄는 동안 값 방울이 손잡이 위로 떠오르므로(약 26dp) 조절바를 타일 아래쪽에 붙여 방울이 타일 모서리에 잘리지 않게 한다
-    Box(Modifier.fillMaxSize().padding(start = 14.dp, end = 14.dp, bottom = 2.dp), contentAlignment = Alignment.BottomCenter) {
+    // 타일 가운데에 둔다(11-02 소장님 "조절바 너무 아래로 내려갔어"). 값 방울은 타일이 내용을 자르지 않아(clipContent = false) 위로 나와도 된다
+    Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
         com.labok.goat.ui.liquid.LiquidSlider(
             value = v,
             range = 0..steps,
