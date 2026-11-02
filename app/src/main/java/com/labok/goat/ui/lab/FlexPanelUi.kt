@@ -730,6 +730,8 @@ private fun GlassTile(
     val tn = tone(state.intensity)
     val sceneTint = remember(amb[3], state.ambientOn) { if (state.ambientOn) sceneTintOf(amb[3]) else null }
     val posterBlurTile = rememberPosterBlur(state.art?.takeIf { state.posterShown })
+    // 리퀴드 글래스 셰이더(API 33+, 카드마다 하나). 만들 수 없으면(구형 기기·셰이더 컴파일 실패) 예전 겹친 레이어로 그린다
+    val glass = remember { if (android.os.Build.VERSION.SDK_INT >= 33) runCatching { GlassShader() }.getOrNull() else null }
     val q = state.quality
     val kk = if (state.ambientOn) ambK(state.intensity) else 0f
     val hc = state.highContrast
@@ -779,6 +781,30 @@ private fun GlassTile(
                         // 포스터도 바닥과 같은 좌표계(패널 전체)로 그려 카드 경계에서 끊기지 않는다
                         val wk = (kk * tn.reflection).coerceAtMost(1f)
                         drawPoster(posterImg, posterBlurTile, Offset(-pos.x, -pos.y), Size(rootSize.width.toFloat(), rootSize.height.toFloat()), wk)
+                    }
+                    val shaderOn = glass != null && q >= 2 && !hc && android.os.Build.VERSION.SDK_INT >= 33
+                    if (shaderOn) {
+                        // 반사(굴절·분산 포함)와 테두리 빛·Fresnel·안쪽 그늘을 셰이더 한 번으로. 포스터를 보일 때는 반사 대신 테두리 빛만
+                        val useField = kk > 0f && fieldImg != null && posterImg == null
+                        val wk = if (useField) (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * tn.reflection).coerceAtMost(1f) else 0f
+                        glass!!.update(
+                            if (useField) fieldImg else null,
+                            if (useField) state.near else null,
+                            pos,
+                            rootSize.width.toFloat(),
+                            rootSize.height.toFloat(),
+                            com.labok.goat.data.lab.ReflectionField.NEAR_FRAC,
+                            size.width,
+                            size.height,
+                            minOf(Glass.radius.toPx(), size.minDimension / 2f),
+                            density,
+                            wk,
+                            primary,
+                            press
+                        )
+                        drawRect(ShaderBrush(glass.shader))
+                    } else if (posterImg != null && q >= 2 && kk > 0f) {
+                        // 포스터는 위에서 그렸다
                     } else if (q >= 2 && kk > 0f && fieldImg != null) {
                         val wk = (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * tn.reflection).coerceAtMost(1f)
                         val off = androidx.compose.ui.unit.IntOffset(-pos.x.toInt(), -pos.y.toInt())
@@ -815,9 +841,9 @@ private fun GlassTile(
                         val ctr = Offset(size.width / 2, size.height * 0.42f)
                         val rr = size.maxDimension * 0.7f
                         drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.10f else 0.05f), Color.Transparent), ctr, rr), rr, ctr)
-                        // 안쪽 가장자리 그늘(두께감): 둥근 테두리 안쪽으로 얇은 그늘
+                        // 안쪽 가장자리 그늘(두께감): 둥근 테두리 안쪽으로 얇은 그늘(셰이더를 쓰면 셰이더가 그린다)
                         val r0 = minOf(Glass.radius.toPx(), size.minDimension / 2f)
-                        drawRoundRect(Color.Black.copy(alpha = 0.22f), Offset(2.dp.toPx(), 2.dp.toPx()), Size(size.width - 4.dp.toPx(), size.height - 4.dp.toPx()), CornerRadius(r0 - 2.dp.toPx()), style = Stroke(3.dp.toPx()))
+                        if (!shaderOn) drawRoundRect(Color.Black.copy(alpha = 0.22f), Offset(2.dp.toPx(), 2.dp.toPx()), Size(size.width - 4.dp.toPx(), size.height - 4.dp.toPx()), CornerRadius(r0 - 2.dp.toPx()), style = Stroke(3.dp.toPx()))
                     }
                     // 7 누름: 살짝 어두워진다 / 선택: 주변광으로 밝아진다
                     if (press > 0f) drawRect(Color.Black.copy(alpha = 0.16f * press))
@@ -827,38 +853,41 @@ private fun GlassTile(
                     val edge = if (selected) (refl ?: ambientAt(xFrac, amb[0], amb[1], amb[2])).copy(alpha = 0.9f) else lerp(Color.White, refl ?: Color.White, 0.35f)
                     // 모서리 반지름은 실제 그려진 모양과 같게(작은 타일은 높이의 절반) — 가장자리 빛·그늘이 둥근 모서리를 그대로 따라간다
                     val r = minOf(Glass.radius.toPx(), size.minDimension / 2f)
-                    drawRoundRect(
-                        Brush.linearGradient(
-                            listOf(
-                                edge.copy(
-                                    alpha = if (hc) {
-                                        0.9f
-                                    } else if (selected) {
-                                        0.85f
-                                    } else if (primary) {
-                                        0.42f
-                                    } else {
-                                        0.28f
-                                    }
-                                ),
-                                edge.copy(
-                                    alpha = if (hc) {
-                                        0.6f
-                                    } else if (selected) {
-                                        0.4f
-                                    } else {
-                                        0.06f
-                                    }
+                    // 셰이더가 테두리 빛을 그리면 이 선은 선택 표시(·고대비)일 때만
+                    if (!shaderOn || selected) {
+                        drawRoundRect(
+                            Brush.linearGradient(
+                                listOf(
+                                    edge.copy(
+                                        alpha = if (hc) {
+                                            0.9f
+                                        } else if (selected) {
+                                            0.85f
+                                        } else if (primary) {
+                                            0.42f
+                                        } else {
+                                            0.28f
+                                        }
+                                    ),
+                                    edge.copy(
+                                        alpha = if (hc) {
+                                            0.6f
+                                        } else if (selected) {
+                                            0.4f
+                                        } else {
+                                            0.06f
+                                        }
+                                    )
                                 )
-                            )
-                        ),
-                        Offset(0.5f, 0.5f),
-                        Size(size.width - 1f, size.height - 1f),
-                        CornerRadius(r),
-                        style = Stroke(if (selected) 1.5.dp.toPx() else 1.dp.toPx())
-                    )
+                            ),
+                            Offset(0.5f, 0.5f),
+                            Size(size.width - 1f, size.height - 1f),
+                            CornerRadius(r),
+                            style = Stroke(if (selected) 1.5.dp.toPx() else 1.dp.toPx())
+                        )
+                    }
                     // 모서리 광택: 왼쪽 위 둥근 모서리를 따라 맺히는 짧은 빛(그 자리 반사색으로 살짝 물든다). 누르면 약해진다
-                    if (q >= 2 && !hc) {
+                    if (q >= 2 && !hc && !shaderOn) {
                         val inset = 1.5.dp.toPx()
                         drawArc(
                             lerp(Color.White, refl ?: Color.White, 0.3f).copy(alpha = (if (primary) 0.30f else 0.22f) * (1f - 0.5f * press)),

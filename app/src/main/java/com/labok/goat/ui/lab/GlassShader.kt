@@ -1,0 +1,169 @@
+package com.labok.goat.ui.lab
+
+import android.graphics.BitmapShader
+import android.graphics.Matrix
+import android.graphics.RuntimeShader
+import android.graphics.Shader
+import androidx.annotation.RequiresApi
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+
+/**
+ * GOAT 패널 카드의 리퀴드 글래스 셰이더(11-02 소장님 "깃 검색해서 리퀴드 글래스 구현 긴빠이").
+ *
+ * 조사 보고서 `liquid_glass_research_261102.md`의 레시피를 GOAT에 맞게 옮겼다. 출처(허용 라이선스만):
+ * - Kyant0/AndroidLiquidGlass(Apache-2.0): 둥근 사각형 SDF, 가장자리 띠 안에서만 샘플 위치를 안쪽으로 당기는 굴절
+ * - QWEA0/Liquid-Glass-Android(MIT): 광원 쪽·반대쪽 두 lobe의 테두리 빛, 1px 실선 + 안쪽 glow, 되접힘 고리를 막는 제곱 프로파일과 상한
+ * - skydoves/Cloudy(Apache-2.0): 모서리 이음매가 부드러운 법선
+ *
+ * GOAT는 카드 뒤 배경(반사 필드)을 스스로 그리므로 실제 화면을 캡처할 필요가 없다. 반사 필드(96칸)와 근거리 띠(384칸)를
+ * 패널 좌표계로 늘린 BitmapShader 두 개를 입력으로 받아, 카드 하나를 셰이더 한 번으로 그린다.
+ * 기존의 가짜 굴절(옮긴 사본)·스크린 사본·안쪽 그늘 선·대각선 테두리 선·모서리 광택 호를 이것 하나로 바꾼다.
+ */
+@RequiresApi(33)
+internal class GlassShader {
+    val shader = RuntimeShader(AGSL)
+    private val fieldMatrix = Matrix()
+    private val nearMatrix = Matrix()
+    private var fieldSrc: ImageBitmap? = null
+    private var nearSrc: ImageBitmap? = null
+    private var fieldShader: BitmapShader? = null
+    private var nearShader: BitmapShader? = null
+    private val empty: BitmapShader by lazy {
+        BitmapShader(android.graphics.Bitmap.createBitmap(1, 1, android.graphics.Bitmap.Config.ARGB_8888), Shader.TileMode.DECAL, Shader.TileMode.DECAL)
+    }
+
+    /**
+     * 이번 프레임의 입력을 넣는다. [pos]는 패널 안에서 카드의 왼쪽 위, [panelW]·[panelH]는 패널 크기(px).
+     * [nearFrac]은 근거리 띠가 덮는 패널 높이 비율. [reflect]는 반사 세기(프리셋·장면 밝기 반영), [press]는 눌림(0~1).
+     */
+    fun update(
+        field: ImageBitmap?,
+        near: ImageBitmap?,
+        pos: androidx.compose.ui.geometry.Offset,
+        panelW: Float,
+        panelH: Float,
+        nearFrac: Float,
+        w: Float,
+        h: Float,
+        radius: Float,
+        density: Float,
+        reflect: Float,
+        primary: Boolean,
+        press: Float
+    ) {
+        if (field !== fieldSrc) {
+            fieldSrc = field
+            fieldShader = field?.let { bmpShader(it) }
+        }
+        if (near !== nearSrc) {
+            nearSrc = near
+            nearShader = near?.let { bmpShader(it) }
+        }
+        // 비트맵 칸 → 패널 px로 늘리고, 카드 위치만큼 옮긴다(바닥과 같은 좌표계라 카드 경계에서 끊기지 않는다)
+        field?.let { f ->
+            fieldMatrix.setScale(panelW / f.width, panelH / f.height)
+            fieldMatrix.postTranslate(-pos.x, -pos.y)
+            fieldShader?.setLocalMatrix(fieldMatrix)
+        }
+        near?.let { n ->
+            nearMatrix.setScale(panelW / n.width, panelH * nearFrac / n.height)
+            nearMatrix.postTranslate(-pos.x, -pos.y)
+            nearShader?.setLocalMatrix(nearMatrix)
+        }
+        shader.setInputShader("field", fieldShader ?: empty)
+        shader.setInputShader("near", nearShader ?: empty)
+        shader.setFloatUniform("size", w, h)
+        shader.setFloatUniform("cornerRadius", radius)
+        // 굴절 띠 폭과 최대 변위: 변위는 띠 폭의 절반 이하(그 이상이면 가장자리에 거울 고리가 생긴다, QWEA0 상한)
+        val bevel = 22f * density
+        shader.setFloatUniform("bevel", bevel)
+        shader.setFloatUniform("refraction", bevel * 0.5f * (1f - 0.35f * press))
+        shader.setFloatUniform("dispersion", 0.10f)
+        shader.setFloatUniform("lightDir", -0.6f, -0.8f)
+        shader.setFloatUniform("specular", if (primary) 1f else 0.85f)
+        shader.setFloatUniform("reflect", reflect)
+        shader.setFloatUniform("density", density)
+    }
+
+    private fun bmpShader(b: ImageBitmap) = BitmapShader(b.asAndroidBitmap(), Shader.TileMode.DECAL, Shader.TileMode.DECAL).apply {
+        filterMode = BitmapShader.FILTER_MODE_LINEAR
+    }
+
+    private companion object {
+        const val AGSL = """
+uniform shader field;
+uniform shader near;
+uniform float2 size;
+uniform float cornerRadius;
+uniform float bevel;
+uniform float refraction;
+uniform float dispersion;
+uniform float2 lightDir;
+uniform float specular;
+uniform float reflect;
+uniform float density;
+
+float sdRoundRect(float2 p, float2 b, float r) {
+    float2 q = abs(p) - b + r;
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+}
+
+float2 edgeNormal(float2 p, float2 b, float r) {
+    float2 q = abs(p) - b + r;
+    float2 s = float2(p.x >= 0.0 ? 1.0 : -1.0, p.y >= 0.0 ? 1.0 : -1.0);
+    if (max(q.x, q.y) > 0.0) return s * normalize(max(q, 0.0));
+    float w = clamp(0.5 + 0.5 * (q.x - q.y) / (8.0 * density), 0.0, 1.0);
+    return normalize(float2(s.x * w, s.y * (1.0 - w)) + float2(0.0, 1e-4));
+}
+
+half4 back(float2 c) {
+    half4 n = near.eval(c);
+    half4 f = field.eval(c);
+    return n + f * (1.0 - n.a);
+}
+
+half4 main(float2 coord) {
+    float2 hs = size * 0.5;
+    float2 p = coord - hs;
+    float minHalf = min(hs.x, hs.y);
+    float r = min(cornerRadius, minHalf);
+    float sd = sdRoundRect(p, hs, r);
+    float cov = clamp(0.5 - sd, 0.0, 1.0);
+    if (cov <= 0.0) return half4(0.0);
+
+    // 1) 굴절: 가장자리 띠 안에서만, 제곱 프로파일(되접힘 고리 없이 가장자리로 갈수록 강하게)
+    float2 n = edgeNormal(p, hs, min(r * 1.5, minHalf));
+    float x = 1.0 - clamp(-sd / bevel, 0.0, 1.0);
+    float bend = x * x;
+    float2 disp = -n * (bend * refraction);
+
+    // 2) 샘플링 + 채널 분산(파랑이 조금 더 꺾임)
+    half4 g = back(coord + disp);
+    half rr = back(coord + disp * (1.0 - dispersion)).r;
+    half bb = back(coord + disp * (1.0 + dispersion)).b;
+    half4 refl = half4(rr, g.g, bb, g.a) * half(reflect);
+
+    // 3) 테두리 빛: 법선·광원 내적, 광원 쪽과 반대쪽(안쪽 벽 반사) 두 lobe. 1px 실선 + 안쪽 8px 부드러운 빛
+    float facing = dot(n, -lightDir);
+    float lobeF = pow(max(facing, 0.0), 3.0);
+    float lobeB = pow(max(-facing, 0.0), 3.0) * 0.55;
+    float hair = clamp(1.0 - abs(sd + density) / (1.5 * density), 0.0, 1.0);
+    float inner = -sd - density;
+    float glow = clamp(inner / (2.0 * density), 0.0, 1.0) * pow(clamp(1.0 - (inner - 2.0 * density) / (8.0 * density), 0.0, 1.0), 1.5);
+    float spec = specular * (hair * 0.55 * (lobeF + lobeB) + glow * 0.12 * lobeF);
+
+    // 4) Fresnel: 가장자리로 갈수록 반사가 밝아진다(시야각 효과 근사)
+    float fres = pow(x, 4.0) * 0.10;
+
+    // 5) 안쪽 가장자리 그늘(두께감): 테두리 바로 안쪽이 살짝 어둡다
+    float shade = clamp(1.0 - abs(-sd - 4.0 * density) / (4.0 * density), 0.0, 1.0) * 0.18 * (1.0 - lobeF);
+
+    half hl = half(clamp(spec + fres, 0.0, 1.0));
+    half4 outc = refl + half4(hl) * (1.0 - refl.a);
+    outc = outc + half4(0.0, 0.0, 0.0, half(shade)) * (1.0 - outc.a);
+    return outc * half(cov);
+}
+"""
+    }
+}
