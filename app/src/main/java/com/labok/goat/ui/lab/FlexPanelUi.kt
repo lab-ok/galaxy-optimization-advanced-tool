@@ -265,10 +265,11 @@ private object Glass {
 private class AmbTone(val k: Float, val reflection: Float, val absorption: Float, val ink: Float)
 
 private val TONES = listOf(
-    AmbTone(0.6f, 0.55f, 0.62f, 0.16f),
-    AmbTone(1.2f, 0.8f, 0.52f, 0.24f),
-    AmbTone(1.45f, 0.92f, 0.46f, 0.28f),
-    AmbTone(1.7f, 1.0f, 0.40f, 0.32f)
+    // 11-03 재질 계층: 버튼은 바닥보다 더 불투명한 '조작 표면'으로(흡수 +0.22). 바닥은 반대로 더 비친다(AmbientBackdrop)
+    AmbTone(0.6f, 0.55f, 0.82f, 0.16f),
+    AmbTone(1.2f, 0.8f, 0.74f, 0.24f),
+    AmbTone(1.45f, 0.92f, 0.68f, 0.28f),
+    AmbTone(1.7f, 1.0f, 0.62f, 0.32f)
 )
 
 private fun tone(i: Int) = TONES[i.coerceIn(0, TONES.size - 1)]
@@ -522,13 +523,13 @@ private fun glassLog(context: android.content.Context, ok: Boolean) {
     com.labok.goat.data.log.LogRepository.from(context).add("GOAT 플렉스 패널: 리퀴드 글래스 셰이더 ${if (ok) "동작" else "만들지 못해 예전 방식으로 그림"} (Android ${android.os.Build.VERSION.SDK_INT})")
 }
 
-/** 반사 색 보정(채도 1.3·대비 1.12, 가운데 0.48) — 예전 CPU의 AmbientColor.grade를 GPU 색 행렬로 근사. 바닥·근거리 띠가 같이 쓴다. */
+/** 반사 색 보정(채도 1.22·대비 1.18, 가운데 0.48. 11-03: 채도 1.3이 초록 같은 한 색을 넓게 덮어 구조가 묻혀, 채도를 조금 낮추고 대비로 구조를 살렸다) — 예전 CPU의 AmbientColor.grade를 GPU 색 행렬로 근사. 바닥·근거리 띠가 같이 쓴다. */
 internal fun reflectionGrade(): androidx.compose.ui.graphics.ColorFilter {
-    val sat = 1.3f
+    val sat = 1.22f
     val lr = 0.2126f * (1 - sat)
     val lg = 0.7152f * (1 - sat)
     val lb = 0.0722f * (1 - sat)
-    val c = 1.12f
+    val c = 1.18f
     val t = 0.48f * (1 - c) * 255f
     return androidx.compose.ui.graphics.ColorFilter.colorMatrix(
         androidx.compose.ui.graphics.ColorMatrix(
@@ -575,7 +576,8 @@ private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
             drawPoster(posterBlur, Offset.Zero, size, (0.92f * kk).coerceAtMost(1f))
         } else if (kk > 0f && field != null) {
             // 공간 반사: 위 화면이 바닥에 비친 상을 패널 전체에 깐다(쌍선형 확대). 회색·밝은 화면은 덜 비친다
-            val w = (0.92f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f)
+            // 11-03 재질 계층: 바닥은 더 비치게(0.92 → 1.0배, 아래 어둡힘 45% → 30%)
+            val w = (1.0f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f)
             val dst = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt())
             drawImage(field, dstSize = dst, alpha = w, filterQuality = androidx.compose.ui.graphics.FilterQuality.Low, colorFilter = gradeCf)
             // 근거리 띠: 같은 좌표계로 패널 위쪽에 고해상도 반사를 얹는다(띠 아래쪽은 투명해져 기본 필드로 이어진다)
@@ -585,9 +587,9 @@ private fun AmbientBackdrop(state: FlexPanelState, c: List<Color>) {
             // 영상(위)에서 흘러내리는 빛
             drawRect(Brush.verticalGradient(listOf(c[3].copy(alpha = (0.5f * kk * ambWeight(c[3])).coerceAtMost(0.75f)), Color.Transparent), 0f, size.height * 0.55f))
         }
-        drawRect(Brush.verticalGradient(listOf(Color(0x00000000), Color(0x73000000))))
+        drawRect(Brush.verticalGradient(listOf(Color(0x00000000), Color(0x4D000000))))
     }
-    if (kk > 0f && field != null && poster == null) NearLayer(state, (0.92f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f))
+    if (kk > 0f && field != null && poster == null) NearLayer(state, (1.0f * kk * ambWeight(c[3]).coerceAtLeast(0.45f)).coerceAtMost(1f))
     // 떠다니는 빛 두 덩이: 한 번 그려 둔 층을 옮기기만 한다(움직이는 동안 다시 그리지 않아 가볍다). 품질 '높음'·애니메이션 켬일 때만 움직인다
     if (kk > 0f && field == null && state.ambReady) GlowLayer(c, kk, state.motion && state.quality >= 3)
 }
@@ -673,7 +675,8 @@ private fun PanelBody(
                         // 누르면 앰비언트 고르기 탭이 열린다(11-02 소장님)
                         Text(
                             if (state.ambMode == 3 && state.ambFps > 0f && state.ambSource.startsWith("화면") && com.labok.goat.data.lab.LabUnlock.unlocked) "실시간 · ${state.ambFps.toInt()}fps" else state.ambSource,
-                            color = Glass.Ink,
+                            // 상태 표시는 정보 계층 맨 아래(11-03): 보조 회색
+                            color = if (state.ambPicker) Glass.Ink else Glass.Muted,
                             fontSize = 10.sp,
                             modifier = Modifier.clip(RoundedCornerShape(50)).background(if (state.ambPicker) Color(0x44FFFFFF) else Color(0x22FFFFFF))
                                 .clickable { state.ambPicker = !state.ambPicker }.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -687,16 +690,16 @@ private fun PanelBody(
         }
         Row(Modifier.fillMaxWidth().weight(1.65f), horizontalArrangement = Arrangement.spacedBy(gap)) {
             GlassTile(state, amb, Modifier.weight(1f), { onSeek(-1) }, label = "${seekSec}초 뒤로") {
-                Icon(34) { seekIcon(it, backward = true, sec = seekSec) }
+                Icon(38) { seekIcon(it, backward = true, sec = seekSec) }
                 SeekBadge(state, back = true)
             }
             GlassTile(state, amb, Modifier.weight(1.2f), onPlayPause, primary = true, label = if (state.playing) "일시정지" else "재생") {
                 AnimatedContent(state.playing, transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) }, label = "pp") { playing ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(40) { if (playing) pause(it) else play(it) } }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(48) { if (playing) pause(it) else play(it) } }
                 }
             }
             GlassTile(state, amb, Modifier.weight(1f), { onSeek(1) }, label = "${seekSec}초 앞으로") {
-                Icon(34) { seekIcon(it, backward = false, sec = seekSec) }
+                Icon(38) { seekIcon(it, backward = false, sec = seekSec) }
                 SeekBadge(state, back = false)
             }
         }
@@ -711,7 +714,9 @@ private fun PanelBody(
                         Box(Modifier.weight(1f)) {
                             PanelSlider(f, 1000, { clock(state.duration * it / 1000) }, "재생 위치", live = false) { onSeekTo(it) }
                         }
-                        Text(clock(state.position) + " / " + clock(state.duration), color = Glass.Muted, fontSize = 12.sp)
+                        // 11-03 정보 계층: 지금 위치(값)는 진하고 크게, 전체 길이(보조)는 옅게
+                        Text(clock(state.position), color = Glass.Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(" / " + clock(state.duration), color = Glass.Muted, fontSize = 12.sp)
                     }
                 } else {
                     // 진행 정보가 없으면 가짜 진행률을 그리지 않고 이유만 적는다
@@ -920,7 +925,7 @@ private fun GlassTile(
                             alpha = if (hc) {
                                 0.97f
                             } else if (primary) {
-                                tn.absorption + 0.12f
+                                tn.absorption + 0.16f
                             } else {
                                 tn.absorption
                             }
@@ -939,8 +944,9 @@ private fun GlassTile(
                     if (shaderOn) {
                         // 반사(굴절·분산 포함)와 테두리 빛·Fresnel·안쪽 그늘을 셰이더 한 번으로. 포스터를 보일 때는 반사 대신 테두리 빛만
                         val useField = kk > 0f && fieldImg != null && posterImg == null
-                        // 카드는 바닥보다 반사를 덜 통과시킨다(유리 두께감 — 1.42.15에서 카드가 반사로 꽉 차 유리로 안 보였다)
-                        val wk = if (useField) (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * tn.reflection * 0.72f).coerceAtMost(0.85f) else 0f
+                        // 카드는 바닥보다 반사를 덜 통과시킨다(유리 두께감 — 1.42.15에서 카드가 반사로 꽉 차 유리로 안 보였다).
+                        // 11-03 재질 계층: 0.72 → 0.45, 상한 0.85 → 0.6 — 바닥은 '공간', 버튼은 그 위에 뜬 '조작 표면'으로 읽히게
+                        val wk = if (useField) (kk * ambWeight(amb[3]).coerceAtLeast(0.45f) * tn.reflection * 0.45f).coerceAtMost(0.6f) else 0f
                         glass!!.update(
                             if (useField) fieldImg else null,
                             if (useField) state.near else null,
@@ -995,7 +1001,7 @@ private fun GlassTile(
                     if (q >= 2) {
                         val ctr = Offset(size.width / 2, size.height * 0.42f)
                         val rr = size.maxDimension * 0.7f
-                        drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.10f else 0.05f), Color.Transparent), ctr, rr), rr, ctr)
+                        drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.14f else 0.05f), Color.Transparent), ctr, rr), rr, ctr)
                         // 안쪽 가장자리 그늘(두께감): 둥근 테두리 안쪽으로 얇은 그늘(셰이더를 쓰면 셰이더가 그린다)
                         if (!shaderOn) drawPath(tileClip, Color.Black.copy(alpha = 0.22f), style = Stroke(5.dp.toPx()))
                     }
@@ -1234,8 +1240,9 @@ private fun DrawScope.seekIcon(c: Color, backward: Boolean, sec: Int) {
     // 굵은 둥근 선 끝의 300° 호, 호 끝에 이어 붙은 채운 화살촉, 가운데 큰 숫자(5·10·15·30). 새로고침 기호처럼 보이지 않게 숫자를 키웠다
     val s = size.minDimension
     val center = Offset(s / 2, s / 2)
+    // 11-03: 버튼 크기에 맞게 존재감을 키웠다(아이콘 34 → 38dp, 선 0.085 → 0.095, 숫자 0.36 → 0.42)
     val r = s * 0.40f
-    val sw = s * 0.085f
+    val sw = s * 0.095f
     val startDeg = -62f
     val sweep = 292f
     withTransform({ if (backward) scale(-1f, 1f, center) }) {
@@ -1258,7 +1265,7 @@ private fun DrawScope.seekIcon(c: Color, backward: Boolean, sec: Int) {
     }
     val p = android.graphics.Paint().apply {
         color = c.toArgb()
-        textSize = s * 0.36f
+        textSize = s * 0.42f
         textAlign = android.graphics.Paint.Align.CENTER
         isAntiAlias = true
         typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, 800, false)
