@@ -55,8 +55,10 @@ internal class GlassShader {
         reflect: Float,
         primary: Boolean,
         press: Float,
-        frost: ImageBitmap? = null
+        frost: ImageBitmap? = null,
+        sizeK: Float = 0f
     ) {
+        shader.setFloatUniform("sizeK", sizeK)
         if (frost !== frostSrc) {
             frostSrc = frost
             frostShader = frost?.let { bmpShader(it) }
@@ -123,6 +125,7 @@ uniform float specular;
 uniform float reflAmount; // 반사 세기. GLSL 내장 함수 이름 reflect와 겹치면 컴파일이 실패한다(1.42.15~16은 이 때문에 셰이더가 한 번도 돌지 않았다)
 uniform float density;
 uniform shader frost;
+uniform float sizeK; // 버튼 크기 0(작은 캡슐)~1(큰 버튼): 안쪽 그늘 폭은 넓히고 세기는 낮춰 큰 버튼이 눌려 보이지 않게(11-03)
 uniform float useFrost; // 1이면 미리 흐린 반사(frost) 한 장만 읽는다(11-02 최적화: 픽셀당 텍스처 114회 → 3회)
 
 // 모서리는 원호가 아니라 초타원(|x|^N + |y|^N = r^N, SuperellipseShape.EXPONENT와 같은 N) — 잘라낸 모양과 같은 윤곽
@@ -214,7 +217,8 @@ half4 main(float2 coord) {
     float fres = pow(x, 4.0) * 0.05;
 
     // 5) 안쪽 가장자리 그늘(두께감): 테두리 바로 안쪽이 살짝 어둡다
-    float shade = clamp(1.0 - abs(-sd - 4.0 * density) / (4.0 * density), 0.0, 1.0) * 0.18 * (1.0 - lobeF);
+    float sw = (4.0 + 6.0 * sizeK) * density;
+    float shade = clamp(1.0 - abs(-sd - sw) / sw, 0.0, 1.0) * 0.18 * (1.0 - 0.4 * sizeK) * (1.0 - lobeF);
 
     half hl = half(clamp(spec + fres, 0.0, 1.0));
     half4 outc = refl + half4(hl) * (1.0 - refl.a);

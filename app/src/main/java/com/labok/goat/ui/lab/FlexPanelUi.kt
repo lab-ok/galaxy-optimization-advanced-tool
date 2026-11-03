@@ -910,6 +910,8 @@ private fun GlassTile(
                 // 재질은 늘 둥근 모양 안에만(내용을 자르지 않는 타일도 바탕·반사·테두리는 모서리를 따른다)
                 val tileClip = androidx.compose.ui.graphics.Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawBehind)) }
                 clipPath(tileClip) {
+                    // 버튼 크기 0(작은 캡슐 ≈ 44dp)~1(큰 버튼 ≈ 120dp): 곡면 광학을 크기에 맞춰 키운다(아래 4·몸통, 셰이더 안쪽 그늘)
+                    val sizeK = ((size.minDimension / density - 44f) / 76f).coerceIn(0f, 1f)
                     // 재생(주 버튼)도 같은 액상 유리. 잉크로 칠하지 않고 밀도(조금 더 밝은 바탕)·가운데 빛·더 또렷한 가장자리로 구분한다(11-02 소장님)
                     // 카드 표면 틴트: 장면 전체 색을 어두운 유리 색으로 낮춰 섞는다(파란 장면이면 청색, 따뜻한 장면이면 주황 기운이
                     // 카드 자체에서 느껴지게, 11-02 실사용 검수). 무채색 장면은 거의 섞이지 않는다
@@ -961,7 +963,8 @@ private fun GlassTile(
                             wk,
                             primary,
                             press,
-                            if (useField) state.frost else null
+                            if (useField) state.frost else null,
+                            sizeK
                         )
                         drawRect(ShaderBrush(glass.shader))
                     } else if (posterImg != null && q >= 2 && kk > 0f) {
@@ -987,21 +990,34 @@ private fun GlassTile(
                     }
                     // 3 재질 결
                     if (q >= 3) drawRect(ShaderBrush(ImageShader(grain, TileMode.Repeated, TileMode.Repeated)))
-                    // 4 위쪽 하이라이트(누르면 아래로 내려가며 약해진다)
+                    // 크기별 곡면(11-03 소장님 "버튼 크기에 따라 liquid glass의 곡면 광학 표현이 함께 스케일링"): 예전에는 모든 버튼이
+                    // 같은 비율·같은 세기의 빛을 써서, 큰 미디어 버튼은 넓은 면적에 비해 곡면 반응이 약해 평평하고 탁하게(눌려) 보였다.
+                    // 짧은 변(dp)으로 0(작은 캡슐 ≈ 44dp)~1(큰 버튼 ≈ 120dp)을 정해 위 광택 폭·가운데 밝기·광택 자국·아래 가라앉음이 함께 커진다.
+                    // 밝기를 통째로 올리지 않고 분포(폭·반경)를 키운다. 가로로 긴 카드(헤더·진행)는 짧은 변이 작아 작은 버튼 규칙을 따른다
+                    // 4 위쪽 광택 띠(누르면 아래로 내려가며 약해진다): 작은 버튼은 얇고 단단하게, 큰 버튼은 넓고 완만하게
                     if (q >= 2) {
                         val top = size.height * (0.0f + 0.08f * press)
-                        drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.13f * (1f - 0.5f * press)), Color.Transparent), top, top + size.height * 0.5f))
+                        drawRect(
+                            Brush.verticalGradient(listOf(Color.White.copy(alpha = (0.11f + 0.03f * sizeK) * (1f - 0.5f * press)), Color.Transparent), top, top + size.height * (0.30f + 0.25f * sizeK))
+                        )
                     }
                     // 5 안쪽 반사(왼쪽 위의 은은한 빛)
                     if (q >= 3) {
                         val o = Offset(size.width * 0.18f, size.height * 0.1f)
                         drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.07f), Color.Transparent), o, size.minDimension * 0.9f), size.minDimension * 0.9f, o)
                     }
-                    // 가운데 액체 몸통: 가운데가 은은히 밝고 가장자리로 갈수록 살짝 가라앉는다(주 버튼은 조금 더 밝게)
+                    // 가운데 액체 몸통: 가운데가 은은히 솟고 가장자리로 갈수록 가라앉는다. 큰 버튼일수록 솟은 범위가 넓고 중심이 위로(쿠션)
                     if (q >= 2) {
-                        val ctr = Offset(size.width / 2, size.height * 0.42f)
-                        val rr = size.maxDimension * 0.7f
-                        drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = if (primary) 0.14f else 0.05f), Color.Transparent), ctr, rr), rr, ctr)
+                        val ctr = Offset(size.width / 2, size.height * (0.42f - 0.06f * sizeK))
+                        val rr = size.maxDimension * (0.45f + 0.35f * sizeK)
+                        val lift = 0.05f + 0.07f * sizeK + if (primary) 0.04f else 0f
+                        drawCircle(Brush.radialGradient(0f to Color.White.copy(alpha = lift), 0.55f to Color.White.copy(alpha = lift * 0.45f), 1f to Color.Transparent, center = ctr, radius = rr), rr, ctr)
+                        // 광택 자국(specular footprint): 위쪽 가운데의 부드러운 빛 웅덩이 — 크기에 비례해 넓어진다(가장자리 선이 아니라 면)
+                        val so = Offset(size.width / 2, size.height * 0.14f)
+                        val sr = size.minDimension * (0.30f + 0.45f * sizeK)
+                        drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = (0.04f + 0.05f * sizeK) * (1f - 0.6f * press)), Color.Transparent), so, sr), sr, so)
+                        // 아래쪽 완만한 가라앉음: 진하게가 아니라 넓게(큰 버튼은 넓은 면적에 걸쳐 아주 옅게) — 눌려 보이지 않게 세기는 고정·낮게
+                        drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.06f)), size.height * (1f - (0.18f + 0.20f * sizeK)), size.height))
                         // 안쪽 가장자리 그늘(두께감): 둥근 테두리 안쪽으로 얇은 그늘(셰이더를 쓰면 셰이더가 그린다)
                         if (!shaderOn) drawPath(tileClip, Color.Black.copy(alpha = 0.22f), style = Stroke(5.dp.toPx()))
                     }
