@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.46.1",
+        "2026-11-03",
+        "업데이트가 막힐 때 안내를 고칩니다(시험 버전).",
+        listOf(
+            "고침" to listOf(
+                "앱 안 업데이트: '출처를 알 수 없는 앱 설치'가 꺼져 있어 업데이트가 막히면, 이유를 알려 주고 허용하는 설정 화면을 바로 엽니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.46.0",
         "2026-11-03",
         "업데이트나 재부팅 직후 플렉스 각도가 90°·180°로만 보이던 문제를 고쳤습니다.",

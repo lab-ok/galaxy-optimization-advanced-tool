@@ -31,4 +31,11 @@ class InstallFailureTest {
             cmd
         )
     }
+
+    @Test
+    fun selfUpdateBlockedByUnknownSourceAsksForPermission() {
+        // 11-03 사용자 메일(갤럭시 S26, Android 17): 시스템 설치 창이 '출처를 알 수 없는 앱 설치'가 꺼져 있어 막았다
+        assertEquals(InstallFailure.UNKNOWN_SOURCE, InstallFailure.explain(3, "INSTALL_FAILED_ABORTED: Self update is blocked by unknown source package"))
+        assertEquals(InstallFailure.UNKNOWN_SOURCE, InstallFailure.explain(3, "INSTALL_FAILED_ABORTED: User rejected permissions"))
+    }
 }

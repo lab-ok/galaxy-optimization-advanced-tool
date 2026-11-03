@@ -214,6 +214,19 @@ object Updater {
             if (r?.ok == true && r.out.contains("Success")) return
             log.add("업데이트 ${release.version}: Shizuku 설치 실패(${(r?.err ?: r?.out).orEmpty().take(80)}), 시스템 설치 창으로")
         }
+        // 'GOAT: 출처를 알 수 없는 앱 설치'가 꺼져 있으면 시스템이 자기 업데이트를 바로 막는다(11-03 사용자 메일, 갤럭시 S26 Android 17:
+        // "Self update is blocked by unknown source package"). 설치 창을 띄우기 전에 그 설정 화면을 열어 허용하게 안내한다
+        if (!context.packageManager.canRequestPackageInstalls()) {
+            state.value = State.Failed(InstallFailure.UNKNOWN_SOURCE, release)
+            log.add("업데이트 ${release.version}: '출처를 알 수 없는 앱 설치'가 꺼져 있어 설정 화면을 엶")
+            runCatching {
+                context.startActivity(
+                    Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${context.packageName}"))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }
+            return
+        }
         runCatching { installWithSystem(context, file) }.onFailure {
             state.value = State.Failed("설치 창을 열지 못했습니다.", release)
             log.add("업데이트 ${release.version}: 설치 창 실패(${it.message?.take(80)})")

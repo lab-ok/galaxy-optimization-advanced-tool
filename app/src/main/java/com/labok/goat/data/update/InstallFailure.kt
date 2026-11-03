@@ -8,10 +8,14 @@ import android.content.pm.PackageInstaller
  * 모르는 코드는 원문을 괄호로 붙여 신고할 때 단서로 남긴다.
  */
 object InstallFailure {
+    /** 'GOAT: 출처를 알 수 없는 앱 설치'가 꺼져 있을 때(시스템이 "Self update is blocked by unknown source package"로 막는다). */
+    const val UNKNOWN_SOURCE = "GOAT에 '출처를 알 수 없는 앱 설치' 권한이 없어 시스템이 업데이트를 막았습니다. 열린 설정 화면에서 허용한 뒤 다시 업데이트해 주세요."
+
     fun explain(status: Int?, message: String?): String {
         val m = message.orEmpty()
         fun has(code: String) = m.contains(code, ignoreCase = true)
         return when {
+            has("unknown source") || has("User rejected permissions") -> UNKNOWN_SOURCE
             has("INSTALL_FAILED_UPDATE_INCOMPATIBLE") || has("INCONSISTENT_CERTIFICATES") || has("signatures do not match") ->
                 "현재 설치된 GOAT와 서명이 달라 덮어 설치할 수 없습니다. GitHub가 아닌 곳에서 받은 GOAT라면 지웠다가 다시 설치해 주세요(GOAT 설정은 처음부터 다시 해야 합니다)."
             has("INSUFFICIENT_STORAGE") || status == PackageInstaller.STATUS_FAILURE_STORAGE ->
