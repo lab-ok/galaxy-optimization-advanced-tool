@@ -181,10 +181,16 @@ internal fun LabScreen(contentPadding: PaddingValues) {
         GlassCard(Modifier.animateContentSize()) {
             var navInfo by remember { mutableStateOf("") }
             var navTesting by remember { mutableStateOf(NavGestureTest.testing(context)) }
+            var navBusy by remember { mutableStateOf(false) }
+
+            // 셸 명령이 1~2초 걸려 그사이 여러 번 눌리면(11-03 진단: 조합 2가 3초에 7번) 앞 것이 끝날 때까지 받지 않는다
             fun run(block: () -> String?) = scope.launch {
+                if (navBusy) return@launch
+                navBusy = true
                 val (err, info) = withContext(Dispatchers.IO) { block() to (NavGestureTest.status() ?: "Shizuku 연결이 필요합니다.") }
                 navInfo = (err?.let { "실패: $it\n" } ?: "") + info
                 navTesting = NavGestureTest.testing(context)
+                navBusy = false
             }
             Text("홈업 멀티핑거 · 버튼식 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
@@ -195,7 +201,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("조합 1 · 삼성 값만 버튼으로", modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 1) } })
             Spacer(Modifier.height(Gap.Item))
-            LiquidButton("조합 2 · 안드로이드 제스처 층만 켜기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 2) } })
+            LiquidButton("조합 2 · 제스처 층만 켜기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 2) } })
             Spacer(Modifier.height(Gap.Item))
             Text("조합 2는 설정 앱에서 버튼식으로 바꾼 뒤 누르세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))

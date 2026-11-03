@@ -15,7 +15,8 @@ import com.labok.goat.data.shizuku.ShizukuAccess
  * 실험실: 굿락 홈업 멀티핑거 제스처를 버튼식 내비게이션에서도 쓸 수 있는지 설정값만 바꿔 시험한다(11-03 소장님, 디시 댓글 요청).
  * 홈업은 '스와이프 제스처(여러 방향)'에서만 동작한다고 안내되어 있어, 버튼은 남기고 제스처 쪽 값만 켜는 두 조합을 시험한다.
  * - 조합 1: 삼성 내비게이션 값만 버튼으로(global navigation_bar_gesture_while_hidden 0)
- * - 조합 2: 안드로이드 제스처 층만 켜기(cmd overlay enable-exclusive navbar.gestural)
+ * - 조합 2: 제스처 층만 켜기(삼성 층 com.samsung.internal.systemui.navbar.gestural_no_hint가 있으면 그것, 없으면 안드로이드 navbar.gestural).
+ *   1.44.3은 안드로이드 층만 켰는데 폴드8 제스처 모드는 삼성 층을 쓴다(11-03 진단)
  * 바꾸기 전 값을 저장해 두고 [restore]로 되돌린다. 시험 중에는 알림에 [원래대로] 버튼을 띄워 내비게이션이 막혀도 알림창에서 되돌릴 수 있다.
  * 작업 스레드에서 부른다.
  */
@@ -24,6 +25,10 @@ object NavGestureTest {
     private const val CHANNEL = "lab_nav_gesture"
     private const val NOTIFICATION = 3201
     private const val NAVBAR = "com.android.internal.systemui.navbar"
+    private const val SEC_GESTURAL = "com.samsung.internal.systemui.navbar.gestural_no_hint"
+
+    // 삼성(com.samsung.internal…)과 안드로이드(com.android.internal…) 내비게이션 층을 모두 가리킨다
+    private fun isNavbar(name: String) = "systemui.navbar." in name
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 
@@ -37,7 +42,7 @@ object NavGestureTest {
                 "안드로이드 방식 $(settings get secure navigation_mode) · 세 손가락 $(settings get global three_finger_gesture) · 네 손가락 $(settings get global four_finger_gesture); " +
                 "cmd overlay list android | grep navbar"
         ) ?: return null
-        return r.out.lines().joinToString("\n") { it.trim().replace("$NAVBAR.", "") }
+        return r.out.lines().joinToString("\n") { it.trim().replace("$NAVBAR.", "").replace("com.samsung.internal.systemui.navbar.", "삼성 ") }
     }
 
     /** 조합 [combo](1 또는 2)를 적용한다. 성공하면 null, 실패하면 이유. */
@@ -46,12 +51,15 @@ object NavGestureTest {
         if (!testing(context)) {
             val hidden = ShizukuAccess.shell("settings get global navigation_bar_gesture_while_hidden")?.out?.trim() ?: return "설정값을 읽지 못했습니다."
             val mode = ShizukuAccess.shell("settings get secure navigation_mode")?.out?.trim().orEmpty()
-            val overlay = ShizukuAccess.shell("cmd overlay list android | grep navbar | grep '\\[x\\]'")?.out?.trim()?.substringAfter("] ")?.trim().orEmpty()
+            val overlay = ShizukuAccess.shell("cmd overlay list android | grep navbar | grep '\\[x\\]'")?.out?.lines()?.firstOrNull { it.isNotBlank() }?.substringAfter("] ")?.trim().orEmpty()
             prefs(context).edit().putString("hidden", hidden).putString("mode", mode).putString("overlay", overlay).apply()
         }
         val cmd = when (combo) {
             1 -> "settings put global navigation_bar_gesture_while_hidden 0"
-            else -> "cmd overlay enable-exclusive --category $NAVBAR.gestural"
+            else -> {
+                val sec = ShizukuAccess.shell("cmd overlay list android | grep -c '$SEC_GESTURAL\$'")?.out?.trim()?.toIntOrNull() ?: 0
+                "cmd overlay enable-exclusive --category ${if (sec > 0) SEC_GESTURAL else "$NAVBAR.gestural"}"
+            }
         }
         val r = ShizukuAccess.shell(cmd) ?: return "Shizuku 연결이 필요합니다."
         val err = if (r.ok) null else r.err.ifBlank { r.out }.take(120).ifBlank { "실패" }
@@ -69,7 +77,8 @@ object NavGestureTest {
         val cmds = buildList {
             if (hidden != "null") add("settings put global navigation_bar_gesture_while_hidden $hidden")
             // 바꾸기 전에 켜진 내비게이션 층이 없었으면(기본 3버튼) 시험으로 켠 층을 끈다
-            if (overlay.startsWith(NAVBAR)) {
+            // 1.44.3은 삼성 층 이름(com.samsung…)을 알아보지 못해, 원래 켜져 있던 삼성 제스처 층을 되살리지 않고 모두 껐다(11-03 진단)
+            if (isNavbar(overlay)) {
                 add("cmd overlay enable-exclusive --category $overlay")
             } else {
                 add("for o in $(cmd overlay list android | grep navbar | grep '\\[x\\]' | sed 's/.*] //'); do cmd overlay disable \$o; done")
