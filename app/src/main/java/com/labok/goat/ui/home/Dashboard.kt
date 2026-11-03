@@ -2,13 +2,18 @@ package com.labok.goat.ui.home
 
 import android.content.Context
 import android.os.SystemClock
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -32,8 +37,13 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -424,9 +434,7 @@ internal fun Dashboard(
                 val expanded = section.title in openSections
                 CategoryCard(
                     title = section.title,
-                    icon = inSection.first().icon,
-                    count = inSection.size,
-                    on = inSection.count(active),
+                    summary = Copy.homeSectionCount(inSection.size, inSection.count(active)) + " · " + inSection.joinToString(" · ") { it.label },
                     expanded = expanded,
                     modifier = Modifier.animateItem(fadeInSpec = if (reduce) snap() else tween(220), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160)),
                     onToggle = {
@@ -444,42 +452,47 @@ internal fun Dashboard(
 }
 
 /**
- * 홈 칸(카테고리) 카드(11-04 시안 5번): 머리 줄(아이콘·칸 이름·기능 수와 켜진 수·펼침 화살표)을 누르면 접고 편다.
+ * 홈 칸(카테고리) 카드: 변경 기록(앱 설정 → 정보)의 아코디언과 같은 모양(11-04 소장님 "변경사항의 그것처럼").
+ * 머리 줄 전체(칸 이름 · 그 칸 기능 이름 요약 · 아래 화살표)를 누르면 접고 펴고, 펼침이 끝날 무렵 카드 전체가 보이게 목록을 굴린다.
  * 펼친 안쪽 [content]는 기능 줄([CategoryRow])이다.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CategoryCard(
     title: String,
-    icon: com.labok.goat.ui.nav.NavIcon,
-    count: Int,
-    on: Int,
+    summary: String,
     expanded: Boolean,
     modifier: Modifier = Modifier,
     onToggle: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val c = LocalLiquid.current
-    val reduce = LocalReduceMotion.current
-    val turn by animateFloatAsState(if (expanded) 90f else 0f, Springs.calm(reduce), label = "chev")
-    GlassCard(modifier.fillMaxWidth().animateContentSize(if (reduce) snap() else spring<IntSize>(UiMotion.ratio(0.86f), UiMotion.stiffness(500f, 0.86f)))) {
+    val bring = remember { BringIntoViewRequester() }
+    var touched by remember { mutableStateOf(false) }
+    LaunchedEffect(expanded) {
+        if (expanded && touched) {
+            delay(320)
+            bring.bringIntoView()
+        }
+    }
+    GlassCard(modifier = modifier.fillMaxWidth().bringIntoViewRequester(bring), padding = Gap.Flush) {
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onToggle)
-                .semantics { stateDescription = if (expanded) Copy.HOME_SECTION_OPEN else Copy.HOME_SECTION_CLOSED }
-                .padding(vertical = 4.dp),
+            Modifier.fillMaxWidth().clickable {
+                touched = true
+                onToggle()
+            }.semantics { stateDescription = if (expanded) Copy.HOME_SECTION_OPEN else Copy.HOME_SECTION_CLOSED }
+                .padding(Gap.CardPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(c.ink.copy(alpha = if (on > 0) 1f else 0.14f)), contentAlignment = Alignment.Center) {
-                com.labok.goat.ui.nav.NavGlyph(icon, if (on > 0) c.bg else c.ink, Modifier.size(20.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(summary, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
-            Spacer(Modifier.width(Gap.Title))
-            Text(title, color = c.ink, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            Text(Copy.homeSectionCount(count, on), color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.width(Gap.Tight))
-            Text("›", color = c.muted, style = MaterialTheme.typography.titleMedium, modifier = Modifier.graphicsLayer { rotationZ = turn })
+            val turn by animateFloatAsState(if (expanded) 180f else 0f, label = "chevron")
+            Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
         }
-        if (expanded) {
-            Spacer(Modifier.height(Gap.Tight))
-            content()
+        AnimatedVisibility(expanded, enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+            Column(Modifier.padding(start = Gap.CardPadding, end = Gap.CardPadding, bottom = Gap.Item)) { content() }
         }
     }
 }
@@ -502,7 +515,7 @@ private fun CategoryRow(item: NavItem, status: String, on: Boolean, onClick: (Of
                 }
             }
             .pointerInput(item) { detectTapGestures { pos -> onClick(origin + pos) } }
-            .padding(start = 48.dp, top = 9.dp, bottom = 9.dp, end = 4.dp),
+            .padding(top = 9.dp, bottom = 9.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
