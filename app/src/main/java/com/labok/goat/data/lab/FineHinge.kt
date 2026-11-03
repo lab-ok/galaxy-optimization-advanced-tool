@@ -15,26 +15,51 @@ class FineHinge(private val onAngle: (Float) -> Unit) {
 
     @Volatile private var running = false
 
+    @Volatile private var gen = 0
+
     fun start() {
         if (running) return
         running = true
+        val my = ++gen
         thread(name = "fine-hinge", isDaemon = true) {
-            // -T 1: 지난 로그는 건너뛰고 지금부터. -s: sensors-hal 정보 줄만
-            val p = ShizukuAccess.stream("logcat -v brief -T 1 -s sensors-hal:I") ?: run {
-                running = false
-                return@thread
-            }
-            process = p
-            val smooth = Smoother()
-            runCatching {
-                p.inputStream.bufferedReader().useLines { lines ->
-                    for (line in lines) {
-                        if (!running) break
-                        parse(line)?.let { smooth.feed(it) }?.let(onAngle)
+            // 11-03 사용자 신고(1.45.0, "처음엔 각도가 잘 나오다가 이제 90°·180°만"): 예전에는 시작할 때 Shizuku가 아직 안 붙었거나
+            // (업데이트·재부팅 직후) 로그 스트림이 중간에 끊기면 그대로 멈추고 다시 시도하지 않아, 기본 센서(0·90·180)만 남았다.
+            // 이제 원하는 동안(running)은 붙을 때까지 3초마다 다시 열고, 끊기면 2초 뒤 다시 연다
+            var first = true
+            // 멈췄다 곧바로 다시 시작하면 새 줄이 뜨므로, 옛 줄은 세대(gen)가 바뀌면 끝난다
+            while (running && gen == my) {
+                // -T 1: 지난 로그는 건너뛰고 지금부터. -s: sensors-hal 정보 줄만
+                val p = ShizukuAccess.stream("logcat -v brief -T 1 -s sensors-hal:I")
+                if (p == null) {
+                    if (first) android.util.Log.i("GOAT", "세밀한 힌지 각도: Shizuku 연결을 기다림(3초마다 다시 시도)")
+                    first = false
+                    sleepWhileRunning(3000)
+                    continue
+                }
+                if (!first) android.util.Log.i("GOAT", "세밀한 힌지 각도: 다시 연결됨")
+                first = false
+                process = p
+                val smooth = Smoother()
+                runCatching {
+                    p.inputStream.bufferedReader().useLines { lines ->
+                        for (line in lines) {
+                            if (!running || gen != my) break
+                            parse(line)?.let { smooth.feed(it) }?.let(onAngle)
+                        }
                     }
                 }
+                runCatching { p.destroy() }
+                process = null
+                if (running && gen == my) sleepWhileRunning(2000)
             }
-            running = false
+        }
+    }
+
+    private fun sleepWhileRunning(ms: Long) {
+        var left = ms
+        while (running && left > 0) {
+            Thread.sleep(200)
+            left -= 200
         }
     }
 
