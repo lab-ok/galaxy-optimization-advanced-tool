@@ -1131,7 +1131,7 @@ object GoatFlexPanel {
      */
     private fun frostOf(base: IntArray, w: Int, h: Int, near: IntArray?, nw: Int, nh: Int, rCells: Float): IntArray {
         val comp = base.copyOf()
-        if (near != null && nw >= w && nh > 0) {
+        if (near != null && nw >= w && nh > 0 && near.size >= nw * nh) {
             val k = nw / w
             val rows = (h * ReflectionField.NEAR_FRAC).toInt().coerceAtLeast(1)
             for (y in 0 until rows) {
@@ -1273,6 +1273,10 @@ object GoatFlexPanel {
         var nearClear: Boolean
         var nearImg: androidx.compose.ui.graphics.ImageBitmap?
         var hingeImg: androidx.compose.ui.graphics.ImageBitmap? = null
+        // 버튼 유리 블러용 근거리 띠: 배열과 그 크기를 같은 잠금 안에서 함께 잡는다(아래 frostOf)
+        var frostNear: IntArray? = null
+        var frostNw = 0
+        var frostNh = 0
         val px: IntArray
         synchronized(blendLock) {
             w = blender.w
@@ -1293,6 +1297,9 @@ object GoatFlexPanel {
                     nearBmp[slot] = android.graphics.Bitmap.createBitmap(nw, nh, android.graphics.Bitmap.Config.ARGB_8888)
                 }
                 nearBlender.step(dt, nearPx[slot]!!)
+                frostNear = nearPx[slot]
+                frostNw = nw
+                frostNh = nh
                 nearClear = nearBlender.isClear()
                 nearBmp[slot]!!.setPixels(nearPx[slot]!!, 0, nw, 0, 0, nw, nh)
                 nearImg = if (nearClear) null else nearBmp[slot]!!.asImageBitmap()
@@ -1316,7 +1323,9 @@ object GoatFlexPanel {
         // 버튼 유리 블러(미리 흐림): 버튼 블러가 0이면 만들지 않는다(셰이더가 원래 반사를 읽는다)
         val fd = frostDpNow
         val frostImg = if (fd > 0f && !clear) {
-            val f = frostOf(px, w, h, synchronized(blendLock) { if (nearBlender.w > 0) nearPx[slot] else null }, nearBlender.w, nearBlender.h, fd / cellDpFor(w))
+            // 11-03 실기 크래시(ArrayIndexOutOfBounds length=19456): 예전에는 근거리 배열은 잠금 안에서, 그 크기(nearBlender.w·h)는 잠금 밖에서 따로 읽었다.
+            // 보호 화면 ↔ 실시간 미러 전환으로 근거리 띠 크기가 바뀌는 순간(512×38 ↔ 768×50) 옛 배열에 새 크기를 대어 범위를 넘었다
+            val f = frostOf(px, w, h, frostNear, frostNw, frostNh, fd / cellDpFor(w))
             if (frostBmp[slot]?.width != w || frostBmp[slot]?.height != h) frostBmp[slot] = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
             frostBmp[slot]!!.setPixels(f, 0, w, 0, 0, w, h)
             frostBmp[slot]!!.asImageBitmap()
