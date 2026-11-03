@@ -201,8 +201,13 @@ object GoatFlexPanel {
 
     /** 등장 애니메이션이 끝났다(화면이 알림). */
     private fun onEntered() {
-        if (phase == Phase.ENTERING) phase = Phase.VISIBLE
+        if (phase != Phase.ENTERING) return
+        phase = Phase.VISIBLE
+        val ms = SystemClock.elapsedRealtime() - enterAt
+        if (ms > 600) view?.context?.let { LogRepository.from(it).add("GOAT 플렉스 패널: 등장 ${ms}ms(느림)") }
     }
+
+    private var enterAt = 0L
 
     /** 퇴장 애니메이션이 끝났다(화면이 알림): 이때 창을 뗀다. 그 사이 다시 보이게 했으면 떼지 않는다. */
     private fun onExited(context: Context) {
@@ -325,6 +330,14 @@ object GoatFlexPanel {
         val b = wm.maximumWindowMetrics.bounds
         val o = Owner().also { owner = it }
         val v = ComposeView(wctx).apply {
+            // 시스템이 패널 창을 숨기면(다른 앱이 겹쳐 띄우기 창 숨김을 켠 경우 등) 남긴다(11-03 YouTube에서 패널 안 보임 진단)
+            addOnAttachStateChangeListener(object : android.view.View.OnAttachStateChangeListener {
+                val l = android.view.ViewTreeObserver.OnWindowVisibilityChangeListener { vis ->
+                    if (vis != android.view.View.VISIBLE) LogRepository.from(context).add("GOAT 플렉스 패널: 시스템이 패널 창을 숨김($vis) · 앞 앱 $p")
+                }
+                override fun onViewAttachedToWindow(av: android.view.View) = av.viewTreeObserver.addOnWindowVisibilityChangeListener(l)
+                override fun onViewDetachedFromWindow(av: android.view.View) = av.viewTreeObserver.removeOnWindowVisibilityChangeListener(l)
+            })
             setViewTreeLifecycleOwner(o)
             setViewTreeSavedStateRegistryOwner(o)
             setContent {
@@ -403,7 +416,19 @@ object GoatFlexPanel {
         // 붙이는 사이에 화면이 돌았으면 알림을 놓친다 — 붙인 직후 한 번 맞춘다
         main.postDelayed({ if (view === v) relayout.fit() }, 350)
         phase = Phase.ENTERING
+        enterAt = SystemClock.elapsedRealtime()
         main.post { if (phase == Phase.ENTERING) state.visible = true }
+        // 등장 애니메이션이 끝나지 않으면(프레임이 오지 않음) 첫 프레임(투명)인 채로 남아 패널이 안 보인다(11-03 소장님: YouTube에서
+        // 패널 창은 붙었는데 첫 프레임 한 장만 그려지고 멈춤). 0.9초 안에 등장이 안 끝나면 상태를 남기고 움직임 없이 바로 보이게 한다
+        main.postDelayed({
+            if (view !== v || phase != Phase.ENTERING) return@postDelayed
+            LogRepository.from(context).add(
+                "GOAT 플렉스 패널: 등장이 0.9초 안에 안 끝남 · 창 보임 ${v.windowVisibility == android.view.View.VISIBLE} · 화면 표시 ${v.isShown} · " +
+                    "붙음 ${v.isAttachedToWindow} · 크기 ${v.width}×${v.height} · 움직임 ${state.motion} → 바로 보이게 함"
+            )
+            state.motion = false
+            v.invalidate()
+        }, 900)
         lastSaver = saver
         startAmbient(context, saver, ambientModeFor(context, p))
         // 볼륨·밝기 초기값
@@ -702,6 +727,7 @@ object GoatFlexPanel {
                     tel.capture(now - last, true)
                     last = now
                     if (latest.getAndSet(Frame(base, bw, bh, now, near, nw, nh)) != null) tel.dropped++
+                    if (frames == 0) LogRepository.from(context).add("GOAT 플렉스 패널: 실시간 미러 첫 장 $nw×$nh+$bw×$bh")
                     frames++
                     gotAny = true
                     tel.maybeLog(context, 0, saver, state.ambSource + " · 실시간 미러")
