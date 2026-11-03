@@ -992,10 +992,6 @@ private fun GlassTile(
                         val top = size.height * (0.0f + 0.08f * press)
                         drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.13f * (1f - 0.5f * press)), Color.Transparent), top, top + size.height * 0.5f))
                     }
-                    // 4-2 아래쪽 안쪽 명암(11-03 리퀴드 깊이감, 1.42.10의 '위는 밝고 아래는 어두운' 테두리를 면으로): 아래 40%가 살짝 가라앉는다
-                    if (q >= 2) {
-                        drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.12f + 0.04f * press)), size.height * 0.6f, size.height))
-                    }
                     // 5 안쪽 반사(왼쪽 위의 은은한 빛)
                     if (q >= 3) {
                         val o = Offset(size.width * 0.18f, size.height * 0.1f)
