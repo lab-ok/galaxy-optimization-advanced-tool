@@ -2,6 +2,7 @@ package com.labok.goat.ui.home
 
 import android.content.Context
 import android.os.SystemClock
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -62,8 +63,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -280,6 +283,19 @@ internal fun Dashboard(
         HomeView.ON -> features.filter(active)
         HomeView.OFF -> features.filterNot(active)
     }
+    // 자주 쓰는 기능: 홈에서 기능을 연 횟수(기기 안에만 저장). 펴 둔 칸: 처음에는 첫 칸만 펴 둔다
+    var openCounts by remember { mutableStateOf(features.associate { it.name to homePrefs.getInt("open_" + it.name, 0) }) }
+    var openSections by remember { mutableStateOf(homePrefs.getStringSet("open_sections", null)?.toSet() ?: setOfNotNull(sections.firstOrNull { it.title.isNotEmpty() }?.title)) }
+    val open: (NavItem, Offset) -> Unit = { item, at ->
+        val n = (openCounts[item.name] ?: 0) + 1
+        homePrefs.edit().putInt("open_" + item.name, n).apply()
+        openCounts = openCounts + (item.name to n)
+        onOpen(item, at)
+    }
+    val favs = run {
+        val used = shown.filter { (openCounts[it.name] ?: 0) > 0 }.sortedByDescending { openCounts[it.name] ?: 0 }
+        (used + shown.filter(active)).distinct().take(4)
+    }
     // 홈이 처음 보인 시각: 이 시간 안에 그려진 카드만 등장 애니메이션을 한다
     val shownAt = remember { SystemClock.uptimeMillis() }
 
@@ -388,52 +404,112 @@ internal fun Dashboard(
                 }
             }
         }
-        // 11-03 카테고리 재편: 타일도 사이드바와 같은 칸(화면 크기·화면 표시·…)으로 묶어 칸 제목 아래에 둔다. 보기(전체·활성화·비활성화)로
-        // 거른 뒤 비는 칸은 제목째 숨긴다. 카드 순서 번호는 칸을 넘어 이어진다(등장 물결이 끊기지 않게)
-        var order = 0
+        // 11-04 소장님 홈 시안 5번: 위에 '자주 쓰는 기능'(많이 연 기능 4개, 아직 없으면 켜 둔 기능)을 타일로 고정하고, 그 아래 칸(카테고리)은
+        // 접고 펴는 카드로 둔다. 칸을 펴면 기능이 한 줄씩(아이콘·이름·지금 상태) 보이고, 누르면 그 기능으로 간다. 펴 둔 칸은 기억한다.
+        // 보기(전체·활성화·비활성화)는 칸 안의 줄과 자주 쓰는 기능에 함께 적용하고, 비는 칸은 숨긴다
+        if (favs.isNotEmpty()) {
+            item(key = "fav_title", span = { GridItemSpan(maxLineSpan) }) {
+                Text(Copy.HOME_FAVORITES, color = c.muted, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = Gap.Tight, top = Gap.Item))
+            }
+            itemsIndexed(favs, key = { _, it -> "fav_" + it.name }) { i, item ->
+                Box(Modifier.animateItem(fadeInSpec = if (reduce) snap() else tween(220, delayMillis = i * 28), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160))) {
+                    BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> open(item, at) }
+                }
+            }
+        }
         sections.filter { it.title.isNotEmpty() }.forEach { section ->
             val inSection = section.items.filter { it in shown }
             if (inSection.isEmpty()) return@forEach
             item(key = "sec_${section.title}", span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    section.title,
-                    color = c.muted,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(start = Gap.Tight, top = Gap.Item).animateItem(fadeInSpec = if (reduce) snap() else tween(220), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160))
-                )
-            }
-            val base = order
-            order += inSection.size
-            itemsIndexed(inSection, key = { _, it -> it.name }) { j, item ->
-                val i = base + j
-                // 보기를 바꾸면(전체·활성화·비활성화) 남는 카드는 물처럼 출렁이며 새 자리로 흘러가고, 새로 들어오는 카드는
-                // 작은 방울에서 통 부풀며 맺히고, 빠지는 카드는 옅어지며 사라진다. 카드마다 조금씩 늦게 시작해 물결처럼 이어진다.
-                val switched = SystemClock.uptimeMillis() - viewChangedAt < VIEW_SWITCH_MS
-                val bead = remember { Animatable(if (switched && !reduce) 0.82f else 1f) }
-                LaunchedEffect(Unit) {
-                    if (bead.value < 1f) {
-                        delay(i * 28L)
-                        bead.animateTo(1f, Springs.pop())
+                val expanded = section.title in openSections
+                CategoryCard(
+                    title = section.title,
+                    icon = inSection.first().icon,
+                    count = inSection.size,
+                    on = inSection.count(active),
+                    expanded = expanded,
+                    modifier = Modifier.animateItem(fadeInSpec = if (reduce) snap() else tween(220), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160)),
+                    onToggle = {
+                        openSections = if (expanded) openSections - section.title else openSections + section.title
+                        homePrefs.edit().putStringSet("open_sections", openSections).apply()
                     }
-                }
-                Box(
-                    Modifier
-                        .animateItem(
-                            fadeInSpec = if (reduce) snap() else tween(220, delayMillis = i * 28),
-                            placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)),
-                            fadeOutSpec = if (reduce) snap() else tween(160)
-                        )
-                        .graphicsLayer {
-                            scaleX = bead.value
-                            scaleY = bead.value
-                        }
                 ) {
-                    // 처음 화면에 보인 카드만 차례로 맺히고, 나중에 스크롤로 들어오는 카드는 동그라미에서 터지듯 커지지 않게 바로 그린다
-                    BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> onOpen(item, at) }
+                    inSection.forEach { item ->
+                        CategoryRow(item, status(item), active(item)) { at -> open(item, at) }
+                    }
                 }
             }
         }
+    }
+}
+
+/**
+ * 홈 칸(카테고리) 카드(11-04 시안 5번): 머리 줄(아이콘·칸 이름·기능 수와 켜진 수·펼침 화살표)을 누르면 접고 편다.
+ * 펼친 안쪽 [content]는 기능 줄([CategoryRow])이다.
+ */
+@Composable
+private fun CategoryCard(
+    title: String,
+    icon: com.labok.goat.ui.nav.NavIcon,
+    count: Int,
+    on: Int,
+    expanded: Boolean,
+    modifier: Modifier = Modifier,
+    onToggle: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val c = LocalLiquid.current
+    val reduce = LocalReduceMotion.current
+    val turn by animateFloatAsState(if (expanded) 90f else 0f, Springs.calm(reduce), label = "chev")
+    GlassCard(modifier.fillMaxWidth().animateContentSize(if (reduce) snap() else spring<IntSize>(UiMotion.ratio(0.86f), UiMotion.stiffness(500f, 0.86f)))) {
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onToggle)
+                .semantics { stateDescription = if (expanded) Copy.HOME_SECTION_OPEN else Copy.HOME_SECTION_CLOSED }
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(c.ink.copy(alpha = if (on > 0) 1f else 0.14f)), contentAlignment = Alignment.Center) {
+                com.labok.goat.ui.nav.NavGlyph(icon, if (on > 0) c.bg else c.ink, Modifier.size(20.dp))
+            }
+            Spacer(Modifier.width(Gap.Title))
+            Text(title, color = c.ink, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Text(Copy.homeSectionCount(count, on), color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.width(Gap.Tight))
+            Text("›", color = c.muted, style = MaterialTheme.typography.titleMedium, modifier = Modifier.graphicsLayer { rotationZ = turn })
+        }
+        if (expanded) {
+            Spacer(Modifier.height(Gap.Tight))
+            content()
+        }
+    }
+}
+
+/** 칸 안의 기능 한 줄: 켜짐 점·이름·지금 상태. 누른 자리에서 다음 화면이 번진다. */
+@Composable
+private fun CategoryRow(item: NavItem, status: String, on: Boolean, onClick: (Offset) -> Unit) {
+    val c = LocalLiquid.current
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    var size by remember { mutableStateOf(IntSize.Zero) }
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+            .onGloballyPositioned { origin = it.positionInRoot() }
+            .onSizeChanged { size = it }
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                onClick {
+                    onClick(origin + Offset(size.width / 2f, size.height / 2f))
+                    true
+                }
+            }
+            .pointerInput(item) { detectTapGestures { pos -> onClick(origin + pos) } }
+            .padding(start = 48.dp, top = 9.dp, bottom = 9.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(item.label, color = c.ink, style = MaterialTheme.typography.bodyLarge)
+            Text(status, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Box(Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(if (on) c.ink else c.line))
     }
 }
 
