@@ -222,6 +222,9 @@
         <receiver
             android:name=".data.lab.FlexModeReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".data.lab.NavGestureReceiver"
+            android:exported="false" />
         <!-- 실험실 텐트 모드: 바깥 화면 스탠바이 시계(가로, 잠금 화면 위). 돌려도 넘긴 시계가 그대로 남게 다시 만들지 않는다 -->
         <activity
             android:name=".ui.lab.StandbyActivity"
