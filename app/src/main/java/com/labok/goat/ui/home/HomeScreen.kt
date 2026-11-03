@@ -297,20 +297,30 @@ internal fun HomeScreen(
         // 사이드바는 기능 단위. DPI를 다루는 두 기능은 '화면 배율'로, 그 밖의 유틸은 '편의 기능'으로 묶는다. 조사 도구는 lab 빌드에서만.
         // 이 기기에서 쓸 수 없는 기능은 숨긴다(실험실을 열면 모두 보인다, [FeatureSupport])
         FeatureSupport.version
-        fun shownOf(vararg items: NavItem) = items.filter { FeatureSupport.visible(context, it) }
+        // 11-03 소장님 "카테고리화로 접근성 높이고 직관적으로": 사용자가 하고 싶은 일로 묶는다. 실험실 기능(염소 열 번)은 따로 모으지 않고
+        // 목적이 같은 칸 끝에 '실험' 표시를 달아 둔다. 실험실 칸에는 기능이 아닌 도구(TXT로 공유·조사 도구)만 남긴다.
+        // 이 기기에서 쓸 수 없는 기능은 숨기고(실험실을 열면 모두 보인다), 비는 칸은 칸째 숨긴다(폴드가 아니면 '폴더블' 칸이 없다)
+        val lab = LabUnlock.unlocked
+        fun labOf(item: NavItem) = item.takeIf { lab }
         val sections = buildList {
             add(NavSection("", listOf(NavItem.HOME)))
-            add(NavSection(Copy.MENU_SECTION_SCREEN, shownOf(NavItem.DPI_MATCH, NavItem.APP_SIZE)))
-            // 화면 표시: 크기(해상도) → 움직임(주사율·애니메이션) → 색(다크) 순. 해상도는 화면 배율 바로 뒤라 이어서 읽힌다.
-            add(NavSection(Copy.MENU_SECTION_DISPLAY, shownOf(NavItem.RESOLUTION, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, NavItem.STATUS_ICONS)))
-            // 편의 기능: 화면(회전) → 연결(비행기 모드 무선) → 소리(촬영음) 순. 시스템: 성능(GOS) → 배터리(잠자기) → 정리(기본 앱) 순
-            add(NavSection(Copy.MENU_SECTION_TOOLS, shownOf(NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE, NavItem.AUTO_FLEX, NavItem.AIRPLANE, NavItem.CAMERA_MUTE)))
-            add(NavSection(Copy.MENU_SECTION_SYSTEM, shownOf(NavItem.GOS, NavItem.DOZE, NavItem.APP_CLEANUP)))
-            // 실험실: 염소를 열 번 눌러 연 경우에만 보인다. 조사 도구도 함께 둔다(공유 화면 진단·설정 비교를 공개 빌드에서도 쓰려고).
-            // lab 빌드는 잠금과 상관없이 조사 도구를 보인다
-            val lab = (if (LabUnlock.unlocked) listOfNotNull(NavItem.LAB_NARROW, NavItem.LAB_SCROLL_TOP, NavItem.LAB_SCREEN, NavItem.LAB_AMBIENT, NavItem.LAB_BATTERY, NavItem.LAB_NOTE) else emptyList()) +
-                listOfNotNull(NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || LabUnlock.unlocked })
-            if (lab.isNotEmpty()) add(NavSection(Copy.MENU_SECTION_LAB, lab))
+            fun section(title: String, vararg items: NavItem?) {
+                val shown = items.filterNotNull().filter { FeatureSupport.visible(context, it) }
+                if (shown.isNotEmpty()) add(NavSection(title, shown))
+            }
+            // 화면 크기: 글자·화면이 크다/작다
+            section(Copy.MENU_SECTION_SCREEN, NavItem.DPI_MATCH, NavItem.APP_SIZE, NavItem.RESOLUTION, labOf(NavItem.LAB_NARROW))
+            // 화면 표시: 부드러움(주사율·애니메이션)과 색(다크)
+            section(Copy.MENU_SECTION_DISPLAY, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, labOf(NavItem.LAB_SCREEN))
+            // 상단바·조작: 손으로 다루는 것(상단바·회전·버튼)
+            section(Copy.MENU_SECTION_TOOLS, NavItem.STATUS_ICONS, NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE, labOf(NavItem.LAB_SCROLL_TOP))
+            // 폴더블: 접는 폰에서만
+            section(Copy.MENU_SECTION_FOLD, NavItem.AUTO_FLEX, labOf(NavItem.LAB_AMBIENT))
+            section(Copy.MENU_SECTION_SYSTEM, NavItem.GOS, NavItem.DOZE, labOf(NavItem.LAB_BATTERY))
+            section(Copy.MENU_SECTION_SOUND, NavItem.CAMERA_MUTE, NavItem.AIRPLANE)
+            section(Copy.MENU_SECTION_CLEAN, NavItem.APP_CLEANUP)
+            // 실험실: 도구만. lab 빌드는 잠금과 상관없이 조사 도구를 보인다
+            section(Copy.MENU_SECTION_LAB, labOf(NavItem.LAB_NOTE), NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || lab })
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
         val common = { help: Sheet, guide: Sheet, reset: Sheet ->

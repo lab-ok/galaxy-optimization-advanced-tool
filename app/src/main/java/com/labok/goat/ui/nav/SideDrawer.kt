@@ -391,6 +391,11 @@ private fun DrawerRow(
         NavGlyph(item.icon, fg)
         Spacer(Modifier.width(14.dp))
         Text(item.label, color = fg, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
+        // 목적별 칸에 섞어 둔 실험실 기능은 이름 옆에 작게 '실험'(11-03 카테고리 재편)
+        if (item in NavItem.LAB_ITEMS && item != NavItem.LAB_TOOLS && item != NavItem.LAB_NOTE) {
+            Spacer(Modifier.width(6.dp))
+            Text(Copy.NAV_LAB_TAG, color = fg.copy(alpha = 0.6f), style = MaterialTheme.typography.labelSmall)
+        }
         // 새 기능이 들어온 항목은 이름 옆에 점을 찍는다(그 화면을 보고 나가면 사라진다)
         if (NewBadge.navNew(item)) {
             Spacer(Modifier.width(8.dp))

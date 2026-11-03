@@ -85,8 +85,12 @@ object Copy {
     const val FEATURE_ANIMATION = "애니메이션 속도"
     const val FEATURE_APP_CLEANUP = "기본 앱 정리"
     const val BLOAT_LOADING = "이 기기의 기본 앱을 확인하는 중…"
-    const val MENU_SECTION_SCREEN = "화면 배율"
-    const val MENU_SECTION_SYSTEM = "시스템"
+    const val MENU_SECTION_SCREEN = "화면 크기"
+    const val MENU_SECTION_SYSTEM = "배터리·성능"
+    const val MENU_SECTION_FOLD = "폴더블"
+    const val MENU_SECTION_SOUND = "소리·연결"
+    const val MENU_SECTION_CLEAN = "앱 정리"
+    const val NAV_LAB_TAG = "실험"
 
     // 홈
     const val HOME_SUBTITLE = "사용할 기능을 눌러 바로 이동하세요."
@@ -296,7 +300,7 @@ object Copy {
     const val LAB_SCREEN_NONE = "이 기기에서는 화면 모드 설정을 찾지 못했습니다."
     const val SHAKE_FAST_TITLE = "빠른 회전"
     const val SHAKE_FAST_BODY = "시스템을 기다리지 않고 센서로 기기 방향을 바로 계산해 회전합니다. 방향이 불분명하면 시스템에 맡깁니다."
-    const val MENU_SECTION_TOOLS = "편의 기능"
+    const val MENU_SECTION_TOOLS = "상단바·조작"
     const val MENU_ADVANCED = "고급 정보"
     const val MENU_REPORT = "문제 신고"
     const val MENU_TEST = "크기 테스트"

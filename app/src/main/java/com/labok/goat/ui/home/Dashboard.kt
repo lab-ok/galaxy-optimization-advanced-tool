@@ -388,31 +388,50 @@ internal fun Dashboard(
                 }
             }
         }
-        itemsIndexed(shown, key = { _, it -> it.name }) { i, item ->
-            // 보기를 바꾸면(전체·활성화·비활성화) 남는 카드는 물처럼 출렁이며 새 자리로 흘러가고, 새로 들어오는 카드는
-            // 작은 방울에서 통 부풀며 맺히고, 빠지는 카드는 옅어지며 사라진다. 카드마다 조금씩 늦게 시작해 물결처럼 이어진다.
-            val switched = SystemClock.uptimeMillis() - viewChangedAt < VIEW_SWITCH_MS
-            val bead = remember { Animatable(if (switched && !reduce) 0.82f else 1f) }
-            LaunchedEffect(Unit) {
-                if (bead.value < 1f) {
-                    delay(i * 28L)
-                    bead.animateTo(1f, Springs.pop())
-                }
+        // 11-03 카테고리 재편: 타일도 사이드바와 같은 칸(화면 크기·화면 표시·…)으로 묶어 칸 제목 아래에 둔다. 보기(전체·활성화·비활성화)로
+        // 거른 뒤 비는 칸은 제목째 숨긴다. 카드 순서 번호는 칸을 넘어 이어진다(등장 물결이 끊기지 않게)
+        var order = 0
+        sections.filter { it.title.isNotEmpty() }.forEach { section ->
+            val inSection = section.items.filter { it in shown }
+            if (inSection.isEmpty()) return@forEach
+            item(key = "sec_${section.title}", span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    section.title,
+                    color = c.muted,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = Gap.Tight, top = Gap.Item).animateItem(fadeInSpec = if (reduce) snap() else tween(220), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160))
+                )
             }
-            Box(
-                Modifier
-                    .animateItem(
-                        fadeInSpec = if (reduce) snap() else tween(220, delayMillis = i * 28),
-                        placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)),
-                        fadeOutSpec = if (reduce) snap() else tween(160)
-                    )
-                    .graphicsLayer {
-                        scaleX = bead.value
-                        scaleY = bead.value
+            val base = order
+            order += inSection.size
+            itemsIndexed(inSection, key = { _, it -> it.name }) { j, item ->
+                val i = base + j
+                // 보기를 바꾸면(전체·활성화·비활성화) 남는 카드는 물처럼 출렁이며 새 자리로 흘러가고, 새로 들어오는 카드는
+                // 작은 방울에서 통 부풀며 맺히고, 빠지는 카드는 옅어지며 사라진다. 카드마다 조금씩 늦게 시작해 물결처럼 이어진다.
+                val switched = SystemClock.uptimeMillis() - viewChangedAt < VIEW_SWITCH_MS
+                val bead = remember { Animatable(if (switched && !reduce) 0.82f else 1f) }
+                LaunchedEffect(Unit) {
+                    if (bead.value < 1f) {
+                        delay(i * 28L)
+                        bead.animateTo(1f, Springs.pop())
                     }
-            ) {
-                // 처음 화면에 보인 카드만 차례로 맺히고, 나중에 스크롤로 들어오는 카드는 동그라미에서 터지듯 커지지 않게 바로 그린다
-                BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> onOpen(item, at) }
+                }
+                Box(
+                    Modifier
+                        .animateItem(
+                            fadeInSpec = if (reduce) snap() else tween(220, delayMillis = i * 28),
+                            placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)),
+                            fadeOutSpec = if (reduce) snap() else tween(160)
+                        )
+                        .graphicsLayer {
+                            scaleX = bead.value
+                            scaleY = bead.value
+                        }
+                ) {
+                    // 처음 화면에 보인 카드만 차례로 맺히고, 나중에 스크롤로 들어오는 카드는 동그라미에서 터지듯 커지지 않게 바로 그린다
+                    BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> onOpen(item, at) }
+                }
             }
         }
     }
