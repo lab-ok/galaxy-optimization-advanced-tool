@@ -54,17 +54,22 @@ object NavGestureTest {
             val overlay = ShizukuAccess.shell("cmd overlay list android | grep navbar | grep '\\[x\\]'")?.out?.lines()?.firstOrNull { it.isNotBlank() }?.substringAfter("] ")?.trim().orEmpty()
             prefs(context).edit().putString("hidden", hidden).putString("mode", mode).putString("overlay", overlay).apply()
         }
+        val sec = ShizukuAccess.shell("cmd overlay list android | grep -c '$SEC_GESTURAL\$'")?.out?.trim()?.toIntOrNull() ?: 0
+        val gestural = "cmd overlay enable-exclusive --category ${if (sec > 0) SEC_GESTURAL else "$NAVBAR.gestural"}"
         val cmd = when (combo) {
             1 -> "settings put global navigation_bar_gesture_while_hidden 0"
-            else -> {
-                val sec = ShizukuAccess.shell("cmd overlay list android | grep -c '$SEC_GESTURAL\$'")?.out?.trim()?.toIntOrNull() ?: 0
-                "cmd overlay enable-exclusive --category ${if (sec > 0) SEC_GESTURAL else "$NAVBAR.gestural"}"
-            }
+            2 -> gestural
+            // 버튼 하나로 둘 다(11-03 소장님 "버튼 하나로 네비바랑 제스처 둘 다 되게"): 삼성 값을 버튼으로 바꿔 버튼 바를 띄우고,
+            // 시스템 UI가 버튼식 층으로 다 바꿀 때까지(2초) 기다린 뒤 제스처 층과 안드로이드 제스처 방식을 다시 켠다
+            else -> "settings put global navigation_bar_gesture_while_hidden 0; sleep 2; $gestural; settings put secure navigation_mode 2"
         }
         val r = ShizukuAccess.shell(cmd) ?: return "Shizuku 연결이 필요합니다."
         val err = if (r.ok) null else r.err.ifBlank { r.out }.take(120).ifBlank { "실패" }
         LogRepository.from(context).add("실험실 홈업 멀티핑거 시험: 조합 $combo 적용" + (err?.let { " 실패($it)" } ?: "") + " · ${status()?.replace("\n", " / ")}")
         notifyRestore(context, combo)
+        // 시스템이 곧바로 되돌리는지 보려고 3초 뒤 값을 한 번 더 남긴다
+        Thread.sleep(3000)
+        LogRepository.from(context).add("실험실 홈업 멀티핑거 시험: 조합 $combo 3초 뒤 · ${status()?.replace("\n", " / ")}")
         return err
     }
 

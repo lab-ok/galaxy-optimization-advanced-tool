@@ -199,7 +199,11 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
-            LiquidButton("조합 1 · 삼성 값만 버튼으로", modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 1) } })
+            LiquidButton("버튼 바 + 제스처 함께 켜기", modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 3) } })
+            Spacer(Modifier.height(Gap.Item))
+            Text("스와이프 제스처 상태에서 누르면 버튼 바를 띄운 뒤 제스처 층을 다시 켭니다. 약 5초 뒤 결과 값이 아래에 나옵니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton("조합 1 · 삼성 값만 버튼으로", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 1) } })
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("조합 2 · 제스처 층만 켜기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 2) } })
             Spacer(Modifier.height(Gap.Item))
