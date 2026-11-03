@@ -79,6 +79,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
@@ -846,6 +847,59 @@ private val grain: ImageBitmap by lazy {
  * 품질: 0 끔(단색), 1 낮음(색조·테두리), 2 균형(+주변광·하이라이트), 3 높음(+결·안쪽 반사).
  * 상태: 눌림(작아짐·어두워짐·진동), 선택(주변광 테두리), 비활성(채도·대비 낮춤). 길게 누르면 [label]이 잠깐 뜬다.
  */
+/**
+ * 버튼 곡면 광학 모델(11-03 소장님 "Aspect-Ratio-Aware Liquid Optics"). 버튼을 짧은 축으로 휜 유리 쿠션으로 보고, 크기(짧은 변 dp)와
+ * 종횡비(긴 변/짧은 변)로 빛 분포를 연속으로 정한다. 상수 묶음을 버튼 종류마다 두지 않고 한 식으로 보간한다.
+ * - [k] 크기 0(작은 캡슐 ≈ 44dp)~1(큰 쿠션 ≈ 120dp): 클수록 솟은 범위·광택 자국·굴절 띠가 넓어진다(밝기를 통째로 올리지 않는다)
+ * - [e] 길쭉함 0(정사각)~1(4:1 이상): 길수록 곡률은 짧은 축에만 — 솟음은 얕고 넓게, 광택 자국은 긴 가장자리를 따라 가늘고 길게
+ * 가장자리 선 광택은 쓰지 않는다(11-02 회색 선·11-03 볼록 지적). 모두 면의 밝기 분포다.
+ */
+private class TileOptics(w: Float, h: Float, density: Float, primary: Boolean) {
+    private val shortDp = minOf(w, h) / density
+    val k = ((shortDp - 44f) / 76f).coerceIn(0f, 1f)
+    val e = ((maxOf(w, h) / minOf(w, h).coerceAtLeast(1f) - 1f) / 3f).coerceIn(0f, 1f)
+
+    // 얕게 만드는 것은 '작고 긴' 카드(헤더·진행·밝기)에만 — 큰 버튼은 길쭉해도 넓은 쿠션이다(1차 측정: 가로 화면의 큰 버튼이 1.44.10보다 어두워짐)
+    private val thin = e * (1f - k)
+
+    // 위 광택 띠: 세로(짧은 축) 곡률을 따라 높이 비율로. 길쭉한 카드는 얕게
+    val sheenExtent = h * (0.30f + 0.25f * k) * (1f - 0.25f * thin)
+    val sheenAlpha = 0.13f + 0.03f * k
+
+    // 가운데 솟음: 축마다 반경을 따로 — 긴 축은 너비, 짧은 축은 높이 비례. 길쭉할수록 얕게(중심 발광 과다 방지)
+    val liftRx = w * (0.50f + 0.20f * k)
+
+    // 짧은 축 반경은 높이의 75~100%: 3차 측정에서 60%면 아래쪽이 1.44.10보다 7~10 어두워졌다(하단이 죽어 보임)
+    val liftRy = h * (0.75f + 0.25f * k) * (1f - 0.2f * thin)
+    val liftCy = h * (0.42f - 0.06f * k)
+
+    // 1.44.10의 왼쪽 위 안쪽 빛(0.07)을 빼고 그만큼을 가운데 솟음으로 옮겼다 — 전체 밝기는 유지, 분포만 곡면으로
+    val liftAlpha = (0.07f + 0.09f * k) * (1f - 0.35f * thin) + if (primary) 0.04f else 0f
+
+    // 광택 자국: 높이는 짧은 축 비례, 너비는 길쭉할수록 늘어난다(긴 가장자리를 따라 맺히는 반사)
+    val specRy = h * (0.16f + 0.10f * k)
+    val specRx = (specRy * (1.6f + 2.4f * e)).coerceAtMost(w * 0.45f)
+    val specCy = h * (0.12f + 0.04f * k)
+    val specAlpha = 0.06f + 0.05f * k
+
+    // 아래 가라앉음: 진하게가 아니라 넓게, 길쭉한 카드는 더 옅게(짙은 가장자리 그림자 방지)
+    val sinkExtent = h * (0.18f + 0.20f * k)
+    val sinkAlpha = 0.025f * (1f - 0.3f * thin)
+
+    // 셰이더 가장자리 굴절 띠: 짧은 변의 28%(14~28dp) — 작은 캡슐은 좁고 선명, 큰 쿠션은 넓고 완만.
+    // 2차 측정: 20%(80dp 버튼에서 16dp)는 1.44.10의 22dp보다 좁아 가장자리 Fresnel 빛이 줄고 아래가 어두워졌다
+    val bevelDp = (shortDp * 0.28f).coerceIn(14f, 28f)
+}
+
+/** 부드러운 타원 빛: 원형 방사 그라데이션을 축마다 늘려 그린다([mid]는 반경 55% 지점의 상대 세기). */
+private fun DrawScope.softEllipse(c: Offset, rx: Float, ry: Float, color: Color, alpha: Float, mid: Float) {
+    if (alpha <= 0f || rx <= 0f || ry <= 0f) return
+    val r = maxOf(rx, ry)
+    withTransform({ scale(rx / r, ry / r, c) }) {
+        drawCircle(Brush.radialGradient(0f to color.copy(alpha = alpha), 0.55f to color.copy(alpha = alpha * mid), 1f to Color.Transparent, center = c, radius = r), r, c)
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GlassTile(
@@ -964,7 +1018,8 @@ private fun GlassTile(
                             primary,
                             press,
                             if (useField) state.frost else null,
-                            sizeK
+                            sizeK,
+                            TileOptics(size.width, size.height, density, primary).bevelDp
                         )
                         drawRect(ShaderBrush(glass.shader))
                     } else if (posterImg != null && q >= 2 && kk > 0f) {
@@ -994,30 +1049,16 @@ private fun GlassTile(
                     // 같은 비율·같은 세기의 빛을 써서, 큰 미디어 버튼은 넓은 면적에 비해 곡면 반응이 약해 평평하고 탁하게(눌려) 보였다.
                     // 짧은 변(dp)으로 0(작은 캡슐 ≈ 44dp)~1(큰 버튼 ≈ 120dp)을 정해 위 광택 폭·가운데 밝기·광택 자국·아래 가라앉음이 함께 커진다.
                     // 밝기를 통째로 올리지 않고 분포(폭·반경)를 키운다. 가로로 긴 카드(헤더·진행)는 짧은 변이 작아 작은 버튼 규칙을 따른다
-                    // 4 위쪽 광택 띠(누르면 아래로 내려가며 약해진다): 작은 버튼은 얇고 단단하게, 큰 버튼은 넓고 완만하게
+                    // 4 곡면 광학(11-03 종횡비 인식): 위 광택 띠 · 가운데 솟음(타원) · 광택 자국(긴 축으로 늘어난 타원) · 아래 가라앉음을
+                    //   [TileOptics] 한 모델이 크기·종횡비로 연속 계산한다. 광택 자국은 앰비언트가 더 밝은 쪽으로 조금 옮겨 실제 반사광과 방향을 맞춘다
                     if (q >= 2) {
+                        val o = TileOptics(size.width, size.height, density, primary)
                         val top = size.height * (0.0f + 0.08f * press)
-                        drawRect(
-                            Brush.verticalGradient(listOf(Color.White.copy(alpha = (0.11f + 0.03f * sizeK) * (1f - 0.5f * press)), Color.Transparent), top, top + size.height * (0.30f + 0.25f * sizeK))
-                        )
-                    }
-                    // 5 안쪽 반사(왼쪽 위의 은은한 빛)
-                    if (q >= 3) {
-                        val o = Offset(size.width * 0.18f, size.height * 0.1f)
-                        drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.07f), Color.Transparent), o, size.minDimension * 0.9f), size.minDimension * 0.9f, o)
-                    }
-                    // 가운데 액체 몸통: 가운데가 은은히 솟고 가장자리로 갈수록 가라앉는다. 큰 버튼일수록 솟은 범위가 넓고 중심이 위로(쿠션)
-                    if (q >= 2) {
-                        val ctr = Offset(size.width / 2, size.height * (0.42f - 0.06f * sizeK))
-                        val rr = size.maxDimension * (0.45f + 0.35f * sizeK)
-                        val lift = 0.05f + 0.07f * sizeK + if (primary) 0.04f else 0f
-                        drawCircle(Brush.radialGradient(0f to Color.White.copy(alpha = lift), 0.55f to Color.White.copy(alpha = lift * 0.45f), 1f to Color.Transparent, center = ctr, radius = rr), rr, ctr)
-                        // 광택 자국(specular footprint): 위쪽 가운데의 부드러운 빛 웅덩이 — 크기에 비례해 넓어진다(가장자리 선이 아니라 면)
-                        val so = Offset(size.width / 2, size.height * 0.14f)
-                        val sr = size.minDimension * (0.30f + 0.45f * sizeK)
-                        drawCircle(Brush.radialGradient(listOf(Color.White.copy(alpha = (0.04f + 0.05f * sizeK) * (1f - 0.6f * press)), Color.Transparent), so, sr), sr, so)
-                        // 아래쪽 완만한 가라앉음: 진하게가 아니라 넓게(큰 버튼은 넓은 면적에 걸쳐 아주 옅게) — 눌려 보이지 않게 세기는 고정·낮게
-                        drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.06f)), size.height * (1f - (0.18f + 0.20f * sizeK)), size.height))
+                        drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = o.sheenAlpha * (1f - 0.5f * press)), Color.Transparent), top, top + o.sheenExtent))
+                        softEllipse(Offset(size.width / 2, o.liftCy), o.liftRx, o.liftRy, Color.White, o.liftAlpha, 0.45f)
+                        val side = if (state.ambientOn) (amb[2].luminance() - amb[0].luminance()).coerceIn(-1f, 1f) else 0f
+                        softEllipse(Offset(size.width * (0.5f + 0.12f * side), o.specCy), o.specRx, o.specRy, Color.White, o.specAlpha * (1f - 0.6f * press), 0.35f)
+                        drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = o.sinkAlpha)), size.height - o.sinkExtent, size.height))
                         // 안쪽 가장자리 그늘(두께감): 둥근 테두리 안쪽으로 얇은 그늘(셰이더를 쓰면 셰이더가 그린다)
                         if (!shaderOn) drawPath(tileClip, Color.Black.copy(alpha = 0.22f), style = Stroke(5.dp.toPx()))
                     }

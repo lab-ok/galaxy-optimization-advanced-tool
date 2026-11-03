@@ -56,7 +56,8 @@ internal class GlassShader {
         primary: Boolean,
         press: Float,
         frost: ImageBitmap? = null,
-        sizeK: Float = 0f
+        sizeK: Float = 0f,
+        bevelDp: Float = 22f
     ) {
         shader.setFloatUniform("sizeK", sizeK)
         if (frost !== frostSrc) {
@@ -94,7 +95,8 @@ internal class GlassShader {
         shader.setFloatUniform("size", w, h)
         shader.setFloatUniform("cornerRadius", radius)
         // 굴절 띠 폭과 최대 변위: 변위는 띠 폭의 절반 이하(그 이상이면 가장자리에 거울 고리가 생긴다, QWEA0 상한)
-        val bevel = 22f * density
+        // 굴절 띠 폭은 버튼 짧은 변에 비례(TileOptics.bevelDp, 11-03 종횡비 인식)
+        val bevel = bevelDp * density
         shader.setFloatUniform("bevel", bevel)
         shader.setFloatUniform("refraction", bevel * 0.5f * (1f - 0.35f * press))
         shader.setFloatUniform("dispersion", 0.10f)
