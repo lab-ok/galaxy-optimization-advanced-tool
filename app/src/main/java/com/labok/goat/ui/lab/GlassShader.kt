@@ -96,7 +96,10 @@ internal class GlassShader {
         shader.setFloatUniform("bevel", bevel)
         shader.setFloatUniform("refraction", bevel * 0.5f * (1f - 0.35f * press))
         shader.setFloatUniform("dispersion", 0.10f)
-        shader.setFloatUniform("lightDir", -0.6f, -0.8f)
+        // 빛은 바로 위에서(11-03): 1.42.15의 왼쪽 위 광원은 어두운 장면에서 왼쪽 위 회색 호로 보였다(11-02 소장님 지적). 위에서 비추면
+        // 위 가장자리 전체에 고르게 맺혀 '왼쪽 위 선'이 생기지 않는다
+        // 셰이더 좌표는 y가 아래로 커지고 facing = dot(법선, -lightDir)이라, (0, 1)이어야 위 가장자리가 광원 쪽(lobeF)이 된다
+        shader.setFloatUniform("lightDir", 0f, 1f)
         shader.setFloatUniform("specular", if (primary) 1f else 0.85f)
         shader.setFloatUniform("reflAmount", reflect)
         shader.setFloatUniform("density", density)
@@ -159,8 +162,8 @@ half4 back(float2 c) {
     if (m.a < 0.001) return m;
     float3 col = float3(m.rgb) / float(m.a);
     float lum = dot(col, float3(0.2126, 0.7152, 0.0722));
-    col = mix(float3(lum), col, 1.3);
-    col = clamp((col - 0.48) * 1.12 + 0.48, 0.0, 1.0);
+    col = mix(float3(lum), col, 1.22);
+    col = clamp((col - 0.48) * 1.18 + 0.48, 0.0, 1.0);
     return half4(half3(col) * m.a, m.a);
 }
 
@@ -204,16 +207,23 @@ half4 main(float2 coord) {
     float glow = clamp(inner / (2.0 * density), 0.0, 1.0) * pow(clamp(1.0 - (inner - 2.0 * density) / (8.0 * density), 0.0, 1.0), 1.5);
     // 11-02 소장님 "왼쪽 위 회색 선 거슬린다": 테두리 1px 실선(hair)은 뺐다. 안쪽 부드러운 빛만 아주 옅게 남긴다
     // 어두운 장면에서는 광원 쪽 안쪽 빛도 왼쪽 위 회색 호로 보여 함께 뺐다. 테두리는 굴절·Fresnel·안쪽 그늘로만 드러난다
-    float spec = 0.0 * specular * (glow * lobeF + hair * lobeB);
+    // 11-03 리퀴드 깊이감: 1.42.15의 테두리 빛을 되살리되 실선(hair)은 빼고, 회색이 아니라 그 자리 반사색에 물든 아주 옅은 안쪽 빛만
+    // 위쪽 가장자리에 둔다(아래 rimCol). 아래쪽 가장자리는 반대로 안쪽 그늘을 짙게 해(lobeB) 위는 밝고 아래는 어두운 두께감을 낸다
+    float spec = specular * glow * lobeF * 0.42;
 
     // 4) Fresnel: 가장자리로 갈수록 반사가 밝아진다(시야각 효과 근사)
-    float fres = pow(x, 4.0) * 0.05;
+    float fres = pow(x, 4.0) * 0.07;
 
     // 5) 안쪽 가장자리 그늘(두께감): 테두리 바로 안쪽이 살짝 어둡다
-    float shade = clamp(1.0 - abs(-sd - 4.0 * density) / (4.0 * density), 0.0, 1.0) * 0.18 * (1.0 - lobeF);
+    float shade = clamp(1.0 - abs(-sd - 4.0 * density) / (4.0 * density), 0.0, 1.0) * (0.18 + 0.14 * lobeB) * (1.0 - lobeF);
 
-    half hl = half(clamp(spec + fres, 0.0, 1.0));
+    // 테두리 빛 색: 흰색과 그 자리 반사색의 중간(반사가 없으면 흰색). 어두운 장면에서 회색 선으로 보이지 않게 세기도 반사 밝기를 따른다
+    float3 rc = refl.a > 0.001 ? float3(refl.rgb) / float(refl.a) : float3(1.0);
+    float3 rimCol = mix(float3(1.0), rc, 0.5);
+    float rimK = spec * mix(0.25, 1.0, clamp(dot(rc, float3(0.2126, 0.7152, 0.0722)) * 1.6, 0.0, 1.0));
+    half hl = half(clamp(fres, 0.0, 1.0));
     half4 outc = refl + half4(hl) * (1.0 - refl.a);
+    outc = outc + half4(half3(rimCol * rimK), half(rimK)) * (1.0 - outc.a * 0.5);
     outc = outc + half4(0.0, 0.0, 0.0, half(shade)) * (1.0 - outc.a);
     return outc * half(cov);
 }

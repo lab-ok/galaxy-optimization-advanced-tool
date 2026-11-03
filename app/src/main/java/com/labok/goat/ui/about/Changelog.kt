@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.44.8",
+        "2026-11-03",
+        "플렉스 모드를 시험합니다(시험 버전).",
+        listOf(
+            "변경" to listOf(
+                "플렉스 모드: GOAT 패널 버튼에 위쪽 가장자리 빛과 아래쪽 안쪽 그늘을 더해 더 액상 유리처럼 보이게 하고, 밝은 장면에서 아이콘 대비를 높였습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.44.7",
         "2026-11-03",
         "플렉스 모드를 시험합니다(시험 버전).",

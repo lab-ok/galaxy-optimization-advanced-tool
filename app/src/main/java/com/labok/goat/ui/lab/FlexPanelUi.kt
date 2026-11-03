@@ -992,6 +992,10 @@ private fun GlassTile(
                         val top = size.height * (0.0f + 0.08f * press)
                         drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.13f * (1f - 0.5f * press)), Color.Transparent), top, top + size.height * 0.5f))
                     }
+                    // 4-2 아래쪽 안쪽 명암(11-03 리퀴드 깊이감, 1.42.10의 '위는 밝고 아래는 어두운' 테두리를 면으로): 아래 40%가 살짝 가라앉는다
+                    if (q >= 2) {
+                        drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.12f + 0.04f * press)), size.height * 0.6f, size.height))
+                    }
                     // 5 안쪽 반사(왼쪽 위의 은은한 빛)
                     if (q >= 3) {
                         val o = Offset(size.width * 0.18f, size.height * 0.1f)
@@ -1080,11 +1084,12 @@ private fun GlassTile(
         // 잉크: 주 버튼(재생 상태 아이콘)은 가독성이 먼저라 반사를 더 적게(12%), 그 밖은 22%. 가장자리 광택은 그 자리 반사색
         val refl = state.sampleAt(xFrac, ((pos.y + 1f) / rootSize.height).coerceIn(0f, 1f))
         val on = if (state.ambientOn) 1f else 0f
-        val tileInk = inkWith(state.ink, refl, (if (primary) 0.12f else tn.ink) * on)
         val glint = if (state.ambientOn) glintOf(refl) else Color.White
         // 적응형 그림자(11-02 소장님 "Adaptive Text Shadow · Subtle Soft Halo"): 카드 가운데 뒤 반사 밝기(0~1)로 그림자·halo의
         // 불투명도와 번짐 반경을 정한다. 밝은 반사 위에서는 진하고 넓게, 어두운 반사 위에서는 거의 없게. 글자 자체는 그대로 선명하다
         val bgLuma = if (state.ambientOn) backLuma(state.sampleAt(xFrac, ((pos.y + rootSize.height * 0f + 1f) / rootSize.height).coerceIn(0f, 1f)) ?: amb[3], primary) else 0.1f
+        // 전경 대비 보정(11-03): 밝은 반사 위에서는 잉크가 반사색에 덜 물들게(최대 60% 덜) — 밝은 배경에 밝은 색 잉크가 묻히지 않게
+        val tileInk = inkWith(state.ink, refl, (if (primary) 0.12f else tn.ink) * on * (1f - 0.6f * bgLuma))
         val shadow = androidx.compose.ui.graphics.Shadow(
             // 11-02 소장님 "각 요소에 검은색 그림자 블러 더": 기본 세기와 번짐을 올렸다
             color = Color.Black.copy(alpha = 0.42f + 0.45f * bgLuma),
@@ -1252,8 +1257,9 @@ private fun DrawScope.seekIcon(c: Color, backward: Boolean, sec: Int) {
         val end = Offset(center.x + r * cos(endRad).toFloat(), center.y + r * sin(endRad).toFloat())
         val tan = Offset(-sin(endRad).toFloat(), cos(endRad).toFloat())
         val nrm = Offset(cos(endRad).toFloat(), sin(endRad).toFloat())
-        val hl = s * 0.17f
-        val hw = s * 0.13f
+        // 방향이 한눈에 읽히게 화살촉을 키웠다(11-03: 0.17·0.13 → 0.2·0.15)
+        val hl = s * 0.20f
+        val hw = s * 0.15f
         val head = Path().apply {
             moveTo(end.x + tan.x * hl * 0.75f, end.y + tan.y * hl * 0.75f)
             lineTo(end.x - tan.x * hl * 0.25f + nrm.x * hw, end.y - tan.y * hl * 0.25f + nrm.y * hw)
