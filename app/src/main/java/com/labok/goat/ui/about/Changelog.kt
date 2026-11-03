@@ -44,6 +44,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.47.0",
+        "2026-11-03",
+        "업데이트가 막힐 때 이유를 알려 주고, GitHub에서 직접 받는 길을 열어 둡니다.",
+        listOf(
+            "고침" to listOf(
+                "앱 안 업데이트: '출처를 알 수 없는 앱 설치'가 꺼져 있어 업데이트가 막히면, 이유를 알려 주고 허용하는 설정 화면을 바로 엽니다.",
+                "앱 안 업데이트가 실패하면 'GitHub에서 직접 받기' 버튼으로 릴리스 페이지를 바로 열 수 있습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.46.2",
         "2026-11-03",
         "업데이트가 막힐 때 안내를 고칩니다(시험 버전).",
