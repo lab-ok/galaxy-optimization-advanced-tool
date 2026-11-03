@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.GoatFlexPanel
-import com.labok.goat.data.lab.NavGestureTest
 import com.labok.goat.data.lab.OttFlexTest
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe
@@ -175,48 +174,6 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             LiquidButton("GOAT 패널 미리 보기(8초)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { GoatFlexPanel.preview(context) })
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("포스터 표시 미리 보기(8초)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { GoatFlexPanel.previewPoster(context) })
-        }
-        Spacer(Modifier.height(Gap.Card))
-        // 홈업 멀티핑거를 버튼식 내비게이션에서 쓸 수 있는지(11-03 소장님): 설정값만 바꿔 시험하고 되돌린다
-        GlassCard(Modifier.animateContentSize()) {
-            var navInfo by remember { mutableStateOf("") }
-            var navTesting by remember { mutableStateOf(NavGestureTest.testing(context)) }
-            var navBusy by remember { mutableStateOf(false) }
-
-            // 셸 명령이 1~2초 걸려 그사이 여러 번 눌리면(11-03 진단: 조합 2가 3초에 7번) 앞 것이 끝날 때까지 받지 않는다
-            fun run(block: () -> String?) = scope.launch {
-                if (navBusy) return@launch
-                navBusy = true
-                val (err, info) = withContext(Dispatchers.IO) { block() to (NavGestureTest.status() ?: "Shizuku 연결이 필요합니다.") }
-                navInfo = (err?.let { "실패: $it\n" } ?: "") + info
-                navTesting = NavGestureTest.testing(context)
-                navBusy = false
-            }
-            Text("홈업 멀티핑거 · 버튼식 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text(
-                "굿락 홈업의 여러 손가락 제스처는 스와이프 제스처에서만 됩니다. 먼저 스와이프 제스처에서 홈업 제스처를 설정해 두고, 아래 조합을 눌러 버튼이 보이면서 제스처도 되는지 확인하세요. 내비게이션이 이상해지면 알림의 [원래대로]나 아래 버튼으로 되돌립니다.",
-                color = c.muted,
-                style = MaterialTheme.typography.bodySmall
-            )
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton("버튼 바 + 제스처 함께 켜기", modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 3) } })
-            Spacer(Modifier.height(Gap.Item))
-            Text("스와이프 제스처 상태에서 누르면 버튼 바를 띄운 뒤 제스처 층을 다시 켭니다. 약 5초 뒤 결과 값이 아래에 나옵니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton("조합 1 · 삼성 값만 버튼으로", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 1) } })
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton("조합 2 · 제스처 층만 켜기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { run { NavGestureTest.apply(context, 2) } })
-            Spacer(Modifier.height(Gap.Item))
-            Text("조합 2는 설정 앱에서 버튼식으로 바꾼 뒤 누르세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButtonPair(listOf("원래대로", "지금 값 보기")) { half ->
-                LiquidButton("원래대로", modifier = half, primary = false, enabled = navTesting, disabledHint = "시험 중이 아닙니다", onClick = { run { NavGestureTest.restore(context) } })
-                LiquidButton("지금 값 보기", modifier = half, primary = false, onClick = { run { null } })
-            }
-            if (navInfo.isNotEmpty()) {
-                Spacer(Modifier.height(Gap.Item))
-                Text(navInfo, color = c.ink, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp))
-            }
         }
         Spacer(Modifier.height(Gap.Card))
         // 텐트 모드 시험(11-01 소장님): 폴드를 반쯤 접어 엎어 세우고 바깥은 시계·유튜브, 안쪽은 간접조명으로 두 화면을 함께 쓸 수 있는지 본다
