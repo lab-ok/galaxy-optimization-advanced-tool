@@ -449,6 +449,7 @@ object Copy {
     const val UPDATE_FAILED_TITLE = "업데이트하지 못했습니다"
     const val UPDATE_CHECK_FAILED_TITLE = "새 버전을 확인하지 못했습니다"
     const val UPDATE_RETRY = "다시 시도"
+    const val UPDATE_MANUAL = "GitHub에서 직접 받기"
     fun updateTitle(v: String) = "새 버전 $v 업데이트가 있습니다"
     fun updateLatest(v: String) = "현재 사용 중인 $v 버전이 최신입니다."
     fun updateCurrent(v: String) = "현재 사용 중인 버전은 ${v}입니다. GitHub 릴리스에서 새 버전을 확인합니다."

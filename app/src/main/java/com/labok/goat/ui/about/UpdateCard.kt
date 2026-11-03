@@ -125,6 +125,16 @@ internal fun UpdateCard(manual: Boolean) {
                     LiquidButton(Copy.UPDATE_RETRY, modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
                         run { s.release?.let { Updater.update(context, it) } ?: Updater.check(context) }
                     })
+                    // 설치가 막히면(권한·기기 보안·저장 공간 등) 다시 시도해도 같은 이유로 실패한다. 릴리스 페이지에서 APK를 직접 받는 길을 함께 둔다
+                    // (11-03 사용자 메일: 1.7.0에서 업데이트가 몇 주째 막혀 있었다)
+                    s.release?.let { r ->
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.UPDATE_MANUAL, modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                            runCatching {
+                                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(r.page.ifBlank { "https://github.com/lab-ok/galaxy-optimization-advanced-tool/releases/latest" })))
+                            }
+                        })
+                    }
                 }
                 else -> {
                     Text(Copy.UPDATE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
