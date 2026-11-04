@@ -36,7 +36,7 @@ class ClipShareActivity : Activity() {
             val files = clip?.let { MemoShare.saveClip(this, it) }.orEmpty()
             runOnUiThread {
                 if (files.isEmpty()) {
-                    Toast.makeText(this, "클립보드가 비어 있습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "클립보드가 비어 있습니다", Toast.LENGTH_SHORT).show()
                     finish()
                 } else {
                     @Suppress("DEPRECATION")

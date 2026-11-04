@@ -78,12 +78,16 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
         Legend(c.ink.copy(alpha = chargeAlpha(c.dark)), "충전한 시간대")
     }
     Spacer(Modifier.height(Gap.Item))
-    val hourFmt = remember { SimpleDateFormat("a h시", Locale.KOREA) }
+    val hourFmt = remember(bucketMs) { SimpleDateFormat(if (bucketMs >= 86_400_000L) "M월 d일 a h시" else "a h시", Locale.KOREA) }
     val pick = selected?.let { buckets.getOrNull(it) }
     if (pick == null) {
         Text("기둥 하나는 ${bucketMs / 3_600_000}시간입니다. 누르면 그 시간대 사용량이 보입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
     } else {
-        val range = "${hourFmt.format(Date(pick.start))}~${hourFmt.format(Date(pick.end)).substringAfter(' ')}"
+        val range = if (bucketMs >= 86_400_000L) {
+            "${hourFmt.format(Date(pick.start))}부터 하루"
+        } else {
+            "${hourFmt.format(Date(pick.start))}~${hourFmt.format(Date(pick.end)).substringAfter(' ')}"
+        }
         Text(
             "$range · ${pctText(pick.usedPct)} 사용" + if (pick.chargedPct >= 0.5f) {
                 " · 충전 +${pick.chargedPct.roundToInt()}%"
@@ -142,7 +146,9 @@ private fun LiquidBucketColumns(buckets: List<BatteryHistory.Bucket>, selected: 
     val top = (ceil(buckets.maxOf { it.usedPct } / 5f) * 5f).coerceAtLeast(5f)
     val fills = buckets.mapIndexed { i, b -> rememberFill(b.usedPct / top, delayMs = 30L * i) }
     val measurer = rememberTextMeasurer()
-    val hourFmt = remember { SimpleDateFormat("a h시", Locale.KOREA) }
+    // 기둥이 하루(24시간) 이상이면 시각은 모두 같아 날짜로 표시한다(1.50.0 QA: 네 칸이 모두 '오전 8시'로 보였다)
+    val daily = buckets.size > 1 && buckets[1].start - buckets[0].start >= 86_400_000L
+    val hourFmt = remember(daily) { SimpleDateFormat(if (daily) "M월 d일" else "a h시", Locale.KOREA) }
     val small = TextStyle(fontFamily = GalaxyFont, fontSize = 10.sp, color = c.muted)
     val labelEvery = ((buckets.size + 3) / 4).coerceAtLeast(1)
     Canvas(

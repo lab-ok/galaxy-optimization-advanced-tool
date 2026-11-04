@@ -80,13 +80,13 @@ internal fun ArtCanvas(height: Dp = 150.dp, draw: DrawScope.(LiquidColors, TextM
 
 /** 가운데 정렬 글자. */
 internal fun DrawScope.artLabel(tm: TextMeasurer, text: String, center: Offset, color: Color, sizeSp: Int = 11, bold: Boolean = false) {
-    val l = tm.measure(text, TextStyle(fontFamily = GalaxyFont, color = color, fontSize = sizeSp.sp, fontWeight = if (bold) FontWeight.Bold else FontWeight.Medium))
+    val l = tm.measure(text, TextStyle(fontFamily = GalaxyFont, color = color, fontSize = (sizeSp / fontScale).sp, fontWeight = if (bold) FontWeight.Bold else FontWeight.Medium))
     drawText(l, topLeft = Offset(center.x - l.size.width / 2f, center.y - l.size.height / 2f))
 }
 
 /** 값 표시 알약. */
 internal fun DrawScope.artPill(tm: TextMeasurer, c: LiquidColors, text: String, center: Offset, filled: Boolean) {
-    val l = tm.measure(text, TextStyle(fontFamily = GalaxyFont, color = if (filled) c.onInk else c.muted, fontSize = 10.sp, fontWeight = FontWeight.Bold))
+    val l = tm.measure(text, TextStyle(fontFamily = GalaxyFont, color = if (filled) c.onInk else c.muted, fontSize = (10f / fontScale).sp, fontWeight = FontWeight.Bold))
     val w = l.size.width + 14.dp.toPx()
     val h = l.size.height + 6.dp.toPx()
     drawRoundRect(if (filled) c.ink else c.line, Offset(center.x - w / 2, center.y - h / 2), Size(w, h), CornerRadius(h / 2))

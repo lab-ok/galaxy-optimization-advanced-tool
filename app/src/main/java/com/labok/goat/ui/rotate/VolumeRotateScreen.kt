@@ -222,7 +222,7 @@ private fun DrawScope.drop(c: LiquidColors, tm: TextMeasurer, from: Offset, to: 
 internal fun VolumeRotateHelpSheet() {
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic("1. 하는 일", "화면을 돌려 볼륨 버튼이 위로 가면 화면 기준 오른쪽이 올리기, 왼쪽이 내리기가 됩니다. 거꾸로 들어도 위쪽이 올리기입니다.") { VolumeRotateArt() }
-        HelpTopic("2. ${Copy.VOLUME_INVERT}", "버튼을 위로 돌렸는데 왼쪽이 올리기가 되면 켜세요. 폴드 메인 화면처럼 기기마다 기본 방향이 다릅니다. 켜면 반대쪽 가로에서 올리기·내리기를 바꿉니다.")
+        HelpTopic("2. ${Copy.VOLUME_INVERT}", "버튼을 위로 돌렸는데 왼쪽이 올리기가 되면 켜세요. 폴드 내부 화면처럼 기기마다 기본 방향이 다릅니다. 켜면 반대쪽 가로에서 올리기·내리기를 바꿉니다.")
         HelpTopic("3. ${Copy.VOLUME_CAMERA}", "카메라 앱을 쓰는 동안은 바꾸지 않아 볼륨 키 셔터를 그대로 쓸 수 있습니다.")
         HelpTopic("4. 권한과 접근성", "GOAT가 시스템 설정 권한으로 접근성 서비스를 켭니다. 볼륨 키만 받고 화면 내용은 읽지 않습니다. 끄면 접근성 목록에서도 빠집니다.")
     }

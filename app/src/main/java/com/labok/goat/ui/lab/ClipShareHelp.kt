@@ -61,14 +61,14 @@ internal fun ClipShareHelpSheet() {
     SheetColumn(title = "사용 방법") {
         GlassCard {
             val tap = artLoop(1600)
-            TimelineStep("1", "빠른 설정에 타일 넣기", "[${Copy.LAB_NOTE_ADD_TILE}]를 누릅니다", 34) { c, tm -> tilePill(c, tm, Offset(0f, 4f), 150f) }
-            TimelineStep("2", "아무 앱에서 복사", "글·사진·여러 장 모두 됩니다", 70) { c, tm ->
+            TimelineStep("1", "빠른 설정에 타일 넣기", "[${Copy.LAB_NOTE_ADD_TILE}]를 누릅니다.", 34) { c, tm -> tilePill(c, tm, Offset(0f, 4f), 150f) }
+            TimelineStep("2", "아무 앱에서 복사", "글·사진·여러 장 모두 됩니다.", 70) { c, tm ->
                 copyScene(c, tm, Offset(0f, 6f), tap)
                 photo(c, Offset(116f, 22f), 30f)
             }
-            TimelineStep("3", "알림창을 내려 타일 누르기", "GOAT를 열지 않아도 됩니다", 70) { c, tm -> shadeScene(c, tm, Offset(0f, 4f), tap) }
-            TimelineStep("4", "보낼 앱과 대화방 고르기", "글은 TXT, 사진은 원본으로 갑니다", 70) { c, tm -> pickScene(c, tm, Offset(0f, 4f), tap) }
-            TimelineStep(null, "임시 파일은 바로 지웁니다", "휴대폰 밖으로 보내지 않습니다", 0, last = true)
+            TimelineStep("3", "알림창을 내려 타일 누르기", "GOAT를 열지 않아도 됩니다.", 70) { c, tm -> shadeScene(c, tm, Offset(0f, 4f), tap) }
+            TimelineStep("4", "보낼 앱과 대화방 고르기", "글은 TXT, 사진은 원본으로 갑니다.", 70) { c, tm -> pickScene(c, tm, Offset(0f, 4f), tap) }
+            TimelineStep(null, "임시 파일은 바로 지웁니다", "휴대폰 밖으로 보내지 않습니다.", 0, last = true)
         }
         Spacer(Modifier.height(Gap.Card))
         HelpTopic(
@@ -178,7 +178,7 @@ private fun DrawScope.clipIcon(color: Color, topLeft: Offset, sizeDp: Float) {
 private fun DrawScope.tilePill(c: LiquidColors, tm: TextMeasurer, o: Offset, w: Float) {
     box(c.ink, o, 0f, 0f, w, 26f, 13f)
     clipIcon(c.onInk, at(o, 7f, 3f), 20f)
-    val l = tm.measure("클립보드 공유", TextStyle(fontFamily = GalaxyFont, color = c.onInk, fontSize = minOf(10.5f, (w - 38f) / 6.3f).sp, fontWeight = FontWeight.Bold))
+    val l = tm.measure("클립보드 공유", TextStyle(fontFamily = GalaxyFont, color = c.onInk, fontSize = (minOf(10.5f, (w - 38f) / 6.3f) / fontScale).sp, fontWeight = FontWeight.Bold))
     drawText(l, topLeft = at(o, 31f, 13f) - Offset(0f, l.size.height / 2f))
 }
 
