@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.R
@@ -50,7 +51,6 @@ import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.text.Copy
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -77,7 +77,7 @@ internal fun LabNoteScreen(contentPadding: PaddingValues) {
         MemoShare.clear(context)
         text = ""
         sharing = false
-        Toast.makeText(context, "공유한 임시 파일을 지웠습니다", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Copy.text(R.string.lab_note_temp_cleared), Toast.LENGTH_SHORT).show()
     }
     // 화면을 열 때 지난번에 남은 임시 파일이 있으면 지운다
     LaunchedEffect(Unit) { withContext(Dispatchers.IO) { MemoShare.clear(context) } }
@@ -113,7 +113,7 @@ internal fun LabNoteScreen(contentPadding: PaddingValues) {
                     val onlyText = clip != null && (0 until clip.itemCount).all { clip.getItemAt(it).uri == null }
                     val pasted = if (onlyText) clip?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty() else ""
                     when {
-                        clip == null || clip.itemCount == 0 -> Toast.makeText(context, "클립보드가 비어 있습니다", Toast.LENGTH_SHORT).show()
+                        clip == null || clip.itemCount == 0 -> Toast.makeText(context, Copy.text(R.string.lab_clip_empty), Toast.LENGTH_SHORT).show()
                         onlyText && clip.itemCount == 1 && pasted.isNotBlank() -> {
                             text = pasted
                             share(pasted)
@@ -125,7 +125,7 @@ internal fun LabNoteScreen(contentPadding: PaddingValues) {
                                 val files = withContext(Dispatchers.IO) { MemoShare.saveClip(context, clip) }
                                 if (files.isEmpty()) {
                                     sharing = false
-                                    Toast.makeText(context, "클립보드가 비어 있습니다", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, Copy.text(R.string.lab_clip_empty), Toast.LENGTH_SHORT).show()
                                 } else {
                                     launcher.launch(MemoShare.chooser(context, files))
                                 }
@@ -144,8 +144,8 @@ internal fun LabNoteScreen(contentPadding: PaddingValues) {
         if (!WindowInsets.isImeVisible) Spacer(Modifier.height(Gap.Card))
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth).weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("직접 붙여넣기", fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
-                Text(String.format(Locale.KOREA, "%,d자", text.length), color = c.muted, style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.lab_note_paste_direct), fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.lab_note_char_count, text.length), color = c.muted, style = MaterialTheme.typography.labelSmall)
             }
             Spacer(Modifier.height(Gap.Item))
             Box(Modifier.fillMaxWidth().weight(1f)) {
@@ -164,7 +164,7 @@ internal fun LabNoteScreen(contentPadding: PaddingValues) {
             }
             Spacer(Modifier.height(Gap.Item))
             Row {
-                LiquidButton("지우기", modifier = Modifier.weight(1f), primary = false, enabled = text.isNotEmpty(), onClick = { text = "" })
+                LiquidButton(stringResource(R.string.lab_note_clear), modifier = Modifier.weight(1f), primary = false, enabled = text.isNotEmpty(), onClick = { text = "" })
                 Spacer(Modifier.width(Gap.Item))
                 LiquidButton(Copy.LAB_NOTE_SHARE, modifier = Modifier.weight(1f), enabled = text.isNotBlank() && !sharing, onClick = { share(text) })
             }
@@ -188,12 +188,12 @@ private fun requestTile(context: Context) {
             main
         ) { result ->
             val msg = when (result) {
-                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED -> "빠른 설정에 타일을 추가했습니다"
-                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED -> "이미 빠른 설정에 있습니다"
+                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED -> Copy.text(R.string.lab_note_tile_added)
+                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED -> Copy.text(R.string.lab_note_tile_already)
                 StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED -> null
-                else -> "추가하지 못했습니다. 빠른 설정 편집 화면에서 직접 넣으세요"
+                else -> Copy.text(R.string.lab_note_tile_failed)
             }
             if (msg != null) Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
-    }.onFailure { Toast.makeText(context, "추가하지 못했습니다. 빠른 설정 편집 화면에서 직접 넣으세요", Toast.LENGTH_SHORT).show() }
+    }.onFailure { Toast.makeText(context, Copy.text(R.string.lab_note_tile_failed), Toast.LENGTH_SHORT).show() }
 }

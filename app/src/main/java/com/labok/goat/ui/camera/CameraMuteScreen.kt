@@ -23,10 +23,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.CommandBox
@@ -148,28 +150,24 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
 internal fun CameraMuteHelpSheet() {
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
-            "1. 하는 일",
-            "국내 갤럭시는 무음·진동 모드에서도 촬영음이 강제로 납니다. 이 설정을 끄면 촬영음이 기기 소리 설정을 따릅니다. " +
-                "무음·진동 모드에서는 소리 없이 찍힙니다. 삼성 기본 카메라와 대부분의 카메라 앱에 적용됩니다."
+            stringResource(R.string.tweaks_help_what_title),
+            stringResource(R.string.camera_help_what_body)
         ) { ShutterArt() }
         HelpTopic(
-            "2. ${Copy.CAMERA_ETIQUETTE_TITLE}",
-            "촬영음은 몰래 촬영을 막는 장치입니다. 동의 없이 다른 사람을 찍으면 법에 따라 처벌받습니다. " +
-                "조용한 곳에서 물건·문서·음식을 찍을 때처럼 예절을 지키는 데만 쓰세요."
+            stringResource(R.string.camera_help_etiquette_title_fmt, Copy.CAMERA_ETIQUETTE_TITLE),
+            stringResource(R.string.camera_help_etiquette_body)
         )
         HelpTopic(
-            "3. Shizuku가 필요한 이유",
-            "촬영음 강제는 삼성이 숨겨 둔 시스템 설정이라 시스템 설정 권한으로도 바꿀 수 없습니다. " +
-                "GOAT는 Shizuku의 셸 권한으로 바꿉니다. Shizuku가 없으면 PC에서 명령을 한 번 실행해도 됩니다."
+            stringResource(R.string.tweaks_help_shizuku_title),
+            stringResource(R.string.camera_help_why_shizuku_body)
         )
         HelpTopic(
-            "4. 재부팅·업데이트 뒤",
-            "기기에 따라 업데이트나 재부팅 뒤 촬영음 강제가 다시 켜집니다. " +
-                "스위치를 켜 두면 Shizuku가 연결될 때마다 확인해 다시 끕니다."
+            stringResource(R.string.camera_help_after_reboot_title),
+            stringResource(R.string.camera_help_after_reboot_body)
         )
         HelpTopic(
-            "5. 되돌리기",
-            "스위치를 끄면 원래대로 촬영음이 강제로 납니다. PC에서는 '${CameraMute.PC_UNDO}'로 되돌립니다."
+            stringResource(R.string.tweaks_help_step5_undo_title),
+            stringResource(R.string.camera_help_undo_body_fmt, CameraMute.PC_UNDO)
         )
     }
 }

@@ -62,6 +62,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.Font
@@ -74,6 +75,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.R
+import com.labok.goat.ui.text.Copy
 import java.time.LocalDateTime
 import java.time.format.TextStyle as JTextStyle
 import java.util.Locale
@@ -90,8 +92,9 @@ import kotlinx.coroutines.delay
  * 크기는 바깥 화면 가로(높이 1248 기준)에 비례한다. 시안 생성기: ~/claude_workspace/develop/goat/branding/standby/clocks.py
  */
 internal object StandbyClocks {
-    val NAMES = listOf("리퀴드", "디지털", "플로트", "솔라", "아날로그", "닷 매트릭스", "플립", "나이트", "위젯", "매거진", "미니멀 링")
-    val COUNT = NAMES.size
+    private val NAME_IDS = listOf(R.string.lab_standby_clock_liquid, R.string.lab_standby_clock_digital, R.string.lab_standby_clock_float, R.string.lab_standby_clock_solar, R.string.lab_standby_clock_analog, R.string.lab_standby_clock_dot_matrix, R.string.lab_standby_clock_flip, R.string.lab_standby_clock_night, R.string.lab_standby_clock_widget, R.string.lab_standby_clock_magazine, R.string.lab_standby_clock_minimal_ring)
+    val NAMES: List<String> get() = NAME_IDS.map { Copy.text(it) }
+    val COUNT = NAME_IDS.size
 }
 
 private val InterHeavy = FontFamily(Font(R.font.standby_inter_heavy))
@@ -112,7 +115,7 @@ private fun hh(t: LocalDateTime) = "${t.hour}"
 private fun mm(t: LocalDateTime) = "%02d".format(t.minute)
 private fun ss(t: LocalDateTime) = "%02d".format(t.second)
 private fun dayKo(t: LocalDateTime) = t.dayOfWeek.getDisplayName(JTextStyle.FULL, Locale.KOREAN)
-private fun dateKo(t: LocalDateTime) = "${t.monthValue}월 ${t.dayOfMonth}일"
+private fun dateKo(t: LocalDateTime) = Copy.text(R.string.lab_date_month_day, t.monthValue, t.dayOfMonth)
 
 /** 화면 높이에 비례한 글자 크기(시안은 높이 1248 기준). */
 private fun Dp.ratio(px: Float): TextUnit = (value * px / 1248f).sp
@@ -774,12 +777,12 @@ private fun WidgetClock(now: LocalDateTime, h: Dp, battery: Int?, charging: Bool
         }
         Column(Modifier.weight(0.85f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(pad * 0.6f)) {
             Column(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(h * 0.06f)).background(Brush.linearGradient(listOf(Color(0xFF243E70), Color(0xFF15264A)))).padding(h * 0.045f)) {
-                Text("${now.monthValue}월 · ${dayKo(now)}", color = Color(0xFFC9D8FF), fontSize = h.ratio(48f), fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.lab_standby_month_day_of_week, now.monthValue, dayKo(now)), color = Color(0xFFC9D8FF), fontSize = h.ratio(48f), fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.weight(1f))
                 Text("${now.dayOfMonth}", color = Color.White, style = TextStyle(fontFamily = InterThin, fontSize = h.ratio(190f)))
             }
             Column(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(h * 0.06f)).background(Brush.linearGradient(listOf(Color(0xFF1C4A2B), Color(0xFF10291A)))).padding(h * 0.045f)) {
-                Text(if (charging) "충전 중" else "배터리", color = Color(0xFFB4F0BE), fontSize = h.ratio(48f), fontWeight = FontWeight.SemiBold)
+                Text(if (charging) stringResource(R.string.lab_battery_status_charging) else stringResource(R.string.lab_battery_label), color = Color(0xFFB4F0BE), fontSize = h.ratio(48f), fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.weight(1f))
                 Text(battery?.let { "$it%" } ?: "-", color = Color.White, style = TextStyle(fontFamily = InterThin, fontSize = h.ratio(170f)))
                 Box(Modifier.fillMaxWidth().height(h * 0.022f).clip(RoundedCornerShape(50)).background(Color(0xFF285A37))) {
@@ -842,7 +845,7 @@ private fun RingClock(now: LocalDateTime, h: Dp, battery: Int?, charging: Boolea
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             TimeRow(now, TextStyle(fontFamily = ManropeThin, fontSize = h.ratio(230f)), Ink)
             Text("${dayKo(now)} · ${dateKo(now)}", color = Mute, fontSize = h.ratio(44f))
-            Text((if (charging) "충전 " else "") + (battery?.let { "$it%" } ?: ""), color = if (charging) Color(0xFF82DC8C) else Mute, fontSize = h.ratio(40f))
+            Text(if (charging) stringResource(R.string.lab_standby_charging_level, battery?.let { "$it%" } ?: "") else battery?.let { "$it%" } ?: "", color = if (charging) Color(0xFF82DC8C) else Mute, fontSize = h.ratio(40f))
         }
     }
 }

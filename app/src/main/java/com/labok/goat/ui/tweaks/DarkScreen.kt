@@ -21,9 +21,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.tweaks.ForceDark
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -144,30 +146,24 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
 internal fun DarkHelpSheet() {
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
-            "1. 하는 일",
-            "다크 모드를 지원하지 않는 앱도 시스템이 어두운 색으로 바꿔 표시합니다. " +
-                "개발자 옵션의 '강제 다크 모드 재정의'와 같으며, 사진과 동영상 색은 바꾸지 않습니다."
+            stringResource(R.string.tweaks_help_what_title),
+            stringResource(R.string.tweaks_dark_help_what_body)
         ) { DarkArt(on = true) }
         HelpTopic(
-            "2. 시스템 다크 모드 필요",
-            "Android는 시스템 다크 모드가 켜져 있을 때만 강제 다크를 적용합니다. 그래서 스위치를 켤 때 다크 모드가 꺼져 있으면 함께 켭니다. " +
-                "끌 때는 켜기 전 방식(꺼짐·자동·예약)으로 되돌립니다. 이미 열려 있던 앱은 다시 열어야 바뀝니다."
+            stringResource(R.string.tweaks_dark_help_system_title),
+            stringResource(R.string.tweaks_dark_help_system_body)
         )
         HelpTopic(
-            "3. 적용 범위",
-            "앱마다 고르는 공식 방법이 없어 다크 모드가 없는 앱 전체에 적용됩니다. " +
-                "강제 다크를 막아 둔 앱과 이미 다크 모드가 있는 앱은 그대로입니다."
+            stringResource(R.string.tweaks_dark_help_scope_title),
+            stringResource(R.string.tweaks_dark_help_scope_body)
         )
         HelpTopic(
-            "4. 생길 수 있는 화면 오류",
-            "시스템이 다른 앱의 색을 대신 바꾸므로 어색한 부분이 생기기도 합니다. " +
-                "바탕은 어두운데 상태 표시줄 글자·아이콘이 검은색으로 남거나, 홈 화면 폴더 뒤에 흰 네모가 보이는 경우입니다. " +
-                "GOAT가 고칠 수 없는 현상이라 불편하면 스위치를 끄세요. 끄면 원래대로 돌아갑니다."
+            stringResource(R.string.tweaks_dark_help_glitch_title),
+            stringResource(R.string.tweaks_dark_help_glitch_body)
         )
         HelpTopic(
-            "5. 재부팅 뒤",
-            "이 설정은 재부팅하면 꺼집니다. 스위치를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 다시 켭니다. " +
-                "부팅 뒤 개발자 옵션에서 직접 껐다면 그대로 둡니다."
+            stringResource(R.string.tweaks_dark_help_reboot_title),
+            stringResource(R.string.tweaks_dark_help_reboot_body)
         )
     }
 }

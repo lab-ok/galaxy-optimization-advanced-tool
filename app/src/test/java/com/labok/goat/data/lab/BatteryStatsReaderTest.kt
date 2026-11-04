@@ -1,10 +1,16 @@
 package com.labok.goat.data.lab
 
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Before
 import org.junit.Test
 
 class BatteryStatsReaderTest {
+    // 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
+
     // AOSP 체크인 형식(redroid 14에서 받은 줄 모양)에 실제 사용처럼 값을 넣은 예
     private val sample = """
         9,0,l,bt,2,36000000,30000000,605203789,605203789,1791555461738,25200000,20000000,4400,0,0,0

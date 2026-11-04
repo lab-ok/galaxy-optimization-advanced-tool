@@ -1,5 +1,7 @@
 package com.labok.goat.domain
 
+import com.labok.goat.R
+import com.labok.goat.ui.text.Copy
 import kotlin.math.roundToInt
 
 /**
@@ -28,7 +30,12 @@ data class ScreenInfo(
  */
 object ScreenPolicy {
 
-    enum class Role(val label: String) { OUTER("외부"), INNER("내부") }
+    enum class Role(private val labelRes: Int) {
+        OUTER(R.string.domain_role_outer),
+        INNER(R.string.domain_role_inner);
+
+        val label: String get() = Copy.text(labelRes)
+    }
 
     const val MIN_PPI = 100f
     const val MAX_PPI = 1000f
@@ -90,8 +97,8 @@ object ScreenPolicy {
         val clamped = scaled.coerceIn(DpiPolicy.MIN_DPI, DpiPolicy.MAX_DPI)
         val blocked = when {
             ratio !in MIN_RATIO..MAX_RATIO ->
-                "보정 비율 ${"%.2f".format(ratio)}가 비정상입니다(${"%.1f".format(active.ppi)}/${"%.1f".format(ref.ppi)}ppi). 화면 정보를 다시 수집하세요"
-            clamped != scaled -> "보정 결과 $scaled dpi가 허용 범위(${DpiPolicy.MIN_DPI}~${DpiPolicy.MAX_DPI})를 벗어납니다"
+                Copy.text(R.string.domain_blocked_ratio_fmt, "%.2f".format(ratio), "%.1f".format(active.ppi), "%.1f".format(ref.ppi))
+            clamped != scaled -> Copy.text(R.string.domain_blocked_out_of_range_fmt, scaled, DpiPolicy.MIN_DPI, DpiPolicy.MAX_DPI)
             else -> null
         }
         val note = buildString {

@@ -2,6 +2,7 @@ package com.labok.goat.domain
 
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.DpiPolicy.Decision
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -14,6 +15,10 @@ import org.junit.Test
  * 지금 화면의 역할이 없어지자, 외부 변경을 묻지 않고 감시가 되돌리던 상황을 재현한다.
  */
 class SingleScreenDpiTest {
+    // 화면 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
+
     private var now = 1_000_000L
     private val phone = ScreenInfo("1248x1972", 420f, 5.56f)
 

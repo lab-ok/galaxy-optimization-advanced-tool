@@ -16,6 +16,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.R
 import com.labok.goat.domain.AppDensityPolicy
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.LocalDeviceShape
@@ -74,8 +75,8 @@ internal fun AppScaleArt() {
         appContent(left, k, c.ink)
         appContent(right, 1f, c.ink)
         val dpi = AppDensityPolicy.STEPS[((t * 5.99f).toInt()).coerceIn(0, 5)]
-        artPill(tm, c, "앱 A · $dpi", Offset(size.width * 0.3f, size.height - 8.dp.toPx()), true)
-        artPill(tm, c, "앱 B · 기본", Offset(size.width * 0.7f, size.height - 8.dp.toPx()), false)
+        artPill(tm, c, Copy.text(R.string.appsize_art_app_a_fmt, dpi), Offset(size.width * 0.3f, size.height - 8.dp.toPx()), true)
+        artPill(tm, c, Copy.text(R.string.appsize_art_app_b_default), Offset(size.width * 0.7f, size.height - 8.dp.toPx()), false)
     }
 }
 
@@ -87,8 +88,8 @@ internal fun ShizukuBridgeArt() {
         val y = size.height * 0.42f
         val xs = listOf(size.width * 0.17f, size.width * 0.5f, size.width * 0.83f)
         val box = size.height * 0.42f
-        val names = listOf("GOAT", "Shizuku", "시스템")
-        val subs = listOf("크기 바꾸기 요청", "셸 권한 빌려줌", "앱 크기 저장")
+        val names = listOf("GOAT", "Shizuku", Copy.text(R.string.appsize_art_system))
+        val subs = listOf(Copy.text(R.string.appsize_art_sub_request), Copy.text(R.string.appsize_art_sub_shell), Copy.text(R.string.appsize_art_sub_store))
         // 화살표
         for (i in 0..1) {
             val a = xs[i] + box / 2 + 6.dp.toPx()
@@ -127,13 +128,13 @@ internal fun PersistArt() {
         drawRoundRect(if (on) c.ink else c.line, Offset(sc.x - sw.width / 2, sc.y - sw.height / 2), sw, CornerRadius(sw.height / 2))
         val knobX = if (on) sc.x + sw.width / 2 - sw.height / 2 else sc.x - sw.width / 2 + sw.height / 2
         drawCircle(if (on) c.onInk else c.ink, sw.height * 0.36f, Offset(knobX, sc.y))
-        artLabel(tm, if (on) "Shizuku 켜짐" else "Shizuku 꺼짐", Offset(sc.x, sc.y + 30.dp.toPx()), c.ink, 11, bold = true)
-        artLabel(tm, if (on) "→ 바꿀 수 있음" else "→ 바꾸기만 멈춤", Offset(sc.x, sc.y + 46.dp.toPx()), c.muted, 9)
+        artLabel(tm, if (on) Copy.text(R.string.appsize_art_shizuku_on) else Copy.text(R.string.appsize_art_shizuku_off), Offset(sc.x, sc.y + 30.dp.toPx()), c.ink, 11, bold = true)
+        artLabel(tm, if (on) Copy.text(R.string.appsize_art_can_change) else Copy.text(R.string.appsize_art_change_paused), Offset(sc.x, sc.y + 46.dp.toPx()), c.muted, 9)
         // 오른쪽: 앱 배율 값은 계속 유지(체크 표시)
         val h = size.height * 0.8f
         val screen = phone(c, Offset(size.width * 0.72f, size.height / 2), h, aspect)
         appContent(screen, 1.25f, c.ink)
-        artPill(tm, c, "480 유지", Offset(screen.center.x, screen.bottom - 12.dp.toPx()), true)
+        artPill(tm, c, Copy.text(R.string.appsize_art_kept_480), Offset(screen.center.x, screen.bottom - 12.dp.toPx()), true)
     }
 }
 
@@ -191,8 +192,8 @@ internal fun FoldDiffArt() {
         // 내부 화면은 넓어서 두 단으로 채운다(같은 숫자인데 내용이 더 작게 보임)
         appContent(Rect(inner.left, inner.top, inner.center.x, inner.bottom), 0.85f, c.ink)
         appContent(Rect(inner.center.x, inner.top, inner.right, inner.bottom), 0.85f, c.ink)
-        artPill(tm, c, "외부 420", Offset(cover.center.x, size.height - 12.dp.toPx()), t < 0.5f)
-        artPill(tm, c, "내부 420", Offset(inner.center.x, size.height - 12.dp.toPx()), t >= 0.5f)
+        artPill(tm, c, Copy.text(R.string.appsize_art_outer_420), Offset(cover.center.x, size.height - 12.dp.toPx()), t < 0.5f)
+        artPill(tm, c, Copy.text(R.string.appsize_art_inner_420), Offset(inner.center.x, size.height - 12.dp.toPx()), t >= 0.5f)
     }
 }
 
@@ -210,9 +211,9 @@ internal fun NotifyArt() {
         val textLeft = tl.x + 16.dp.toPx()
         val tTitle = tm.measure(Copy.FEATURE_APP_SIZE, TextStyle(fontFamily = GalaxyFont, color = c.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold))
         drawText(tTitle, topLeft = Offset(textLeft, tl.y + 10.dp.toPx()))
-        val tBody = tm.measure(if (pressed) "Discord · 480 dpi" else "Discord · 기본(450)", TextStyle(fontFamily = GalaxyFont, color = c.muted, fontSize = 10.sp))
+        val tBody = tm.measure(if (pressed) "Discord · 480 dpi" else Copy.text(R.string.appsize_art_discord_default), TextStyle(fontFamily = GalaxyFont, color = c.muted, fontSize = 10.sp))
         drawText(tBody, topLeft = Offset(textLeft, tl.y + 26.dp.toPx()))
-        val labels = listOf("작게", "기본", "크게")
+        val labels = listOf(Copy.text(R.string.appsize_notif_smaller), Copy.DEFAULT, Copy.text(R.string.appsize_notif_larger))
         val bw = (cardW - 32.dp.toPx()) / 3
         labels.forEachIndexed { i, s ->
             val cx = textLeft + bw * i + bw / 2
@@ -233,7 +234,7 @@ internal fun NotifyArt() {
         drawCircle(c.ink.copy(alpha = 0.25f), r + 4.dp.toPx(), finger)
         drawCircle(c.ink.copy(alpha = 0.55f), r, finger)
         // 아래: 앱 글자가 누른 뒤 커진다
-        artLabel(tm, "앱 글자 가나다 Aa", Offset(size.width * 0.4f, tl.y + cardH + 26.dp.toPx()), c.ink, if (pressed) 17 else 12, bold = true)
+        artLabel(tm, Copy.text(R.string.appsize_art_sample_text), Offset(size.width * 0.4f, tl.y + cardH + 26.dp.toPx()), c.ink, if (pressed) 17 else 12, bold = true)
     }
 }
 
@@ -242,7 +243,7 @@ internal fun NotifyArt() {
 internal fun ResetArt() {
     val t = artLoop(3000)
     ArtCanvas(120.dp) { c, tm ->
-        val rows = listOf("카카오톡" to "420", "Chrome" to "360", "X" to "480")
+        val rows = listOf(Copy.text(R.string.appsize_art_sample_app_kakao) to "420", "Chrome" to "360", "X" to "480")
         val rowH = size.height / 3.4f
         rows.forEachIndexed { i, (name, v) ->
             val y = 6.dp.toPx() + i * (rowH + 4.dp.toPx())
@@ -254,7 +255,7 @@ internal fun ResetArt() {
             val nl = tm.measure(name, TextStyle(fontFamily = GalaxyFont, color = c.ink, fontSize = 11.sp))
             drawText(nl, topLeft = Offset(tl.x + 16.dp.toPx() + rowH * 0.6f, y + (rowH - nl.size.height) / 2))
             val reset = t > 0.25f + i * 0.18f
-            artPill(tm, c, if (reset) "기본" else v, Offset(tl.x + w - 30.dp.toPx(), y + rowH / 2), !reset)
+            artPill(tm, c, if (reset) Copy.DEFAULT else v, Offset(tl.x + w - 30.dp.toPx(), y + rowH / 2), !reset)
         }
     }
 }

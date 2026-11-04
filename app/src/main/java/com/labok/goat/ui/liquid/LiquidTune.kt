@@ -1,6 +1,7 @@
 package com.labok.goat.ui.liquid
 
 import android.content.Context
+import com.labok.goat.R
 import com.labok.goat.ui.text.Copy
 
 /**
@@ -12,12 +13,12 @@ object LiquidTune {
     class Knob(val key: String, val label: String, val range: IntRange, val default: Int, val text: (Int) -> String)
 
     private val percent: (Int) -> String = { "$it%" }
-    val WATER = Knob("water", Copy.FLUID_WATER, 40..420, LiquidLook.default.particles) { "방울 ${it}개" }
+    val WATER = Knob("water", Copy.FLUID_WATER, 40..420, LiquidLook.default.particles) { Copy.text(R.string.ui_fluid_water_count_fmt, it) }
     val VISCOSITY = Knob("viscosity", Copy.FLUID_VISCOSITY, 10..400, 100, percent)
     val TENSION = Knob("tension", Copy.FLUID_TENSION, 0..400, 100, percent)
     val SCATTER = Knob("scatter", Copy.FLUID_SCATTER, 20..400, 100, percent)
     val SPLASH = Knob("splash", Copy.FLUID_SPLASH, 0..400, 100, percent)
-    val GRAVITY = Knob("gravity", Copy.FLUID_GRAVITY, 0..100, 5) { if (it == 0) "무중력" else "지구의 $it%" }
+    val GRAVITY = Knob("gravity", Copy.FLUID_GRAVITY, 0..100, 5) { if (it == 0) Copy.text(R.string.ui_fluid_gravity_zero) else Copy.text(R.string.ui_fluid_gravity_earth_fmt, it) }
 
     /** 출렁임이 이어지는 정도: 0이면 금방 멈추고 100이면 오래 출렁인다(속도 감쇠 0.958~0.998, 기본 50 = 0.978). */
     val WOBBLE = Knob("wobble", Copy.FLUID_WOBBLE, 0..100, 50) { "$it/100" }

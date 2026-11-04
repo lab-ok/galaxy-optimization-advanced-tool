@@ -57,11 +57,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.update.UpdateNotice
@@ -123,9 +125,9 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
             Text(
                 when {
                     running -> Copy.SHAKE_CALIBRATE_NOW
-                    result != null -> "민감도를 $result${UpdateNotice.ro("$result")} 맞췄습니다"
-                    failed -> "흔들림을 인식하지 못했습니다"
-                    else -> "기기를 움직이면 물방울도 움직입니다"
+                    result != null -> stringResource(R.string.rotate_calibrate_result_fmt, result!!, UpdateNotice.ro("$result"))
+                    failed -> stringResource(R.string.rotate_calibrate_not_detected)
+                    else -> stringResource(R.string.rotate_calibrate_idle)
                 },
                 color = c.ink,
                 fontWeight = FontWeight.SemiBold,
@@ -160,40 +162,40 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                                 run -> {
                                     // 시트는 아래에 붙어 있어 짧아지면 내용이 위로 튀었다가 시트를 따라 내려온다(QA 1차 재검). 안내 줄 자리를 그대로 비워 높이를 유지한다
                                     Text(
-                                        "[시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 평소처럼 흔드세요.",
+                                        stringResource(R.string.rotate_calibrate_start_hint_fmt, CALIBRATE_SECONDS),
                                         modifier = Modifier.alpha(0f).clearAndSetSemantics { },
                                         style = MaterialTheme.typography.bodyMedium,
                                         textAlign = TextAlign.Center
                                     )
                                     Spacer(Modifier.height(Gap.Item))
-                                    LiquidButton("흔드는 중…", modifier = Modifier.fillMaxWidth(), enabled = false, onClick = {})
+                                    LiquidButton(stringResource(R.string.rotate_calibrate_shaking), modifier = Modifier.fillMaxWidth(), enabled = false, onClick = {})
                                 }
                                 level != null -> {
                                     Text(
-                                        "이제 방금보다 조금 약하게 흔들어도 회전합니다.",
+                                        stringResource(R.string.rotate_calibrate_done_hint),
                                         color = c.muted,
                                         style = MaterialTheme.typography.bodyMedium,
                                         textAlign = TextAlign.Center
                                     )
                                     Spacer(Modifier.height(Gap.Item))
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                        LiquidButton("다시 하기", modifier = Modifier.weight(1f), primary = false, onClick = {
+                                        LiquidButton(stringResource(R.string.rotate_calibrate_retry), modifier = Modifier.weight(1f), primary = false, onClick = {
                                             result = null
                                             round++
                                             running = true
                                         })
-                                        LiquidButton("확인", modifier = Modifier.weight(1f), onClick = onClose)
+                                        LiquidButton(stringResource(R.string.rotate_calibrate_ok), modifier = Modifier.weight(1f), onClick = onClose)
                                     }
                                 }
                                 else -> {
                                     Text(
-                                        if (fail) Copy.SHAKE_CALIBRATE_FAIL else "[시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 평소처럼 흔드세요.",
+                                        if (fail) Copy.SHAKE_CALIBRATE_FAIL else stringResource(R.string.rotate_calibrate_start_hint_fmt, CALIBRATE_SECONDS),
                                         color = c.muted,
                                         style = MaterialTheme.typography.bodyMedium,
                                         textAlign = TextAlign.Center
                                     )
                                     Spacer(Modifier.height(Gap.Item))
-                                    LiquidButton(if (fail) "다시 하기" else "시작", modifier = Modifier.fillMaxWidth(), onClick = {
+                                    LiquidButton(stringResource(if (fail) R.string.rotate_calibrate_retry else R.string.rotate_calibrate_start), modifier = Modifier.fillMaxWidth(), onClick = {
                                         failed = false
                                         round++
                                         running = true

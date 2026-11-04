@@ -36,6 +36,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.labok.goat.R
 import com.labok.goat.domain.PanelSpec
 import com.labok.goat.domain.ScreenGeometry
 import com.labok.goat.domain.ScreenPolicy
@@ -87,9 +89,9 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
         Text(
             // 화면이 하나인 기기에는 접고 펴는 안내와 두 화면 비교가 맞지 않는다(1.17.5 전수 점검)
             if (state.foldable) {
-                "이 화면을 연 채로 접고 펴서 두 화면의 도형과 글자 크기가 같은지 봅니다."
+                stringResource(R.string.sizetest_intro_fold)
             } else {
-                "바꾼 배율에서 도형과 글자가 어떤 크기로 보이는지 봅니다."
+                stringResource(R.string.sizetest_intro_single)
             },
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
@@ -98,9 +100,9 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
 
         if (state.foldable) {
             GlassCard(accent = c.ink) {
-                Text("세로 줄 수 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(stringResource(R.string.sizetest_rows_title), fontWeight = FontWeight.SemiBold, color = c.ink)
                 Text(
-                    "두 화면은 높이가 거의 같아 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다.",
+                    stringResource(R.string.sizetest_rows_body),
                     color = c.muted,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -109,21 +111,22 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                 val outerRows = if (outer != null && outerDpi != null) ScreenGeometry.orientedSize(outer.screen.key, cover, false)?.let { ScreenGeometry.rowsFor(it.second, outerDpi) } else null
                 val innerRows = if (inner != null && innerDpi != null) ScreenGeometry.orientedSize(inner.screen.key, cover, true)?.let { ScreenGeometry.rowsFor(it.second, innerDpi) } else null
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    RowsFigure("외부 화면", outerRows)
-                    RowsFigure("내부 화면", innerRows)
+                    RowsFigure(Copy.OUTER, outerRows)
+                    RowsFigure(Copy.INNER, innerRows)
                 }
                 if (outerRows != null && innerRows != null) {
                     val diff = (innerRows - outerRows) / outerRows * 100f
                     Spacer(Modifier.height(Gap.Item))
                     Text(
-                        "차이 %+.1f%% · %s".format(
+                        stringResource(
+                            R.string.sizetest_diff_fmt,
                             diff,
                             if (abs(diff) < 2f) {
-                                "일치"
+                                stringResource(R.string.sizetest_match)
                             } else if (diff > 0) {
-                                "내부 화면이 더 작음(보정 +)"
+                                stringResource(R.string.sizetest_rows_inner_smaller)
                             } else {
-                                "내부 화면이 더 큼(보정 −)"
+                                stringResource(R.string.sizetest_rows_inner_larger)
                             }
                         ),
                         color = if (abs(diff) < 2f) c.ink else c.danger,
@@ -133,10 +136,10 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                     )
                 }
                 Spacer(Modifier.height(Gap.Card))
-                LiquidButton("전체 화면으로 줄 수 보기", modifier = Modifier.fillMaxWidth(), onClick = onCount)
+                LiquidButton(stringResource(R.string.sizetest_rows_fullscreen), modifier = Modifier.fillMaxWidth(), onClick = onCount)
                 Spacer(Modifier.height(Gap.Item))
                 Text(
-                    "번호 매긴 줄로 화면을 채웁니다. 접고 펴서 두 화면의 마지막 번호를 비교하세요.",
+                    stringResource(R.string.sizetest_rows_fullscreen_hint),
                     color = c.muted,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -145,8 +148,8 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
         Spacer(Modifier.height(Gap.Item))
 
         GlassCard {
-            Text("기준 도형", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text("한 변 ${REF_DP}dp(앱 아이콘 크기)", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.sizetest_ref_title), fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(stringResource(R.string.sizetest_ref_body_fmt, REF_DP), color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Card))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 repeat(4) { i ->
@@ -158,14 +161,14 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             }
             Spacer(Modifier.height(Gap.Section))
             listOf(14, 18, 24).forEach { sp ->
-                Text("가나다 Aa 123 · ${sp}sp", fontSize = sp.sp, color = c.ink)
+                Text(stringResource(R.string.sizetest_sample_text_fmt, sp), fontSize = sp.sp, color = c.ink)
             }
         }
         Spacer(Modifier.height(Gap.Item))
 
         GlassCard {
-            Text("예상 실측 크기", fontWeight = FontWeight.SemiBold, color = c.ink)
-            Text("${REF_DP}dp 기준 도형이 ${if (state.foldable) "각 화면" else "이 화면"}에서 차지하는 실제 길이입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.sizetest_measure_title), fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(stringResource(R.string.sizetest_measure_body_fmt, REF_DP, if (state.foldable) stringResource(R.string.sizetest_each_screen) else stringResource(R.string.sizetest_this_screen)), color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             // 화면이 하나면 외부 화면 대신 지금 화면으로 계산한다(외부 화면을 찾으면 늘 '정보 없음'이었다, 1.17.6 점검 2차)
             // 아직 기준을 정하지 않아 계획이 없으면 켜진 화면 정보와 지금 DPI를 쓴다
@@ -173,26 +176,26 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             val firstDpi = if (state.foldable) outerDpi else current?.let { state.plan?.targetFor(it.screen)?.dpi } ?: state.dpi?.current
             val outerMm = if (first != null && firstDpi != null) ScreenGeometry.dpToMm(REF_DP, firstDpi, state.rulerPpi[first.key] ?: first.ppi) else null
             val innerMm = if (inner != null && innerDpi != null) ScreenGeometry.dpToMm(REF_DP, innerDpi, state.rulerPpi[inner.screen.key] ?: inner.screen.ppi) else null
-            InfoRow(if (state.foldable) "외부 화면" else "이 화면", outerMm?.let { "%.2f\u00A0mm · %d\u00A0dpi · %.0f\u00A0ppi".format(it, firstDpi, first!!.ppi) } ?: "정보 없음")
-            if (state.foldable) InfoRow("내부 화면", innerMm?.let { "%.2f\u00A0mm · %d\u00A0dpi · %.0f\u00A0ppi".format(it, innerDpi, inner!!.screen.ppi) } ?: "정보 없음")
+            InfoRow(if (state.foldable) Copy.OUTER else stringResource(R.string.sizetest_this_screen), outerMm?.let { "%.2f\u00A0mm · %d\u00A0dpi · %.0f\u00A0ppi".format(it, firstDpi, first!!.ppi) } ?: stringResource(R.string.sizetest_no_info))
+            if (state.foldable) InfoRow(Copy.INNER, innerMm?.let { "%.2f\u00A0mm · %d\u00A0dpi · %.0f\u00A0ppi".format(it, innerDpi, inner!!.screen.ppi) } ?: stringResource(R.string.sizetest_no_info))
             // 화면이 하나면 두 화면 비교는 없다
             if (state.foldable && outerMm != null && innerMm != null) {
                 val diff = (innerMm - outerMm) / outerMm * 100f
                 val ok = abs(diff) < 2f
-                InfoRow("차이", "%+.1f%% · %s".format(diff, if (ok) "일치" else "불일치"), emphasize = true)
+                InfoRow(stringResource(R.string.sizetest_diff), stringResource(R.string.sizetest_diff_value_fmt, diff, if (ok) stringResource(R.string.sizetest_match) else stringResource(R.string.sizetest_mismatch)), emphasize = true)
                 if (!ok) {
                     Text(
                         if (diff > 0) {
-                            "내부 화면이 더 크게 보입니다. 내부 화면 보정을 − 쪽으로 옮기세요."
+                            stringResource(R.string.sizetest_inner_larger_hint)
                         } else {
-                            "내부 화면이 더 작게 보입니다. 내부 화면 보정을 + 쪽으로 옮기세요."
+                            stringResource(R.string.sizetest_inner_smaller_hint)
                         },
                         color = c.danger,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             } else if (state.foldable) {
-                Text("한 번 접었다 펴면 두 화면을 비교할 수 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.sizetest_fold_once), color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
         }
         Spacer(Modifier.height(Gap.Item))
@@ -209,9 +212,9 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
 private fun RulerCard(state: UiState, current: PanelSpec.Resolved?, onCalibrate: (String, Float?) -> Unit) {
     val c = LocalLiquid.current
     GlassCard {
-        Text("실제 길이 확인", fontWeight = FontWeight.SemiBold, color = c.ink)
+        Text(stringResource(R.string.sizetest_ruler_title), fontWeight = FontWeight.SemiBold, color = c.ink)
         if (current == null) {
-            Text("아직 이 화면 정보가 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.sizetest_ruler_no_screen), color = c.muted, style = MaterialTheme.typography.bodySmall)
             return@GlassCard
         }
         val key = current.screen.key
@@ -220,7 +223,7 @@ private fun RulerCard(state: UiState, current: PanelSpec.Resolved?, onCalibrate:
         var pct by remember(key, saved) { mutableIntStateOf(0) }
         val ppi = ScreenGeometry.calibratedPpi(base, 1f + pct / 100f)
         Text(
-            "신용카드나 신분증의 짧은 변(54 mm)을 아래 칸에 대고 양 끝이 맞게 조절하세요. 맞추면 mm 눈금이 실제 길이와 같아집니다.",
+            stringResource(R.string.sizetest_ruler_body),
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
         )
@@ -232,33 +235,34 @@ private fun RulerCard(state: UiState, current: PanelSpec.Resolved?, onCalibrate:
             onValueChange = { pct = it },
             onValueChangeFinished = {},
             valueText = { if (it > 0) "+$it%" else "$it%" },
-            description = "카드 폭 맞추기",
+            description = stringResource(R.string.sizetest_ruler_slider),
             centered = true
         )
         Spacer(Modifier.height(Gap.Item))
         Text(
-            "기준 PPI %.0f · %s".format(
+            stringResource(
+                R.string.sizetest_ruler_ppi_fmt,
                 ppi,
                 if (saved != null && pct == 0) {
-                    "카드로 맞춘 값"
+                    stringResource(R.string.sizetest_ruler_from_card)
                 } else if (pct == 0) {
-                    "기기가 알려 준 값"
+                    stringResource(R.string.sizetest_ruler_from_device)
                 } else {
-                    "조절 중"
+                    stringResource(R.string.sizetest_ruler_adjusting)
                 }
             ),
             color = c.muted,
             style = MaterialTheme.typography.labelMedium
         )
         Spacer(Modifier.height(Gap.Item))
-        LiquidButtonPair(listOf("이 폭으로 저장", "기기 값으로")) { half ->
-            LiquidButton("이 폭으로 저장", modifier = half, enabled = pct != 0, disabledHint = Copy.DISABLED_SIZE_UNCHANGED, onClick = { onCalibrate(key, ppi) })
-            LiquidButton("기기 값으로", modifier = half, primary = false, enabled = saved != null, disabledHint = Copy.DISABLED_SIZE_DEFAULT, onClick = { onCalibrate(key, null) })
+        LiquidButtonPair(listOf(stringResource(R.string.sizetest_ruler_save), stringResource(R.string.sizetest_ruler_reset))) { half ->
+            LiquidButton(stringResource(R.string.sizetest_ruler_save), modifier = half, enabled = pct != 0, disabledHint = Copy.DISABLED_SIZE_UNCHANGED, onClick = { onCalibrate(key, ppi) })
+            LiquidButton(stringResource(R.string.sizetest_ruler_reset), modifier = half, primary = false, enabled = saved != null, disabledHint = Copy.DISABLED_SIZE_DEFAULT, onClick = { onCalibrate(key, null) })
         }
         Spacer(Modifier.height(Gap.Section))
         val px = with(LocalDensity.current) { REF_DP.dp.toPx() }
         Text(
-            "아래 상자는 ${REF_DP}dp로, 이 화면에서 약 %.1f\u00A0mm입니다.".format(px / ppi * 25.4f),
+            stringResource(R.string.sizetest_ruler_box_fmt, REF_DP, px / ppi * 25.4f),
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
         )
@@ -321,7 +325,7 @@ private fun RowsFigure(label: String, rows: Float?) {
     val c = LocalLiquid.current
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(rows?.let { "%.1f".format(it) } ?: "—", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = c.ink)
-        Text("$label · 줄", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.sizetest_rows_label_fmt, label), color = c.muted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -368,7 +372,7 @@ internal fun RowCountOverlay(onClose: () -> Unit) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("${i + 1}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = c.ink, modifier = Modifier.width(48.dp))
-                        Text("가나다라 Aa 123", fontSize = 16.sp, color = c.ink)
+                        Text(stringResource(R.string.sizetest_rows_sample), fontSize = 16.sp, color = c.ink)
                     }
                 }
             }
@@ -382,8 +386,8 @@ internal fun RowCountOverlay(onClose: () -> Unit) {
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("이 화면 %.1f줄".format(rows), color = c.onInk, fontWeight = FontWeight.Bold)
-                Text("눌러서 닫기", color = c.onInk.copy(alpha = 0.7f), style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.sizetest_rows_count_fmt, rows), color = c.onInk, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.sizetest_tap_to_close), color = c.onInk.copy(alpha = 0.7f), style = MaterialTheme.typography.labelSmall)
             }
         }
     }

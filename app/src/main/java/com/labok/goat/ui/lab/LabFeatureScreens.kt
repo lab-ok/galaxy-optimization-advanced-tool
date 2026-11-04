@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.data.lab.AirplaneRadios
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.LabSetting
@@ -144,7 +146,7 @@ internal fun LabAirplaneScreen(contentPadding: PaddingValues) {
         Text(Copy.LAB_AIRPLANE_ROW, color = c.muted, style = MaterialTheme.typography.bodySmall)
         AirplaneRadios.Radio.entries.forEach { radio ->
             Spacer(Modifier.height(Gap.Item))
-            LiquidSwitchRow("${radio.label} 켜 두기", null, AirplaneRadios.kept(raw, radio), true) { keep ->
+            LiquidSwitchRow(stringResource(R.string.lab_airplane_keep_radio, radio.label), null, AirplaneRadios.kept(raw, radio), true) { keep ->
                 w.write(AirplaneRadios.setting, AirplaneRadios.edit(raw, radio, keep))
             }
         }
@@ -215,7 +217,7 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
                 StatusBarGlyph(slot, c.ink)
                 Spacer(Modifier.width(Gap.Card))
                 Box(Modifier.weight(1f)) {
-                    LiquidSwitchRow("${slot.label} 숨기기", slot.id, IconBlacklist.hidden(raw, slot), true) { hide ->
+                    LiquidSwitchRow(stringResource(R.string.lab_status_icons_hide_slot, slot.label), slot.id, IconBlacklist.hidden(raw, slot), true) { hide ->
                         w.write(IconBlacklist.setting, IconBlacklist.edit(raw, slot, hide))
                     }
                 }
@@ -248,36 +250,28 @@ private fun PrivacyDotGlyph(color: Color, size: Dp = 22.dp) {
 /** 상태 표시줄 아이콘 사용 방법(점 세 개 메뉴 → 사용 방법). */
 @Composable
 internal fun StatusIconsHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = stringResource(R.string.lab_help_title)) {
         HelpTopic(
-            "1. 하는 일",
-            "상태 표시줄에서 알람·블루투스·진동 같은 아이콘 중 고른 것을 숨깁니다. " +
-                "아이콘만 숨기고 기능은 그대로 켜져 있습니다."
+            stringResource(R.string.lab_help_what_title),
+            stringResource(R.string.lab_status_icons_help_what_body)
         )
         HelpTopic(
-            "2. 필요한 권한",
-            "고급 화면 배율 설정과 같은 시스템 설정 권한이 필요합니다. " +
-                "받는 방법은 점 세 개 메뉴의 '권한 설정'에 있습니다."
+            stringResource(R.string.lab_status_icons_help_permission_title),
+            stringResource(R.string.lab_status_icons_help_permission_body)
         )
         HelpTopic(
-            "3. 숨겨지지 않는 아이콘",
-            "One UI 버전에 따라 일부 아이콘은 이름이 달라 숨겨지지 않습니다. 마이크·카메라 사용 표시(초록 점)는 Android 13 이하에서만 " +
-                "바꿀 수 있습니다. Android 14 이상은 시스템이 막아 스위치가 잠깁니다."
+            stringResource(R.string.lab_status_icons_help_unhidable_title),
+            stringResource(R.string.lab_status_icons_help_unhidable_body)
         )
-        HelpTopic("4. 되돌리기", "[처음대로]를 누르면 GOAT가 바꾸기 전 값으로 돌아갑니다.")
+        HelpTopic(stringResource(R.string.lab_help_revert_title), stringResource(R.string.lab_help_revert_body))
         // 같은 화면의 상단바 숨기기 카드도 설명한다(빠져 있었음, QA 1차)
         HelpTopic(
-            "5. 상태 표시줄 숨기기",
-            "상태 표시줄 전체를 숨겨 앱이 그 자리까지 씁니다. 위 가장자리를 쓸어내리거나 뒤로 가기를 쓰면 잠깐 보였다가 다시 숨겨집니다. " +
-                "'다른 앱 위에 표시' 권한이 필요하며, Shizuku가 연결되어 있으면 GOAT가 받습니다."
+            stringResource(R.string.lab_status_icons_help_statusbar_title),
+            stringResource(R.string.lab_status_icons_help_statusbar_body)
         )
         HelpTopic(
-            "6. Android 11 이상의 제한",
-            "Android 11부터 시스템 전체를 전체 화면으로 바꾸는 설정이 없어졌습니다. 그래서 GOAT는 보이지 않는 작은 창을 앞에 두어 상태 표시줄을 숨깁니다. " +
-                "이 때문에 다음 경우에는 상태 표시줄이 보입니다.\n" +
-                "• 키보드를 쓰는 동안: 키보드를 닫으면 다시 숨겨집니다.\n" +
-                "• 설정 앱, 권한 요청 창처럼 다른 앱 위에 표시를 막는 화면: 벗어나면 다시 숨겨집니다.\n" +
-                "그래도 보이면 알림의 [다시 숨기기]를 누르세요."
+            stringResource(R.string.lab_status_icons_help_limits_title),
+            stringResource(R.string.lab_status_icons_help_limits_body)
         )
     }
 }
@@ -285,20 +279,19 @@ internal fun StatusIconsHelpSheet() {
 /** 비행기 모드 무선 사용 방법(점 세 개 메뉴 → 사용 방법). */
 @Composable
 internal fun AirplaneHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = stringResource(R.string.lab_help_title)) {
         HelpTopic(
-            "1. 하는 일",
-            "비행기 모드를 켜면 보통 Wi-Fi·블루투스·NFC도 함께 꺼집니다. 여기서 고른 무선은 비행기 모드에서도 켜 둡니다. " +
-                "모바일 데이터는 비행기 모드에서 항상 꺼집니다."
+            stringResource(R.string.lab_help_what_title),
+            stringResource(R.string.lab_airplane_help_what_body)
         )
         HelpTopic(
-            "2. 적용 시점",
-            "다음에 비행기 모드를 켤 때부터 적용됩니다. 이미 켜져 있으면 껐다 다시 켜세요."
+            stringResource(R.string.lab_airplane_help_when_title),
+            stringResource(R.string.lab_airplane_help_when_body)
         )
         HelpTopic(
-            "3. 필요한 권한",
-            "시스템 설정 권한이 필요합니다. 받는 방법은 점 세 개 메뉴의 '권한 설정'에 있습니다."
+            stringResource(R.string.lab_airplane_help_permission_title),
+            stringResource(R.string.lab_airplane_help_permission_body)
         )
-        HelpTopic("4. 되돌리기", "[처음대로]를 누르면 GOAT가 바꾸기 전 값으로 돌아갑니다.")
+        HelpTopic(stringResource(R.string.lab_help_revert_title), stringResource(R.string.lab_help_revert_body))
     }
 }

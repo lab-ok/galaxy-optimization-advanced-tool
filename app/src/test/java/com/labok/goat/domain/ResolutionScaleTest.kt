@@ -1,14 +1,19 @@
 package com.labok.goat.domain
 
 import com.labok.goat.data.display.DpiManager
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 /** 해상도 낮추기가 DPI 기능에 거는 비율 경로(화면 키·목표 축소·외부 변경). 해상도를 바꾸지 않은 사용자에게는 아무것도 바뀌지 않아야 한다. */
 class ResolutionScaleTest {
+    // 화면 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
 
     @Test
     fun screenWithoutGoatResolutionIsUnchanged() {

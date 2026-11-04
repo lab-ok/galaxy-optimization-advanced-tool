@@ -8,10 +8,12 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.art.artPill
+import com.labok.goat.ui.text.Copy
 
 private fun seg(t: Float, from: Float, to: Float) = ((t - from) / (to - from)).coerceIn(0f, 1f)
 
@@ -60,9 +62,9 @@ internal fun ShutterArt() {
                 drawLine(c.surface, Offset(sx - 6 * u, center.y - 12 * u), Offset(sx + 13 * u, center.y + 12 * u), s.width * 2.2f, StrokeCap.Round)
                 drawLine(c.ink, Offset(sx - 6 * u, center.y - 12 * u), Offset(sx + 13 * u, center.y + 12 * u), s.width, StrokeCap.Round)
             }
-            artPill(tm, c, if (muted) "무음" else "찰칵", Offset(center.x, size.height - 14.dp.toPx()), filled = muted)
+            artPill(tm, c, Copy.text(if (muted) R.string.camera_art_silent else R.string.camera_art_click), Offset(center.x, size.height - 14.dp.toPx()), filled = muted)
         }
-        artLabel(tm, "끄기 전", Offset(size.width * 0.27f, 12.dp.toPx()), c.muted)
-        artLabel(tm, "끈 뒤(무음 모드)", Offset(size.width * 0.73f, 12.dp.toPx()), c.ink, bold = true)
+        artLabel(tm, Copy.text(R.string.camera_art_before), Offset(size.width * 0.27f, 12.dp.toPx()), c.muted)
+        artLabel(tm, Copy.text(R.string.camera_art_after), Offset(size.width * 0.73f, 12.dp.toPx()), c.ink, bold = true)
     }
 }

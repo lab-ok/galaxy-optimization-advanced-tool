@@ -7,6 +7,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.data.tweaks.AnimationSpeed
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.LocalDeviceShape
@@ -15,6 +16,7 @@ import com.labok.goat.ui.art.artPill
 import com.labok.goat.ui.art.deviceFrame
 import com.labok.goat.ui.art.realTimeLoop
 import com.labok.goat.ui.liquid.LiquidColors
+import com.labok.goat.ui.text.Copy
 
 private fun ease(x: Float) = x * x * (3 - 2 * x)
 
@@ -50,8 +52,8 @@ internal fun SpeedArt(scale: Float, name: String? = null) {
             }
             if (t >= 0.12f && close < 1f) window(c, screen, open * (1 - close))
             val ms = (300 * s).toInt()
-            artPill(tm, c, if (s <= 0f) "바로" else "${ms}ms", Offset(screen.center.x, top + h + 16.dp.toPx()), filled = i == 1)
-            artLabel(tm, if (i == 0) "기본" else listOfNotNull(name, AnimationSpeed.label(s)).joinToString(" "), Offset(screen.center.x, top + h + 36.dp.toPx()), if (i == 1) c.ink else c.muted, bold = i == 1)
+            artPill(tm, c, if (s <= 0f) Copy.text(R.string.tweaks_speed_art_instant) else "${ms}ms", Offset(screen.center.x, top + h + 16.dp.toPx()), filled = i == 1)
+            artLabel(tm, if (i == 0) Copy.text(R.string.tweaks_anim_default) else listOfNotNull(name, AnimationSpeed.label(s)).joinToString(" "), Offset(screen.center.x, top + h + 36.dp.toPx()), if (i == 1) c.ink else c.muted, bold = i == 1)
         }
     }
 }

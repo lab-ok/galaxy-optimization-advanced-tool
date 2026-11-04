@@ -31,8 +31,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import com.labok.goat.R
 import com.labok.goat.data.lab.Transcript
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.components.Gap
@@ -101,33 +103,33 @@ private fun TranscriptSheet(shared: Intent?, onClose: () -> Unit) {
         containerColor = c.bg,
         scrimColor = c.ink.copy(alpha = 0.16f)
     ) {
-        SheetColumn(title = "전사문 저장") {
+        SheetColumn(title = stringResource(R.string.lab_transcript_title)) {
             when (val l = loaded) {
-                Loaded.Loading -> Text("전사문을 읽는 중입니다…", color = c.muted)
+                Loaded.Loading -> Text(stringResource(R.string.lab_transcript_loading), color = c.muted)
                 Loaded.Empty -> {
-                    Text("받은 글이 없습니다. 음성 녹음에서 공유 → 텍스트 파일로 보내세요.", color = c.muted)
+                    Text(stringResource(R.string.lab_transcript_empty), color = c.muted)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton("닫기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = onClose)
+                    LiquidButton(stringResource(R.string.lab_transcript_close), modifier = Modifier.fillMaxWidth(), primary = false, onClick = onClose)
                 }
                 is Loaded.Ready -> {
                     val p = l.parsed
                     if (p == null) {
-                        Text("화자 표시를 찾지 못했습니다. 받은 글을 그대로 저장합니다.", color = c.muted)
+                        Text(stringResource(R.string.lab_transcript_no_speakers), color = c.muted)
                     } else {
-                        Text("누가 나인가요? 고른 화자는 '나', 나머지는 모두 '상대'로 바꿔 저장합니다.", color = c.muted)
+                        Text(stringResource(R.string.lab_transcript_pick_me), color = c.muted)
                         Spacer(Modifier.height(Gap.Item))
                         LiquidRadioGroup {
                             p.speakers.forEach { s ->
-                                LiquidRadioRow(s, "${p.count(s)}번 말함 · ${p.preview(s)}", me == s, enabled = !saving) { me = s }
+                                LiquidRadioRow(s, stringResource(R.string.lab_transcript_speaker_summary, p.count(s), p.preview(s)), me == s, enabled = !saving) { me = s }
                             }
                         }
                     }
                     Spacer(Modifier.height(Gap.Section))
                     LiquidButton(
-                        if (p == null) "그대로 저장" else "저장",
+                        if (p == null) stringResource(R.string.lab_transcript_save_as_is) else stringResource(R.string.lab_transcript_save),
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !saving && (p == null || me != null),
-                        disabledHint = "먼저 '나'인 화자를 고르세요",
+                        disabledHint = stringResource(R.string.lab_transcript_pick_me_first),
                         onClick = {
                             saving = true
                             scope.launch {
@@ -138,13 +140,13 @@ private fun TranscriptSheet(shared: Intent?, onClose: () -> Unit) {
                                 LogRepository.from(context).add(
                                     "전사문 저장(실험실): ${if (ok) "저장함" else "저장 실패"} · $file · 화자 ${p?.speakers?.size ?: 0}명"
                                 )
-                                Toast.makeText(context, if (ok) "Download/GOAT/전사문에 저장했습니다" else "저장하지 못했습니다", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, if (ok) Copy.text(R.string.lab_transcript_saved) else Copy.text(R.string.lab_transcript_save_failed), Toast.LENGTH_LONG).show()
                                 onClose()
                             }
                         }
                     )
                     Spacer(Modifier.height(Gap.Item))
-                    Text("저장 위치: Download/GOAT/전사문", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.lab_transcript_location), color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

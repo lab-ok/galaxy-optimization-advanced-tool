@@ -25,6 +25,7 @@ import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.liquid.UiGoat
+import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -69,7 +70,7 @@ object StatusBarHider {
         val app = context.applicationContext
         if (!Settings.canDrawOverlays(app)) {
             ShizukuAccess.shell("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
-            if (!Settings.canDrawOverlays(app)) return "다른 앱 위에 표시 권한이 없습니다. Shizuku를 연결하세요."
+            if (!Settings.canDrawOverlays(app)) return Copy.text(R.string.labdata_statusbar_no_overlay)
         }
         main.post { attach(app) }
         onFlow.value = true
@@ -317,7 +318,7 @@ object StatusBarHider {
 
     private fun notify(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "상태 표시줄 숨기기", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, Copy.text(R.string.labdata_statusbar_channel), NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
         fun action(what: String, code: Int) = PendingIntent.getBroadcast(
             context,
             code,
@@ -327,12 +328,12 @@ object StatusBarHider {
         val n: Notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
-            .setContentTitle("상태 표시줄 숨기는 중")
-            .setContentText("뒤로 가기를 써도 다시 숨깁니다. 키보드가 열린 동안에는 보입니다")
+            .setContentTitle(Copy.text(R.string.labdata_statusbar_notif_title))
+            .setContentText(Copy.text(R.string.labdata_statusbar_notif_text))
             .setOngoing(true)
             .setSilent(true)
-            .addAction(0, "다시 숨기기", action(ACTION_REHIDE, 1))
-            .addAction(0, "끄기", action(ACTION_STOP, 2))
+            .addAction(0, Copy.text(R.string.labdata_statusbar_action_rehide), action(ACTION_REHIDE, 1))
+            .addAction(0, Copy.text(R.string.labdata_statusbar_action_stop), action(ACTION_STOP, 2))
             .build()
         runCatching { nm.notify(NOTIFICATION_ID, n) }
     }

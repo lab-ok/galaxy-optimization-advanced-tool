@@ -1,12 +1,17 @@
 package com.labok.goat.domain
 
 import com.labok.goat.domain.ScreenPolicy.Role
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Before
 import org.junit.Test
 
 class ScreenPolicyTest {
+    // 화면 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
 
     private val outer = ScreenInfo("904x2316", 402f, 6.2f)
     private val inner = ScreenInfo("1812x2176", 373f, 7.6f)

@@ -28,13 +28,17 @@ object ExternalChangeNotifier {
     const val ACTION_RESTORE = "com.labok.goat.EXTERNAL_RESTORE"
 
     /** 화면이 하나인 폰([foldable]이 false)에는 외부·내부 구분을 붙이지 않는다(앱 안 카드와 같은 문구). */
-    fun text(change: ExternalChange, foldable: Boolean = true) = "다른 설정에서 ${if (foldable) "${change.role.label} 화면 " else ""}DPI가 ${change.from}에서 ${change.to}${UpdateNotice.ro("${change.to}")} 변경되었습니다."
+    fun text(change: ExternalChange, foldable: Boolean = true) = if (foldable) {
+        Copy.text(R.string.notif_external_text_fold_fmt, change.role.label, change.from, change.to, UpdateNotice.ro("${change.to}"))
+    } else {
+        Copy.text(R.string.notif_external_text_single_fmt, change.from, change.to, UpdateNotice.ro("${change.to}"))
+    }
 
     fun show(context: Context, change: ExternalChange) {
         if (!canNotify(context)) return
         val body = text(change, DeviceKind.isFoldable(context))
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "외부 DPI 변경", NotificationManager.IMPORTANCE_DEFAULT))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, Copy.text(R.string.notif_external_channel), NotificationManager.IMPORTANCE_DEFAULT))
         fun action(a: String, code: Int) = PendingIntent.getBroadcast(
             context,
             code,
@@ -45,13 +49,13 @@ object ExternalChangeNotifier {
         val n = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
-            .setContentTitle("화면 배율이 다른 곳에서 바뀌었습니다")
+            .setContentTitle(Copy.text(R.string.notif_external_title))
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText("$body ${Copy.EXTERNAL_BODY}"))
             .setContentIntent(open)
             .setAutoCancel(true)
-            .addAction(0, "${change.to} 기준으로 설정", action(ACTION_ADOPT, 1))
-            .addAction(0, "${change.from}${UpdateNotice.ro("${change.from}")} 복원", action(ACTION_RESTORE, 2))
+            .addAction(0, Copy.text(R.string.notif_external_adopt_fmt, change.to), action(ACTION_ADOPT, 1))
+            .addAction(0, Copy.text(R.string.notif_external_restore_fmt, change.from, UpdateNotice.ro("${change.from}")), action(ACTION_RESTORE, 2))
             .build()
         nm.notify(NOTIFICATION_ID, n)
     }

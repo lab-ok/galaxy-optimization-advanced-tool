@@ -69,6 +69,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
@@ -84,6 +85,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.AppInfo
+import com.labok.goat.R
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.camera.CameraMute
@@ -185,23 +187,23 @@ internal fun Dashboard(
     val status: (NavItem) -> String = { item ->
         tick
         when (item) {
-            NavItem.DPI_MATCH -> state.target?.let { (if (state.foldable) "외부 화면 $it dpi" else "$it dpi") + if (state.auto) " · 자동 적용" else "" }
-                ?: if (state.foldable) "외부 화면 DPI 설정 필요" else "DPI 설정 필요"
+            NavItem.DPI_MATCH -> state.target?.let { (if (state.foldable) Copy.text(R.string.home_dash_dpi_outer_fmt, it) else "$it dpi") + if (state.auto) Copy.text(R.string.home_dash_suffix_auto) else "" }
+                ?: if (state.foldable) Copy.text(R.string.home_dash_dpi_outer_needed) else Copy.text(R.string.home_dash_dpi_needed)
             NavItem.APP_SIZE -> if (DensityShell.rejected(context)) {
-                "이 기기에서 쓸 수 없음"
+                Copy.text(R.string.home_dash_unsupported)
             } else {
-                DensityShell.savedCount(context).let { if (it == 0) "바꾼 앱 없음" else "바꾼 앱 ${it}개" } +
-                    if (AppDensityNotifier.enabled(context)) " · 알림창 조절" else ""
+                DensityShell.savedCount(context).let { if (it == 0) Copy.text(R.string.home_dash_sized_none) else Copy.text(R.string.home_dash_sized_count_fmt, it) } +
+                    if (AppDensityNotifier.enabled(context)) Copy.text(R.string.home_dash_suffix_notify) else ""
             }
             NavItem.ANIMATION -> AnimationSpeed.label(AnimationSpeed.read(context, AnimationSpeed.Kind.WINDOW))
-            NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) "켜짐 · 민감도 ${ShakeRotate.level(context)}" + (if (ShakeRotate.largeOnly(context)) " · 큰 화면만" else "") else Copy.DASH_OFF
+            NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) Copy.text(R.string.home_dash_shake_on_fmt, ShakeRotate.level(context)) + (if (ShakeRotate.largeOnly(context)) Copy.text(R.string.home_dash_suffix_large_only) else "") else Copy.DASH_OFF
             NavItem.CAMERA_MUTE -> when (camera) {
-                CameraMute.State.MUTED -> "촬영음 꺼 둠"
-                CameraMute.State.FORCED -> "촬영음 강제"
-                CameraMute.State.NONE -> "강제 설정 없는 기기"
+                CameraMute.State.MUTED -> Copy.text(R.string.home_dash_camera_muted)
+                CameraMute.State.FORCED -> Copy.text(R.string.home_dash_camera_forced)
+                CameraMute.State.NONE -> Copy.text(R.string.home_dash_camera_none)
                 CameraMute.State.UNKNOWN -> if (CameraMute.wanted(context)) Copy.DASH_WANTED_OFF else Copy.DASH_NEED_SHIZUKU
             }
-            NavItem.APP_CLEANUP -> cleaned?.let { if (it == 0) "꺼 둔 앱 없음" else "꺼 둔 앱 ${it}개" } ?: Copy.BLOAT_INTRO_TITLE
+            NavItem.APP_CLEANUP -> cleaned?.let { if (it == 0) Copy.text(R.string.home_dash_cleanup_none) else Copy.text(R.string.home_dash_cleanup_count_fmt, it) } ?: Copy.BLOAT_INTRO_TITLE
             NavItem.GOS -> when (gos) {
                 Gos.State.OFF -> Copy.GOS_DASH_OFF
                 Gos.State.ON -> Copy.GOS_DASH_ON
@@ -244,8 +246,8 @@ internal fun Dashboard(
                     AirplaneRadios.Radio.entries.filter { AirplaneRadios.kept(raw, it) }.map { it.label }
                 }.let { if (it.isEmpty()) Copy.AIRPLANE_DASH_NONE else Copy.airplaneDash(it) }
             }
-            NavItem.VOLUME_ROTATE -> if (VolumeRotate.enabled(context)) Copy.VOLUME_DASH_ON + if (VolumeRotate.invert(context)) " · 반대 방향" else "" else Copy.DASH_OFF
-            NavItem.AUTO_FLEX -> if (AutoFlex.enabled(context)) "켜짐 · ${AutoFlex.min(context)}~${AutoFlex.max(context)}°" + (if (AutoFlex.click(context)) " · 까딱" else "") else Copy.DASH_OFF
+            NavItem.VOLUME_ROTATE -> if (VolumeRotate.enabled(context)) Copy.VOLUME_DASH_ON + if (VolumeRotate.invert(context)) Copy.text(R.string.home_dash_suffix_inverted) else "" else Copy.DASH_OFF
+            NavItem.AUTO_FLEX -> if (AutoFlex.enabled(context)) Copy.text(R.string.home_dash_flex_on_fmt, AutoFlex.min(context), AutoFlex.max(context)) + (if (AutoFlex.click(context)) Copy.text(R.string.home_dash_suffix_flex_click) else "") else Copy.DASH_OFF
             else -> ""
         }
     }
@@ -329,7 +331,7 @@ internal fun Dashboard(
             // 홈 머리: 카드 없이 바탕 위에 바로 놓는 요약(갤럭시 '디바이스 케어'식). 왼쪽 염소, 가운데 상태 한 문장, 오른쪽 켜진 비율 고리,
             // 아래 권한·Shizuku 상태 알약.
             val on = features.count(active)
-            val headline = if (on == 0) Copy.HOME_VIEW_EMPTY_TITLE else "기능 ${on}개가 켜져 있습니다"
+            val headline = if (on == 0) Copy.HOME_VIEW_EMPTY_TITLE else stringResource(R.string.home_headline_on_count_fmt, on)
             val pills: @Composable () -> Unit = {
                 // 폭이 모자라면 다음 줄로 넘긴다
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Gap.Tight * 2), verticalArrangement = Arrangement.spacedBy(Gap.Tight * 2)) {
@@ -609,7 +611,7 @@ private fun StatusPill(label: String, on: Boolean, onClick: () -> Unit = {}) {
             if (k > 0.01f) drawCircle(c.ink, size.minDimension / 2 * k.coerceAtMost(1.25f))
         }
         Spacer(Modifier.width(6.dp))
-        Text(label + if (on) "" else " 필요", color = if (on) c.ink else c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, softWrap = false)
+        Text(if (on) label else stringResource(R.string.home_pill_needed_fmt, label), color = if (on) c.ink else c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, softWrap = false)
     }
 }
 

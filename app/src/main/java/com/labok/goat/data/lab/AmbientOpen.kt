@@ -24,6 +24,7 @@ import com.labok.goat.background.GoatService
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.liquid.UiGoat
+import com.labok.goat.ui.text.Copy
 import kotlin.concurrent.thread
 import kotlin.math.pow
 
@@ -66,13 +67,13 @@ object AmbientOpen {
 
     fun buildNotification(context: Context): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "앰비언트 모드", NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) })
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, Copy.text(R.string.labdata_ambient_channel), NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) })
         val open = PendingIntent.getActivity(context, 23, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
-            .setContentTitle("앰비언트 모드")
-            .setContentText("펼칠 때 안쪽 화면이 간접등처럼 빛납니다")
+            .setContentTitle(Copy.text(R.string.labdata_ambient_channel))
+            .setContentText(Copy.text(R.string.labdata_ambient_notif_text))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)

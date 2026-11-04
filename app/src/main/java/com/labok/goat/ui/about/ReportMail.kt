@@ -8,7 +8,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import com.labok.goat.AppInfo
+import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.ui.text.Copy
 
 /**
  * 개발자에게 보내는 메일.
@@ -24,7 +26,7 @@ internal object ReportMail {
     fun inquiry(context: Context) {
         val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "-"
         val mail = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${DeveloperProfile.CONTACT_EMAIL}"))
-            .putExtra(Intent.EXTRA_SUBJECT, "[${AppInfo.NAME} $version] 문의")
+            .putExtra(Intent.EXTRA_SUBJECT, "[${AppInfo.NAME} $version] ${Copy.text(R.string.about_inquiry)}")
         try {
             context.startActivity(mail)
         } catch (e: ActivityNotFoundException) {
@@ -32,17 +34,22 @@ internal object ReportMail {
         }
     }
 
-    enum class Kind(val label: String) { INQUIRY("문의"), REPORT("문제 신고") }
+    enum class Kind(private val labelRes: Int) {
+        INQUIRY(R.string.about_inquiry),
+        REPORT(R.string.about_mail_kind_report);
+
+        val label: String get() = Copy.text(labelRes)
+    }
 
     fun send(context: Context, kind: Kind, attachments: List<Uri>, share: Boolean = false) {
         val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "-"
         val body = buildString {
-            appendLine(if (kind == Kind.REPORT) "어떤 문제였는지 적어 주세요. (언제, 무엇을 했을 때, 어떻게 되었는지)" else "문의 내용을 적어 주세요.")
+            appendLine(if (kind == Kind.REPORT) Copy.text(R.string.about_mail_body_report) else Copy.text(R.string.about_mail_body_inquiry))
             appendLine()
             appendLine()
             appendLine("---")
-            if (attachments.isNotEmpty()) appendLine("진단 파일과 오늘 로그를 첨부했습니다.")
-            appendLine("기기: ${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} · ${AppInfo.NAME} $version")
+            if (attachments.isNotEmpty()) appendLine(Copy.text(R.string.about_mail_attached))
+            appendLine(Copy.text(R.string.about_mail_device_fmt, "${Build.MANUFACTURER} ${Build.MODEL}", Build.VERSION.RELEASE, AppInfo.NAME, version))
         }
         val mail = (if (attachments.size <= 1) Intent(Intent.ACTION_SEND) else Intent(Intent.ACTION_SEND_MULTIPLE)).apply {
             type = "text/plain"
@@ -66,7 +73,7 @@ internal object ReportMail {
         // 파일 공유: 같은 첨부를 모든 앱이 보이는 공유 창으로 보낸다(메신저로 진단 파일을 바로 보낼 때)
         if (share) {
             LogRepository.from(context).add("${kind.label}: 파일 공유 창 (${attachments.size}개)")
-            context.startActivity(Intent.createChooser(Intent(mail).apply { removeExtra(Intent.EXTRA_EMAIL) }, "진단 파일 공유"))
+            context.startActivity(Intent.createChooser(Intent(mail).apply { removeExtra(Intent.EXTRA_EMAIL) }, Copy.text(R.string.about_mail_share_chooser)))
             return
         }
         val pm = context.packageManager
@@ -81,7 +88,7 @@ internal object ReportMail {
             0 -> context.startActivity(Intent.createChooser(mail, kind.label))
             1 -> open(0)
             else -> AlertDialog.Builder(context)
-                .setTitle("메일 앱 선택")
+                .setTitle(Copy.text(R.string.about_mail_pick_app))
                 .setItems(targets.map { it.loadLabel(pm) }.toTypedArray()) { _, i -> open(i) }
                 .show()
         }

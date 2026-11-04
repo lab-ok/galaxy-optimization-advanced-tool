@@ -26,6 +26,7 @@ import com.labok.goat.domain.ScreenLearner
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.liquid.UiGoat
+import com.labok.goat.ui.text.Copy
 
 /**
  * 접기/펼치기 감시. 폴링하지 않고 DisplayManager.DisplayListener 이벤트만 받는다.
@@ -111,7 +112,7 @@ class FoldWatchService : Service() {
     private fun startAsForeground() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "접기·펼치기 감지", NotificationManager.IMPORTANCE_MIN)
+            NotificationChannel(CHANNEL_ID, Copy.text(R.string.notif_fold_watch_channel), NotificationManager.IMPORTANCE_MIN)
         )
         val open = PendingIntent.getActivity(
             this,
@@ -122,8 +123,8 @@ class FoldWatchService : Service() {
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(this))
-            .setContentTitle("고급 화면 배율 설정")
-            .setContentText("접고 펼 때 배율을 확인하는 중")
+            .setContentTitle(Copy.text(R.string.notif_fold_watch_title))
+            .setContentText(Copy.text(R.string.notif_fold_watch_text))
             .setContentIntent(open)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_MIN)

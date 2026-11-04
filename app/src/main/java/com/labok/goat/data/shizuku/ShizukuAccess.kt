@@ -8,11 +8,13 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import com.labok.goat.R
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.appsize.AppUsage
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.AppDensityPolicy
+import com.labok.goat.ui.text.Copy
 import java.io.InputStream
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -203,7 +205,7 @@ object ShizukuAccess {
     private fun call(name: String, size: Int, vararg args: Any): Any? {
         val svc = atm()
         val m = svc.javaClass.methods.firstOrNull { it.name == name && it.parameterTypes.size == size }
-            ?: throw UnsupportedOperationException("이 기기는 앱별 배율을 지원하지 않습니다")
+            ?: throw UnsupportedOperationException(Copy.text(R.string.appsize_device_unsupported))
         return try {
             m.invoke(svc, *args)
         } catch (e: InvocationTargetException) {

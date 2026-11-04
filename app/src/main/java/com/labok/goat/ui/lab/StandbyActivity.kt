@@ -42,11 +42,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.labok.goat.R
 import com.labok.goat.data.lab.TentDuo
 import com.labok.goat.ui.components.Gap
 import java.time.LocalDateTime
@@ -134,7 +136,7 @@ class StandbyActivity : ComponentActivity() {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             StandbyDots(pager.currentPage, uiAlpha)
                             Text(
-                                "끝내기",
+                                stringResource(R.string.lab_standby_finish),
                                 color = Color.White.copy(alpha = uiAlpha),
                                 fontSize = 14.sp,
                                 modifier = Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.16f * uiAlpha))
@@ -174,12 +176,12 @@ class StandbyActivity : ComponentActivity() {
 @androidx.compose.runtime.Composable
 private fun DirectionCheck(onClose: () -> Unit) {
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        Box(Modifier.fillMaxWidth().fillMaxHeight(0.18f).background(Color(0xFFFF2020)).align(Alignment.TopCenter)) { Text("위", Modifier.align(Alignment.Center), color = Color.White, fontSize = 40.sp) }
-        Box(Modifier.fillMaxWidth().fillMaxHeight(0.18f).background(Color(0xFF2050FF)).align(Alignment.BottomCenter)) { Text("아래", Modifier.align(Alignment.Center), color = Color.White, fontSize = 40.sp) }
-        Box(Modifier.fillMaxWidth(0.12f).fillMaxHeight(0.6f).background(Color(0xFF20D040)).align(Alignment.CenterStart)) { Text("왼쪽", Modifier.align(Alignment.Center), color = Color.White, fontSize = 30.sp) }
-        Box(Modifier.fillMaxWidth(0.12f).fillMaxHeight(0.6f).background(Color(0xFFFFD020)).align(Alignment.CenterEnd)) { Text("오른쪽", Modifier.align(Alignment.Center), color = Color.Black, fontSize = 30.sp) }
+        Box(Modifier.fillMaxWidth().fillMaxHeight(0.18f).background(Color(0xFFFF2020)).align(Alignment.TopCenter)) { Text(stringResource(R.string.lab_direction_top), Modifier.align(Alignment.Center), color = Color.White, fontSize = 40.sp) }
+        Box(Modifier.fillMaxWidth().fillMaxHeight(0.18f).background(Color(0xFF2050FF)).align(Alignment.BottomCenter)) { Text(stringResource(R.string.lab_direction_bottom), Modifier.align(Alignment.Center), color = Color.White, fontSize = 40.sp) }
+        Box(Modifier.fillMaxWidth(0.12f).fillMaxHeight(0.6f).background(Color(0xFF20D040)).align(Alignment.CenterStart)) { Text(stringResource(R.string.lab_direction_left), Modifier.align(Alignment.Center), color = Color.White, fontSize = 30.sp) }
+        Box(Modifier.fillMaxWidth(0.12f).fillMaxHeight(0.6f).background(Color(0xFFFFD020)).align(Alignment.CenterEnd)) { Text(stringResource(R.string.lab_direction_right), Modifier.align(Alignment.Center), color = Color.Black, fontSize = 30.sp) }
         Text(
-            "안쪽 빛에서 빨강·파랑·초록·노랑이 보이는 자리를 확인하세요.\n누르면 끝납니다.",
+            stringResource(R.string.lab_direction_check_body),
             Modifier.align(Alignment.Center).clickable { onClose() },
             color = Color.White,
             fontSize = 18.sp

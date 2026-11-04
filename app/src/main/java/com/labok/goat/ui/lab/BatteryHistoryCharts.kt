@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -35,11 +36,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.R
 import com.labok.goat.data.lab.BatteryHistory
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.text.Copy
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -62,7 +65,7 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
     // 카드 제목과 맞게 기준 시각부터 자른다
     val points = remember(all, since) { BatteryHistory.since(all, since) }
     if (points.size < 2) {
-        Text("배터리 기록이 아직 부족합니다. 잠시 사용한 뒤 다시 여세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.lab_battery_history_too_short), color = c.muted, style = MaterialTheme.typography.bodySmall)
         return
     }
     val start = points.first().time
@@ -73,35 +76,37 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
     Spacer(Modifier.height(Gap.Item))
     // 범례: 기둥의 세 가지 물(가장 옅은 기둥은 충전한 시간대)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Legend(c.ink, "화면 켜짐에 쓴 양")
-        Legend(c.ink.copy(alpha = standbyAlpha(c.dark)), "화면 꺼짐에 쓴 양")
-        Legend(c.ink.copy(alpha = chargeAlpha(c.dark)), "충전한 시간대")
+        Legend(c.ink, stringResource(R.string.lab_battery_legend_screen_on))
+        Legend(c.ink.copy(alpha = standbyAlpha(c.dark)), stringResource(R.string.lab_battery_legend_screen_off))
+        Legend(c.ink.copy(alpha = chargeAlpha(c.dark)), stringResource(R.string.lab_battery_legend_charged))
     }
     Spacer(Modifier.height(Gap.Item))
-    val hourFmt = remember(bucketMs) { SimpleDateFormat(if (bucketMs >= 86_400_000L) "M월 d일 a h시" else "a h시", Locale.KOREA) }
+    val fmtDayHour = stringResource(R.string.lab_battery_fmt_day_hour)
+    val fmtHour = stringResource(R.string.lab_battery_fmt_hour)
+    val hourFmt = remember(bucketMs, fmtDayHour, fmtHour) { SimpleDateFormat(if (bucketMs >= 86_400_000L) fmtDayHour else fmtHour, Locale.KOREA) }
     val pick = selected?.let { buckets.getOrNull(it) }
     if (pick == null) {
-        Text("기둥 하나는 ${bucketMs / 3_600_000}시간입니다. 누르면 그 시간대 사용량이 보입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.lab_battery_bucket_hint, bucketMs / 3_600_000), color = c.muted, style = MaterialTheme.typography.bodySmall)
     } else {
         val range = if (bucketMs >= 86_400_000L) {
-            "${hourFmt.format(Date(pick.start))}부터 하루"
+            stringResource(R.string.lab_battery_bucket_day_range, hourFmt.format(Date(pick.start)))
         } else {
             "${hourFmt.format(Date(pick.start))}~${hourFmt.format(Date(pick.end)).substringAfter(' ')}"
         }
         Text(
-            "$range · ${pctText(pick.usedPct)} 사용" + if (pick.chargedPct >= 0.5f) {
-                " · 충전 +${pick.chargedPct.roundToInt()}%"
+            if (pick.chargedPct >= 0.5f) {
+                stringResource(R.string.lab_battery_bucket_used_charged, range, pctText(pick.usedPct), pick.chargedPct.roundToInt())
             } else if (pick.charging) {
-                " · 충전"
+                stringResource(R.string.lab_battery_bucket_used_charging, range, pctText(pick.usedPct))
             } else {
-                ""
+                stringResource(R.string.lab_battery_bucket_used, range, pctText(pick.usedPct))
             },
             color = c.ink,
             fontWeight = FontWeight.SemiBold,
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            "화면 켜짐에 ${pctText(pick.screenPct)} · 화면 꺼짐에 ${pctText(pick.standbyPct)} · 화면 켜짐 ${duration(pick.screenMs)}",
+            stringResource(R.string.lab_battery_bucket_detail, pctText(pick.screenPct), pctText(pick.standbyPct), duration(pick.screenMs)),
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
         )
@@ -130,7 +135,7 @@ private fun floorHour(t: Long): Long {
 
 private fun pctText(v: Float) = when {
     v <= 0f -> "0%"
-    v < 1f -> "1% 미만"
+    v < 1f -> Copy.text(R.string.lab_battery_pct_under_one)
     else -> "${v.roundToInt()}%"
 }
 
@@ -148,14 +153,17 @@ private fun LiquidBucketColumns(buckets: List<BatteryHistory.Bucket>, selected: 
     val measurer = rememberTextMeasurer()
     // 기둥이 하루(24시간) 이상이면 시각은 모두 같아 날짜로 표시한다(1.50.0 QA: 네 칸이 모두 '오전 8시'로 보였다)
     val daily = buckets.size > 1 && buckets[1].start - buckets[0].start >= 86_400_000L
-    val hourFmt = remember(daily) { SimpleDateFormat(if (daily) "M월 d일" else "a h시", Locale.KOREA) }
+    val fmtDay = stringResource(R.string.lab_battery_fmt_day)
+    val fmtHour = stringResource(R.string.lab_battery_fmt_hour)
+    val hourFmt = remember(daily, fmtDay, fmtHour) { SimpleDateFormat(if (daily) fmtDay else fmtHour, Locale.KOREA) }
     val small = TextStyle(fontFamily = GalaxyFont, fontSize = 10.sp, color = c.muted)
     val labelEvery = ((buckets.size + 3) / 4).coerceAtLeast(1)
+    val graphDesc = stringResource(R.string.lab_battery_history_graph_desc)
     Canvas(
         Modifier
             .fillMaxWidth()
             .height(140.dp)
-            .semantics { contentDescription = "시간대별 배터리 사용량 그래프" }
+            .semantics { contentDescription = graphDesc }
             .pointerInput(buckets.size, selected) {
                 detectTapGestures { p ->
                     val axisW = 32.dp.toPx()

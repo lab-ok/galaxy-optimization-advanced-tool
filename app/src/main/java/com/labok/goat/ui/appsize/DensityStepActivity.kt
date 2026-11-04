@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import com.labok.goat.R
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.AppUsage
 import com.labok.goat.data.appsize.DensityShell
@@ -60,20 +61,20 @@ class DensityStepActivity : Activity() {
     }
 
     private fun change(target: String?, step: Int): String {
-        if (!ForegroundWatcher.running && !AppUsage.hasAccess(this)) return "현재 앱을 찾지 못했습니다. Shizuku를 켜거나 '${Copy.FEATURE_APP_SIZE}'에서 사용 기록 접근을 허용하세요"
-        target ?: return "열려 있는 앱이 없습니다"
+        if (!ForegroundWatcher.running && !AppUsage.hasAccess(this)) return Copy.text(R.string.appsize_step_no_foreground_fmt, Copy.FEATURE_APP_SIZE)
+        target ?: return Copy.text(R.string.appsize_step_no_app)
         // 프로세스가 막 떠서 Shizuku 바인더가 아직 오지 않았을 수 있다: 잠깐 기다린다
         ShizukuAccess.watch(this)
         var tries = 0
         while (!Shizuku.pingBinder() && tries++ < 20) Thread.sleep(75)
         ShizukuAccess.refresh()
-        if (DensityShell.connected.value == null && ShizukuAccess.status.value != ShizukuAccess.State.READY) return "Shizuku가 꺼져 있습니다"
+        if (DensityShell.connected.value == null && ShizukuAccess.status.value != ShizukuAccess.State.READY) return Copy.text(R.string.appsize_step_shizuku_off)
         val label = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(target, 0)).toString() }.getOrDefault(target)
         val now = DensityShell.get(this, target)
         val base = if (now > 0) now else Resources.getSystem().configuration.densityDpi
         val next = AppDensityPolicy.next(base, step)
-            ?: return "$label: 이미 가장 ${if (step < 0) "작습니다" else "큽니다"}($base)"
-        if (next == now) return "$label: 이미 ${if (now == 0) Copy.DEFAULT else "$now"}입니다"
+            ?: return if (step < 0) Copy.text(R.string.appsize_step_already_smallest_fmt, label, base) else Copy.text(R.string.appsize_step_already_largest_fmt, label, base)
+        if (next == now) return Copy.text(R.string.appsize_step_already_fmt, label, if (now == 0) Copy.DEFAULT else "$now")
         // GOAT 자신이면 삼성이 GOAT를 닫아 아래에서 다시 열 수 없다. 셸에 다시 열기를 먼저 맡겨 둔다.
         val self = target == packageName
         if (self) ShizukuAccess.runLater(2, "am start -n $packageName/.ui.MainActivity")

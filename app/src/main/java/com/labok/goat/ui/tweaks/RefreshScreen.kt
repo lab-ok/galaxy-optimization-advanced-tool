@@ -26,10 +26,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.BuildConfig
+import com.labok.goat.R
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.tweaks.RefreshRate
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -194,25 +196,20 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
 internal fun RefreshHelpSheet() {
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
-            "1. 주사율이란",
-            "화면을 1초에 몇 번 새로 고치는지 나타내는 값입니다. 120Hz는 60Hz보다 두 배 자주 새로 고쳐 스크롤과 움직임이 매끄럽습니다. " +
-                "대신 배터리를 조금 더 씁니다."
+            stringResource(R.string.tweaks_refresh_help_what_title),
+            stringResource(R.string.tweaks_refresh_help_what_body)
         ) { RefreshArt(low = 60, high = 120, selected = 120) }
         HelpTopic(
-            "2. 세 가지 방식",
-            "'${Copy.REFRESH_SYSTEM}'은 화면이 움직일 때만 주사율을 높이고 멈추면 낮춥니다. " +
-                "'${Copy.REFRESH_SMOOTH}'은 멈춰 있어도 최고 주사율을 유지해 터치 반응도 가장 빠릅니다. 화면에는 '항상 120Hz'처럼 이 기기의 최고값으로 보입니다. " +
-                "'${Copy.REFRESH_SAVER}'은 60Hz로 고정해 배터리를 아낍니다."
+            stringResource(R.string.tweaks_refresh_help_modes_title),
+            stringResource(R.string.tweaks_refresh_help_modes_body_fmt, Copy.REFRESH_SYSTEM, Copy.REFRESH_SMOOTH, Copy.REFRESH_SAVER)
         )
         HelpTopic(
-            "3. 잠시 내려가는 경우",
-            "절전 모드, 아주 낮은 밝기, 일부 게임·동영상 앱에서는 시스템이 잠시 주사율을 내립니다. 그 상황이 끝나면 고른 방식으로 돌아옵니다. " +
-                "주사율 고정은 재부팅해도 유지됩니다."
+            stringResource(R.string.tweaks_refresh_help_drop_title),
+            stringResource(R.string.tweaks_refresh_help_drop_body)
         )
         HelpTopic(
-            "4. 권한과 되돌리기",
-            "주사율 최고·최저값은 숨겨진 시스템 설정이라 Shizuku 셸 권한으로 바꿉니다. '${Copy.REFRESH_SYSTEM}'을 고르면 처음 값으로 돌아갑니다. " +
-                "설정 → 디스플레이 → '화면 움직임 부드럽게'에서 바꿔도 되며, GOAT는 앱 밖에서 바꾼 값을 덮어쓰지 않습니다."
+            stringResource(R.string.tweaks_help_permission_undo_title),
+            stringResource(R.string.tweaks_refresh_help_permission_body_fmt, Copy.REFRESH_SYSTEM)
         )
     }
 }

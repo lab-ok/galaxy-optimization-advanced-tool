@@ -2,11 +2,16 @@ package com.labok.goat.domain
 
 import com.labok.goat.data.display.DpiManager
 import com.labok.goat.domain.DpiPolicy.Decision
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class DpiPolicyTest {
+    // 화면 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
 
     @Test
     fun validateAcceptsRangeBoundaries() {

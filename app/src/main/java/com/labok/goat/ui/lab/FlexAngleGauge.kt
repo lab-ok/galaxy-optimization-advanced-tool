@@ -35,12 +35,14 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.R
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -333,7 +335,7 @@ internal fun FlexAngleGauge(angle: Float?, min: Int, max: Int, active: Boolean, 
         Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             // 숫자는 따로 떼어 정수가 바뀔 때만 다시 그린다(바늘이 움직이는 매 프레임 게이지 전체를 다시 만들지 않게)
             AngleLabel(angle != null, { pos }, c.ink)
-            Text(if (active) "플렉스 모드" else "보통", color = if (active) c.ink else c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal)
+            Text(if (active) stringResource(R.string.lab_flex_gauge_active) else stringResource(R.string.lab_flex_gauge_normal), color = if (active) c.ink else c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal)
         }
     }
 }

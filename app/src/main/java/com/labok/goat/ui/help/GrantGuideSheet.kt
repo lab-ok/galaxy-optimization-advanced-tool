@@ -52,10 +52,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.about.DeveloperProfile
 import com.labok.goat.ui.art.ConnectionIllustration
@@ -107,7 +109,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
     SheetColumn(modifier = Modifier.animateContentSize()) {
         Text(Copy.MENU_GUIDE, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = LocalLiquid.current.ink)
         Text(
-            "한 번 받으면 재부팅해도 유지됩니다.",
+            stringResource(R.string.help_guide_persist),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -130,8 +132,8 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                         Icon(Icons.Outlined.CheckCircle, null, modifier = Modifier.size(28.dp))
                         Spacer(Modifier.width(12.dp))
                         Column {
-                            Text("권한 설정 완료", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text("이 창을 닫아도 됩니다. 디버깅은 꺼도 됩니다.", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.help_guide_done_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.help_guide_done_body), style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -141,7 +143,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
         if (!hasPermission) {
             Spacer(Modifier.height(Gap.Section))
             // 세 가지 방법을 한 줄에서 고른다: Shizuku(PC 없이) · PC 무선 디버깅 · PC USB 케이블
-            Label("연결 방법")
+            Label(stringResource(R.string.help_guide_method))
             val method = if (viaShizuku) {
                 0
             } else if (connection == GrantGuideContent.Connection.WIRELESS) {
@@ -149,7 +151,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             } else {
                 2
             }
-            Choice(listOf(0, 1, 2), method, { listOf("Shizuku", "PC 무선", "PC 유선")[it] }) {
+            Choice(listOf(0, 1, 2), method, { listOf("Shizuku", Copy.text(R.string.help_guide_method_pc_wireless), Copy.text(R.string.help_guide_method_pc_usb))[it] }) {
                 viaShizuku = it == 0
                 if (it == 1) connection = GrantGuideContent.Connection.WIRELESS
                 if (it == 2) connection = GrantGuideContent.Connection.USB
@@ -157,9 +159,9 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             Spacer(Modifier.height(Gap.Item))
             Text(
                 listOf(
-                    "PC 없이 휴대폰만으로 설정합니다. 무료 앱 Shizuku와 Wi-Fi가 필요합니다.",
-                    "PC와 휴대폰이 같은 Wi-Fi에 있으면 케이블 없이 설정합니다.",
-                    "USB 케이블로 PC에 연결해 설정합니다. 가장 확실합니다."
+                    stringResource(R.string.help_guide_method_shizuku_body),
+                    stringResource(R.string.help_guide_method_wireless_body),
+                    stringResource(R.string.help_guide_method_usb_body)
                 )[method],
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -169,11 +171,11 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             Spacer(Modifier.height(Gap.Section))
             ShizukuGuide(
                 shizuku,
-                intro = "마지막 단계가 끝나면 GOAT가 권한을 받습니다. 그 뒤에는 Shizuku를 꺼도 됩니다."
+                intro = stringResource(R.string.help_guide_shizuku_intro)
             )
             if (grantError) {
                 Text(
-                    "Shizuku로 권한을 받지 못했습니다. PC 무선이나 PC 유선으로 하세요.",
+                    stringResource(R.string.help_guide_shizuku_failed),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -181,18 +183,18 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
         }
         if (!hasPermission && !viaShizuku) {
             Spacer(Modifier.height(Gap.Item))
-            Label("PC 운영체제")
+            Label(stringResource(R.string.help_guide_pc_os))
             Choice(GrantGuideContent.PcOs.entries, os, { it.label }) { os = it }
 
             Spacer(Modifier.height(Gap.Section))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LiquidButton("PC로 보내기", modifier = Modifier.weight(1f), onClick = { shareGuide(context, connection, os) }, primary = false)
-                LiquidButton("메일로 보내기", modifier = Modifier.weight(1f), onClick = { emailGuide(context, connection, os) }, primary = false)
+                LiquidButton(stringResource(R.string.help_guide_send_pc), modifier = Modifier.weight(1f), onClick = { shareGuide(context, connection, os) }, primary = false)
+                LiquidButton(stringResource(R.string.help_guide_send_mail), modifier = Modifier.weight(1f), onClick = { emailGuide(context, connection, os) }, primary = false)
             }
             Spacer(Modifier.height(Gap.Section))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "${index + 1} / ${steps.size} 단계",
+                    stringResource(R.string.help_guide_step_count_fmt, index + 1, steps.size),
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -214,12 +216,12 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
 
             Spacer(Modifier.height(Gap.Card))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                TextButton(onClick = { index-- }, enabled = index > 0) { Text("이전") }
+                TextButton(onClick = { index-- }, enabled = index > 0) { Text(stringResource(R.string.help_guide_prev)) }
                 if (index < steps.lastIndex) {
-                    LiquidButton("다음", onClick = { index++ }, burst = false)
+                    LiquidButton(stringResource(R.string.help_guide_next), onClick = { index++ }, burst = false)
                 } else {
                     Text(
-                        "명령을 실행하면 자동으로 확인합니다",
+                        stringResource(R.string.help_guide_auto_check),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.align(Alignment.CenterVertically)
@@ -239,8 +241,8 @@ private fun TroubleCard(items: List<GrantGuideContent.Trouble>, onCopy: (String)
     val c = LocalLiquid.current
     var open by remember { mutableStateOf<String?>(null) }
     GlassCard {
-        Text("안 될 때", fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text("PC에 나온 오류와 같은 항목을 누르세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.help_guide_troubles_title), fontWeight = FontWeight.SemiBold, color = c.ink)
+        Text(stringResource(R.string.help_guide_troubles_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
         items.forEachIndexed { i, tr ->
             Spacer(Modifier.height(Gap.Item))
             if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(c.line.copy(alpha = 0.6f)))
@@ -293,7 +295,7 @@ private fun StepCard(
                 Spacer(Modifier.height(Gap.Item))
                 Text(name, style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(Gap.Item))
-                CommandBox(url, onCopy = { onCopy(url) }, extra = { TextButton(onClick = { onOpenLink(url) }) { Text("열기") } })
+                CommandBox(url, onCopy = { onCopy(url) }, extra = { TextButton(onClick = { onOpenLink(url) }) { Text(stringResource(R.string.help_guide_open_link)) } })
             }
             step.commands.forEach { cmd ->
                 Spacer(Modifier.height(Gap.Item))
@@ -301,7 +303,7 @@ private fun StepCard(
             }
             if (step.openDevOptions) {
                 Spacer(Modifier.height(Gap.Item))
-                LiquidButton("개발자 옵션 열기", modifier = Modifier.fillMaxWidth(), onClick = onOpenDev, primary = false)
+                LiquidButton(stringResource(R.string.help_guide_open_dev), modifier = Modifier.fillMaxWidth(), onClick = onOpenDev, primary = false)
             }
         }
     }
@@ -323,15 +325,15 @@ private fun <T> Choice(options: List<T>, selected: T, label: (T) -> String, onSe
 private fun shareGuide(context: Context, c: GrantGuideContent.Connection, os: GrantGuideContent.PcOs) {
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
-        putExtra(Intent.EXTRA_SUBJECT, "${DeveloperProfile.PRODUCT} 권한 설정 안내")
+        putExtra(Intent.EXTRA_SUBJECT, Copy.text(R.string.help_grant_subject_fmt, DeveloperProfile.PRODUCT))
         putExtra(Intent.EXTRA_TEXT, GrantGuideContent.fullText(c, os, DeveloperProfile.PRODUCT))
     }
-    context.startActivity(Intent.createChooser(send, "안내 보내기"))
+    context.startActivity(Intent.createChooser(send, Copy.text(R.string.help_guide_share_chooser)))
 }
 
 private fun emailGuide(context: Context, c: GrantGuideContent.Connection, os: GrantGuideContent.PcOs) {
     val mail = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).apply {
-        putExtra(Intent.EXTRA_SUBJECT, "${DeveloperProfile.PRODUCT} 권한 설정 안내")
+        putExtra(Intent.EXTRA_SUBJECT, Copy.text(R.string.help_grant_subject_fmt, DeveloperProfile.PRODUCT))
         putExtra(Intent.EXTRA_TEXT, GrantGuideContent.fullText(c, os, DeveloperProfile.PRODUCT))
     }
     try {

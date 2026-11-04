@@ -7,7 +7,9 @@ import android.os.BatteryManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.ui.text.Copy
 import kotlin.math.abs
 
 /**
@@ -48,21 +50,21 @@ object BatteryMonitor {
         val status = i.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
         val charging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
         val plug = when (i.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)) {
-            BatteryManager.BATTERY_PLUGGED_AC -> "충전기"
+            BatteryManager.BATTERY_PLUGGED_AC -> Copy.text(R.string.labdata_battery_plug_ac)
             BatteryManager.BATTERY_PLUGGED_USB -> "USB"
-            BatteryManager.BATTERY_PLUGGED_WIRELESS -> "무선"
+            BatteryManager.BATTERY_PLUGGED_WIRELESS -> Copy.text(R.string.labdata_battery_plug_wireless)
             0 -> null
-            else -> "기타"
+            else -> Copy.text(R.string.labdata_battery_plug_other)
         }
         val volt = i.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1).takeIf { it > 0 }
         // 배터리가 없는 기기(에뮬레이터 등)는 전압 없이 온도 0을 준다. 그때는 읽지 못한 것으로 본다
         val temp = i.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE).takeIf { it != Int.MIN_VALUE && (it != 0 || volt != null) }?.let { it / 10f }
         val health = when (i.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)) {
-            BatteryManager.BATTERY_HEALTH_GOOD -> "좋음"
-            BatteryManager.BATTERY_HEALTH_OVERHEAT -> "과열"
-            BatteryManager.BATTERY_HEALTH_COLD -> "저온"
-            BatteryManager.BATTERY_HEALTH_DEAD -> "수명 다함"
-            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "과전압"
+            BatteryManager.BATTERY_HEALTH_GOOD -> Copy.text(R.string.labdata_battery_health_good)
+            BatteryManager.BATTERY_HEALTH_OVERHEAT -> Copy.text(R.string.labdata_battery_health_overheat)
+            BatteryManager.BATTERY_HEALTH_COLD -> Copy.text(R.string.labdata_battery_health_cold)
+            BatteryManager.BATTERY_HEALTH_DEAD -> Copy.text(R.string.labdata_battery_health_dead)
+            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> Copy.text(R.string.labdata_battery_health_over_voltage)
             else -> null
         }
         return Snapshot(System.currentTimeMillis(), level * 100 / scale, charging, plug, temp, volt, currentMa(context, charging), health)

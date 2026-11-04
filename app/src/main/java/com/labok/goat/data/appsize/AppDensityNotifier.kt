@@ -54,12 +54,12 @@ object AppDensityNotifier {
 
     /** "Discord · 기본(450)" / "Notion · 320 dpi"처럼 앱과 지금 크기를 적는다. 홈 화면이면 안내 문구. */
     fun describe(context: Context, pkg: String?): String {
-        pkg ?: return "앱을 열면 여기서 배율을 바꿉니다"
+        pkg ?: return Copy.text(R.string.appsize_notif_idle)
         val pm = context.packageManager
         val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
         val v = runCatching { DensityShell.get(context, pkg) }.getOrNull()
         val size = when {
-            v == null -> "배율 확인 불가"
+            v == null -> Copy.text(R.string.appsize_notif_unknown)
             v == 0 -> "${Copy.DEFAULT}(${Resources.getSystem().configuration.densityDpi})"
             else -> "$v dpi"
         }
@@ -69,12 +69,12 @@ object AppDensityNotifier {
     fun cancel(context: Context) = context.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
 
     /** 흔들어서 화면 회전도 켜져 있으면 같은 알림에 한 줄로 알린다(알림을 따로 띄우지 않는다). */
-    fun shakeNote(context: Context) = listOfNotNull("흔들기 회전 켜짐".takeIf { ShakeRotate.enabled(context) }, "플렉스 모드 켜짐".takeIf { AutoFlex.enabled(context) }).joinToString(" · ").ifBlank { null }
+    fun shakeNote(context: Context) = listOfNotNull(Copy.text(R.string.appsize_notif_shake_on).takeIf { ShakeRotate.enabled(context) }, Copy.text(R.string.appsize_notif_flex_on).takeIf { AutoFlex.enabled(context) }).joinToString(" · ").ifBlank { null }
 
     fun build(context: Context, status: String? = null, extra: String? = null): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "앱별 배율 조절", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) }
+            NotificationChannel(CHANNEL_ID, Copy.text(R.string.appsize_notif_channel), NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) }
         )
         fun step(s: Int, code: Int) = PendingIntent.getActivity(
             context,
@@ -88,15 +88,15 @@ object AppDensityNotifier {
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle(Copy.FEATURE_APP_SIZE)
-            .setContentText(status ?: "앱을 열면 여기서 배율을 바꿉니다")
+            .setContentText(status ?: Copy.text(R.string.appsize_notif_idle))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setContentIntent(open)
             .setSubText(extra)
-            .addAction(0, "작게", step(-1, 11))
-            .addAction(0, "기본", step(0, 12))
-            .addAction(0, "크게", step(1, 13))
+            .addAction(0, Copy.text(R.string.appsize_notif_smaller), step(-1, 11))
+            .addAction(0, Copy.DEFAULT, step(0, 12))
+            .addAction(0, Copy.text(R.string.appsize_notif_larger), step(1, 13))
             .build()
     }
 

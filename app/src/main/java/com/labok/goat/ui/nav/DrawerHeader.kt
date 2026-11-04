@@ -28,10 +28,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.labok.goat.AppInfo
+import com.labok.goat.R
 import com.labok.goat.ui.about.LOGO_CORNER
 import com.labok.goat.ui.about.idleRipple
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -182,7 +184,7 @@ internal fun DrawerHeader(version: String, visible: Boolean, modifier: Modifier 
                 }
         ) {
             Text(AppInfo.NAME, fontWeight = FontWeight.Bold, color = c.ink, style = MaterialTheme.typography.titleMedium)
-            Text("버전 $version", color = c.muted, style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.nav_version_fmt, version), color = c.muted, style = MaterialTheme.typography.labelMedium)
         }
     }
 }

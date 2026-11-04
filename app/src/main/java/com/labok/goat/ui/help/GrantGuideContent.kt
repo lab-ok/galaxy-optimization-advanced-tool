@@ -1,6 +1,8 @@
 package com.labok.goat.ui.help
 
+import com.labok.goat.R
 import com.labok.goat.ui.art.GuideScene
+import com.labok.goat.ui.text.Copy
 
 /**
  * PC adb로 WRITE_SECURE_SETTINGS를 부여하는 안내 문구.
@@ -8,7 +10,12 @@ import com.labok.goat.ui.art.GuideScene
  */
 object GrantGuideContent {
 
-    enum class Connection(val label: String) { USB("USB 케이블"), WIRELESS("무선") }
+    enum class Connection(private val labelRes: Int) {
+        USB(R.string.help_grant_conn_usb),
+        WIRELESS(R.string.help_grant_conn_wireless);
+
+        val label: String get() = Copy.text(labelRes)
+    }
     enum class PcOs(val label: String) { WINDOWS("Windows"), MAC("Mac"), LINUX("Linux") }
 
     data class Step(
@@ -23,13 +30,13 @@ object GrantGuideContent {
         /** 이 단계에 보여 줄 그림 장면. */
         val scene: GuideScene
             get() = when {
-                title.startsWith("휴대폰 준비") -> GuideScene.DEV_OPTIONS
-                title.startsWith("PC에 adb 설치") -> GuideScene.INSTALL
-                title.startsWith("페어링") -> GuideScene.PAIR
-                title.startsWith("연결 확인") -> GuideScene.USB_CONNECT
-                title.startsWith("연결") -> GuideScene.WIRELESS_CONNECT
-                title.startsWith("권한 부여") -> GuideScene.COMMAND
-                title.startsWith("마무리") -> GuideScene.DONE
+                title.startsWith(Copy.text(R.string.help_grant_step_prepare)) -> GuideScene.DEV_OPTIONS
+                title.startsWith(Copy.text(R.string.help_grant_step_install)) -> GuideScene.INSTALL
+                title.startsWith(Copy.text(R.string.help_grant_step_pair)) -> GuideScene.PAIR
+                title.startsWith(Copy.text(R.string.help_grant_step_check)) -> GuideScene.USB_CONNECT
+                title.startsWith(Copy.text(R.string.help_grant_step_connect)) -> GuideScene.WIRELESS_CONNECT
+                title.startsWith(Copy.text(R.string.help_grant_step_grant)) -> GuideScene.COMMAND
+                title.startsWith(Copy.text(R.string.help_grant_step_done)) -> GuideScene.DONE
                 else -> GuideScene.USB_CONNECT
             }
     }
@@ -40,10 +47,10 @@ object GrantGuideContent {
 
     /** PC로 보내기(메일·메신저)용 전체 안내문. */
     fun fullText(connection: Connection, os: PcOs, appName: String): String = buildString {
-        appendLine("$appName 권한 설정 안내 (${os.label} · ${connection.label})")
+        appendLine(Copy.text(R.string.help_grant_full_title_fmt, appName, os.label, connection.label))
         appendLine()
-        appendLine("$appName 앱이 화면 DPI를 바꾸려면 WRITE_SECURE_SETTINGS 권한이 필요합니다.")
-        appendLine("PC의 adb로 한 번만 부여하면 재부팅해도 유지됩니다.")
+        appendLine(Copy.text(R.string.help_grant_full_intro_fmt, appName))
+        appendLine(Copy.text(R.string.help_grant_full_persist))
         steps(connection, os).forEachIndexed { i, step ->
             appendLine()
             appendLine("${i + 1}. ${step.title}")
@@ -52,7 +59,7 @@ object GrantGuideContent {
             step.commands.forEach { appendLine("   $ $it") }
         }
         appendLine()
-        appendLine("■ 문제 해결")
+        appendLine(Copy.text(R.string.help_grant_full_troubles))
         troubles(connection, os).forEach { tr ->
             appendLine()
             appendLine("- ${tr.title}" + (tr.error?.let { " ($it)" } ?: ""))
@@ -70,65 +77,62 @@ object GrantGuideContent {
             if (connection == Connection.WIRELESS) {
                 add(
                     Trouble(
-                        "무선 연결이 되지 않을 때",
+                        Copy.text(R.string.help_trouble_wireless_title),
                         "protocol fault (couldn't read status message)",
-                        "① 휴대폰의 VPN을 끕니다. VPN이 켜져 있으면 같은 Wi-Fi에서도 서로 찾지 못합니다.\n" +
-                            "② 휴대폰과 PC가 같은 Wi-Fi인지 확인합니다.\n" +
-                            "③ adb를 다시 시작하고, 그래도 연결되지 않으면 휴대폰과 PC를 재시작합니다.\n" +
-                            "④ Windows 방화벽이 adb 허용을 물으면 허용합니다.",
+                        Copy.text(R.string.help_trouble_wireless_body),
                         listOf("$adb kill-server", "$adb start-server")
                     )
                 )
                 add(
                     Trouble(
-                        "포트 번호가 헷갈릴 때",
+                        Copy.text(R.string.help_trouble_ports_title),
                         null,
-                        "adb pair에는 '페어링 코드로 기기 페어링' 팝업의 IP:포트를, adb connect에는 무선 디버깅 첫 화면의 'IP 주소 및 포트'를 씁니다. 두 포트는 서로 다르고, 무선 디버깅을 껐다 켜면 바뀝니다."
+                        Copy.text(R.string.help_trouble_ports_body)
                     )
                 )
             }
             add(
                 Trouble(
-                    "기기가 두 개 이상이라고 나올 때",
+                    Copy.text(R.string.help_trouble_multiple_title),
                     "more than one device/emulator",
-                    "같은 휴대폰이 두 번 인식된 경우입니다(무선은 페어링 연결과 connect 연결, 또는 USB와 무선). 목록에서 상태가 device인 항목 하나를 골라 -s 뒤에 그 이름을 넣어 실행합니다.",
-                    listOf("$adb devices", "$adb -s 목록의이름 shell pm grant $PACKAGE $PERMISSION")
+                    Copy.text(R.string.help_trouble_multiple_body),
+                    listOf("$adb devices", "$adb -s ${Copy.text(R.string.help_trouble_multiple_placeholder)} shell pm grant $PACKAGE $PERMISSION")
                 )
             )
             if (connection == Connection.USB) {
                 add(
                     Trouble(
-                        "unauthorized로 나올 때",
+                        Copy.text(R.string.help_trouble_unauthorized_title),
                         "unauthorized",
-                        "휴대폰에 표시된 'USB 디버깅을 허용하시겠습니까?'에서 [허용]을 누릅니다. 창이 보이지 않으면 개발자 옵션 → 'USB 디버깅 권한 승인 취소' 후 케이블을 다시 꽂습니다."
+                        Copy.text(R.string.help_trouble_unauthorized_body)
                     )
                 )
                 add(
                     Trouble(
-                        "기기가 보이지 않을 때",
+                        Copy.text(R.string.help_trouble_no_device_title),
                         "no devices/emulators found",
-                        "충전 전용이 아닌 데이터 케이블인지, USB 디버깅이 켜져 있는지 확인합니다." +
-                            (if (os == PcOs.WINDOWS) " Windows는 Samsung USB 드라이버가 필요할 수 있습니다." else ""),
+                        Copy.text(R.string.help_trouble_no_device_body) +
+                            (if (os == PcOs.WINDOWS) Copy.text(R.string.help_trouble_no_device_windows) else ""),
                         listOf("$adb devices")
                     )
                 )
             }
             add(
                 Trouble(
-                    "adb를 찾을 수 없다고 나올 때",
+                    Copy.text(R.string.help_trouble_no_adb_title),
                     if (os == PcOs.WINDOWS) "'adb' is not recognized" else "command not found: adb",
                     if (os == PcOs.WINDOWS) {
-                        "platform-tools 폴더에서 연 PowerShell에서 adb 앞에 .\\를 붙여 실행합니다."
+                        Copy.text(R.string.help_trouble_no_adb_windows)
                     } else {
-                        "설치하지 않았다면 위 단계로 설치하고, 압축 파일을 사용하면 그 폴더에서 ./adb로 실행합니다."
+                        Copy.text(R.string.help_trouble_no_adb_other)
                     }
                 )
             )
             add(
                 Trouble(
-                    "오래된 adb일 때",
+                    Copy.text(R.string.help_trouble_old_adb_title),
                     null,
-                    "adb version이 30 이상이어야 무선 페어링을 할 수 있습니다. 다른 프로그램(Smart Switch 등)에 포함된 이전 adb가 먼저 실행되는지도 확인합니다.",
+                    Copy.text(R.string.help_trouble_old_adb_body),
                     listOf("$adb version") + (if (os == PcOs.WINDOWS) listOf("where adb") else listOf("which adb"))
                 )
             )
@@ -149,17 +153,13 @@ object GrantGuideContent {
 
         list += when (connection) {
             Connection.USB -> Step(
-                "휴대폰 준비",
-                "① 설정 → 휴대전화 정보 → 소프트웨어 정보 → 빌드번호를 7번 눌러 개발자 옵션을 켭니다.\n" +
-                    "② 개발자 옵션 → USB 디버깅을 켭니다.\n" +
-                    "③ USB 케이블로 PC에 연결합니다.",
+                Copy.text(R.string.help_grant_step_prepare),
+                Copy.text(R.string.help_step_prepare_usb_body),
                 openDevOptions = true
             )
             Connection.WIRELESS -> Step(
-                "휴대폰 준비",
-                "① 설정 → 휴대전화 정보 → 소프트웨어 정보 → 빌드번호를 7번 눌러 개발자 옵션을 켭니다.\n" +
-                    "② 휴대폰과 PC를 같은 Wi-Fi에 연결합니다.\n" +
-                    "③ 개발자 옵션 → 무선 디버깅을 켭니다.",
+                Copy.text(R.string.help_grant_step_prepare),
+                Copy.text(R.string.help_step_prepare_wireless_body),
                 openDevOptions = true
             )
         }
@@ -169,82 +169,72 @@ object GrantGuideContent {
         when (connection) {
             Connection.USB -> {
                 list += Step(
-                    "연결 확인",
-                    "아래 명령을 실행합니다. 휴대폰에 'USB 디버깅을 허용하시겠습니까?'가 표시되면 [허용]을 누릅니다. " +
-                        "목록에 기기가 device로 나오면 준비가 끝났습니다.",
+                    Copy.text(R.string.help_grant_step_check),
+                    Copy.text(R.string.help_step_usb_check_body),
                     listOf("$adb devices")
                 )
             }
             Connection.WIRELESS -> {
                 list += Step(
-                    "페어링 (처음 한 번)",
-                    "휴대폰: 무선 디버깅 화면에서 '페어링 코드로 기기 페어링'을 누릅니다. 창에 표시된 IP 주소:포트와 " +
-                        "6자리 코드를 확인합니다. 이 창은 페어링이 끝날 때까지 열어 둡니다.\n" +
-                        "PC: 아래 명령의 IP:포트를 바꿔 실행하고, 코드를 요청하면 6자리 코드를 입력합니다. " +
-                        "'Successfully paired'가 나오면 성공입니다.",
+                    Copy.text(R.string.help_grant_step_pair_first),
+                    Copy.text(R.string.help_step_pair_body),
                     listOf("$adb pair 192.168.0.10:37123")
                 )
                 list += Step(
-                    "연결",
-                    "무선 디버깅 첫 화면의 'IP 주소 및 포트'(페어링 포트와 다릅니다)로 연결합니다. " +
-                        "'connected to …'가 나오면 성공입니다.",
+                    Copy.text(R.string.help_grant_step_connect),
+                    Copy.text(R.string.help_step_connect_body),
                     listOf("$adb connect 192.168.0.10:41234", "$adb devices")
                 )
             }
         }
 
         list += Step(
-            "권한 부여",
-            "아래 명령을 실행합니다. 아무 출력 없이 끝나면 성공입니다.",
+            Copy.text(R.string.help_grant_step_grant),
+            Copy.text(R.string.help_step_grant_body),
             listOf(grantCommand(os))
         )
         list += Step(
-            "마무리",
-            "GOAT로 돌아오면 권한을 자동으로 확인합니다. 확인되면 " +
-                (if (connection == Connection.USB) "USB 디버깅" else "무선 디버깅") + "은 꺼도 됩니다."
+            Copy.text(R.string.help_grant_step_done),
+            Copy.text(R.string.help_step_done_body_fmt, if (connection == Connection.USB) Copy.text(R.string.help_step_done_usb) else Copy.text(R.string.help_step_done_wireless))
         )
         return list
     }
 
     private fun installStep(connection: Connection, os: PcOs): Step {
         val pairNote = if (connection == Connection.WIRELESS) {
-            "\n무선 페어링(adb pair)은 adb 30 이상에서만 됩니다. adb version으로 확인합니다."
+            Copy.text(R.string.help_install_pair_note)
         } else {
             ""
         }
         return when (os) {
             PcOs.WINDOWS -> Step(
-                "PC에 adb 설치 (Windows)",
+                Copy.text(R.string.help_grant_step_install_os_fmt, "Windows"),
                 links = listOfNotNull(
                     "SDK Platform-Tools" to URL_PLATFORM_TOOLS,
-                    if (connection == Connection.USB) "Samsung USB 드라이버" to URL_SAMSUNG_DRIVER else null
+                    if (connection == Connection.USB) Copy.text(R.string.help_install_link_samsung_driver) to URL_SAMSUNG_DRIVER else null
                 ),
                 body =
-                "① developer.android.com/tools/releases/platform-tools 에서 'SDK Platform-Tools for Windows'를 다운로드해 압축을 풉니다.\n" +
-                    "② platform-tools 폴더의 빈 곳을 Shift+우클릭 → 'PowerShell 창 열기' 또는 '터미널에서 열기'를 누릅니다.\n" +
-                    "③ 아래 단계의 명령은 이 창에서 .\\adb 로 실행합니다." +
-                    (if (connection == Connection.USB) "\n휴대폰이 인식되지 않으면 Samsung 'Android USB Driver for Windows'를 설치합니다." else "") +
+                Copy.text(R.string.help_install_windows_body) +
+                    (if (connection == Connection.USB) Copy.text(R.string.help_install_windows_driver) else "") +
                     pairNote
             )
             PcOs.MAC -> Step(
-                "PC에 adb 설치 (Mac)",
+                Copy.text(R.string.help_grant_step_install_os_fmt, "Mac"),
                 links = listOf("Homebrew" to URL_HOMEBREW, "SDK Platform-Tools" to URL_PLATFORM_TOOLS),
                 body =
-                "Homebrew가 있으면 아래 명령으로 설치합니다. 없으면 위 사이트에서 'SDK Platform-Tools for Mac'을 다운로드해 " +
-                    "압축을 풀고, 그 폴더에서 adb 대신 ./adb 로 실행합니다." + pairNote,
+                Copy.text(R.string.help_install_mac_body) + pairNote,
                 commands = listOf("brew install --cask android-platform-tools")
             )
             PcOs.LINUX -> Step(
-                "PC에 adb 설치 (Linux)",
+                Copy.text(R.string.help_grant_step_install_os_fmt, "Linux"),
                 links = listOf("SDK Platform-Tools" to URL_PLATFORM_TOOLS),
                 body =
-                "배포판 패키지로 설치합니다. Fedora는 sudo dnf install android-tools, Arch는 sudo pacman -S android-tools 입니다." +
+                Copy.text(R.string.help_install_linux_body) +
                     (
                         if (connection == Connection.USB) {
-                            "\nadb devices에 'no permissions'가 뜨면 Ubuntu·Debian에서는 " +
-                                "sudo apt install android-sdk-platform-tools-common 을 설치한 뒤 케이블을 다시 연결합니다."
+                            Copy.text(R.string.help_install_linux_usb)
                         } else {
-                            "\n배포판 adb가 30보다 낮으면 developer.android.com 의 'SDK Platform-Tools for Linux'를 다운로드해 ./adb 로 실행합니다."
+                            Copy.text(R.string.help_install_linux_wireless)
                         }
                         ) + pairNote,
                 commands = listOf("sudo apt install adb")

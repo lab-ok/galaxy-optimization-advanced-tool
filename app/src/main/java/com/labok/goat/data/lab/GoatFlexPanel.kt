@@ -28,10 +28,12 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.lab.FlexPanelState
 import com.labok.goat.ui.lab.FlexPanelUi
+import com.labok.goat.ui.text.Copy
 import java.util.concurrent.Executors
 
 /**
@@ -52,9 +54,9 @@ object GoatFlexPanel {
     const val SEEK_KEY = 2
     val SEEK_MODES = listOf(SEEK_AUTO, SEEK_TAP, SEEK_KEY)
     fun seekModeLabel(m: Int) = when (m) {
-        SEEK_TAP -> "두 번 누르기"
-        SEEK_KEY -> "미디어 키"
-        else -> "자동"
+        SEEK_TAP -> Copy.text(R.string.labdata_goatpanel_seek_tap)
+        SEEK_KEY -> Copy.text(R.string.labdata_goatpanel_seek_key)
+        else -> Copy.text(R.string.labdata_goatpanel_seek_auto)
     }
     val SEEK_SECONDS = listOf(5, 10, 15, 30)
 
@@ -65,11 +67,11 @@ object GoatFlexPanel {
 
     // 품질·앰비언트 프리셋(11-02 고도화). 유리 품질 0 끔·1 낮음·2 균형·3 높음, 앰비언트 0 끔·1 고정 색·2 포스터·3 화면 분석, 강도 0 은은·1 균형·2 몰입
     val QUALITIES = listOf(0, 1, 2, 3)
-    fun qualityLabel(v: Int) = listOf("끔", "낮음", "균형", "높음")[v]
+    fun qualityLabel(v: Int) = Copy.text(listOf(R.string.labdata_goatpanel_off, R.string.labdata_goatpanel_quality_low, R.string.labdata_goatpanel_balanced, R.string.labdata_goatpanel_quality_high)[v])
     val AMBIENT_MODES = listOf(0, 1, 2, 3)
-    fun ambientLabel(v: Int) = listOf("끔", "고정 색", "포스터", "화면 분석")[v]
+    fun ambientLabel(v: Int) = Copy.text(listOf(R.string.labdata_goatpanel_off, R.string.labdata_goatpanel_ambient_fixed, R.string.labdata_goatpanel_ambient_poster, R.string.labdata_goatpanel_ambient_screen)[v])
     val INTENSITIES = listOf(0, 1, 2, 3)
-    fun intensityLabel(v: Int) = listOf("은은", "균형", "선명", "몰입")[v.coerceIn(0, 3)]
+    fun intensityLabel(v: Int) = Copy.text(listOf(R.string.labdata_goatpanel_intensity_subtle, R.string.labdata_goatpanel_balanced, R.string.labdata_goatpanel_intensity_vivid, R.string.labdata_goatpanel_intensity_immersive)[v.coerceIn(0, 3)])
     fun quality(c: Context) = prefs(c).getInt("quality", 2)
     fun setQuality(c: Context, v: Int) = prefs(c).edit().putInt("quality", v).apply()
     fun ambientMode(c: Context) = prefs(c).getInt("ambient", 3)
@@ -630,7 +632,8 @@ object GoatFlexPanel {
         val token = ++ambToken
         state.ambientOn = mode != 0
         if (mode == 0) {
-            state.ambSource = "앰비언트 끔"
+            state.ambSource = Copy.text(AmbSource.OFF.res)
+            state.ambKind = AmbSource.OFF
             return
         }
         kotlin.concurrent.thread(name = "goat-ambient", isDaemon = true) {
@@ -671,7 +674,7 @@ object GoatFlexPanel {
                 } else {
                     // 포스터·고정 색: 포스터가 바뀔 때만 다시 보면 된다
                     val pal = if (mode == 2) artPaletteNow() else null
-                    val src = if (pal != null) "포스터" else "앱 색"
+                    val src = if (pal != null) AmbSource.POSTER else AmbSource.APP_COLOR
                     post(context, token, tel, src, pal, if (pal != null) artFieldNow() else null, false, t0)
                     period = 2000L
                 }
@@ -808,7 +811,7 @@ object GoatFlexPanel {
                 var pal: AmbientColor.Palette? = null
                 var field: Field? = null
                 var keep = false
-                var src: String
+                var src: AmbSource
                 if (!protectedNow) {
                     slowBlend = false
                     pal = pal0
@@ -824,7 +827,7 @@ object GoatFlexPanel {
                     } else {
                         keep = true
                     }
-                    src = "화면 분석"
+                    src = AmbSource.SCREEN
                 } else {
                     tel.black++
                     pal = artPaletteNow()
@@ -833,7 +836,7 @@ object GoatFlexPanel {
                     val base = artFieldSource() ?: tintSource()
                     field = fieldFrom(cinematic(base.first, base.second, base.third, SystemClock.elapsedRealtime()), base.second, base.third)
                     slowBlend = true
-                    src = if (pal != null) "보호 화면 · 포스터 연출(실제 영상 아님)" else "보호 화면 · 앱 색 연출(실제 영상 아님)"
+                    src = if (pal != null) AmbSource.PROTECTED_POSTER else AmbSource.PROTECTED_APP_COLOR
                     tel.fallback++
                 }
                 tel.analyze(SystemClock.elapsedRealtime() - t1)
@@ -843,19 +846,20 @@ object GoatFlexPanel {
     }
 
     /** 분석 결과를 메인 스레드에서 화면 상태에 넣는다. [capturedAt]부터 반영까지 걸린 시간을 계측한다. */
-    private fun post(context: Context, token: Int, tel: Telemetry, src: String, p: AmbientColor.Palette?, fNew: Field?, keep: Boolean, capturedAt: Long) {
+    private fun post(context: Context, token: Int, tel: Telemetry, src: AmbSource, p: AmbientColor.Palette?, fNew: Field?, keep: Boolean, capturedAt: Long) {
         main.post {
             if (ambToken != token) return@post
             tel.applied(SystemClock.elapsedRealtime() - capturedAt)
-            state.ambSource = src
+            state.ambSource = Copy.text(src.res)
+            state.ambKind = src
             state.ambReady = true
             // 포스터를 쓰는 경우(포스터 모드·보호 화면의 포스터 연출)는 반사 대신 포스터 원본을 똑바로 보여 준다(11-02 소장님)
             // 앱 색 대체도 단색 대신 앱 아이콘을 크게 흐린 빛으로 보여 준다(11-02 소장님)
-            state.posterShown = "포스터" in src || "앱 색" in src || posterPreview
+            state.posterShown = src.poster || src.appColor || posterPreview
             // 무엇을 보일지 따로 정한다(11-02 소장님 "앱 색상이 포스터랑 합쳐져 있니?" — 예전에는 앱 색상에서도 포스터가 있으면 포스터를 보였다)
-            state.posterKind = if ("포스터" in src || posterPreview) {
+            state.posterKind = if (src.poster || posterPreview) {
                 2
-            } else if ("앱 색" in src) {
+            } else if (src.appColor) {
                 1
             } else {
                 0
@@ -1443,4 +1447,17 @@ object GoatFlexPanel {
             registry.currentState = Lifecycle.State.DESTROYED
         }
     }
+}
+
+/**
+ * 앰비언트가 지금 무엇으로 빛을 만드는지. 화면 표시 문구는 리소스([res])에서 읽고, 코드의 판단은 이 값으로 한다
+ * (예전에는 표시 문구 안에 "포스터"·"앱 색"이 들었는지로 판단해 다른 언어에서는 깨질 수 있었다).
+ */
+enum class AmbSource(val res: Int, val poster: Boolean = false, val appColor: Boolean = false) {
+    OFF(R.string.labdata_amb_source_off),
+    POSTER(R.string.labdata_amb_source_poster, poster = true),
+    APP_COLOR(R.string.labdata_amb_source_app_color, appColor = true),
+    SCREEN(R.string.labdata_amb_source_screen),
+    PROTECTED_POSTER(R.string.labdata_amb_source_protected_poster, poster = true),
+    PROTECTED_APP_COLOR(R.string.labdata_amb_source_protected_app_color, appColor = true)
 }

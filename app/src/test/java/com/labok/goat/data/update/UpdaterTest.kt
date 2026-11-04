@@ -1,12 +1,18 @@
 package com.labok.goat.data.update
 
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class UpdaterTest {
+    // 화면 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
+
     @Test fun versionCompare() {
         assertTrue(Updater.isNewer("1.3", "1.2"))
         assertTrue(Updater.isNewer("1.10", "1.9"))

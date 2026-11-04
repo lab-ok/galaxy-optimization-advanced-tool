@@ -26,11 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import com.labok.goat.R
 import com.labok.goat.data.lab.BatteryHistory
 import com.labok.goat.data.lab.BatteryStatsReader
 import com.labok.goat.data.lab.BatteryStatsReader.SinceCharge
@@ -43,6 +45,7 @@ import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.text.Copy
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -57,7 +60,7 @@ private const val TOP_APPS = 10
 /** 충전 기록에 보여 줄 최근 충전 수. */
 private const val RECENT_CHARGES = 5
 
-private enum class RankTab(val label: String) { APPS("앱별"), PARTS("항목별") }
+private enum class RankTab(val label: Int) { APPS(R.string.lab_battery_rank_tab_apps), PARTS(R.string.lab_battery_rank_tab_parts) }
 
 /**
  * 배터리 모니터링의 시스템 통계·기록 카드들(지금 배터리 카드 아래). 카드마다 한 가지만 보여 준다.
@@ -104,16 +107,16 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     }
 
     val s = stats
-    Card("마지막 충전 이후") {
+    Card(stringResource(R.string.lab_battery_card_since_charge)) {
         if (shizuku != ShizukuAccess.State.READY) {
-            Text("Shizuku를 연결하면 사용량과 앱별 순위가 보입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.lab_battery_need_shizuku), color = c.muted, style = MaterialTheme.typography.bodySmall)
             return@Card
         }
         if (s == null) {
             if (loaded) {
-                Text("배터리 통계를 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.lab_battery_stats_failed), color = c.muted, style = MaterialTheme.typography.bodySmall)
             } else {
-                LiquidLoader("배터리 통계를 불러오는 중…", Modifier.padding(vertical = 8.dp))
+                LiquidLoader(stringResource(R.string.lab_battery_stats_loading), Modifier.padding(vertical = 8.dp))
             }
             return@Card
         }
@@ -122,12 +125,12 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     if (shizuku != ShizukuAccess.State.READY || s == null) return
     val now = System.currentTimeMillis()
 
-    Card("시간대별 사용량") {
+    Card(stringResource(R.string.lab_battery_card_hourly)) {
         when (val h = history) {
             null -> if (historyLoaded) {
-                Text("배터리 기록을 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.lab_battery_history_failed), color = c.muted, style = MaterialTheme.typography.bodySmall)
             } else {
-                LiquidLoader("배터리 기록을 불러오는 중…", Modifier.padding(vertical = 8.dp))
+                LiquidLoader(stringResource(R.string.lab_battery_history_loading), Modifier.padding(vertical = 8.dp))
             }
             else -> BatteryHistorySection(h, now, s.startClock)
         }
@@ -136,9 +139,9 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     history?.let { h ->
         // 충전 기록은 기록 전체에서 찾는다(마지막 충전 이후의 시작이 된 충전도 보이게)
         val charges = remember(h, now / 60_000) { BatteryHistory.charges(h, now).takeLast(RECENT_CHARGES).reversed() }
-        Card("충전 기록") {
+        Card(stringResource(R.string.lab_battery_card_charges)) {
             if (charges.isEmpty()) {
-                Text("아직 충전 기록이 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.lab_battery_charges_empty), color = c.muted, style = MaterialTheme.typography.bodySmall)
             } else {
                 charges.forEach { ChargeRow(it) }
             }
@@ -146,7 +149,7 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     }
 
     if (s.apps.isNotEmpty() || s.system.isNotEmpty()) {
-        Card("사용량 순위") { UsageRanking(s, names, icons) }
+        Card(stringResource(R.string.lab_battery_card_ranking)) { UsageRanking(s, names, icons) }
     }
 }
 
@@ -167,23 +170,23 @@ private fun Card(title: String, desc: String? = null, content: @Composable Colum
 @Composable
 private fun ColumnScope.SinceChargeSummary(s: SinceCharge, level: Int?, charging: Boolean) {
     val c = LocalLiquid.current
-    val since = SimpleDateFormat("M월 d일 a h:mm", Locale.KOREA).format(Date(s.startClock))
-    Text("${since}부터 · 배터리 사용 ${duration(s.onBatteryMs)}", color = c.muted, style = MaterialTheme.typography.bodySmall)
+    val since = SimpleDateFormat(stringResource(R.string.lab_battery_fmt_since), Locale.KOREA).format(Date(s.startClock))
+    Text(stringResource(R.string.lab_battery_since_summary, since, duration(s.onBatteryMs)), color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
     Row(verticalAlignment = Alignment.Bottom) {
         Text(if (s.usedPctLow == s.usedPctHigh) "${s.usedPctLow}" else "${s.usedPctLow}~${s.usedPctHigh}", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = c.ink)
-        Text("% 사용", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+        Text(stringResource(R.string.lab_battery_used_pct_unit), color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
     }
-    if (charging) Text("충전 중입니다. 충전기를 빼면 새로 집계합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+    if (charging) Text(stringResource(R.string.lab_battery_charging_note), color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
-    UseRow("화면 켜짐", s.screenOnMs, s.screenOnPct)
-    UseRow("화면 꺼짐", s.screenOffMs, s.screenOffPct)
+    UseRow(stringResource(R.string.lab_battery_screen_on), s.screenOnMs, s.screenOnPct)
+    UseRow(stringResource(R.string.lab_battery_screen_off), s.screenOffMs, s.screenOffPct)
     // 이 패턴이면: 지금 잔량으로 몇 시간 더, 완충으로 몇 시간
     BatteryStatsReader.fullChargeMs(s)?.let { full ->
         Spacer(Modifier.height(Gap.Card))
-        Text("지금처럼 사용하면", fontWeight = FontWeight.SemiBold, color = c.ink, style = MaterialTheme.typography.bodyMedium)
-        if (level != null && !charging) Line("현재 잔량 $level%로", "약 ${duration(full * level / 100)} 더 사용")
-        Line("완충 시", "약 ${duration(full)}")
+        Text(stringResource(R.string.lab_battery_forecast_title), fontWeight = FontWeight.SemiBold, color = c.ink, style = MaterialTheme.typography.bodyMedium)
+        if (level != null && !charging) Line(stringResource(R.string.lab_battery_forecast_level, level), stringResource(R.string.lab_battery_forecast_level_value, duration(full * level / 100)))
+        Line(stringResource(R.string.lab_battery_forecast_full), stringResource(R.string.lab_battery_forecast_full_value, duration(full)))
     }
 }
 
@@ -195,7 +198,7 @@ private fun ChargeRow(ch: BatteryHistory.Charge) {
     val time = SimpleDateFormat("a h:mm", Locale.KOREA)
     val sameDay = SimpleDateFormat("yyyyMMdd", Locale.US).let { it.format(Date(ch.start)) == it.format(Date(ch.end)) }
     val range = "${day.format(Date(ch.start))}~" + if (ch.ongoing) {
-        "지금"
+        stringResource(R.string.lab_battery_charge_now)
     } else if (sameDay) {
         time.format(Date(ch.end))
     } else {
@@ -204,13 +207,13 @@ private fun ChargeRow(ch: BatteryHistory.Charge) {
     Column(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("${ch.startLevel}% → ${ch.endLevel}%", color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-            Text((if (ch.ongoing) "충전 중 · " else "") + duration(ch.durationMs), color = c.ink, style = MaterialTheme.typography.bodyMedium)
+            Text(if (ch.ongoing) stringResource(R.string.lab_battery_charge_ongoing_duration, duration(ch.durationMs)) else duration(ch.durationMs), color = c.ink, style = MaterialTheme.typography.bodyMedium)
         }
         Spacer(Modifier.height(Gap.Tight))
-        LiquidBar(ch.startLevel / 100f, height = 8.dp, ghost = ch.endLevel / 100f, description = "${ch.startLevel}%에서 ${ch.endLevel}%까지 충전")
+        LiquidBar(ch.startLevel / 100f, height = 8.dp, ghost = ch.endLevel / 100f, description = stringResource(R.string.lab_battery_charge_bar_desc, ch.startLevel, ch.endLevel))
         Spacer(Modifier.height(Gap.Tight))
-        val perHour = if (ch.durationMs >= 5 * 60_000L && ch.gained > 0) String.format(Locale.KOREA, " · 시간당 +%.0f%%", ch.gained * 3_600_000f / ch.durationMs) else ""
-        Text("$range$perHour", color = c.muted, style = MaterialTheme.typography.labelSmall)
+        val line = if (ch.durationMs >= 5 * 60_000L && ch.gained > 0) stringResource(R.string.lab_battery_charge_range_per_hour, range, ch.gained * 3_600_000f / ch.durationMs) else range
+        Text(line, color = c.muted, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -220,11 +223,11 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>, icons: Map<Int
     val c = LocalLiquid.current
     var tab by remember { mutableStateOf(if (s.apps.isNotEmpty()) RankTab.APPS else RankTab.PARTS) }
     var showAll by remember { mutableStateOf(false) }
-    LiquidChips(RankTab.entries.toList(), tab, { it.label }, { tab = it })
+    LiquidChips(RankTab.entries.toList(), tab, { Copy.text(it.label) }, { tab = it })
     Spacer(Modifier.height(Gap.Item))
     when (tab) {
         RankTab.APPS -> {
-            Text("진한 부분은 포그라운드, 연한 부분은 백그라운드입니다. 사용 시간 비율로 나눈 추정값입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.lab_battery_apps_hint), color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             val total = s.computedMah.takeIf { it > 0 } ?: s.apps.sumOf { it.mah }.coerceAtLeast(1.0)
             val list = if (showAll) s.apps else s.apps.take(TOP_APPS)
@@ -233,18 +236,18 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>, icons: Map<Int
                 val time = a.frontMs + a.backMs
                 val front = if (time > 0) a.frontMs.toFloat() / time else 1f
                 val detail = listOfNotNull(
-                    a.frontMs.takeIf { it >= 60_000 }?.let { "포그라운드 ${duration(it)} · ${percent(share * front)}" },
-                    a.backMs.takeIf { it >= 60_000 }?.let { "백그라운드 ${duration(it)} · ${percent(share * (1 - front))}" }
+                    a.frontMs.takeIf { it >= 60_000 }?.let { stringResource(R.string.lab_battery_app_foreground, duration(it), percent(share * front)) },
+                    a.backMs.takeIf { it >= 60_000 }?.let { stringResource(R.string.lab_battery_app_background, duration(it), percent(share * (1 - front))) }
                 ).joinToString("  ")
                 ShareRow(names[a.uid] ?: "uid ${a.uid}", share, detail, dark = share * front, icon = icons[a.uid], withIcon = true)
             }
             if (s.apps.size > TOP_APPS) {
                 Spacer(Modifier.height(Gap.Item))
-                LiquidButton(if (showAll) "상위 ${TOP_APPS}개만 보기" else "모두 보기(${s.apps.size}개)", modifier = Modifier.fillMaxWidth(), primary = false, onClick = { showAll = !showAll })
+                LiquidButton(if (showAll) stringResource(R.string.lab_battery_show_top, TOP_APPS) else stringResource(R.string.lab_battery_show_all, s.apps.size), modifier = Modifier.fillMaxWidth(), primary = false, onClick = { showAll = !showAll })
             }
         }
         RankTab.PARTS -> {
-            Text("기기 전체 사용량을 항목별로 나눈 값입니다. 앱 사용량도 들어 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.lab_battery_parts_hint), color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             val total = s.computedMah.takeIf { it > 0 } ?: s.system.values.sum()
             s.system.entries.sortedByDescending { it.value }.forEach { (k, v) ->
@@ -258,7 +261,7 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>, icons: Map<Int
 @Composable
 private fun UseRow(name: String, ms: Long, pct: Int) {
     val per = BatteryStatsReader.perHour(pct, ms)
-    Line(name, "${duration(ms)} · $pct%" + (per?.let { String.format(Locale.KOREA, " · 시간당 %.1f%%", it) } ?: ""))
+    Line(name, per?.let { stringResource(R.string.lab_battery_use_value_per_hour, duration(ms), pct, it) } ?: "${duration(ms)} · $pct%")
 }
 
 @Composable
@@ -316,7 +319,7 @@ private fun appIcon(context: Context, uid: Int): ImageBitmap? {
     return runCatching { pm.getApplicationIcon(pkg).toBitmap(px, px).asImageBitmap() }.getOrNull()
 }
 
-private fun percent(share: Float): String = if (share > 0f && share < 0.01f) "1% 미만" else "${(share * 100).roundToInt()}%"
+private fun percent(share: Float): String = if (share > 0f && share < 0.01f) Copy.text(R.string.lab_battery_pct_under_one) else "${(share * 100).roundToInt()}%"
 
 /** "3시간 5분", "45분", "1분 미만". */
 internal fun duration(ms: Long): String {
@@ -324,9 +327,9 @@ internal fun duration(ms: Long): String {
     val h = min / 60
     val m = min % 60
     return when {
-        min < 1 -> "1분 미만"
-        h == 0L -> "${m}분"
-        m == 0L -> "${h}시간"
-        else -> "${h}시간 ${m}분"
+        min < 1 -> Copy.text(R.string.lab_duration_under_minute)
+        h == 0L -> Copy.text(R.string.lab_duration_minutes, m)
+        m == 0L -> Copy.text(R.string.lab_duration_hours, h)
+        else -> Copy.text(R.string.lab_duration_hours_minutes, h, m)
     }
 }

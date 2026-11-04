@@ -1,5 +1,7 @@
 package com.labok.goat.data.lab
 
+import com.labok.goat.R
+import com.labok.goat.ui.text.Copy
 import kotlin.math.roundToInt
 
 /**
@@ -12,12 +14,12 @@ object UsageFun {
     /** 맨 위 한 줄 요약. 이번 기간에서 가장 눈에 띄는 것 두 가지(기준 기간보다 가장 많이 늘어난 것 먼저). */
     fun headline(r: UsageTally.Result, base: UsageTally.Result?): List<String> {
         val items = buildList {
-            r.unfolds?.takeIf { it > 0 }?.let { add(Triple("폰을 ${it}번 펼쳤습니다", it, base?.unfolds)) }
-            if (r.unlocks > 0) add(Triple("잠금을 ${r.unlocks}번 풀었습니다", r.unlocks, base?.unlocks))
-            if (r.screenMs > 0) add(Triple("화면을 ${duration(r.screenMs)} 봤습니다", (r.screenMs / 60_000).toInt(), base?.let { (it.screenMs / 60_000).toInt() }))
-            if (r.notifications > 0) add(Triple("알림을 ${r.notifications}개 받았습니다", r.notifications, base?.notifications))
-            r.volume?.takeIf { it > 0 }?.let { add(Triple("볼륨 버튼을 ${it}번 눌렀습니다", it, base?.volume)) }
-            if (r.appOpens > 0) add(Triple("앱을 ${r.appOpens}번 열었습니다", r.appOpens, base?.appOpens))
+            r.unfolds?.takeIf { it > 0 }?.let { add(Triple(Copy.text(R.string.labdata_usage_headline_unfolds, it), it, base?.unfolds)) }
+            if (r.unlocks > 0) add(Triple(Copy.text(R.string.labdata_usage_headline_unlocks, r.unlocks), r.unlocks, base?.unlocks))
+            if (r.screenMs > 0) add(Triple(Copy.text(R.string.labdata_usage_headline_screen, duration(r.screenMs)), (r.screenMs / 60_000).toInt(), base?.let { (it.screenMs / 60_000).toInt() }))
+            if (r.notifications > 0) add(Triple(Copy.text(R.string.labdata_usage_headline_notifications, r.notifications), r.notifications, base?.notifications))
+            r.volume?.takeIf { it > 0 }?.let { add(Triple(Copy.text(R.string.labdata_usage_headline_volume, it), it, base?.volume)) }
+            if (r.appOpens > 0) add(Triple(Copy.text(R.string.labdata_usage_headline_app_opens, r.appOpens), r.appOpens, base?.appOpens))
         }
         // 기준보다 늘어난 비율이 큰 것부터. 기준이 없으면 넣은 순서(펼치기·잠금 해제가 먼저)
         return items.sortedByDescending { (_, now, before) -> if (before == null || before <= 0) 0.0 else now.toDouble() / before }
@@ -27,12 +29,12 @@ object UsageFun {
     /** 재미로 보는 숫자. 보여 줄 만한 것만(값이 없으면 뺀다). */
     fun facts(r: UsageTally.Result, topApp: Pair<String, Int>?, topNoti: Pair<String, Int>?): List<String> = buildList {
         val peak = r.hourlyMs.indices.maxByOrNull { r.hourlyMs[it] }
-        if (peak != null && r.hourlyMs[peak] > 0) add("가장 많이 본 때는 ${hourName(peak)}입니다.")
-        if (r.unlocks > 0 && r.screenMs > 0) add("잠금을 한 번 풀면 평균 ${duration(r.screenMs / r.unlocks)} 봅니다.")
-        if (r.screenOn >= 3 && r.appOpens > 0) add("화면을 한 번 켤 때마다 앱을 평균 ${oneDecimal(r.appOpens.toFloat() / r.screenOn)}개 엽니다.")
-        topApp?.let { (name, n) -> if (r.appOpens > 0) add("$name 실행이 전체의 ${n * 100 / r.appOpens}%입니다.") }
-        topNoti?.let { (name, n) -> if (r.notifications > 0) add("알림 ${r.notifications}개 중 ${n * 100 / r.notifications}%가 $name 알림입니다.") }
-        r.chargeStartAvg?.let { add("충전기는 평균 $it%에서 꽂았습니다.") }
+        if (peak != null && r.hourlyMs[peak] > 0) add(Copy.text(R.string.labdata_usage_fact_peak_hour, hourName(peak)))
+        if (r.unlocks > 0 && r.screenMs > 0) add(Copy.text(R.string.labdata_usage_fact_per_unlock, duration(r.screenMs / r.unlocks)))
+        if (r.screenOn >= 3 && r.appOpens > 0) add(Copy.text(R.string.labdata_usage_fact_apps_per_screen_on, oneDecimal(r.appOpens.toFloat() / r.screenOn)))
+        topApp?.let { (name, n) -> if (r.appOpens > 0) add(Copy.text(R.string.labdata_usage_fact_top_app, name, n * 100 / r.appOpens)) }
+        topNoti?.let { (name, n) -> if (r.notifications > 0) add(Copy.text(R.string.labdata_usage_fact_top_noti, r.notifications, n * 100 / r.notifications, name)) }
+        r.chargeStartAvg?.let { add(Copy.text(R.string.labdata_usage_fact_charge_start, it)) }
     }
 
     /** 오늘의 칭호(최대 3개). [days]는 기간의 날 수로, 기준을 하루 평균으로 맞춘다. */
@@ -41,22 +43,22 @@ object UsageFun {
         val night = (0..3).sumOf { r.hourlyMs[it] } / d
         val screenPerDay = r.screenMs / d
         return buildList {
-            r.unfolds?.let { if (it / d >= 30) add(Title("폴드 장인", "하루 ${it / d}번 펼침")) }
-            if (night >= 30 * 60_000L) add(Title("올빼미", "새벽 0~4시에 ${duration(night)}"))
-            if (r.notifications / d >= 150) add(Title("알림 부자", "하루 알림 ${r.notifications / d}개"))
-            r.volume?.let { if (it / d >= 100) add(Title("볼륨 장인", "하루 ${it / d}번 누름")) }
-            if (r.unlocks / d >= 80) add(Title("잠금 해제 달인", "하루 ${r.unlocks / d}번"))
+            r.unfolds?.let { if (it / d >= 30) add(Title(Copy.text(R.string.labdata_usage_title_fold_master), Copy.text(R.string.labdata_usage_title_fold_master_why, it / d))) }
+            if (night >= 30 * 60_000L) add(Title(Copy.text(R.string.labdata_usage_title_night_owl), Copy.text(R.string.labdata_usage_title_night_owl_why, duration(night))))
+            if (r.notifications / d >= 150) add(Title(Copy.text(R.string.labdata_usage_title_noti_rich), Copy.text(R.string.labdata_usage_title_noti_rich_why, r.notifications / d)))
+            r.volume?.let { if (it / d >= 100) add(Title(Copy.text(R.string.labdata_usage_title_volume_master), Copy.text(R.string.labdata_usage_title_volume_master_why, it / d))) }
+            if (r.unlocks / d >= 80) add(Title(Copy.text(R.string.labdata_usage_title_unlock_master), Copy.text(R.string.labdata_usage_title_unlock_master_why, r.unlocks / d)))
             r.chargeStartAvg?.let {
                 if (it < 15) {
-                    add(Title("배터리 벼랑 끝", "평균 $it%에서 충전"))
+                    add(Title(Copy.text(R.string.labdata_usage_title_battery_edge), Copy.text(R.string.labdata_usage_title_charge_avg_why, it)))
                 } else if (it >= 40) {
-                    add(Title("충전 모범생", "평균 $it%에서 충전"))
+                    add(Title(Copy.text(R.string.labdata_usage_title_charge_model), Copy.text(R.string.labdata_usage_title_charge_avg_why, it)))
                 }
             }
             if (screenPerDay >= 6 * 3_600_000L) {
-                add(Title("화면 지킴이", "하루 ${duration(screenPerDay)}"))
+                add(Title(Copy.text(R.string.labdata_usage_title_screen_keeper), Copy.text(R.string.labdata_usage_title_per_day_why, duration(screenPerDay))))
             } else if (r.screenMs > 0 && screenPerDay < 2 * 3_600_000L) {
-                add(Title("폰과 휴식 중", "하루 ${duration(screenPerDay)}"))
+                add(Title(Copy.text(R.string.labdata_usage_title_phone_rest), Copy.text(R.string.labdata_usage_title_per_day_why, duration(screenPerDay))))
             }
         }.take(3)
     }
@@ -68,19 +70,19 @@ object UsageFun {
     }
 
     internal fun hourName(h: Int): String = when (h) {
-        in 0..4 -> "새벽 ${h}시"
-        in 5..11 -> "오전 ${h}시"
-        12 -> "낮 12시"
-        in 13..17 -> "오후 ${h - 12}시"
-        else -> "저녁 ${h - 12}시"
-    } + "대"
+        in 0..4 -> Copy.text(R.string.labdata_usage_hour_dawn, h)
+        in 5..11 -> Copy.text(R.string.labdata_usage_hour_morning, h)
+        12 -> Copy.text(R.string.labdata_usage_hour_noon)
+        in 13..17 -> Copy.text(R.string.labdata_usage_hour_afternoon, h - 12)
+        else -> Copy.text(R.string.labdata_usage_hour_evening, h - 12)
+    }
 
     internal fun duration(ms: Long): String {
         val m = ms / 60_000
         return when {
-            m >= 60 -> "${m / 60}시간 ${m % 60}분"
-            m >= 1 -> "${m}분"
-            else -> "${ms / 1000}초"
+            m >= 60 -> Copy.text(R.string.labdata_usage_duration_hours_minutes, m / 60, m % 60)
+            m >= 1 -> Copy.text(R.string.labdata_usage_duration_minutes, m)
+            else -> Copy.text(R.string.labdata_usage_duration_seconds, ms / 1000)
         }
     }
 

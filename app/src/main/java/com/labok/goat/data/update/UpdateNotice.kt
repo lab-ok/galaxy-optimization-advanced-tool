@@ -12,6 +12,7 @@ import com.labok.goat.BuildConfig
 import com.labok.goat.R
 import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.liquid.UiGoat
+import com.labok.goat.ui.text.Copy
 
 /**
  * 업데이트를 마친 뒤 알림: 안드로이드는 업데이트된 앱이 스스로 화면을 열지 못하게 막으므로, GOAT가 시작한 업데이트가
@@ -33,7 +34,7 @@ object UpdateNotice {
         if (prefs(context).getString("expect", null) == null) return
         if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "업데이트 완료", NotificationManager.IMPORTANCE_DEFAULT))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, Copy.text(R.string.update_done_channel), NotificationManager.IMPORTANCE_DEFAULT))
         val open = PendingIntent.getActivity(
             context,
             0,
@@ -44,7 +45,7 @@ object UpdateNotice {
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle(doneText())
-            .setContentText("눌러서 열기")
+            .setContentText(Copy.text(R.string.update_done_tap_to_open))
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()
@@ -63,11 +64,11 @@ object UpdateNotice {
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 
     /** "GOAT 1.6.0으로 업데이트했습니다"(버전 끝 숫자 읽는 소리에 맞춰 '로/으로'를 고른다). */
-    fun doneText(version: String = BuildConfig.VERSION_NAME) = "GOAT ${version}${ro(version)} 업데이트했습니다"
+    fun doneText(version: String = BuildConfig.VERSION_NAME) = Copy.text(R.string.update_done_fmt, version, ro(version))
 
     /** 숫자로 끝나는 말 뒤의 '로/으로': 받침이 있으면(영·삼·육) '으로', 받침 없거나 ㄹ(일·칠·팔)이면 '로'. */
     internal fun ro(word: String): String = when (word.lastOrNull { it.isLetterOrDigit() }) {
-        '0', '3', '6' -> "으로"
-        else -> "로"
+        '0', '3', '6' -> Copy.text(R.string.update_particle_euro)
+        else -> Copy.text(R.string.update_particle_ro)
     }
 }

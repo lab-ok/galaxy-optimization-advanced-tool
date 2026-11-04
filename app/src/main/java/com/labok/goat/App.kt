@@ -1,6 +1,5 @@
 package com.labok.goat
 
-import com.labok.goat.ui.text.Copy
 import android.app.Application
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
@@ -35,6 +34,7 @@ import com.labok.goat.ui.liquid.UiHaptics
 import com.labok.goat.ui.liquid.UiInk
 import com.labok.goat.ui.liquid.UiMotion
 import com.labok.goat.ui.nav.NewBadge
+import com.labok.goat.ui.text.Copy
 
 class App : Application() {
     override fun onCreate() {

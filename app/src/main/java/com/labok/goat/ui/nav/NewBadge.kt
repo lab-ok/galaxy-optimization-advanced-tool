@@ -16,8 +16,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 
@@ -83,6 +85,6 @@ fun NewTag(key: String, modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         NewDot()
         Spacer(Modifier.width(6.dp))
-        Text("새 기능", color = c.danger, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.nav_new_feature), color = c.danger, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
     }
 }

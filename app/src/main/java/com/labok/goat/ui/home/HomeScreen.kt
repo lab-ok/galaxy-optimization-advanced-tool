@@ -75,6 +75,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +89,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.labok.goat.BuildConfig
+import com.labok.goat.R
 import com.labok.goat.background.ExternalChangeNotifier
 import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.domain.ScreenPolicy
@@ -545,11 +547,11 @@ internal fun HomeScreen(
                             },
                             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                             navigationIcon = {
-                                if (!wide) IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "기능 메뉴 열기") }
+                                if (!wide) IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, stringResource(R.string.home_open_feature_menu)) }
                             },
                             actions = {
                                 Box {
-                                    IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, "설정 메뉴") }
+                                    IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, stringResource(R.string.home_settings_menu)) }
                                     LiquidMenu(expanded = menu, onDismiss = { menu = false }, items = menuItems)
                                     LiquidMenu(
                                         expanded = reportMenu,

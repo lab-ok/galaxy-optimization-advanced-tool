@@ -9,10 +9,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.art.artPill
+import com.labok.goat.ui.text.Copy
 import kotlin.math.sin
 
 private fun ease(x: Float) = x * x * (3 - 2 * x)
@@ -61,9 +63,9 @@ internal fun GosArt(off: Boolean, none: Boolean = false) {
             val fillTop = tubeBottom - (tubeBottom - tubeTop) * heat
             drawRoundRect(ink, Offset(tx - 3.dp.toPx(), fillTop), Size(6.dp.toPx(), tubeBottom - fillTop), CornerRadius(3.dp.toPx()))
             drawCircle(ink, 6.dp.toPx(), Offset(tx, tubeBottom + 3.dp.toPx()))
-            val fps = if (gosOff) "높은 성능" else "성능 제한"
+            val fps = Copy.text(if (gosOff) R.string.tweaks_gos_art_high_perf else R.string.tweaks_gos_art_limited)
             artPill(tm, c, fps, Offset(left + graphW / 2, top + h + 16.dp.toPx()), filled = on)
-            artLabel(tm, if (gosOff) "GOS 꺼짐" else "GOS 켜짐", Offset(left + graphW / 2, top + h + 37.dp.toPx()), ink, bold = on)
+            artLabel(tm, Copy.text(if (gosOff) R.string.tweaks_gos_art_off else R.string.tweaks_gos_art_on), Offset(left + graphW / 2, top + h + 37.dp.toPx()), ink, bold = on)
         }
     }
 }

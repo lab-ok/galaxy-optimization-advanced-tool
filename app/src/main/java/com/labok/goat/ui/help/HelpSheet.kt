@@ -15,8 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.art.ConnectionIllustration
 import com.labok.goat.ui.art.DensityIllustration
 import com.labok.goat.ui.art.FoldDeviceArt
@@ -45,19 +47,18 @@ internal fun HelpSheet(state: UiState, onOpenGuide: () -> Unit) {
         // 다른 사용 방법과 같은 꼴: 제목 → 그림 → 설명(HelpTopic). 폴드가 아니면 두 화면 이야기 대신 DPI 하나만 설명한다.
         if (!state.foldable) {
             HelpTopic(
-                "1. DPI로 화면 크기 바꾸기",
-                "DPI가 작을수록 글자와 아이콘이 작아져 한 화면에 더 많이 보입니다. " +
-                    "설정의 '화면 크게/작게'에 없는 값도 1 단위로 고를 수 있고, 재부팅해도 다시 적용합니다."
+                stringResource(R.string.help_single_dpi_title),
+                stringResource(R.string.help_single_dpi_body)
             )
         }
         if (state.foldable) {
             HelpTopic(
-                "1. 같은 DPI인데 크기가 다른 이유",
-                "두 화면은 PPI(인치당 픽셀 수)가 달라 같은 DPI라도 실제 크기가 다릅니다."
+                stringResource(R.string.help_fold_why_title),
+                stringResource(R.string.help_fold_why_body)
             ) {
                 DensityIllustration(corrected = anim)
                 Text(
-                    if (anim < 0.5f) "보정 전: 내부 화면이 더 큼" else "보정 후: 두 화면 크기가 같음",
+                    if (anim < 0.5f) stringResource(R.string.help_fold_before) else stringResource(R.string.help_fold_after),
                     color = c.ink,
                     style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center,
@@ -67,8 +68,8 @@ internal fun HelpSheet(state: UiState, onOpenGuide: () -> Unit) {
         }
         if (state.foldable) {
             HelpTopic(
-                "2. 외부 화면 DPI만 정하기",
-                "내부 화면 DPI는 두 화면의 해상도와 PPI로 계산해 같은 크기로 맞춥니다. 재부팅해도 다시 적용합니다."
+                stringResource(R.string.help_fold_outer_title),
+                stringResource(R.string.help_fold_outer_body)
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Spacer(Modifier.weight(1f))
@@ -79,9 +80,9 @@ internal fun HelpSheet(state: UiState, onOpenGuide: () -> Unit) {
         }
         // 권한을 받는 길(PC·폰 연결) 그림. 권한이 있으면 연결된 모습으로 보여 준다.
         HelpTopic(
-            "${if (state.foldable) 3 else 2}. 처음 한 번 권한 설정",
+            "${if (state.foldable) 3 else 2}. ${stringResource(R.string.help_setup_title)}",
             if (state.hasPermission) {
-                "권한 설정을 마쳤습니다."
+                stringResource(R.string.help_setup_done)
             } else {
                 Copy.TODO_SETUP_BODY
             }

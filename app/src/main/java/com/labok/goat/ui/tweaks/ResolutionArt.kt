@@ -6,6 +6,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
@@ -48,8 +49,8 @@ internal fun ResolutionArt(percent: Int, points: Int = Copy.resPoints(percent)) 
                 }
             }
             drawRoundRect(if (on) c.ink else c.line, Offset(left, top), Size(box, box), CornerRadius(12.dp.toPx()), style = Stroke(1.5f.dp.toPx()))
-            artPill(tm, c, if (i == 0) "화소 100%" else "화소 $points%", Offset(left + box / 2, top + box + 16.dp.toPx()), filled = on)
-            artLabel(tm, if (i == 0) "원래 해상도" else "낮춘 해상도", Offset(left + box / 2, top + box + 36.dp.toPx()), if (on) c.ink else c.muted, bold = on)
+            artPill(tm, c, Copy.text(R.string.tweaks_res_art_points_fmt, if (i == 0) 100 else points), Offset(left + box / 2, top + box + 16.dp.toPx()), filled = on)
+            artLabel(tm, Copy.text(if (i == 0) R.string.tweaks_res_art_original else R.string.tweaks_res_art_lowered), Offset(left + box / 2, top + box + 36.dp.toPx()), if (on) c.ink else c.muted, bold = on)
         }
     }
 }

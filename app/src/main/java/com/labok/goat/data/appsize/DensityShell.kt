@@ -4,10 +4,12 @@ import android.content.Context
 import android.os.Build
 import android.os.IBinder
 import android.os.Parcel
+import com.labok.goat.R
 import com.labok.goat.data.UserId
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.domain.AppDensityPolicy
+import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,13 +43,13 @@ object DensityShell {
     private fun user() = UserId.current()
 
     private fun <T> tx(code: Int, write: Parcel.() -> Unit = {}, read: Parcel.() -> T): T {
-        val b = binder.value ?: throw IllegalStateException("셸 도우미가 연결되어 있지 않습니다")
+        val b = binder.value ?: throw IllegalStateException(Copy.text(R.string.appsize_helper_not_connected))
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
         try {
             data.writeInterfaceToken(DensityServer.DESCRIPTOR)
             data.write()
-            if (!b.transact(code, data, reply, 0)) throw IllegalStateException("셸 도우미가 요청을 거절했습니다")
+            if (!b.transact(code, data, reply, 0)) throw IllegalStateException(Copy.text(R.string.appsize_helper_rejected))
             reply.readException()
             return reply.read()
         } finally {
@@ -132,7 +134,7 @@ object DensityShell {
     private fun state(context: Context) = context.getSharedPreferences("app_density_state", Context.MODE_PRIVATE)
 
     private const val KEY_REJECTED = "rejected_fingerprint"
-    const val REJECTED_MESSAGE = "이 기기는 앱별 배율을 지원하지 않습니다"
+    val REJECTED_MESSAGE: String get() = Copy.text(R.string.appsize_device_unsupported)
 
     /** 이 펌웨어에서 배율을 바꿔도 값이 남지 않은 적이 있는지. 펌웨어가 바뀌면 다시 시험한다. */
     fun rejected(context: Context) = state(context).getString(KEY_REJECTED, null) == Build.FINGERPRINT

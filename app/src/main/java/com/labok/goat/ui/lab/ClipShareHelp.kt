@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.R
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
@@ -58,36 +60,30 @@ private val SHADE_TILE_OFF = Color(0xFF46454B)
 
 @Composable
 internal fun ClipShareHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = stringResource(R.string.lab_help_title)) {
         GlassCard {
             val tap = artLoop(1600)
-            TimelineStep("1", "빠른 설정에 타일 넣기", "[${Copy.LAB_NOTE_ADD_TILE}]를 누릅니다.", 34) { c, tm -> tilePill(c, tm, Offset(0f, 4f), 150f) }
-            TimelineStep("2", "아무 앱에서 복사", "글·사진·여러 장 모두 됩니다.", 70) { c, tm ->
+            TimelineStep("1", stringResource(R.string.lab_clip_help_step1_title), stringResource(R.string.lab_clip_help_step1_body, Copy.LAB_NOTE_ADD_TILE), 34) { c, tm -> tilePill(c, tm, Offset(0f, 4f), 150f) }
+            TimelineStep("2", stringResource(R.string.lab_clip_help_step2_title), stringResource(R.string.lab_clip_help_step2_body), 70) { c, tm ->
                 copyScene(c, tm, Offset(0f, 6f), tap)
                 photo(c, Offset(116f, 22f), 30f)
             }
-            TimelineStep("3", "알림창을 내려 타일 누르기", "GOAT를 열지 않아도 됩니다.", 70) { c, tm -> shadeScene(c, tm, Offset(0f, 4f), tap) }
-            TimelineStep("4", "보낼 앱과 대화방 고르기", "글은 TXT, 사진은 원본으로 갑니다.", 70) { c, tm -> pickScene(c, tm, Offset(0f, 4f), tap) }
-            TimelineStep(null, "임시 파일은 바로 지웁니다", "휴대폰 밖으로 보내지 않습니다.", 0, last = true)
+            TimelineStep("3", stringResource(R.string.lab_clip_help_step3_title), stringResource(R.string.lab_clip_help_step3_body), 70) { c, tm -> shadeScene(c, tm, Offset(0f, 4f), tap) }
+            TimelineStep("4", stringResource(R.string.lab_clip_help_step4_title), stringResource(R.string.lab_clip_help_step4_body), 70) { c, tm -> pickScene(c, tm, Offset(0f, 4f), tap) }
+            TimelineStep(null, stringResource(R.string.lab_clip_help_done_title), stringResource(R.string.lab_clip_help_done_body), 0, last = true)
         }
         Spacer(Modifier.height(Gap.Card))
         HelpTopic(
-            "다른 방법으로 열기",
-            "• GOAT 아이콘 길게 누르기: '클립보드 공유' 바로가기가 나옵니다. 끌어서 홈 화면에 둘 수 있습니다.\n" +
-                "• 다른 앱의 공유 메뉴: 'TXT로 공유'를 고르면 글을 TXT 파일로 보냅니다.\n" +
-                "• 이 화면: [${Copy.LAB_NOTE_PASTE_SHARE}]를 누르거나 아래 입력란에 붙여넣습니다."
+            stringResource(R.string.lab_clip_help_other_title),
+            stringResource(R.string.lab_clip_help_other_body, Copy.LAB_NOTE_PASTE_SHARE)
         )
         HelpTopic(
-            "보낼 수 있는 것",
-            "• 글: TXT 파일. 서식은 빠집니다\n" +
-                "• 사진(갤러리·브라우저의 '이미지 복사'): 원본 이미지\n" +
-                "• 한꺼번에 복사한 여러 장: 모두 한 번에\n" +
-                "• 파일 앱에서 복사한 파일: 원본 파일"
+            stringResource(R.string.lab_clip_help_what_title),
+            stringResource(R.string.lab_clip_help_what_body)
         )
         HelpTopic(
-            "알아 둘 점",
-            "마지막에 복사한 것 하나만 보냅니다. 키보드 클립보드 목록의 예전 항목은 Android가 막아 읽을 수 없습니다. " +
-                "공유할 때 뜨는 'GOAT이 클립보드에서 붙여넣음' 안내는 Android의 정상 알림입니다."
+            stringResource(R.string.lab_clip_help_note_title),
+            stringResource(R.string.lab_clip_help_note_body)
         )
     }
 }
@@ -178,7 +174,7 @@ private fun DrawScope.clipIcon(color: Color, topLeft: Offset, sizeDp: Float) {
 private fun DrawScope.tilePill(c: LiquidColors, tm: TextMeasurer, o: Offset, w: Float) {
     box(c.ink, o, 0f, 0f, w, 26f, 13f)
     clipIcon(c.onInk, at(o, 7f, 3f), 20f)
-    val l = tm.measure("클립보드 공유", TextStyle(fontFamily = GalaxyFont, color = c.onInk, fontSize = (minOf(10.5f, (w - 38f) / 6.3f) / fontScale).sp, fontWeight = FontWeight.Bold))
+    val l = tm.measure(Copy.text(R.string.lab_clip_art_tile), TextStyle(fontFamily = GalaxyFont, color = c.onInk, fontSize = (minOf(10.5f, (w - 38f) / 6.3f) / fontScale).sp, fontWeight = FontWeight.Bold))
     drawText(l, topLeft = at(o, 31f, 13f) - Offset(0f, l.size.height / 2f))
 }
 
@@ -220,7 +216,7 @@ private fun DrawScope.copyScene(c: LiquidColors, tm: TextMeasurer, o: Offset, t:
     textLines(c, o, 8f, 22f, 80f, 3)
     box(c.ink.copy(alpha = 0.22f), o, 8f, 20f, 60f, 12f, 2f)
     box(Color(0xFF3A3A3C), o, 18f, -4f, 40f, 16f, 8f)
-    artLabel(tm, "복사", at(o, 38f, 4f), Color.White, 9, bold = true)
+    artLabel(tm, Copy.text(R.string.lab_clip_art_copy), at(o, 38f, 4f), Color.White, 9, bold = true)
     tapRipple(c, at(o, 38f, 4f), 5f, t)
 }
 
@@ -241,6 +237,6 @@ private fun DrawScope.pickScene(c: LiquidColors, tm: TextMeasurer, o: Offset, t:
     txtDoc(c, tm, Offset(o.x + 8f, o.y + 8f), 0.8f)
     listOf(c.ink, c.ink.copy(alpha = 0.4f), c.line).forEachIndexed { i, col -> drawCircle(col, px(8f), at(o, 52f + i * 22f, 22f)) }
     box(c.ink.copy(alpha = 0.12f), o, 8f, 44f, 104f, 10f, 5f)
-    artLabel(tm, "보낼 앱 고르기", at(o, 60f, 49f), c.ink, 7, bold = true)
+    artLabel(tm, Copy.text(R.string.lab_clip_art_pick_app), at(o, 60f, 49f), c.ink, 7, bold = true)
     tapRipple(c, at(o, 52f, 22f), 5f, t)
 }

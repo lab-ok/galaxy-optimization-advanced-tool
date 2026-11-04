@@ -1,7 +1,9 @@
 package com.labok.goat.data.lab
 
 import android.content.Context
+import com.labok.goat.R
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.text.Copy
 
 /**
  * 실험실 배터리 모니터링의 '마지막 충전 이후': 시스템 배터리 통계(`dumpsys batterystats -c --charged`, Shizuku 셸)를 읽는다.
@@ -108,19 +110,19 @@ object BatteryStatsReader {
 
     /** 시스템 항목 이름표를 한국어로. 모르는 것은 그대로. */
     fun systemLabel(key: String) = when (key) {
-        "scrn" -> "화면"
-        "cpu" -> "프로세서"
-        "cell", "phone" -> "모바일 네트워크·통화 대기"
+        "scrn" -> Copy.text(R.string.labdata_batterystats_screen)
+        "cpu" -> Copy.text(R.string.labdata_batterystats_cpu)
+        "cell", "phone" -> Copy.text(R.string.labdata_batterystats_cell)
         "wifi" -> "Wi-Fi"
-        "blue" -> "블루투스"
-        "idle" -> "기기 대기"
-        "camera" -> "카메라"
-        "audio" -> "오디오"
-        "video" -> "동영상"
-        "flashlight" -> "손전등"
-        "sensors" -> "센서"
-        "gnss" -> "위치(GPS)"
-        "memory" -> "메모리"
+        "blue" -> Copy.text(R.string.labdata_name_bluetooth)
+        "idle" -> Copy.text(R.string.labdata_batterystats_idle)
+        "camera" -> Copy.text(R.string.labdata_batterystats_camera)
+        "audio" -> Copy.text(R.string.labdata_batterystats_audio)
+        "video" -> Copy.text(R.string.labdata_batterystats_video)
+        "flashlight" -> Copy.text(R.string.labdata_batterystats_flashlight)
+        "sensors" -> Copy.text(R.string.labdata_batterystats_sensors)
+        "gnss" -> Copy.text(R.string.labdata_batterystats_gnss)
+        "memory" -> Copy.text(R.string.labdata_batterystats_memory)
         "ambi" -> "Always On Display"
         else -> key
     }
@@ -128,15 +130,15 @@ object BatteryStatsReader {
     /** 시스템 uid의 이름. 앱 uid(10000 이상)는 null(패키지 이름으로 찾는다). */
     fun systemUidLabel(uid: Int): String? = when {
         uid % 100_000 >= 10_000 -> null
-        uid == 0 -> "커널"
-        uid == 1000 -> "Android 시스템"
-        uid == 1001 -> "전화·통신"
-        uid == 1002 -> "블루투스"
+        uid == 0 -> Copy.text(R.string.labdata_batterystats_uid_kernel)
+        uid == 1000 -> Copy.text(R.string.labdata_batterystats_uid_android)
+        uid == 1001 -> Copy.text(R.string.labdata_batterystats_uid_phone)
+        uid == 1002 -> Copy.text(R.string.labdata_name_bluetooth)
         uid == 1010 -> "Wi-Fi"
-        uid == 1013 -> "미디어"
-        uid == 1041 -> "오디오"
-        uid == 1047 -> "카메라"
-        else -> "시스템($uid)"
+        uid == 1013 -> Copy.text(R.string.labdata_batterystats_uid_media)
+        uid == 1041 -> Copy.text(R.string.labdata_batterystats_audio)
+        uid == 1047 -> Copy.text(R.string.labdata_batterystats_camera)
+        else -> Copy.text(R.string.labdata_batterystats_uid_system, uid)
     }
 
     /**
@@ -156,7 +158,7 @@ object BatteryStatsReader {
     fun uidName(context: Context, uid: Int): String {
         systemUidLabel(uid)?.let { return it }
         val pm = context.packageManager
-        val pkg = pm.getPackagesForUid(uid)?.firstOrNull() ?: return "삭제된 앱"
+        val pkg = pm.getPackagesForUid(uid)?.firstOrNull() ?: return Copy.text(R.string.labdata_batterystats_deleted_app)
         return runCatching {
             @Suppress("DEPRECATION")
             pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()

@@ -1,10 +1,16 @@
 package com.labok.goat.data.lab
 
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Before
 import org.junit.Test
 
 class TranscriptTest {
+    // 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
+
     @Test
     fun headerLinesWithTime() {
         val text = "회의 녹음 10월 19일\n\n화자 1 00:00\n안녕하세요.\n오늘 일정 말씀드릴게요.\n\n화자 2 (00:12)\n네, 좋습니다.\n\n화자 1 00:20\n내일 3:30에 만나요."

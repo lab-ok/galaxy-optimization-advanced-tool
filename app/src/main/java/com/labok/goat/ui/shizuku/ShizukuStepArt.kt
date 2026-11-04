@@ -8,10 +8,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.liquid.LiquidColors
+import com.labok.goat.ui.text.Copy
 import kotlin.math.min
 
 /*
@@ -48,9 +50,9 @@ internal fun StoreStepArt() {
         drawLine(c.ink, Offset(ax, ay), Offset(ax - 6.dp.toPx(), ay - 6.dp.toPx()), 3.dp.toPx(), StrokeCap.Round)
         drawLine(c.ink, Offset(ax, ay), Offset(ax + 6.dp.toPx(), ay - 6.dp.toPx()), 3.dp.toPx(), StrokeCap.Round)
         if (t > 0.65f) {
-            artLabel(tm, "✓ 설치됨", Offset(size.width / 2, size.height * 0.88f), c.ink, 11, bold = true)
+            artLabel(tm, Copy.text(R.string.shizuku_art_installed), Offset(size.width / 2, size.height * 0.88f), c.ink, 11, bold = true)
         } else {
-            artLabel(tm, "Shizuku · 무료", Offset(size.width / 2, size.height * 0.88f), c.muted, 11)
+            artLabel(tm, Copy.text(R.string.shizuku_art_free), Offset(size.width / 2, size.height * 0.88f), c.muted, 11)
         }
     }
 }
@@ -66,9 +68,9 @@ internal fun WirelessStepArt() {
         val rowH = size.height * 0.44f
         drawRoundRect(c.surface, rowTl, Size(rowW, rowH), CornerRadius(rowH / 2))
         drawRoundRect(c.line, rowTl, Size(rowW, rowH), CornerRadius(rowH / 2), style = Stroke(1.dp.toPx()))
-        artLabel(tm, "무선 디버깅", Offset(rowTl.x + rowW * 0.3f, rowTl.y + rowH / 2), c.ink, 12, bold = true)
+        artLabel(tm, Copy.text(R.string.shizuku_art_wireless_debugging), Offset(rowTl.x + rowW * 0.3f, rowTl.y + rowH / 2), c.ink, 12, bold = true)
         // 이 줄이 개발자 옵션 안 '디버깅' 묶음에 있다는 것을 위에 적는다
-        artLabel(tm, "개발자 옵션 › 디버깅", Offset(rowTl.x + rowW * 0.22f, rowTl.y - 10.dp.toPx()), c.muted, 10)
+        artLabel(tm, Copy.text(R.string.shizuku_art_dev_debugging), Offset(rowTl.x + rowW * 0.22f, rowTl.y - 10.dp.toPx()), c.muted, 10)
         val sw = Size(40.dp.toPx(), 22.dp.toPx())
         val sc = Offset(rowTl.x + rowW - 34.dp.toPx(), rowTl.y + rowH / 2)
         drawRoundRect(if (on) c.ink else c.line, Offset(sc.x - sw.width / 2, sc.y - sw.height / 2), sw, CornerRadius(sw.height / 2))
@@ -98,13 +100,13 @@ internal fun PairingStepArt() {
         // 왼쪽: 설정 → 무선 디버깅 → 페어링 코드
         drawRoundRect(c.surface, left, Size(w, h), CornerRadius(14.dp.toPx()))
         drawRoundRect(c.line, left, Size(w, h), CornerRadius(14.dp.toPx()), style = Stroke(1.dp.toPx()))
-        artLabel(tm, "페어링 코드", Offset(left.x + w / 2, left.y + h * 0.25f), c.muted, 10)
+        artLabel(tm, Copy.text(R.string.shizuku_art_pairing_code), Offset(left.x + w / 2, left.y + h * 0.25f), c.muted, 10)
         artLabel(tm, "482 931", Offset(left.x + w / 2, left.y + h * 0.52f), c.ink, 16, bold = true)
-        artLabel(tm, "설정 화면", Offset(left.x + w / 2, left.y + h * 0.82f), c.muted, 9)
+        artLabel(tm, Copy.text(R.string.shizuku_art_settings_screen), Offset(left.x + w / 2, left.y + h * 0.82f), c.muted, 9)
         // 오른쪽: Shizuku 알림의 입력 칸
         drawRoundRect(c.surface, right, Size(w, h), CornerRadius(14.dp.toPx()))
         drawRoundRect(c.ink, right, Size(w, h), CornerRadius(14.dp.toPx()), style = Stroke(1.5.dp.toPx()))
-        artLabel(tm, "Shizuku 알림", Offset(right.x + w / 2, right.y + h * 0.18f), c.ink, 10, bold = true)
+        artLabel(tm, Copy.text(R.string.shizuku_art_notification), Offset(right.x + w / 2, right.y + h * 0.18f), c.ink, 10, bold = true)
         val typed = (t / 0.7f * code.length).toInt().coerceIn(0, code.length)
         val fieldTl = Offset(right.x + w * 0.1f, right.y + h * 0.34f)
         drawRoundRect(c.line.copy(alpha = 0.5f), fieldTl, Size(w * 0.8f, h * 0.26f), CornerRadius(8.dp.toPx()))
@@ -112,7 +114,7 @@ internal fun PairingStepArt() {
         val done = t > 0.75f
         val btnTl = Offset(right.x + w * 0.25f, right.y + h * 0.68f)
         drawRoundRect(if (done) c.ink else c.line, btnTl, Size(w * 0.5f, h * 0.2f), CornerRadius(h * 0.1f))
-        artLabel(tm, "보내기", Offset(right.x + w / 2, btnTl.y + h * 0.1f), if (done) c.onInk else c.muted, 10, bold = true)
+        artLabel(tm, Copy.text(R.string.shizuku_art_send), Offset(right.x + w / 2, btnTl.y + h * 0.1f), if (done) c.onInk else c.muted, 10, bold = true)
         // 숫자가 왼쪽에서 오른쪽으로 옮겨 가는 점
         if (!done) {
             val f = (t / 0.7f * code.length) % 1f
@@ -131,12 +133,12 @@ internal fun AllowStepArt() {
         val tl = Offset((size.width - w) / 2, size.height * 0.06f)
         drawRoundRect(c.surface, tl, Size(w, h), CornerRadius(18.dp.toPx()))
         drawRoundRect(c.line, tl, Size(w, h), CornerRadius(18.dp.toPx()), style = Stroke(1.dp.toPx()))
-        artLabel(tm, "GOAT가 Shizuku를 쓰도록 허용할까요?", Offset(size.width / 2, tl.y + h * 0.22f), c.ink, 11, bold = true)
+        artLabel(tm, Copy.text(R.string.shizuku_art_allow_prompt), Offset(size.width / 2, tl.y + h * 0.22f), c.ink, 11, bold = true)
         val pressed = t in 0.45f..0.75f
         val b1 = Offset(tl.x + w * 0.1f, tl.y + h * 0.42f)
         drawRoundRect(if (pressed) c.ink else c.line.copy(alpha = 0.6f), b1, Size(w * 0.8f, h * 0.22f), CornerRadius(h * 0.11f))
-        artLabel(tm, "항상 허용", Offset(size.width / 2, b1.y + h * 0.11f), if (pressed) c.onInk else c.ink, 11, bold = true)
-        artLabel(tm, "거부", Offset(size.width / 2, tl.y + h * 0.82f), c.muted, 10)
+        artLabel(tm, Copy.text(R.string.shizuku_art_allow_always), Offset(size.width / 2, b1.y + h * 0.11f), if (pressed) c.onInk else c.ink, 11, bold = true)
+        artLabel(tm, Copy.text(R.string.shizuku_art_deny), Offset(size.width / 2, tl.y + h * 0.82f), c.muted, 10)
         finger(c, Offset(size.width * 0.8f, size.height), Offset(size.width / 2 + w * 0.2f, b1.y + h * 0.11f), t)
     }
 }
@@ -154,12 +156,12 @@ internal fun DevOptionsStepArt() {
         val rowH = size.height * 0.24f
         // 위 줄: 소프트웨어 정보 화면의 다른 항목(흐리게)
         drawRoundRect(c.surface, rowTl, Size(rowW, rowH), CornerRadius(rowH / 2))
-        artLabel(tm, "소프트웨어 정보", Offset(rowTl.x + rowW * 0.3f, rowTl.y + rowH / 2), c.muted, 11)
+        artLabel(tm, Copy.text(R.string.shizuku_art_software_info), Offset(rowTl.x + rowW * 0.3f, rowTl.y + rowH / 2), c.muted, 11)
         // 누를 줄: 빌드 번호
         val bTl = Offset(rowTl.x, rowTl.y + rowH + 8.dp.toPx())
         drawRoundRect(c.surface, bTl, Size(rowW, rowH), CornerRadius(rowH / 2))
         drawRoundRect(c.ink, bTl, Size(rowW, rowH), CornerRadius(rowH / 2), style = Stroke(1.5.dp.toPx()))
-        artLabel(tm, "빌드 번호", Offset(bTl.x + rowW * 0.24f, bTl.y + rowH / 2), c.ink, 12, bold = true)
+        artLabel(tm, Copy.text(R.string.shizuku_art_build_number), Offset(bTl.x + rowW * 0.24f, bTl.y + rowH / 2), c.ink, 12, bold = true)
         // 7번 두드리기: 앞 70% 동안 0.1마다 한 번
         val taps = if (t < 0.7f) (t / 0.1f).toInt() + 1 else 7
         val local = if (t < 0.7f) (t % 0.1f) / 0.1f else 1f
@@ -176,9 +178,9 @@ internal fun DevOptionsStepArt() {
         // 끝: 켜졌다는 안내
         if (t >= 0.72f) {
             val y = bTl.y + rowH + 18.dp.toPx()
-            artLabel(tm, "✓ 개발자 모드를 켰습니다", Offset(size.width / 2, y), c.ink, 11, bold = true)
+            artLabel(tm, Copy.text(R.string.shizuku_art_dev_mode_on), Offset(size.width / 2, y), c.ink, 11, bold = true)
         } else {
-            artLabel(tm, "빠르게 7번 누르기", Offset(size.width / 2, bTl.y + rowH + 18.dp.toPx()), c.muted, 11)
+            artLabel(tm, Copy.text(R.string.shizuku_art_tap_seven), Offset(size.width / 2, bTl.y + rowH + 18.dp.toPx()), c.muted, 11)
         }
     }
 }

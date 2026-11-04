@@ -25,9 +25,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.tweaks.Resolution
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -227,28 +229,24 @@ internal fun ResolutionHelpSheet() {
     }
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
-            "1. 하는 일",
-            "글자·아이콘 크기는 그대로 두고 화면의 픽셀 수만 줄입니다. 선명도가 조금 낮아지는 대신 게임 프레임이 오르거나 " +
-                "배터리 소모가 줄 수 있습니다. 효과는 기기와 앱마다 다릅니다."
+            stringResource(R.string.tweaks_help_what_title),
+            stringResource(R.string.tweaks_res_help_what_body)
         ) { ResolutionArt(art.percent, art.points) }
         HelpTopic(
-            "2. 바꾼 뒤 확인",
-            "바꾸면 화면이 잠깐 깜빡이고 ${Resolution.CONFIRM_MS / 1000}초 동안 '${Copy.RES_CONFIRM_TITLE}' 창이 뜹니다. " +
-                "그 안에 [${Copy.RES_CONFIRM_KEEP}]를 누르지 않으면 원래대로 되돌립니다. 확인 전에 재부팅해도 다음 부팅 때 되돌립니다."
+            stringResource(R.string.tweaks_res_help_confirm_title),
+            stringResource(R.string.tweaks_res_help_confirm_body_fmt, Resolution.CONFIRM_MS / 1000, Copy.RES_CONFIRM_TITLE, Copy.RES_CONFIRM_KEEP)
         )
         HelpTopic(
-            "3. 함께 바뀌는 것",
-            "화면 크기가 그대로 보이도록 표시 밀도(DPI)도 같은 비율로 줄입니다. 고급 화면 배율 설정 값도 같은 비율로 맞춥니다. " +
-                "앱별 배율을 정해 둔 앱은 삼성 설정이 정해진 단계만 허용해, 해상도를 낮춘 동안 조금 커 보입니다."
+            stringResource(R.string.tweaks_res_help_together_title),
+            stringResource(R.string.tweaks_res_help_together_body)
         )
         HelpTopic(
-            "4. 폴드와 권한",
-            "폴드는 두 화면의 해상도가 따로 저장되는 방식이 확인되지 않아 지원하지 않습니다. 고급 화면 배율 설정과 같은 시스템 설정 권한으로 바꿉니다."
+            stringResource(R.string.tweaks_res_help_fold_title),
+            stringResource(R.string.tweaks_res_help_fold_body)
         )
         HelpTopic(
-            "5. 되돌리기",
-            "'원래대로'를 고르면 GOAT가 바꾸기 전 해상도로 돌아갑니다. 삼성 설정에서 FHD+로 줄여 두었다면 그 크기입니다. " +
-                "화면을 쓸 수 없을 만큼 문제가 생기면 PC에서 '${Resolution.PC_UNDO}'을 실행하세요."
+            stringResource(R.string.tweaks_help_step5_undo_title),
+            stringResource(R.string.tweaks_res_help_undo_body_fmt, Resolution.PC_UNDO)
         )
     }
 }

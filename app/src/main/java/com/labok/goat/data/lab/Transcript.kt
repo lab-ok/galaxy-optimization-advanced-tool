@@ -1,5 +1,8 @@
 package com.labok.goat.data.lab
 
+import com.labok.goat.R
+import com.labok.goat.ui.text.Copy
+
 /**
  * 실험실 '전사문 저장': 삼성 음성 녹음(Galaxy AI 전사)이 공유한 전사문에서 화자를 찾고,
  * 사용자가 고른 화자를 '나', 나머지를 모두 '상대'로 바꾼 글을 만든다. 화면·저장은 [com.labok.goat.ui.lab.TranscriptShareActivity].
@@ -26,8 +29,8 @@ object Transcript {
         }
     }
 
-    const val ME = "나"
-    const val OTHER = "상대"
+    val ME: String get() = Copy.text(R.string.labdata_transcript_me)
+    val OTHER: String get() = Copy.text(R.string.labdata_transcript_other)
 
     private const val TIME = """\d{1,2}:\d{2}(?::\d{2})?"""
     private const val NAME = """[^\s:：()\[\]][^:：()\[\]]{0,23}?"""
@@ -139,6 +142,6 @@ object Transcript {
     /** 저장할 파일 이름: 받은 이름(확장자 뺌)에 '(나·상대)'를 붙인다. 파일 이름에 못 쓰는 글자는 바꾼다. */
     fun fileName(base: String?, fallback: String): String {
         val name = base?.substringBeforeLast('.')?.replace(Regex("""[\\/:*?"<>|\n\r]"""), "_")?.trim()?.take(60)?.ifEmpty { null } ?: fallback
-        return "$name (나·상대).txt"
+        return Copy.text(R.string.labdata_transcript_file_name, name)
     }
 }

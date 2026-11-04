@@ -2,8 +2,10 @@ package com.labok.goat.data.lab
 
 import android.content.Context
 import android.provider.Settings
+import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.text.Copy
 
 /**
  * 실험실 설정 하나(시스템 설정 표·키). 처음 바꾸기 전 값(없던 키는 없었다는 사실까지)을 남겨 [restore]로 그대로 되돌린다.
@@ -82,7 +84,13 @@ object AirplaneRadios {
     val setting = LabSetting("global", "airplane_mode_radios", "비행기 모드 무선")
 
     /** 사용자가 고를 수 있는 무선(셀룰러는 비행기 모드의 뜻이라 늘 끈다). */
-    enum class Radio(val id: String, val label: String) { WIFI("wifi", "Wi-Fi"), BLUETOOTH("bluetooth", "블루투스"), NFC("nfc", "NFC") }
+    enum class Radio(val id: String, private val labelRes: Int) {
+        WIFI("wifi", R.string.labdata_name_wifi),
+        BLUETOOTH("bluetooth", R.string.labdata_name_bluetooth),
+        NFC("nfc", R.string.labdata_name_nfc);
+
+        val label: String get() = Copy.text(labelRes)
+    }
 
     fun list(raw: String?): List<String> = (raw ?: DEFAULT).split(',').map { it.trim() }.filter { it.isNotEmpty() }
 
@@ -109,19 +117,21 @@ object AirplaneRadios {
 object IconBlacklist {
     val setting = LabSetting("secure", "icon_blacklist", "상태 표시줄 아이콘 숨기기")
 
-    enum class Slot(val id: String, val label: String) {
-        ALARM("alarm_clock", "알람"),
-        VOLUME("volume", "진동·무음"),
-        BLUETOOTH("bluetooth", "블루투스"),
-        NFC("nfc", "NFC"),
-        HOTSPOT("hotspot", "핫스팟"),
-        ROTATE("rotate", "화면 회전 잠금"),
-        HEADSET("headset", "헤드셋"),
-        LOCATION("location", "위치"),
-        DATA_SAVER("data_saver", "데이터 절약"),
-        VPN("vpn", "VPN"),
-        ZEN("zen", "방해 금지"),
-        VOLTE("ims_volte", "VoLTE")
+    enum class Slot(val id: String, private val labelRes: Int) {
+        ALARM("alarm_clock", R.string.labdata_icon_slot_alarm),
+        VOLUME("volume", R.string.labdata_icon_slot_volume),
+        BLUETOOTH("bluetooth", R.string.labdata_name_bluetooth),
+        NFC("nfc", R.string.labdata_name_nfc),
+        HOTSPOT("hotspot", R.string.labdata_icon_slot_hotspot),
+        ROTATE("rotate", R.string.labdata_icon_slot_rotate),
+        HEADSET("headset", R.string.labdata_icon_slot_headset),
+        LOCATION("location", R.string.labdata_icon_slot_location),
+        DATA_SAVER("data_saver", R.string.labdata_icon_slot_data_saver),
+        VPN("vpn", R.string.labdata_icon_slot_vpn),
+        ZEN("zen", R.string.labdata_icon_slot_zen),
+        VOLTE("ims_volte", R.string.labdata_icon_slot_volte);
+
+        val label: String get() = Copy.text(labelRes)
     }
 
     fun list(raw: String?): List<String> = raw.orEmpty().split(',').map { it.trim() }.filter { it.isNotEmpty() }

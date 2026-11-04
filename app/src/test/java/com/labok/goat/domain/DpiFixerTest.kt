@@ -8,10 +8,12 @@ import com.labok.goat.data.settings.KeyValueStore
 import com.labok.goat.data.settings.LastApply
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.DpiPolicy.Decision
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class MemoryStore : KeyValueStore {
@@ -66,6 +68,9 @@ class FakeController(
 }
 
 class DpiFixerTest {
+    // 화면 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
 
     private var now = 1_000_000L
     private val logs = mutableListOf<String>()
@@ -281,6 +286,10 @@ class DpiFixerTest {
 }
 
 class ExternalChangeTest {
+    // 화면 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
+
     private val outer = ScreenInfo("1100x2400", 420f, 6.5f)
     private val inner = ScreenInfo("1900x2200", 380f, 8.0f)
 

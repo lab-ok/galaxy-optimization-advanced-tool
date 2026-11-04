@@ -25,10 +25,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.tweaks.Doze
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -160,23 +162,20 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
 internal fun DozeHelpSheet() {
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
-            "1. 하는 일",
-            "화면을 끄고 휴대폰을 두면 Android는 배터리를 아끼려고 앱의 백그라운드 동작과 네트워크를 몰아서 처리합니다. 이것이 잠자기 모드(Doze)입니다. " +
-                "그래서 메신저·메일 알림이 늦게 오기도 합니다. 이 기능은 잠자기 모드를 끕니다."
+            stringResource(R.string.tweaks_help_what_title),
+            stringResource(R.string.tweaks_doze_help_what_body)
         ) { DozeArt(off = true) }
         HelpTopic(
-            "2. 얻는 것과 잃는 것",
-            "알림과 백그라운드 작업이 덜 늦어집니다. 대신 화면이 꺼진 동안에도 앱이 깨어 있어 대기 배터리 소모가 크게 늘어납니다. " +
-                "특정 앱의 알림만 늦다면 그 앱의 배터리 설정을 '제한 없음'으로 바꾸는 편이 낫습니다."
+            stringResource(R.string.tweaks_help_tradeoff_title),
+            stringResource(R.string.tweaks_doze_help_tradeoff_body)
         )
         HelpTopic(
-            "3. 재부팅 뒤",
-            "잠자기 모드는 재부팅하면 다시 켜집니다. 꺼 두었다면 부팅마다 한 번, Shizuku가 연결될 때 GOAT가 다시 끕니다. " +
-                "같은 부팅 안에서 PC 등으로 직접 다시 켰다면 그대로 둡니다."
+            stringResource(R.string.tweaks_doze_help_reboot_title),
+            stringResource(R.string.tweaks_doze_help_reboot_body)
         )
         HelpTopic(
-            "4. 권한과 되돌리기",
-            "셸 권한이 필요해 Shizuku로 끄고 켭니다. 스위치를 끄면 다시 켜지고, PC에서는 'adb shell dumpsys deviceidle enable'로 되돌립니다."
+            stringResource(R.string.tweaks_help_permission_undo_title),
+            stringResource(R.string.tweaks_doze_help_undo_body)
         )
     }
 }

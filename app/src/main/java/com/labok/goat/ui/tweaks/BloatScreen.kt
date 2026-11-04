@@ -36,11 +36,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.tweaks.Bloat
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -126,7 +128,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     if (found != null) {
                         Spacer(Modifier.height(Gap.Item))
                         // 숫자 앞은 줄바꿈하지 않는 공백(좁은 폭에서 '0개'만 다음 줄로 떨어졌다)
-                        Text("정리할 수 있는 앱\u00A0${apps.size}개 · 꺼\u00A0둔\u00A0앱\u00A0${offCount}개", color = c.ink, style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.tweaks_bloat_counts_fmt, apps.size, offCount), color = c.ink, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -184,12 +186,12 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                             }
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    app.name + if (app.risk == Bloat.Risk.CARE) " · 주의" else "",
+                                    app.name + if (app.risk == Bloat.Risk.CARE) " · " + stringResource(R.string.tweaks_bloat_risk_care) else "",
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (off) c.muted else c.ink
                                 )
                                 Text(app.note, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                                Text(if (off) "꺼짐" else "켜짐", color = c.muted, style = MaterialTheme.typography.labelSmall)
+                                Text(stringResource(if (off) R.string.tweaks_state_off else R.string.tweaks_state_on), color = c.muted, style = MaterialTheme.typography.labelSmall)
                             }
                             Spacer(Modifier.width(12.dp))
                             LiquidSwitch(!off, { on ->
@@ -219,8 +221,8 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     confirm?.let { app ->
         AlertDialog(
             onDismissRequest = { confirm = null },
-            title = { Text("${app.name} 끄기") },
-            text = { Text(app.note + " 언제든 다시 켤 수 있습니다.") },
+            title = { Text(stringResource(R.string.tweaks_bloat_confirm_title_fmt, app.name)) },
+            text = { Text(stringResource(R.string.tweaks_bloat_confirm_body_fmt, app.note)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirm = null
@@ -237,22 +239,20 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
 internal fun BloatHelpSheet() {
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
-            "1. 하는 일",
-            "쓰지 않는 삼성·제휴 기본 앱을 꺼서 앱 목록·알림·백그라운드 동작에서 뺍니다. " +
-                "꺼도 전화·문자·설정·카메라 같은 기본 기능이 멈추지 않는 앱만 골라 두었습니다."
+            stringResource(R.string.tweaks_help_what_title),
+            stringResource(R.string.tweaks_bloat_help_what_body)
         ) { CleanupArt() }
         HelpTopic(
-            "2. 지우지 않고 끕니다",
-            "앱을 지우지 않고 '사용 안 함'으로 멈춥니다. 저장 공간은 그대로지만 스위치로 언제든 다시 켤 수 있습니다. " +
-                "'주의'가 붙은 앱은 끄기 전에 무엇이 달라지는지 한 번 더 알려 줍니다."
+            stringResource(R.string.tweaks_bloat_help_disable_title),
+            stringResource(R.string.tweaks_bloat_help_disable_body)
         )
         HelpTopic(
-            "3. Shizuku가 필요한 이유",
-            "앱을 끄려면 셸 권한이 필요합니다. Shizuku를 연결하면 GOAT가 그 권한으로 끄고 켭니다."
+            stringResource(R.string.tweaks_help_shizuku_title),
+            stringResource(R.string.tweaks_bloat_help_shizuku_body)
         )
         HelpTopic(
-            "4. 업데이트 뒤",
-            "업데이트나 재부팅 뒤 다시 켜지는 앱도 있습니다(게임 최적화 서비스 등). 화면을 열면 상태를 다시 읽으니 켜져 있으면 다시 끄세요."
+            stringResource(R.string.tweaks_bloat_help_update_title),
+            stringResource(R.string.tweaks_bloat_help_update_body)
         )
     }
 }

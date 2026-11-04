@@ -17,9 +17,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.R
 import com.labok.goat.data.lab.BatteryMonitor
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
@@ -58,7 +60,7 @@ internal fun BatterySection() {
             Spacer(Modifier.height(Gap.Item))
             val s = now
             if (s == null) {
-                Text("배터리 상태를 확인하지 못했습니다.", color = c.ink)
+                Text(stringResource(R.string.lab_battery_status_unknown), color = c.ink)
             } else {
                 // 맨 위 그림(시안 8): 사용 중·충전 중에 따라 다른 물 막대 애니메이션
                 BatteryBarsArt(s.level, s.charging)
@@ -68,17 +70,17 @@ internal fun BatterySection() {
                     Text("%", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
                     Spacer(Modifier.weight(1f))
                     Text(
-                        if (s.charging) "충전 중" + (s.plug?.let { " · $it" } ?: "") else "배터리 사용 중",
+                        if (s.charging) s.plug?.let { stringResource(R.string.lab_battery_status_charging_plug, it) } ?: stringResource(R.string.lab_battery_status_charging) else stringResource(R.string.lab_battery_status_using),
                         color = c.ink,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
                 }
                 Spacer(Modifier.height(Gap.Item))
-                Metric("온도", s.tempC?.let { String.format(Locale.KOREA, "%.1f°C", it) })
-                Metric("전압", s.voltageMv?.let { String.format(Locale.KOREA, "%.2fV", it / 1000f) })
-                Metric("전류", s.currentMa?.let { "${if (it > 0) "+" else ""}$it mA" })
-                Metric("전력", s.watts?.let { String.format(Locale.KOREA, "%+.1fW", it) })
+                Metric(stringResource(R.string.lab_battery_metric_temp), s.tempC?.let { String.format(Locale.KOREA, "%.1f°C", it) })
+                Metric(stringResource(R.string.lab_battery_metric_voltage), s.voltageMv?.let { String.format(Locale.KOREA, "%.2fV", it / 1000f) })
+                Metric(stringResource(R.string.lab_battery_metric_current), s.currentMa?.let { "${if (it > 0) "+" else ""}$it mA" })
+                Metric(stringResource(R.string.lab_battery_metric_power), s.watts?.let { String.format(Locale.KOREA, "%+.1fW", it) })
             }
         }
         // 배터리 수명 카드는 뺐다: 삼성 기기의 남은 전하량은 화면 잔량으로 만든 값이라 수명을 추정할 수 없고(2026-10-20 조사),
@@ -92,6 +94,6 @@ private fun Metric(name: String, value: String?) {
     val c = LocalLiquid.current
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(name, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-        Text(value ?: "알 수 없음", color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+        Text(value ?: stringResource(R.string.lab_battery_metric_unknown), color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
     }
 }

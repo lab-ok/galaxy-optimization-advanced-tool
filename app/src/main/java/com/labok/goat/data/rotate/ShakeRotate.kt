@@ -19,6 +19,7 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.ShakeRotatePolicy
 import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.liquid.UiGoat
+import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
@@ -228,14 +229,14 @@ object ShakeRotate {
     fun buildNotification(context: Context): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "흔들어서 화면 회전", NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) }
+            NotificationChannel(CHANNEL_ID, Copy.text(R.string.rotate_shake_notification_title), NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) }
         )
         val open = PendingIntent.getActivity(context, 20, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
-            .setContentTitle("흔들어서 화면 회전")
-            .setContentText("기기를 흔들면 현재 방향으로 화면이 회전합니다")
+            .setContentTitle(Copy.text(R.string.rotate_shake_notification_title))
+            .setContentText(Copy.text(R.string.rotate_shake_notification_text))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)

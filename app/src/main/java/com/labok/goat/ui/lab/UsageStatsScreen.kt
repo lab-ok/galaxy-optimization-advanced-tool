@@ -34,6 +34,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -41,6 +42,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.R
 import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.data.lab.BatteryHistory
 import com.labok.goat.data.lab.UsageArchive
@@ -67,13 +69,13 @@ import kotlinx.coroutines.withContext
  * 맨 아래에는 예전 실험실 '배터리 모니터링'을 그대로 붙였다(1.50.3에서 흡수).
  */
 
-private enum class StatsRange(val label: String, val compare: String?) {
-    TODAY("오늘", "어제 이맘때보다"),
-    YESTERDAY("어제", "그저께보다"),
-    WEEK("7일", "그 전 7일보다"),
-    MONTH("월", "지난달보다"),
-    YEAR("1년", "지난해보다"),
-    ALL("전체", null)
+private enum class StatsRange(val label: Int, val compare: Int?) {
+    TODAY(R.string.lab_stats_range_today, R.string.lab_stats_compare_today),
+    YESTERDAY(R.string.lab_stats_range_yesterday, R.string.lab_stats_compare_yesterday),
+    WEEK(R.string.lab_stats_range_week, R.string.lab_stats_compare_week),
+    MONTH(R.string.lab_stats_range_month, R.string.lab_stats_compare_month),
+    YEAR(R.string.lab_stats_range_year, R.string.lab_stats_compare_year),
+    ALL(R.string.lab_stats_range_all, null)
 }
 
 /**
@@ -96,24 +98,24 @@ private enum class Kind { COUNT, TIME, PERCENT }
 private class Metric(val label: String, val unit: String, val kind: Kind, val get: (UsageTally.Result) -> Number?)
 
 /** 숫자 표의 묶음(같은 종류끼리 모아 중복 없이 한 번씩만 보여 준다). */
-private val GROUPS: List<Pair<String, List<Metric>>> = listOf(
-    "화면" to listOf(
-        Metric("화면 켠 시간", "", Kind.TIME) { it.screenMs },
-        Metric("화면 켬", "번", Kind.COUNT) { it.screenOn },
-        Metric("잠금 해제", "번", Kind.COUNT) { it.unlocks }
+private val GROUPS: List<Pair<String, List<Metric>>> get() = listOf(
+    Copy.text(R.string.lab_stats_group_screen) to listOf(
+        Metric(Copy.text(R.string.lab_stats_screen_time), "", Kind.TIME) { it.screenMs },
+        Metric(Copy.text(R.string.lab_stats_screen_on), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.screenOn },
+        Metric(Copy.text(R.string.lab_stats_unlocks), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.unlocks }
     ),
-    "앱·알림" to listOf(
-        Metric("앱 실행", "번", Kind.COUNT) { it.appOpens },
-        Metric("알림", "개", Kind.COUNT) { it.notifications }
+    Copy.text(R.string.lab_stats_group_apps) to listOf(
+        Metric(Copy.text(R.string.lab_stats_app_opens), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.appOpens },
+        Metric(Copy.text(R.string.lab_stats_notifications), Copy.text(R.string.lab_stats_unit_items), Kind.COUNT) { it.notifications }
     ),
-    "손으로 한 것" to listOf(
-        Metric("펼침", "번", Kind.COUNT) { it.unfolds },
-        Metric("화면 회전", "번", Kind.COUNT) { it.rotations },
-        Metric("볼륨 버튼", "번", Kind.COUNT) { it.volume }
+    Copy.text(R.string.lab_stats_group_hands) to listOf(
+        Metric(Copy.text(R.string.lab_stats_unfolds), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.unfolds },
+        Metric(Copy.text(R.string.lab_stats_rotations), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.rotations },
+        Metric(Copy.text(R.string.lab_stats_volume_keys), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.volume }
     ),
-    "배터리" to listOf(
-        Metric("배터리 사용", "%", Kind.PERCENT) { it.batteryUsed },
-        Metric("충전기 꽂음", "번", Kind.COUNT) { it.charges }
+    Copy.text(R.string.lab_battery_label) to listOf(
+        Metric(Copy.text(R.string.lab_stats_battery_used), "%", Kind.PERCENT) { it.batteryUsed },
+        Metric(Copy.text(R.string.lab_stats_charges), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.charges }
     )
 )
 
@@ -140,7 +142,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth().padding(bottom = Gap.Item)) {
-            LiquidChips(options = StatsRange.entries, selected = range, label = { it.label }, onSelect = {
+            LiquidChips(options = StatsRange.entries, selected = range, label = { Copy.text(it.label) }, onSelect = {
                 range = it
                 back = 0
             })
@@ -176,7 +178,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
                 .padding(horizontal = 18.dp, vertical = 14.dp)
         ) {
             Text(spanLabel(v.from, v.to, r.days), color = c.onInk.copy(alpha = 0.75f), style = MaterialTheme.typography.bodySmall)
-            if (lines.isEmpty()) Text("아직 기록이 없습니다", color = c.onInk, fontWeight = FontWeight.Bold, fontSize = 19.sp)
+            if (lines.isEmpty()) Text(stringResource(R.string.lab_stats_no_records), color = c.onInk, fontWeight = FontWeight.Bold, fontSize = 19.sp)
             lines.forEach { Text(it, color = c.onInk, fontWeight = FontWeight.Bold, fontSize = 19.sp) }
             if (titles.isNotEmpty()) {
                 Spacer(Modifier.height(Gap.Item))
@@ -195,11 +197,11 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
         }
         Spacer(Modifier.height(Gap.Card))
         // 2. 숫자 표: 값, 평균, 비교 기준 대비 변화를 한 줄에
-        val avgNote = if (r.days > 1) "하루 평균" else v.avgRef?.let { "최근 ${it.days}일 평균" }
+        val avgNote = if (r.days > 1) stringResource(R.string.lab_stats_avg_per_day) else v.avgRef?.let { stringResource(R.string.lab_stats_avg_recent, it.days) }
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("숫자로 보기", fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
-                Text(listOfNotNull(avgNote, range.compare?.let { "▲▼ $it" }).joinToString(" · "), color = c.muted, style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.lab_stats_numbers_title), fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
+                Text(listOfNotNull(avgNote, range.compare?.let { "▲▼ ${stringResource(it)}" }).joinToString(" · "), color = c.muted, style = MaterialTheme.typography.labelSmall)
             }
             GROUPS.forEach { (group, metrics) ->
                 val shown = metrics.filter { it.get(r) != null }
@@ -225,7 +227,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
                 val active = v.trend.filter { it.second > 0 }
                 if (active.isNotEmpty()) {
                     val peak = active.maxBy { it.second }
-                    Text("평균 ${UsageFun.duration(active.sumOf { it.second } / active.size)} · 가장 많이 쓴 때 ${peak.first} ${UsageFun.duration(peak.second)}", color = c.muted, style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.lab_stats_trend_summary, UsageFun.duration(active.sumOf { it.second } / active.size), peak.first, UsageFun.duration(peak.second)), color = c.muted, style = MaterialTheme.typography.labelSmall)
                 }
                 Spacer(Modifier.height(Gap.Item))
                 TrendBars(v.trend)
@@ -233,7 +235,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
         }
         Spacer(Modifier.height(Gap.Card))
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
-            Text(if (r.days > 1) "시간대별 화면 켠 시간 · 하루 평균" else "시간대별 화면 켠 시간", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(if (r.days > 1) stringResource(R.string.lab_stats_hourly_title_avg) else stringResource(R.string.lab_stats_hourly_title), fontWeight = FontWeight.SemiBold, color = c.ink)
             Spacer(Modifier.height(Gap.Item))
             HourBars(if (r.days > 1) LongArray(24) { r.hourlyMs[it] / r.days } else r.hourlyMs)
         }
@@ -244,7 +246,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
         if (facts.isNotEmpty()) {
             Spacer(Modifier.height(Gap.Card))
             GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
-                Text("발견", fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(stringResource(R.string.lab_stats_facts_title), fontWeight = FontWeight.SemiBold, color = c.ink)
                 Spacer(Modifier.height(Gap.Tight))
                 facts.forEach { Text("• $it", color = c.ink, style = MaterialTheme.typography.bodyMedium) }
             }
@@ -254,15 +256,15 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
             Spacer(Modifier.height(Gap.Card))
             GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
                 if (topApps.isNotEmpty()) {
-                    Text("많이 연 앱", fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(stringResource(R.string.lab_stats_top_apps), fontWeight = FontWeight.SemiBold, color = c.ink)
                     Spacer(Modifier.height(Gap.Tight))
-                    RankList(topApps, "번")
+                    RankList(topApps, stringResource(R.string.lab_stats_unit_times))
                 }
                 if (topNotis.isNotEmpty()) {
                     if (topApps.isNotEmpty()) Spacer(Modifier.height(Gap.Item))
-                    Text("알림이 많이 온 앱", fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(stringResource(R.string.lab_stats_top_notifications), fontWeight = FontWeight.SemiBold, color = c.ink)
                     Spacer(Modifier.height(Gap.Tight))
-                    RankList(topNotis, "개")
+                    RankList(topNotis, stringResource(R.string.lab_stats_unit_items))
                 }
             }
         }
@@ -271,7 +273,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth).clickable { batteryOpen = !batteryOpen }) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(Copy.LAB_STATS_BATTERY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
-                Text(if (batteryOpen) "접기" else "펼치기", color = c.muted, style = MaterialTheme.typography.labelSmall)
+                Text(if (batteryOpen) stringResource(R.string.lab_stats_collapse) else stringResource(R.string.lab_stats_expand), color = c.muted, style = MaterialTheme.typography.labelSmall)
             }
             Text(Copy.LAB_STATS_BATTERY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
         }
@@ -296,7 +298,7 @@ private fun MetricRow(m: Metric, r: UsageTally.Result, base: UsageTally.Result?,
     val change = base?.let { m.get(it) }?.let { delta(m.kind, value, it) }
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-        avg?.let { Text("평균 " + format(m.kind, it, m.unit), color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(end = 10.dp)) }
+        avg?.let { Text(stringResource(R.string.lab_stats_avg_value, format(m.kind, it, m.unit)), color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(end = 10.dp)) }
         Text(format(m.kind, value, m.unit), color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
         Text(
             change ?: "",
@@ -343,12 +345,12 @@ private fun delta(kind: Kind, now: Number, before: Number): String? {
 private fun spanLabel(from: Long, to: Long, days: Int): String {
     val f = Calendar.getInstance().apply { timeInMillis = from }
     val t = Calendar.getInstance().apply { timeInMillis = to }
-    fun md(c: Calendar) = "${c.get(Calendar.MONTH) + 1}월 ${c.get(Calendar.DAY_OF_MONTH)}일"
+    fun md(c: Calendar) = Copy.text(R.string.lab_date_month_day, c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH))
     val sameDay = f.get(Calendar.YEAR) == t.get(Calendar.YEAR) && f.get(Calendar.DAY_OF_YEAR) == t.get(Calendar.DAY_OF_YEAR)
-    if (sameDay) return "${f.get(Calendar.YEAR)}년 ${md(f)}"
-    val start = "${f.get(Calendar.YEAR)}년 ${md(f)}"
-    val end = (if (t.get(Calendar.YEAR) != f.get(Calendar.YEAR)) "${t.get(Calendar.YEAR)}년 " else "") + md(t)
-    return "$start ~ $end · 기록 ${days}일"
+    if (sameDay) return Copy.text(R.string.lab_stats_year_date, f.get(Calendar.YEAR), md(f))
+    val start = Copy.text(R.string.lab_stats_year_date, f.get(Calendar.YEAR), md(f))
+    val end = if (t.get(Calendar.YEAR) != f.get(Calendar.YEAR)) Copy.text(R.string.lab_stats_year_date, t.get(Calendar.YEAR), md(t)) else md(t)
+    return Copy.text(R.string.lab_stats_span, start, end, days)
 }
 
 /** 기간 하나를 센다(작업 스레드): 지난날은 저장된 기록, 오늘은 새로 센다. */
@@ -372,22 +374,22 @@ private fun load(context: Context, range: StatsRange, back: Int): StatsView {
         StatsRange.YESTERDAY -> StatsView(period(today - DAY, today - 1), period(today - 2 * DAY, today - DAY - 1), recent(today - DAY), emptyList(), null, today - DAY, today - 1)
         StatsRange.WEEK -> {
             val from = UsageTally.dayStart(6)
-            StatsView(period(from, now), period(UsageTally.dayStart(13), from - 1), null, dailyTrend(context, from, now) { todayResult }, "날마다 화면 켠 시간", from, now)
+            StatsView(period(from, now), period(UsageTally.dayStart(13), from - 1), null, dailyTrend(context, from, now) { todayResult }, Copy.text(R.string.lab_stats_trend_daily), from, now)
         }
         StatsRange.MONTH -> {
             val (from, to) = monthRange(back)
             val (pf, pt) = monthRange(back + 1)
-            StatsView(period(from, minOf(to, now)), period(pf, pt), null, dailyTrend(context, from, minOf(to, now)) { todayResult }, "날마다 화면 켠 시간", from, minOf(to, now))
+            StatsView(period(from, minOf(to, now)), period(pf, pt), null, dailyTrend(context, from, minOf(to, now)) { todayResult }, Copy.text(R.string.lab_stats_trend_daily), from, minOf(to, now))
         }
         StatsRange.YEAR -> {
             val (from, to) = yearRange(back)
             val (pf, pt) = yearRange(back + 1)
             val start = maxOf(from, UsageArchive.firstDay(context) ?: today)
-            StatsView(period(from, minOf(to, now)), period(pf, pt), null, monthlyTrend(from, minOf(to, now), ::period), "달마다 화면 켠 시간", start, minOf(to, now))
+            StatsView(period(from, minOf(to, now)), period(pf, pt), null, monthlyTrend(from, minOf(to, now), ::period), Copy.text(R.string.lab_stats_trend_monthly), start, minOf(to, now))
         }
         StatsRange.ALL -> {
             val first = UsageArchive.firstDay(context) ?: today
-            StatsView(period(first, now), null, null, monthlyTrend(first, now, ::period), "달마다 화면 켠 시간", first, now)
+            StatsView(period(first, now), null, null, monthlyTrend(first, now, ::period), Copy.text(R.string.lab_stats_trend_monthly), first, now)
         }
     }
 }
@@ -416,7 +418,7 @@ private fun monthlyTrend(from: Long, to: Long, period: (Long, Long) -> UsageTall
     val out = ArrayList<Pair<String, Long>>()
     while (cal.timeInMillis <= to) {
         val start = maxOf(cal.timeInMillis, from)
-        val label = "${cal.get(Calendar.MONTH) + 1}월"
+        val label = Copy.text(R.string.lab_stats_month, cal.get(Calendar.MONTH) + 1)
         cal.add(Calendar.MONTH, 1)
         out += label to period(start, minOf(cal.timeInMillis - 1, to)).screenMs
     }
@@ -451,10 +453,10 @@ private fun periodLabel(range: StatsRange, back: Int): String {
     val cal = Calendar.getInstance()
     return if (range == StatsRange.MONTH) {
         cal.add(Calendar.MONTH, -back)
-        "${cal.get(Calendar.YEAR)}년 ${cal.get(Calendar.MONTH) + 1}월"
+        Copy.text(R.string.lab_stats_year_month, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1)
     } else {
         cal.add(Calendar.YEAR, -back)
-        "${cal.get(Calendar.YEAR)}년"
+        Copy.text(R.string.lab_stats_year, cal.get(Calendar.YEAR))
     }
 }
 
@@ -484,7 +486,7 @@ private fun minutesDelta(now: Long, before: Long): String? {
 /** 0~23시 막대. 진하고 높을수록 그 시간에 화면을 오래 켰다. */
 @Composable
 private fun HourBars(hourly: LongArray) {
-    Bars(hourly.toList(), (0 until 24).map { if (it % 6 == 0) "${it}시" else "" })
+    Bars(hourly.toList(), (0 until 24).map { if (it % 6 == 0) stringResource(R.string.lab_stats_hour_label, it) else "" })
 }
 
 /** 기간 안 흐름(일별·월별) 막대. 라벨이 많으면 몇 칸 걸러 쓴다. */

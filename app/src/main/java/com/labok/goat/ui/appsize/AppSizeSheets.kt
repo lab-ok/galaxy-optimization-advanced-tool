@@ -20,9 +20,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.data.appsize.DensityServer
 import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.shizuku.ShizukuAccess
@@ -52,54 +54,41 @@ internal fun AppSizeHelpSheet(foldable: Boolean = true, onConnect: () -> Unit) {
         var no = 0
         fun n() = ++no
         HelpTopic(
-            "${n()}. 하는 일",
-            "앱마다 배율을 따로 정합니다. 삼성 '설정 → 디스플레이 → 앱 화면 크게/작게'와 같은 설정이라 " +
-                "그 화면에도 반영됩니다. 바꾼 값은 재부팅해도 유지됩니다.",
+            "${n()}. ${stringResource(R.string.appsize_help_what_title)}",
+            stringResource(R.string.appsize_help_what_body),
             art = { AppScaleArt() }
         )
         HelpTopic(
-            "${n()}. 배율이 여섯 단계인 이유",
-            "삼성 시스템이 ${AppDensityPolicy.STEPS.joinToString(", ")} 여섯 값만 받아 1 단위로 조절할 수 없습니다. " +
-                "'기본'은 앱별 설정을 지우고 기기 전체 배율을 따릅니다.",
+            "${n()}. ${stringResource(R.string.appsize_help_steps_title)}",
+            stringResource(R.string.appsize_help_steps_body_fmt, AppDensityPolicy.STEPS.joinToString(", ")),
             art = { StepsArt() }
         )
         // 접고 펼 때 이야기는 폴드에서만
         if (foldable) {
             HelpTopic(
-                "${n()}. 접고 펼 때 크기가 달라 보이는 이유",
-                "앱별 배율은 DPI 하나라서 외부·내부 화면에 같은 값이 쓰입니다. 두 화면은 PPI가 달라 같은 값이라도 크기가 다르게 보입니다. " +
-                    "기기 전체 배율은 '${Copy.FEATURE_DPI}'이 화면마다 맞추지만, 앱별 배율은 화면마다 따로 정할 수 없습니다. " +
-                    "주로 쓰는 화면에 맞춰 고르세요.",
+                "${n()}. ${stringResource(R.string.appsize_help_fold_title)}",
+                stringResource(R.string.appsize_help_fold_body_fmt, Copy.FEATURE_DPI),
                 art = { FoldDiffArt() }
             )
         }
         HelpTopic(
-            "${n()}. 알림창에서 바로 바꾸기",
-            "'${Copy.APP_SIZE_NOTIFY_TITLE}'을 켜면 알림에 지금 보는 앱과 배율이 나옵니다. [작게]·[기본]·[크게]로 한 단계씩 바꿉니다. " +
-                "배율을 바꾸면 그 앱이 다시 시작되고, GOAT가 다시 열어 줍니다.",
+            "${n()}. ${stringResource(R.string.appsize_help_notify_title)}",
+            stringResource(R.string.appsize_help_notify_body_fmt, Copy.APP_SIZE_NOTIFY_TITLE),
             art = { NotifyArt() }
         )
         HelpTopic(
-            "${n()}. Shizuku가 필요한 이유",
-            "이 설정은 시스템 전용 권한이 있어야 바꿀 수 있습니다. 무료 앱 Shizuku가 무선 디버깅으로 그 권한을 빌려 줍니다. " +
-                "페어링은 처음 한 번만 하면 됩니다. Android 13 이상에서는 재부팅 뒤 Wi-Fi에 연결되면 Shizuku가 다시 켜집니다. " +
-                "Shizuku 대신 PC 명령 한 번으로 GOAT 셸 도우미를 켜도 됩니다.",
+            "${n()}. ${stringResource(R.string.appsize_help_shizuku_title)}",
+            stringResource(R.string.appsize_help_shizuku_body),
             art = { ShizukuBridgeArt() }
         )
         HelpTopic(
-            "${n()}. Shizuku가 꺼져 있으면",
-            "• 이미 정해 둔 앱 배율: 재부팅해도 그대로 유지됩니다.\n" +
-                "• 목록에서 배율 바꾸기, 알림창 [작게]·[기본]·[크게]: Shizuku가 실행 중일 때만 됩니다.\n" +
-                "• 알림의 지금 보는 앱 표시: Shizuku가 실행 중일 때만 바뀝니다.\n" +
-                "• '${Copy.FEATURE_DPI}': Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.\n" +
-                "• 무선 디버깅은 Shizuku를 시작할 때만 필요합니다. '${Copy.APP_SIZE_AUTO_OFF_TITLE}'를 켜면 Shizuku가 켜진 직후 GOAT가 끕니다. " +
-                "무선 디버깅을 끄면 Shizuku가 멈추는 기기에서는 이 옵션을 꺼 두세요.",
+            "${n()}. ${stringResource(R.string.appsize_help_off_title)}",
+            stringResource(R.string.appsize_help_off_body_fmt, Copy.FEATURE_DPI, Copy.APP_SIZE_AUTO_OFF_TITLE),
             art = { PersistArt() }
         )
         HelpTopic(
-            "${n()}. 되돌리기",
-            "앱을 눌러 '기본'을 고르면 그 앱만, ⋮ → 초기화는 모든 앱을 기본 배율로 되돌립니다. " +
-                "삼성 설정의 '앱 화면 크게/작게'에서도 되돌릴 수 있습니다.",
+            "${n()}. ${stringResource(R.string.appsize_help_reset_title)}",
+            stringResource(R.string.appsize_help_reset_body),
             art = { ResetArt() }
         )
         LiquidButton(Copy.SHIZUKU_CONNECT, modifier = Modifier.fillMaxWidth(), primary = false, onClick = onConnect)
@@ -118,12 +107,12 @@ internal fun AppSizeGuideSheet() {
     SheetColumn(title = Copy.MENU_GUIDE) {
         if (shizuku == ShizukuAccess.State.READY || shell != null) {
             GlassCard {
-                Text("연결되어 있습니다", fontWeight = FontWeight.SemiBold, color = c.ink)
+                Text(stringResource(R.string.appsize_guide_connected), fontWeight = FontWeight.SemiBold, color = c.ink)
                 Text(
                     if (shell != null) {
-                        "PC 셸 도우미는 GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다."
+                        stringResource(R.string.appsize_guide_pc_idle_fmt, DensityServer.IDLE_MINUTES)
                     } else {
-                        "Shizuku 권한을 받았습니다. 창을 닫고 계속하세요."
+                        stringResource(R.string.appsize_guide_shizuku_granted)
                     },
                     color = c.muted,
                     style = MaterialTheme.typography.bodySmall
@@ -134,20 +123,19 @@ internal fun AppSizeGuideSheet() {
         GlassCard {
             ShizukuGuide(
                 shizuku,
-                intro = "무료 앱 Shizuku로 시스템 권한을 빌려 씁니다. 처음 한 번만 아래 순서대로 하면 됩니다."
+                intro = stringResource(R.string.appsize_guide_intro)
             )
         }
         Spacer(Modifier.height(Gap.Card))
         Text(
-            if (showPc) "PC로 하기 접기" else "Shizuku 대신 PC로 하기",
+            if (showPc) stringResource(R.string.appsize_guide_pc_hide) else stringResource(R.string.appsize_guide_pc_show),
             color = c.muted,
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { showPc = !showPc }.padding(6.dp)
         )
         if (showPc) {
             Text(
-                "platform-tools 폴더에서 연 PC PowerShell에 아래 명령을 한 번 실행하면 GOAT 셸 도우미가 켜집니다. " +
-                    "GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다.",
+                stringResource(R.string.appsize_guide_pc_body_fmt, DensityServer.IDLE_MINUTES),
                 color = c.muted,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -179,14 +167,14 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
             Text(Copy.APP_SIZE_RESET_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
             // 개수를 세는 동안은 리퀴드 로딩 방울을 보여 준다
             if (ready && count == null) {
-                LiquidLoader("배율을 바꾼 앱을 확인하는 중…", Modifier.padding(vertical = 8.dp))
+                LiquidLoader(stringResource(R.string.appsize_reset_counting), Modifier.padding(vertical = 8.dp))
             } else {
                 Text(
                     when {
-                        !ready -> "Shizuku가 연결되지 않아 되돌릴 수 없습니다."
+                        !ready -> stringResource(R.string.appsize_reset_not_ready)
                         // 되돌릴 앱이 없으면 꺼진 버튼 대신 여기서 알린다(꺼진 버튼을 누르면 뜨는 토스트가 시트 맨 아래 버튼을 가렸다, QA 1차)
                         count == 0 -> Copy.DISABLED_NO_SIZED_APPS
-                        else -> "배율을 바꾼 앱 ${count}개"
+                        else -> stringResource(R.string.appsize_reset_count_fmt, count ?: 0)
                     },
                     color = c.ink,
                     style = MaterialTheme.typography.bodySmall
@@ -210,11 +198,11 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                             step = 2
                             scope.launch {
                                 val n = withContext(Dispatchers.IO) { DensityShell.resetAll(context) }
-                                onDone("앱 ${n}개를 기본 배율로 되돌렸습니다")
+                                onDone(Copy.text(R.string.appsize_reset_done_fmt, n))
                             }
                         })
                     }
-                    else -> LiquidLoader("되돌리는 중…", Modifier.padding(vertical = 8.dp))
+                    else -> LiquidLoader(stringResource(R.string.appsize_reset_running), Modifier.padding(vertical = 8.dp))
                 }
             }
         }

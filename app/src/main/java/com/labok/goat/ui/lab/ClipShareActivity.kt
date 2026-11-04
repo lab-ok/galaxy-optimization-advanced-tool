@@ -5,7 +5,9 @@ import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import com.labok.goat.R
 import com.labok.goat.data.lab.MemoShare
+import com.labok.goat.ui.text.Copy
 
 /**
  * 클립보드 공유: 클립보드의 글은 TXT로, 이미지·파일은 원본 그대로 곧바로 공유하는 투명 화면. 공유 메뉴가 없는 앱에서 글을 복사만 한 경우에 쓴다.
@@ -36,7 +38,7 @@ class ClipShareActivity : Activity() {
             val files = clip?.let { MemoShare.saveClip(this, it) }.orEmpty()
             runOnUiThread {
                 if (files.isEmpty()) {
-                    Toast.makeText(this, "클립보드가 비어 있습니다", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, Copy.text(R.string.lab_clip_empty), Toast.LENGTH_SHORT).show()
                     finish()
                 } else {
                     @Suppress("DEPRECATION")

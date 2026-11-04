@@ -46,8 +46,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.data.lab.AmbientOpen
 import com.labok.goat.data.lab.TentDuo
 import com.labok.goat.ui.components.ContentMaxWidth
@@ -88,25 +90,25 @@ internal fun AmbientScreen(contentPadding: PaddingValues) {
                 GlassCard {
                     AmbientHero(on)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidSwitchRow("앰비언트 모드", "펼치기 시작하면 안쪽 화면이 간접등처럼 빛납니다.", on, enabled = true, onChange = {
+                    LiquidSwitchRow(stringResource(R.string.lab_ambient_mode_title), stringResource(R.string.lab_ambient_mode_desc), on, enabled = true, onChange = {
                         on = it
                         AmbientOpen.setEnabled(context, it)
                     })
                     Spacer(Modifier.height(Gap.Item))
                     Text(
-                        "빛은 막 펼칠 때 가장 밝고 90°에서 사라집니다. 펼치다 1.5초 멈춰 세워 두면 계속 켜지고, 앱을 열어도 바깥 화면 색을 따라갑니다. 완전히 펴거나 닫으면 꺼집니다. Shizuku가 필요합니다.",
+                        stringResource(R.string.lab_ambient_mode_body),
                         color = c.muted,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton("지금 켜기", modifier = Modifier.fillMaxWidth(), onClick = { TentDuo.start(context) })
+                    LiquidButton(stringResource(R.string.lab_ambient_start_now), modifier = Modifier.fillMaxWidth(), onClick = { TentDuo.start(context) })
                 }
             }
         }
         item(key = "clock") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard(Modifier.animateContentSize()) {
-                    LiquidSwitchRow("시계 함께 표시", "켜지면 바깥 화면에 가로 스탠바이 시계를 띄웁니다.", clock, enabled = true, onChange = {
+                    LiquidSwitchRow(stringResource(R.string.lab_ambient_clock_title), stringResource(R.string.lab_ambient_clock_desc), clock, enabled = true, onChange = {
                         clock = it
                         AmbientOpen.setClock(context, it)
                     })
@@ -123,17 +125,17 @@ internal fun AmbientScreen(contentPadding: PaddingValues) {
         item(key = "direction") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    Text("빛 방향", fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text("[방향 확인]을 누르면 바깥 화면 네 가장자리가 서로 다른 색이 됩니다. 안쪽 빛에서 각 색이 보이는 자리를 보고 맞춥니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.lab_ambient_direction_title), fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(stringResource(R.string.lab_ambient_direction_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton("방향 확인", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentDuo.start(context, check = true) })
+                    LiquidButton(stringResource(R.string.lab_ambient_direction_check), primary = false, modifier = Modifier.fillMaxWidth(), onClick = { TentDuo.start(context, check = true) })
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidSwitchRow("빛을 오른쪽 절반으로", "빛이 반대쪽 면에 나오면 켭니다.", swap, enabled = true, onChange = {
+                    LiquidSwitchRow(stringResource(R.string.lab_ambient_swap_title), stringResource(R.string.lab_ambient_swap_desc), swap, enabled = true, onChange = {
                         swap = it
                         TentDuo.setSwap(context, it)
                     })
                     Spacer(Modifier.height(Gap.Section))
-                    LiquidSwitchRow("좌우 뒤집기", "초록·노랑이 반대로 보이면 켭니다.", mirror, enabled = true, onChange = {
+                    LiquidSwitchRow(stringResource(R.string.lab_ambient_mirror_title), stringResource(R.string.lab_ambient_mirror_desc), mirror, enabled = true, onChange = {
                         mirror = it
                         TentDuo.setMirror(context, it)
                     })

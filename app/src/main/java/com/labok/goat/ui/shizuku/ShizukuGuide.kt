@@ -30,9 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.labok.goat.R
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.openDeveloperOptions
@@ -81,34 +83,32 @@ internal fun ShizukuGuide(
 
     Text(intro, color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Card))
-    Step(1, "개발자 옵션 켜기", done[0], current == 0) {
+    Step(1, stringResource(R.string.shizuku_step1_title), done[0], current == 0) {
         DevOptionsStepArt()
-        SettingsPath("설정", "휴대전화 정보", "소프트웨어 정보", "빌드 번호 7번")
+        SettingsPath(stringResource(R.string.shizuku_path_settings), stringResource(R.string.shizuku_path_phone_info), stringResource(R.string.shizuku_path_software_info), stringResource(R.string.shizuku_path_build_number_7))
         Hint(
-            "① [휴대전화 정보 열기] → '소프트웨어 정보'를 누릅니다.\n" +
-                "② '빌드 번호'를 빠르게 7번 누릅니다. 잠금 화면 비밀번호를 물으면 입력합니다.\n" +
-                "③ \"개발자 모드를 켰습니다\"가 뜨면 이 화면으로 돌아오세요."
+            stringResource(R.string.shizuku_step1_hint)
         )
-        Action("휴대전화 정보 열기") { openPhoneInfo(context) }
+        Action(stringResource(R.string.shizuku_step1_action)) { openPhoneInfo(context) }
     }
-    Step(2, "Shizuku 설치", done[1], current == 1) {
+    Step(2, stringResource(R.string.shizuku_step2_title), done[1], current == 1) {
         StoreStepArt()
-        SettingsPath("Play 스토어", "Shizuku", "설치")
-        Hint("무료 앱입니다. 설치가 끝나면 이 화면으로 돌아오세요.")
-        Action("설치하기") { openStore(context) }
+        SettingsPath(stringResource(R.string.shizuku_path_play_store), "Shizuku", stringResource(R.string.shizuku_path_install))
+        Hint(stringResource(R.string.shizuku_step2_hint))
+        Action(stringResource(R.string.shizuku_step2_action)) { openStore(context) }
     }
-    Step(3, "무선 디버깅 켜기", done[2], current == 2) {
+    Step(3, stringResource(R.string.shizuku_step3_title), done[2], current == 2) {
         WirelessStepArt()
-        SettingsPath("설정", "개발자 옵션", "디버깅", "무선 디버깅")
-        Hint("'개발자 옵션'은 1단계를 마치면 설정 맨 아래에 생깁니다. 그 안의 '디버깅' 항목에 '무선 디버깅'이 있습니다.")
-        Hint("'이 네트워크에서 허용할까요?'가 뜨면 허용을 누르세요.")
+        SettingsPath(stringResource(R.string.shizuku_path_settings), stringResource(R.string.shizuku_path_dev_options), stringResource(R.string.shizuku_path_debugging), stringResource(R.string.shizuku_art_wireless_debugging))
+        Hint(stringResource(R.string.shizuku_step3_hint_where))
+        Hint(stringResource(R.string.shizuku_step3_hint_network))
         // 무선 디버깅은 Wi-Fi에 연결돼 있어야만 켜진다(아니면 'Wi-Fi에 연결하세요'만 뜨고 꺼진다). 연결 상태를 읽으려면
         // 네트워크 상태 권한이 필요한데 GOAT는 쓰지 않으므로(읽으려다 앱이 종료됐다), 항상 먼저 알려 주고 Wi-Fi 설정으로 가는 길을 둔다
-        Hint("Wi-Fi에 연결되어 있어야 켜집니다.")
-        if (note == 1) Hint("열린 개발자 옵션 화면에서 '무선 디버깅'을 직접 켜고 돌아오세요.", warn = true)
+        Hint(stringResource(R.string.shizuku_step3_hint_wifi))
+        if (note == 1) Hint(stringResource(R.string.shizuku_step3_hint_manual), warn = true)
         Spacer(Modifier.height(Gap.Item))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            LiquidButton("켜기", modifier = Modifier.weight(1f), onClick = {
+            LiquidButton(stringResource(R.string.shizuku_step3_turn_on), modifier = Modifier.weight(1f), onClick = {
                 if (ShizukuAccess.enableWirelessDebug(context)) {
                     tick++
                 } else {
@@ -116,37 +116,34 @@ internal fun ShizukuGuide(
                     openDeveloperOptions(context)
                 }
             })
-            LiquidButton("Wi-Fi 설정", modifier = Modifier.weight(1f), primary = false, onClick = {
+            LiquidButton(stringResource(R.string.shizuku_step3_wifi_settings), modifier = Modifier.weight(1f), primary = false, onClick = {
                 runCatching { context.startActivity(settingsIntent(Settings.ACTION_WIFI_SETTINGS)) }
             })
         }
     }
-    Step(4, "Shizuku 페어링하고 시작", done[3], current == 3) {
+    Step(4, stringResource(R.string.shizuku_step4_title), done[3], current == 3) {
         PairingStepArt()
-        SettingsPath("Shizuku", "무선 디버깅으로 시작", "페어링")
-        SettingsPath("설정", "개발자 옵션", "무선 디버깅", "페어링 코드로 기기 페어링")
-        SettingsPath("알림창", "Shizuku 알림", "6자리 코드 입력")
+        SettingsPath("Shizuku", stringResource(R.string.shizuku_path_start_wireless), stringResource(R.string.shizuku_path_pairing))
+        SettingsPath(stringResource(R.string.shizuku_path_settings), stringResource(R.string.shizuku_path_dev_options), stringResource(R.string.shizuku_art_wireless_debugging), stringResource(R.string.shizuku_path_pair_with_code))
+        SettingsPath(stringResource(R.string.shizuku_path_notification_shade), stringResource(R.string.shizuku_art_notification), stringResource(R.string.shizuku_path_enter_code))
         Hint(
-            "① [Shizuku 열기] → '무선 디버깅으로 시작'의 [페어링]을 누릅니다. 알림 허용을 물으면 허용합니다.\n" +
-                "② [무선 디버깅 화면] → '페어링 코드로 기기 페어링'을 누르면 6자리 숫자가 나옵니다.\n" +
-                "③ 화면 위에서 Shizuku 알림을 내려 그 숫자를 입력합니다.\n" +
-                "④ Shizuku로 돌아가 [시작]을 누른 뒤 이 화면으로 돌아오세요."
+            stringResource(R.string.shizuku_step4_hint)
         )
         Spacer(Modifier.height(Gap.Item))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            LiquidButton("Shizuku 열기", modifier = Modifier.weight(1f), onClick = { openShizuku(context) })
-            LiquidButton("무선 디버깅 화면", modifier = Modifier.weight(1f), primary = false, onClick = { openDeveloperOptions(context) })
+            LiquidButton(stringResource(R.string.shizuku_step4_open_shizuku), modifier = Modifier.weight(1f), onClick = { openShizuku(context) })
+            LiquidButton(stringResource(R.string.shizuku_step4_open_wireless), modifier = Modifier.weight(1f), primary = false, onClick = { openDeveloperOptions(context) })
         }
     }
-    Step(5, "GOAT 허용", done[4], current == 4) {
+    Step(5, stringResource(R.string.shizuku_step5_title), done[4], current == 4) {
         AllowStepArt()
-        SettingsPath("Shizuku 창", "항상 허용")
-        Hint("Shizuku가 묻는 창에서 '항상 허용'을 누르세요.")
-        Action("허용하기") { ShizukuAccess.requestPermission() }
+        SettingsPath(stringResource(R.string.shizuku_path_shizuku_window), stringResource(R.string.shizuku_art_allow_always))
+        Hint(stringResource(R.string.shizuku_step5_hint))
+        Action(stringResource(R.string.shizuku_step5_action)) { ShizukuAccess.requestPermission() }
     }
     Spacer(Modifier.height(Gap.Item))
     Text(
-        "[켜기]를 누르면 GOAT가 무선 디버깅을 켭니다. Shizuku가 켜지면 허용 창을 바로 띄웁니다.",
+        stringResource(R.string.shizuku_footer),
         color = c.muted,
         style = MaterialTheme.typography.labelSmall
     )
@@ -172,7 +169,7 @@ private fun Step(no: Int, title: String, done: Boolean, active: Boolean, body: @
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f).padding(top = 2.dp)) {
             Text(
-                title + if (done) " · 완료" else "",
+                if (done) stringResource(R.string.shizuku_step_done_fmt, title) else title,
                 color = if (done) c.muted else c.ink,
                 fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
                 style = MaterialTheme.typography.bodyMedium

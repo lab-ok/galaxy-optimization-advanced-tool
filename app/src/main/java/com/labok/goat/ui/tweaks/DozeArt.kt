@@ -8,10 +8,12 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.artLabel
 import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.art.artPill
+import com.labok.goat.ui.text.Copy
 
 private fun easeD(x: Float) = x * x * (3 - 2 * x)
 
@@ -72,8 +74,8 @@ internal fun DozeArt(off: Boolean) {
             val level = 0.9f - now * (if (dozeOff) 0.55f else 0.18f)
             val fillTop = bBottom - (bBottom - bTop - 3.dp.toPx()) * level
             drawRoundRect(ink, Offset(bx - 3.dp.toPx(), fillTop), Size(6.dp.toPx(), bBottom - 1.5f.dp.toPx() - fillTop), CornerRadius(2.dp.toPx()))
-            artPill(tm, c, if (dozeOff) "알림 바로" else "알림 몰아서", Offset(left + trackW / 2, top + h + 16.dp.toPx()), filled = on)
-            artLabel(tm, if (dozeOff) "잠자기 꺼짐" else "잠자기 켜짐", Offset(left + trackW / 2, top + h + 37.dp.toPx()), ink, bold = on)
+            artPill(tm, c, Copy.text(if (dozeOff) R.string.tweaks_doze_art_alerts_now else R.string.tweaks_doze_art_alerts_batched), Offset(left + trackW / 2, top + h + 16.dp.toPx()), filled = on)
+            artLabel(tm, Copy.text(if (dozeOff) R.string.tweaks_doze_art_off else R.string.tweaks_doze_art_on), Offset(left + trackW / 2, top + h + 37.dp.toPx()), ink, bold = on)
         }
     }
 }

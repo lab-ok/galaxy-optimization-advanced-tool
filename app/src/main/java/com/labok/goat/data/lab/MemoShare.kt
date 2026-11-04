@@ -16,6 +16,7 @@ import androidx.core.content.FileProvider
 import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.lab.ClipShareActivity
+import com.labok.goat.ui.text.Copy
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -95,7 +96,7 @@ object MemoShare {
             clipData = ClipData.newRawUri("", files[0].uri).also { c -> files.drop(1).forEach { c.addItem(ClipData.Item(it.uri)) } }
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        return Intent.createChooser(send, "클립보드 공유").apply {
+        return Intent.createChooser(send, Copy.text(R.string.labdata_memo_share_clipboard)).apply {
             putExtra(
                 Intent.EXTRA_EXCLUDE_COMPONENTS,
                 arrayOf(ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity"), ComponentName(context, "com.labok.goat.ui.lab.TranscriptShareActivity"))
@@ -111,7 +112,7 @@ object MemoShare {
             clipData = ClipData.newRawUri("", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        return Intent.createChooser(send, "TXT로 공유").apply {
+        return Intent.createChooser(send, Copy.text(R.string.labdata_memo_share_txt)).apply {
             putExtra(
                 Intent.EXTRA_EXCLUDE_COMPONENTS,
                 arrayOf(ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity"), ComponentName(context, "com.labok.goat.ui.lab.TranscriptShareActivity"))
@@ -142,8 +143,8 @@ object MemoShare {
         val sm = context.getSystemService(ShortcutManager::class.java) ?: return
         val intent = Intent(context, ClipShareActivity::class.java).setAction(Intent.ACTION_VIEW)
         val shortcut = ShortcutInfo.Builder(context, SHORTCUT_ID)
-            .setShortLabel("클립보드 공유")
-            .setLongLabel("클립보드 공유")
+            .setShortLabel(Copy.text(R.string.labdata_memo_share_clipboard))
+            .setLongLabel(Copy.text(R.string.labdata_memo_share_clipboard))
             .setIcon(Icon.createWithResource(context, R.drawable.ic_shortcut_txt))
             .setIntent(intent)
             .build()

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 실험실 데이터 계층(data/lab) 문구: 알림·토스트·이름표. 이름은 labdata_<기능>_<용도>. -->
+<resources>
+    <!-- 공통 이름 -->
+    <string name="labdata_name_bluetooth">블루투스</string>
+    <string name="labdata_name_wifi">Wi-Fi</string>
+    <string name="labdata_name_nfc">NFC</string>
+    <string name="labdata_need_shizuku">Shizuku 연결이 필요합니다.</string>
+
+    <!-- AmbientOpen: 앰비언트 모드 알림 -->
+    <string name="labdata_ambient_channel">앰비언트 모드</string>
+    <string name="labdata_ambient_notif_text">펼칠 때 안쪽 화면이 간접등처럼 빛납니다</string>
+
+    <!-- AutoFlex: 접으면 바꿀 모드 이름·알림 -->
+    <string name="labdata_autoflex_mode_off">사용 안 함</string>
+    <string name="labdata_autoflex_mode_panel">GOAT 패널</string>
+    <string name="labdata_autoflex_mode_flex">플렉스 모드</string>
+    <string name="labdata_autoflex_notif_dim_title">가까이 접으면 밝기 고정</string>
+    <string name="labdata_autoflex_notif_flex_text">반쯤 접으면 플렉스 모드로 바뀝니다</string>
+    <string name="labdata_autoflex_notif_dim_text">50° 안쪽으로 접으면 밝기를 고정합니다</string>
+
+    <!-- BatteryMonitor: 충전 방식·배터리 상태 -->
+    <string name="labdata_battery_plug_ac">충전기</string>
+    <string name="labdata_battery_plug_wireless">무선</string>
+    <string name="labdata_battery_plug_other">기타</string>
+    <string name="labdata_battery_health_good">좋음</string>
+    <string name="labdata_battery_health_overheat">과열</string>
+    <string name="labdata_battery_health_cold">저온</string>
+    <string name="labdata_battery_health_dead">수명 다함</string>
+    <string name="labdata_battery_health_over_voltage">과전압</string>
+
+    <!-- BatteryStatsReader: 배터리 사용량 시스템 항목·시스템 uid 이름 -->
+    <string name="labdata_batterystats_screen">화면</string>
+    <string name="labdata_batterystats_cpu">프로세서</string>
+    <string name="labdata_batterystats_cell">모바일 네트워크·통화 대기</string>
+    <string name="labdata_batterystats_idle">기기 대기</string>
+    <string name="labdata_batterystats_camera">카메라</string>
+    <string name="labdata_batterystats_audio">오디오</string>
+    <string name="labdata_batterystats_video">동영상</string>
+    <string name="labdata_batterystats_flashlight">손전등</string>
+    <string name="labdata_batterystats_sensors">센서</string>
+    <string name="labdata_batterystats_gnss">위치(GPS)</string>
+    <string name="labdata_batterystats_memory">메모리</string>
+    <string name="labdata_batterystats_uid_kernel">커널</string>
+    <string name="labdata_batterystats_uid_android">Android 시스템</string>
+    <string name="labdata_batterystats_uid_phone">전화·통신</string>
+    <string name="labdata_batterystats_uid_media">미디어</string>
+    <string name="labdata_batterystats_uid_system">시스템(%1$d)</string>
+    <string name="labdata_batterystats_deleted_app">삭제된 앱</string>
+
+    <!-- FlexPanel: 플렉스 모드 바꾸기 알림 -->
+    <string name="labdata_flexpanel_mode_channel">플렉스 모드 바꾸기</string>
+    <string name="labdata_flexpanel_mode_notif_text">접었을 때 이 앱에서 쓸 방식을 바꿉니다</string>
+
+    <!-- GoatFlexPanel: 넘기기 방식·유리 품질·앰비언트·강도 이름표 -->
+    <string name="labdata_goatpanel_seek_tap">두 번 누르기</string>
+    <string name="labdata_goatpanel_seek_key">미디어 키</string>
+    <string name="labdata_goatpanel_seek_auto">자동</string>
+    <string name="labdata_goatpanel_off">끔</string>
+    <string name="labdata_goatpanel_balanced">균형</string>
+    <string name="labdata_goatpanel_quality_low">낮음</string>
+    <string name="labdata_goatpanel_quality_high">높음</string>
+    <string name="labdata_goatpanel_ambient_fixed">고정 색</string>
+    <string name="labdata_goatpanel_ambient_poster">포스터</string>
+    <string name="labdata_goatpanel_ambient_screen">화면 분석</string>
+    <string name="labdata_goatpanel_intensity_subtle">은은</string>
+    <string name="labdata_goatpanel_intensity_vivid">선명</string>
+    <string name="labdata_goatpanel_intensity_immersive">몰입</string>
+
+    <!-- LabTweaks: 상태 표시줄 아이콘 자리 이름 -->
+    <string name="labdata_icon_slot_alarm">알람</string>
+    <string name="labdata_icon_slot_volume">진동·무음</string>
+    <string name="labdata_icon_slot_hotspot">핫스팟</string>
+    <string name="labdata_icon_slot_rotate">화면 회전 잠금</string>
+    <string name="labdata_icon_slot_headset">헤드셋</string>
+    <string name="labdata_icon_slot_location">위치</string>
+    <string name="labdata_icon_slot_data_saver">데이터 절약</string>
+    <string name="labdata_icon_slot_vpn">VPN</string>
+    <string name="labdata_icon_slot_zen">방해 금지</string>
+    <string name="labdata_icon_slot_volte">VoLTE</string>
+
+    <!-- MemoShare: 공유 창 제목·바로가기 -->
+    <string name="labdata_memo_share_clipboard">클립보드 공유</string>
+    <string name="labdata_memo_share_txt">TXT로 공유</string>
+
+    <!-- PrivacyDot: 마이크·카메라 사용 표시 실패 이유 -->
+    <string name="labdata_privacydot_unchanged">바뀌지 않음</string>
+
+    <!-- StatusBarHider: 상태 표시줄 숨기기 -->
+    <string name="labdata_statusbar_no_overlay">다른 앱 위에 표시 권한이 없습니다. Shizuku를 연결하세요.</string>
+    <string name="labdata_statusbar_channel">상태 표시줄 숨기기</string>
+    <string name="labdata_statusbar_notif_title">상태 표시줄 숨기는 중</string>
+    <string name="labdata_statusbar_notif_text">뒤로 가기를 써도 다시 숨깁니다. 키보드가 열린 동안에는 보입니다</string>
+    <string name="labdata_statusbar_action_rehide">다시 숨기기</string>
+    <string name="labdata_statusbar_action_stop">끄기</string>
+
+    <!-- Transcript: 전사문 변환(화자 이름·저장 파일 이름) -->
+    <string name="labdata_transcript_me">나</string>
+    <string name="labdata_transcript_other">상대</string>
+    <string name="labdata_transcript_file_name">%1$s (나·상대).txt</string>
+
+    <!-- VolumeRotate: 화면 방향 이름 -->
+    <string name="labdata_volume_rotation_0">기본 세로</string>
+    <string name="labdata_volume_rotation_90">왼쪽으로 돌린 가로</string>
+    <string name="labdata_volume_rotation_180">거꾸로 든 세로</string>
+    <string name="labdata_volume_rotation_270">오른쪽으로 돌린 가로</string>
+
+    <!-- UsageFun: 사용 통계 한 줄 요약 -->
+    <string name="labdata_usage_headline_unfolds">폰을 %1$d번 펼쳤습니다</string>
+    <string name="labdata_usage_headline_unlocks">잠금을 %1$d번 풀었습니다</string>
+    <string name="labdata_usage_headline_screen">화면을 %1$s 봤습니다</string>
+    <string name="labdata_usage_headline_notifications">알림을 %1$d개 받았습니다</string>
+    <string name="labdata_usage_headline_volume">볼륨 버튼을 %1$d번 눌렀습니다</string>
+    <string name="labdata_usage_headline_app_opens">앱을 %1$d번 열었습니다</string>
+    <!-- UsageFun: 재미로 보는 숫자 -->
+    <string name="labdata_usage_fact_peak_hour">가장 많이 본 때는 %1$s입니다.</string>
+    <string name="labdata_usage_fact_per_unlock">잠금을 한 번 풀면 평균 %1$s 봅니다.</string>
+    <string name="labdata_usage_fact_apps_per_screen_on">화면을 한 번 켤 때마다 앱을 평균 %1$s개 엽니다.</string>
+    <string name="labdata_usage_fact_top_app">%1$s 실행이 전체의 %2$d%%입니다.</string>
+    <string name="labdata_usage_fact_top_noti">알림 %1$d개 중 %2$d%%가 %3$s 알림입니다.</string>
+    <string name="labdata_usage_fact_charge_start">충전기는 평균 %1$d%%에서 꽂았습니다.</string>
+    <!-- UsageFun: 오늘의 칭호(이름·까닭) -->
+    <string name="labdata_usage_title_fold_master">폴드 장인</string>
+    <string name="labdata_usage_title_fold_master_why">하루 %1$d번 펼침</string>
+    <string name="labdata_usage_title_night_owl">올빼미</string>
+    <string name="labdata_usage_title_night_owl_why">새벽 0~4시에 %1$s</string>
+    <string name="labdata_usage_title_noti_rich">알림 부자</string>
+    <string name="labdata_usage_title_noti_rich_why">하루 알림 %1$d개</string>
+    <string name="labdata_usage_title_volume_master">볼륨 장인</string>
+    <string name="labdata_usage_title_volume_master_why">하루 %1$d번 누름</string>
+    <string name="labdata_usage_title_unlock_master">잠금 해제 달인</string>
+    <string name="labdata_usage_title_unlock_master_why">하루 %1$d번</string>
+    <string name="labdata_usage_title_battery_edge">배터리 벼랑 끝</string>
+    <string name="labdata_usage_title_charge_model">충전 모범생</string>
+    <string name="labdata_usage_title_charge_avg_why">평균 %1$d%%에서 충전</string>
+    <string name="labdata_usage_title_screen_keeper">화면 지킴이</string>
+    <string name="labdata_usage_title_phone_rest">폰과 휴식 중</string>
+    <string name="labdata_usage_title_per_day_why">하루 %1$s</string>
+    <!-- UsageFun: 시간대·시간 길이 -->
+    <string name="labdata_usage_hour_dawn">새벽 %1$d시대</string>
+    <string name="labdata_usage_hour_morning">오전 %1$d시대</string>
+    <string name="labdata_usage_hour_noon">낮 12시대</string>
+    <string name="labdata_usage_hour_afternoon">오후 %1$d시대</string>
+    <string name="labdata_usage_hour_evening">저녁 %1$d시대</string>
+    <string name="labdata_usage_duration_hours_minutes">%1$d시간 %2$d분</string>
+    <string name="labdata_usage_duration_minutes">%1$d분</string>
+    <string name="labdata_usage_duration_seconds">%1$d초</string>
+    <!-- 앰비언트 출처(패널 머리 표시) -->
+    <string name="labdata_amb_source_off">앰비언트 끔</string>
+    <string name="labdata_amb_source_poster">포스터</string>
+    <string name="labdata_amb_source_app_color">앱 색</string>
+    <string name="labdata_amb_source_screen">화면 분석</string>
+    <string name="labdata_amb_source_protected_poster">보호 화면 · 포스터 연출(실제 영상 아님)</string>
+    <string name="labdata_amb_source_protected_app_color">보호 화면 · 앱 색 연출(실제 영상 아님)</string>
+</resources>

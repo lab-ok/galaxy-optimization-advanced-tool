@@ -45,6 +45,7 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -193,7 +194,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                             UiHaptics.set(context, it)
                         },
                         onValueChangeFinished = { UiHaptics.set(context, h) },
-                        valueText = { if (it == 0) "꺼짐" else "$it%" },
+                        valueText = { if (it == 0) Copy.text(R.string.about_haptic_off) else "$it%" },
                         description = Copy.HAPTIC_TITLE
                     )
                 }
@@ -233,9 +234,9 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                 GlassCard {
                     Column(Modifier.rowListEdges()) {
                         val perms = AppPermissions.all
-                        InfoLink(Copy.MENU_ABOUT, "GOAT ${BuildConfig.VERSION_NAME} · 라이선스·문의", onAbout)
-                        InfoLink(Copy.INFO_CHANGELOG, CHANGELOG.first().let { "최근 ${it.version.removePrefix("GOAT ")} · ${it.date}" }, onChangelog)
-                        InfoLink(Copy.INFO_PERMISSIONS, "권한 ${perms.size}개 중 ${perms.count { AppPermissions.granted(context, it) }}개 허용됨", onPermissions)
+                        InfoLink(Copy.MENU_ABOUT, stringResource(R.string.about_info_link_fmt, BuildConfig.VERSION_NAME), onAbout)
+                        InfoLink(Copy.INFO_CHANGELOG, CHANGELOG.first().let { stringResource(R.string.about_changelog_latest_fmt, it.version.removePrefix("GOAT "), it.date) }, onChangelog)
+                        InfoLink(Copy.INFO_PERMISSIONS, stringResource(R.string.about_permissions_count_fmt, perms.size, perms.count { AppPermissions.granted(context, it) }), onPermissions)
                     }
                 }
             }
@@ -319,7 +320,7 @@ private fun InkTones() {
                         }
                         .semantics {
                             selected = i == index
-                            contentDescription = "${Copy.INK_TONE} 강조색 ${t.accent} ${if (t.deep) "진하게" else "중간"}"
+                            contentDescription = Copy.text(R.string.about_ink_tone_desc_fmt, Copy.INK_TONE, t.accent, if (t.deep) Copy.text(R.string.about_ink_tone_deep) else Copy.text(R.string.about_ink_tone_medium))
                         }
                 )
             }

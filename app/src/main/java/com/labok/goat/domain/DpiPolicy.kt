@@ -1,5 +1,8 @@
 package com.labok.goat.domain
 
+import com.labok.goat.R
+import com.labok.goat.ui.text.Copy
+
 /** DPI 값 검증과 "지금 무엇을 해야 하는가" 판단. Android 의존성이 없어 단위 테스트로 검증한다. */
 object DpiPolicy {
     /**
@@ -32,10 +35,10 @@ object DpiPolicy {
 
     fun validate(input: String?): Validation {
         val text = input?.trim().orEmpty()
-        if (text.isEmpty()) return Validation.Error("DPI를 입력하세요")
-        val dpi = text.toIntOrNull() ?: return Validation.Error("숫자만 입력하세요")
+        if (text.isEmpty()) return Validation.Error(Copy.text(R.string.domain_dpi_input_empty))
+        val dpi = text.toIntOrNull() ?: return Validation.Error(Copy.text(R.string.domain_dpi_input_not_number))
         if (dpi < MIN_DPI || dpi > MAX_DPI) {
-            return Validation.Error("$MIN_DPI~$MAX_DPI 범위로 입력하세요")
+            return Validation.Error(Copy.text(R.string.domain_dpi_input_range_fmt, MIN_DPI, MAX_DPI))
         }
         return Validation.Ok(dpi)
     }

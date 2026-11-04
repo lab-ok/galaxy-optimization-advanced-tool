@@ -19,10 +19,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Springs
@@ -112,7 +114,8 @@ internal fun BatteryBarsArt(level: Int, charging: Boolean, modifier: Modifier = 
     val c = LocalLiquid.current
     val t = rememberWaveTime()
     val shown = rememberFill(level.coerceIn(0, 100) / 100f)
-    Canvas(modifier.fillMaxWidth().height(120.dp).semantics { contentDescription = (if (charging) "충전 중 " else "배터리 사용 중 ") + "$level%" }) {
+    val desc = stringResource(if (charging) R.string.lab_battery_art_charging else R.string.lab_battery_art_using, level)
+    Canvas(modifier.fillMaxWidth().height(120.dp).semantics { contentDescription = desc }) {
         val bodyW = size.width.coerceAtMost(260.dp.toPx())
         val bodyH = size.height * 0.86f
         val x0 = (size.width - bodyW) / 2f - 6.dp.toPx()

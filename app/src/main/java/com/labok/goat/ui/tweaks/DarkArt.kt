@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.LocalDeviceShape
 import com.labok.goat.ui.art.artLabel
@@ -17,6 +18,7 @@ import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.art.artPill
 import com.labok.goat.ui.art.deviceFrame
 import com.labok.goat.ui.liquid.LiquidColors
+import com.labok.goat.ui.text.Copy
 
 private fun seg(t: Float, from: Float, to: Float) = ((t - from) / (to - from)).coerceIn(0f, 1f)
 private fun ease(x: Float) = x * x * (3 - 2 * x)
@@ -38,8 +40,8 @@ internal fun DarkArt(on: Boolean) {
         listOf(0.3f to false, 0.7f to true).forEachIndexed { i, (fx, forced) ->
             val screen = deviceFrame(c, Offset(size.width * fx - w / 2, top), Size(w, h), emphasis = if (i == 1 && on || i == 0 && !on) 1f else 0.6f)
             app(c, screen, if (forced) k else 0f)
-            artPill(tm, c, if (forced) "어둡게 바뀜" else "하얀 그대로", Offset(screen.center.x, top + h + 16.dp.toPx()), filled = forced == on)
-            artLabel(tm, if (forced) "강제 다크" else "강제 안 함", Offset(screen.center.x, top + h + 36.dp.toPx()), if (forced == on) c.ink else c.muted, bold = forced == on)
+            artPill(tm, c, Copy.text(if (forced) R.string.tweaks_dark_art_darkened else R.string.tweaks_dark_art_white), Offset(screen.center.x, top + h + 16.dp.toPx()), filled = forced == on)
+            artLabel(tm, Copy.text(if (forced) R.string.tweaks_dark_art_forced else R.string.tweaks_dark_art_not_forced), Offset(screen.center.x, top + h + 36.dp.toPx()), if (forced == on) c.ink else c.muted, bold = forced == on)
         }
     }
 }

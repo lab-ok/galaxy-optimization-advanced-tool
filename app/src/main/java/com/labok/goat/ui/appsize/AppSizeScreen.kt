@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.background.ExternalChangeNotifier
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.AppList
@@ -233,12 +235,12 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
             }
             // 지원 여부를 확인하는 동안에는 불러오는 표시만 둔다(지원 기기용 카드가 잠깐 보였다가 '쓸 수 없습니다'로 바뀌던 깜빡임)
             supported == null -> item(key = "loading") {
-                LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp))
+                LiquidLoader(stringResource(R.string.appsize_loading_apps), Modifier.padding(vertical = 12.dp))
             }
             supported == false -> item(key = "unsupported") {
                 Appear("unsupported", 1, shown) {
                     GlassCard {
-                        Text("이 기기에서는 쓸 수 없습니다", fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(stringResource(R.string.appsize_unsupported_title), fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.APP_SIZE_UNSUPPORTED, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -273,7 +275,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                 Spacer(Modifier.height(Gap.Item))
                                 Text(Copy.APP_SIZE_USAGE_NEEDED, color = c.danger, style = MaterialTheme.typography.bodySmall)
                                 Spacer(Modifier.height(Gap.Item))
-                                LiquidButton("사용 기록 접근 허용", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                                LiquidButton(stringResource(R.string.appsize_allow_usage_access), modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
                                     scope.launch {
                                         usage = withContext(Dispatchers.IO) { shizuku == ShizukuAccess.State.READY && ShizukuAccess.grantUsageAccess(context) }
                                         if (!usage) runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
@@ -286,7 +288,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                             }
                             if (shell != null) {
                                 Spacer(Modifier.height(Gap.Item))
-                                LiquidButton("PC 셸 도우미 끄기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                                LiquidButton(stringResource(R.string.appsize_stop_pc_helper), modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
                                     scope.launch(Dispatchers.IO) { DensityShell.stop() }
                                 })
                             }
@@ -333,7 +335,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                             LiquidTextField(
                                 query,
                                 { query = it },
-                                "앱 이름 검색",
+                                stringResource(R.string.appsize_search_hint),
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                                 leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) }
                             )
@@ -348,12 +350,12 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                 }
                 if (apps == null) {
                     item(key = "loading") {
-                        LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp))
+                        LiquidLoader(stringResource(R.string.appsize_loading_apps), Modifier.padding(vertical = 12.dp))
                     }
                 }
                 if (applied.isNotEmpty()) {
                     item(key = "h-applied") {
-                        Section("적용된 앱 ${applied.size}", Modifier.animateItem()) {
+                        Section(stringResource(R.string.appsize_applied_fmt, applied.size), Modifier.animateItem()) {
                             Text(
                                 Copy.APP_SIZE_RESET_ACTION,
                                 color = c.danger,
@@ -366,10 +368,10 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                         AppRow(app, values[app.pkg], open == app.pkg, { open = if (open == app.pkg) null else app.pkg }, { applyDensity(app, it) }, Modifier.animateItem())
                     }
                 }
-                item(key = "h-rest") { Section(if (usage) "최근 사용 순" else "모든 앱(이름 순)", Modifier.animateItem()) }
+                item(key = "h-rest") { Section(if (usage) stringResource(R.string.appsize_sort_recent) else stringResource(R.string.appsize_sort_name), Modifier.animateItem()) }
                 if (apps != null && rest.isEmpty()) {
                     item(key = "empty") {
-                        Text("찾는 앱이 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(6.dp))
+                        Text(stringResource(R.string.appsize_no_match), color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(6.dp))
                     }
                 }
                 items(rest, key = { it.pkg }) { app ->
@@ -500,9 +502,9 @@ internal fun loadApps(context: Context): List<AppEntry> {
 internal fun ago(t: Long): String {
     val m = (System.currentTimeMillis() - t) / 60_000
     return when {
-        m < 1 -> "방금 사용"
-        m < 60 -> "${m}분 전"
-        m < 24 * 60 -> "${m / 60}시간 전"
-        else -> "${m / (24 * 60)}일 전"
+        m < 1 -> Copy.text(R.string.appsize_used_just_now)
+        m < 60 -> Copy.text(R.string.appsize_used_minutes_fmt, m)
+        m < 24 * 60 -> Copy.text(R.string.appsize_used_hours_fmt, m / 60)
+        else -> Copy.text(R.string.appsize_used_days_fmt, m / (24 * 60))
     }
 }

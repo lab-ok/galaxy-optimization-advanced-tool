@@ -2,7 +2,9 @@ package com.labok.goat.data.tweaks
 
 import android.content.Context
 import android.provider.Settings
+import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.ui.text.Copy
 
 /**
  * 애니메이션 속도: 개발자 옵션의 창·전환·애니메이터 배율(전역 설정)을 바꾼다. 값이 작을수록 빠르고(0이면 끔), 1이 기본이다.
@@ -13,10 +15,13 @@ import com.labok.goat.data.log.LogRepository
  */
 object AnimationSpeed {
     /** 바꾸는 세 설정과 화면 이름. */
-    enum class Kind(val key: String, val label: String, val short: String) {
-        WINDOW(Settings.Global.WINDOW_ANIMATION_SCALE, "창 애니메이션", "창"),
-        TRANSITION(Settings.Global.TRANSITION_ANIMATION_SCALE, "화면 전환 애니메이션", "전환"),
-        ANIMATOR(Settings.Global.ANIMATOR_DURATION_SCALE, "애니메이터 길이", "애니메이터")
+    enum class Kind(val key: String, private val labelRes: Int, private val shortRes: Int) {
+        WINDOW(Settings.Global.WINDOW_ANIMATION_SCALE, R.string.tweaks_anim_window, R.string.tweaks_anim_window_short),
+        TRANSITION(Settings.Global.TRANSITION_ANIMATION_SCALE, R.string.tweaks_anim_transition, R.string.tweaks_anim_transition_short),
+        ANIMATOR(Settings.Global.ANIMATOR_DURATION_SCALE, R.string.tweaks_anim_animator, R.string.tweaks_anim_animator_short);
+
+        val label: String get() = Copy.text(labelRes)
+        val short: String get() = Copy.text(shortRes)
     }
 
     fun read(context: Context, kind: Kind): Float = runCatching { Settings.Global.getFloat(context.contentResolver, kind.key, 1f) }.getOrDefault(1f)
@@ -79,8 +84,8 @@ object AnimationSpeed {
     fun setAll(context: Context, value: Float, how: String): Boolean = Kind.entries.map { set(context, it, value, how) }.all { it }
 
     fun label(v: Float) = when {
-        v == 0f -> "끔"
-        v == 1f -> "기본"
-        else -> "${"%.2f".format(v).trimEnd('0').trimEnd('.')}배"
+        v == 0f -> Copy.text(R.string.tweaks_value_off)
+        v == 1f -> Copy.text(R.string.tweaks_anim_default)
+        else -> Copy.text(R.string.tweaks_anim_scale_fmt, "%.2f".format(v).trimEnd('0').trimEnd('.'))
     }
 }

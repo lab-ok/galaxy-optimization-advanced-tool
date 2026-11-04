@@ -1,5 +1,6 @@
 package com.labok.goat.ui.nav
 
+import com.labok.goat.R
 import com.labok.goat.data.lab.AirplaneRadios
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.ui.text.Copy
@@ -12,11 +13,11 @@ object SettingsSearch {
     data class Hit(val item: NavItem, val title: String)
 
     /** 기능마다 찾을 수 있는 설정 이름(화면의 제목·스위치 이름 그대로). 기능 이름은 [NavItem.label]로 따로 넣는다. */
-    private val settings: Map<NavItem, List<String>> by lazy {
-        mapOf(
-            NavItem.DPI_MATCH to listOf(Copy.AUTO_TITLE, "화면 DPI", "크기 테스트"),
+    private val settings: Map<NavItem, List<String>>
+        get() = mapOf(
+            NavItem.DPI_MATCH to listOf(Copy.AUTO_TITLE, Copy.text(R.string.search_dpi_screen_dpi), Copy.text(R.string.search_dpi_size_test)),
             NavItem.APP_SIZE to listOf(Copy.APP_SIZE_NOTIFY_TITLE, Copy.APP_SIZE_HOME_TITLE),
-            NavItem.ANIMATION to listOf(Copy.ANIM_PRESET_TITLE, Copy.ANIM_DETAIL_TITLE, "창 애니메이션", "화면 전환 애니메이션", "애니메이터 길이"),
+            NavItem.ANIMATION to listOf(Copy.ANIM_PRESET_TITLE, Copy.ANIM_DETAIL_TITLE, Copy.text(R.string.search_anim_window), Copy.text(R.string.search_anim_transition), Copy.text(R.string.search_anim_animator)),
             NavItem.SHAKE_ROTATE to listOf(
                 Copy.SHAKE_SENSITIVITY_TITLE,
                 Copy.SHAKE_CALIBRATE,
@@ -24,27 +25,26 @@ object SettingsSearch {
                 Copy.SHAKE_LARGE_TITLE,
                 Copy.SHAKE_TAPS_TITLE,
                 Copy.SHAKE_ADVANCED_TITLE,
-                "회전 진동 세기",
-                "물방울 조절"
+                Copy.text(R.string.search_shake_vibration),
+                Copy.text(R.string.search_shake_droplet)
             ),
-            NavItem.CAMERA_MUTE to listOf("촬영음", "셔터 소리"),
+            NavItem.CAMERA_MUTE to listOf(Copy.text(R.string.search_camera_shutter_sound), Copy.text(R.string.search_camera_shutter)),
             NavItem.APP_CLEANUP to listOf(Copy.BLOAT_INTRO_TITLE),
             NavItem.REFRESH to listOf(Copy.REFRESH_SYSTEM, Copy.REFRESH_SMOOTH, Copy.REFRESH_SAVER, "120Hz", "60Hz"),
             NavItem.GOS to listOf(Copy.GOS_SWITCH_TITLE),
-            NavItem.DOZE to listOf(Copy.FEATURE_DOZE, "알림 늦음"),
+            NavItem.DOZE to listOf(Copy.FEATURE_DOZE, Copy.text(R.string.search_doze_late_notifications)),
             NavItem.RESOLUTION to listOf(Copy.RES_PICK_TITLE, "FHD", "HD"),
             NavItem.DARK to listOf(Copy.DARK_FORCE_TITLE, Copy.DARK_NIGHT_TITLE),
-            NavItem.AIRPLANE to AirplaneRadios.Radio.entries.map { "${it.label} 켜 두기" },
+            NavItem.AIRPLANE to AirplaneRadios.Radio.entries.map { Copy.text(R.string.search_airplane_keep_on_fmt, it.label) },
             NavItem.VOLUME_ROTATE to listOf(Copy.VOLUME_ON, Copy.VOLUME_INVERT, Copy.VOLUME_CAMERA, Copy.VOLUME_CLOSED, Copy.VOLUME_OPEN),
-            NavItem.STATUS_ICONS to listOf(Copy.LAB_STATUS_HIDE, Copy.LAB_PRIVACY_DOT_SWITCH) + IconBlacklist.Slot.entries.map { "${it.label} 숨기기" },
+            NavItem.STATUS_ICONS to listOf(Copy.LAB_STATUS_HIDE, Copy.LAB_PRIVACY_DOT_SWITCH) + IconBlacklist.Slot.entries.map { Copy.text(R.string.search_icons_hide_fmt, it.label) },
             NavItem.AUTO_FLEX to listOf(Copy.LAB_FLEX_DIM, Copy.LAB_FLEX_CLICK, Copy.LAB_FLEX_APPS_TITLE, Copy.LAB_FLEX_RANGE_TITLE),
-            NavItem.LAB_NOTE to listOf("TXT로 공유", "텍스트 파일", "긴 글", "이미지 복사"),
-            NavItem.LAB_TOOLS to listOf("설정 변경 비교", "시스템 함수 탐색"),
-            NavItem.LAB_STATS to listOf("펼친 횟수", "잠금 해제 횟수", "화면 켠 시간", "볼륨 버튼 횟수", "통계", "배터리 모니터링", "충전 기록", "시간대별 사용량"),
-            NavItem.LAB_AMBIENT to listOf("텐트 모드", "스탠바이 시계", "간접등"),
-            NavItem.SETTINGS to listOf(Copy.INK_TITLE, Copy.HAPTIC_TITLE, Copy.MOTION_TITLE, Copy.GOAT_STYLE_TITLE, Copy.LOG_FILE_TITLE, "업데이트 확인", "변경 기록", "권한 설정")
+            NavItem.LAB_NOTE to listOf(Copy.text(R.string.search_note_share_txt), Copy.text(R.string.search_note_text_file), Copy.text(R.string.search_note_long_text), Copy.text(R.string.search_note_copy_image)),
+            NavItem.LAB_TOOLS to listOf(Copy.text(R.string.search_tools_settings_diff), Copy.text(R.string.search_tools_api_probe)),
+            NavItem.LAB_STATS to listOf(Copy.text(R.string.search_stats_unfolds), Copy.text(R.string.search_stats_unlocks), Copy.text(R.string.search_stats_screen_on), Copy.text(R.string.search_stats_volume_presses), Copy.text(R.string.search_stats_stats), Copy.text(R.string.search_stats_battery), Copy.text(R.string.search_stats_charge_history), Copy.text(R.string.search_stats_hourly_usage)),
+            NavItem.LAB_AMBIENT to listOf(Copy.text(R.string.search_ambient_tent), Copy.text(R.string.search_ambient_standby_clock), Copy.text(R.string.search_ambient_mood_light)),
+            NavItem.SETTINGS to listOf(Copy.INK_TITLE, Copy.HAPTIC_TITLE, Copy.MOTION_TITLE, Copy.GOAT_STYLE_TITLE, Copy.LOG_FILE_TITLE, Copy.text(R.string.search_settings_update_check), Copy.text(R.string.search_settings_changelog), Copy.text(R.string.search_settings_permissions))
         )
-    }
 
     /**
      * [query]로 찾은 결과. [visible]은 지금 사이드바에 보이는 기능(실험실을 열지 않았으면 실험실 기능은 빠진다).
@@ -54,9 +54,10 @@ object SettingsSearch {
         val q = norm(query)
         if (q.isEmpty()) return emptyList()
         val hits = mutableListOf<Pair<Int, Hit>>()
+        val table = settings
         for (item in visible) {
             score(item.label, q)?.let { hits += (it - 10) to Hit(item, item.label) }
-            settings[item].orEmpty().forEach { name -> score(name, q)?.let { hits += it to Hit(item, name) } }
+            table[item].orEmpty().forEach { name -> score(name, q)?.let { hits += it to Hit(item, name) } }
         }
         return hits.sortedBy { it.first }.map { it.second }.distinct().take(20)
     }

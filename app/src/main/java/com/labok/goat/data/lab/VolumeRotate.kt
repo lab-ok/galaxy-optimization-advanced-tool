@@ -14,10 +14,12 @@ import android.view.Display
 import android.view.KeyEvent
 import android.view.Surface
 import android.view.accessibility.AccessibilityEvent
+import com.labok.goat.R
 import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.text.Copy
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -97,10 +99,10 @@ object VolumeRotate {
     }
 
     fun rotationLabel(rotation: Int) = when (rotation) {
-        Surface.ROTATION_90 -> "왼쪽으로 돌린 가로"
-        Surface.ROTATION_180 -> "거꾸로 든 세로"
-        Surface.ROTATION_270 -> "오른쪽으로 돌린 가로"
-        else -> "기본 세로"
+        Surface.ROTATION_90 -> Copy.text(R.string.labdata_volume_rotation_90)
+        Surface.ROTATION_180 -> Copy.text(R.string.labdata_volume_rotation_180)
+        Surface.ROTATION_270 -> Copy.text(R.string.labdata_volume_rotation_270)
+        else -> Copy.text(R.string.labdata_volume_rotation_0)
     }
 
     fun rotation(context: Context): Int = context.getSystemService(DisplayManager::class.java)?.getDisplay(Display.DEFAULT_DISPLAY)?.rotation ?: Surface.ROTATION_0

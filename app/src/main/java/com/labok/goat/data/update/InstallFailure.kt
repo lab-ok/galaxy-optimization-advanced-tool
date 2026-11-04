@@ -1,6 +1,8 @@
 package com.labok.goat.data.update
 
 import android.content.pm.PackageInstaller
+import com.labok.goat.R
+import com.labok.goat.ui.text.Copy
 
 /**
  * 설치 실패를 사용자가 알아듣는 한국어로 푼다. 시스템 설치 창의 결과 코드([PackageInstaller] STATUS_*)와
@@ -9,7 +11,7 @@ import android.content.pm.PackageInstaller
  */
 object InstallFailure {
     /** 'GOAT: 출처를 알 수 없는 앱 설치'가 꺼져 있을 때(시스템이 "Self update is blocked by unknown source package"로 막는다). */
-    const val UNKNOWN_SOURCE = "'출처를 알 수 없는 앱 설치'가 허용되지 않아 업데이트가 막혔습니다. 열린 설정 화면에서 허용한 뒤 다시 업데이트하세요."
+    val UNKNOWN_SOURCE: String get() = Copy.text(R.string.update_fail_unknown_source)
 
     fun explain(status: Int?, message: String?): String {
         val m = message.orEmpty()
@@ -17,22 +19,22 @@ object InstallFailure {
         return when {
             has("unknown source") || has("User rejected permissions") -> UNKNOWN_SOURCE
             has("INSTALL_FAILED_UPDATE_INCOMPATIBLE") || has("INCONSISTENT_CERTIFICATES") || has("signatures do not match") ->
-                "설치된 GOAT와 서명이 달라 덮어 설치할 수 없습니다. GitHub가 아닌 곳에서 받았다면 지운 뒤 다시 설치하세요. GOAT 설정은 처음부터 다시 해야 합니다."
+                Copy.text(R.string.update_fail_signature)
             has("INSUFFICIENT_STORAGE") || status == PackageInstaller.STATUS_FAILURE_STORAGE ->
-                "저장 공간이 부족합니다. 공간을 비운 뒤 다시 시도하세요."
+                Copy.text(R.string.update_fail_storage)
             has("VERSION_DOWNGRADE") ->
-                "설치된 GOAT가 더 최신 버전이라 설치하지 않았습니다."
+                Copy.text(R.string.update_fail_downgrade)
             status == PackageInstaller.STATUS_FAILURE_ABORTED || has("aborted") || has("cancel") ->
-                "설치를 취소했습니다. 다시 시도하면 설치 창이 열립니다."
+                Copy.text(R.string.update_fail_aborted)
             status == PackageInstaller.STATUS_FAILURE_BLOCKED || has("blocked") || has("VERIFICATION_FAILURE") ->
-                "기기 보안 기능(Play 프로텍트·삼성 자동 차단)이 설치를 막았습니다. 잠시 끄거나 GitHub에서 APK를 받아 직접 설치하세요."
+                Copy.text(R.string.update_fail_blocked)
             status == PackageInstaller.STATUS_FAILURE_INVALID || has("INVALID_APK") || has("PARSE_FAILED") ->
-                "다운로드한 파일이 손상되었습니다. 다시 시도하세요."
+                Copy.text(R.string.update_fail_invalid)
             status == PackageInstaller.STATUS_FAILURE_CONFLICT ->
-                "같은 이름의 다른 앱과 충돌해 설치하지 못했습니다."
+                Copy.text(R.string.update_fail_conflict)
             status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE ->
-                "이 기기와 맞지 않아 설치하지 못했습니다."
-            else -> "설치하지 못했습니다." + if (m.isNotBlank()) " (${m.take(80)})" else ""
+                Copy.text(R.string.update_fail_incompatible)
+            else -> Copy.text(R.string.update_fail_generic) + if (m.isNotBlank()) " (${m.take(80)})" else ""
         }
     }
 }

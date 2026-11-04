@@ -33,9 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.labok.goat.R
 import com.labok.goat.data.tweaks.AnimationSpeed
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
@@ -104,9 +106,9 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
                     Text(
                         if (same == null) {
                             // 셋을 따로 맞춘 때는 어느 값이 어느 항목인지 짧은 이름을 붙인다(창·전환·움직임)
-                            "현재: 사용자 지정(${AnimationSpeed.Kind.entries.joinToString(" · ") { "${it.short} ${AnimationSpeed.label(values.getValue(it))}" }})"
+                            stringResource(R.string.tweaks_anim_now_custom_fmt, AnimationSpeed.Kind.entries.joinToString(" · ") { "${it.short} ${AnimationSpeed.label(values.getValue(it))}" })
                         } else {
-                            "현재: ${AnimationSpeed.label(same)}"
+                            stringResource(R.string.tweaks_anim_now_fmt, AnimationSpeed.label(same))
                         },
                         color = c.muted,
                         style = MaterialTheme.typography.bodySmall
@@ -178,24 +180,20 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
 internal fun AnimationHelpSheet() {
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
-            "1. 하는 일",
-            "앱을 열고 닫거나 화면이 바뀔 때의 애니메이션 속도를 바꿉니다. 0.5배로 하면 절반의 시간에 끝나 더 빠르게 느껴집니다. " +
-                "가장 많이 쓰는 값은 0.5배입니다."
+            stringResource(R.string.tweaks_help_what_title),
+            stringResource(R.string.tweaks_anim_help_what_body)
         ) { SpeedArt(0.5f) }
         HelpTopic(
-            "2. 세 가지 설정",
-            "개발자 옵션의 '창 애니메이션 배율', '전환 애니메이션 배율', '애니메이터 길이 배율'과 같습니다. 한 번에 고르면 셋이 함께 바뀝니다. " +
-                "'${Copy.ANIM_DETAIL_TITLE}'를 펼치면 따로 맞출 수 있습니다."
+            stringResource(R.string.tweaks_anim_help_three_title),
+            stringResource(R.string.tweaks_anim_help_three_body_fmt, Copy.ANIM_DETAIL_TITLE)
         )
         HelpTopic(
-            "3. 끔과 주의",
-            "'끔'은 애니메이션 없이 바로 바뀝니다. 너무 빠르면 일부 앱에서 화면이 깜빡이거나 멈춘 것처럼 보입니다. 그럴 때는 0.5배나 기본값으로 되돌리세요. " +
-                "GOAT의 물방울 애니메이션도 이 설정을 따릅니다."
+            stringResource(R.string.tweaks_anim_help_off_title),
+            stringResource(R.string.tweaks_anim_help_off_body)
         )
         HelpTopic(
-            "4. 권한과 유지",
-            "고급 화면 배율 설정과 같은 시스템 설정 권한으로 바꾸며, 재부팅해도 유지됩니다. " +
-                "개발자 옵션을 끄면 기기가 기본값으로 되돌리지만 GOAT가 고른 값으로 다시 맞춥니다."
+            stringResource(R.string.tweaks_anim_help_permission_title),
+            stringResource(R.string.tweaks_anim_help_permission_body)
         )
     }
 }

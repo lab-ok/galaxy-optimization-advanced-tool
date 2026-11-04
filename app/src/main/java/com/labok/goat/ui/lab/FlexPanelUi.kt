@@ -87,11 +87,15 @@ import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.R
+import com.labok.goat.data.lab.AmbSource
 import com.labok.goat.data.lab.AmbientColor
+import com.labok.goat.ui.text.Copy
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
@@ -127,6 +131,7 @@ class FlexPanelState {
 
     /** 앰비언트 색이 어디서 왔는지(화면 분석·포스터·앱 색·끔, 보호 콘텐츠면 그 사실). */
     var ambSource by mutableStateOf("")
+    var ambKind by mutableStateOf<AmbSource?>(null)
 
     /** 지금 앰비언트 방식(0 없음·1 앱 색상·2 포스터·3 실시간)과, 머리글 칩을 눌러 연 고르기 탭이 열려 있는지. */
     var ambMode by mutableIntStateOf(3)
@@ -646,7 +651,7 @@ private fun PanelBody(
         verticalArrangement = Arrangement.spacedBy(gap)
     ) {
         Row(Modifier.fillMaxWidth().weight(0.9f), horizontalArrangement = Arrangement.spacedBy(gap)) {
-            GlassTile(state, amb, Modifier.weight(0.7f), onClose, label = "패널 닫기", shape = SuperellipseShape.Capsule) { Icon { close(it) } }
+            GlassTile(state, amb, Modifier.weight(0.7f), onClose, label = stringResource(R.string.lab_panel_close), shape = SuperellipseShape.Capsule) { Icon { close(it) } }
             // 컨텍스트 카드: 앱 아이콘·앱 이름 · 제목(2줄까지) · 재생 상태 · 앰비언트 출처 · 꺾쇠
             GlassTile(state, amb, Modifier.weight(4.2f), null, shape = SuperellipseShape.Capsule) {
                 Row(Modifier.fillMaxSize().padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -661,7 +666,7 @@ private fun PanelBody(
                         if (state.title.isNotEmpty()) {
                             Text(state.title, color = state.ink, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             Text(
-                                listOf(state.subtitle.ifEmpty { state.app }, if (state.playing) "재생 중" else "일시정지됨").joinToString(" · "),
+                                listOf(state.subtitle.ifEmpty { state.app }, if (state.playing) stringResource(R.string.lab_panel_playing) else stringResource(R.string.lab_panel_paused)).joinToString(" · "),
                                 color = Glass.Muted,
                                 fontSize = 12.sp,
                                 maxLines = 1,
@@ -669,13 +674,13 @@ private fun PanelBody(
                             )
                         } else {
                             Text(state.app, color = state.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                            Text(if (state.hasSession) "제목 정보 없음 · 조작 가능" else "재생 정보 없음 · 화면 누르기로 조작", color = Glass.Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(if (state.hasSession) stringResource(R.string.lab_panel_no_title) else stringResource(R.string.lab_panel_no_session), color = Glass.Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                     if (state.ambSource.isNotEmpty()) {
                         // 누르면 앰비언트 고르기 탭이 열린다(11-02 소장님)
                         Text(
-                            if (state.ambMode == 3 && state.ambFps > 0f && state.ambSource.startsWith("화면") && com.labok.goat.data.lab.LabUnlock.unlocked) "실시간 · ${state.ambFps.toInt()}fps" else state.ambSource,
+                            if (state.ambMode == 3 && state.ambFps > 0f && state.ambKind == AmbSource.SCREEN && com.labok.goat.data.lab.LabUnlock.unlocked) stringResource(R.string.lab_panel_ambient_live_fps, state.ambFps.toInt()) else state.ambSource,
                             // 상태 표시는 정보 계층 맨 아래(11-03): 보조 회색
                             color = if (state.ambPicker) Glass.Ink else Glass.Muted,
                             fontSize = 10.sp,
@@ -687,19 +692,19 @@ private fun PanelBody(
                     Icon(16) { chevron(it) }
                 }
             }
-            GlassTile(state, amb, Modifier.weight(0.7f), onLock, shape = SuperellipseShape.Capsule, selected = state.locked, label = if (state.locked) "영상 잠금 풀기" else "영상 터치 잠금") { Icon(22) { lock(it, state.locked) } }
+            GlassTile(state, amb, Modifier.weight(0.7f), onLock, shape = SuperellipseShape.Capsule, selected = state.locked, label = if (state.locked) stringResource(R.string.lab_panel_unlock_video) else stringResource(R.string.lab_panel_lock_video)) { Icon(22) { lock(it, state.locked) } }
         }
         Row(Modifier.fillMaxWidth().weight(1.65f), horizontalArrangement = Arrangement.spacedBy(gap)) {
-            GlassTile(state, amb, Modifier.weight(1f), { onSeek(-1) }, label = "${seekSec}초 뒤로") {
+            GlassTile(state, amb, Modifier.weight(1f), { onSeek(-1) }, label = stringResource(R.string.lab_panel_seek_back, seekSec)) {
                 Icon(38) { seekIcon(it, backward = true, sec = seekSec) }
                 SeekBadge(state, back = true)
             }
-            GlassTile(state, amb, Modifier.weight(1.2f), onPlayPause, primary = true, label = if (state.playing) "일시정지" else "재생") {
+            GlassTile(state, amb, Modifier.weight(1.2f), onPlayPause, primary = true, label = if (state.playing) stringResource(R.string.lab_panel_pause) else stringResource(R.string.lab_panel_play)) {
                 AnimatedContent(state.playing, transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) }, label = "pp") { playing ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(48) { if (playing) pause(it) else play(it) } }
                 }
             }
-            GlassTile(state, amb, Modifier.weight(1f), { onSeek(1) }, label = "${seekSec}초 앞으로") {
+            GlassTile(state, amb, Modifier.weight(1f), { onSeek(1) }, label = stringResource(R.string.lab_panel_seek_forward, seekSec)) {
                 Icon(38) { seekIcon(it, backward = false, sec = seekSec) }
                 SeekBadge(state, back = false)
             }
@@ -713,7 +718,7 @@ private fun PanelBody(
                     val f = (state.position.toFloat() / state.duration).coerceIn(0f, 1f)
                     Row(Modifier.fillMaxSize().padding(end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.weight(1f)) {
-                            PanelSlider(f, 1000, { clock(state.duration * it / 1000) }, "재생 위치", live = false) { onSeekTo(it) }
+                            PanelSlider(f, 1000, { clock(state.duration * it / 1000) }, stringResource(R.string.lab_panel_position), live = false) { onSeekTo(it) }
                         }
                         // 11-03 정보 계층: 지금 위치(값)는 진하고 크게, 전체 길이(보조)는 옅게
                         Text(clock(state.position), color = Glass.Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
@@ -722,7 +727,7 @@ private fun PanelBody(
                 } else {
                     // 진행 정보가 없으면 가짜 진행률을 그리지 않고 이유만 적는다
                     // 손잡이·0%를 그리지 않는다(실제 0%로 오해). 짧게 이유만
-                    GlassSlider(0f, Glass.Muted, { if (state.hasSession) "위치 이동 미지원" else "위치 정보 없음" }, live = false, enabled = false) {}
+                    GlassSlider(0f, Glass.Muted, { if (state.hasSession) Copy.text(R.string.lab_panel_seek_unsupported) else Copy.text(R.string.lab_panel_no_position) }, live = false, enabled = false) {}
                 }
             }
         }
@@ -731,13 +736,13 @@ private fun PanelBody(
         if (show("brightness") || show("volume")) {
             Row(Modifier.fillMaxWidth().weight(0.9f), horizontalArrangement = Arrangement.spacedBy(gap)) {
                 if (show("brightness")) {
-                    GlassTile(state, amb, Modifier.weight(1f), null, label = "밝기", clipContent = false, shape = SuperellipseShape.Capsule) {
-                        InlineSlider(state.brightness, "밝기", { sun(it) }) { onBrightness(it) }
+                    GlassTile(state, amb, Modifier.weight(1f), null, label = stringResource(R.string.lab_panel_brightness), clipContent = false, shape = SuperellipseShape.Capsule) {
+                        InlineSlider(state.brightness, stringResource(R.string.lab_panel_brightness), { sun(it) }) { onBrightness(it) }
                     }
                 }
                 if (show("volume")) {
-                    GlassTile(state, amb, Modifier.weight(1f), null, label = "음량", clipContent = false, shape = SuperellipseShape.Capsule) {
-                        InlineSlider(state.volume, "음량", { speaker(it) }) { onVolume(it) }
+                    GlassTile(state, amb, Modifier.weight(1f), null, label = stringResource(R.string.lab_panel_volume), clipContent = false, shape = SuperellipseShape.Capsule) {
+                        InlineSlider(state.volume, stringResource(R.string.lab_panel_volume), { speaker(it) }) { onVolume(it) }
                     }
                 }
             }
@@ -751,7 +756,7 @@ private fun PanelBody(
  */
 @Composable
 private fun AmbientTabs(mode: Int, onPick: (Int) -> Unit) {
-    val items = listOf(3 to "실시간", 2 to "포스터", 1 to "앱 색상", 0 to "없음")
+    val items = listOf(3 to stringResource(R.string.lab_panel_ambient_live), 2 to stringResource(R.string.lab_panel_ambient_poster), 1 to stringResource(R.string.lab_panel_ambient_app_color), 0 to stringResource(R.string.lab_panel_ambient_none))
     val sel = items.indexOfFirst { it.first == mode }.coerceAtLeast(0)
     val pos by animateFloatAsState(sel.toFloat(), spring(dampingRatio = 0.72f, stiffness = 520f), label = "tab")
     val ink = LocalTileInk.current
@@ -821,7 +826,7 @@ private fun BoxScope.SeekBadge(state: FlexPanelState, back: Boolean) {
     val v = state.seekBadge
     if (v == 0 || (v < 0) != back) return
     Text(
-        (if (v > 0) "+" else "−") + "${kotlin.math.abs(v)}초",
+        stringResource(if (v > 0) R.string.lab_panel_seek_badge_forward else R.string.lab_panel_seek_badge_back, kotlin.math.abs(v)),
         color = Glass.Ink,
         fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold,

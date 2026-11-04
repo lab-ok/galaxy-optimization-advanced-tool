@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.art.ArtCanvas
 import com.labok.goat.ui.art.LocalDeviceShape
 import com.labok.goat.ui.art.artLabel
@@ -17,6 +18,7 @@ import com.labok.goat.ui.art.artLoop
 import com.labok.goat.ui.art.artPill
 import com.labok.goat.ui.art.deviceFrame
 import com.labok.goat.ui.liquid.LiquidColors
+import com.labok.goat.ui.text.Copy
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -52,14 +54,14 @@ internal fun ShakeTurnArt(toLandscape: Boolean = true) {
         val open = t >= 0.38f && t < 0.78f
         phone(c, aspect, center, body, content, locked = true, open = open)
         val status = when {
-            t < 0.14f -> "잠김"
-            t < 0.36f -> "기기 회전"
-            t < 0.6f -> "흔들기"
-            t < 0.78f -> "자동 회전"
-            else -> "다시 잠김"
+            t < 0.14f -> Copy.text(R.string.rotate_art_locked)
+            t < 0.36f -> Copy.text(R.string.rotate_art_device_turn)
+            t < 0.6f -> Copy.text(R.string.rotate_art_shake)
+            t < 0.78f -> Copy.text(R.string.rotate_art_auto_rotate)
+            else -> Copy.text(R.string.rotate_art_locked_again)
         }
         artPill(tm, c, status, Offset(size.width - 52.dp.toPx(), 18.dp.toPx()), filled = t >= 0.38f && t < 0.78f)
-        artLabel(tm, if (toLandscape) "세로 → 가로" else "가로 → 세로", Offset(44.dp.toPx(), 18.dp.toPx()), c.muted)
+        artLabel(tm, Copy.text(if (toLandscape) R.string.rotate_art_portrait_to_landscape else R.string.rotate_art_landscape_to_portrait), Offset(44.dp.toPx(), 18.dp.toPx()), c.muted)
     }
 }
 
@@ -81,10 +83,10 @@ internal fun LyingDownArt() {
         val autoTurn = ease(seg(t, 0.5f, 0.65f))
         phone(c, aspect, left, body, -90f * autoTurn, locked = false)
         phone(c, aspect, right, body, 0f, locked = true)
-        artLabel(tm, "자동 회전", Offset(left.x, size.height - 12.dp.toPx()), c.muted)
-        artLabel(tm, "GOAT 잠금", Offset(right.x, size.height - 12.dp.toPx()), c.ink, bold = true)
-        if (autoTurn > 0.9f) artPill(tm, c, "저절로 회전", Offset(left.x, 14.dp.toPx()), filled = false)
-        if (tilt > 0.9f) artPill(tm, c, "그대로", Offset(right.x, 14.dp.toPx()), filled = true)
+        artLabel(tm, Copy.text(R.string.rotate_art_auto_rotate), Offset(left.x, size.height - 12.dp.toPx()), c.muted)
+        artLabel(tm, Copy.text(R.string.rotate_art_goat_lock), Offset(right.x, size.height - 12.dp.toPx()), c.ink, bold = true)
+        if (autoTurn > 0.9f) artPill(tm, c, Copy.text(R.string.rotate_art_turned_by_itself), Offset(left.x, 14.dp.toPx()), filled = false)
+        if (tilt > 0.9f) artPill(tm, c, Copy.text(R.string.rotate_art_stays), Offset(right.x, 14.dp.toPx()), filled = true)
     }
 }
 

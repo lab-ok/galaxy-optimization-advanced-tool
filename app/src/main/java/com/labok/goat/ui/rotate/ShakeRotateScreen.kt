@@ -44,10 +44,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.data.rotate.ShakeHaptics
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.domain.ShakeRotatePolicy
@@ -127,7 +129,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
 
     fun turnOn() {
         on = ShakeRotate.setEnabled(context, true)
-        message = if (on) "" else "회전을 잠그지 못했습니다. 권한 설정을 확인하세요."
+        message = if (on) "" else Copy.text(R.string.rotate_shake_lock_failed)
     }
 
     // 권한 설정에서 돌아오거나 빠른 설정에서 자동 회전을 켜고 돌아와도 바로 보이게 한다
@@ -272,7 +274,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                             }
                         },
                         onValueChangeFinished = { ShakeRotate.setVibration(context, vibration) },
-                        valueText = { if (it == 0) "끔" else "$it" },
+                        valueText = { if (it == 0) Copy.text(R.string.tweaks_value_off) else "$it" },
                         description = Copy.SHAKE_VIBRATION_TITLE
                     )
                 }
@@ -317,7 +319,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 range = 2..4,
                                 onValueChange = { swings = it },
                                 onValueChangeFinished = { ShakeRotate.setAdvanced(context, swings = swings, how = "슬라이더") },
-                                valueText = { "${it}번" },
+                                valueText = { Copy.text(R.string.rotate_shake_swings_value_fmt, it) },
                                 description = Copy.SHAKE_SWINGS_TITLE
                             )
                             Spacer(Modifier.height(Gap.Section))
@@ -341,7 +343,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                                 range = 0..ShakeRotatePolicy.MAX_TURN,
                                 onValueChange = { turn = it },
                                 onValueChangeFinished = { ShakeRotate.setAdvanced(context, turn = turn, how = "슬라이더") },
-                                valueText = { if (it == 0) "끔" else "$it" },
+                                valueText = { if (it == 0) Copy.text(R.string.tweaks_value_off) else "$it" },
                                 description = Copy.SHAKE_TURN_TITLE
                             )
                             Spacer(Modifier.height(Gap.Item))
@@ -364,42 +366,36 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
 internal fun ShakeRotateHelpSheet() {
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
-            "1. 하는 일",
-            "평소에는 화면 회전을 잠가 둡니다. 원하는 방향으로 기기를 든 채 흔들면 그 방향으로 회전하고 다시 잠깁니다. " +
-                "세로로 든 채 흔들면 세로가 유지됩니다. 회전하면 흔든 리듬에 맞춰 진동합니다."
+            stringResource(R.string.tweaks_help_what_title),
+            stringResource(R.string.rotate_shake_help_what_body)
         ) { ShakeTurnArt() }
         HelpTopic(
-            "2. 자동 회전 꺼 두기",
-            "흔들어서 화면 회전은 자동 회전이 꺼진 상태에서 동작합니다. 켜면 GOAT가 자동 회전을 끄고 지금 방향으로 잠급니다. " +
-                "빠른 설정에서 자동 회전을 다시 켰다면 이 화면의 [${Copy.SHAKE_AUTO_OFF_BUTTON}]를 누르세요."
+            stringResource(R.string.rotate_shake_help_auto_off_title),
+            stringResource(R.string.rotate_shake_help_auto_off_body_fmt, Copy.SHAKE_AUTO_OFF_BUTTON)
         )
         HelpTopic(
-            "3. 누워서 볼 때",
-            "옆으로 누우면 자동 회전은 화면을 가로로 돌립니다. 흔들어서 화면 회전을 켜 두면 흔들기 전까지 지금 방향이 유지됩니다."
+            stringResource(R.string.rotate_shake_help_lying_title),
+            stringResource(R.string.rotate_shake_help_lying_body)
         ) { LyingDownArt() }
         HelpTopic(
-            "4. 다시 세로로",
-            "휴대폰을 세로로 세워 든 채 흔들면 세로로 돌아옵니다. 들기만 해서는 회전하지 않아 누워서 뒤척여도 화면은 그대로입니다."
+            stringResource(R.string.rotate_shake_help_portrait_title),
+            stringResource(R.string.rotate_shake_help_portrait_body)
         ) { ShakeTurnArt(toLandscape = false) }
         HelpTopic(
-            "5. 민감도와 자동 맞추기",
-            "민감도는 1~${ShakeRotatePolicy.MAX_LEVEL}이며, 클수록 살짝만 흔들어도 회전합니다. " +
-                "[${Copy.SHAKE_CALIBRATE}]에서 [시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 평소처럼 흔들면 그보다 조금 약하게 흔들어도 회전하도록 맞춥니다. " +
-                "걷거나 뒤척일 때 회전하면 민감도를 낮추세요."
+            stringResource(R.string.rotate_shake_help_level_title),
+            stringResource(R.string.rotate_shake_help_level_body_fmt, ShakeRotatePolicy.MAX_LEVEL, Copy.SHAKE_CALIBRATE, CALIBRATE_SECONDS)
         )
         HelpTopic(
-            "6. 배터리와 알림",
-            "흔들기는 가속도 센서로만 감지하고, 화면이 꺼져 있으면 센서를 쓰지 않아 배터리를 거의 쓰지 않습니다. " +
-                "Android는 알림이 없는 앱의 센서를 멈추므로 GOAT 알림 하나가 떠 있어야 합니다. " +
-                "다른 GOAT 알림이 있으면 그 알림을 함께 쓰고, 없으면 소리·진동 없는 알림 하나만 띄웁니다."
+            stringResource(R.string.rotate_shake_help_battery_title),
+            stringResource(R.string.rotate_shake_help_battery_body)
         )
         HelpTopic(
-            "7. 앱이 방향을 정할 때",
-            "동영상 전체 화면처럼 앱이 방향을 정하면 그 방향을 따릅니다. 그 앱을 닫으면 잠가 둔 방향으로 돌아옵니다."
+            stringResource(R.string.rotate_shake_help_app_orientation_title),
+            stringResource(R.string.rotate_shake_help_app_orientation_body)
         )
         HelpTopic(
-            "8. 끄기",
-            "끄면 켜기 전의 자동 회전 설정으로 되돌립니다."
+            stringResource(R.string.rotate_shake_help_off_title),
+            stringResource(R.string.rotate_shake_help_off_body)
         )
     }
 }

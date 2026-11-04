@@ -6,9 +6,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import com.labok.goat.BuildConfig
+import com.labok.goat.R
 import com.labok.goat.data.lab.LabUnlock
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.text.Copy
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -127,12 +129,12 @@ object Updater {
         }
         prefs(context).edit().putLong("checkedAt", System.currentTimeMillis()).apply()
         val (test, json) = result.getOrElse {
-            if (!quiet) state.value = State.Failed("인터넷 연결을 확인하세요.")
+            if (!quiet) state.value = State.Failed(Copy.text(R.string.update_check_offline))
             return
         }
         val release = runCatching { if (test) newestOf(json, withTest = true) else parse(json) }.getOrNull()
         state.value = when {
-            release == null -> if (quiet) state.value else State.Failed("최신 릴리스에서 APK를 찾지 못했습니다.")
+            release == null -> if (quiet) state.value else State.Failed(Copy.text(R.string.update_check_no_apk))
             isNewer(release.version, BuildConfig.VERSION_NAME) -> State.Available(release)
             else -> State.UpToDate
         }
@@ -186,13 +188,13 @@ object Updater {
             md.digest().joinToString("") { "%02x".format(it) }
         }
         val sha = downloaded.getOrElse {
-            state.value = State.Failed("다운로드하지 못했습니다. 인터넷 연결을 확인하세요.", release)
+            state.value = State.Failed(Copy.text(R.string.update_download_failed), release)
             log.add("업데이트 ${release.version}: 다운로드 실패(${it.message?.take(80)})")
             return
         }
         if ((release.size > 0 && file.length() != release.size) || (release.sha256 != null && release.sha256 != sha)) {
             file.delete()
-            state.value = State.Failed("다운로드한 파일이 릴리스와 달라 설치하지 않았습니다.", release)
+            state.value = State.Failed(Copy.text(R.string.update_download_mismatch), release)
             log.add("업데이트 ${release.version}: 크기·SHA-256 불일치로 설치하지 않음")
             return
         }
@@ -228,7 +230,7 @@ object Updater {
             return
         }
         runCatching { installWithSystem(context, file) }.onFailure {
-            state.value = State.Failed("설치 창을 열지 못했습니다.", release)
+            state.value = State.Failed(Copy.text(R.string.update_installer_open_failed), release)
             log.add("업데이트 ${release.version}: 설치 창 실패(${it.message?.take(80)})")
         }
     }

@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,6 +60,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.R
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.GoatFlexPanel
@@ -218,7 +220,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 // 삼성 공식 '플렉스 모드 패널' 화면과 같은 순서: 사용 스위치 → 그림 → 설명
                 GlassCard {
-                    LiquidSwitchRow(if (enabled) "사용 중" else "사용 안 함", if (shizuku == ShizukuAccess.State.READY) Copy.LAB_FLEX_SWITCH_BODY else Copy.NEED_SHIZUKU_TITLE, enabled, shizuku == ShizukuAccess.State.READY || enabled) { v ->
+                    LiquidSwitchRow(if (enabled) stringResource(R.string.lab_flex_switch_on) else stringResource(R.string.lab_flex_switch_off), if (shizuku == ShizukuAccess.State.READY) Copy.LAB_FLEX_SWITCH_BODY else Copy.NEED_SHIZUKU_TITLE, enabled, shizuku == ShizukuAccess.State.READY || enabled) { v ->
                         enabled = v
                         AutoFlex.setEnabled(context, v)
                         GoatService.sync(context)
@@ -275,7 +277,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                             NewTag(NewBadge.AUTO_FLEX, Modifier.padding(bottom = Gap.Item))
                             Text(Copy.LAB_FLEX_APPS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                             Text(
-                                if (apps == null) "앱 목록을 불러오는 중…" else AutoFlex.MODES.filter { counts[it]!! > 0 }.joinToString(" · ") { "${AutoFlex.modeLabel(it)} ${counts[it]}" },
+                                if (apps == null) stringResource(R.string.lab_flex_apps_loading) else AutoFlex.MODES.filter { counts[it]!! > 0 }.joinToString(" · ") { "${AutoFlex.modeLabel(it)} ${counts[it]}" },
                                 color = c.muted,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -304,20 +306,20 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     LiquidTextField(
                         query,
                         { query = it },
-                        "앱 이름 검색",
+                        stringResource(R.string.lab_flex_apps_search),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) }
                     )
                 }
             }
-            if (apps == null) item(key = "loading") { LiquidLoader("앱 목록을 불러오는 중…", Modifier.padding(vertical = 12.dp)) }
+            if (apps == null) item(key = "loading") { LiquidLoader(stringResource(R.string.lab_flex_apps_loading), Modifier.padding(vertical = 12.dp)) }
             // 고른 모드의 앱만, 최근 사용 순. 모드를 바꾸면 그 줄은 물처럼 빠져나가 다른 탭으로 옮겨 간다
             val shown = apps.orEmpty().filter { (pending[it.pkg] ?: modeOf(it)) == filter }
                 .filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) || it.pkg.contains(q, ignoreCase = true) }
             if (apps != null && shown.isEmpty()) {
                 item(key = "empty") {
                     Text(
-                        if (q.isEmpty()) "${AutoFlex.modeLabel(filter)}인 앱이 없습니다." else "찾는 앱이 없습니다.",
+                        if (q.isEmpty()) stringResource(R.string.lab_flex_apps_empty_mode, AutoFlex.modeLabel(filter)) else stringResource(R.string.lab_flex_apps_not_found),
                         color = c.muted,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.widthIn(max = ContentMaxWidth).padding(horizontal = Gap.CardPadding).animateItem(fadeInSpec = liquidFade, placementSpec = liquidPlace, fadeOutSpec = liquidFade)
@@ -351,40 +353,34 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
 /** 자동 플렉스 모드 사용 방법(점 세 개 메뉴 → 사용 방법). */
 @Composable
 internal fun FlexHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = stringResource(R.string.lab_help_title)) {
         HelpTopic(
-            "1. 하는 일",
-            "폴드8은 반쯤 접어 세워도 플렉스 모드로 바뀌지 않습니다. 이 기능을 켜 두면 가로로 접어 정한 각도에 들어올 때 " +
-                "GOAT가 플렉스 모드로 바꿉니다. 위 화면에는 쓰던 앱이, 아래 화면에는 조작 패널이 나옵니다."
+            stringResource(R.string.lab_help_what_title),
+            stringResource(R.string.lab_flex_help_what_body)
         ) { FlexPanelArt() }
         HelpTopic(
-            "2. 먼저 Shizuku 연결",
-            "플렉스 모드로 바꾸려면 Shizuku가 필요합니다. 연결 방법은 점 세 개 메뉴의 '권한 설정'에 있습니다. " +
-                "연결하면 이 화면의 스위치를 켤 수 있습니다."
+            stringResource(R.string.lab_flex_help_shizuku_title),
+            stringResource(R.string.lab_flex_help_shizuku_body)
         )
         HelpTopic(
-            "3. 켜고 사용",
-            "맨 위 스위치를 켠 뒤, 세로 화면에서 펼친 화면을 천천히 접습니다. 각도가 범위에 들어오면 진동과 함께 " +
-                "플렉스 모드가 켜지고, 범위를 벗어나면 원래대로 돌아옵니다. 켜진 뒤에는 기울이거나 돌려도 풀리지 않습니다. 가로 화면에서 접으면 켜지지 않습니다."
+            stringResource(R.string.lab_flex_help_use_title),
+            stringResource(R.string.lab_flex_help_use_body)
         )
         HelpTopic(
-            "4. 각도 범위 맞추기",
-            "게이지의 두 손잡이를 끌어 범위를 정합니다. 손잡이를 길게 누르면 1도씩 맞출 수 있습니다. " +
-                "[${Copy.LAB_FLEX_TEST}]로 바로 시험하세요."
+            stringResource(R.string.lab_flex_help_range_title),
+            stringResource(R.string.lab_flex_help_range_body, Copy.LAB_FLEX_TEST)
         )
         HelpTopic(
-            "5. 까딱으로 플렉스 모드",
-            "켜 두면 완전히 편 채 130~160°까지 살짝 접었다가 3초 안에 다시 펴는 동작(까딱)으로 플렉스 모드를 켜고 끕니다. " +
-                "켜진 동안에는 펼친 상태에서도 플렉스 모드로 씁니다. 닫거나 화면을 끄면 꺼집니다."
+            stringResource(R.string.lab_flex_help_nod_title),
+            stringResource(R.string.lab_flex_help_nod_body)
         )
         HelpTopic(
-            "6. 앱마다 다른 점",
-            "기본으로는 유튜브·카메라·갤러리처럼 플렉스 화면을 지원하는 앱만 위아래로 나뉘고, 그 밖의 앱은 그대로입니다. " +
-                "다른 앱도 나누려면 '${Copy.LAB_FLEX_APPS_TITLE}'에서 그 앱을 '플렉스 모드'로 바꿉니다."
+            stringResource(R.string.lab_flex_help_apps_title),
+            stringResource(R.string.lab_flex_help_apps_body, Copy.LAB_FLEX_APPS_TITLE)
         )
         HelpTopic(
-            "7. 끄기·되돌리기",
-            "맨 위 스위치를 끄면 GOAT가 바꾼 설정과 접힘 상태가 원래대로 돌아옵니다. 재부팅해도 원래대로 돌아옵니다."
+            stringResource(R.string.lab_flex_help_off_title),
+            stringResource(R.string.lab_flex_help_off_body)
         )
     }
 }
@@ -454,50 +450,50 @@ private fun GoatPanelCard() {
     var sec by remember { mutableIntStateOf(GoatFlexPanel.seekSec(context)) }
     var how by remember { mutableIntStateOf(GoatFlexPanel.seekMode(context)) }
     GlassCard {
-        Text("GOAT 패널", fontWeight = FontWeight.SemiBold, color = c.ink)
+        Text(stringResource(R.string.lab_flex_panel_title), fontWeight = FontWeight.SemiBold, color = c.ink)
         Text(
-            "'GOAT 패널'로 고른 앱은 반쯤 접으면 아래 화면에 조작 패널이 뜹니다. 넷플릭스·디즈니+처럼 자체 조작이 없는 앱에 씁니다.",
+            stringResource(R.string.lab_flex_panel_body),
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
         )
         Spacer(Modifier.height(Gap.Item))
-        Text("이동 시간", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.lab_flex_panel_seek_time), color = c.ink, style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.height(Gap.Item))
-        LiquidChips(options = GoatFlexPanel.SEEK_SECONDS, selected = sec, label = { "${it}초" }, onSelect = {
+        LiquidChips(options = GoatFlexPanel.SEEK_SECONDS, selected = sec, label = { Copy.text(R.string.lab_flex_panel_seek_seconds, it) }, onSelect = {
             sec = it
             GoatFlexPanel.setSeekSec(context, it)
         })
         Spacer(Modifier.height(Gap.Section))
-        Text("이동 방식", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.lab_flex_panel_seek_mode), color = c.ink, style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.height(Gap.Item))
         LiquidChips(options = GoatFlexPanel.SEEK_MODES, selected = how, label = { GoatFlexPanel.seekModeLabel(it) }, onSelect = {
             how = it
             GoatFlexPanel.setSeekMode(context, it)
         })
         Spacer(Modifier.height(Gap.Item))
-        Text("자동은 앱의 재생 정보로 옮기고, 안 되면 영상 좌우 두 번 누르기로 대신합니다. 두 번 누르기는 10초 고정입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.lab_flex_panel_seek_mode_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
         // 품질·앰비언트 프리셋(11-02 고도화). 화면 분석은 보호 콘텐츠(넷플릭스 등 DRM)에서는 검게 찍혀 포스터·앱 색으로 대신한다
         var quality by remember { mutableIntStateOf(GoatFlexPanel.quality(context)) }
         var ambient by remember { mutableIntStateOf(GoatFlexPanel.ambientMode(context)) }
         var intensity by remember { mutableIntStateOf(GoatFlexPanel.intensity(context)) }
         Spacer(Modifier.height(Gap.Section))
-        Text("유리 품질", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.lab_flex_panel_quality), color = c.ink, style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.height(Gap.Item))
         LiquidChips(options = GoatFlexPanel.QUALITIES, selected = quality, label = { GoatFlexPanel.qualityLabel(it) }, onSelect = {
             quality = it
             GoatFlexPanel.setQuality(context, it)
         })
         Spacer(Modifier.height(Gap.Section))
-        Text("앰비언트", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.lab_flex_panel_ambient), color = c.ink, style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.height(Gap.Item))
         LiquidChips(options = GoatFlexPanel.AMBIENT_MODES, selected = ambient, label = { GoatFlexPanel.ambientLabel(it) }, onSelect = {
             ambient = it
             GoatFlexPanel.setAmbientMode(context, it)
         })
         Spacer(Modifier.height(Gap.Item))
-        Text("화면 분석은 위 화면을 작게 찍어 기기 안에서만 색을 뽑습니다. 저장하거나 보내지 않습니다. 넷플릭스처럼 보호된 영상은 포스터나 앱 색으로 대신합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.lab_flex_panel_ambient_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Section))
-        Text("앰비언트 강도", color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.lab_flex_panel_intensity), color = c.ink, style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.height(Gap.Item))
         LiquidChips(options = GoatFlexPanel.INTENSITIES, selected = intensity, label = { GoatFlexPanel.intensityLabel(it) }, onSelect = {
             intensity = it
@@ -507,8 +503,8 @@ private fun GoatPanelCard() {
         var floorBlur by remember { mutableIntStateOf(GoatFlexPanel.floorBlur(context)) }
         var buttonBlur by remember { mutableIntStateOf(GoatFlexPanel.buttonBlur(context)) }
         Spacer(Modifier.height(Gap.Section))
-        Text("바닥 반사 블러", color = c.ink, style = MaterialTheme.typography.labelMedium)
-        Text("접는 선에서 멀어질수록 흐려지는 정도입니다. 기본은 30%입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.lab_flex_panel_floor_blur), color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.lab_flex_panel_floor_blur_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Item))
         LiquidSlider(
             value = floorBlur,
@@ -516,11 +512,11 @@ private fun GoatPanelCard() {
             onValueChange = { floorBlur = it },
             onValueChangeFinished = { GoatFlexPanel.setFloorBlur(context, floorBlur) },
             valueText = { "$it%" },
-            description = "바닥 반사 블러"
+            description = stringResource(R.string.lab_flex_panel_floor_blur)
         )
         Spacer(Modifier.height(Gap.Section))
-        Text("버튼 유리 블러", color = c.ink, style = MaterialTheme.typography.labelMedium)
-        Text("버튼 안에 비치는 반사의 흐림 정도입니다. 0이면 바닥과 같고, 기본은 60dp입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.lab_flex_panel_button_blur), color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.lab_flex_panel_button_blur_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Item))
         LiquidSlider(
             value = buttonBlur,
@@ -528,29 +524,29 @@ private fun GoatPanelCard() {
             onValueChange = { buttonBlur = it },
             onValueChangeFinished = { GoatFlexPanel.setButtonBlur(context, buttonBlur) },
             valueText = { "${it}dp" },
-            description = "버튼 유리 블러"
+            description = stringResource(R.string.lab_flex_panel_button_blur)
         )
         var haptic by remember { mutableStateOf(GoatFlexPanel.haptics(context)) }
         Spacer(Modifier.height(Gap.Item))
-        LiquidSwitchRow("누를 때 진동", "타일을 누르면 짧게 진동합니다. 시스템 진동 설정을 따릅니다.", haptic, enabled = true, onChange = {
+        LiquidSwitchRow(stringResource(R.string.lab_flex_panel_haptic_title), stringResource(R.string.lab_flex_panel_haptic_desc), haptic, enabled = true, onChange = {
             haptic = it
             GoatFlexPanel.setHaptics(context, it)
         })
         var motionOn by remember { mutableStateOf(GoatFlexPanel.motion(context)) }
         Spacer(Modifier.height(Gap.Section))
-        LiquidSwitchRow("표면 애니메이션", "빛 일렁임·눌림·등장 움직임입니다. 시스템 '애니메이션 줄이기'가 켜져 있으면 꺼집니다.", motionOn, enabled = true, onChange = {
+        LiquidSwitchRow(stringResource(R.string.lab_flex_panel_motion_title), stringResource(R.string.lab_flex_panel_motion_desc), motionOn, enabled = true, onChange = {
             motionOn = it
             GoatFlexPanel.setMotion(context, it)
         })
-        listOf("progress" to "진행 막대", "brightness" to "밝기", "volume" to "음량").forEach { (key, name) ->
+        listOf("progress" to stringResource(R.string.lab_flex_panel_tile_progress), "brightness" to stringResource(R.string.lab_flex_panel_tile_brightness), "volume" to stringResource(R.string.lab_flex_panel_tile_volume)).forEach { (key, name) ->
             var on by remember { mutableStateOf(GoatFlexPanel.shown(context, key)) }
             Spacer(Modifier.height(Gap.Section))
-            LiquidSwitchRow("$name 타일", null, on, enabled = true, onChange = {
+            LiquidSwitchRow(stringResource(R.string.lab_flex_panel_tile_switch, name), null, on, enabled = true, onChange = {
                 on = it
                 GoatFlexPanel.setShown(context, key, it)
             })
         }
         Spacer(Modifier.height(Gap.Section))
-        LiquidButton("패널 미리 보기(8초)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { GoatFlexPanel.preview(context) })
+        LiquidButton(stringResource(R.string.lab_flex_panel_preview), primary = false, modifier = Modifier.fillMaxWidth(), onClick = { GoatFlexPanel.preview(context) })
     }
 }

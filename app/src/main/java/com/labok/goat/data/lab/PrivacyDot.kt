@@ -2,8 +2,10 @@ package com.labok.goat.data.lab
 
 import android.content.Context
 import android.os.Build
+import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.text.Copy
 
 /**
  * 마이크·카메라 사용 표시(상태 표시줄 오른쪽 위 초록 점) 끄기. Android 기기 설정(device_config)의 `privacy/camera_mic_icons_enabled`를
@@ -43,12 +45,12 @@ object PrivacyDot {
         val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
         val pat = Regex("""([\w$]+(?:Exception|Error)):\s*(.*)""")
         val ex = lines.firstNotNullOfOrNull { pat.find(it) }
-        return (ex?.let { "${it.groupValues[1]}: ${it.groupValues[2]}" } ?: lines.firstOrNull() ?: "바뀌지 않음").take(200)
+        return (ex?.let { "${it.groupValues[1]}: ${it.groupValues[2]}" } ?: lines.firstOrNull() ?: Copy.text(R.string.labdata_privacydot_unchanged)).take(200)
     }
 
     /** [hide]면 초록 점을 끄고, 아니면 다시 켠다. 바뀌었으면 null, 못 바꾸면 이유(셸 메시지). 작업 스레드에서 부른다. */
     fun set(context: Context, hide: Boolean): String? {
-        var last = "Shizuku 연결이 필요합니다."
+        var last = Copy.text(R.string.labdata_need_shizuku)
         for (cmd in commands(!hide)) {
             val r = ShizukuAccess.shell(cmd) ?: break
             if (hidden() == hide) {

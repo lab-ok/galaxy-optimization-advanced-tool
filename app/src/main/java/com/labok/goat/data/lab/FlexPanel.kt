@@ -12,6 +12,7 @@ import com.labok.goat.data.UserId
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.liquid.UiGoat
+import com.labok.goat.ui.text.Copy
 import java.util.concurrent.Executors
 import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
@@ -185,12 +186,12 @@ object FlexPanel {
     /** 켜져 있는 동안 지금 앱·모드를 보여 주고, 알림 버튼으로 모드를 바꿀 수 있게 한다. */
     private fun notifyMode(context: Context, s: Applied) {
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(MODE_CHANNEL, "플렉스 모드 바꾸기", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
+        nm.createNotificationChannel(NotificationChannel(MODE_CHANNEL, Copy.text(R.string.labdata_flexpanel_mode_channel), NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
         val b = NotificationCompat.Builder(context, MODE_CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle("${s.label} · ${AutoFlex.modeLabel(s.mode)}")
-            .setContentText("접었을 때 이 앱에서 쓸 방식을 바꿉니다")
+            .setContentText(Copy.text(R.string.labdata_flexpanel_mode_notif_text))
             .setOngoing(true)
             .setSilent(true)
             .setOnlyAlertOnce(true)

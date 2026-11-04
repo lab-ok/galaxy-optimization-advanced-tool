@@ -30,12 +30,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.R
 import com.labok.goat.data.display.DisplayDensity
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.domain.ScreenPolicy
@@ -59,11 +61,11 @@ import java.util.Locale
 internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
     val c = LocalLiquid.current
     SheetColumn {
-        Text("고급 정보", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
+        Text(stringResource(R.string.advanced_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Spacer(Modifier.height(Gap.Section))
 
         if (state.displays.isEmpty()) {
-            GlassCard { Text(if (state.hasPermission) "읽을 수 있는 디스플레이가 없습니다." else "권한을 설정하면 표시됩니다.", color = c.muted) }
+            GlassCard { Text(if (state.hasPermission) stringResource(R.string.advanced_no_displays) else stringResource(R.string.advanced_need_permission), color = c.muted) }
             Spacer(Modifier.height(Gap.Item))
         }
         state.displays.forEach { d ->
@@ -72,27 +74,27 @@ internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
         }
 
         GlassCard {
-            Text("적용 기록", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(stringResource(R.string.advanced_apply_history), fontWeight = FontWeight.SemiBold, color = c.ink)
             state.lastApply?.let {
-                InfoRow("마지막 적용", "${if (it.success) "성공" else "실패"} · ${SimpleDateFormat("MM-dd HH:mm:ss", Locale.US).format(Date(it.timeMs))}")
-                InfoRow("내용", it.text)
-            } ?: Text("기록 없음", color = c.muted)
-            if (state.foldable) InfoRow("내부 화면 보정", "${if (state.adjust > 0) "+" else ""}${state.adjust}")
+                InfoRow(stringResource(R.string.advanced_last_apply), "${if (it.success) stringResource(R.string.advanced_apply_success) else stringResource(R.string.advanced_apply_failure)} · ${SimpleDateFormat("MM-dd HH:mm:ss", Locale.US).format(Date(it.timeMs))}")
+                InfoRow(stringResource(R.string.advanced_apply_detail), it.text)
+            } ?: Text(stringResource(R.string.advanced_no_history), color = c.muted)
+            if (state.foldable) InfoRow(stringResource(R.string.advanced_inner_adjust), "${if (state.adjust > 0) "+" else ""}${state.adjust}")
         }
         Spacer(Modifier.height(Gap.Item))
         GlassCard {
-            Text("로그", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(stringResource(R.string.advanced_logs), fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
                 if (PublicLogFile.enabled(LocalContext.current)) {
-                    "내장 저장소 ${PublicLogFile.displayPath}에 날짜별로 저장합니다."
+                    stringResource(R.string.advanced_logs_public_fmt, PublicLogFile.displayPath)
                 } else {
-                    "앱 안에만 짧게 남깁니다. 앱 설정의 '기록 파일 남기기'를 켜면 ${PublicLogFile.displayPath}에도 날짜별로 저장합니다."
+                    stringResource(R.string.advanced_logs_private_fmt, PublicLogFile.displayPath)
                 },
                 color = c.muted,
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
-            LiquidButton("앱 내부 로그 삭제", modifier = Modifier.fillMaxWidth(), onClick = onClearLogs, primary = false)
+            LiquidButton(stringResource(R.string.advanced_clear_logs), modifier = Modifier.fillMaxWidth(), onClick = onClearLogs, primary = false)
         }
     }
 }
@@ -150,28 +152,29 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
             Column(Modifier.weight(1f)) {
                 Text(
                     // 화면이 하나뿐인 기기는 외부·내부 구분이 없으니 그냥 '화면'이라고 쓴다
-                    "${role?.let { if (it.name == "OUTER") "외부 " else "내부 " } ?: if (state.foldable) "미확인 " else ""}화면${if (active) " · 사용 중" else ""}",
+                    (role?.let { if (it.name == "OUTER") stringResource(R.string.advanced_display_outer) else stringResource(R.string.advanced_display_inner) } ?: if (state.foldable) stringResource(R.string.advanced_display_unknown) else stringResource(R.string.advanced_display_plain))
+                        .let { if (active) stringResource(R.string.advanced_display_in_use_fmt, it) else it },
                     fontWeight = FontWeight.SemiBold,
                     color = c.ink
                 )
                 // 숫자와 단위 사이는 줄바꿈하지 않는 공백(좁은 폭에서 'dpi'만 다음 줄로 떨어졌다)
-                Text("현재 ${d.current?.let { "$it\u00A0dpi" } ?: "꺼짐"} · 기본\u00A0${d.physical}\u00A0dpi", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.advanced_display_dpi_fmt, d.current?.let { "$it\u00A0dpi" } ?: stringResource(R.string.advanced_display_off), d.physical), color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
-            Text(if (open) "접기" else "상세", color = c.muted, style = MaterialTheme.typography.labelMedium)
+            Text(if (open) stringResource(R.string.advanced_collapse) else stringResource(R.string.advanced_details), color = c.muted, style = MaterialTheme.typography.labelMedium)
         }
         AnimatedVisibility(open, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
             Column {
                 Spacer(Modifier.height(Gap.Item))
-                InfoRow("디스플레이 ID", "${d.id}")
-                key?.let { InfoRow("해상도", it.replace("x", " × ")) }
+                InfoRow(stringResource(R.string.advanced_display_id), "${d.id}")
+                key?.let { InfoRow(stringResource(R.string.advanced_resolution), it.replace("x", " × ")) }
                 if (panel != null) {
                     InfoRow("PPI", "%.1f".format(panel.screen.ppi))
                     state.plan?.targetFor(panel.screen)?.let { t ->
-                        InfoRow("설정 DPI", if (t.blocked != null) "보류" else "${t.dpi} dpi", emphasize = true)
+                        InfoRow(stringResource(R.string.advanced_target_dpi), if (t.blocked != null) stringResource(R.string.advanced_target_held) else "${t.dpi} dpi", emphasize = true)
                         t.blocked?.let { b -> Text(b, color = c.danger, style = MaterialTheme.typography.bodySmall) }
                     }
                 } else {
-                    Text("아직 켜진 상태로 확인하지 못한 화면입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.advanced_display_unseen), color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

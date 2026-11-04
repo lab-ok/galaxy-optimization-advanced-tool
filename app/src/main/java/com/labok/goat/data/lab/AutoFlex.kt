@@ -26,6 +26,7 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.liquid.UiGoat
+import com.labok.goat.ui.text.Copy
 import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -118,9 +119,9 @@ object AutoFlex {
     val MODES = listOf(MODE_FLEX, MODE_PANEL, MODE_OFF)
 
     fun modeLabel(mode: Int) = when (mode) {
-        MODE_OFF -> "사용 안 함"
-        MODE_PANEL -> "GOAT 패널"
-        else -> "플렉스 모드"
+        MODE_OFF -> Copy.text(R.string.labdata_autoflex_mode_off)
+        MODE_PANEL -> Copy.text(R.string.labdata_autoflex_mode_panel)
+        else -> Copy.text(R.string.labdata_autoflex_mode_flex)
     }
 
     /** 따로 고르지 않아도 플렉스 모드로 쓰는 앱: 유튜브, 삼성 카메라, 삼성 갤러리. */
@@ -330,13 +331,13 @@ object AutoFlex {
 
     fun buildNotification(context: Context): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "플렉스 모드", NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) })
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, Copy.text(R.string.labdata_autoflex_mode_flex), NotificationManager.IMPORTANCE_MIN).apply { setShowBadge(false) })
         val open = PendingIntent.getActivity(context, 21, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
-            .setContentTitle(if (enabled(context)) "플렉스 모드" else "가까이 접으면 밝기 고정")
-            .setContentText(if (enabled(context)) "반쯤 접으면 플렉스 모드로 바뀝니다" else "50° 안쪽으로 접으면 밝기를 고정합니다")
+            .setContentTitle(if (enabled(context)) Copy.text(R.string.labdata_autoflex_mode_flex) else Copy.text(R.string.labdata_autoflex_notif_dim_title))
+            .setContentText(if (enabled(context)) Copy.text(R.string.labdata_autoflex_notif_flex_text) else Copy.text(R.string.labdata_autoflex_notif_dim_text))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)

@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.R
 import com.labok.goat.data.display.PermissionReset
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.data.update.UpdateNotice
@@ -137,12 +138,16 @@ internal fun todosOf(state: UiState): List<Todo> = buildList {
             Todo(
                 "external",
                 Copy.EXTERNAL_TITLE,
-                "다른 설정에서 ${if (state.foldable) "${e.role.label} 화면 " else ""}DPI가 ${e.from} → ${e.to}${UpdateNotice.ro("${e.to}")} 바뀌었습니다. ${Copy.EXTERNAL_BODY}",
+                if (state.foldable) {
+                    Copy.text(R.string.home_external_body_fold_fmt, e.role.label, e.from, e.to, UpdateNotice.ro("${e.to}"), Copy.EXTERNAL_BODY)
+                } else {
+                    Copy.text(R.string.home_external_body_single_fmt, e.from, e.to, UpdateNotice.ro("${e.to}"), Copy.EXTERNAL_BODY)
+                },
                 TodoAction.ADOPT,
-                "${e.to} 기준으로 설정",
+                Copy.text(R.string.notif_external_adopt_fmt, e.to),
                 blocking = true,
                 second = TodoAction.RESTORE,
-                secondLabel = "${e.from}${UpdateNotice.ro("${e.from}")} 복원"
+                secondLabel = Copy.text(R.string.notif_external_restore_fmt, e.from, UpdateNotice.ro("${e.from}"))
             )
         )
     }

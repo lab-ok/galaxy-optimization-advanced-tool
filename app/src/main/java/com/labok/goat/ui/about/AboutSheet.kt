@@ -26,10 +26,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.labok.goat.R
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.InfoRow
 import com.labok.goat.ui.components.SheetColumn
@@ -59,13 +61,13 @@ internal fun AboutSheet(onMail: () -> Unit) {
         }
         Spacer(Modifier.height(Gap.Section))
         GlassCard {
-            InfoRow("버전", pkg.versionName ?: "-")
-            InfoRow("라이선스", DeveloperProfile.LICENSE)
-            InfoRow("문의", DeveloperProfile.CONTACT_EMAIL)
+            InfoRow(stringResource(R.string.about_version), pkg.versionName ?: "-")
+            InfoRow(stringResource(R.string.about_license), DeveloperProfile.LICENSE)
+            InfoRow(stringResource(R.string.about_inquiry), DeveloperProfile.CONTACT_EMAIL)
             Text(DeveloperProfile.LICENSE_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             Row(Modifier.fillMaxWidth()) {
-                LiquidButton("메일 보내기", modifier = Modifier.fillMaxWidth(), onClick = onMail, primary = false)
+                LiquidButton(stringResource(R.string.about_send_mail), modifier = Modifier.fillMaxWidth(), onClick = onMail, primary = false)
             }
         }
         Spacer(Modifier.height(Gap.Section))
@@ -79,8 +81,8 @@ internal fun PermissionsCard() {
     val c = LocalLiquid.current
     val context = LocalContext.current
     GlassCard {
-        Text("필요 권한", fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text("GOAT가 쓰는 권한 전체입니다. 저장소·위치 권한은 쓰지 않습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.about_permissions_title), fontWeight = FontWeight.SemiBold, color = c.ink)
+        Text(stringResource(R.string.about_permissions_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
         AppPermissions.all.forEachIndexed { i, item ->
             Spacer(Modifier.height(Gap.Card))
             if (i > 0) {
@@ -127,10 +129,10 @@ private fun PermissionRow(item: AppPermissions.Item, granted: Boolean, index: In
                 Text(item.title, fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
                 Pill(
                     when {
-                        !item.applies -> "해당 없음"
-                        granted -> "허용됨"
-                        item.optional -> "선택"
-                        else -> "필요함"
+                        !item.applies -> stringResource(R.string.about_perm_not_applicable)
+                        granted -> stringResource(R.string.about_perm_granted)
+                        item.optional -> stringResource(R.string.about_perm_optional)
+                        else -> stringResource(R.string.about_perm_required)
                     },
                     strong = item.applies && !granted && !item.optional
                 )
