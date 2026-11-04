@@ -34,7 +34,6 @@ object UsageFun {
         if (r.screenOn >= 3 && r.appOpens > 0) add(Copy.text(R.string.labdata_usage_fact_apps_per_screen_on, oneDecimal(r.appOpens.toFloat() / r.screenOn)))
         topApp?.let { (name, n) -> if (r.appOpens > 0) add(Copy.text(R.string.labdata_usage_fact_top_app, name, n * 100 / r.appOpens)) }
         topNoti?.let { (name, n) -> if (r.notifications > 0) add(Copy.text(R.string.labdata_usage_fact_top_noti, r.notifications, n * 100 / r.notifications, name)) }
-        r.chargeStartAvg?.let { add(Copy.text(R.string.labdata_usage_fact_charge_start, it)) }
     }
 
     /** 오늘의 칭호(최대 3개). [days]는 기간의 날 수로, 기준을 하루 평균으로 맞춘다. */

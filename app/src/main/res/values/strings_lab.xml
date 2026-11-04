@@ -273,4 +273,10 @@
     <string name="lab_transcript_saved">Download/GOAT/전사문에 저장했습니다</string>
     <string name="lab_transcript_speaker_summary">%1$d번 말함 · %2$s</string>
     <string name="lab_transcript_title">전사문 저장</string>
+    <string name="lab_stats_tab_usage">사용</string>
+    <string name="lab_stats_tab_battery">배터리</string>
+    <string name="lab_stats_battery_periods_title">기간별 배터리</string>
+    <string name="lab_stats_charge_start_avg">꽂을 때 평균 잔량</string>
+    <string name="lab_stats_range_7d">7일</string>
+    <string name="lab_stats_range_30d">30일</string>
 </resources>

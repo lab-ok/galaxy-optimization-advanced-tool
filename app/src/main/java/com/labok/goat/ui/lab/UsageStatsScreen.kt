@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -33,6 +34,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -57,6 +62,8 @@ import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.nav.NavGlyph
+import com.labok.goat.ui.nav.NavIcon
 import com.labok.goat.ui.text.Copy
 import java.util.Calendar
 import kotlin.math.roundToInt
@@ -95,28 +102,31 @@ private class StatsView(
 /** 숫자 표의 한 줄: 이름, 값을 꺼내는 법, 표시 방법. */
 private enum class Kind { COUNT, TIME, PERCENT }
 
-private class Metric(val label: String, val unit: String, val kind: Kind, val get: (UsageTally.Result) -> Number?)
+private class Metric(val label: String, val unit: String, val kind: Kind, val icon: StatIcon, val get: (UsageTally.Result) -> Number?)
 
 /** 숫자 표의 묶음(같은 종류끼리 모아 중복 없이 한 번씩만 보여 준다). */
 private val GROUPS: List<Pair<String, List<Metric>>> get() = listOf(
     Copy.text(R.string.lab_stats_group_screen) to listOf(
-        Metric(Copy.text(R.string.lab_stats_screen_time), "", Kind.TIME) { it.screenMs },
-        Metric(Copy.text(R.string.lab_stats_screen_on), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.screenOn },
-        Metric(Copy.text(R.string.lab_stats_unlocks), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.unlocks }
+        Metric(Copy.text(R.string.lab_stats_screen_time), "", Kind.TIME, StatIcon.TIME) { it.screenMs },
+        Metric(Copy.text(R.string.lab_stats_screen_on), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT, StatIcon.SCREEN) { it.screenOn },
+        Metric(Copy.text(R.string.lab_stats_unlocks), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT, StatIcon.UNLOCK) { it.unlocks }
     ),
     Copy.text(R.string.lab_stats_group_apps) to listOf(
-        Metric(Copy.text(R.string.lab_stats_app_opens), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.appOpens },
-        Metric(Copy.text(R.string.lab_stats_notifications), Copy.text(R.string.lab_stats_unit_items), Kind.COUNT) { it.notifications }
+        Metric(Copy.text(R.string.lab_stats_app_opens), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT, StatIcon.APPS) { it.appOpens },
+        Metric(Copy.text(R.string.lab_stats_notifications), Copy.text(R.string.lab_stats_unit_items), Kind.COUNT, StatIcon.BELL) { it.notifications }
     ),
     Copy.text(R.string.lab_stats_group_hands) to listOf(
-        Metric(Copy.text(R.string.lab_stats_unfolds), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.unfolds },
-        Metric(Copy.text(R.string.lab_stats_rotations), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.rotations },
-        Metric(Copy.text(R.string.lab_stats_volume_keys), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.volume }
-    ),
-    Copy.text(R.string.lab_battery_label) to listOf(
-        Metric(Copy.text(R.string.lab_stats_battery_used), "%", Kind.PERCENT) { it.batteryUsed },
-        Metric(Copy.text(R.string.lab_stats_charges), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT) { it.charges }
+        Metric(Copy.text(R.string.lab_stats_unfolds), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT, StatIcon.UNFOLD) { it.unfolds },
+        Metric(Copy.text(R.string.lab_stats_rotations), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT, StatIcon.ROTATE) { it.rotations },
+        Metric(Copy.text(R.string.lab_stats_volume_keys), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT, StatIcon.VOLUME) { it.volume }
     )
+)
+
+/** 배터리 탭의 기간별 숫자(사용 탭과 겹치지 않게 배터리 숫자는 여기에만 둔다). */
+private val BATTERY_METRICS: List<Metric> get() = listOf(
+    Metric(Copy.text(R.string.lab_stats_battery_used), "%", Kind.PERCENT, StatIcon.BATTERY) { it.batteryUsed },
+    Metric(Copy.text(R.string.lab_stats_charges), Copy.text(R.string.lab_stats_unit_times), Kind.COUNT, StatIcon.PLUG) { it.charges },
+    Metric(Copy.text(R.string.lab_stats_charge_start_avg), "%", Kind.PERCENT, StatIcon.PLUG) { it.chargeStartAvg }
 )
 
 @Composable
@@ -127,7 +137,8 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
     // 월·1년 보기에서 몇 달·몇 해 전을 보는지(0 = 이번)
     var back by remember { mutableIntStateOf(0) }
     var view by remember { mutableStateOf<StatsView?>(null) }
-    var batteryOpen by remember { mutableStateOf(false) }
+    // 11-04 소장님 "배터리 사용내역은 탭바로 분리": 사용·배터리 두 탭(배터리 숫자는 배터리 탭에만 둔다)
+    var tab by remember { mutableIntStateOf(0) }
     LaunchedEffect(range, back) {
         view = null
         view = withContext(Dispatchers.IO) { load(context, range, back) }
@@ -141,6 +152,13 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
             .padding(top = 4.dp, bottom = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Box(Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth().padding(bottom = Gap.Item)) {
+            LiquidChips(options = listOf(0, 1), selected = tab, label = { if (it == 0) Copy.text(R.string.lab_stats_tab_usage) else Copy.text(R.string.lab_stats_tab_battery) }, onSelect = { tab = it })
+        }
+        if (tab == 1) {
+            BatteryTab()
+            return@Column
+        }
         Box(Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth().padding(bottom = Gap.Item)) {
             LiquidChips(options = StatsRange.entries, selected = range, label = { Copy.text(it.label) }, onSelect = {
                 range = it
@@ -212,7 +230,6 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
             }
             val missing = buildList {
                 if (r.volume == null) add(Copy.LAB_STATS_VOLUME_NEED)
-                if (r.charges == null) add(Copy.LAB_STATS_CHARGE_NEED)
             }
             if (missing.isNotEmpty()) {
                 Spacer(Modifier.height(Gap.Item))
@@ -268,19 +285,6 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
                 }
             }
         }
-        // 6. 배터리 자세히(예전 배터리 모니터링). 접어 두고 필요할 때 연다
-        Spacer(Modifier.height(Gap.Card))
-        GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth).clickable { batteryOpen = !batteryOpen }) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(Copy.LAB_STATS_BATTERY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
-                Text(if (batteryOpen) stringResource(R.string.lab_stats_collapse) else stringResource(R.string.lab_stats_expand), color = c.muted, style = MaterialTheme.typography.labelSmall)
-            }
-            Text(Copy.LAB_STATS_BATTERY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        }
-        if (batteryOpen) {
-            Spacer(Modifier.height(Gap.Card))
-            Box(Modifier.widthIn(max = ContentMaxWidth)) { BatterySection() }
-        }
         if (range != StatsRange.TODAY && range != StatsRange.YESTERDAY) {
             Spacer(Modifier.height(Gap.Item))
             Text(Copy.LAB_STATS_ARCHIVE_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth())
@@ -296,7 +300,12 @@ private fun MetricRow(m: Metric, r: UsageTally.Result, base: UsageTally.Result?,
     // 여러 날이면 이 기간의 하루 평균, 하루짜리면 최근 며칠의 하루 평균
     val avg = if (r.days > 1) perDay(value, r.days) else avgRef?.let { ref -> m.get(ref)?.let { perDay(it, ref.days) } }
     val change = base?.let { m.get(it) }?.let { delta(m.kind, value, it) }
-    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        // 홈 카테고리 줄과 같은 아이콘 칸(32dp, 옅은 잉크 바탕)
+        Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
+            StatGlyph(m.icon, c.ink, Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(10.dp))
         Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
         avg?.let { Text(stringResource(R.string.lab_stats_avg_value, format(m.kind, it, m.unit)), color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(end = 10.dp)) }
         Text(format(m.kind, value, m.unit), color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
@@ -533,6 +542,109 @@ private fun RankList(items: List<Pair<String, Int>>, unit: String) {
                     Box(Modifier.fillMaxWidth(n.toFloat() / max).height(8.dp).clip(RoundedCornerShape(4.dp)).background(c.ink))
                 }
                 Text("$n$unit", color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 52.dp).padding(start = 6.dp))
+            }
+        }
+    }
+}
+
+/** 배터리 탭: 오늘·7일·30일 배터리 숫자, 그 아래 지금 배터리와 마지막 충전 이후(예전 배터리 모니터링). */
+@Composable
+private fun BatteryTab() {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    var periods by remember { mutableStateOf<List<Pair<String, UsageTally.Result>>?>(null) }
+    LaunchedEffect(Unit) { periods = withContext(Dispatchers.IO) { batteryPeriods(context) } }
+    val p = periods
+    GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
+        Text(stringResource(R.string.lab_stats_battery_periods_title), fontWeight = FontWeight.SemiBold, color = c.ink)
+        if (p == null) {
+            Spacer(Modifier.height(Gap.Item))
+            LiquidLoader(Copy.LAB_STATS_LOADING)
+        } else if (p.all { it.second.batteryUsed == null }) {
+            Text(Copy.LAB_STATS_CHARGE_NEED, color = c.muted, style = MaterialTheme.typography.bodySmall)
+        } else {
+            // 머리줄: 기간 이름은 한 번만
+            Row(Modifier.padding(top = Gap.Tight)) {
+                Spacer(Modifier.weight(1f))
+                p.forEach { (label, _) -> Text(label, color = c.muted, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.End, modifier = Modifier.widthIn(min = 56.dp)) }
+            }
+            BATTERY_METRICS.forEach { m ->
+                Spacer(Modifier.height(Gap.Tight))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
+                        StatGlyph(m.icon, c.ink, Modifier.size(18.dp))
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    p.forEach { (_, r) ->
+                        Text(m.get(r)?.let { format(m.kind, it, m.unit) } ?: "-", color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End, modifier = Modifier.widthIn(min = 56.dp))
+                    }
+                }
+            }
+        }
+    }
+    Spacer(Modifier.height(Gap.Card))
+    Box(Modifier.widthIn(max = ContentMaxWidth)) { BatterySection() }
+}
+
+/** 오늘·7일·30일의 배터리 숫자(저장된 날 + 오늘). */
+private fun batteryPeriods(context: Context): List<Pair<String, UsageTally.Result>> {
+    UsageArchive.sync(context)
+    val now = System.currentTimeMillis()
+    val today = UsageTally.dayStart()
+    val battery = if (ShizukuAccess.status.value == ShizukuAccess.State.READY) BatteryHistory.read(now) else null
+    val todayResult = UsageTally.read(context, today, now, DeviceKind.isFoldable(context), battery)
+    fun days(n: Int) = UsageTally.merge(UsageArchive.between(context, UsageTally.dayStart(n - 1), today - 1).map { it.second } + todayResult) ?: todayResult
+    return listOf(
+        Copy.text(R.string.lab_stats_range_today) to todayResult,
+        Copy.text(R.string.lab_stats_range_7d) to days(7),
+        Copy.text(R.string.lab_stats_range_30d) to days(30)
+    )
+}
+
+/** 숫자 표 아이콘. 홈·메뉴와 같은 선 굵기의 단순한 그림(24칸 격자). */
+private enum class StatIcon { TIME, SCREEN, UNLOCK, APPS, BELL, UNFOLD, ROTATE, VOLUME, BATTERY, PLUG }
+
+@Composable
+private fun StatGlyph(icon: StatIcon, color: Color, modifier: Modifier) {
+    when (icon) {
+        StatIcon.APPS -> NavGlyph(NavIcon.APPS, color, modifier)
+        StatIcon.BELL -> NavGlyph(NavIcon.BELL, color, modifier)
+        StatIcon.ROTATE -> NavGlyph(NavIcon.ROTATE, color, modifier)
+        StatIcon.VOLUME -> NavGlyph(NavIcon.VOLUME, color, modifier)
+        StatIcon.UNFOLD -> NavGlyph(NavIcon.FOLD, color, modifier)
+        else -> Canvas(modifier) {
+            val u = size.minDimension / 24f
+            fun p(x: Float, y: Float) = Offset(x * u, y * u)
+            val s = Stroke(1.8f * u, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            when (icon) {
+                StatIcon.TIME -> {
+                    drawCircle(color, 8.5f * u, p(12f, 12f), style = s)
+                    drawLine(color, p(12f, 12f), p(12f, 7.5f), s.width, StrokeCap.Round)
+                    drawLine(color, p(12f, 12f), p(15.5f, 14f), s.width, StrokeCap.Round)
+                }
+                StatIcon.SCREEN -> {
+                    drawRoundRect(color, p(7f, 3f), Size(10f * u, 18f * u), CornerRadius(2.2f * u), style = s)
+                    drawLine(color, p(10.5f, 18f), p(13.5f, 18f), s.width, StrokeCap.Round)
+                }
+                StatIcon.UNLOCK -> {
+                    drawRoundRect(color, p(5.5f, 11f), Size(13f * u, 9.5f * u), CornerRadius(2f * u), style = s)
+                    drawArc(color, 180f, 160f, false, p(8f, 4f), Size(8f * u, 9f * u), style = s)
+                    drawCircle(color, 1.2f * u, p(12f, 15.5f))
+                }
+                StatIcon.BATTERY -> {
+                    drawRoundRect(color, p(7f, 4.5f), Size(10f * u, 16.5f * u), CornerRadius(2.2f * u), style = s)
+                    drawLine(color, p(10f, 2.6f), p(14f, 2.6f), s.width, StrokeCap.Round)
+                    drawLine(color, p(10f, 16.5f), p(14f, 16.5f), s.width * 1.4f, StrokeCap.Round)
+                    drawLine(color, p(10f, 13f), p(14f, 13f), s.width * 1.4f, StrokeCap.Round)
+                }
+                StatIcon.PLUG -> {
+                    drawLine(color, p(9.5f, 3f), p(9.5f, 7.5f), s.width, StrokeCap.Round)
+                    drawLine(color, p(14.5f, 3f), p(14.5f, 7.5f), s.width, StrokeCap.Round)
+                    drawRoundRect(color, p(6.5f, 7.5f), Size(11f * u, 6.5f * u), CornerRadius(2f * u), style = s)
+                    drawLine(color, p(12f, 14f), p(12f, 21f), s.width, StrokeCap.Round)
+                }
+                else -> Unit
             }
         }
     }
