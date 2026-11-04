@@ -506,11 +506,12 @@ internal fun HomeScreen(
             Scaffold(
                 containerColor = c.bg,
                 topBar = {
-                    // 11-04 소장님 "설정 앱처럼 상단바 투명하게": 제목 줄은 지금처럼 흐리게 두고, 그 아래로 짧게 옅어지는 블러를 덧대
-                    // 띠의 아래 경계가 보이지 않게 한다. 블러 판은 제목 줄보다 [TOP_FADE]만큼 길지만 자리는 차지하지 않는다(높이 0으로 배치).
+                    // 11-04 소장님 "상단 노티바(상태 표시줄)를 투명하게": 제목 줄은 예전처럼 흐린 띠(그라데이션 없음)로 두고,
+                    // 그 위 상태 표시줄 칸만 블러를 빼 아래 내용이 그대로 비치게 한다(설정 앱처럼). 블러 판은 자리를 차지하지 않는다(높이 0으로 배치).
                     Box {
-                        val bar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + TOP_BAR_HEIGHT
-                        val solid = bar / (bar + TOP_FADE)
+                        val status = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                        val bar = status + TOP_BAR_HEIGHT
+                        val clear = status / bar
                         Box(
                             Modifier
                                 .fillMaxWidth()
@@ -518,9 +519,9 @@ internal fun HomeScreen(
                                     val p = m.measure(cons.copy(minHeight = 0, maxHeight = Constraints.Infinity))
                                     layout(p.width, 0) { p.place(0, 0) }
                                 }
-                                .height(bar + TOP_FADE)
+                                .height(bar)
                                 .hazeChild(haze, HazeStyle(backgroundColor = c.bg, tint = HazeTint(c.bg.copy(alpha = 0.7f)), blurRadius = 24.dp, noiseFactor = 0f)) {
-                                    mask = Brush.verticalGradient(0f to Color.Black, solid to Color.Black, 1f to Color.Transparent)
+                                    mask = Brush.verticalGradient(0f to Color.Transparent, clear to Color.Transparent, clear to Color.Black, 1f to Color.Black)
                                 }
                         )
                         TopAppBar(
@@ -727,6 +728,3 @@ private val BEHIND_BLUR = 14.dp
 
 /** Material 제목 줄 높이(상태 표시줄 아래). */
 private val TOP_BAR_HEIGHT = 64.dp
-
-/** 제목 줄 아래로 블러가 옅어지며 이어지는 길이. */
-private val TOP_FADE = 28.dp
