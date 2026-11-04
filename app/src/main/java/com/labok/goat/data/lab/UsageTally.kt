@@ -51,7 +51,7 @@ object UsageTally {
     )
 
     /** [from]~[to] 사이를 센다(작업 스레드). */
-    fun read(context: Context, from: Long, to: Long, foldable: Boolean): Result {
+    fun read(context: Context, from: Long, to: Long, foldable: Boolean, withCharges: Boolean = true): Result {
         val access = AppUsage.hasAccess(context)
         val hourly = LongArray(24)
         var screenOn = 0
@@ -153,7 +153,7 @@ object UsageTally {
         }
         var charges: Int? = null
         var chargeAvg: Int? = null
-        if (ShizukuAccess.status.value == ShizukuAccess.State.READY) {
+        if (withCharges && ShizukuAccess.status.value == ShizukuAccess.State.READY) {
             BatteryHistory.read(to)?.let { points ->
                 val inRange = BatteryHistory.charges(points, to).filter { it.start in from..to }
                 charges = inRange.size
