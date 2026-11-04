@@ -131,7 +131,7 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
                         Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.REFRESH_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Text(Copy.NEED_SHIZUKU_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
@@ -192,26 +192,27 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
 /** 사용 방법. */
 @Composable
 internal fun RefreshHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
             "1. 주사율이란",
-            "화면을 1초에 몇 번 새로 고치는지 나타내는 값입니다. 120Hz는 1초에 120번 새로 고쳐 60Hz보다 스크롤과 움직임이 두 배 촘촘하고 매끄럽습니다. " +
-                "대신 화면을 더 자주 새로 고치는 만큼 배터리를 조금 더 씁니다."
+            "화면을 1초에 몇 번 새로 고치는지 나타내는 값입니다. 120Hz는 60Hz보다 두 배 자주 새로 고쳐 스크롤과 움직임이 매끄럽습니다. " +
+                "대신 배터리를 조금 더 씁니다."
         ) { RefreshArt(low = 60, high = 120, selected = 120) }
         HelpTopic(
             "2. 세 가지 방식",
-            "'시스템 기본'은 화면이 움직일 때만 갤럭시가 주사율을 높이고 멈추면 낮춥니다. '항상 최고 주사율'은 멈춰 있어도 최고 주사율을 유지해 터치 반응까지 " +
-                "가장 빠르게 합니다. 화면에는 이 기기의 최고값으로 '항상 120Hz'처럼 보입니다. '60Hz 절전'은 60Hz로 고정해 배터리를 아낍니다."
+            "'${Copy.REFRESH_SYSTEM}'은 화면이 움직일 때만 주사율을 높이고 멈추면 낮춥니다. " +
+                "'${Copy.REFRESH_SMOOTH}'은 멈춰 있어도 최고 주사율을 유지해 터치 반응도 가장 빠릅니다. 화면에는 '항상 120Hz'처럼 이 기기의 최고값으로 보입니다. " +
+                "'${Copy.REFRESH_SAVER}'은 60Hz로 고정해 배터리를 아낍니다."
         )
         HelpTopic(
             "3. 잠시 내려가는 경우",
-            "절전 모드를 켰을 때, 화면 밝기가 아주 낮을 때, 일부 게임·동영상 앱을 쓸 때는 시스템이 잠시 주사율을 내립니다. 그 상황이 끝나면 고른 방식으로 돌아옵니다. " +
-                "주사율 고정 자체는 재부팅해도 유지됩니다."
+            "절전 모드, 아주 낮은 밝기, 일부 게임·동영상 앱에서는 시스템이 잠시 주사율을 내립니다. 그 상황이 끝나면 고른 방식으로 돌아옵니다. " +
+                "주사율 고정은 재부팅해도 유지됩니다."
         )
         HelpTopic(
             "4. 권한과 되돌리기",
-            "주사율 최고·최저값은 숨겨진 시스템 설정이라 Shizuku 셸 권한으로 바꿉니다. '시스템 기본'을 고르면 처음 값으로 돌아갑니다. " +
-                "설정 > 디스플레이 > '화면 움직임 부드럽게'에서 바꿔도 되며, GOAT는 앱 밖에서 바꾼 값을 다시 덮어쓰지 않습니다."
+            "주사율 최고·최저값은 숨겨진 시스템 설정이라 Shizuku 셸 권한으로 바꿉니다. '${Copy.REFRESH_SYSTEM}'을 고르면 처음 값으로 돌아갑니다. " +
+                "설정 > 디스플레이 > '화면 움직임 부드럽게'에서 바꿔도 되며, GOAT는 앱 밖에서 바꾼 값을 덮어쓰지 않습니다."
         )
     }
 }

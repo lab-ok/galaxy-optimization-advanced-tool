@@ -62,7 +62,7 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
     // 카드 제목과 맞게 기준 시각부터 자른다
     val points = remember(all, since) { BatteryHistory.since(all, since) }
     if (points.size < 2) {
-        Text("시스템 배터리 기록이 아직 충분하지 않습니다. 잠시 사용한 뒤 다시 열어 주세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("배터리 기록이 아직 부족합니다. 잠시 사용한 뒤 다시 여세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         return
     }
     val start = points.first().time
@@ -74,14 +74,14 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
     // 범례: 기둥의 세 가지 물(가장 옅은 기둥은 충전한 시간대)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Legend(c.ink, "화면 켜짐에 쓴 양")
-        Legend(c.ink.copy(alpha = standbyAlpha(c.dark)), "대기(화면 꺼짐)에 쓴 양")
+        Legend(c.ink.copy(alpha = standbyAlpha(c.dark)), "화면 꺼짐에 쓴 양")
         Legend(c.ink.copy(alpha = chargeAlpha(c.dark)), "충전한 시간대")
     }
     Spacer(Modifier.height(Gap.Item))
     val hourFmt = remember { SimpleDateFormat("a h시", Locale.KOREA) }
     val pick = selected?.let { buckets.getOrNull(it) }
     if (pick == null) {
-        Text("기둥 하나가 ${bucketMs / 3_600_000}시간입니다. 누르면 그 시간대 사용량이 나옵니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("기둥 하나는 ${bucketMs / 3_600_000}시간입니다. 누르면 그 시간대 사용량이 보입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
     } else {
         val range = "${hourFmt.format(Date(pick.start))}~${hourFmt.format(Date(pick.end)).substringAfter(' ')}"
         Text(
@@ -97,7 +97,7 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            "화면 켜짐에 ${pctText(pick.screenPct)} · 대기에 ${pctText(pick.standbyPct)} · 화면 켜짐 ${duration(pick.screenMs)}",
+            "화면 켜짐에 ${pctText(pick.screenPct)} · 화면 꺼짐에 ${pctText(pick.standbyPct)} · 화면 켜짐 ${duration(pick.screenMs)}",
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
         )
@@ -149,7 +149,7 @@ private fun LiquidBucketColumns(buckets: List<BatteryHistory.Bucket>, selected: 
         Modifier
             .fillMaxWidth()
             .height(140.dp)
-            .semantics { contentDescription = "시간대별 배터리 사용량 그래프. 기둥을 누르면 그 시간대 사용량을 보여 줍니다." }
+            .semantics { contentDescription = "시간대별 배터리 사용량 그래프" }
             .pointerInput(buckets.size, selected) {
                 detectTapGestures { p ->
                     val axisW = 32.dp.toPx()

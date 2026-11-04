@@ -186,7 +186,7 @@ internal fun Dashboard(
         tick
         when (item) {
             NavItem.DPI_MATCH -> state.target?.let { (if (state.foldable) "외부 화면 $it dpi" else "$it dpi") + if (state.auto) " · 자동 적용" else "" }
-                ?: if (state.foldable) "외부 화면 DPI를 정해 주세요" else "DPI를 정해 주세요"
+                ?: if (state.foldable) "외부 화면 DPI 설정 필요" else "DPI 설정 필요"
             NavItem.APP_SIZE -> if (DensityShell.rejected(context)) {
                 "이 기기에서 쓸 수 없음"
             } else {
@@ -194,14 +194,14 @@ internal fun Dashboard(
                     if (AppDensityNotifier.enabled(context)) " · 알림창 조절" else ""
             }
             NavItem.ANIMATION -> AnimationSpeed.label(AnimationSpeed.read(context, AnimationSpeed.Kind.WINDOW))
-            NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) "켜짐 · 민감도 ${ShakeRotate.level(context)}" + (if (ShakeRotate.largeOnly(context)) " · 큰 화면만" else "") else "꺼짐"
+            NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) "켜짐 · 민감도 ${ShakeRotate.level(context)}" + (if (ShakeRotate.largeOnly(context)) " · 큰 화면만" else "") else Copy.DASH_OFF
             NavItem.CAMERA_MUTE -> when (camera) {
                 CameraMute.State.MUTED -> "촬영음 꺼 둠"
-                CameraMute.State.FORCED -> "촬영음 강제 적용"
+                CameraMute.State.FORCED -> "촬영음 강제"
                 CameraMute.State.NONE -> "강제 설정 없는 기기"
-                CameraMute.State.UNKNOWN -> if (CameraMute.wanted(context)) "꺼 두기로 함" else "Shizuku로 끕니다"
+                CameraMute.State.UNKNOWN -> if (CameraMute.wanted(context)) Copy.DASH_WANTED_OFF else Copy.DASH_NEED_SHIZUKU
             }
-            NavItem.APP_CLEANUP -> cleaned?.let { if (it == 0) "꺼 둔 앱 없음" else "꺼 둔 앱 ${it}개" } ?: "쓰지 않는 기본 앱 끄기"
+            NavItem.APP_CLEANUP -> cleaned?.let { if (it == 0) "꺼 둔 앱 없음" else "꺼 둔 앱 ${it}개" } ?: Copy.BLOAT_INTRO_TITLE
             NavItem.GOS -> when (gos) {
                 Gos.State.OFF -> Copy.GOS_DASH_OFF
                 Gos.State.ON -> Copy.GOS_DASH_ON
@@ -245,7 +245,7 @@ internal fun Dashboard(
                 }.let { if (it.isEmpty()) Copy.AIRPLANE_DASH_NONE else Copy.airplaneDash(it) }
             }
             NavItem.VOLUME_ROTATE -> if (VolumeRotate.enabled(context)) Copy.VOLUME_DASH_ON + if (VolumeRotate.invert(context)) " · 반대 방향" else "" else Copy.DASH_OFF
-            NavItem.AUTO_FLEX -> if (AutoFlex.enabled(context)) "켜짐 · ${AutoFlex.min(context)}~${AutoFlex.max(context)}°" + (if (AutoFlex.click(context)) " · 까딱" else "") else "꺼짐"
+            NavItem.AUTO_FLEX -> if (AutoFlex.enabled(context)) "켜짐 · ${AutoFlex.min(context)}~${AutoFlex.max(context)}°" + (if (AutoFlex.click(context)) " · 까딱" else "") else Copy.DASH_OFF
             else -> ""
         }
     }
@@ -329,7 +329,7 @@ internal fun Dashboard(
             // 홈 머리: 카드 없이 바탕 위에 바로 놓는 요약(갤럭시 '디바이스 케어'식). 왼쪽 염소, 가운데 상태 한 문장, 오른쪽 켜진 비율 고리,
             // 아래 권한·Shizuku 상태 알약.
             val on = features.count(active)
-            val headline = if (on == 0) Copy.HOME_HERO_NONE else "기능 ${on}개가 켜져 있습니다"
+            val headline = if (on == 0) Copy.HOME_VIEW_EMPTY_TITLE else "기능 ${on}개가 켜져 있습니다"
             val pills: @Composable () -> Unit = {
                 // 폭이 모자라면 다음 줄로 넘긴다
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Gap.Tight * 2), verticalArrangement = Arrangement.spacedBy(Gap.Tight * 2)) {
@@ -349,7 +349,6 @@ internal fun Dashboard(
                         Column(Modifier.weight(1f)) {
                             Text(AppInfo.FULL_NAME, color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
                             Text(headline, color = c.ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            Text(Copy.HOME_SUBTITLE, color = c.muted, style = MaterialTheme.typography.bodySmall)
                             Spacer(Modifier.height(Gap.Item))
                             // 알약은 글 줄 시작에 맞춘다(염소 아래로 튀어나오지 않게)
                             pills()
@@ -371,8 +370,6 @@ internal fun Dashboard(
                             Spacer(Modifier.width(Gap.Card))
                             ActiveRing(on, features.size, 54.dp)
                         }
-                        Spacer(Modifier.height(Gap.Item))
-                        Text(Copy.HOME_SUBTITLE, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
                         pills()
                     }

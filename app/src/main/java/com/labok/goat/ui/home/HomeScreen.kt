@@ -25,10 +25,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,7 +69,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
@@ -74,6 +79,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -499,53 +505,67 @@ internal fun HomeScreen(
             Scaffold(
                 containerColor = c.bg,
                 topBar = {
-                    TopAppBar(
-                        title = {
-                            AnimatedContent(
-                                targetState = shown,
-                                transitionSpec = {
-                                    (fadeIn(tween(260, delayMillis = 120)) + slideInVertically(tween(320, delayMillis = 120)) { it / 2 }) togetherWith
-                                        (fadeOut(tween(140)) + slideOutVertically(tween(180)) { -it / 2 })
-                                },
-                                label = "title"
-                            ) { f ->
-                                // 메뉴 아이콘(사이드바·홈 타일과 같은 그림)과 제목
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(c.ink), contentAlignment = Alignment.Center) {
-                                        NavGlyph(f.icon, c.onInk, Modifier.size(20.dp))
+                    // 11-04 소장님 "설정 앱처럼 상단바 투명하게": 제목 줄은 지금처럼 흐리게 두고, 그 아래로 짧게 옅어지는 블러를 덧대
+                    // 띠의 아래 경계가 보이지 않게 한다. 블러 판은 제목 줄보다 [TOP_FADE]만큼 길지만 자리는 차지하지 않는다(높이 0으로 배치).
+                    Box {
+                        val bar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + TOP_BAR_HEIGHT
+                        val solid = bar / (bar + TOP_FADE)
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .layout { m, cons ->
+                                    val p = m.measure(cons.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+                                    layout(p.width, 0) { p.place(0, 0) }
+                                }
+                                .height(bar + TOP_FADE)
+                                .hazeChild(haze, HazeStyle(backgroundColor = c.bg, tint = HazeTint(c.bg.copy(alpha = 0.7f)), blurRadius = 24.dp, noiseFactor = 0f)) {
+                                    mask = Brush.verticalGradient(0f to Color.Black, solid to Color.Black, 1f to Color.Transparent)
+                                }
+                        )
+                        TopAppBar(
+                            title = {
+                                AnimatedContent(
+                                    targetState = shown,
+                                    transitionSpec = {
+                                        (fadeIn(tween(260, delayMillis = 120)) + slideInVertically(tween(320, delayMillis = 120)) { it / 2 }) togetherWith
+                                            (fadeOut(tween(140)) + slideOutVertically(tween(180)) { -it / 2 })
+                                    },
+                                    label = "title"
+                                ) { f ->
+                                    // 메뉴 아이콘(사이드바·홈 타일과 같은 그림)과 제목
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(c.ink), contentAlignment = Alignment.Center) {
+                                            NavGlyph(f.icon, c.onInk, Modifier.size(20.dp))
+                                        }
+                                        Spacer(Modifier.width(12.dp))
+                                        Text(
+                                            f.label,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = (-0.3).sp
+                                        )
                                     }
-                                    Spacer(Modifier.width(12.dp))
-                                    Text(
-                                        f.label,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = (-0.3).sp
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                            navigationIcon = {
+                                if (!wide) IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "기능 메뉴 열기") }
+                            },
+                            actions = {
+                                Box {
+                                    IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, "설정 메뉴") }
+                                    LiquidMenu(expanded = menu, onDismiss = { menu = false }, items = menuItems)
+                                    LiquidMenu(
+                                        expanded = reportMenu,
+                                        onDismiss = { reportMenu = false },
+                                        items = listOf(
+                                            Copy.REPORT_VIA_MAIL to { mail(ReportMail.Kind.REPORT, false) },
+                                            Copy.REPORT_VIA_SHARE to { mail(ReportMail.Kind.REPORT, true) }
+                                        )
                                     )
                                 }
                             }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
-                        modifier = Modifier.hazeChild(
-                            haze,
-                            HazeStyle(backgroundColor = c.bg, tint = HazeTint(c.bg.copy(alpha = 0.7f)), blurRadius = 24.dp, noiseFactor = 0f)
-                        ),
-                        navigationIcon = {
-                            if (!wide) IconButton(onClick = { scope.launch { drawer.open() } }) { Icon(Icons.Outlined.Menu, "기능 메뉴 열기") }
-                        },
-                        actions = {
-                            Box {
-                                IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, "설정 메뉴") }
-                                LiquidMenu(expanded = menu, onDismiss = { menu = false }, items = menuItems)
-                                LiquidMenu(
-                                    expanded = reportMenu,
-                                    onDismiss = { reportMenu = false },
-                                    items = listOf(
-                                        Copy.REPORT_VIA_MAIL to { mail(ReportMail.Kind.REPORT, false) },
-                                        Copy.REPORT_VIA_SHARE to { mail(ReportMail.Kind.REPORT, true) }
-                                    )
-                                )
-                            }
-                        }
-                    )
+                        )
+                    }
                 },
                 snackbarHost = { SnackbarHost(toast) { LiquidToast(it.visuals.message) } }
             ) { inner ->
@@ -702,3 +722,9 @@ internal fun HomeScreen(
 
 /** 서랍·시트가 덮었을 때 뒤 화면 흐림 반지름. */
 private val BEHIND_BLUR = 14.dp
+
+/** Material 제목 줄 높이(상태 표시줄 아래). */
+private val TOP_BAR_HEIGHT = 64.dp
+
+/** 제목 줄 아래로 블러가 옅어지며 이어지는 길이. */
+private val TOP_FADE = 28.dp

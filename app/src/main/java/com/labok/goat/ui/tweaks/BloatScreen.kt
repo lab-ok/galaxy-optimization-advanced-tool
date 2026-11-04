@@ -126,7 +126,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     if (found != null) {
                         Spacer(Modifier.height(Gap.Item))
                         // 숫자 앞은 줄바꿈하지 않는 공백(좁은 폭에서 '0개'만 다음 줄로 떨어졌다)
-                        Text("이 기기에서 정리할 수 있는 앱\u00A0${apps.size}개 · 꺼\u00A0둔\u00A0앱\u00A0${offCount}개", color = c.ink, style = MaterialTheme.typography.labelMedium)
+                        Text("정리할 수 있는 앱\u00A0${apps.size}개 · 꺼\u00A0둔\u00A0앱\u00A0${offCount}개", color = c.ink, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -141,7 +141,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
                         Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.BLOAT_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Text(Copy.NEED_SHIZUKU_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
@@ -189,7 +189,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                                     color = if (off) c.muted else c.ink
                                 )
                                 Text(app.note, color = c.muted, style = MaterialTheme.typography.bodySmall)
-                                Text(if (off) "꺼 둠" else "켜져 있음", color = c.muted, style = MaterialTheme.typography.labelSmall)
+                                Text(if (off) "꺼짐" else "켜짐", color = c.muted, style = MaterialTheme.typography.labelSmall)
                             }
                             Spacer(Modifier.width(12.dp))
                             LiquidSwitch(!off, { on ->
@@ -219,15 +219,15 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     confirm?.let { app ->
         AlertDialog(
             onDismissRequest = { confirm = null },
-            title = { Text("${app.name}을(를) 끄시겠습니까?") },
+            title = { Text("${app.name} 끄기") },
             text = { Text(app.note + " 언제든 다시 켤 수 있습니다.") },
             confirmButton = {
                 TextButton(onClick = {
                     confirm = null
                     apply(app, off = true)
-                }) { Text("끄기") }
+                }) { Text(Copy.CONFIRM_TURN_OFF) }
             },
-            dismissButton = { TextButton(onClick = { confirm = null }) { Text("취소") } }
+            dismissButton = { TextButton(onClick = { confirm = null }) { Text(Copy.CANCEL) } }
         )
     }
 }
@@ -235,24 +235,24 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
 /** 사용 방법: 무엇을 하는지, 지우기와 끄기의 차이, Shizuku, 되돌리기, 업데이트 뒤. */
 @Composable
 internal fun BloatHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
             "1. 하는 일",
-            "쓰지 않는 삼성·제휴 기본 앱을 꺼서 앱 목록·알림·백그라운드 동작에서 제외합니다. 커뮤니티에서 많이 끄는 앱 가운데 " +
-                "꺼도 전화·문자·설정·카메라 같은 기본 기능이 멈추지 않는 것만 골라 두었습니다."
+            "쓰지 않는 삼성·제휴 기본 앱을 꺼서 앱 목록·알림·백그라운드 동작에서 뺍니다. " +
+                "꺼도 전화·문자·설정·카메라 같은 기본 기능이 멈추지 않는 앱만 골라 두었습니다."
         ) { CleanupArt() }
         HelpTopic(
             "2. 지우지 않고 끕니다",
-            "앱을 지우지 않고 '사용 안 함'으로 멈춥니다(pm disable-user). 저장 공간은 그대로지만, 스위치 하나로 언제든 다시 켤 수 있고 " +
-                "공장 초기화 없이 원래대로 돌아옵니다. '주의'가 붙은 앱은 끄기 전에 무엇이 달라지는지 한 번 더 알려 줍니다."
+            "앱을 지우지 않고 '사용 안 함'으로 멈춥니다. 저장 공간은 그대로지만 스위치로 언제든 다시 켤 수 있습니다. " +
+                "'주의'가 붙은 앱은 끄기 전에 무엇이 달라지는지 한 번 더 알려 줍니다."
         )
         HelpTopic(
             "3. Shizuku가 필요한 이유",
-            "앱을 끄는 명령은 셸 권한이 있어야 실행됩니다. Shizuku를 연결하면 GOAT가 그 권한으로 끄고 켭니다."
+            "앱을 끄려면 셸 권한이 필요합니다. Shizuku를 연결하면 GOAT가 그 권한으로 끄고 켭니다."
         )
         HelpTopic(
             "4. 업데이트 뒤",
-            "시스템 업데이트나 재부팅 뒤 다시 켜지는 앱(게임 최적화 서비스 등)도 있습니다. 화면을 열면 지금 상태를 다시 읽으니, 켜져 있으면 다시 끄세요."
+            "업데이트나 재부팅 뒤 다시 켜지는 앱도 있습니다(게임 최적화 서비스 등). 화면을 열면 상태를 다시 읽으니 켜져 있으면 다시 끄세요."
         )
     }
 }

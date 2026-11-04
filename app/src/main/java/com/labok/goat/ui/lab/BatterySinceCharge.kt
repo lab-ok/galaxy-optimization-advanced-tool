@@ -106,14 +106,14 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     val s = stats
     Card("마지막 충전 이후") {
         if (shizuku != ShizukuAccess.State.READY) {
-            Text("Shizuku를 연결하면 시스템 배터리 통계로 마지막 충전 이후 사용량과 앱별 순위를 보여 줍니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text("Shizuku를 연결하면 사용량과 앱별 순위가 보입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             return@Card
         }
         if (s == null) {
             if (loaded) {
-                Text("시스템 배터리 통계를 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text("배터리 통계를 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             } else {
-                LiquidLoader("시스템 배터리 통계를 불러오는 중…", Modifier.padding(vertical = 8.dp))
+                LiquidLoader("배터리 통계를 불러오는 중…", Modifier.padding(vertical = 8.dp))
             }
             return@Card
         }
@@ -125,9 +125,9 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
     Card("시간대별 사용량") {
         when (val h = history) {
             null -> if (historyLoaded) {
-                Text("시스템 배터리 기록을 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text("배터리 기록을 불러오지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             } else {
-                LiquidLoader("시스템 배터리 기록을 불러오는 중…", Modifier.padding(vertical = 8.dp))
+                LiquidLoader("배터리 기록을 불러오는 중…", Modifier.padding(vertical = 8.dp))
             }
             else -> BatteryHistorySection(h, now, s.startClock)
         }
@@ -138,7 +138,7 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
         val charges = remember(h, now / 60_000) { BatteryHistory.charges(h, now).takeLast(RECENT_CHARGES).reversed() }
         Card("충전 기록") {
             if (charges.isEmpty()) {
-                Text("시스템 기록에 남은 충전이 아직 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text("아직 충전 기록이 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             } else {
                 charges.forEach { ChargeRow(it) }
             }
@@ -174,10 +174,10 @@ private fun ColumnScope.SinceChargeSummary(s: SinceCharge, level: Int?, charging
         Text(if (s.usedPctLow == s.usedPctHigh) "${s.usedPctLow}" else "${s.usedPctLow}~${s.usedPctHigh}", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = c.ink)
         Text("% 사용", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
     }
-    if (charging) Text("현재 충전 중입니다. 충전기를 분리하면 시스템이 새로 집계합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+    if (charging) Text("충전 중입니다. 충전기를 빼면 새로 집계합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
     UseRow("화면 켜짐", s.screenOnMs, s.screenOnPct)
-    UseRow("화면 꺼짐(대기)", s.screenOffMs, s.screenOffPct)
+    UseRow("화면 꺼짐", s.screenOffMs, s.screenOffPct)
     // 이 패턴이면: 지금 잔량으로 몇 시간 더, 완충으로 몇 시간
     BatteryStatsReader.fullChargeMs(s)?.let { full ->
         Spacer(Modifier.height(Gap.Card))
@@ -224,7 +224,7 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>, icons: Map<Int
     Spacer(Modifier.height(Gap.Item))
     when (tab) {
         RankTab.APPS -> {
-            Text("진한 부분은 포그라운드, 연한 부분은 백그라운드입니다(사용 시간 비율로 나눈 추정).", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text("진한 부분은 포그라운드, 연한 부분은 백그라운드입니다. 사용 시간 비율로 나눈 추정값입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             val total = s.computedMah.takeIf { it > 0 } ?: s.apps.sumOf { it.mah }.coerceAtLeast(1.0)
             val list = if (showAll) s.apps else s.apps.take(TOP_APPS)
@@ -244,7 +244,7 @@ private fun UsageRanking(s: SinceCharge, names: Map<Int, String>, icons: Map<Int
             }
         }
         RankTab.PARTS -> {
-            Text("기기 전체 사용량을 부품별로 나눈 값입니다(앱 사용량 포함).", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text("기기 전체 사용량을 항목별로 나눈 값입니다. 앱 사용량도 들어 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Item))
             val total = s.computedMah.takeIf { it > 0 } ?: s.system.values.sum()
             s.system.entries.sortedByDescending { it.value }.forEach { (k, v) ->

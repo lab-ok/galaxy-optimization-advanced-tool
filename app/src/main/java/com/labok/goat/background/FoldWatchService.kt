@@ -111,7 +111,7 @@ class FoldWatchService : Service() {
     private fun startAsForeground() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "디스플레이 전환 감지", NotificationManager.IMPORTANCE_MIN)
+            NotificationChannel(CHANNEL_ID, "접기·펼치기 감지", NotificationManager.IMPORTANCE_MIN)
         )
         val open = PendingIntent.getActivity(
             this,

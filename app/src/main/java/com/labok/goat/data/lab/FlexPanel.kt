@@ -36,7 +36,7 @@ object FlexPanel {
     fun setApp(context: Context, pkg: String, on: Boolean): String? {
         if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return "Shizuku 연결이 필요합니다."
         val err = runCatching {
-            val m = setter() ?: return "이 기기에는 앱별 플렉스 패널 함수가 없습니다."
+            val m = setter() ?: return "이 기기는 앱별 플렉스 패널을 지원하지 않습니다."
             m.invoke(wm(), UserId.current(), pkg, on)
         }.exceptionOrNull()?.let { HiddenApi.describe(it) }
         val p = prefs(context)
@@ -190,7 +190,7 @@ object FlexPanel {
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle("${s.label} · ${AutoFlex.modeLabel(s.mode)}")
-            .setContentText("접은 동안 이 앱에서 쓸 방식을 바꿀 수 있습니다")
+            .setContentText("접었을 때 이 앱에서 쓸 방식을 바꿉니다")
             .setOngoing(true)
             .setSilent(true)
             .setOnlyAlertOnce(true)

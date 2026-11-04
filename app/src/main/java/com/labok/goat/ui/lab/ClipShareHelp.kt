@@ -43,6 +43,7 @@ import com.labok.goat.ui.liquid.LiquidColors
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.nav.CLIP_SHARE_PATHS
+import com.labok.goat.ui.text.Copy
 
 /*
  * 클립보드 공유 사용 방법(점 세 개 메뉴 → 사용 방법). 11-04 소장님 지정 시안 5번 '물방울 타임라인':
@@ -60,33 +61,33 @@ internal fun ClipShareHelpSheet() {
     SheetColumn(title = "사용 방법") {
         GlassCard {
             val tap = artLoop(1600)
-            TimelineStep("1", "타일을 한 번 넣어 두세요", "[빠른 설정에 타일 추가]를 누르면 끝", 34) { c, tm -> tilePill(c, tm, Offset(0f, 4f), 150f) }
-            TimelineStep("2", "아무 앱에서 복사", "글도, 사진도, 여러 장도 돼요", 70) { c, tm ->
+            TimelineStep("1", "빠른 설정에 타일 넣기", "[${Copy.LAB_NOTE_ADD_TILE}]를 누릅니다", 34) { c, tm -> tilePill(c, tm, Offset(0f, 4f), 150f) }
+            TimelineStep("2", "아무 앱에서 복사", "글·사진·여러 장 모두 됩니다", 70) { c, tm ->
                 copyScene(c, tm, Offset(0f, 6f), tap)
                 photo(c, Offset(116f, 22f), 30f)
             }
-            TimelineStep("3", "알림창을 내려 타일 톡", "GOAT 화면을 열 필요가 없어요", 70) { c, tm -> shadeScene(c, tm, Offset(0f, 4f), tap) }
-            TimelineStep("4", "보낼 앱과 대화방 고르기", "글은 TXT, 사진은 원본으로 가요", 70) { c, tm -> pickScene(c, tm, Offset(0f, 4f), tap) }
-            TimelineStep(null, "끝! 임시 파일은 바로 지워요", "휴대폰 밖으로 따로 보내지 않아요", 0, last = true)
+            TimelineStep("3", "알림창을 내려 타일 누르기", "GOAT를 열지 않아도 됩니다", 70) { c, tm -> shadeScene(c, tm, Offset(0f, 4f), tap) }
+            TimelineStep("4", "보낼 앱과 대화방 고르기", "글은 TXT, 사진은 원본으로 갑니다", 70) { c, tm -> pickScene(c, tm, Offset(0f, 4f), tap) }
+            TimelineStep(null, "임시 파일은 바로 지웁니다", "휴대폰 밖으로 보내지 않습니다", 0, last = true)
         }
         Spacer(Modifier.height(Gap.Card))
         HelpTopic(
             "다른 방법으로 열기",
-            "• GOAT 아이콘 길게 누르기: '클립보드 공유' 바로가기가 나옵니다. 끌어서 홈 화면에 따로 둘 수도 있습니다.\n" +
-                "• 다른 앱의 공유 메뉴: 글을 공유할 때 'TXT로 공유'를 고르면 그 글을 TXT 파일로 바꿔 보냅니다.\n" +
-                "• 이 화면: [붙여넣고 공유]를 누르거나, 아래 입력란에 붙여넣어도 바로 공유합니다."
+            "• GOAT 아이콘 길게 누르기: '클립보드 공유' 바로가기가 나옵니다. 끌어서 홈 화면에 둘 수 있습니다.\n" +
+                "• 다른 앱의 공유 메뉴: 'TXT로 공유'를 고르면 글을 TXT 파일로 보냅니다.\n" +
+                "• 이 화면: [${Copy.LAB_NOTE_PASTE_SHARE}]를 누르거나 아래 입력란에 붙여넣습니다."
         )
         HelpTopic(
             "보낼 수 있는 것",
-            "• 글·서식 있는 글: TXT 파일(서식은 빠지고 글만 남습니다)\n" +
+            "• 글: TXT 파일. 서식은 빠집니다\n" +
                 "• 사진(갤러리·브라우저의 '이미지 복사'): 원본 이미지\n" +
-                "• 여러 장을 한꺼번에 복사한 사진: 한 번에 모두\n" +
+                "• 한꺼번에 복사한 여러 장: 모두 한 번에\n" +
                 "• 파일 앱에서 복사한 파일: 원본 파일"
         )
         HelpTopic(
             "알아 둘 점",
-            "가장 마지막에 복사한 것 하나만 보냅니다. 키보드의 클립보드 목록에 쌓인 예전 항목은 안드로이드가 막아 읽을 수 없습니다. " +
-                "공유할 때 'GOAT이 클립보드에서 붙여넣음' 안내가 뜨는 것은 안드로이드의 정상 알림입니다."
+            "마지막에 복사한 것 하나만 보냅니다. 키보드 클립보드 목록의 예전 항목은 Android가 막아 읽을 수 없습니다. " +
+                "공유할 때 뜨는 'GOAT이 클립보드에서 붙여넣음' 안내는 Android의 정상 알림입니다."
         )
     }
 }

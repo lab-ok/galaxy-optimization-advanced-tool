@@ -78,7 +78,7 @@ object DensityServer {
                         GET -> {
                             val pkg = data.readString()!!
                             val user = data.readInt()
-                            if (getM == null) throw UnsupportedOperationException("이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.")
+                            if (getM == null) throw UnsupportedOperationException("이 기기는 앱별 배율을 지원하지 않습니다")
                             // (패키지, 사용자, 사용자 설정만): true면 사용자가 정한 값만, false면 삼성이 정해 둔 앱별 기본값까지 돌려준다.
                             val v = unwrap { getM.invoke(atm, pkg, user, true) } as Int
                             reply?.writeNoException()
@@ -88,7 +88,7 @@ object DensityServer {
                             val pkg = data.readString()!!
                             val user = data.readInt()
                             val dpi = data.readInt()
-                            if (setM == null) throw UnsupportedOperationException("이 기기에는 삼성 앱별 화면 크기 함수가 없습니다.")
+                            if (setM == null) throw UnsupportedOperationException("이 기기는 앱별 배율을 지원하지 않습니다")
                             require(AppDensityPolicy.isAllowed(dpi)) { "허용되지 않는 값: $dpi" }
                             // 실기기 코드 기준 인자 순서는 (패키지, 사용자, 밀도, 메모). 바뀌면 그 앱을 다시 띄워 바로 적용된다.
                             unwrap { setM.invoke(atm, pkg, user, dpi, "GOAT") }

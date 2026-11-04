@@ -41,13 +41,13 @@ object DensityShell {
     private fun user() = UserId.current()
 
     private fun <T> tx(code: Int, write: Parcel.() -> Unit = {}, read: Parcel.() -> T): T {
-        val b = binder.value ?: throw IllegalStateException("셸 도우미가 연결되어 있지 않습니다.")
+        val b = binder.value ?: throw IllegalStateException("셸 도우미가 연결되어 있지 않습니다")
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
         try {
             data.writeInterfaceToken(DensityServer.DESCRIPTOR)
             data.write()
-            if (!b.transact(code, data, reply, 0)) throw IllegalStateException("셸 도우미가 요청을 거절했습니다.")
+            if (!b.transact(code, data, reply, 0)) throw IllegalStateException("셸 도우미가 요청을 거절했습니다")
             reply.readException()
             return reply.read()
         } finally {
@@ -132,7 +132,7 @@ object DensityShell {
     private fun state(context: Context) = context.getSharedPreferences("app_density_state", Context.MODE_PRIVATE)
 
     private const val KEY_REJECTED = "rejected_fingerprint"
-    const val REJECTED_MESSAGE = "이 기기는 앱별 화면 배율을 지원하지 않습니다(폴드처럼 큰 화면 기기 전용)."
+    const val REJECTED_MESSAGE = "이 기기는 앱별 배율을 지원하지 않습니다"
 
     /** 이 펌웨어에서 배율을 바꿔도 값이 남지 않은 적이 있는지. 펌웨어가 바뀌면 다시 시험한다. */
     fun rejected(context: Context) = state(context).getString(KEY_REJECTED, null) == Build.FINGERPRINT

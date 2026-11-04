@@ -17,5 +17,5 @@ object DeveloperProfile {
     const val CONTACT_EMAIL = "lala5bok@gmail.com"
     const val COPYRIGHT = "© 2026 lala5bok · GPL-3.0"
     const val LICENSE = "GPL-3.0 (오픈소스)"
-    const val LICENSE_NOTE = "누구나 무료로 쓰고 고칠 수 있습니다. 고친 앱을 배포할 때는 소스도 GPL-3.0으로 공개해야 하며, 그러기 어려우면 상용 라이선스를 문의하세요."
+    const val LICENSE_NOTE = "누구나 무료로 쓰고 고칠 수 있습니다. 고친 앱을 배포하면 소스도 GPL-3.0으로 공개해야 합니다. 어렵다면 상용 라이선스를 문의하세요."
 }

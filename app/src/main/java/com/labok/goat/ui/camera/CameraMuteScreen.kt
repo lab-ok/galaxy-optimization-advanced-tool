@@ -118,7 +118,7 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
                         Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.CAMERA_NEED_SHIZUKU_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Text(Copy.NEED_SHIZUKU_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(Gap.Section))
@@ -146,32 +146,30 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
 /** 사용 방법: 무엇을 하는지, 왜 Shizuku가 필요한지, 재부팅·업데이트 뒤, 되돌리기, 주의. */
 @Composable
 internal fun CameraMuteHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
             "1. 하는 일",
-            "국내 갤럭시는 무음·진동 모드여도 카메라 촬영음이 강제로 납니다. 이 강제 설정을 끄면 촬영음이 기기 소리 설정을 따라, " +
-                "무음·진동 모드에서는 소리 없이 찍히고 소리 모드에서는 그대로 납니다. 삼성 기본 카메라와 대부분의 카메라 앱에 적용됩니다."
+            "국내 갤럭시는 무음·진동 모드에서도 촬영음이 강제로 납니다. 이 설정을 끄면 촬영음이 기기 소리 설정을 따릅니다. " +
+                "무음·진동 모드에서는 소리 없이 찍힙니다. 삼성 기본 카메라와 대부분의 카메라 앱에 적용됩니다."
         ) { ShutterArt() }
         HelpTopic(
-            "2. 꼭 지켜 주세요",
-            "촬영음은 몰래 촬영을 막기 위한 장치입니다. 다른 사람을 동의 없이 찍거나 몰래 찍으면 법에 따라 처벌받습니다. " +
-                "조용한 곳에서 내 물건, 문서, 음식을 찍을 때처럼 예절을 지키는 데만 쓰세요."
+            "2. ${Copy.CAMERA_ETIQUETTE_TITLE}",
+            "촬영음은 몰래 촬영을 막는 장치입니다. 동의 없이 다른 사람을 찍으면 법에 따라 처벌받습니다. " +
+                "조용한 곳에서 물건·문서·음식을 찍을 때처럼 예절을 지키는 데만 쓰세요."
         )
         HelpTopic(
             "3. Shizuku가 필요한 이유",
-            "촬영음 강제는 삼성이 숨겨 둔 시스템 설정이라, 일반 앱은 시스템 설정 권한이 있어도 읽거나 바꿀 수 없습니다. " +
-                "Shizuku가 빌려 주는 셸 권한으로 'settings put system ${CameraMute.KEY} 0'을 실행합니다. " +
-                "Shizuku가 없으면 PC에서 같은 명령을 한 번 실행해도 됩니다."
+            "촬영음 강제는 삼성이 숨겨 둔 시스템 설정이라 시스템 설정 권한으로도 바꿀 수 없습니다. " +
+                "GOAT는 Shizuku의 셸 권한으로 바꿉니다. Shizuku가 없으면 PC에서 명령을 한 번 실행해도 됩니다."
         )
         HelpTopic(
             "4. 재부팅·업데이트 뒤",
-            "기기에 따라 업데이트나 재부팅 뒤 촬영음이 다시 켜질 수 있습니다. 스위치를 켜 두면 " +
-                "Shizuku가 연결될 때마다(Android 13 이상은 재부팅 뒤 Wi-Fi에 연결되면 자동으로 연결) 확인해 다시 끕니다."
+            "기기에 따라 업데이트나 재부팅 뒤 촬영음 강제가 다시 켜집니다. " +
+                "스위치를 켜 두면 Shizuku가 연결될 때마다 확인해 다시 끕니다."
         )
         HelpTopic(
             "5. 되돌리기",
-            "스위치를 끄면 촬영음이 다시 강제로 나도록 원래대로 돌아갑니다. PC에서는 '${CameraMute.PC_UNDO}'로 되돌립니다. " +
-                "'이 기기에는 강제 설정이 없음'으로 나오면 해외 모델처럼 이미 소리 설정을 따르는 기기입니다."
+            "스위치를 끄면 원래대로 촬영음이 강제로 납니다. PC에서는 '${CameraMute.PC_UNDO}'로 되돌립니다."
         )
     }
 }

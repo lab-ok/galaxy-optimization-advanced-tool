@@ -60,7 +60,6 @@ internal fun AdvancedSheet(state: UiState, onClearLogs: () -> Unit) {
     val c = LocalLiquid.current
     SheetColumn {
         Text("고급 정보", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
-        Text("디스플레이별 DPI·해상도·PPI와 적용 기록입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Section))
 
         if (state.displays.isEmpty()) {
@@ -172,7 +171,7 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
                         t.blocked?.let { b -> Text(b, color = c.danger, style = MaterialTheme.typography.bodySmall) }
                     }
                 } else {
-                    Text("아직 활성 상태로 확인되지 않은 화면입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text("아직 켜진 상태로 확인하지 못한 화면입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

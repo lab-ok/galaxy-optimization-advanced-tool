@@ -25,6 +25,7 @@ import com.labok.goat.ui.art.artPill
 import com.labok.goat.ui.art.deviceFrame
 import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LiquidColors
+import com.labok.goat.ui.text.Copy
 import kotlin.math.abs
 import kotlin.math.sin
 
@@ -127,7 +128,7 @@ internal fun PersistArt() {
         val knobX = if (on) sc.x + sw.width / 2 - sw.height / 2 else sc.x - sw.width / 2 + sw.height / 2
         drawCircle(if (on) c.onInk else c.ink, sw.height * 0.36f, Offset(knobX, sc.y))
         artLabel(tm, if (on) "Shizuku 켜짐" else "Shizuku 꺼짐", Offset(sc.x, sc.y + 30.dp.toPx()), c.ink, 11, bold = true)
-        artLabel(tm, if (on) "→ 값을 바꿀 수 있음" else "→ 변경만 중지", Offset(sc.x, sc.y + 46.dp.toPx()), c.muted, 9)
+        artLabel(tm, if (on) "→ 바꿀 수 있음" else "→ 바꾸기만 멈춤", Offset(sc.x, sc.y + 46.dp.toPx()), c.muted, 9)
         // 오른쪽: 앱 배율 값은 계속 유지(체크 표시)
         val h = size.height * 0.8f
         val screen = phone(c, Offset(size.width * 0.72f, size.height / 2), h, aspect)
@@ -207,7 +208,7 @@ internal fun NotifyArt() {
         drawRoundRect(c.surface, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()))
         drawRoundRect(c.line, tl, Size(cardW, cardH), CornerRadius(18.dp.toPx()), style = Stroke(1.5.dp.toPx()))
         val textLeft = tl.x + 16.dp.toPx()
-        val tTitle = tm.measure("앱별 화면 배율", TextStyle(fontFamily = GalaxyFont, color = c.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold))
+        val tTitle = tm.measure(Copy.FEATURE_APP_SIZE, TextStyle(fontFamily = GalaxyFont, color = c.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold))
         drawText(tTitle, topLeft = Offset(textLeft, tl.y + 10.dp.toPx()))
         val tBody = tm.measure(if (pressed) "Discord · 480 dpi" else "Discord · 기본(450)", TextStyle(fontFamily = GalaxyFont, color = c.muted, fontSize = 10.sp))
         drawText(tBody, topLeft = Offset(textLeft, tl.y + 26.dp.toPx()))

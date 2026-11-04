@@ -41,7 +41,7 @@ internal object ReportMail {
             appendLine()
             appendLine()
             appendLine("---")
-            if (attachments.isNotEmpty()) appendLine("진단 파일과 오늘 로그가 첨부되어 있습니다.")
+            if (attachments.isNotEmpty()) appendLine("진단 파일과 오늘 로그를 첨부했습니다.")
             appendLine("기기: ${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} · ${AppInfo.NAME} $version")
         }
         val mail = (if (attachments.size <= 1) Intent(Intent.ACTION_SEND) else Intent(Intent.ACTION_SEND_MULTIPLE)).apply {

@@ -227,7 +227,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                         Spacer(Modifier.height(Gap.Item))
                         Text(Copy.APP_SIZE_CONNECT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.APP_SIZE_CONNECT_ACTION, modifier = Modifier.fillMaxWidth(), onClick = onGuide)
+                        LiquidButton(Copy.SHIZUKU_CONNECT, modifier = Modifier.fillMaxWidth(), onClick = onGuide)
                     }
                 }
             }

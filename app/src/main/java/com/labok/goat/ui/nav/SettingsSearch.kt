@@ -42,7 +42,7 @@ object SettingsSearch {
             NavItem.LAB_TOOLS to listOf("설정 변경 비교", "시스템 함수 탐색"),
             NavItem.LAB_BATTERY to listOf("충전 기록", "시간대별 사용량"),
             NavItem.LAB_AMBIENT to listOf("텐트 모드", "스탠바이 시계", "간접등"),
-            NavItem.SETTINGS to listOf(Copy.INK_TITLE, Copy.HAPTIC_TITLE, Copy.MOTION_TITLE, Copy.GOAT_STYLE_TITLE, Copy.LOG_FILE_TITLE, "업데이트 확인", "변경 기록", "필요 권한")
+            NavItem.SETTINGS to listOf(Copy.INK_TITLE, Copy.HAPTIC_TITLE, Copy.MOTION_TITLE, Copy.GOAT_STYLE_TITLE, Copy.LOG_FILE_TITLE, "업데이트 확인", "변경 기록", "권한 설정")
         )
     }
 

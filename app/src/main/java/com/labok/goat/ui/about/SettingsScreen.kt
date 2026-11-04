@@ -193,7 +193,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                             UiHaptics.set(context, it)
                         },
                         onValueChangeFinished = { UiHaptics.set(context, h) },
-                        valueText = { if (it == 0) "끔" else "$it%" },
+                        valueText = { if (it == 0) "꺼짐" else "$it%" },
                         description = Copy.HAPTIC_TITLE
                     )
                 }

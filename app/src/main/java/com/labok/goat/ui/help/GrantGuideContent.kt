@@ -42,8 +42,8 @@ object GrantGuideContent {
     fun fullText(connection: Connection, os: PcOs, appName: String): String = buildString {
         appendLine("$appName 권한 설정 안내 (${os.label} · ${connection.label})")
         appendLine()
-        appendLine("휴대폰에서 $appName 앱이 디스플레이 밀도를 바꾸려면 WRITE_SECURE_SETTINGS 권한이 필요합니다.")
-        appendLine("PC의 adb로 처음 한 번만 부여하면 되고, 재부팅해도 유지됩니다.")
+        appendLine("$appName 앱이 화면 DPI를 바꾸려면 WRITE_SECURE_SETTINGS 권한이 필요합니다.")
+        appendLine("PC의 adb로 한 번만 부여하면 재부팅해도 유지됩니다.")
         steps(connection, os).forEachIndexed { i, step ->
             appendLine()
             appendLine("${i + 1}. ${step.title}")
@@ -72,7 +72,7 @@ object GrantGuideContent {
                     Trouble(
                         "무선 연결이 되지 않을 때",
                         "protocol fault (couldn't read status message)",
-                        "① 휴대폰의 VPN을 끕니다(VPN이 켜져 있으면 같은 Wi-Fi에서도 서로 찾지 못합니다).\n" +
+                        "① 휴대폰의 VPN을 끕니다. VPN이 켜져 있으면 같은 Wi-Fi에서도 서로 찾지 못합니다.\n" +
                             "② 휴대폰과 PC가 같은 Wi-Fi인지 확인합니다.\n" +
                             "③ adb를 다시 시작하고, 그래도 연결되지 않으면 휴대폰과 PC를 재시작합니다.\n" +
                             "④ Windows 방화벽이 adb 허용을 물으면 허용합니다.",
@@ -81,7 +81,7 @@ object GrantGuideContent {
                 )
                 add(
                     Trouble(
-                        "포트 번호가 혼동될 때",
+                        "포트 번호가 헷갈릴 때",
                         null,
                         "adb pair에는 '페어링 코드로 기기 페어링' 팝업의 IP:포트를, adb connect에는 무선 디버깅 첫 화면의 'IP 주소 및 포트'를 씁니다. 두 포트는 서로 다르고, 무선 디버깅을 껐다 켜면 바뀝니다."
                     )
@@ -171,7 +171,7 @@ object GrantGuideContent {
                 list += Step(
                     "연결 확인",
                     "아래 명령을 실행합니다. 휴대폰에 'USB 디버깅을 허용하시겠습니까?'가 표시되면 [허용]을 누릅니다. " +
-                        "목록에 기기가 device로 표시되면 준비가 끝난 것입니다.",
+                        "목록에 기기가 device로 나오면 준비가 끝났습니다.",
                     listOf("$adb devices")
                 )
             }
@@ -200,7 +200,7 @@ object GrantGuideContent {
         )
         list += Step(
             "마무리",
-            "이 앱으로 돌아오면 권한을 자동으로 확인합니다. 권한은 재부팅해도 유지되므로, 확인되면 " +
+            "GOAT로 돌아오면 권한을 자동으로 확인합니다. 확인되면 " +
                 (if (connection == Connection.USB) "USB 디버깅" else "무선 디버깅") + "은 꺼도 됩니다."
         )
         return list
@@ -208,7 +208,7 @@ object GrantGuideContent {
 
     private fun installStep(connection: Connection, os: PcOs): Step {
         val pairNote = if (connection == Connection.WIRELESS) {
-            "\n무선 페어링(adb pair)은 adb 30 이상에서만 지원됩니다. adb version 으로 확인하십시오."
+            "\n무선 페어링(adb pair)은 adb 30 이상에서만 됩니다. adb version으로 확인합니다."
         } else {
             ""
         }

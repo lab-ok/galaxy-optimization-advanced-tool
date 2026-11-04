@@ -90,7 +90,7 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
                         Text(Copy.STATUS_NEED_SETUP, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.ANIM_NEED_PERMISSION, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Text(Copy.TODO_SETUP_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.MENU_GUIDE, onClick = onGuide, modifier = Modifier.fillMaxWidth())
                     }
@@ -176,26 +176,26 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
 /** 사용 방법. */
 @Composable
 internal fun AnimationHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
             "1. 하는 일",
-            "앱을 열고 닫거나 화면이 바뀔 때의 애니메이션 속도를 바꿉니다. 0.5배로 설정하면 애니메이션이 절반의 시간에 끝나 휴대폰이 더 빠르게 느껴집니다. " +
-                "커뮤니티에서 가장 많이 쓰는 값은 0.5배입니다."
+            "앱을 열고 닫거나 화면이 바뀔 때의 애니메이션 속도를 바꿉니다. 0.5배로 하면 절반의 시간에 끝나 더 빠르게 느껴집니다. " +
+                "가장 많이 쓰는 값은 0.5배입니다."
         ) { SpeedArt(0.5f) }
         HelpTopic(
             "2. 세 가지 설정",
-            "개발자 옵션의 '창 애니메이션 배율', '전환 애니메이션 배율', '애니메이터 길이 배율'과 같습니다. 한 번에 고르면 세 설정이 함께 바뀌고, " +
-                "'하나씩 맞추기'를 펼치면 따로 맞출 수 있습니다."
+            "개발자 옵션의 '창 애니메이션 배율', '전환 애니메이션 배율', '애니메이터 길이 배율'과 같습니다. 한 번에 고르면 셋이 함께 바뀝니다. " +
+                "'${Copy.ANIM_DETAIL_TITLE}'를 펼치면 따로 맞출 수 있습니다."
         )
         HelpTopic(
             "3. 끔과 주의",
-            "'끔'은 애니메이션 없이 바로 바뀝니다. 너무 빠르게 하면 일부 앱에서 화면이 깜빡이거나 멈춘 것처럼 보일 수 있습니다. 그럴 때는 0.5배나 기본값으로 되돌리세요. " +
+            "'끔'은 애니메이션 없이 바로 바뀝니다. 너무 빠르면 일부 앱에서 화면이 깜빡이거나 멈춘 것처럼 보입니다. 그럴 때는 0.5배나 기본값으로 되돌리세요. " +
                 "GOAT의 물방울 애니메이션도 이 설정을 따릅니다."
         )
         HelpTopic(
             "4. 권한과 유지",
-            "고급 화면 배율 설정과 같은 시스템 설정 권한으로 변경하며, 재부팅해도 유지됩니다. 개발자 옵션을 끄면 기기가 기본값으로 되돌리는데, " +
-                "GOAT가 고른 값으로 자동으로 다시 맞춥니다."
+            "고급 화면 배율 설정과 같은 시스템 설정 권한으로 바꾸며, 재부팅해도 유지됩니다. " +
+                "개발자 옵션을 끄면 기기가 기본값으로 되돌리지만 GOAT가 고른 값으로 다시 맞춥니다."
         )
     }
 }

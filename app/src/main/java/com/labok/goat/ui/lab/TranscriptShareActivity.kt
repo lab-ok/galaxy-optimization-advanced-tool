@@ -105,14 +105,14 @@ private fun TranscriptSheet(shared: Intent?, onClose: () -> Unit) {
             when (val l = loaded) {
                 Loaded.Loading -> Text("전사문을 읽는 중입니다…", color = c.muted)
                 Loaded.Empty -> {
-                    Text("받은 글이 없습니다. 음성 녹음에서 공유 → 텍스트 파일로 보내 주세요.", color = c.muted)
+                    Text("받은 글이 없습니다. 음성 녹음에서 공유 → 텍스트 파일로 보내세요.", color = c.muted)
                     Spacer(Modifier.height(Gap.Item))
                     LiquidButton("닫기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = onClose)
                 }
                 is Loaded.Ready -> {
                     val p = l.parsed
                     if (p == null) {
-                        Text("화자 표시를 찾지 못했습니다. 받은 글을 그대로 저장할 수 있습니다.", color = c.muted)
+                        Text("화자 표시를 찾지 못했습니다. 받은 글을 그대로 저장합니다.", color = c.muted)
                     } else {
                         Text("누가 나인가요? 고른 화자는 '나', 나머지는 모두 '상대'로 바꿔 저장합니다.", color = c.muted)
                         Spacer(Modifier.height(Gap.Item))

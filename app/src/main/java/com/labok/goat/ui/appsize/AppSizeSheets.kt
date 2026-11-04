@@ -47,62 +47,62 @@ import kotlinx.coroutines.withContext
 /** 사용 방법: 무엇을 하는지, Shizuku가 왜 필요한지, 왜 단계가 정해져 있는지, 접고 펼 때 달라지는 이유. */
 @Composable
 internal fun AppSizeHelpSheet(foldable: Boolean = true, onConnect: () -> Unit) {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = Copy.MENU_HELP) {
         // 순서: 무엇 → 쓰는 방법(단계·폴드·알림창) → 필요한 것(Shizuku) → 되돌리기. 폴드 항목이 빠지면 번호가 당겨진다.
         var no = 0
         fun n() = ++no
         HelpTopic(
             "${n()}. 하는 일",
-            "앱마다 화면 크기를 따로 정합니다. 삼성 '설정 → 디스플레이 → 앱 화면 크게/작게'와 같은 설정이므로, " +
-                "여기서 바꾸면 그 화면에도 그대로 반영됩니다. 바꾼 값은 재부팅해도 유지됩니다.",
+            "앱마다 배율을 따로 정합니다. 삼성 '설정 → 디스플레이 → 앱 화면 크게/작게'와 같은 설정이라 " +
+                "그 화면에도 반영됩니다. 바꾼 값은 재부팅해도 유지됩니다.",
             art = { AppScaleArt() }
         )
         HelpTopic(
-            "${n()}. 크기가 여섯 단계로 정해진 이유",
-            "삼성 시스템이 ${AppDensityPolicy.STEPS.joinToString(", ")} 여섯 값만 허용합니다. 다른 값을 넣으면 시스템이 거부하므로, " +
-                "1단위로 조절할 수는 없습니다. '기본'은 앱별 설정을 지우고 기기 전체 크기를 따르게 합니다.",
+            "${n()}. 배율이 여섯 단계인 이유",
+            "삼성 시스템이 ${AppDensityPolicy.STEPS.joinToString(", ")} 여섯 값만 받아 1 단위로 조절할 수 없습니다. " +
+                "'기본'은 앱별 설정을 지우고 기기 전체 배율을 따릅니다.",
             art = { StepsArt() }
         )
         // 접고 펼 때 이야기는 폴드에서만
         if (foldable) {
             HelpTopic(
                 "${n()}. 접고 펼 때 크기가 달라 보이는 이유",
-                "앱별 크기는 하나의 고정된 DPI라서 외부 화면과 내부 화면에 같은 숫자가 쓰입니다. 두 화면은 픽셀 밀도(PPI)가 달라 " +
-                    "같은 숫자라도 실제 크기가 다르게 보입니다. 기기 전체 크기는 '고급 화면 배율 설정'이 화면마다 맞춰 주지만, " +
-                    "앱별 크기는 시스템상 화면마다 다른 값을 지정할 수 없습니다. 주로 쓰는 화면에 맞춰 고르세요.",
+                "앱별 배율은 DPI 하나라서 외부·내부 화면에 같은 값이 쓰입니다. 두 화면은 PPI가 달라 같은 값이라도 크기가 다르게 보입니다. " +
+                    "기기 전체 배율은 '${Copy.FEATURE_DPI}'이 화면마다 맞추지만, 앱별 배율은 화면마다 따로 정할 수 없습니다. " +
+                    "주로 쓰는 화면에 맞춰 고르세요.",
                 art = { FoldDiffArt() }
             )
         }
         HelpTopic(
             "${n()}. 알림창에서 바로 바꾸기",
-            "'알림창에서 바로 조절'을 켜면 알림에 지금 보고 있는 앱과 크기가 나오고, [작게]·[기본]·[크게]로 한 단계씩 바꿉니다. " +
-                "삼성 설정 특성상 크기를 바꾸면 그 앱이 다시 시작되며, GOAT가 바로 다시 열어 줍니다.",
+            "'${Copy.APP_SIZE_NOTIFY_TITLE}'을 켜면 알림에 지금 보는 앱과 배율이 나옵니다. [작게]·[기본]·[크게]로 한 단계씩 바꿉니다. " +
+                "배율을 바꾸면 그 앱이 다시 시작되고, GOAT가 다시 열어 줍니다.",
             art = { NotifyArt() }
         )
         HelpTopic(
             "${n()}. Shizuku가 필요한 이유",
-            "삼성은 이 설정을 바꾸는 기능에 시스템 전용 권한을 요구하므로 일반 앱은 직접 바꿀 수 없습니다. " +
-                "무료 앱 Shizuku는 휴대폰의 무선 디버깅을 이용해 그 권한을 빌려 줍니다. 처음 한 번만 페어링하면 되며, " +
-                "Android 13 이상에서는 재부팅 뒤에도 Wi-Fi에 연결되면 자동으로 다시 켜집니다. " +
-                "Shizuku가 없으면 PC에서 명령 한 번으로 GOAT 셸 도우미를 켜서 쓸 수도 있습니다.",
+            "이 설정은 시스템 전용 권한이 있어야 바꿀 수 있습니다. 무료 앱 Shizuku가 무선 디버깅으로 그 권한을 빌려 줍니다. " +
+                "페어링은 처음 한 번만 하면 됩니다. Android 13 이상에서는 재부팅 뒤 Wi-Fi에 연결되면 Shizuku가 다시 켜집니다. " +
+                "Shizuku 대신 PC 명령 한 번으로 GOAT 셸 도우미를 켜도 됩니다.",
             art = { ShizukuBridgeArt() }
         )
         HelpTopic(
             "${n()}. Shizuku가 꺼져 있으면",
-            "• 이미 정해 둔 앱 크기: Shizuku가 꺼져 있어도, 재부팅해도 그대로 유지됩니다.\n" +
-                "• 목록에서 크기 바꾸기, 알림창 [작게]·[기본]·[크게]: Shizuku가 실행 중일 때만 사용할 수 있습니다.\n" +
-                "• 알림에 지금 보고 있는 앱 표시: Shizuku가 실행 중일 때만 실시간으로 바뀝니다.\n" +
-                "• '고급 화면 배율 설정'(기기 전체 크기): Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.\n" +
-                "• 무선 디버깅은 Shizuku를 시작할 때만 필요합니다. 'Shizuku가 켜지면 무선 디버깅 끄기'를 켜면 Shizuku가 켜진 직후 GOAT가 끕니다. 무선 디버깅을 끄면 Shizuku가 멈추는 기기에서는 이 옵션을 꺼 두세요.",
+            "• 이미 정해 둔 앱 배율: 재부팅해도 그대로 유지됩니다.\n" +
+                "• 목록에서 배율 바꾸기, 알림창 [작게]·[기본]·[크게]: Shizuku가 실행 중일 때만 됩니다.\n" +
+                "• 알림의 지금 보는 앱 표시: Shizuku가 실행 중일 때만 바뀝니다.\n" +
+                "• '${Copy.FEATURE_DPI}': Shizuku로 권한을 한 번 받아 두면 이후에는 Shizuku가 없어도 됩니다.\n" +
+                "• 무선 디버깅은 Shizuku를 시작할 때만 필요합니다. '${Copy.APP_SIZE_AUTO_OFF_TITLE}'를 켜면 Shizuku가 켜진 직후 GOAT가 끕니다. " +
+                "무선 디버깅을 끄면 Shizuku가 멈추는 기기에서는 이 옵션을 꺼 두세요.",
             art = { PersistArt() }
         )
         HelpTopic(
             "${n()}. 되돌리기",
-            "앱을 눌러 '기본'을 고르면 그 앱만, ⋮ → 초기화에서는 모든 앱을 기본 배율로 되돌립니다. " +
-                "삼성 설정의 '앱 화면 크게/작게'에서 되돌릴 수도 있습니다.",
+            "앱을 눌러 '기본'을 고르면 그 앱만, ⋮ → 초기화는 모든 앱을 기본 배율로 되돌립니다. " +
+                "삼성 설정의 '앱 화면 크게/작게'에서도 되돌릴 수 있습니다.",
             art = { ResetArt() }
         )
-        LiquidButton("Shizuku 연결 안내 열기", modifier = Modifier.fillMaxWidth(), primary = false, onClick = onConnect)
+        LiquidButton(Copy.SHIZUKU_CONNECT, modifier = Modifier.fillMaxWidth(), primary = false, onClick = onConnect)
     }
 }
 
@@ -115,15 +115,15 @@ internal fun AppSizeGuideSheet() {
     val shell by DensityShell.connected.collectAsStateWithLifecycle()
     var showPc by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { ShizukuAccess.watch(context) }
-    SheetColumn(title = "권한 설정") {
+    SheetColumn(title = Copy.MENU_GUIDE) {
         if (shizuku == ShizukuAccess.State.READY || shell != null) {
             GlassCard {
                 Text("연결되어 있습니다", fontWeight = FontWeight.SemiBold, color = c.ink)
                 Text(
                     if (shell != null) {
-                        "PC 셸 도우미로 연결되어 있습니다. GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다."
+                        "PC 셸 도우미는 GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다."
                     } else {
-                        "Shizuku 권한을 받았습니다. 이 창을 닫고 계속 진행하세요."
+                        "Shizuku 권한을 받았습니다. 창을 닫고 계속하세요."
                     },
                     color = c.muted,
                     style = MaterialTheme.typography.bodySmall
@@ -134,7 +134,7 @@ internal fun AppSizeGuideSheet() {
         GlassCard {
             ShizukuGuide(
                 shizuku,
-                intro = "이 기능은 무료 앱 Shizuku로 시스템 권한을 빌려 씁니다. 아래 순서대로 버튼만 누르면 되며, 처음 한 번만 설정하면 됩니다."
+                intro = "무료 앱 Shizuku로 시스템 권한을 빌려 씁니다. 처음 한 번만 아래 순서대로 하면 됩니다."
             )
         }
         Spacer(Modifier.height(Gap.Card))
@@ -146,8 +146,8 @@ internal fun AppSizeGuideSheet() {
         )
         if (showPc) {
             Text(
-                "PC PowerShell(platform-tools 폴더)에서 아래 명령을 한 번 실행하면 GOAT 셸 도우미가 켜집니다. " +
-                    "도우미는 GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 자동으로 꺼집니다.",
+                "platform-tools 폴더에서 연 PC PowerShell에 아래 명령을 한 번 실행하면 GOAT 셸 도우미가 켜집니다. " +
+                    "GOAT를 닫거나 ${DensityServer.IDLE_MINUTES}분 동안 쓰지 않으면 꺼집니다.",
                 color = c.muted,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -183,10 +183,10 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
             } else {
                 Text(
                     when {
-                        !ready -> "Shizuku가 연결되어 있지 않아 지금은 되돌릴 수 없습니다."
+                        !ready -> "Shizuku가 연결되지 않아 되돌릴 수 없습니다."
                         // 되돌릴 앱이 없으면 꺼진 버튼 대신 여기서 알린다(꺼진 버튼을 누르면 뜨는 토스트가 시트 맨 아래 버튼을 가렸다, QA 1차)
                         count == 0 -> Copy.DISABLED_NO_SIZED_APPS
-                        else -> "현재 배율을 바꾼 앱: ${count}개"
+                        else -> "배율을 바꾼 앱 ${count}개"
                     },
                     color = c.ink,
                     style = MaterialTheme.typography.bodySmall
@@ -210,7 +210,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                             step = 2
                             scope.launch {
                                 val n = withContext(Dispatchers.IO) { DensityShell.resetAll(context) }
-                                onDone("${n}개 앱을 기본 배율로 되돌렸습니다.")
+                                onDone("앱 ${n}개를 기본 배율로 되돌렸습니다")
                             }
                         })
                     }

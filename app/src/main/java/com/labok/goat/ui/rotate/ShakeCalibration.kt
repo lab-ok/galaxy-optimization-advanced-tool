@@ -125,7 +125,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                     running -> Copy.SHAKE_CALIBRATE_NOW
                     result != null -> "민감도를 $result${UpdateNotice.ro("$result")} 맞췄습니다"
                     failed -> "흔들림을 인식하지 못했습니다"
-                    else -> "기기를 움직이면 물방울이 함께 움직입니다."
+                    else -> "기기를 움직이면 물방울도 움직입니다"
                 },
                 color = c.ink,
                 fontWeight = FontWeight.SemiBold,
@@ -160,7 +160,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                                 run -> {
                                     // 시트는 아래에 붙어 있어 짧아지면 내용이 위로 튀었다가 시트를 따라 내려온다(QA 1차 재검). 안내 줄 자리를 그대로 비워 높이를 유지한다
                                     Text(
-                                        "[시작]을 누른 뒤 ${CALIBRATE_SECONDS}초 동안 평소처럼 기기를 흔들어 주세요.",
+                                        "[시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 평소처럼 흔드세요.",
                                         modifier = Modifier.alpha(0f).clearAndSetSemantics { },
                                         style = MaterialTheme.typography.bodyMedium,
                                         textAlign = TextAlign.Center
@@ -170,7 +170,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                                 }
                                 level != null -> {
                                     Text(
-                                        "이후에는 방금과 같거나 조금 약하게 흔들어도 화면이 회전합니다.",
+                                        "이제 방금보다 조금 약하게 흔들어도 회전합니다.",
                                         color = c.muted,
                                         style = MaterialTheme.typography.bodyMedium,
                                         textAlign = TextAlign.Center
@@ -187,7 +187,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                                 }
                                 else -> {
                                     Text(
-                                        if (fail) Copy.SHAKE_CALIBRATE_FAIL else "[시작]을 누른 뒤 ${CALIBRATE_SECONDS}초 동안 평소처럼 기기를 흔들어 주세요.",
+                                        if (fail) Copy.SHAKE_CALIBRATE_FAIL else "[시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 평소처럼 흔드세요.",
                                         color = c.muted,
                                         style = MaterialTheme.typography.bodyMedium,
                                         textAlign = TextAlign.Center

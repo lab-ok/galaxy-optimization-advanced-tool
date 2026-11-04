@@ -669,7 +669,7 @@ private fun PanelBody(
                             )
                         } else {
                             Text(state.app, color = state.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                            Text(if (state.hasSession) "제목 정보 없음 · 조작은 됩니다" else "재생 정보 없음 · 화면 누르기로 조작", color = Glass.Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(if (state.hasSession) "제목 정보 없음 · 조작 가능" else "재생 정보 없음 · 화면 누르기로 조작", color = Glass.Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                     if (state.ambSource.isNotEmpty()) {

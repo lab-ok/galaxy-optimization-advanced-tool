@@ -191,9 +191,9 @@ private fun requestTile(context: Context) {
                 StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED -> "빠른 설정에 타일을 추가했습니다."
                 StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED -> "이미 빠른 설정에 있습니다."
                 StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED -> null
-                else -> "추가하지 못했습니다. 알림창 편집 화면에서 직접 넣어 주세요."
+                else -> "추가하지 못했습니다. 빠른 설정 편집 화면에서 직접 넣으세요."
             }
             if (msg != null) Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
-    }.onFailure { Toast.makeText(context, "추가하지 못했습니다. 알림창 편집 화면에서 직접 넣어 주세요.", Toast.LENGTH_SHORT).show() }
+    }.onFailure { Toast.makeText(context, "추가하지 못했습니다. 빠른 설정 편집 화면에서 직접 넣으세요.", Toast.LENGTH_SHORT).show() }
 }

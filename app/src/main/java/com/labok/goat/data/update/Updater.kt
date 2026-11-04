@@ -127,7 +127,7 @@ object Updater {
         }
         prefs(context).edit().putLong("checkedAt", System.currentTimeMillis()).apply()
         val (test, json) = result.getOrElse {
-            if (!quiet) state.value = State.Failed("업데이트를 확인하지 못했습니다. 인터넷 연결을 확인해 주세요.")
+            if (!quiet) state.value = State.Failed("인터넷 연결을 확인하세요.")
             return
         }
         val release = runCatching { if (test) newestOf(json, withTest = true) else parse(json) }.getOrNull()
@@ -186,7 +186,7 @@ object Updater {
             md.digest().joinToString("") { "%02x".format(it) }
         }
         val sha = downloaded.getOrElse {
-            state.value = State.Failed("다운로드하지 못했습니다. 인터넷 연결을 확인해 주세요.", release)
+            state.value = State.Failed("다운로드하지 못했습니다. 인터넷 연결을 확인하세요.", release)
             log.add("업데이트 ${release.version}: 다운로드 실패(${it.message?.take(80)})")
             return
         }

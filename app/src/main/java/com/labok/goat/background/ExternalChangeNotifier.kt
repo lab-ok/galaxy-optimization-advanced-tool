@@ -18,6 +18,7 @@ import com.labok.goat.domain.DpiFixer
 import com.labok.goat.domain.ExternalChange
 import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.liquid.UiGoat
+import com.labok.goat.ui.text.Copy
 
 /** 외부 DPI 변경 알림. '이 값 기준으로'와 '복원' 두 가지를 알림에서 바로 고를 수 있다. */
 object ExternalChangeNotifier {
@@ -46,7 +47,7 @@ object ExternalChangeNotifier {
             .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle("화면 배율이 다른 곳에서 바뀌었습니다")
             .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$body 이 값을 기준으로 할지, 앱 설정으로 복원할지 선택하세요."))
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$body ${Copy.EXTERNAL_BODY}"))
             .setContentIntent(open)
             .setAutoCancel(true)
             .addAction(0, "${change.to} 기준으로 설정", action(ACTION_ADOPT, 1))

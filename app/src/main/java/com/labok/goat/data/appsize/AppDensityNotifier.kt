@@ -74,7 +74,7 @@ object AppDensityNotifier {
     fun build(context: Context, status: String? = null, extra: String? = null): Notification {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "앱별 화면 크기 조절", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) }
+            NotificationChannel(CHANNEL_ID, "앱별 배율 조절", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) }
         )
         fun step(s: Int, code: Int) = PendingIntent.getActivity(
             context,
@@ -87,7 +87,7 @@ object AppDensityNotifier {
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
-            .setContentTitle("앱별 화면 배율")
+            .setContentTitle(Copy.FEATURE_APP_SIZE)
             .setContentText(status ?: "앱을 열면 여기서 배율을 바꿉니다")
             .setOngoing(true)
             .setOnlyAlertOnce(true)

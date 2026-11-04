@@ -137,7 +137,7 @@ internal fun todosOf(state: UiState): List<Todo> = buildList {
             Todo(
                 "external",
                 Copy.EXTERNAL_TITLE,
-                "다른 설정에서 ${if (state.foldable) "${e.role.label} 화면 " else ""}DPI가 ${e.from} → ${e.to}${UpdateNotice.ro("${e.to}")} 변경되었습니다. ${Copy.EXTERNAL_BODY}",
+                "다른 설정에서 ${if (state.foldable) "${e.role.label} 화면 " else ""}DPI가 ${e.from} → ${e.to}${UpdateNotice.ro("${e.to}")} 바뀌었습니다. ${Copy.EXTERNAL_BODY}",
                 TodoAction.ADOPT,
                 "${e.to} 기준으로 설정",
                 blocking = true,

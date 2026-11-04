@@ -72,6 +72,7 @@ import com.labok.goat.ui.liquid.LiquidDots
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.shizuku.ShizukuGuide
+import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -104,9 +105,9 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
     }
 
     SheetColumn(modifier = Modifier.animateContentSize()) {
-        Text("권한 설정", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = LocalLiquid.current.ink)
+        Text(Copy.MENU_GUIDE, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = LocalLiquid.current.ink)
         Text(
-            "한 번만 받으면 재부팅 후에도 유지됩니다.",
+            "한 번 받으면 재부팅해도 유지됩니다.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -168,12 +169,11 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             Spacer(Modifier.height(Gap.Section))
             ShizukuGuide(
                 shizuku,
-                intro = "무료 앱 Shizuku로 휴대폰 안에서 권한을 받습니다. 아래 순서대로 버튼만 누르면 되고, 마지막 단계가 끝나면 GOAT가 스스로 권한을 받습니다. " +
-                    "권한을 받은 뒤에는 Shizuku를 꺼도 됩니다."
+                intro = "마지막 단계가 끝나면 GOAT가 권한을 받습니다. 그 뒤에는 Shizuku를 꺼도 됩니다."
             )
             if (grantError) {
                 Text(
-                    "Shizuku로 권한을 받지 못했습니다. PC 무선이나 PC 유선 방법을 이용해 주세요.",
+                    "Shizuku로 권한을 받지 못했습니다. PC 무선이나 PC 유선으로 하세요.",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -240,7 +240,7 @@ private fun TroubleCard(items: List<GrantGuideContent.Trouble>, onCopy: (String)
     var open by remember { mutableStateOf<String?>(null) }
     GlassCard {
         Text("안 될 때", fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text("PC에 나온 오류 문구와 같은 항목을 눌러 보세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("PC에 나온 오류와 같은 항목을 누르세요.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         items.forEachIndexed { i, tr ->
             Spacer(Modifier.height(Gap.Item))
             if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(c.line.copy(alpha = 0.6f)))

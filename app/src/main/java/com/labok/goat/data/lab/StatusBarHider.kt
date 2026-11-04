@@ -69,7 +69,7 @@ object StatusBarHider {
         val app = context.applicationContext
         if (!Settings.canDrawOverlays(app)) {
             ShizukuAccess.shell("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
-            if (!Settings.canDrawOverlays(app)) return "다른 앱 위에 표시 권한을 받지 못했습니다(Shizuku 연결 필요)."
+            if (!Settings.canDrawOverlays(app)) return "다른 앱 위에 표시 권한이 없습니다. Shizuku를 연결하세요."
         }
         main.post { attach(app) }
         onFlow.value = true
@@ -317,7 +317,7 @@ object StatusBarHider {
 
     private fun notify(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "상단바 숨기기", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "상태 표시줄 숨기기", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
         fun action(what: String, code: Int) = PendingIntent.getBroadcast(
             context,
             code,
@@ -327,8 +327,8 @@ object StatusBarHider {
         val n: Notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
-            .setContentTitle("상단바 숨기는 중")
-            .setContentText("뒤로 가기를 써도 곧 다시 숨깁니다. 키보드가 열려 있는 동안에는 보입니다")
+            .setContentTitle("상태 표시줄 숨기는 중")
+            .setContentText("뒤로 가기를 써도 다시 숨깁니다. 키보드가 열린 동안에는 보입니다")
             .setOngoing(true)
             .setSilent(true)
             .addAction(0, "다시 숨기기", action(ACTION_REHIDE, 1))

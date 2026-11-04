@@ -119,7 +119,7 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
                         Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.GOS_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Text(Copy.NEED_SHIZUKU_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
@@ -131,7 +131,6 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
                         Text(Copy.GOS_NONE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.GOS_NONE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -167,26 +166,25 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
 /** 사용 방법. */
 @Composable
 internal fun GosHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
             "1. GOS란",
-            "게임 최적화 서비스(GOS)는 게임을 하는 동안 해상도·프레임·처리 성능을 낮춰 발열과 배터리 소모를 줄이는 삼성 서비스입니다. " +
-                "끄면 GOS의 조절이 멈춰 같은 게임에서 더 높은 성능을 낼 수 있습니다. 실제 차이는 기기와 게임마다 다릅니다."
+            "게임 최적화 서비스(GOS)는 게임 중 해상도·프레임·처리 성능을 낮춰 발열과 배터리 소모를 줄이는 삼성 서비스입니다. " +
+                "끄면 이 조절이 멈춰 같은 게임에서 성능이 더 오를 수 있습니다. 차이는 기기와 게임마다 다릅니다."
         ) { GosArt(off = true) }
         HelpTopic(
             "2. 얻는 것과 잃는 것",
-            "성능 조절이 멈추는 대신 오래 플레이하면 휴대폰이 더 뜨거워지고 배터리가 빨리 닳을 수 있습니다. 너무 뜨거워지면 " +
-                "시스템이 자동으로 성능을 낮춥니다. 게임 런처와 게임 부스터는 그대로 둡니다."
+            "대신 오래 플레이하면 휴대폰이 더 뜨거워지고 배터리가 빨리 닳습니다. 너무 뜨거워지면 시스템이 성능을 낮춥니다. " +
+                "게임 런처와 게임 부스터는 그대로 둡니다."
         )
         HelpTopic(
             "3. 다시 켜지는 경우",
-            "업데이트나 재부팅 뒤 GOS가 다시 켜지는 기기가 있습니다. 끄기 스위치를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 확인해 다시 끕니다. " +
-                "같은 부팅 안에서 설정 앱 등으로 직접 다시 켠 것은 그대로 둡니다."
+            "업데이트나 재부팅 뒤 GOS가 다시 켜지는 기기가 있습니다. 스위치를 켜 두면 부팅마다 한 번, Shizuku가 연결될 때 확인해 다시 끕니다. " +
+                "같은 부팅 안에서 설정 앱 등으로 직접 다시 켰다면 그대로 둡니다."
         )
         HelpTopic(
             "4. 되돌리기와 기본 앱 정리",
-            "스위치를 끄면 GOS가 다시 켜집니다. 기본 앱 정리 목록의 '게임 최적화 서비스(GOS)'와 같은 설정이라 어느 화면에서 바꿔도 같은 상태가 됩니다. " +
-                "Shizuku 셸 권한으로 끄고 켭니다."
+            "스위치를 끄면 GOS가 다시 켜집니다. 기본 앱 정리의 '게임 최적화 서비스(GOS)'와 같은 설정이라 어느 화면에서 바꿔도 같습니다."
         )
     }
 }

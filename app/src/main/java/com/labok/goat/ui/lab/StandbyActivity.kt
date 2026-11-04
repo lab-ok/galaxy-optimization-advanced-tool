@@ -179,7 +179,7 @@ private fun DirectionCheck(onClose: () -> Unit) {
         Box(Modifier.fillMaxWidth(0.12f).fillMaxHeight(0.6f).background(Color(0xFF20D040)).align(Alignment.CenterStart)) { Text("왼쪽", Modifier.align(Alignment.Center), color = Color.White, fontSize = 30.sp) }
         Box(Modifier.fillMaxWidth(0.12f).fillMaxHeight(0.6f).background(Color(0xFFFFD020)).align(Alignment.CenterEnd)) { Text("오른쪽", Modifier.align(Alignment.Center), color = Color.Black, fontSize = 30.sp) }
         Text(
-            "안쪽 화면 빛에서 빨강·파랑·초록·노랑이 어디에 보이는지 알려 주세요.\n누르면 끝납니다.",
+            "안쪽 빛에서 빨강·파랑·초록·노랑이 보이는 자리를 확인하세요.\n누르면 끝납니다.",
             Modifier.align(Alignment.Center).clickable { onClose() },
             color = Color.White,
             fontSize = 18.sp

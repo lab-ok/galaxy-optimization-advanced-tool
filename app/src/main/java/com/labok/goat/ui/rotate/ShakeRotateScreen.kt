@@ -127,7 +127,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
 
     fun turnOn() {
         on = ShakeRotate.setEnabled(context, true)
-        message = if (on) "" else "회전을 잠그지 못했습니다. 권한 설정을 확인해 주세요."
+        message = if (on) "" else "회전을 잠그지 못했습니다. 권한 설정을 확인하세요."
     }
 
     // 권한 설정에서 돌아오거나 빠른 설정에서 자동 회전을 켜고 돌아와도 바로 보이게 한다
@@ -192,7 +192,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
                         Text(Copy.STATUS_NEED_SETUP, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.SHAKE_NEED_PERMISSION, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Text(Copy.TODO_SETUP_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.MENU_GUIDE, onClick = onGuide, modifier = Modifier.fillMaxWidth())
                     }
@@ -362,42 +362,40 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
 /** 사용 방법: 무엇을 하는지, 자동 회전, 누워서 볼 때, 다시 세로로, 민감도·자동 맞추기, 배터리·알림, 앱이 방향을 정할 때, 끌 때. */
 @Composable
 internal fun ShakeRotateHelpSheet() {
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
             "1. 하는 일",
-            "평소에는 화면 회전을 잠가 둡니다. 화면을 회전하려면 원하는 방향으로 기기를 든 채 흔들어 주세요. " +
-                "흔드는 순간에만 자동 회전이 켜져 기기 방향에 맞게 화면이 회전하고, 곧바로 다시 잠깁니다. " +
-                "세로로 든 채 흔들면 세로 방향이 유지됩니다. 회전하면 흔든 리듬에 맞춰 진동으로 알려 드립니다."
+            "평소에는 화면 회전을 잠가 둡니다. 원하는 방향으로 기기를 든 채 흔들면 그 방향으로 회전하고 다시 잠깁니다. " +
+                "세로로 든 채 흔들면 세로가 유지됩니다. 회전하면 흔든 리듬에 맞춰 진동합니다."
         ) { ShakeTurnArt() }
         HelpTopic(
             "2. 자동 회전 꺼 두기",
-            "흔들어서 화면 회전은 자동 회전을 끈 상태에서 동작합니다. 켜면 GOAT가 자동 회전을 끄고 지금 방향으로 잠급니다. " +
-                "빠른 설정에서 자동 회전을 다시 켜면 흔들지 않아도 화면이 저절로 회전하므로, 이 화면에 뜨는 [자동 회전 끄기]를 눌러 주세요."
+            "흔들어서 화면 회전은 자동 회전이 꺼진 상태에서 동작합니다. 켜면 GOAT가 자동 회전을 끄고 지금 방향으로 잠급니다. " +
+                "빠른 설정에서 자동 회전을 다시 켰다면 이 화면의 [${Copy.SHAKE_AUTO_OFF_BUTTON}]를 누르세요."
         )
         HelpTopic(
             "3. 누워서 볼 때",
-            "옆으로 누워 휴대폰을 보면 자동 회전은 휴대폰이 옆으로 놓인 것으로 판단해 화면을 가로로 회전합니다. " +
-                "흔들어서 화면 회전을 켜 두면 흔들기 전까지 지금 방향이 유지됩니다."
+            "옆으로 누우면 자동 회전은 화면을 가로로 돌립니다. 흔들어서 화면 회전을 켜 두면 흔들기 전까지 지금 방향이 유지됩니다."
         ) { LyingDownArt() }
         HelpTopic(
-            "4. 다시 세로로 회전하기",
-            "가로로 본 뒤에는 휴대폰을 세로로 세워 든 채 흔들면 세로로 돌아옵니다. 들기만 해서는 회전하지 않으므로, 누운 자세에서 뒤척여도 화면은 그대로입니다."
+            "4. 다시 세로로",
+            "휴대폰을 세로로 세워 든 채 흔들면 세로로 돌아옵니다. 들기만 해서는 회전하지 않아 누워서 뒤척여도 화면은 그대로입니다."
         ) { ShakeTurnArt(toLandscape = false) }
         HelpTopic(
             "5. 민감도와 자동 맞추기",
-            "민감도는 1~${ShakeRotatePolicy.MAX_LEVEL}이고, 숫자가 클수록 살짝만 흔들어도 회전합니다. " +
-                "[흔들어서 자동으로 맞추기]에서 [시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 평소 회전할 때처럼 흔들면, 그 세기보다 조금 약하게 흔들어도 회전하도록 맞춥니다. " +
-                "걷거나 뒤척일 때 저절로 회전하면 숫자를 낮추세요."
+            "민감도는 1~${ShakeRotatePolicy.MAX_LEVEL}이며, 클수록 살짝만 흔들어도 회전합니다. " +
+                "[${Copy.SHAKE_CALIBRATE}]에서 [시작]을 누르고 ${CALIBRATE_SECONDS}초 동안 평소처럼 흔들면 그보다 조금 약하게 흔들어도 회전하도록 맞춥니다. " +
+                "걷거나 뒤척일 때 회전하면 민감도를 낮추세요."
         )
         HelpTopic(
             "6. 배터리와 알림",
-            "흔들기는 가속도 센서로만 감지하고, 화면이 꺼져 있을 때는 센서를 사용하지 않아 배터리를 거의 소모하지 않습니다. " +
-                "Android는 알림이 없는 앱의 센서를 멈추므로 GOAT 알림 하나가 떠 있어야 합니다. 다른 GOAT 알림이 이미 떠 있으면 " +
-                "그 알림을 함께 사용하고 따로 띄우지 않습니다. 흔들기만 켰을 때는 소리·진동 없는 조용한 알림 하나만 둡니다."
+            "흔들기는 가속도 센서로만 감지하고, 화면이 꺼져 있으면 센서를 쓰지 않아 배터리를 거의 쓰지 않습니다. " +
+                "Android는 알림이 없는 앱의 센서를 멈추므로 GOAT 알림 하나가 떠 있어야 합니다. " +
+                "다른 GOAT 알림이 있으면 그 알림을 함께 쓰고, 없으면 소리·진동 없는 알림 하나만 띄웁니다."
         )
         HelpTopic(
-            "7. 동영상처럼 앱이 방향을 정할 때",
-            "동영상 앱의 전체 화면처럼 앱이 방향을 직접 정하면 앱이 정한 방향을 우선합니다. 그 앱을 닫으면 잠가 둔 방향으로 돌아옵니다."
+            "7. 앱이 방향을 정할 때",
+            "동영상 전체 화면처럼 앱이 방향을 정하면 그 방향을 따릅니다. 그 앱을 닫으면 잠가 둔 방향으로 돌아옵니다."
         )
         HelpTopic(
             "8. 끄기",

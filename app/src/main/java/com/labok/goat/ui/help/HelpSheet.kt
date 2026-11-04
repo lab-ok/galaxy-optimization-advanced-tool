@@ -27,6 +27,7 @@ import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
 import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.text.Copy
 
 /** 사용 방법: 원리 두 장면 + 준비 안내로 이어지는 버튼. 쉬운 말 한두 문장만. */
 @Composable
@@ -40,23 +41,23 @@ internal fun HelpSheet(state: UiState, onOpenGuide: () -> Unit) {
         label = "t"
     )
     val anim = if (reduce) 1f else t
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = Copy.MENU_HELP) {
         // 다른 사용 방법과 같은 꼴: 제목 → 그림 → 설명(HelpTopic). 폴드가 아니면 두 화면 이야기 대신 DPI 하나만 설명한다.
         if (!state.foldable) {
             HelpTopic(
                 "1. DPI로 화면 크기 바꾸기",
-                "DPI가 작을수록 글자와 아이콘이 작아져 한 화면에 더 많이 보이고, 클수록 크게 보입니다. 설정의 '화면 크게/작게'에 없는 값도 " +
-                    "1 단위로 자유롭게 고를 수 있고, 재부팅해도 자동으로 다시 적용합니다."
+                "DPI가 작을수록 글자와 아이콘이 작아져 한 화면에 더 많이 보입니다. " +
+                    "설정의 '화면 크게/작게'에 없는 값도 1 단위로 고를 수 있고, 재부팅해도 다시 적용합니다."
             )
         }
         if (state.foldable) {
             HelpTopic(
                 "1. 같은 DPI인데 크기가 다른 이유",
-                "두 화면은 PPI(인치당 픽셀 수)가 달라서, 같은 DPI라도 실제 표시 크기가 다릅니다."
+                "두 화면은 PPI(인치당 픽셀 수)가 달라 같은 DPI라도 실제 크기가 다릅니다."
             ) {
                 DensityIllustration(corrected = anim)
                 Text(
-                    if (anim < 0.5f) "보정 전: 내부 화면이 더 크게 표시" else "보정 후: 두 화면이 같은 크기로 표시",
+                    if (anim < 0.5f) "보정 전: 내부 화면이 더 큼" else "보정 후: 두 화면 크기가 같음",
                     color = c.ink,
                     style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center,
@@ -66,8 +67,8 @@ internal fun HelpSheet(state: UiState, onOpenGuide: () -> Unit) {
         }
         if (state.foldable) {
             HelpTopic(
-                "2. 외부 화면 DPI만 설정합니다",
-                "내부 화면 DPI는 두 화면의 해상도와 PPI로 계산해 같은 크기로 표시되게 합니다. 재부팅 후에도 자동으로 다시 적용합니다."
+                "2. 외부 화면 DPI만 정하기",
+                "내부 화면 DPI는 두 화면의 해상도와 PPI로 계산해 같은 크기로 맞춥니다. 재부팅해도 다시 적용합니다."
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Spacer(Modifier.weight(1f))
@@ -78,15 +79,15 @@ internal fun HelpSheet(state: UiState, onOpenGuide: () -> Unit) {
         }
         // 권한을 받는 길(PC·폰 연결) 그림. 권한이 있으면 연결된 모습으로 보여 준다.
         HelpTopic(
-            "${if (state.foldable) 3 else 2}. 최초 1회 권한 설정",
+            "${if (state.foldable) 3 else 2}. 처음 한 번 권한 설정",
             if (state.hasPermission) {
-                "권한이 설정되어 있습니다."
+                "권한 설정을 마쳤습니다."
             } else {
-                "DPI는 시스템 설정이라 WRITE_SECURE_SETTINGS 권한이 필요합니다. Shizuku(PC 없이)나 PC의 adb로 한 번 받으면 이후에는 앱이 자동으로 처리합니다."
+                Copy.TODO_SETUP_BODY
             }
         ) { ConnectionIllustration(wireless = true, done = state.hasPermission) }
         if (!state.hasPermission) {
-            LiquidButton("권한 설정 방법", modifier = Modifier.fillMaxWidth(), onClick = onOpenGuide)
+            LiquidButton(Copy.MENU_GUIDE, modifier = Modifier.fillMaxWidth(), onClick = onOpenGuide)
         }
     }
 }

@@ -218,7 +218,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 // 삼성 공식 '플렉스 모드 패널' 화면과 같은 순서: 사용 스위치 → 그림 → 설명
                 GlassCard {
-                    LiquidSwitchRow(if (enabled) "사용 중" else "사용 안 함", if (shizuku == ShizukuAccess.State.READY) Copy.LAB_FLEX_SWITCH_BODY else Copy.LAB_FLEX_NEED_SHIZUKU, enabled, shizuku == ShizukuAccess.State.READY || enabled) { v ->
+                    LiquidSwitchRow(if (enabled) "사용 중" else "사용 안 함", if (shizuku == ShizukuAccess.State.READY) Copy.LAB_FLEX_SWITCH_BODY else Copy.NEED_SHIZUKU_TITLE, enabled, shizuku == ShizukuAccess.State.READY || enabled) { v ->
                         enabled = v
                         AutoFlex.setEnabled(context, v)
                         GoatService.sync(context)
@@ -232,7 +232,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     Text(Copy.LAB_FLEX_BODY2, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     if (!enabled) Text(Copy.LAB_FLEX_TEST_OFF, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
-                    LiquidButton(Copy.LAB_FLEX_TEST, modifier = Modifier.fillMaxWidth(), enabled = enabled, disabledHint = Copy.LAB_FLEX_TEST_NEED_ON, onClick = { context.startActivity(Intent(context, FlexTestActivity::class.java)) })
+                    LiquidButton(Copy.LAB_FLEX_TEST, modifier = Modifier.fillMaxWidth(), enabled = enabled, disabledHint = Copy.LAB_FLEX_TEST_OFF, onClick = { context.startActivity(Intent(context, FlexTestActivity::class.java)) })
                 }
             }
         }
@@ -252,7 +252,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
         item(key = "dim") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    LiquidSwitchRow(Copy.LAB_FLEX_DIM, if (shizuku == ShizukuAccess.State.READY) Copy.LAB_FLEX_DIM_BODY else Copy.LAB_FLEX_NEED_SHIZUKU, dim, shizuku == ShizukuAccess.State.READY || dim) { v ->
+                    LiquidSwitchRow(Copy.LAB_FLEX_DIM, if (shizuku == ShizukuAccess.State.READY) Copy.LAB_FLEX_DIM_BODY else Copy.NEED_SHIZUKU_TITLE, dim, shizuku == ShizukuAccess.State.READY || dim) { v ->
                         dim = v
                         AutoFlex.setDimLock(context, v)
                         GoatService.sync(context)
@@ -354,37 +354,37 @@ internal fun FlexHelpSheet() {
     SheetColumn(title = "사용 방법") {
         HelpTopic(
             "1. 하는 일",
-            "폴드8은 반쯤 접어 세워도 플렉스 모드로 바뀌지 않습니다. 플렉스 모드를 켜 두면 가로로 접어 정한 각도에 들어올 때 " +
-                "GOAT가 대신 플렉스 모드로 바꿔 줍니다. 위 화면에는 쓰던 앱이, 아래 화면에는 조작 패널이 나옵니다."
+            "폴드8은 반쯤 접어 세워도 플렉스 모드로 바뀌지 않습니다. 이 기능을 켜 두면 가로로 접어 정한 각도에 들어올 때 " +
+                "GOAT가 플렉스 모드로 바꿉니다. 위 화면에는 쓰던 앱이, 아래 화면에는 조작 패널이 나옵니다."
         ) { FlexPanelArt() }
         HelpTopic(
             "2. 먼저 Shizuku 연결",
-            "플렉스 모드로 바꾸는 명령에는 셸 권한이 필요해 Shizuku를 사용합니다. 점 세 개 메뉴의 '권한 설정'에서 연결 방법을 볼 수 있습니다. " +
-                "Shizuku가 연결되면 이 화면의 스위치를 켤 수 있습니다."
+            "플렉스 모드로 바꾸려면 Shizuku가 필요합니다. 연결 방법은 점 세 개 메뉴의 '권한 설정'에 있습니다. " +
+                "연결하면 이 화면의 스위치를 켤 수 있습니다."
         )
         HelpTopic(
             "3. 켜고 사용",
-            "맨 위 스위치를 켜 '사용 중'으로 바꾼 뒤, 세로 화면 상태에서 펼친 화면을 천천히 접습니다. 각도가 범위에 들어오면 진동과 함께 " +
-                "플렉스 모드가 켜지고, 펴거나 닫아 범위를 벗어나면 원래대로 돌아옵니다. 켜진 뒤에는 기울이거나 돌려도 풀리지 않습니다. 가로 화면에서 접을 때는 켜지지 않습니다."
+            "맨 위 스위치를 켠 뒤, 세로 화면에서 펼친 화면을 천천히 접습니다. 각도가 범위에 들어오면 진동과 함께 " +
+                "플렉스 모드가 켜지고, 범위를 벗어나면 원래대로 돌아옵니다. 켜진 뒤에는 기울이거나 돌려도 풀리지 않습니다. 가로 화면에서 접으면 켜지지 않습니다."
         )
         HelpTopic(
             "4. 각도 범위 맞추기",
-            "폴드8 힌지는 원하는 각도에서 저절로 멈추지 않아 손이나 거치대로 각도를 잡습니다. 게이지의 두 손잡이를 끌어 사용 습관에 맞는 범위를 정하고, " +
-                "손잡이를 길게 누르면 1도씩 세밀하게 맞출 수 있습니다. [플렉스 모드 테스트하기]로 바로 시험해 보세요."
+            "게이지의 두 손잡이를 끌어 범위를 정합니다. 손잡이를 길게 누르면 1도씩 맞출 수 있습니다. " +
+                "[${Copy.LAB_FLEX_TEST}]로 바로 시험하세요."
         )
         HelpTopic(
             "5. 까딱으로 플렉스 모드",
             "켜 두면 완전히 편 채 130~160°까지 살짝 접었다가 3초 안에 다시 펴는 동작(까딱)으로 플렉스 모드를 켜고 끕니다. " +
-                "켜져 있는 동안에는 펼친 상태에서도 플렉스 모드처럼 사용합니다. 닫거나 화면을 끄면 꺼집니다."
+                "켜진 동안에는 펼친 상태에서도 플렉스 모드로 씁니다. 닫거나 화면을 끄면 꺼집니다."
         )
         HelpTopic(
             "6. 앱마다 다른 점",
-            "기본으로는 유튜브·카메라·갤러리처럼 플렉스 화면을 직접 지원하는 앱만 접으면 위아래로 나뉘고, 그 밖의 앱은 접어도 그대로입니다. " +
-                "플렉스 화면을 지원하는 다른 앱이 있으면 '앱별로 접었을 때 동작'에서 그 앱을 '플렉스 모드'로 바꾸면 됩니다."
+            "기본으로는 유튜브·카메라·갤러리처럼 플렉스 화면을 지원하는 앱만 위아래로 나뉘고, 그 밖의 앱은 그대로입니다. " +
+                "다른 앱도 나누려면 '${Copy.LAB_FLEX_APPS_TITLE}'에서 그 앱을 '플렉스 모드'로 바꿉니다."
         )
         HelpTopic(
             "7. 끄기·되돌리기",
-            "맨 위 스위치를 끄면 GOAT가 켠 패널 설정을 모두 해제하고 접힘 상태도 원래대로 되돌립니다. 재부팅해도 원래대로 돌아옵니다."
+            "맨 위 스위치를 끄면 GOAT가 바꾼 설정과 접힘 상태가 원래대로 돌아옵니다. 재부팅해도 원래대로 돌아옵니다."
         )
     }
 }
@@ -456,7 +456,7 @@ private fun GoatPanelCard() {
     GlassCard {
         Text("GOAT 패널", fontWeight = FontWeight.SemiBold, color = c.ink)
         Text(
-            "아래 앱 목록에서 'GOAT 패널'로 고른 앱은 반쯤 접으면 아래 절반에 GOAT 조작 패널(재생·이동·진행·속도·밝기·볼륨·잠금)이 뜹니다. 넷플릭스·디즈니+처럼 자체 조작이 안 뜨는 앱에 씁니다.",
+            "'GOAT 패널'로 고른 앱은 반쯤 접으면 아래 화면에 조작 패널이 뜹니다. 넷플릭스·디즈니+처럼 자체 조작이 없는 앱에 씁니다.",
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
         )
@@ -475,7 +475,7 @@ private fun GoatPanelCard() {
             GoatFlexPanel.setSeekMode(context, it)
         })
         Spacer(Modifier.height(Gap.Item))
-        Text("자동은 앱의 재생 정보로 바로 옮기고, 안 되면 영상 좌우 두 번 누르기(10초 고정)로 대신합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("자동은 앱의 재생 정보로 옮기고, 안 되면 영상 좌우 두 번 누르기로 대신합니다. 두 번 누르기는 10초 고정입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         // 품질·앰비언트 프리셋(11-02 고도화). 화면 분석은 보호 콘텐츠(넷플릭스 등 DRM)에서는 검게 찍혀 포스터·앱 색으로 대신한다
         var quality by remember { mutableIntStateOf(GoatFlexPanel.quality(context)) }
         var ambient by remember { mutableIntStateOf(GoatFlexPanel.ambientMode(context)) }
@@ -495,7 +495,7 @@ private fun GoatPanelCard() {
             GoatFlexPanel.setAmbientMode(context, it)
         })
         Spacer(Modifier.height(Gap.Item))
-        Text("화면 분석은 위 화면을 아주 작게 찍어 기기 안에서만 색을 뽑습니다(저장·전송 없음). 넷플릭스처럼 보호된 영상은 시스템이 검게 찍어 분석할 수 없어 포스터나 앱 색으로 대신합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("화면 분석은 위 화면을 작게 찍어 기기 안에서만 색을 뽑습니다. 저장하거나 보내지 않습니다. 넷플릭스처럼 보호된 영상은 포스터나 앱 색으로 대신합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Section))
         Text("앰비언트 강도", color = c.ink, style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.height(Gap.Item))
@@ -508,7 +508,7 @@ private fun GoatPanelCard() {
         var buttonBlur by remember { mutableIntStateOf(GoatFlexPanel.buttonBlur(context)) }
         Spacer(Modifier.height(Gap.Section))
         Text("바닥 반사 블러", color = c.ink, style = MaterialTheme.typography.labelMedium)
-        Text("접는 선에서 멀어질수록 흐려지는 정도 전체를 키우거나 줄입니다. 기본은 30%입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("접는 선에서 멀어질수록 흐려지는 정도입니다. 기본은 30%입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Item))
         LiquidSlider(
             value = floorBlur,
@@ -520,7 +520,7 @@ private fun GoatPanelCard() {
         )
         Spacer(Modifier.height(Gap.Section))
         Text("버튼 유리 블러", color = c.ink, style = MaterialTheme.typography.labelMedium)
-        Text("버튼 안에 비치는 반사를 얼마나 뿌옇게 할지 정합니다. 0이면 바닥과 같고, 기본은 60dp입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text("버튼 안에 비치는 반사의 흐림 정도입니다. 0이면 바닥과 같고, 기본은 60dp입니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Item))
         LiquidSlider(
             value = buttonBlur,
@@ -532,20 +532,20 @@ private fun GoatPanelCard() {
         )
         var haptic by remember { mutableStateOf(GoatFlexPanel.haptics(context)) }
         Spacer(Modifier.height(Gap.Item))
-        LiquidSwitchRow("누를 때 진동", "타일을 누르면 짧게 진동합니다(시스템 진동 설정을 따릅니다).", haptic, enabled = true, onChange = {
+        LiquidSwitchRow("누를 때 진동", "타일을 누르면 짧게 진동합니다. 시스템 진동 설정을 따릅니다.", haptic, enabled = true, onChange = {
             haptic = it
             GoatFlexPanel.setHaptics(context, it)
         })
         var motionOn by remember { mutableStateOf(GoatFlexPanel.motion(context)) }
         Spacer(Modifier.height(Gap.Section))
-        LiquidSwitchRow("표면 애니메이션", "빛 일렁임·눌림·등장 움직임. 시스템 '애니메이션 줄이기'면 꺼집니다.", motionOn, enabled = true, onChange = {
+        LiquidSwitchRow("표면 애니메이션", "빛 일렁임·눌림·등장 움직임입니다. 시스템 '애니메이션 줄이기'가 켜져 있으면 꺼집니다.", motionOn, enabled = true, onChange = {
             motionOn = it
             GoatFlexPanel.setMotion(context, it)
         })
         listOf("progress" to "진행 막대", "brightness" to "밝기", "volume" to "음량").forEach { (key, name) ->
             var on by remember { mutableStateOf(GoatFlexPanel.shown(context, key)) }
             Spacer(Modifier.height(Gap.Section))
-            LiquidSwitchRow("$name 타일", "패널에 $name 타일을 보입니다.", on, enabled = true, onChange = {
+            LiquidSwitchRow("$name 타일", null, on, enabled = true, onChange = {
                 on = it
                 GoatFlexPanel.setShown(context, key, it)
             })

@@ -83,13 +83,13 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
     val current = panels.find { it.screen.key == state.activeScreen?.key }
 
     SheetColumn {
-        Text("크기 테스트", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
+        Text(Copy.SIZE_TEST, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Text(
             // 화면이 하나인 기기에는 접고 펴는 안내와 두 화면 비교가 맞지 않는다(1.17.5 전수 점검)
             if (state.foldable) {
-                "이 화면을 연 채로 기기를 접고 펼쳐 아래 기준 도형과 글자가 두 화면에서 같은 크기로 보이는지 확인합니다."
+                "이 화면을 연 채로 접고 펴서 두 화면의 도형과 글자 크기가 같은지 봅니다."
             } else {
-                "아래 기준 도형과 글자가 바꾼 배율에서 어떤 크기로 보이는지 확인합니다."
+                "바꾼 배율에서 도형과 글자가 어떤 크기로 보이는지 봅니다."
             },
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
@@ -100,7 +100,7 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             GlassCard(accent = c.ink) {
                 Text("세로 줄 수 비교", fontWeight = FontWeight.SemiBold, color = c.ink)
                 Text(
-                    "두 화면은 실제 높이가 거의 같아서, 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다. 가장 구분하기 쉬운 방법입니다.",
+                    "두 화면은 높이가 거의 같아 크기가 맞으면 한 화면에 들어가는 줄 수도 같습니다.",
                     color = c.muted,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -121,9 +121,9 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                             if (abs(diff) < 2f) {
                                 "일치"
                             } else if (diff > 0) {
-                                "내부 화면이 더 작게 표시됨(보정 + 방향)"
+                                "내부 화면이 더 작음(보정 +)"
                             } else {
-                                "내부 화면이 더 크게 표시됨(보정 − 방향)"
+                                "내부 화면이 더 큼(보정 −)"
                             }
                         ),
                         color = if (abs(diff) < 2f) c.ink else c.danger,
@@ -136,7 +136,7 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                 LiquidButton("전체 화면으로 줄 수 보기", modifier = Modifier.fillMaxWidth(), onClick = onCount)
                 Spacer(Modifier.height(Gap.Item))
                 Text(
-                    "전체 화면에 번호 매긴 줄을 채웁니다. 이 상태로 접고 펼쳐서 두 화면의 마지막 번호를 비교해 보세요.",
+                    "번호 매긴 줄로 화면을 채웁니다. 접고 펴서 두 화면의 마지막 번호를 비교하세요.",
                     color = c.muted,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -183,16 +183,16 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
                 if (!ok) {
                     Text(
                         if (diff > 0) {
-                            "내부 화면이 더 크게 표시됩니다. 내부 화면 보정을 − 방향으로 조정하세요."
+                            "내부 화면이 더 크게 보입니다. 내부 화면 보정을 − 쪽으로 옮기세요."
                         } else {
-                            "내부 화면이 더 작게 표시됩니다. 내부 화면 보정을 + 방향으로 조정하세요."
+                            "내부 화면이 더 작게 보입니다. 내부 화면 보정을 + 쪽으로 옮기세요."
                         },
                         color = c.danger,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             } else if (state.foldable) {
-                Text("기기를 한 번 접었다 펼치면 두 화면을 비교할 수 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text("한 번 접었다 펴면 두 화면을 비교할 수 있습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
         }
         Spacer(Modifier.height(Gap.Item))
@@ -211,7 +211,7 @@ private fun RulerCard(state: UiState, current: PanelSpec.Resolved?, onCalibrate:
     GlassCard {
         Text("실제 길이 확인", fontWeight = FontWeight.SemiBold, color = c.ink)
         if (current == null) {
-            Text("현재 화면 정보를 아직 수집하지 못했습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Text("아직 이 화면 정보가 없습니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
             return@GlassCard
         }
         val key = current.screen.key
@@ -220,7 +220,7 @@ private fun RulerCard(state: UiState, current: PanelSpec.Resolved?, onCalibrate:
         var pct by remember(key, saved) { mutableIntStateOf(0) }
         val ppi = ScreenGeometry.calibratedPpi(base, 1f + pct / 100f)
         Text(
-            "신용카드나 신분증의 짧은 변(54 mm)을 아래 칸에 대고, 칸의 양 끝이 카드 모서리와 꼭 맞도록 조절하세요. 맞추면 아래 mm 눈금이 실제 길이와 같아집니다.",
+            "신용카드나 신분증의 짧은 변(54 mm)을 아래 칸에 대고 양 끝이 맞게 조절하세요. 맞추면 mm 눈금이 실제 길이와 같아집니다.",
             color = c.muted,
             style = MaterialTheme.typography.bodySmall
         )

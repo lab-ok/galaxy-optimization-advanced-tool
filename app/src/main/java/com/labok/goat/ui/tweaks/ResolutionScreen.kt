@@ -124,7 +124,7 @@ internal fun ResolutionScreen(contentPadding: PaddingValues, permitted: Boolean,
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
                         Text(Copy.STATUS_NEED_SETUP, fontWeight = FontWeight.SemiBold, color = c.ink)
-                        Text(Copy.RES_NEED_PERMISSION, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Text(Copy.TODO_SETUP_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
                         LiquidButton(Copy.MENU_GUIDE, onClick = onGuide, modifier = Modifier.fillMaxWidth())
                     }
@@ -225,21 +225,21 @@ internal fun ResolutionHelpSheet() {
         val options = Resolution.optionsFor(Resolution.base(context))
         artOption(options, options.minByOrNull { abs(it.short - now.first) })
     }
-    SheetColumn(title = "사용 방법") {
+    SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(
             "1. 하는 일",
-            "화면의 픽셀 수를 줄입니다. 글자·아이콘 크기는 그대로 두고 선명도만 조금 낮춰, 게임에서 프레임이 오르거나 " +
-                "배터리 소모가 줄어들 수 있습니다. 효과는 기기와 앱마다 다릅니다."
+            "글자·아이콘 크기는 그대로 두고 화면의 픽셀 수만 줄입니다. 선명도가 조금 낮아지는 대신 게임 프레임이 오르거나 " +
+                "배터리 소모가 줄 수 있습니다. 효과는 기기와 앱마다 다릅니다."
         ) { ResolutionArt(art.percent, art.points) }
         HelpTopic(
             "2. 바꾼 뒤 확인",
-            "바꾸면 화면이 잠깐 깜빡이고 ${Resolution.CONFIRM_MS / 1000}초 동안 '해상도 유지 확인' 창이 뜹니다. 그 안에 '유지'를 누르지 않으면 " +
-                "원래대로 되돌립니다. 확인하기 전에 재부팅하면 다음 부팅 시 자동으로 원래대로 되돌립니다."
+            "바꾸면 화면이 잠깐 깜빡이고 ${Resolution.CONFIRM_MS / 1000}초 동안 '${Copy.RES_CONFIRM_TITLE}' 창이 뜹니다. " +
+                "그 안에 [${Copy.RES_CONFIRM_KEEP}]를 누르지 않으면 원래대로 되돌립니다. 확인 전에 재부팅해도 다음 부팅 때 되돌립니다."
         )
         HelpTopic(
             "3. 함께 바뀌는 것",
-            "화면 크기가 그대로 보이도록 표시 밀도(DPI)도 같은 비율로 줄입니다. 고급 화면 배율 설정을 쓰고 있으면 그 값도 같은 비율로 맞춥니다. " +
-                "앱별 화면 배율을 정해 둔 앱은 삼성 설정이 정해진 단계만 허용해 함께 줄일 수 없으므로, 해상도를 낮춘 동안 조금 커 보입니다."
+            "화면 크기가 그대로 보이도록 표시 밀도(DPI)도 같은 비율로 줄입니다. 고급 화면 배율 설정 값도 같은 비율로 맞춥니다. " +
+                "앱별 배율을 정해 둔 앱은 삼성 설정이 정해진 단계만 허용해, 해상도를 낮춘 동안 조금 커 보입니다."
         )
         HelpTopic(
             "4. 폴드와 권한",
@@ -247,7 +247,7 @@ internal fun ResolutionHelpSheet() {
         )
         HelpTopic(
             "5. 되돌리기",
-            "'원래대로'를 고르면 GOAT가 바꾸기 전 해상도(삼성 설정에서 FHD+로 줄여 두었으면 그 크기)로 돌아갑니다. " +
+            "'원래대로'를 고르면 GOAT가 바꾸기 전 해상도로 돌아갑니다. 삼성 설정에서 FHD+로 줄여 두었다면 그 크기입니다. " +
                 "화면을 쓸 수 없을 만큼 문제가 생기면 PC에서 '${Resolution.PC_UNDO}'을 실행하세요."
         )
     }
