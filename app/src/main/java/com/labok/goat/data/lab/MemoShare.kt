@@ -78,7 +78,7 @@ object MemoShare {
         var n = 1
         while (file.exists()) file = File(dir, base.substringBeforeLast('.') + "_" + n++ + "." + base.substringAfterLast('.', ext))
         val bytes = r.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } } ?: return null
-        LogRepository.from(context).add("TXT로 공유: 클립보드 파일 저장 ($mime, ${bytes}바이트)")
+        LogRepository.from(context).add("클립보드 공유: 파일 저장 ($mime, ${bytes}바이트)")
         Shared(FileProvider.getUriForFile(context, "${context.packageName}.files", file), mime)
     }.getOrNull()
 
@@ -95,7 +95,7 @@ object MemoShare {
             clipData = ClipData.newRawUri("", files[0].uri).also { c -> files.drop(1).forEach { c.addItem(ClipData.Item(it.uri)) } }
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        return Intent.createChooser(send, "파일로 공유").apply {
+        return Intent.createChooser(send, "클립보드 공유").apply {
             putExtra(
                 Intent.EXTRA_EXCLUDE_COMPONENTS,
                 arrayOf(ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity"), ComponentName(context, "com.labok.goat.ui.lab.TranscriptShareActivity"))
@@ -127,8 +127,8 @@ object MemoShare {
     }
 
     /**
-     * 공유 입구를 맞춘다. 'TXT로 공유'(다른 앱 공유 메뉴, 빠른 설정 타일, GOAT 아이콘을 길게 누르면 나오는 '클립보드를 TXT로 공유'
-     * 바로가기)는 정식 기능이라 늘 켠다. '전사문 저장'은 아직 실험실 기능이라 실험실을 열었을 때([lab])만 켠다.
+     * 공유 입구를 맞춘다. '클립보드 공유'(빠른 설정 타일, GOAT 아이콘을 길게 누르면 나오는 바로가기)와 다른 앱 공유 메뉴의
+     * 'TXT로 공유'는 정식 기능이라 늘 켠다. '전사문 저장'은 아직 실험실 기능이라 실험실을 열었을 때([lab])만 켠다.
      */
     fun setShareTarget(context: Context, lab: Boolean) {
         val pm = context.packageManager
@@ -142,8 +142,8 @@ object MemoShare {
         val sm = context.getSystemService(ShortcutManager::class.java) ?: return
         val intent = Intent(context, ClipShareActivity::class.java).setAction(Intent.ACTION_VIEW)
         val shortcut = ShortcutInfo.Builder(context, SHORTCUT_ID)
-            .setShortLabel("클립보드 TXT로 공유")
-            .setLongLabel("클립보드를 TXT로 공유")
+            .setShortLabel("클립보드 공유")
+            .setLongLabel("클립보드 공유")
             .setIcon(Icon.createWithResource(context, R.drawable.ic_shortcut_txt))
             .setIntent(intent)
             .build()

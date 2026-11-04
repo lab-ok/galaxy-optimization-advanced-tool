@@ -7,7 +7,7 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 
-/** 빠른 설정 타일 'TXT로 공유': 누르면 알림창을 닫고 클립보드 글을 TXT 파일로 공유한다([ClipShareActivity]). */
+/** 빠른 설정 타일 '클립보드 공유': 누르면 알림창을 닫고 클립보드 내용을 파일로 공유한다([ClipShareActivity]). */
 class TxtShareTileService : TileService() {
     override fun onStartListening() {
         super.onStartListening()

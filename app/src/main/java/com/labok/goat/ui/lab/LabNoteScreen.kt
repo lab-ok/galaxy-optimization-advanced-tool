@@ -52,7 +52,8 @@ import kotlinx.coroutines.withContext
 private const val PASTE_MIN_CHARS = 30
 
 /**
- * TXT로 공유(1.49.0 정식): 긴 글을 붙여넣으면 곧바로 임시 txt 파일로 저장해 공유 창을 연다([MemoShare]).
+ * 클립보드 공유(1.49.0 정식, 'TXT로 공유'에서 이름 바꿈): 긴 글을 붙여넣으면 곧바로 임시 txt 파일로 저장해 공유 창을 연다([MemoShare]).
+ * 클립보드에 이미지·파일이 있으면 [붙여넣고 공유]가 원본 그대로 공유한다.
  * 공유를 마치고 돌아오면 파일과 글을 지운다. [붙여넣고 공유]는 클립보드 글을 한 번에 처리하고,
  * 입력란에 직접 붙여넣어도(한 번에 [PASTE_MIN_CHARS]자 이상 늘면) 같은 일을 한다.
  */
@@ -102,12 +103,27 @@ internal fun LabNoteScreen(contentPadding: PaddingValues) {
                 Spacer(Modifier.height(Gap.Item))
                 LiquidButton(Copy.LAB_NOTE_PASTE_SHARE, modifier = Modifier.fillMaxWidth(), onClick = {
                     val clip = context.getSystemService(ClipboardManager::class.java)?.primaryClip
-                    val pasted = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
-                    if (pasted.isBlank()) {
-                        Toast.makeText(context, "클립보드에 글이 없습니다.", Toast.LENGTH_SHORT).show()
-                    } else {
-                        text = pasted
-                        share(pasted)
+                    val onlyText = clip != null && (0 until clip.itemCount).all { clip.getItemAt(it).uri == null }
+                    val pasted = if (onlyText) clip?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty() else ""
+                    when {
+                        clip == null || clip.itemCount == 0 -> Toast.makeText(context, "클립보드가 비어 있습니다.", Toast.LENGTH_SHORT).show()
+                        onlyText && clip.itemCount == 1 && pasted.isNotBlank() -> {
+                            text = pasted
+                            share(pasted)
+                        }
+                        !sharing -> {
+                            // 이미지·파일(또는 여러 항목)은 입력란에 넣지 않고 원본 그대로 공유한다
+                            sharing = true
+                            scope.launch {
+                                val files = withContext(Dispatchers.IO) { MemoShare.saveClip(context, clip) }
+                                if (files.isEmpty()) {
+                                    sharing = false
+                                    Toast.makeText(context, "클립보드가 비어 있습니다.", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    launcher.launch(MemoShare.chooser(context, files))
+                                }
+                            }
+                        }
                     }
                 })
                 Spacer(Modifier.height(Gap.Item))

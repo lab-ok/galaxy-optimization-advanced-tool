@@ -133,7 +133,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 앰비언트 모드(텐트 모드와 합침). 펼칠 때·세워 둘 때 안쪽 화면이 바깥 화면 색 간접등이 된다. */
     LAB_AMBIENT(Copy.FEATURE_LAB_AMBIENT, NavIcon.GLOW),
 
-    /** 긴 글을 붙여넣으면 TXT 파일로 만들어 공유한다(다른 앱 공유 메뉴의 'TXT로 공유'와 같은 일, 1.49.0 실험실에서 정식으로). 열어 본 횟수 기록이 이름에 묶여 있어 이름은 그대로 둔다. */
+    /** 클립보드 공유: 복사한 글·이미지·파일을 파일로 공유한다(1.49.0 실험실에서 정식으로, 'TXT로 공유'에서 이름 바꿈). 열어 본 횟수 기록이 이름에 묶여 있어 이름은 그대로 둔다. */
     LAB_NOTE(Copy.FEATURE_LAB_NOTE, NavIcon.NOTE),
 
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */

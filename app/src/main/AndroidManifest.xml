@@ -263,7 +263,7 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-        <!-- 클립보드 글을 TXT로 공유하는 투명 화면(빠른 설정 타일·아이콘 길게 누른 바로가기에서 연다) -->
+        <!-- 클립보드 내용(글·이미지·파일)을 공유하는 투명 화면(빠른 설정 타일·아이콘 길게 누른 바로가기에서 연다) -->
         <activity
             android:name=".ui.lab.ClipShareActivity"
             android:exported="true"
@@ -285,12 +285,12 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-        <!-- 빠른 설정 타일 'TXT로 공유'(1.49.0 정식) -->
+        <!-- 빠른 설정 타일 '클립보드 공유'(1.49.0 정식, 'TXT로 공유'에서 이름 바꿈) -->
         <service
             android:name=".ui.lab.TxtShareTileService"
             android:exported="true"
             android:icon="@drawable/ic_tile_txt"
-            android:label="TXT로 공유"
+            android:label="클립보드 공유"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
