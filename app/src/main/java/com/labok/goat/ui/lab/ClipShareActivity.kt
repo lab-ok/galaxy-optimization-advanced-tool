@@ -30,15 +30,20 @@ class ClipShareActivity : Activity() {
         super.onWindowFocusChanged(hasFocus)
         if (!hasFocus || started) return
         started = true
+        // 클립보드는 포커스를 가진 지금만 읽을 수 있어 바로 읽고, 파일 복사는 작업 스레드에서 한다
         val clip = getSystemService(ClipboardManager::class.java)?.primaryClip
-        val text = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(this)?.toString().orEmpty()
-        if (text.isBlank()) {
-            Toast.makeText(this, "클립보드에 글이 없습니다.", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-        @Suppress("DEPRECATION")
-        startActivityForResult(MemoShare.chooser(this, MemoShare.save(this, text)), REQUEST)
+        Thread {
+            val files = clip?.let { MemoShare.saveClip(this, it) }.orEmpty()
+            runOnUiThread {
+                if (files.isEmpty()) {
+                    Toast.makeText(this, "클립보드가 비어 있습니다.", Toast.LENGTH_SHORT).show()
+                    finish()
+                } else {
+                    @Suppress("DEPRECATION")
+                    startActivityForResult(MemoShare.chooser(this, files), REQUEST)
+                }
+            }
+        }.start()
     }
 
     @Deprecated("Activity 결과 API")

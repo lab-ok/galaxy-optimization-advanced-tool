@@ -1,6 +1,7 @@
 package com.labok.goat.data.lab
 
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -9,6 +10,8 @@ import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.drawable.Icon
 import android.net.Uri
+import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
@@ -34,6 +37,70 @@ object MemoShare {
         val file = File(dir, "$PREFIX$stamp.txt").apply { writeText(text) }
         LogRepository.from(app).add("TXT로 공유: 임시 파일 저장 (${text.length}자)")
         return FileProvider.getUriForFile(app, "${app.packageName}.files", file)
+    }
+
+    /** 공유할 파일 하나: 주소와 종류(MIME). */
+    data class Shared(val uri: Uri, val mime: String)
+
+    /**
+     * 클립보드 내용을 항목마다 공유용 파일로 저장한다(작업 스레드). 글은 TXT로, 이미지·문서처럼 주소(content://)로 들어온 것은
+     * 원래 파일 그대로 복사한다. 안드로이드는 클립보드를 읽는 앱에 그 주소를 읽을 권한을 잠깐 준다(에뮬레이터 실측).
+     * 예전에는 모든 항목을 글로 바꿔(coerceToText) 이미지가 깨진 글자로 든 TXT가 됐다. 저장할 것이 없으면 빈 목록.
+     */
+    fun saveClip(context: Context, clip: ClipData): List<Shared> {
+        val app = context.applicationContext
+        val out = mutableListOf<Shared>()
+        for (i in 0 until clip.itemCount) {
+            val item = clip.getItemAt(i)
+            val uri = item.uri
+            val copied = if (uri != null && (uri.scheme == "content" || uri.scheme == "file")) copyFile(app, uri, clip.description.let { d -> (0 until d.mimeTypeCount).map(d::getMimeType) }) else null
+            if (copied != null) {
+                out += copied
+                continue
+            }
+            if (item.intent != null && item.text == null && uri == null) continue
+            val text = (item.text ?: item.htmlText ?: uri?.toString())?.toString().orEmpty()
+            if (text.isNotBlank()) out += Shared(save(app, text), "text/plain")
+        }
+        return out
+    }
+
+    /** [uri]의 파일을 share 폴더로 복사한다. 이름은 원래 이름, 없으면 종류에 맞는 확장자로 짓는다. 못 읽으면 null. */
+    private fun copyFile(context: Context, uri: Uri, clipMimes: List<String>): Shared? = runCatching {
+        val r = context.contentResolver
+        val mime = r.getType(uri) ?: clipMimes.firstOrNull { it != ClipDescription.MIMETYPE_TEXT_URILIST && it != "*/*" } ?: "application/octet-stream"
+        val ext = MimeTypeMap.getSingleton().getExtensionFromMimeType(mime) ?: "bin"
+        val stamp = SimpleDateFormat("yyMMdd_HHmmss", Locale.US).format(Date())
+        val shown = runCatching { r.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { if (it.moveToFirst()) it.getString(0) else null } }.getOrNull()
+        val base = (shown ?: "clip_$stamp.$ext").replace(Regex("[\\/:*?\"<>|]"), "_")
+        val dir = File(context.cacheDir, "share").apply { mkdirs() }
+        var file = File(dir, base)
+        var n = 1
+        while (file.exists()) file = File(dir, base.substringBeforeLast('.') + "_" + n++ + "." + base.substringAfterLast('.', ext))
+        val bytes = r.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } } ?: return null
+        LogRepository.from(context).add("TXT로 공유: 클립보드 파일 저장 ($mime, ${bytes}바이트)")
+        Shared(FileProvider.getUriForFile(context, "${context.packageName}.files", file), mime)
+    }.getOrNull()
+
+    /** 여러 파일을 한 번에 공유하는 창. 하나면 [chooser]와 같다. */
+    fun chooser(context: Context, files: List<Shared>): Intent {
+        if (files.size == 1 && files[0].mime == "text/plain") return chooser(context, files[0].uri)
+        val send = if (files.size == 1) {
+            Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, files[0].uri)
+        } else {
+            Intent(Intent.ACTION_SEND_MULTIPLE).putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(files.map { it.uri }))
+        }.apply {
+            val kinds = files.map { it.mime }.distinct()
+            type = kinds.singleOrNull() ?: kinds.map { it.substringBefore('/') }.distinct().singleOrNull()?.let { "$it/*" } ?: "*/*"
+            clipData = ClipData.newRawUri("", files[0].uri).also { c -> files.drop(1).forEach { c.addItem(ClipData.Item(it.uri)) } }
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        return Intent.createChooser(send, "파일로 공유").apply {
+            putExtra(
+                Intent.EXTRA_EXCLUDE_COMPONENTS,
+                arrayOf(ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity"), ComponentName(context, "com.labok.goat.ui.lab.TranscriptShareActivity"))
+            )
+        }
     }
 
     /** 공유 창을 여는 인텐트. GOAT 자신은 받는 앱 목록에서 뺀다(다시 GOAT로 공유되는 고리를 막는다). */
