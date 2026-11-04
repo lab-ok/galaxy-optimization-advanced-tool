@@ -43,6 +43,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
@@ -662,21 +664,22 @@ private fun DrawScope.battery(c: Color, s: Stroke) {
     drawLine(c, p(10f, 13f), p(14f, 13f), s.width * 1.4f, StrokeCap.Round)
 }
 
-/** TXT로 공유: 귀퉁이가 접힌 종이와 글줄 세 개. */
+/** 클립보드 공유: 클립보드 오른쪽 변이 그대로 위로 솟는 화살표가 된다(1.49.1 시안 10번, 타일 아이콘 ic_tile_txt와 같은 그림). */
 private fun DrawScope.note(c: Color, s: Stroke) {
-    val paper = Path().apply {
-        moveTo(u(6f), u(3.5f))
-        lineTo(u(14.5f), u(3.5f))
-        lineTo(u(18.5f), u(7.5f))
-        lineTo(u(18.5f), u(20.5f))
-        lineTo(u(6f), u(20.5f))
-        close()
-    }
-    drawPath(paper, c, style = s)
-    drawLine(c, p(9f, 11f), p(15.5f, 11f), s.width, StrokeCap.Round)
-    drawLine(c, p(9f, 14.2f), p(15.5f, 14.2f), s.width, StrokeCap.Round)
-    drawLine(c, p(9f, 17.4f), p(13f, 17.4f), s.width, StrokeCap.Round)
+    val m = Matrix().apply { scale(u(1f), u(1f)) }
+    CLIP_SHARE_PATHS.forEach { drawPath(PathParser().parsePathString(it).toPath().apply { transform(m) }, c, style = s) }
+    val thin = s.width * 1.5f / 1.8f
+    drawLine(c, p(8.5f, 11f), p(14.5f, 11f), thin, StrokeCap.Round)
+    drawLine(c, p(8.5f, 14.2f), p(14.5f, 14.2f), thin, StrokeCap.Round)
+    drawLine(c, p(8.5f, 17.4f), p(12f, 17.4f), thin, StrokeCap.Round)
 }
+
+/** [note]의 보드·집게·화살촉(24 격자, ic_tile_txt.xml과 같은 경로). */
+private val CLIP_SHARE_PATHS = listOf(
+    "M7.5 4.5h-.5A2 2 0 0 0 5 6.5V19a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 19V3",
+    "M8.7 2.5h3.6a1.2 1.2 0 0 1 1.2 1.2v1.6a1.2 1.2 0 0 1-1.2 1.2h-3.6a1.2 1.2 0 0 1-1.2-1.2v-1.6a1.2 1.2 0 0 1 1.2-1.2z",
+    "M16.4 5.6L19 3l2.6 2.6"
+)
 
 /** 스피커와 위아래 화살표(볼륨 버튼 회전). */
 private fun DrawScope.volume(c: Color, s: Stroke) {
