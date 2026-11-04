@@ -66,10 +66,11 @@ object Copy {
     const val FEATURE_LAB_BATTERY = "배터리 모니터링"
     const val FEATURE_LAB_AMBIENT = "앰비언트 모드"
     const val FEATURE_LAB_NOTE = "클립보드 공유"
-    const val LAB_NOTE_BODY = "복사한 글은 TXT로, 이미지·파일은 원본 그대로 공유합니다. 공유를 마치고 돌아오면 임시 파일을 지웁니다."
+    const val LAB_NOTE_BODY = "복사해 둔 글은 TXT 파일로, 사진·파일은 원본 그대로 바로 공유합니다."
     const val LAB_NOTE_PASTE_SHARE = "붙여넣고 공유"
-    const val LAB_NOTE_SHARE_MENU = "빠른 설정 타일, GOAT 아이콘 길게 누르기, 다른 앱 공유 메뉴의 'TXT로 공유'로도 됩니다."
+    const val LAB_NOTE_SHARE_MENU = "타일을 추가하면 어느 앱에서든 복사 후 바로 보냅니다. 자세한 방법은 ⋮ → 사용 방법."
     const val LAB_NOTE_SHARE = "파일로 공유"
+    const val LAB_NOTE_ADD_TILE = "빠른 설정에 타일 추가"
     const val LAB_NOTE_HINT = "여기에 붙여넣으면 바로 TXT 파일로 공유합니다."
 
     // 실험실: 배터리 모니터링

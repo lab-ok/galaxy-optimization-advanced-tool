@@ -110,6 +110,7 @@ import com.labok.goat.ui.help.GrantGuideSheet
 import com.labok.goat.ui.help.HelpSheet
 import com.labok.goat.ui.lab.AirplaneHelpSheet
 import com.labok.goat.ui.lab.AmbientScreen
+import com.labok.goat.ui.lab.ClipShareHelpSheet
 import com.labok.goat.ui.lab.FlexHelpSheet
 import com.labok.goat.ui.lab.LabAirplaneScreen
 import com.labok.goat.ui.lab.LabBatteryScreen
@@ -166,7 +167,7 @@ import kotlinx.coroutines.launch
 private const val WIDE_DP = 600
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, GOAT_PANEL, ICONS_HELP, AIRPLANE_HELP, VOLUME_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, GOAT_PANEL, ICONS_HELP, AIRPLANE_HELP, VOLUME_HELP, CLIP_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -407,7 +408,11 @@ internal fun HomeScreen(
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
                 Copy.MENU_REPORT to report
             )
-            NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_AMBIENT, NavItem.LAB_NOTE -> listOf(Copy.MENU_REPORT to report)
+            NavItem.LAB_NOTE -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.CLIP_HELP },
+                Copy.MENU_REPORT to report
+            )
+            NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_AMBIENT -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -684,6 +689,7 @@ internal fun HomeScreen(
                     Sheet.ICONS_HELP -> StatusIconsHelpSheet()
                     Sheet.AIRPLANE_HELP -> AirplaneHelpSheet()
                     Sheet.VOLUME_HELP -> VolumeRotateHelpSheet()
+                    Sheet.CLIP_HELP -> ClipShareHelpSheet()
                     Sheet.CHANGELOG -> ChangelogSheet()
                     Sheet.PERMISSIONS -> PermissionsSheet()
                     Sheet.DARK_HELP -> DarkHelpSheet()
