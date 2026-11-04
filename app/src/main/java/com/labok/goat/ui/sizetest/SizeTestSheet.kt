@@ -51,7 +51,9 @@ import com.labok.goat.domain.ScreenGeometry
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.InfoRow
+import com.labok.goat.ui.components.Inset
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.home.UiState
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
@@ -151,7 +153,7 @@ internal fun SizeTestSheet(state: UiState, onCount: () -> Unit, onCalibrate: (St
             Text(stringResource(R.string.sizetest_ref_title), fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(stringResource(R.string.sizetest_ref_body_fmt, REF_DP), color = c.muted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(Gap.Card))
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Space.Group)) {
                 repeat(4) { i ->
                     Canvas(Modifier.size(REF_DP.dp)) {
                         val r = CornerRadius(size.minDimension * 0.28f)
@@ -368,7 +370,7 @@ internal fun RowCountOverlay(onClose: () -> Unit) {
                             .height(ScreenGeometry.ROW_DP.dp)
                             .then(if (i == 0) Modifier.onSizeChanged { rowPx = it.height } else Modifier)
                             .background(if (i % 2 == 0) c.surface else c.bg)
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = Space.Edge),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("${i + 1}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = c.ink, modifier = Modifier.width(48.dp))
@@ -379,11 +381,11 @@ internal fun RowCountOverlay(onClose: () -> Unit) {
             Column(
                 Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 16.dp, end = 16.dp)
+                    .padding(top = Space.Edge, end = Space.Edge)
                     .clip(RoundedCornerShape(18.dp))
                     .background(c.ink)
                     .clickable(onClick = onClose)
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(Inset.Row),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(stringResource(R.string.sizetest_rows_count_fmt, rows), color = c.onInk, fontWeight = FontWeight.Bold)

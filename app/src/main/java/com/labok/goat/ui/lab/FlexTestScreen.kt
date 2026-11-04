@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.ui.appsize.Section
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
@@ -65,7 +66,7 @@ internal fun FlexTestScreen(onClose: () -> Unit) {
     val horizontal = rememberScreenPortrait()
     // 갈라지는 정도: 0 한 화면, 1 위아래 두 칸
     val split by animateFloatAsState(if (active) 1f else 0f, Springs.water(reduce), label = "flexTestSplit")
-    Column(Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(16.dp)) {
+    Column(Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(Space.Edge)) {
         // 위 칸: 펼쳐 있을 때는 게이지와 안내, 플렉스 모드면 진한 '앱 화면'
         Box(
             Modifier
@@ -118,7 +119,7 @@ internal fun FlexTestScreen(onClose: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Column(Modifier.padding(Gap.CardPadding), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(Space.Group), verticalAlignment = Alignment.CenterVertically) {
                         // 뒤로·재생·앞으로(삼각형으로 직접 그린다)
                         for (i in 0..2) {
                             val tint = if (i == 1) c.onInk else c.ink

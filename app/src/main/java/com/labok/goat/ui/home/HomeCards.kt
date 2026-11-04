@@ -45,6 +45,7 @@ import com.labok.goat.ui.components.CommandBox
 import com.labok.goat.ui.components.DangerConfirmBox
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidDots
@@ -78,7 +79,7 @@ internal fun StatusCard(state: UiState, onAuto: (Boolean) -> Unit) {
                 unfolded = unfolded,
                 height = 118.dp
             )
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(Space.Group))
             Column(Modifier.weight(1f)) {
                 Text(
                     // 폴드가 아니면 화면이 하나라 외부·내부를 말하지 않는다
@@ -102,7 +103,7 @@ internal fun StatusCard(state: UiState, onAuto: (Boolean) -> Unit) {
                         letterSpacing = (-1.5).sp,
                         color = c.ink
                     )
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(Space.Unit))
                     // 좁은 폭에서 'dp'·'i'로 쪼개져 '360 dp'처럼 읽혔다(조합 점검). 단위는 한 줄로 둔다
                     Text("dpi", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(bottom = 10.dp))
                 }
@@ -180,7 +181,7 @@ internal fun TodoCard(todo: Todo, onAction: (TodoAction) -> Unit) {
                 Text(todo.title, fontWeight = FontWeight.SemiBold, color = c.ink)
                 todo.body?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
                 Spacer(Modifier.height(Gap.Card))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.Between)) {
                     if (todo.action != null && todo.actionLabel != null) LiquidButton(todo.actionLabel, modifier = Modifier.weight(1f), onClick = { onAction(todo.action) })
                     LiquidButton(todo.secondLabel ?: "", modifier = Modifier.weight(1f), onClick = { onAction(todo.second) }, primary = false)
                 }
@@ -194,7 +195,7 @@ internal fun TodoCard(todo: Todo, onAction: (TodoAction) -> Unit) {
                                 todo.body?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
                             }
                             if (todo.action != null && todo.actionLabel != null) {
-                                Spacer(Modifier.width(10.dp))
+                                Spacer(Modifier.width(Space.Between))
                                 LiquidButton(todo.actionLabel, onClick = { onAction(todo.action) })
                             }
                         }
@@ -281,7 +282,7 @@ internal fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
                 Spacer(Modifier.height(Gap.Item))
                 Text(Copy.SIZE_PENDING, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(Gap.Item))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.Between)) {
                     if (revertShown[0]) {
                         LiquidButton(Copy.REVERT, modifier = Modifier.weight(1f), primary = false, onClick = {
                             state.target?.let { outer = it }
@@ -376,7 +377,7 @@ internal fun ResetSheet(
                                 }
                             }
                             LiquidDots(count = 3, index = dot)
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(Space.Inline))
                             Text(Copy.RESET_PERMISSION_WAITING, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         }
                     }

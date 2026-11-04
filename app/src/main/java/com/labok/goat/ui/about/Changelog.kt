@@ -44,6 +44,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.50.8",
+        "2026-11-05",
+        "여백과 간격을 통일했습니다(시험 버전).",
+        listOf(
+            "변경" to listOf(
+                "화면마다 조금씩 달랐던 여백과 간격을 구성요소별 표준 값으로 통일했습니다(화면·시트 가장자리, 아이콘과 글 사이, 배지, 아이콘 칸 크기 등).",
+                "숨은 기능을 다듬었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.50.7",
         "2026-11-05",
         "문구를 화면 맥락에 맞게 다듬었습니다(시험 버전).",

@@ -25,6 +25,8 @@ import com.labok.goat.R
 import com.labok.goat.data.lab.BatteryMonitor
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
@@ -67,7 +69,7 @@ internal fun BatterySection() {
                 Spacer(Modifier.height(Gap.Item))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text("${s.level}", fontSize = 52.sp, fontWeight = FontWeight.Bold, color = c.ink)
-                    Text("%", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
+                    Text("%", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = Space.Unit, bottom = 10.dp))
                     Spacer(Modifier.weight(1f))
                     Text(
                         if (s.charging) s.plug?.let { stringResource(R.string.lab_battery_status_charging_plug, it) } ?: stringResource(R.string.lab_battery_status_charging) else stringResource(R.string.lab_battery_status_using),
@@ -92,7 +94,7 @@ internal fun BatterySection() {
 @Composable
 private fun Metric(name: String, value: String?) {
     val c = LocalLiquid.current
-    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(vertical = Inset.TableRow), verticalAlignment = Alignment.CenterVertically) {
         Text(name, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
         Text(value ?: stringResource(R.string.lab_battery_metric_unknown), color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
     }

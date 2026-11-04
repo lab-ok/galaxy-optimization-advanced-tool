@@ -70,6 +70,7 @@ import com.labok.goat.data.update.UpdateNotice
 import com.labok.goat.domain.ShakeRotatePolicy
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.FluidSim
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidLook
@@ -178,7 +179,7 @@ internal fun ShakeCalibrationSheet(onClose: () -> Unit) {
                                         textAlign = TextAlign.Center
                                     )
                                     Spacer(Modifier.height(Gap.Item))
-                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.Between)) {
                                         LiquidButton(stringResource(R.string.rotate_calibrate_retry), modifier = Modifier.weight(1f), primary = false, onClick = {
                                             result = null
                                             round++
@@ -412,7 +413,7 @@ private fun LiquidPlayground(round: Int, recording: Boolean, look: LiquidLook, o
             }
         }
         // 잡힌 휘두름 점: 찰 때마다 통 튀어 오른다(기록 중에만 센다)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Space.Between), verticalAlignment = Alignment.CenterVertically) {
             repeat(SLOTS) { i -> Dot(filled = recording && i < count) }
         }
     }

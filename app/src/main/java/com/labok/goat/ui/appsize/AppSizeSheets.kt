@@ -33,6 +33,7 @@ import com.labok.goat.ui.components.CommandBox
 import com.labok.goat.ui.components.DangerConfirmBox
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
+import com.labok.goat.ui.components.Inset
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.copyText
 import com.labok.goat.ui.liquid.GlassCard
@@ -131,7 +132,7 @@ internal fun AppSizeGuideSheet() {
             if (showPc) stringResource(R.string.appsize_guide_pc_hide) else stringResource(R.string.appsize_guide_pc_show),
             color = c.muted,
             style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { showPc = !showPc }.padding(6.dp)
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { showPc = !showPc }.padding(Inset.TextButton)
         )
         if (showPc) {
             Text(
@@ -167,7 +168,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
             Text(Copy.APP_SIZE_RESET_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
             // 개수를 세는 동안은 리퀴드 로딩 방울을 보여 준다
             if (ready && count == null) {
-                LiquidLoader(stringResource(R.string.appsize_reset_counting), Modifier.padding(vertical = 8.dp))
+                LiquidLoader(stringResource(R.string.appsize_reset_counting), Modifier.padding(vertical = Gap.Item))
             } else {
                 Text(
                     when {
@@ -202,7 +203,7 @@ internal fun AppSizeResetSheet(onDone: (String) -> Unit) {
                             }
                         })
                     }
-                    else -> LiquidLoader(stringResource(R.string.appsize_reset_running), Modifier.padding(vertical = 8.dp))
+                    else -> LiquidLoader(stringResource(R.string.appsize_reset_running), Modifier.padding(vertical = Gap.Item))
                 }
             }
         }

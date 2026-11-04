@@ -28,6 +28,28 @@ class GapGuideTest {
         assertTrue("간격 가이드라인 위반:\n" + problems.joinToString("\n"), problems.isEmpty())
     }
 
+    /**
+     * 가로 간격·구성요소 여백([Space]·[Inset]·[Tile])도 숫자 dp로 직접 쓰지 않는다(11-05 표준화).
+     * 고유한 모양을 가진 부품(liquid/ 부품 안쪽, art/ 그림, 미디어 패널·시계·각도 게이지·사이드바 머리)은 자기 치수를 쓴다.
+     */
+    @Test
+    fun horizontalSpacingUsesTokens() {
+        val own = listOf("/art/", "/liquid/", "FlexPanelUi.kt", "StandbyClocks.kt", "StandbyActivity.kt", "FlexAngleGauge.kt", "NarrowControls.kt", "DrawerHeader.kt", "Gap.kt")
+        val rules = listOf(
+            Regex("""Spacer\(Modifier\.width\(\d+(\.\d+)?\.dp\)\)""") to "가로 Spacer는 Space 값",
+            Regex("""horizontalArrangement = Arrangement\.spacedBy\(\d+(\.\d+)?\.dp""") to "가로 간격은 Space.Between·Group",
+            Regex("""padding\(horizontal = \d+(\.\d+)?\.dp""") to "가로 여백은 Space·Inset",
+            Regex("""Spacer\(Modifier\.width\(Gap\.""") to "가로 간격에 세로 값(Gap)을 쓰지 않는다",
+            Regex("""size\(\d+\.dp\)\.clip\(RoundedCornerShape\(\d+(\.\d+)?\.dp\)\)""") to "아이콘 칸은 Tile 값"
+        )
+        val problems = ui.walkTopDown().filter { f -> f.extension == "kt" && own.none { it in f.path } }.flatMap { f ->
+            f.readLines().mapIndexedNotNull { i, line ->
+                rules.firstOrNull { (re, _) -> re.containsMatchIn(line) }?.let { (_, why) -> "${f.relativeTo(ui)}:${i + 1} $why" }
+            }
+        }.toList()
+        assertTrue("가로 간격 표준 위반:\n" + problems.joinToString("\n"), problems.isEmpty())
+    }
+
     /** 규칙 2: 설명 글(muted) 두 개 사이에 Spacer를 넣지 않는다(같은 덩어리는 줄 간격으로만 잇는다). */
     @Test
     fun noSpacerBetweenDescriptions() {

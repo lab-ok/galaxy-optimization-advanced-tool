@@ -49,6 +49,7 @@ import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
@@ -182,7 +183,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                                     modifier = Modifier.size(40.dp).graphicsLayer { alpha = if (off) 0.4f else 1f },
                                     colorFilter = if (off) ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }) else null
                                 )
-                                Spacer(Modifier.width(12.dp))
+                                Spacer(Modifier.width(Space.IconText))
                             }
                             Column(Modifier.weight(1f)) {
                                 Text(
@@ -193,7 +194,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                                 Text(app.note, color = c.muted, style = MaterialTheme.typography.bodySmall)
                                 Text(stringResource(if (off) R.string.tweaks_state_off else R.string.tweaks_state_on), color = c.muted, style = MaterialTheme.typography.labelSmall)
                             }
-                            Spacer(Modifier.width(12.dp))
+                            Spacer(Modifier.width(Space.IconText))
                             LiquidSwitch(!off, { on ->
                                 if (!on && app.risk == Bloat.Risk.CARE) confirm = app else apply(app, off = !on)
                             }, enabled = ready && busy == null, label = app.name)

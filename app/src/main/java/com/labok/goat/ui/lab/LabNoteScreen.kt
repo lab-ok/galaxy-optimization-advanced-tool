@@ -46,6 +46,7 @@ import com.labok.goat.R
 import com.labok.goat.data.lab.MemoShare
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -97,7 +98,7 @@ internal fun LabNoteScreen(contentPadding: PaddingValues) {
             .padding(contentPadding)
             // 아래 여백(내비게이션 막대)은 contentPadding에 이미 들어 있어, 키보드 여백에서 그만큼 빼야 사이가 뜨지 않는다(1.17.5 전수 점검: 약 48dp 빔)
             .consumeWindowInsets(contentPadding)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = Space.Edge)
             .padding(top = 4.dp, bottom = 16.dp)
             .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -165,7 +166,7 @@ internal fun LabNoteScreen(contentPadding: PaddingValues) {
             Spacer(Modifier.height(Gap.Item))
             Row {
                 LiquidButton(stringResource(R.string.lab_note_clear), modifier = Modifier.weight(1f), primary = false, enabled = text.isNotEmpty(), onClick = { text = "" })
-                Spacer(Modifier.width(Gap.Item))
+                Spacer(Modifier.width(Space.Between))
                 LiquidButton(Copy.LAB_NOTE_SHARE, modifier = Modifier.weight(1f), enabled = text.isNotBlank() && !sharing, onClick = { share(text) })
             }
         }

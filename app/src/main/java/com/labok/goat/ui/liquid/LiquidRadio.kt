@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.rowListEdges
 import com.labok.goat.ui.liquid.Text
 import kotlin.math.abs
@@ -178,7 +179,7 @@ fun LiquidRadioRow(label: String, desc: String?, selected: Boolean, enabled: Boo
             )
             if (group == null && fill > 0.01f) drawCircle(c.ink, (r - 5.dp.toPx()) * fill.coerceAtMost(1.15f))
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(Space.IconText))
         Column(Modifier.weight(1f)) {
             Text(label, color = if (enabled || selected) c.ink else c.muted, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
             if (desc != null) Text(desc, color = c.muted, style = MaterialTheme.typography.bodySmall)

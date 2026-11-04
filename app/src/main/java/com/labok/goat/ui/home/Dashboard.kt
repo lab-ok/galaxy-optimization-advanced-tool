@@ -108,6 +108,9 @@ import com.labok.goat.ui.about.LiquidGoatLogo
 import com.labok.goat.ui.about.UpdateCard
 import com.labok.goat.ui.about.worthShowing
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.Space
+import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
@@ -347,7 +350,7 @@ internal fun Dashboard(
                         // 앱 정보 로고와 같은 리퀴드 상자(누르면 출렁이고 표정이 바뀐다, 열 번이면 실험실)
                         LiquidGoatLogo(68.dp, idle = true)
                         // 아이콘과 글은 다른 덩어리라 글 사이 간격보다 넓게 띄운다
-                        Spacer(Modifier.width(Gap.Title + Gap.Tight))
+                        Spacer(Modifier.width(Space.Group))
                         Column(Modifier.weight(1f)) {
                             Text(AppInfo.FULL_NAME, color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
                             Text(headline, color = c.ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -355,7 +358,7 @@ internal fun Dashboard(
                             // 알약은 글 줄 시작에 맞춘다(염소 아래로 튀어나오지 않게)
                             pills()
                         }
-                        Spacer(Modifier.width(Gap.Card))
+                        Spacer(Modifier.width(Space.IconText))
                         ActiveRing(on, features.size, 64.dp)
                     }
                 } else {
@@ -364,12 +367,12 @@ internal fun Dashboard(
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             LiquidGoatLogo(54.dp, idle = true)
-                            Spacer(Modifier.width(Gap.Title))
+                            Spacer(Modifier.width(Space.IconText))
                             Column(Modifier.weight(1f)) {
                                 Text(AppInfo.NAME, color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
                                 Text(headline, color = c.ink, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             }
-                            Spacer(Modifier.width(Gap.Card))
+                            Spacer(Modifier.width(Space.IconText))
                             ActiveRing(on, features.size, 54.dp)
                         }
                         Spacer(Modifier.height(Gap.Item))
@@ -500,7 +503,7 @@ private fun CategoryCard(
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(Space.Inline))
                     Text(count, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
                 val summary = remember(features, c.ink, c.muted) {
@@ -546,19 +549,19 @@ private fun CategoryRow(item: NavItem, status: String, on: Boolean, onClick: (Of
                 }
             }
             .pointerInput(item) { detectTapGestures { pos -> onClick(origin + pos) } }
-            .padding(top = 9.dp, bottom = 9.dp, end = 4.dp),
+            .padding(top = Gap.RowPad, bottom = Gap.RowPad, end = Space.Unit),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 기능마다 아이콘(11-04): 켜진 기능은 잉크 바탕에 흰 아이콘, 꺼진 기능은 옅은 바탕
-        Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(if (on) c.ink else c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
-            com.labok.goat.ui.nav.NavGlyph(item.icon, if (on) c.bg else c.ink.copy(alpha = 0.7f), Modifier.size(18.dp))
+        Box(Modifier.size(Tile.Icon).clip(RoundedCornerShape(Tile.IconRadius)).background(if (on) c.ink else c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
+            com.labok.goat.ui.nav.NavGlyph(item.icon, if (on) c.bg else c.ink.copy(alpha = 0.7f), Modifier.size(Tile.IconGlyph))
         }
-        Spacer(Modifier.width(Gap.Title))
+        Spacer(Modifier.width(Space.IconText))
         Column(Modifier.weight(1f)) {
             Text(item.label, color = c.ink, style = MaterialTheme.typography.bodyLarge)
             Text(status, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Box(Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(if (on) c.ink else c.line))
+        Box(Modifier.size(10.dp).clip(CircleShape).background(if (on) c.ink else c.line))
     }
 }
 
@@ -603,14 +606,14 @@ private fun StatusPill(label: String, on: Boolean, onClick: () -> Unit = {}) {
             .clip(CircleShape)
             .then(if (on) Modifier else Modifier.clickable(onClick = onClick))
             .border(1.dp, if (c.dark) c.muted.copy(alpha = 0.5f) else c.line, CircleShape)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(Inset.Pill),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Canvas(Modifier.size(8.dp)) {
             drawCircle(if (c.dark) c.muted else c.line, size.minDimension / 2, style = Stroke(1.2.dp.toPx()))
             if (k > 0.01f) drawCircle(c.ink, size.minDimension / 2 * k.coerceAtMost(1.25f))
         }
-        Spacer(Modifier.width(6.dp))
+        Spacer(Modifier.width(Space.Inline))
         Text(if (on) label else stringResource(R.string.home_pill_needed_fmt, label), color = if (on) c.ink else c.muted, style = MaterialTheme.typography.labelMedium, maxLines = 1, softWrap = false)
     }
 }
@@ -716,10 +719,10 @@ private fun BlobCard(item: NavItem, status: String, on: Boolean, order: Int, int
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 꺼진 기능은 아이콘 칸을 살짝 연하게(켜지면 테두리와 함께 진해진다)
-            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(c.ink.copy(alpha = 0.45f + 0.55f * fill)), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(Tile.Large).clip(RoundedCornerShape(Tile.LargeRadius)).background(c.ink.copy(alpha = 0.45f + 0.55f * fill)), contentAlignment = Alignment.Center) {
                 NavGlyph(item.icon, c.onInk)
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(Space.IconText))
             Column(Modifier.weight(1f)) {
                 Text(item.label, fontWeight = FontWeight.SemiBold, color = c.ink, maxLines = 1, modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 1500))
                 Text(status, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 1500))

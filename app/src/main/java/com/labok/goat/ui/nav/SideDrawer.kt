@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -61,6 +62,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.LiquidTextField
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.LocalReduceMotion
@@ -230,7 +232,7 @@ fun SideDrawerContent(
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 18.dp)
+                .padding(DRAWER_SEARCH_PAD)
         ) {
             DrawerHeader(version, visible)
             // 설정 검색: 기능 이름이나 기능 안의 설정 이름으로 찾아 바로 연다(초성으로도 찾는다)
@@ -246,7 +248,7 @@ fun SideDrawerContent(
                 val hits = remember(query, items) { SettingsSearch.search(query, items + NavItem.SETTINGS) }
                 Spacer(Modifier.height(Gap.Item))
                 if (hits.isEmpty()) {
-                    Text(Copy.DRAWER_SEARCH_NONE, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 22.dp))
+                    Text(Copy.DRAWER_SEARCH_NONE, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = DRAWER_EDGE))
                 }
                 hits.forEach { hit ->
                     SearchRow(hit) {
@@ -273,7 +275,7 @@ fun SideDrawerContent(
                                     section.title,
                                     color = c.muted,
                                     style = MaterialTheme.typography.labelMedium,
-                                    modifier = Modifier.padding(start = 22.dp, bottom = 6.dp).graphicsLayer { alpha = ((enter.value - titleOrder) / ENTER_FADE).coerceIn(0f, 1f) }
+                                    modifier = Modifier.padding(start = DRAWER_EDGE, bottom = 6.dp).graphicsLayer { alpha = ((enter.value - titleOrder) / ENTER_FADE).coerceIn(0f, 1f) }
                                 )
                             }
                             section.items.forEach { item ->
@@ -302,7 +304,7 @@ fun SideDrawerContent(
                         }
                         // 맨 아래: 앱 설정. 기능 묶음과 선으로 나누되, 고르면 다른 항목처럼 잉크 방울이 옮겨 와 덮는다.
                         Spacer(Modifier.height(Gap.Section))
-                        Box(Modifier.fillMaxWidth().height(1.dp).padding(horizontal = 22.dp).background(c.line))
+                        Box(Modifier.fillMaxWidth().height(1.dp).padding(horizontal = DRAWER_EDGE).background(c.line))
                         Spacer(Modifier.height(Gap.Item))
                         val settingsOrder = ++index
                         DrawerRow(
@@ -340,11 +342,11 @@ private fun SearchRow(hit: SettingsSearch.Hit, onClick: () -> Unit) {
             .liquidPress(interaction, sx = 1.02f, sy = 0.95f)
             .clip(RoundedCornerShape(24.dp))
             .clickable(interaction, null, onClick = onClick)
-            .padding(start = 22.dp, end = 16.dp, top = 6.dp, bottom = 6.dp),
+            .padding(start = DRAWER_EDGE, end = 16.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         NavGlyph(hit.item.icon, c.ink)
-        Spacer(Modifier.width(14.dp))
+        Spacer(Modifier.width(Space.IconText))
         Column {
             Text(hit.title, color = c.ink, fontWeight = FontWeight.Medium)
             if (hit.title != hit.item.label) Text(hit.item.label, color = c.muted, style = MaterialTheme.typography.labelSmall)
@@ -378,20 +380,20 @@ private fun DrawerRow(
             .clip(RoundedCornerShape(24.dp))
             .clickable(interaction, null, onClick = onClick)
             // 선택 방울의 둥근 끝(반지름 24dp) 안쪽 깊숙이 아이콘을 둬 검은 경계와 붙어 보이지 않게 한다.
-            .padding(start = 22.dp, end = 16.dp),
+            .padding(start = DRAWER_EDGE, end = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         NavGlyph(item.icon, fg)
-        Spacer(Modifier.width(14.dp))
+        Spacer(Modifier.width(Space.IconText))
         Text(item.label, color = fg, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
         // 목적별 칸에 섞어 둔 실험실 기능은 이름 옆에 작게 '실험'(11-03 카테고리 재편)
         if (item in NavItem.LAB_ITEMS && item != NavItem.LAB_TOOLS) {
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(Space.Inline))
             Text(Copy.NAV_LAB_TAG, color = fg.copy(alpha = 0.6f), style = MaterialTheme.typography.labelSmall)
         }
         // 새 기능이 들어온 항목은 이름 옆에 점을 찍는다(그 화면을 보고 나가면 사라진다)
         if (NewBadge.navNew(item)) {
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(Space.Inline))
             NewDot()
         }
     }
@@ -801,3 +803,9 @@ internal const val GLASS_ALPHA = 0.84f
 /** 사이드 메뉴 항목 등장 전체 시간 상한(ms)과 한 항목이 나타나는 폭(항목 칸 수). */
 private const val ENTER_MAX_MS = 380
 private const val ENTER_FADE = 3f
+
+/** 사이드바 안쪽 가장자리: 선택 방울의 둥근 끝(반지름 24dp) 안쪽에 아이콘을 두는 거리. 제목·구분선·검색 결과도 같은 선에 맞춘다. */
+private val DRAWER_EDGE = 22.dp
+
+/** 사이드바 검색칸 안쪽 여백. */
+private val DRAWER_SEARCH_PAD = PaddingValues(horizontal = 14.dp, vertical = 18.dp)

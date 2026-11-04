@@ -34,12 +34,12 @@ internal fun InfoRow(key: String, value: String, emphasize: Boolean = false) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(vertical = 3.dp),
+            .padding(vertical = Inset.TableRow),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         // 이름은 한 줄로 두고(좁은 화면에서 '외부/화면'처럼 접히던 것), 값이 길면 값 쪽이 오른쪽 정렬로 줄바꿈한다
         Text(key, style = MaterialTheme.typography.bodyMedium, color = c.muted, maxLines = 1, softWrap = false)
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(Space.IconText))
         Text(
             value,
             // 숫자는 고정폭 숫자(tabular)로 줄을 맞추되 글꼴은 본문과 같게 둔다.

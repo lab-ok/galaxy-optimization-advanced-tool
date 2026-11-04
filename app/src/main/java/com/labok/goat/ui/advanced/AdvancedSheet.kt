@@ -45,6 +45,7 @@ import com.labok.goat.ui.art.FoldDeviceArt
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.InfoRow
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.home.UiState
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
@@ -148,7 +149,7 @@ private fun DisplayItem(d: DisplayDensity, state: UiState) {
                     )
                 }
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(Space.IconText))
             Column(Modifier.weight(1f)) {
                 Text(
                     // 화면이 하나뿐인 기기는 외부·내부 구분이 없으니 그냥 '화면'이라고 쓴다

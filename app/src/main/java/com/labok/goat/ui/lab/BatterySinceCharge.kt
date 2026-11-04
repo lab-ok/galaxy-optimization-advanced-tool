@@ -39,6 +39,8 @@ import com.labok.goat.data.lab.BatteryStatsReader.SinceCharge
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
@@ -116,7 +118,7 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
             if (loaded) {
                 Text(stringResource(R.string.lab_battery_stats_failed), color = c.muted, style = MaterialTheme.typography.bodySmall)
             } else {
-                LiquidLoader(stringResource(R.string.lab_battery_stats_loading), Modifier.padding(vertical = 8.dp))
+                LiquidLoader(stringResource(R.string.lab_battery_stats_loading), Modifier.padding(vertical = Gap.Item))
             }
             return@Card
         }
@@ -130,7 +132,7 @@ internal fun BatterySinceCharge(level: Int?, charging: Boolean) {
             null -> if (historyLoaded) {
                 Text(stringResource(R.string.lab_battery_history_failed), color = c.muted, style = MaterialTheme.typography.bodySmall)
             } else {
-                LiquidLoader(stringResource(R.string.lab_battery_history_loading), Modifier.padding(vertical = 8.dp))
+                LiquidLoader(stringResource(R.string.lab_battery_history_loading), Modifier.padding(vertical = Gap.Item))
             }
             else -> BatteryHistorySection(h, now, s.startClock)
         }
@@ -175,7 +177,7 @@ private fun ColumnScope.SinceChargeSummary(s: SinceCharge, level: Int?, charging
     Spacer(Modifier.height(Gap.Item))
     Row(verticalAlignment = Alignment.Bottom) {
         Text(if (s.usedPctLow == s.usedPctHigh) "${s.usedPctLow}" else "${s.usedPctLow}~${s.usedPctHigh}", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = c.ink)
-        Text(stringResource(R.string.lab_battery_used_pct_unit), color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+        Text(stringResource(R.string.lab_battery_used_pct_unit), color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = Space.Unit, bottom = 8.dp))
     }
     if (charging) Text(stringResource(R.string.lab_battery_charging_note), color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
@@ -204,7 +206,7 @@ private fun ChargeRow(ch: BatteryHistory.Charge) {
     } else {
         day.format(Date(ch.end))
     }
-    Column(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+    Column(Modifier.fillMaxWidth().padding(vertical = Inset.TableRow)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("${ch.startLevel}% → ${ch.endLevel}%", color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             Text(if (ch.ongoing) stringResource(R.string.lab_battery_charge_ongoing_duration, duration(ch.durationMs)) else duration(ch.durationMs), color = c.ink, style = MaterialTheme.typography.bodyMedium)
@@ -267,7 +269,7 @@ private fun UseRow(name: String, ms: Long, pct: Int) {
 @Composable
 private fun Line(name: String, value: String) {
     val c = LocalLiquid.current
-    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(vertical = Inset.TableRow), verticalAlignment = Alignment.CenterVertically) {
         Text(name, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
         Text(value, color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
     }
@@ -277,7 +279,7 @@ private fun Line(name: String, value: String) {
 @Composable
 private fun ShareRow(name: String, share: Float, detail: String, dark: Float = share, icon: ImageBitmap? = null, withIcon: Boolean = false) {
     val c = LocalLiquid.current
-    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(vertical = Inset.TableRow), verticalAlignment = Alignment.CenterVertically) {
         if (withIcon) {
             Box(Modifier.size(ICON_DP), contentAlignment = Alignment.Center) {
                 if (icon != null) {
@@ -286,7 +288,7 @@ private fun ShareRow(name: String, share: Float, detail: String, dark: Float = s
                     Text(name.take(1), color = c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                 }
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(Space.IconText))
         }
         ShareRowBody(name, share, detail, dark, Modifier.weight(1f))
     }
@@ -298,7 +300,7 @@ private fun ShareRowBody(name: String, share: Float, detail: String, dark: Float
     Column(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(name, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            Text(percent(share), color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 8.dp))
+            Text(percent(share), color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = Space.Inline))
         }
         Spacer(Modifier.height(Gap.Tight))
         LiquidBar(dark, height = 6.dp, ghost = share, description = "$name ${percent(share)}")

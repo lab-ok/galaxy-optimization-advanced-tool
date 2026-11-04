@@ -79,6 +79,10 @@ import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.domain.AppDensityPolicy
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.PillShape
+import com.labok.goat.ui.components.Space
+import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
@@ -235,7 +239,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
             }
             // 지원 여부를 확인하는 동안에는 불러오는 표시만 둔다(지원 기기용 카드가 잠깐 보였다가 '쓸 수 없습니다'로 바뀌던 깜빡임)
             supported == null -> item(key = "loading") {
-                LiquidLoader(stringResource(R.string.appsize_loading_apps), Modifier.padding(vertical = 12.dp))
+                LiquidLoader(stringResource(R.string.appsize_loading_apps), Modifier.padding(vertical = Gap.Item))
             }
             supported == false -> item(key = "unsupported") {
                 Appear("unsupported", 1, shown) {
@@ -254,7 +258,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                     Text(Copy.APP_SIZE_NOTIFY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                                     Text(Copy.APP_SIZE_NOTIFY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                                 }
-                                Spacer(Modifier.width(12.dp))
+                                Spacer(Modifier.width(Space.IconText))
                                 LiquidSwitch(notify, { on ->
                                     if (on && !ExternalChangeNotifier.canNotify(context) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                         notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -342,7 +346,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                             AnimatedVisibility(message.isNotEmpty()) {
                                 Column {
                                     Spacer(Modifier.height(Gap.Item))
-                                    Text(message, color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 6.dp))
+                                    Text(message, color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = Space.Inline))
                                 }
                             }
                         }
@@ -350,7 +354,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                 }
                 if (apps == null) {
                     item(key = "loading") {
-                        LiquidLoader(stringResource(R.string.appsize_loading_apps), Modifier.padding(vertical = 12.dp))
+                        LiquidLoader(stringResource(R.string.appsize_loading_apps), Modifier.padding(vertical = Gap.Item))
                     }
                 }
                 if (applied.isNotEmpty()) {
@@ -360,7 +364,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                 Copy.APP_SIZE_RESET_ACTION,
                                 color = c.danger,
                                 style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onReset).padding(horizontal = 8.dp, vertical = 6.dp)
+                                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onReset).padding(Inset.TextButton)
                             )
                         }
                     }
@@ -436,20 +440,20 @@ private fun AppRow(
             Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onToggle)
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(Inset.Row),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
-            Spacer(Modifier.width(12.dp))
+            Box(Modifier.size(Tile.App).clip(RoundedCornerShape(Tile.AppRadius))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
+            Spacer(Modifier.width(Space.IconText))
             Column(Modifier.weight(1f)) {
                 Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
             }
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(Space.Inline))
             // 크기 표시: 바뀌면 숫자가 위아래로 갈리며 바뀌고, 적용된 앱은 잉크색으로 채워진다
             val fill by animateColorAsState(if (on) c.ink else c.line.copy(alpha = 0.5f), label = "pill")
             val ink by animateColorAsState(if (on) c.onInk else c.muted, label = "pillText")
-            Box(Modifier.clip(RoundedCornerShape(12.dp)).background(fill).padding(horizontal = 10.dp, vertical = 4.dp)) {
+            Box(Modifier.clip(PillShape).background(fill).padding(Inset.Pill)) {
                 AnimatedContent(
                     value,
                     transitionSpec = { (slideInVertically { it } + fadeIn()) togetherWith (slideOutVertically { -it } + fadeOut()) },

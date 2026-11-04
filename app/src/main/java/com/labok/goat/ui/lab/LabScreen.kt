@@ -34,6 +34,7 @@ import com.labok.goat.data.lab.ShareProbe
 import com.labok.goat.data.lab.TentMode
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidButtonPair
@@ -75,7 +76,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = Space.Edge)
             .padding(top = 4.dp, bottom = 28.dp)
     ) {
         GlassCard {

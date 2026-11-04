@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.R
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 
@@ -84,7 +85,7 @@ fun NewTag(key: String, modifier: Modifier = Modifier) {
     val c = LocalLiquid.current
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         NewDot()
-        Spacer(Modifier.width(6.dp))
+        Spacer(Modifier.width(Space.Inline))
         Text(stringResource(R.string.nav_new_feature), color = c.danger, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
     }
 }

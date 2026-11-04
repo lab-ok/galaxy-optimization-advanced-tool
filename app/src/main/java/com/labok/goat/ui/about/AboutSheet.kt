@@ -34,7 +34,9 @@ import androidx.compose.ui.unit.dp
 import com.labok.goat.R
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.InfoRow
+import com.labok.goat.ui.components.Inset
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidShape
@@ -123,7 +125,7 @@ private fun PermissionRow(item: AppPermissions.Item, granted: Boolean, index: In
                 drawCircle(if (item.optional) c.muted else c.danger, r - 1.dp.toPx(), style = Stroke(2.dp.toPx()))
             }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(Space.IconText))
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(item.title, fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
@@ -160,7 +162,7 @@ private fun Pill(text: String, strong: Boolean, outlined: Boolean = false) {
         Modifier
             .clip(shape)
             .then(if (outlined) Modifier.border(1.dp, c.line, shape) else Modifier.background(color.copy(alpha = 0.08f)))
-            .padding(horizontal = 10.dp, vertical = 3.dp)
+            .padding(Inset.Pill)
     ) {
         Text(text, color = if (outlined) c.muted else color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
     }

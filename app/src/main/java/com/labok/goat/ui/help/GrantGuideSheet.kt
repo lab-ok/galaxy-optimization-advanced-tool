@@ -65,6 +65,7 @@ import com.labok.goat.ui.art.GuideSceneArt
 import com.labok.goat.ui.components.CommandBox
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.copyText
 import com.labok.goat.ui.components.openDeveloperOptions
 import com.labok.goat.ui.liquid.GlassCard
@@ -128,9 +129,9 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
                     border = BorderStroke(1.dp, LocalLiquid.current.line),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.padding(Gap.CardPadding), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.CheckCircle, null, modifier = Modifier.size(28.dp))
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(Space.IconText))
                         Column {
                             Text(stringResource(R.string.help_guide_done_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                             Text(stringResource(R.string.help_guide_done_body), style = MaterialTheme.typography.bodySmall)
@@ -187,7 +188,7 @@ internal fun GrantGuideSheet(hasPermission: Boolean, onCopied: () -> Unit) {
             Choice(GrantGuideContent.PcOs.entries, os, { it.label }) { os = it }
 
             Spacer(Modifier.height(Gap.Section))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.Between)) {
                 LiquidButton(stringResource(R.string.help_guide_send_pc), modifier = Modifier.weight(1f), onClick = { shareGuide(context, connection, os) }, primary = false)
                 LiquidButton(stringResource(R.string.help_guide_send_mail), modifier = Modifier.weight(1f), onClick = { emailGuide(context, connection, os) }, primary = false)
             }
@@ -253,7 +254,7 @@ private fun TroubleCard(items: List<GrantGuideContent.Trouble>, onCopy: (String)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
                     .clickable { open = if (expanded) null else tr.title }
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = Gap.RowPad),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f)) {

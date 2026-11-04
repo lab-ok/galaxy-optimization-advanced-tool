@@ -54,6 +54,7 @@ import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
@@ -185,7 +186,7 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         LaunchedEffect(shizuku) { dotHidden = withContext(Dispatchers.IO) { PrivacyDot.hidden() } }
         Row(verticalAlignment = Alignment.CenterVertically) {
             PrivacyDotGlyph(c.ink)
-            Spacer(Modifier.width(Gap.Card))
+            Spacer(Modifier.width(Space.IconText))
             Box(Modifier.weight(1f)) {
                 // 지원되는 버전(Android 13 이하)에서만 켤 수 있고, 그 밖에서는 잠그고 이유를 적는다
                 val dotOk = remember(dotHidden) { PrivacyDot.supported(context) }
@@ -215,7 +216,7 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
             // 줄 앞에 상태 표시줄에서 보이는 모양을 그려 어떤 아이콘인지 바로 알아보게 한다
             Row(verticalAlignment = Alignment.CenterVertically) {
                 StatusBarGlyph(slot, c.ink)
-                Spacer(Modifier.width(Gap.Card))
+                Spacer(Modifier.width(Space.IconText))
                 Box(Modifier.weight(1f)) {
                     LiquidSwitchRow(stringResource(R.string.lab_status_icons_hide_slot, slot.label), slot.id, IconBlacklist.hidden(raw, slot), true) { hide ->
                         w.write(IconBlacklist.setting, IconBlacklist.edit(raw, slot, hide))

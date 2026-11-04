@@ -72,7 +72,10 @@ import com.labok.goat.ui.appsize.loadApps
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
+import com.labok.goat.ui.components.Inset
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
+import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
@@ -312,7 +315,7 @@ internal fun LabFlexScreen(contentPadding: PaddingValues) {
                     )
                 }
             }
-            if (apps == null) item(key = "loading") { LiquidLoader(stringResource(R.string.lab_flex_apps_loading), Modifier.padding(vertical = 12.dp)) }
+            if (apps == null) item(key = "loading") { LiquidLoader(stringResource(R.string.lab_flex_apps_loading), Modifier.padding(vertical = Gap.Item)) }
             // 고른 모드의 앱만, 최근 사용 순. 모드를 바꾸면 그 줄은 물처럼 빠져나가 다른 탭으로 옮겨 간다
             val shown = apps.orEmpty().filter { (pending[it.pkg] ?: modeOf(it)) == filter }
                 .filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) || it.pkg.contains(q, ignoreCase = true) }
@@ -410,17 +413,17 @@ private fun FlexAppRow(app: AppEntry, mode: Int, open: Boolean, onToggle: () -> 
             .background(c.surface)
             .border(1.dp, border, shape)
             .clickable(onClick = onToggle)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .padding(Inset.Row)
             .animateContentSize(spring(UiMotion.ratio(0.62f), UiMotion.stiffness(260f, 0.62f)))
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(38.dp).clip(RoundedCornerShape(11.dp))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
-            Spacer(Modifier.width(12.dp))
+            Box(Modifier.size(Tile.App).clip(RoundedCornerShape(Tile.AppRadius))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
+            Spacer(Modifier.width(Space.IconText))
             Column(Modifier.weight(1f)) {
                 Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
             }
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(Space.Inline))
             Text(AutoFlex.modeLabel(mode), color = c.muted, style = MaterialTheme.typography.labelMedium)
         }
         if (open) {

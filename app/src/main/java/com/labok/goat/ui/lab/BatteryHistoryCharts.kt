@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.sp
 import com.labok.goat.R
 import com.labok.goat.data.lab.BatteryHistory
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
@@ -76,7 +78,7 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
     LiquidBucketColumns(buckets, selected, { selected = it })
     Spacer(Modifier.height(Gap.Item))
     // 범례: 기둥의 세 가지 물(가장 옅은 기둥은 충전한 시간대)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.Group)) {
         Legend(c.ink, stringResource(R.string.lab_battery_legend_screen_on))
         Legend(c.ink.copy(alpha = standbyAlpha(c.dark)), stringResource(R.string.lab_battery_legend_screen_off))
         Legend(c.ink.copy(alpha = chargeAlpha(c.dark)), stringResource(R.string.lab_battery_legend_charged))
@@ -117,9 +119,9 @@ internal fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, s
 @Composable
 private fun Legend(color: Color, label: String) {
     val c = LocalLiquid.current
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = Inset.TableRow)) {
         Canvas(Modifier.width(14.dp).height(14.dp)) { drawRoundRect(color, cornerRadius = CornerRadius(4.dp.toPx())) }
-        Text(label, color = c.ink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 6.dp))
+        Text(label, color = c.ink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = Space.Inline))
     }
 }
 

@@ -58,6 +58,8 @@ import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Space
+import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.components.rowListEdges
 import com.labok.goat.ui.liquid.GlassCard
@@ -249,7 +251,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
 private fun SectionTitle(text: String) {
     val c = LocalLiquid.current
     Box(Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth()) {
-        Text(text, color = c.muted, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 8.dp, top = 4.dp))
+        Text(text, color = c.muted, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = Space.Inline, top = 4.dp))
     }
 }
 
@@ -356,7 +358,7 @@ private fun GoatStylePicker() {
         onSelect = { UiGoat.set(context, it) },
         height = 84.dp,
         content = { style, _ ->
-            icons[style]?.let { Image(it, contentDescription = null, modifier = Modifier.size(56.dp).clip(RoundedCornerShape(16.dp))) }
+            icons[style]?.let { Image(it, contentDescription = null, modifier = Modifier.size(Tile.Preview).clip(RoundedCornerShape(Tile.PreviewRadius))) }
         }
     )
 }

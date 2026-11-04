@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.Text
 
 /**
@@ -25,7 +25,7 @@ fun LiquidSwitchRow(title: String, desc: String?, checked: Boolean, enabled: Boo
             Text(title, fontWeight = FontWeight.SemiBold, color = if (enabled) c.ink else c.muted)
             desc?.let { Text(it, color = c.muted, style = MaterialTheme.typography.bodySmall) }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(Space.IconText))
         LiquidSwitch(checked, onChange, enabled = enabled, label = title)
     }
 }

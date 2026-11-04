@@ -38,8 +38,8 @@ internal val ContentMaxWidth = 640.dp
 
 /** 기능 화면 목록의 여백: 좌우 16dp, 제목 줄·내비게이션 막대 아래로 내용이 비치도록 위아래는 안쪽 여백에 더한다. */
 internal fun featurePadding(inner: PaddingValues) = PaddingValues(
-    start = 16.dp,
-    end = 16.dp,
+    start = Space.Edge,
+    end = Space.Edge,
     top = inner.calculateTopPadding() + 4.dp,
     bottom = inner.calculateBottomPadding() + 28.dp
 )
@@ -55,7 +55,7 @@ internal fun SheetColumn(
     Column(
         modifier
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = Space.Edge)
             .navigationBarsPadding()
             .padding(bottom = 28.dp),
         horizontalAlignment = horizontalAlignment
@@ -78,12 +78,12 @@ internal fun DangerConfirmBox(message: String, note: String? = null, actions: @C
             .fillMaxWidth()
             .background(c.danger.copy(alpha = 0.08f), shape)
             .border(1.dp, c.danger.copy(alpha = 0.5f), shape)
-            .padding(14.dp)
+            .padding(Inset.Box)
     ) {
         Text("⚠ $message", color = c.danger, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
         if (note != null) Text(note, color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Card))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), content = actions)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.Between), content = actions)
     }
 }
 

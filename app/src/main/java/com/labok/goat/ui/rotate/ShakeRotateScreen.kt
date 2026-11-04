@@ -57,6 +57,7 @@ import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
@@ -166,7 +167,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                             // 보조 설명도 같은 설명 덩어리: 띄우지 않고 줄 간격으로만 잇는다(Gap 규칙 2)
                             Text(Copy.SHAKE_NOTIFY_NOTE, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         }
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(Space.IconText))
                         LiquidSwitch(on, { want ->
                             when {
                                 !want -> {

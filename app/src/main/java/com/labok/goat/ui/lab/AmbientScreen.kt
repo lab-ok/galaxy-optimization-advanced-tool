@@ -54,6 +54,7 @@ import com.labok.goat.data.lab.AmbientOpen
 import com.labok.goat.data.lab.TentDuo
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
@@ -196,7 +197,7 @@ private fun ClockPicker(selected: Int, onPick: (Int) -> Unit) {
         }
     }
     val list = rememberLazyListState(initialFirstVisibleItemIndex = (selected - 1).coerceAtLeast(0))
-    LazyRow(state = list, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+    LazyRow(state = list, horizontalArrangement = Arrangement.spacedBy(Space.Between), modifier = Modifier.fillMaxWidth()) {
         itemsIndexed(StandbyClocks.NAMES) { i, name ->
             val pick by animateFloatAsState(if (i == selected) 1f else 0f, spring(dampingRatio = 0.6f, stiffness = 400f), label = "pick")
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onPick(i) }) {

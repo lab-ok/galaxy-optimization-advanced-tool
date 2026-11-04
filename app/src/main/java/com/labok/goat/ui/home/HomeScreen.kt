@@ -111,6 +111,8 @@ import com.labok.goat.ui.camera.CameraMuteHelpSheet
 import com.labok.goat.ui.camera.CameraMuteScreen
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Space
+import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.components.copyText
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.help.GrantGuideSheet
@@ -533,10 +535,10 @@ internal fun HomeScreen(
                                 ) { f ->
                                     // 메뉴 아이콘(사이드바·홈 타일과 같은 그림)과 제목
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(c.ink), contentAlignment = Alignment.Center) {
-                                            NavGlyph(f.icon, c.onInk, Modifier.size(20.dp))
+                                        Box(Modifier.size(Tile.Icon).clip(RoundedCornerShape(Tile.IconRadius)).background(c.ink), contentAlignment = Alignment.Center) {
+                                            NavGlyph(f.icon, c.onInk, Modifier.size(Tile.IconGlyph))
                                         }
-                                        Spacer(Modifier.width(12.dp))
+                                        Spacer(Modifier.width(Space.IconText))
                                         Text(
                                             f.label,
                                             fontWeight = FontWeight.Bold,

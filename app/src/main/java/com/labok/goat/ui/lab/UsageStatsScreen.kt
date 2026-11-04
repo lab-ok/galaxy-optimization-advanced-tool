@@ -66,6 +66,10 @@ import com.labok.goat.data.lab.UsageTally
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.PillShape
+import com.labok.goat.ui.components.Space
+import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidChips
@@ -159,7 +163,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = Space.Edge)
             .padding(top = 4.dp, bottom = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -204,7 +208,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(22.dp))
                 .background(c.ink)
-                .padding(horizontal = 18.dp, vertical = 14.dp)
+                .padding(Gap.CardPadding)
         ) {
             Text(spanLabel(v.from, v.to, r.days), color = c.onInk.copy(alpha = 0.75f), style = MaterialTheme.typography.bodySmall)
             if (lines.isEmpty()) Text(stringResource(R.string.lab_stats_no_records), color = c.onInk, fontWeight = FontWeight.Bold, fontSize = 19.sp)
@@ -218,7 +222,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
                             color = c.ink,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(c.onInk).padding(horizontal = 10.dp, vertical = 3.dp)
+                            modifier = Modifier.clip(PillShape).background(c.onInk).padding(Inset.Pill)
                         )
                     }
                 }
@@ -247,7 +251,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
                         Row(verticalAlignment = Alignment.Bottom) {
                             Spacer(Modifier.weight(1f))
                             Text(nowCol, color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.End, modifier = Modifier.widthIn(min = NOW_COL))
-                            if (avgCol != null) Text(avgCol, color = c.muted, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.End, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 12.dp).widthIn(min = AVG_COL))
+                            if (avgCol != null) Text(avgCol, color = c.muted, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.End, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = Space.Inline).widthIn(min = AVG_COL))
                         }
                     }
                     GROUPS.forEach { (group, metrics) ->
@@ -340,13 +344,13 @@ private fun MetricRow(m: Metric, r: UsageTally.Result, base: UsageTally.Result?,
     val avgText = avg?.let { format(m.kind, it, m.unit) }
     val valueText = format(m.kind, value, m.unit)
     val deltaColor = c.ink.copy(alpha = if (change?.startsWith("▲") == true) 1f else 0.5f)
-    Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
-            StatGlyph(m.icon, c.ink, Modifier.size(18.dp))
+    Row(Modifier.fillMaxWidth().padding(vertical = Inset.TableRow), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(Tile.Icon).clip(RoundedCornerShape(Tile.IconRadius)).background(c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
+            StatGlyph(m.icon, c.ink, Modifier.size(Tile.IconGlyph))
         }
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(Space.IconText))
         if (table) {
-            Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 8.dp))
+            Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = Space.Inline))
             Column(horizontalAlignment = Alignment.End, modifier = Modifier.widthIn(min = NOW_COL)) {
                 Text(valueText, color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, maxLines = 1, softWrap = false)
                 if (change != null) Text(change, color = deltaColor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
@@ -359,14 +363,14 @@ private fun MetricRow(m: Metric, r: UsageTally.Result, base: UsageTally.Result?,
                     textAlign = TextAlign.End,
                     maxLines = 1,
                     softWrap = false,
-                    modifier = Modifier.padding(start = 12.dp).widthIn(min = AVG_COL)
+                    modifier = Modifier.padding(start = Space.Inline).widthIn(min = AVG_COL)
                 )
             }
         } else {
             // 좁을 때: 첫 줄 이름 · 실제 값, 둘째 줄 평균 상자 · ▲▼(평균 상자가 줄 전체 폭을 쓰게 해 글자가 세로로 서지 않게)
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 8.dp))
+                    Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = Space.Inline))
                     Text(valueText, color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, maxLines = 1, softWrap = false)
                 }
                 if (avgText != null || change != null) {
@@ -374,7 +378,7 @@ private fun MetricRow(m: Metric, r: UsageTally.Result, base: UsageTally.Result?,
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         avgText?.let { AvgTag(it) }
                         Spacer(Modifier.weight(1f))
-                        if (change != null) Text(change, color = deltaColor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
+                        if (change != null) Text(change, color = deltaColor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = Space.Inline))
                     }
                 }
             }
@@ -387,11 +391,11 @@ private fun MetricRow(m: Metric, r: UsageTally.Result, base: UsageTally.Result?,
 private fun AvgTag(text: String) {
     val c = LocalLiquid.current
     Row(
-        Modifier.clip(RoundedCornerShape(8.dp)).border(1.dp, c.line, RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 1.dp),
+        Modifier.clip(PillShape).border(1.dp, c.line, PillShape).padding(Inset.Pill),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(stringResource(R.string.lab_stats_avg_tag), color = c.muted, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
-        Spacer(Modifier.width(5.dp))
+        Spacer(Modifier.width(Space.Inline))
         Text(text, color = c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
     }
 }
@@ -562,9 +566,9 @@ private const val DAY = 86_400_000L
 private fun PeriodPicker(label: String, canNext: Boolean, onPrev: () -> Unit, onNext: () -> Unit) {
     val c = LocalLiquid.current
     Row(Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text("‹", color = c.ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onPrev).padding(horizontal = 16.dp))
+        Text("‹", color = c.ink, fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(onClick = onPrev).padding(horizontal = Space.Edge))
         Text(label, color = c.ink, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-        Text("›", color = c.ink.copy(alpha = if (canNext) 1f else 0.25f), fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(enabled = canNext, onClick = onNext).padding(horizontal = 16.dp))
+        Text("›", color = c.ink.copy(alpha = if (canNext) 1f else 0.25f), fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable(enabled = canNext, onClick = onNext).padding(horizontal = Space.Edge))
     }
 }
 
@@ -632,15 +636,15 @@ private fun RankList(items: List<UsageTally.Rank>, unit: String) {
         items.forEachIndexed { i, item ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("${i + 1}", color = c.muted, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(18.dp))
-                Box(Modifier.size(24.dp).clip(RoundedCornerShape(6.dp)).background(c.line.copy(alpha = 0.5f))) {
+                Box(Modifier.size(Tile.AppSmall).clip(RoundedCornerShape(Tile.AppSmallRadius)).background(c.line.copy(alpha = 0.5f))) {
                     icons[item.pkg]?.let { Image(it, contentDescription = null, modifier = Modifier.fillMaxSize()) }
                 }
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(Space.Inline))
                 Text(item.name, color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                Box(Modifier.padding(start = 6.dp).width(56.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(c.line)) {
+                Box(Modifier.padding(start = Space.Inline).width(56.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(c.line)) {
                     Box(Modifier.fillMaxWidth(item.count.toFloat() / max).height(6.dp).clip(RoundedCornerShape(3.dp)).background(c.ink))
                 }
-                Text("%,d".format(item.count) + unit, color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 52.dp).padding(start = 6.dp))
+                Text("%,d".format(item.count) + unit, color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 52.dp).padding(start = Space.Inline))
             }
         }
     }
@@ -670,10 +674,10 @@ private fun BatteryTab() {
             BATTERY_METRICS.forEach { m ->
                 Spacer(Modifier.height(Gap.Tight))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
-                        StatGlyph(m.icon, c.ink, Modifier.size(18.dp))
+                    Box(Modifier.size(Tile.Icon).clip(RoundedCornerShape(Tile.IconRadius)).background(c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
+                        StatGlyph(m.icon, c.ink, Modifier.size(Tile.IconGlyph))
                     }
-                    Spacer(Modifier.width(10.dp))
+                    Spacer(Modifier.width(Space.IconText))
                     Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                     p.forEach { (_, r) ->
                         Text(m.get(r)?.let { format(m.kind, it, m.unit) } ?: "-", color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End, modifier = Modifier.widthIn(min = 56.dp))

@@ -37,6 +37,8 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.labok.goat.R
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.openDeveloperOptions
 import com.labok.goat.ui.components.settingsIntent
 import com.labok.goat.ui.liquid.LiquidButton
@@ -107,7 +109,7 @@ internal fun ShizukuGuide(
         Hint(stringResource(R.string.shizuku_step3_hint_wifi))
         if (note == 1) Hint(stringResource(R.string.shizuku_step3_hint_manual), warn = true)
         Spacer(Modifier.height(Gap.Item))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.Between)) {
             LiquidButton(stringResource(R.string.shizuku_step3_turn_on), modifier = Modifier.weight(1f), onClick = {
                 if (ShizukuAccess.enableWirelessDebug(context)) {
                     tick++
@@ -130,7 +132,7 @@ internal fun ShizukuGuide(
             stringResource(R.string.shizuku_step4_hint)
         )
         Spacer(Modifier.height(Gap.Item))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.Between)) {
             LiquidButton(stringResource(R.string.shizuku_step4_open_shizuku), modifier = Modifier.weight(1f), onClick = { openShizuku(context) })
             LiquidButton(stringResource(R.string.shizuku_step4_open_wireless), modifier = Modifier.weight(1f), primary = false, onClick = { openDeveloperOptions(context) })
         }
@@ -166,7 +168,7 @@ private fun Step(no: Int, title: String, done: Boolean, active: Boolean, body: @
         ) {
             Text(if (done) "✓" else "$no", color = if (done || active) c.onInk else c.muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(Space.IconText))
         Column(Modifier.weight(1f).padding(top = 2.dp)) {
             Text(
                 if (done) stringResource(R.string.shizuku_step_done_fmt, title) else title,
@@ -203,7 +205,7 @@ private fun SettingsPath(vararg steps: String) {
                 Box(
                     Modifier
                         .then(if (last) Modifier.background(c.ink, CircleShape) else Modifier.border(1.dp, c.line, CircleShape))
-                        .padding(horizontal = 10.dp, vertical = 3.dp)
+                        .padding(Inset.Pill)
                 ) {
                     Text(step, color = if (last) c.onInk else c.ink, style = MaterialTheme.typography.labelMedium, fontWeight = if (last) FontWeight.Bold else FontWeight.Medium)
                 }
