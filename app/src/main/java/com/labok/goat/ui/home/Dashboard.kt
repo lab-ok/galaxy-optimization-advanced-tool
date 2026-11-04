@@ -77,6 +77,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -417,34 +418,44 @@ internal fun Dashboard(
         // 11-04 소장님 홈 시안 5번: 위에 '자주 쓰는 기능'(많이 연 기능 4개, 아직 없으면 켜 둔 기능)을 타일로 고정하고, 그 아래 칸(카테고리)은
         // 접고 펴는 카드로 둔다. 칸을 펴면 기능이 한 줄씩(아이콘·이름·지금 상태) 보이고, 누르면 그 기능으로 간다. 펴 둔 칸은 기억한다.
         // 보기(전체·활성화·비활성화)는 칸 안의 줄과 자주 쓰는 기능에 함께 적용하고, 비는 칸은 숨긴다
-        if (favs.isNotEmpty()) {
-            item(key = "fav_title", span = { GridItemSpan(maxLineSpan) }) {
-                Text(Copy.HOME_FAVORITES, color = c.muted, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = Gap.Tight, top = Gap.Item))
-            }
-            itemsIndexed(favs, key = { _, it -> "fav_" + it.name }) { i, item ->
-                Box(Modifier.animateItem(fadeInSpec = if (reduce) snap() else tween(220, delayMillis = i * 28), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160))) {
-                    BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> open(item, at) }
+        // 11-04 소장님: 자주 쓰는 기능과 카테고리 아코디언은 '전체' 보기에서만. 활성화·비활성화 보기는 예전처럼 기능 타일만 늘어놓는다
+        if (view == HomeView.ALL) {
+            if (favs.isNotEmpty()) {
+                item(key = "fav_title", span = { GridItemSpan(maxLineSpan) }) {
+                    Text(Copy.HOME_FAVORITES, color = c.muted, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = Gap.Tight, top = Gap.Item))
+                }
+                itemsIndexed(favs, key = { _, it -> "fav_" + it.name }) { i, item ->
+                    Box(Modifier.animateItem(fadeInSpec = if (reduce) snap() else tween(220, delayMillis = i * 28), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160))) {
+                        BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> open(item, at) }
+                    }
                 }
             }
-        }
-        sections.filter { it.title.isNotEmpty() }.forEach { section ->
-            val inSection = section.items.filter { it in shown }
-            if (inSection.isEmpty()) return@forEach
-            item(key = "sec_${section.title}", span = { GridItemSpan(maxLineSpan) }) {
-                val expanded = section.title in openSections
-                CategoryCard(
-                    title = section.title,
-                    summary = Copy.homeSectionCount(inSection.size, inSection.count(active)) + " · " + inSection.joinToString(" · ") { it.label },
-                    expanded = expanded,
-                    modifier = Modifier.animateItem(fadeInSpec = if (reduce) snap() else tween(220), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160)),
-                    onToggle = {
-                        openSections = if (expanded) openSections - section.title else openSections + section.title
-                        homePrefs.edit().putStringSet("open_sections", openSections).apply()
+            sections.filter { it.title.isNotEmpty() }.forEach { section ->
+                val inSection = section.items.filter { it in shown }
+                if (inSection.isEmpty()) return@forEach
+                item(key = "sec_${section.title}", span = { GridItemSpan(maxLineSpan) }) {
+                    val expanded = section.title in openSections
+                    CategoryCard(
+                        title = section.title,
+                        count = "(${inSection.count(active)}/${inSection.size})",
+                        features = inSection.map { it.label to active(it) },
+                        expanded = expanded,
+                        modifier = Modifier.animateItem(fadeInSpec = if (reduce) snap() else tween(220), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160)),
+                        onToggle = {
+                            openSections = if (expanded) openSections - section.title else openSections + section.title
+                            homePrefs.edit().putStringSet("open_sections", openSections).apply()
+                        }
+                    ) {
+                        inSection.forEach { item ->
+                            CategoryRow(item, status(item), active(item)) { at -> open(item, at) }
+                        }
                     }
-                ) {
-                    inSection.forEach { item ->
-                        CategoryRow(item, status(item), active(item)) { at -> open(item, at) }
-                    }
+                }
+            }
+        } else {
+            itemsIndexed(shown, key = { _, it -> it.name }) { i, item ->
+                Box(Modifier.animateItem(fadeInSpec = if (reduce) snap() else tween(220, delayMillis = i * 28), placementSpec = if (reduce) snap() else spring(UiMotion.ratio(0.62f), UiMotion.stiffness(380f, 0.62f)), fadeOutSpec = if (reduce) snap() else tween(160))) {
+                    BlobCard(item, status(item), active(item), order = i + 1, intro = SystemClock.uptimeMillis() - shownAt < INTRO_MS) { at -> open(item, at) }
                 }
             }
         }
@@ -460,7 +471,10 @@ internal fun Dashboard(
 @Composable
 private fun CategoryCard(
     title: String,
-    summary: String,
+    /** 켜진 기능 수/전체 기능 수, 예: (1/3). */
+    count: String,
+    /** 둘째 줄 기능 이름 요약: 켜진 기능은 굵게·진하게, 꺼진 기능은 옅게(11-04 소장님 "구분감 있게"). */
+    features: List<Pair<String, Boolean>>,
     expanded: Boolean,
     modifier: Modifier = Modifier,
     onToggle: () -> Unit,
@@ -485,8 +499,26 @@ private fun CategoryCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
-                Text(summary, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Spacer(Modifier.width(6.dp))
+                    Text(count, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                }
+                val summary = remember(features, c.ink, c.muted) {
+                    androidx.compose.ui.text.buildAnnotatedString {
+                        features.forEachIndexed { i, (name, on) ->
+                            if (i > 0) withStyle(androidx.compose.ui.text.SpanStyle(color = c.muted.copy(alpha = 0.5f))) { append(" · ") }
+                            withStyle(
+                                if (on) {
+                                    androidx.compose.ui.text.SpanStyle(color = c.ink, fontWeight = FontWeight.Bold)
+                                } else {
+                                    androidx.compose.ui.text.SpanStyle(color = c.muted.copy(alpha = 0.55f))
+                                }
+                            ) { append(com.labok.goat.ui.liquid.keepAll(name)) }
+                        }
+                    }
+                }
+                androidx.compose.material3.Text(summary, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             val turn by animateFloatAsState(if (expanded) 180f else 0f, label = "chevron")
             Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
@@ -518,6 +550,11 @@ private fun CategoryRow(item: NavItem, status: String, on: Boolean, onClick: (Of
             .padding(top = 9.dp, bottom = 9.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // 기능마다 아이콘(11-04): 켜진 기능은 잉크 바탕에 흰 아이콘, 꺼진 기능은 옅은 바탕
+        Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(if (on) c.ink else c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
+            com.labok.goat.ui.nav.NavGlyph(item.icon, if (on) c.bg else c.ink.copy(alpha = 0.7f), Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(Gap.Title))
         Column(Modifier.weight(1f)) {
             Text(item.label, color = c.ink, style = MaterialTheme.typography.bodyLarge)
             Text(status, color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)

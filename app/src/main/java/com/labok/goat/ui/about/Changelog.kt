@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.48.3",
+        "2026-11-04",
+        "새 홈 화면을 시험합니다(시험 버전).",
+        listOf(
+            "변경" to listOf(
+                "홈 화면: 카테고리 줄마다 기능 아이콘과 (켜짐/전체) 개수를 넣고, 요약 줄에서 켜진 기능은 굵게, 꺼진 기능은 옅게 구분했습니다. 자주 쓰는 기능과 카테고리는 '전체' 보기에서만 보이고, 활성화·비활성화 보기는 기능 타일만 보입니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.48.2",
         "2026-11-04",
         "새 홈 화면을 시험합니다(시험 버전).",
