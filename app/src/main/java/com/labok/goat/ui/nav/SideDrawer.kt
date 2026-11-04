@@ -124,15 +124,6 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 상태 표시줄의 고른 아이콘을 숨긴다(시스템 설정 권한, 실험실에서 정식으로). */
     STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.EYE_OFF),
 
-    /** 숨은 실험실: 염소를 열 번 누르면 나타난다(시험 중인 기능을 둔다). */
-    LAB_SCREEN(Copy.FEATURE_LAB_SCREEN, NavIcon.PALETTE),
-
-    /** 실험실: 고른 앱을 세로로 길고 좁게(16:9) 띄우고 양옆을 검은 여백으로 둔다(Shizuku, 앱 호환성 설정). */
-    LAB_NARROW(Copy.FEATURE_LAB_NARROW, NavIcon.NARROW),
-
-    /** 실험실: 상단바를 두 번 누르면 지금 앱을 맨 위로 올린다(접근성 서비스). */
-    LAB_SCROLL_TOP(Copy.FEATURE_LAB_SCROLL_TOP, NavIcon.TOP),
-
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 
@@ -142,7 +133,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 앰비언트 모드(텐트 모드와 합침). 펼칠 때·세워 둘 때 안쪽 화면이 바깥 화면 색 간접등이 된다. */
     LAB_AMBIENT(Copy.FEATURE_LAB_AMBIENT, NavIcon.GLOW),
 
-    /** 실험실: 긴 글을 붙여넣으면 TXT 파일로 만들어 공유한다(다른 앱 공유 메뉴의 'TXT로 공유'와 같은 일). */
+    /** 긴 글을 붙여넣으면 TXT 파일로 만들어 공유한다(다른 앱 공유 메뉴의 'TXT로 공유'와 같은 일, 1.49.0 실험실에서 정식으로). 열어 본 횟수 기록이 이름에 묶여 있어 이름은 그대로 둔다. */
     LAB_NOTE(Copy.FEATURE_LAB_NOTE, NavIcon.NOTE),
 
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */
@@ -151,11 +142,11 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_SCREEN, LAB_NARROW, LAB_SCROLL_TOP, LAB_BATTERY, LAB_AMBIENT, LAB_NOTE, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_BATTERY, LAB_AMBIENT, LAB_TOOLS)
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, PALETTE, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR, NARROW, TOP, GLOW }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR, GLOW }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -392,7 +383,7 @@ private fun DrawerRow(
         Spacer(Modifier.width(14.dp))
         Text(item.label, color = fg, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
         // 목적별 칸에 섞어 둔 실험실 기능은 이름 옆에 작게 '실험'(11-03 카테고리 재편)
-        if (item in NavItem.LAB_ITEMS && item != NavItem.LAB_TOOLS && item != NavItem.LAB_NOTE) {
+        if (item in NavItem.LAB_ITEMS && item != NavItem.LAB_TOOLS) {
             Spacer(Modifier.width(6.dp))
             Text(Copy.NAV_LAB_TAG, color = fg.copy(alpha = 0.6f), style = MaterialTheme.typography.labelSmall)
         }
@@ -425,15 +416,12 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.FLASK -> flask(color, s)
             NavIcon.AIRPLANE -> airplane(color, s)
             NavIcon.EYE_OFF -> eyeOff(color, s)
-            NavIcon.PALETTE -> palette(color, s)
             NavIcon.FLEX -> flex(color, s)
             NavIcon.BATTERY -> battery(color, s)
             NavIcon.NOTE -> note(color, s)
             NavIcon.VOLUME -> volume(color, s)
             NavIcon.INFO -> info(color, s)
             NavIcon.GEAR -> gear(color, s)
-            NavIcon.NARROW -> narrow(color, s)
-            NavIcon.TOP -> top(color, s)
             NavIcon.GLOW -> glow(color, s)
         }
     }
@@ -645,27 +633,6 @@ private fun DrawScope.pixels(c: Color, s: Stroke) {
     drawRoundRect(c.copy(alpha = 0.5f), p(15.4f, 9.4f), Size(u(1.8f), u(1.8f)), r)
 }
 
-/** 앱 폭 좁히기: 화면 테두리 안에 세로로 좁은 앱, 양옆은 채운 여백. */
-private fun DrawScope.narrow(c: Color, s: Stroke) {
-    drawRoundRect(c, p(3.5f, 2.5f), Size(u(17f), u(19f)), CornerRadius(u(2.6f)), style = s)
-    drawRoundRect(c, p(8.5f, 5.5f), Size(u(7f), u(13f)), CornerRadius(u(1.2f)), style = s)
-    val bar = c.copy(alpha = 0.45f)
-    drawRect(bar, p(5.5f, 4.5f), Size(u(1.6f), u(15f)))
-    drawRect(bar, p(16.9f, 4.5f), Size(u(1.6f), u(15f)))
-}
-
-/** 맨 위로 가기: 위쪽 가로줄과 그 줄로 올라가는 화살표. */
-private fun DrawScope.top(c: Color, s: Stroke) {
-    drawLine(c, p(5f, 4.5f), p(19f, 4.5f), s.width, StrokeCap.Round)
-    drawLine(c, p(12f, 9f), p(12f, 20f), s.width, StrokeCap.Round)
-    val head = Path().apply {
-        moveTo(u(7f), u(14f))
-        lineTo(u(12f), u(9f))
-        lineTo(u(17f), u(14f))
-    }
-    drawPath(head, c, style = s)
-}
-
 /** 정보: 원 안의 i. */
 private fun DrawScope.info(c: Color, s: Stroke) {
     drawCircle(c, u(9f), p(12f, 12f), style = s)
@@ -788,14 +755,6 @@ private fun DrawScope.eyeOff(c: Color, s: Stroke) {
     drawPath(eye, c, style = s)
     drawCircle(c, u(2.8f), p(12f, 12f), style = s)
     drawLine(c, p(4.2f, 3.8f), p(19.8f, 20.2f), s.width, StrokeCap.Round)
-}
-
-/** 실험실 화면 모드: 화면 틀 안의 반쪽 칠한 원(색 모드). */
-private fun DrawScope.palette(c: Color, s: Stroke) {
-    drawRoundRect(c, p(3f, 4.5f), Size(u(18f), u(13f)), CornerRadius(u(2.2f)), style = s)
-    drawLine(c, p(9f, 20.5f), p(15f, 20.5f), s.width, StrokeCap.Round)
-    drawCircle(c, u(3.6f), p(12f, 11f), style = s)
-    drawArc(c, 90f, 180f, true, p(8.4f, 7.4f), Size(u(7.2f), u(7.2f)))
 }
 
 /**

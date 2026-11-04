@@ -249,10 +249,9 @@
             android:name=".ui.lab.FlexTestActivity"
             android:exported="false"
             android:configChanges="density|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden" />
-        <!-- 실험실: 다른 앱 공유 메뉴의 'TXT로 공유'. 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
+        <!-- 다른 앱 공유 메뉴의 'TXT로 공유'(1.49.0 정식). 옛 판이 꺼 둔 상태가 남지 않게 앱 시작 때 켠다(MemoShare.setShareTarget) -->
         <activity
             android:name=".ui.lab.MemoShareActivity"
-            android:enabled="false"
             android:exported="true"
             android:excludeFromRecents="true"
             android:label="TXT로 공유"
@@ -264,7 +263,7 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-        <!-- 실험실: 클립보드 글을 TXT로 공유하는 투명 화면(빠른 설정 타일·아이콘 길게 누른 바로가기에서 연다) -->
+        <!-- 클립보드 글을 TXT로 공유하는 투명 화면(빠른 설정 타일·아이콘 길게 누른 바로가기에서 연다) -->
         <activity
             android:name=".ui.lab.ClipShareActivity"
             android:exported="true"
@@ -286,10 +285,9 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-        <!-- 실험실: 빠른 설정 타일 'TXT로 공유'. 실험실을 열었을 때만 켠다(MemoShare.setShareTarget) -->
+        <!-- 빠른 설정 타일 'TXT로 공유'(1.49.0 정식) -->
         <service
             android:name=".ui.lab.TxtShareTileService"
-            android:enabled="false"
             android:exported="true"
             android:icon="@drawable/ic_tile_txt"
             android:label="TXT로 공유"
@@ -310,19 +308,6 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/volume_rotate_service" />
-        </service>
-        <!-- 상단바 제스처(접근성 서비스): 두 번 누르기 맨 위로, 꾹 누르기 앱 폭 좁히기. GOAT가 시스템 설정 권한으로 켜고 끈다(StatusGestures) -->
-        <service
-            android:name=".data.lab.StatusGestureService"
-            android:exported="true"
-            android:label="@string/status_gesture_label"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/status_gesture_service" />
         </service>
         <!-- 공유용 임시 파일(실험실 TXT로 공유) -->
         <provider

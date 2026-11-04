@@ -115,11 +115,8 @@ import com.labok.goat.ui.lab.LabAirplaneScreen
 import com.labok.goat.ui.lab.LabBatteryScreen
 import com.labok.goat.ui.lab.LabFlexScreen
 import com.labok.goat.ui.lab.LabIconsScreen
-import com.labok.goat.ui.lab.LabNarrowScreen
 import com.labok.goat.ui.lab.LabNoteScreen
 import com.labok.goat.ui.lab.LabScreen
-import com.labok.goat.ui.lab.LabScreenModeScreen
-import com.labok.goat.ui.lab.LabScrollTopScreen
 import com.labok.goat.ui.lab.StatusIconsHelpSheet
 import com.labok.goat.ui.liquid.LiquidMenu
 import com.labok.goat.ui.liquid.LiquidToast
@@ -298,7 +295,7 @@ internal fun HomeScreen(
         // 이 기기에서 쓸 수 없는 기능은 숨긴다(실험실을 열면 모두 보인다, [FeatureSupport])
         FeatureSupport.version
         // 11-03 소장님 "카테고리화로 접근성 높이고 직관적으로": 사용자가 하고 싶은 일로 묶는다. 실험실 기능(염소 열 번)은 따로 모으지 않고
-        // 목적이 같은 칸 끝에 '실험' 표시를 달아 둔다. 실험실 칸에는 기능이 아닌 도구(TXT로 공유·조사 도구)만 남긴다.
+        // 목적이 같은 칸 끝에 '실험' 표시를 달아 둔다. 실험실 칸에는 조사 도구만 남긴다.
         // 이 기기에서 쓸 수 없는 기능은 숨기고(실험실을 열면 모두 보인다), 비는 칸은 칸째 숨긴다(폴드가 아니면 '폴더블' 칸이 없다)
         val lab = LabUnlock.unlocked
         fun labOf(item: NavItem) = item.takeIf { lab }
@@ -309,18 +306,19 @@ internal fun HomeScreen(
                 if (shown.isNotEmpty()) add(NavSection(title, shown))
             }
             // 화면 크기: 글자·화면이 크다/작다
-            section(Copy.MENU_SECTION_SCREEN, NavItem.DPI_MATCH, NavItem.APP_SIZE, NavItem.RESOLUTION, labOf(NavItem.LAB_NARROW))
+            section(Copy.MENU_SECTION_SCREEN, NavItem.DPI_MATCH, NavItem.APP_SIZE, NavItem.RESOLUTION)
             // 화면 표시: 부드러움(주사율·애니메이션)과 색(다크)
-            section(Copy.MENU_SECTION_DISPLAY, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK, labOf(NavItem.LAB_SCREEN))
+            section(Copy.MENU_SECTION_DISPLAY, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK)
             // 상단바·조작: 손으로 다루는 것(상단바·회전·버튼)
-            section(Copy.MENU_SECTION_TOOLS, NavItem.STATUS_ICONS, NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE, labOf(NavItem.LAB_SCROLL_TOP))
+            section(Copy.MENU_SECTION_TOOLS, NavItem.STATUS_ICONS, NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE)
             // 폴더블: 접는 폰에서만
             section(Copy.MENU_SECTION_FOLD, NavItem.AUTO_FLEX, labOf(NavItem.LAB_AMBIENT))
             section(Copy.MENU_SECTION_SYSTEM, NavItem.GOS, NavItem.DOZE, labOf(NavItem.LAB_BATTERY))
             section(Copy.MENU_SECTION_SOUND, NavItem.CAMERA_MUTE, NavItem.AIRPLANE)
             section(Copy.MENU_SECTION_CLEAN, NavItem.APP_CLEANUP)
-            // 실험실: 도구만. lab 빌드는 잠금과 상관없이 조사 도구를 보인다
-            section(Copy.MENU_SECTION_LAB, labOf(NavItem.LAB_NOTE), NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || lab })
+            section(Copy.MENU_SECTION_SHARE, NavItem.LAB_NOTE)
+            // 실험실: 조사 도구만. lab 빌드는 잠금과 상관없이 보인다
+            section(Copy.MENU_SECTION_LAB, NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || lab })
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
         val common = { help: Sheet, guide: Sheet, reset: Sheet ->
@@ -409,11 +407,7 @@ internal fun HomeScreen(
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
                 Copy.MENU_REPORT to report
             )
-            NavItem.LAB_NARROW -> listOf(
-                Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
-                Copy.MENU_REPORT to report
-            )
-            NavItem.LAB_SCREEN, NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_AMBIENT, NavItem.LAB_NOTE, NavItem.LAB_SCROLL_TOP -> listOf(Copy.MENU_REPORT to report)
+            NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_AMBIENT, NavItem.LAB_NOTE -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -587,10 +581,7 @@ internal fun HomeScreen(
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.AIRPLANE -> LabAirplaneScreen(inner)
                             NavItem.STATUS_ICONS -> LabIconsScreen(inner)
-                            NavItem.LAB_SCREEN -> LabScreenModeScreen(inner)
                             NavItem.AUTO_FLEX -> LabFlexScreen(inner)
-                            NavItem.LAB_NARROW -> LabNarrowScreen(inner)
-                            NavItem.LAB_SCROLL_TOP -> LabScrollTopScreen(inner)
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                             NavItem.LAB_BATTERY -> LabBatteryScreen(inner)
                             NavItem.LAB_AMBIENT -> AmbientScreen(inner)

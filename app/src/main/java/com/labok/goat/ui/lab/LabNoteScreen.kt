@@ -52,7 +52,7 @@ import kotlinx.coroutines.withContext
 private const val PASTE_MIN_CHARS = 30
 
 /**
- * 실험실 TXT로 공유: 긴 글을 붙여넣으면 곧바로 임시 txt 파일로 저장해 공유 창을 연다([MemoShare]).
+ * TXT로 공유(1.49.0 정식): 긴 글을 붙여넣으면 곧바로 임시 txt 파일로 저장해 공유 창을 연다([MemoShare]).
  * 공유를 마치고 돌아오면 파일과 글을 지운다. [붙여넣고 공유]는 클립보드 글을 한 번에 처리하고,
  * 입력란에 직접 붙여넣어도(한 번에 [PASTE_MIN_CHARS]자 이상 늘면) 같은 일을 한다.
  */

@@ -4,15 +4,10 @@ import android.Manifest
 import android.app.AppOpsManager
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
-import android.os.SystemClock
 import android.provider.Settings
-import android.view.InputDevice
-import android.view.MotionEvent
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.appsize.AppUsage
@@ -20,7 +15,6 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.AppDensityPolicy
 import java.io.InputStream
 import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -195,87 +189,8 @@ object ShizukuAccess {
         FocusedTask(top?.packageName, info.javaClass.getField("displayId").getInt(info), mode, base?.packageName ?: top?.packageName, home = type == 2 || type == 3)
     }.getOrNull()
 
-    /**
-     * 맨 앞 앱이 레터박스로 좁혀져 있는지(셸 권한, 작업 스레드). 안드로이드 14는 TaskInfo.topActivityBoundsLetterboxed,
-     * 15 이상은 appCompatTaskInfo 안에 있다. 못 읽으면 null.
-     */
-    fun focusedLetterboxed(): Boolean? = runCatching {
-        val atm = atm()
-        val info = atm.javaClass.methods.first { it.name == "getFocusedRootTaskInfo" && it.parameterTypes.isEmpty() }.invoke(atm) ?: return null
-        runCatching { info.javaClass.getField("topActivityBoundsLetterboxed").getBoolean(info) }.getOrNull()
-            ?: run {
-                val compat = info.javaClass.getField("appCompatTaskInfo").get(info) ?: return null
-                runCatching { compat.javaClass.getMethod("isTopActivityLetterboxed").invoke(compat) as Boolean }.getOrNull()
-                    ?: runCatching { compat.javaClass.getField("topActivityBoundsLetterboxed").getBoolean(compat) }.getOrNull()
-            }
-    }.getOrNull()
-
-    /**
-     * 맨 앞 작업의 좁혀진 앱 화면 크기(가로, 세로 px, 셸 권한, 작업 스레드). 좁혀지지 않았거나 못 읽으면 null.
-     * 안드로이드 16은 topActivityLetterboxBounds(Rect), 15는 topActivityLetterboxWidth/Height로 준다.
-     */
-    fun focusedLetterboxSize(): Pair<Int, Int>? = runCatching {
-        val atm = atm()
-        val info = atm.javaClass.methods.first { it.name == "getFocusedRootTaskInfo" && it.parameterTypes.isEmpty() }.invoke(atm) ?: return null
-        val compat = runCatching { info.javaClass.getField("appCompatTaskInfo").get(info) }.getOrNull()
-        listOfNotNull(compat, info).firstNotNullOfOrNull { o ->
-            runCatching { (o.javaClass.getField("topActivityLetterboxBounds").get(o) as Rect?)?.let { it.width() to it.height() } }.getOrNull()
-                ?: runCatching { o.javaClass.getField("topActivityLetterboxWidth").getInt(o) to o.javaClass.getField("topActivityLetterboxHeight").getInt(o) }.getOrNull()
-        }?.takeIf { (w, h) -> w > 0 && h > 0 }
-    }.getOrNull()
-
-    /** 최근 작업 하나: 작업 번호와 앱. */
-    data class RecentTask(val taskId: Int, val pkg: String)
-
-    /** 최근에 연 작업(최근 순, 셸 권한, 작업 스레드). 같은 앱은 하나만. 못 읽으면 빈 목록. */
-    fun recentTasks(max: Int): List<RecentTask> = runCatching {
-        val atm = atm()
-        val get = atm.javaClass.methods.first { it.name == "getRecentTasks" && it.parameterTypes.size == 3 }
-        // 2 = RECENT_IGNORE_UNAVAILABLE, 4 = RECENT_WITH_EXCLUDED 없이 보이는 것만
-        val slice = get.invoke(atm, max * 3, 2, UserId.current()) ?: return emptyList()
-        val list = slice.javaClass.getMethod("getList").invoke(slice) as List<*>
-        list.mapNotNull { t ->
-            t ?: return@mapNotNull null
-            val id = t.javaClass.getField("taskId").getInt(t)
-            val base = t.javaClass.getField("baseIntent").get(t) as Intent?
-            val pkg = base?.component?.packageName ?: return@mapNotNull null
-            RecentTask(id, pkg)
-        }.distinctBy { it.pkg }.take(max)
-    }.getOrDefault(emptyList())
-
-    /** 최근 작업 [taskId]로 바꾼다(셸 권한, 작업 스레드). 됐으면 true. */
-    fun openRecent(taskId: Int): Boolean = runCatching {
-        val atm = atm()
-        val start = atm.javaClass.methods.first { it.name == "startActivityFromRecents" && it.parameterTypes.size == 2 }
-        (start.invoke(atm, taskId, null) as Int) >= 0
-    }.getOrDefault(false)
-
-    /** 맨 앞(포커스된) 작업이 있는 화면 번호(셸 권한, 작업 스레드). 폴드는 접고 펼 때 앱이 다른 화면으로 옮겨 간다. 못 읽으면 null. */
-    fun focusedDisplay(): Int? = runCatching {
-        val atm = atm()
-        val info = atm.javaClass.methods.first { it.name == "getFocusedRootTaskInfo" && it.parameterTypes.isEmpty() }.invoke(atm) ?: return null
-        info.javaClass.getField("displayId").getInt(info)
-    }.getOrNull()
-
     /** 앱 호환성 설정 서비스(셸 권한). `am compat` 명령 대신 앱마다 한 번의 호출로 설정을 건다(명령은 앱당 수백 ms, 이것은 2ms 안팎). */
     private fun platformCompat(): Any = HiddenApi.asInterface("com.android.internal.compat.IPlatformCompat", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("platform_compat")))
-
-    /**
-     * [pkg]에 호환성 설정을 건다(셸 권한, 작업 스레드): [enabled]는 켜고 [disabled]는 끈다. 앱을 닫지 않는다(setOverridesForTest,
-     * `am compat --no-kill`과 같은 호출). 이 기기에 없는 설정 번호가 섞여 거절되면 그 번호를 빼고 다시 건다. 됐으면 true.
-     */
-    fun setCompat(pkg: String, enabled: Set<Long>, disabled: Set<Long>, optional: Set<Long> = emptySet()): Boolean {
-        fun attempt(en: Set<Long>, dis: Set<Long>) = runCatching {
-            HiddenApi.exemptAll()
-            val pc = platformCompat()
-            val changeConfig = Class.forName("android.compat.Compatibility\$ChangeConfig")
-            val cfg = changeConfig.getConstructor(Set::class.java, Set::class.java).newInstance(en, dis)
-            val ccc = Class.forName("com.android.internal.compat.CompatibilityChangeConfig").getConstructor(changeConfig).newInstance(cfg)
-            pc.javaClass.methods.first { it.name == "setOverridesForTest" && it.parameterTypes.size == 2 }.invoke(pc, ccc, pkg)
-            true
-        }.getOrDefault(false)
-        return attempt(enabled, disabled) || attempt(enabled - optional, disabled - optional)
-    }
 
     /** [pkg]의 호환성 설정을 모두 지운다(셸 권한, 작업 스레드, 앱을 닫지 않음). 됐으면 true. */
     fun clearCompat(pkg: String): Boolean = runCatching {
@@ -283,37 +198,6 @@ object ShizukuAccess {
         val pc = platformCompat()
         pc.javaClass.methods.first { it.name == "clearOverridesForTest" && it.parameterTypes.size == 1 }.invoke(pc, pkg)
         true
-    }.getOrDefault(false)
-
-    /** 입력 관리자(셸 권한). 손가락 쓸기를 보낼 때 쓴다([injectSwipe]). */
-    private fun input(): Any = HiddenApi.asInterface("android.hardware.input.IInputManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("input")))
-
-    private fun injector(): Pair<Any, Method> {
-        val im = input()
-        return im to im.javaClass.methods.first { it.name == "injectInputEvent" && it.parameterTypes.size == 2 }
-    }
-
-    /**
-     * 화면 [displayId]의 ([x1], [y1])에서 ([x2], [y2])로 [ms] 동안 손가락으로 쓸어 넘긴다(셸 권한, 작업 스레드, 끝날 때까지 기다림).
-     * 쇼츠·릴스를 위아래로, 게시판 글을 좌우로 넘길 때 쓴다. 보냈으면 true.
-     */
-    fun injectSwipe(displayId: Int, x1: Float, y1: Float, x2: Float, y2: Float, ms: Long = 160): Boolean = runCatching {
-        val (im, inject) = injector()
-        val setDisplay = MotionEvent::class.java.methods.firstOrNull { it.name == "setDisplayId" && it.parameterTypes.size == 1 }
-        val down = SystemClock.uptimeMillis()
-        val steps = 8
-        fun send(action: Int, x: Float, y: Float, at: Long): Boolean {
-            val e = MotionEvent.obtain(down, at, action, x, y, 0)
-            e.source = InputDevice.SOURCE_TOUCHSCREEN
-            setDisplay?.invoke(e, displayId)
-            return (inject.invoke(im, e, 2) == true).also { e.recycle() }
-        }
-        var ok = send(MotionEvent.ACTION_DOWN, x1, y1, down)
-        for (i in 1..steps) {
-            Thread.sleep(ms / steps)
-            ok = ok && send(MotionEvent.ACTION_MOVE, x1 + (x2 - x1) * i / steps, y1 + (y2 - y1) * i / steps, SystemClock.uptimeMillis())
-        }
-        ok && send(MotionEvent.ACTION_UP, x2, y2, SystemClock.uptimeMillis())
     }.getOrDefault(false)
 
     private fun call(name: String, size: Int, vararg args: Any): Any? {

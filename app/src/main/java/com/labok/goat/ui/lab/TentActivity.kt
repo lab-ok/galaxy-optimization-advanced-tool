@@ -23,7 +23,6 @@ import androidx.window.area.WindowAreaPresentationSessionCallback
 import androidx.window.area.WindowAreaSessionPresenter
 import androidx.window.core.ExperimentalWindowApi
 import com.labok.goat.data.lab.AutoFlex
-import com.labok.goat.data.lab.StatusGestureService
 import com.labok.goat.data.lab.TentMode
 import com.labok.goat.data.log.DiagnosticReport
 import com.labok.goat.data.log.LogRepository
@@ -129,7 +128,6 @@ class TentActivity : ComponentActivity() {
             withContext(Dispatchers.IO) {
                 val states = TentMode.states()
                 note("기기 상태: " + (states?.let { st -> Regex("identifier=(\\d+), name='([^']*)'").findAll(st).joinToString { "${it.groupValues[1]}:${it.groupValues[2]}" } } ?: "읽지 못함"))
-                note("GOAT 접근성 서비스: ${if (StatusGestureService.current != null) "켜짐" else "꺼짐(Presentation은 이 화면 문맥으로 시도)"}")
                 stepA(::note)
                 stepB(::note)
                 stepC(::note)
@@ -200,7 +198,7 @@ class TentActivity : ComponentActivity() {
     private fun showOn(displayId: Int, view: View, note: (String) -> Unit): Any {
         val p = TentMode.addPresentation(this, displayId, view)
         if (p is Function0<*>) {
-            note("Presentation으로 띄움(${if (StatusGestureService.current != null) "접근성 서비스" else "이 화면"})")
+            note("Presentation으로 띄움")
             return p
         }
         note("Presentation 실패: $p")

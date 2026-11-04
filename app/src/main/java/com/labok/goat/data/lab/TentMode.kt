@@ -101,11 +101,10 @@ object TentMode {
 
     /**
      * [displayId] 화면에 Presentation 창으로 [view]를 꽉 차게 띄운다. 두 화면 동시 표시 상태의 둘째 화면은 Presentation 화면이라
-     * (FLAG_PRESENTATION) 앱이 그릴 수 있다. 접근성 서비스(GOAT 상단바 제스처)가 켜져 있으면 그 문맥으로 띄워 다른 앱이 앞에 와도 남게 하고,
-     * 없으면 [context]로 띄운다. 성공하면 닫는 함수, 실패하면 이유 문자열. 메인 스레드에서 부른다.
+     * (FLAG_PRESENTATION) 앱이 그릴 수 있다. [context]로 띄운다. 성공하면 닫는 함수, 실패하면 이유 문자열. 메인 스레드에서 부른다.
      */
     fun addPresentation(context: Context, displayId: Int, view: View, bright: Boolean = false): Any = runCatching {
-        val owner: Context = StatusGestureService.current ?: context
+        val owner: Context = context
         val d = owner.getSystemService(DisplayManager::class.java).getDisplay(displayId) ?: error("화면 $displayId 없음")
         val p = Presentation(owner, d, android.R.style.Theme_Material_NoActionBar).apply {
             (view.parent as? ViewGroup)?.removeView(view)

@@ -8,7 +8,6 @@ import androidx.compose.runtime.setValue
 import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.LabUnlock
-import com.labok.goat.data.lab.NarrowApps
 import com.labok.goat.data.tweaks.RefreshRate
 import com.labok.goat.data.tweaks.Resolution
 
@@ -43,7 +42,6 @@ object FeatureSupport {
         NavItem.REFRESH -> !RefreshRate.supported(context)
         NavItem.RESOLUTION -> !Resolution.supported(context)
         NavItem.AUTO_FLEX -> !AutoFlex.supported()
-        NavItem.LAB_NARROW -> !NarrowApps.supported()
         NavItem.APP_SIZE -> DensityShell.rejected(context) || noted(context, item)
         NavItem.GOS, NavItem.CAMERA_MUTE -> noted(context, item)
         else -> false

@@ -141,31 +141,6 @@ object IconBlacklist {
 }
 
 /**
- * 화면 모드(삼성 디스플레이 색 모드). 삼성은 `system.screen_mode_setting`에 값(0~4)을 두는 것으로 알려져 있지만
- * 값의 뜻은 기종·One UI마다 달라 확정하지 못했다(갤러리에도 근거 없음). 그래서 실험실에서는 이 기기에 있는 키와
- * 지금 값을 보여 주고, 값을 하나씩 바꿔 보며 화면을 확인한 뒤 언제든 처음 값으로 되돌리게 한다.
- * 삼성이 아닌 기기(픽셀 등)는 안드로이드 공통 `secure.display_color_mode`(0 자연, 1 향상, 2 채도, 3 자동)를 쓴다.
- */
-object ScreenMode {
-    val samsung = LabSetting("system", "screen_mode_setting", "화면 모드(삼성)")
-    val aosp = LabSetting("secure", "display_color_mode", "화면 색 모드")
-
-    /**
-     * 고를 수 있는 값. 삼성 값의 뜻은 삼성 프레임워크 SemMdnieManager 상수에서 확인했다:
-     * 0 AMOLED 시네마, 1 AMOLED 사진, 2 기본, 3 자연, 4 적응형(설정 앱의 '선명한 화면'), 5 읽기.
-     */
-    val SAMSUNG_VALUES = listOf("4", "3", "0", "1", "2", "5")
-    val AOSP_VALUES = listOf("0" to "자연", "1" to "향상", "2" to "채도", "3" to "자동")
-
-    /** 이 기기에서 쓸 설정: 삼성 키가 있으면 삼성, 아니면 공통 키. 둘 다 없으면 null. */
-    fun active(context: Context): LabSetting? = when {
-        samsung.read(context) != null -> samsung
-        aosp.read(context) != null -> aosp
-        else -> null
-    }
-}
-
-/**
  * 예전 실험실 '빠른 설정 타일 격자'(1.14.1~1.15.2)가 바꿨던 설정 키. One UI 8.5(안드로이드 17) 실기기는 이 키들을 읽지 않았고,
  * 시스템 UI 리소스 오버레이는 루트가 아닌 셸(Shizuku)에 막혀(Non-root shell cannot fabricate overlays) 실험을 접었다(2026-10-18).
  * 앱을 켤 때 바꿔 둔 값이 남아 있으면 처음 값으로 되돌린다([restoreLeftovers]).

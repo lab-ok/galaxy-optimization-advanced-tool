@@ -46,10 +46,8 @@ import com.labok.goat.data.lab.AirplaneRadios
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.LabSetting
 import com.labok.goat.data.lab.PrivacyDot
-import com.labok.goat.data.lab.ScreenMode
 import com.labok.goat.data.lab.StatusBarHider
 import com.labok.goat.data.shizuku.ShizukuAccess
-import com.labok.goat.ui.appsize.Section
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
@@ -57,7 +55,6 @@ import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
-import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
@@ -65,7 +62,6 @@ import com.labok.goat.ui.nav.NewBadge
 import com.labok.goat.ui.nav.NewTag
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -248,70 +244,6 @@ private fun PrivacyDotGlyph(color: Color, size: Dp = 22.dp) {
         drawCircle(color, 2.6f * u, Offset(19.5f * u, 4.5f * u))
     }
 }
-
-/** 화면 모드(디스플레이 색 모드) 값 바꿔 보기. */
-@Composable
-internal fun LabScreenModeScreen(contentPadding: PaddingValues) {
-    val c = LocalLiquid.current
-    val context = LocalContext.current
-    val w = rememberLabWriter()
-    LabPage(contentPadding) {
-        val setting = remember(w.version) { ScreenMode.active(context) }
-        val now = remember(w.version) { setting?.read(context) }
-        Text(Copy.LAB_SCREEN_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-        // 쓸 수 없는 기기에서는 [처음대로]를 말하는 안내 대신 쓸 수 없다는 줄만 보인다
-        if (setting != null) Text(Copy.LAB_SCREEN_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(Gap.Item))
-        if (setting == null) {
-            Text(Copy.LAB_SCREEN_NONE, color = c.muted, style = MaterialTheme.typography.bodySmall)
-            return@LabPage
-        }
-        Text("${setting.key} = ${now ?: "-"}", color = c.ink, style = MaterialTheme.typography.labelMedium)
-        Spacer(Modifier.height(Gap.Item))
-        val samsung = setting === ScreenMode.samsung
-        val values = if (samsung) ScreenMode.SAMSUNG_VALUES.map { it to (SAMSUNG_MODE_NAMES[it] ?: it) } else ScreenMode.AOSP_VALUES
-        LiquidChips(
-            options = values.map { it.first },
-            selected = now ?: "",
-            label = { v -> values.first { it.first == v }.second },
-            onSelect = { w.write(setting, it) }
-        )
-        if (samsung) {
-            Spacer(Modifier.height(Gap.Item))
-            SAMSUNG_MODE_DESCS[now]?.let { Text(it, color = c.ink, style = MaterialTheme.typography.bodySmall) }
-            Text(Copy.LAB_SCREEN_TRY, color = c.muted, style = MaterialTheme.typography.bodySmall)
-        }
-        Spacer(Modifier.height(Gap.Item))
-        val changed = remember(w.version) { setting.changed(context) }
-        LiquidButton(Copy.LAB_RESTORE, primary = false, enabled = changed, disabledHint = Copy.DISABLED_NOTHING_CHANGED, modifier = Modifier.fillMaxWidth(), onClick = { w.restore(setting) })
-        RestoreNotice(w)
-        if (samsung) {
-            Spacer(Modifier.height(Gap.Section))
-            Text(Copy.LAB_SCREEN_WHY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
-            listOf(Copy.LAB_SCREEN_WHY_1, Copy.LAB_SCREEN_WHY_2, Copy.LAB_SCREEN_WHY_3).forEach {
-                Text("· $it", color = c.muted, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-    }
-}
-
-/** 삼성 화면 모드 값별 이름과 설명([ScreenMode.SAMSUNG_VALUES]). */
-private val SAMSUNG_MODE_NAMES = mapOf(
-    "0" to Copy.LAB_SCREEN_MODE_0,
-    "1" to Copy.LAB_SCREEN_MODE_1,
-    "2" to Copy.LAB_SCREEN_MODE_2,
-    "3" to Copy.LAB_SCREEN_MODE_3,
-    "4" to Copy.LAB_SCREEN_MODE_4,
-    "5" to Copy.LAB_SCREEN_MODE_5
-)
-private val SAMSUNG_MODE_DESCS = mapOf(
-    "0" to Copy.LAB_SCREEN_DESC_0,
-    "1" to Copy.LAB_SCREEN_DESC_1,
-    "2" to Copy.LAB_SCREEN_DESC_2,
-    "3" to Copy.LAB_SCREEN_DESC_3,
-    "4" to Copy.LAB_SCREEN_DESC_4,
-    "5" to Copy.LAB_SCREEN_DESC_5
-)
 
 /** 상태 표시줄 아이콘 사용 방법(점 세 개 메뉴 → 사용 방법). */
 @Composable

@@ -36,9 +36,10 @@ class SettingsSearchTest {
     @Test
     fun hiddenFeaturesAreNotSearched() {
         val visible = all.filter { it !in NavItem.LAB_ITEMS }
-        // 실험실 기능(앱 폭 좁히기)은 실험실을 열기 전에는 검색되지 않는다. 자동 플렉스는 1.29.0에서 정식 기능이 되어 늘 검색된다
-        assertTrue(SettingsSearch.search("폭 좁히기", visible).isEmpty())
-        assertTrue(SettingsSearch.search("폭 좁히기", all).any { it.item == NavItem.LAB_NARROW })
+        // 실험실 기능(배터리 모니터링)은 실험실을 열기 전에는 검색되지 않는다. 자동 플렉스(1.29.0)·TXT로 공유(1.49.0)는 정식 기능이라 늘 검색된다
+        assertTrue(SettingsSearch.search("충전 기록", visible).isEmpty())
+        assertTrue(SettingsSearch.search("충전 기록", all).any { it.item == NavItem.LAB_BATTERY })
+        assertTrue(SettingsSearch.search("TXT로 공유", visible).any { it.item == NavItem.LAB_NOTE })
         assertTrue(SettingsSearch.search("까딱", visible).any { it.item == NavItem.AUTO_FLEX })
     }
 

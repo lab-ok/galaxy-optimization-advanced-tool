@@ -8,16 +8,13 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.UserManager
 import androidx.core.content.ContextCompat
-import com.labok.goat.background.GoatService
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.DpiManager
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.LabUnlock
-import com.labok.goat.data.lab.NarrowApps
-import com.labok.goat.data.lab.NarrowBar
 import com.labok.goat.data.lab.QsGrid
-import com.labok.goat.data.lab.StatusGestures
+import com.labok.goat.data.lab.RemovedLabCleanup
 import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.log.CrashRecorder
 import com.labok.goat.data.log.LogRepository
@@ -101,16 +98,12 @@ class App : Application() {
         Doze.watch(this)
         // 앱 다크 모드 강제: 재부팅으로 꺼지는 시스템 속성이라 부팅마다 한 번 Shizuku가 연결될 때 다시 켠다
         ForceDark.watch(this)
-        // 앱 폭 좁히기(실험실): 삼성이 부팅 때 호환성 설정을 지우므로 Shizuku가 연결될 때 고른 앱을 다시 건다
-        NarrowApps.watch(this)
+        // 1.49.0에서 없앤 앱 폭 좁히기·맨 위로 가기가 남긴 설정을 지운다
+        RemovedLabCleanup.watch(this)
         // 밝기 고정(실험실 자동 플렉스)이 자동 밝기를 꺼 둔 채 앱이 다시 시작됐으면 되돌린다
         AutoFlex.watchStuckBrightness(this)
         // 예전 업데이트가 듀얼 메신저·보안 폴더에도 깐 GOAT를 Shizuku가 연결되면 지운다(기본 사용자에서만)
         OtherUserCleanup.watch(this)
-        // 좁힌 앱 컨트롤러: 업데이트·강제 종료 뒤에도 상주 서비스가 맨 앞 앱을 따라가도록 다시 띄운다
-        if (NarrowBar.enabled(this)) GoatService.sync(this)
-        // 상단바 제스처(접근성 서비스): 강제 종료로 시스템이 뺐으면 다시 켠다
-        StatusGestures.restoreIfWanted(this)
         // 해상도 낮추기: 확인을 기다리던 중 앱이 다시 시작됐으면 남은 시간으로 이어 가거나 되돌린다
         Resolution.resume(this)
         // 대각선 직접 입력 기능을 없앴다(사용자 요청). 이전 버전 입력값이 남아 있으면 계산에서 빼기 위해 지운다.
