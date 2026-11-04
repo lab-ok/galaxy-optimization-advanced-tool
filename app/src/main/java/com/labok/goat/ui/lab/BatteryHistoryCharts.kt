@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -156,7 +157,8 @@ private fun LiquidBucketColumns(buckets: List<BatteryHistory.Bucket>, selected: 
     val fmtDay = stringResource(R.string.lab_battery_fmt_day)
     val fmtHour = stringResource(R.string.lab_battery_fmt_hour)
     val hourFmt = remember(daily, fmtDay, fmtHour) { SimpleDateFormat(if (daily) fmtDay else fmtHour, Locale.KOREA) }
-    val small = TextStyle(fontFamily = GalaxyFont, fontSize = 10.sp, color = c.muted)
+    // 눈금 글자는 글자 크기 설정을 따라 커지지 않게(그래프 칸은 그대로라 날짜끼리 겹쳤다)
+    val small = TextStyle(fontFamily = GalaxyFont, fontSize = (10f / LocalDensity.current.fontScale).sp, color = c.muted)
     val labelEvery = ((buckets.size + 3) / 4).coerceAtLeast(1)
     val graphDesc = stringResource(R.string.lab_battery_history_graph_desc)
     Canvas(
@@ -187,6 +189,7 @@ private fun LiquidBucketColumns(buckets: List<BatteryHistory.Bucket>, selected: 
             drawText(v, topLeft = Offset(chartW + 4.dp.toPx(), (y - v.size.height / 2f).coerceAtLeast(0f)))
         }
         drawLine(c.line, Offset(0f, chartH), Offset(chartW, chartH), 1.dp.toPx())
+        var labelEnd = -1f
         buckets.forEachIndexed { i, b ->
             val x = slotW * i + (slotW - colW) / 2
             val dim = selected != null && selected != i
@@ -218,7 +221,12 @@ private fun LiquidBucketColumns(buckets: List<BatteryHistory.Bucket>, selected: 
             }
             if (i % labelEvery == 0) {
                 val d = measurer.measure(hourFmt.format(Date(b.start)), small)
-                drawText(d, topLeft = Offset((slotW * i).coerceAtMost(chartW - d.size.width), size.height - d.size.height))
+                val lx = (slotW * i).coerceAtMost(chartW - d.size.width)
+                // 앞 눈금과 겹치면 건너뛴다
+                if (lx > labelEnd) {
+                    drawText(d, topLeft = Offset(lx, size.height - d.size.height))
+                    labelEnd = lx + d.size.width + 4.dp.toPx()
+                }
             }
         }
     }

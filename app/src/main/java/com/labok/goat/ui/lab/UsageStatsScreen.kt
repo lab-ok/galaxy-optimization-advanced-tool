@@ -2,11 +2,16 @@ package com.labok.goat.ui.lab
 
 import android.content.Context
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,18 +40,23 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.drawable.toBitmap
 import com.labok.goat.R
 import com.labok.goat.data.display.DeviceKind
 import com.labok.goat.data.lab.BatteryHistory
@@ -129,6 +139,7 @@ private val BATTERY_METRICS: List<Metric> get() = listOf(
     Metric(Copy.text(R.string.lab_stats_charge_start_avg), "%", Kind.PERCENT, StatIcon.PLUG) { it.chargeStartAvg }
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun UsageStatsScreen(contentPadding: PaddingValues) {
     val c = LocalLiquid.current
@@ -200,7 +211,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
             lines.forEach { Text(it, color = c.onInk, fontWeight = FontWeight.Bold, fontSize = 19.sp) }
             if (titles.isNotEmpty()) {
                 Spacer(Modifier.height(Gap.Item))
-                Row(horizontalArrangement = Arrangement.spacedBy(Gap.Tight)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Gap.Tight), verticalArrangement = Arrangement.spacedBy(Gap.Tight)) {
                     titles.forEach { t ->
                         Text(
                             t.name,
@@ -214,18 +225,39 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
             }
         }
         Spacer(Modifier.height(Gap.Card))
-        // 2. 숫자 표: 값, 평균, 비교 기준 대비 변화를 한 줄에
+        // 2. 숫자 표: 실제 값과 평균을 다른 칸(넓을 때)이나 다른 모양(좁을 때)으로 나눠 한눈에 구분되게
         val avgNote = if (r.days > 1) stringResource(R.string.lab_stats_avg_per_day) else v.avgRef?.let { stringResource(R.string.lab_stats_avg_recent, it.days) }
+        val nowCol = stringResource(
+            when (range) {
+                StatsRange.TODAY -> R.string.lab_stats_range_today
+                StatsRange.YESTERDAY -> R.string.lab_stats_range_yesterday
+                else -> R.string.lab_stats_col_total
+            }
+        )
+        val avgCol = if (r.days > 1) stringResource(R.string.lab_stats_col_avg_day) else v.avgRef?.let { stringResource(R.string.lab_stats_col_avg_recent, it.days) }
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
-            // 설명은 제목 아래 줄에(좁은 화면·큰 글자에서 제목이 꺾이지 않게)
             Text(stringResource(R.string.lab_stats_numbers_title), fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(listOfNotNull(avgNote, range.compare?.let { "▲▼ ${stringResource(it)}" }).joinToString(" · "), color = c.muted, style = MaterialTheme.typography.labelSmall)
-            GROUPS.forEach { (group, metrics) ->
-                val shown = metrics.filter { it.get(r) != null }
-                if (shown.isEmpty()) return@forEach
-                Spacer(Modifier.height(Gap.Item))
-                Text(group, color = c.muted, style = MaterialTheme.typography.labelSmall)
-                shown.forEach { m -> MetricRow(m, r, b, v.avgRef) }
+            BoxWithConstraints {
+                // 글자를 키우면 같은 폭에 들어가는 글자가 줄어든다: 글자 배율로 나눈 폭이 좁으면 두 칸 대신 쌓아 보여 준다
+                val table = maxWidth / LocalDensity.current.fontScale >= 300.dp
+                Column {
+                    if (table) {
+                        Spacer(Modifier.height(Gap.Item))
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Spacer(Modifier.weight(1f))
+                            Text(nowCol, color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.End, modifier = Modifier.widthIn(min = NOW_COL))
+                            if (avgCol != null) Text(avgCol, color = c.muted, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.End, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 12.dp).widthIn(min = AVG_COL))
+                        }
+                    }
+                    GROUPS.forEach { (group, metrics) ->
+                        val shown = metrics.filter { it.get(r) != null }
+                        if (shown.isEmpty()) return@forEach
+                        Spacer(Modifier.height(Gap.Item))
+                        Text(group, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                        shown.forEach { m -> MetricRow(m, r, b, v.avgRef, table, avgCol != null) }
+                    }
+                }
             }
             val missing = buildList {
                 if (r.volume == null) add(Copy.LAB_STATS_VOLUME_NEED)
@@ -243,7 +275,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
                 val active = v.trend.filter { it.second > 0 }
                 if (active.isNotEmpty()) {
                     val peak = active.maxBy { it.second }
-                    Text(stringResource(R.string.lab_stats_trend_summary, UsageFun.duration(active.sumOf { it.second } / active.size), peak.first, UsageFun.duration(peak.second)), color = c.muted, style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.lab_stats_trend_summary, statsDuration(active.sumOf { it.second } / active.size), peak.first, statsDuration(peak.second)), color = c.muted, style = MaterialTheme.typography.labelSmall)
                 }
                 Spacer(Modifier.height(Gap.Item))
                 TrendBars(v.trend)
@@ -258,7 +290,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
         // 4. 발견: 숫자끼리 엮어서 나온 것
         val topApps = remember(r) { UsageTally.top(context, r.apps, 5) }
         val topNotis = remember(r) { UsageTally.top(context, r.notis, 3) }
-        val facts = UsageFun.facts(r, topApps.firstOrNull(), topNotis.firstOrNull())
+        val facts = UsageFun.facts(r, topApps.firstOrNull()?.let { it.name to it.count }, topNotis.firstOrNull()?.let { it.name to it.count })
         if (facts.isNotEmpty()) {
             Spacer(Modifier.height(Gap.Card))
             GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
@@ -291,49 +323,95 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
     }
 }
 
-/** 숫자 표 한 줄: 이름 · 값(굵게), 아래에 평균과 변화. */
+private val NOW_COL = 76.dp
+private val AVG_COL = 68.dp
+
+/**
+ * 숫자 표 한 줄. [table]이면 이름 | 실제 값(굵게, 아래 ▲▼) | 평균(옅게) 세 칸,
+ * 아니면 이름 아래에 '평균' 표가 붙은 작은 상자, 오른쪽에 실제 값과 ▲▼를 쌓는다.
+ */
 @Composable
-private fun MetricRow(m: Metric, r: UsageTally.Result, base: UsageTally.Result?, avgRef: UsageTally.Result?) {
+private fun MetricRow(m: Metric, r: UsageTally.Result, base: UsageTally.Result?, avgRef: UsageTally.Result?, table: Boolean, hasAvgCol: Boolean) {
     val c = LocalLiquid.current
     val value = m.get(r) ?: return
     // 여러 날이면 이 기간의 하루 평균, 하루짜리면 최근 며칠의 하루 평균
     val avg = if (r.days > 1) perDay(value, r.days) else avgRef?.let { ref -> m.get(ref)?.let { perDay(it, ref.days) } }
     val change = base?.let { m.get(it) }?.let { delta(m.kind, value, it) }
-    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        // 홈 카테고리 줄과 같은 아이콘 칸(32dp, 옅은 잉크 바탕)
+    val avgText = avg?.let { format(m.kind, it, m.unit) }
+    val valueText = format(m.kind, value, m.unit)
+    val deltaColor = c.ink.copy(alpha = if (change?.startsWith("▲") == true) 1f else 0.5f)
+    Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(c.ink.copy(alpha = 0.10f)), contentAlignment = Alignment.Center) {
             StatGlyph(m.icon, c.ink, Modifier.size(18.dp))
         }
         Spacer(Modifier.width(10.dp))
-        // 평균은 이름 아래 줄에: 한 줄에 다 두면 좁은 화면·큰 글자에서 이름 칸이 0으로 눌려 글자가 세로로 선다
-        Column(Modifier.weight(1f).padding(end = 10.dp)) {
-            Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium)
-            avg?.let { Text(stringResource(R.string.lab_stats_avg_value, format(m.kind, it, m.unit)), color = c.muted, style = MaterialTheme.typography.labelSmall) }
+        if (table) {
+            Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 8.dp))
+            Column(horizontalAlignment = Alignment.End, modifier = Modifier.widthIn(min = NOW_COL)) {
+                Text(valueText, color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, maxLines = 1, softWrap = false)
+                if (change != null) Text(change, color = deltaColor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+            }
+            if (hasAvgCol) {
+                Text(
+                    avgText ?: "-",
+                    color = c.muted,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.End,
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier.padding(start = 12.dp).widthIn(min = AVG_COL)
+                )
+            }
+        } else {
+            // 좁을 때: 첫 줄 이름 · 실제 값, 둘째 줄 평균 상자 · ▲▼(평균 상자가 줄 전체 폭을 쓰게 해 글자가 세로로 서지 않게)
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 8.dp))
+                    Text(valueText, color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, maxLines = 1, softWrap = false)
+                }
+                if (avgText != null || change != null) {
+                    Spacer(Modifier.height(Gap.Tight))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        avgText?.let { AvgTag(it) }
+                        Spacer(Modifier.weight(1f))
+                        if (change != null) Text(change, color = deltaColor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
         }
-        Text(format(m.kind, value, m.unit), color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-        Text(
-            change ?: "",
-            color = c.ink.copy(alpha = if (change?.startsWith("▲") == true) 1f else 0.5f),
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.End,
-            maxLines = 1,
-            softWrap = false,
-            modifier = Modifier.widthIn(min = 52.dp)
-        )
+    }
+}
+
+/** 좁은 화면에서 평균을 실제 값과 다른 모양(테두리 상자 + '평균' 표)으로. */
+@Composable
+private fun AvgTag(text: String) {
+    val c = LocalLiquid.current
+    Row(
+        Modifier.clip(RoundedCornerShape(8.dp)).border(1.dp, c.line, RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 1.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(stringResource(R.string.lab_stats_avg_tag), color = c.muted, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+        Spacer(Modifier.width(5.dp))
+        Text(text, color = c.muted, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
     }
 }
 
 private fun perDay(v: Number, days: Int): Double = v.toDouble() / days.coerceAtLeast(1)
 
 private fun format(kind: Kind, v: Number, unit: String): String = when (kind) {
-    Kind.TIME -> UsageFun.duration(v.toLong())
+    Kind.TIME -> statsDuration(v.toLong())
     Kind.PERCENT -> "${v.toDouble().roundToInt()}$unit"
     Kind.COUNT -> {
         val d = v.toDouble()
         val one = (d * 10).roundToInt() / 10.0
-        (if (d >= 10 || one == one.roundToInt().toDouble()) "${one.roundToInt()}" else "$one") + unit
+        (if (d >= 10 || one == one.roundToInt().toDouble()) "%,d".format(one.roundToInt()) else "$one") + unit
     }
+}
+
+/** 100시간이 넘으면 분은 빼고 시간만(전체·1년 합계가 칸을 넘지 않게). */
+private fun statsDuration(ms: Long): String {
+    val h = ms / 3_600_000
+    return if (h >= 100) Copy.text(R.string.lab_stats_hours_only, "%,d".format(h)) else UsageFun.duration(ms)
 }
 
 /** 기준 대비 변화: ▲·▼와 차이. 같거나 아주 작으면 null. */
@@ -344,8 +422,8 @@ private fun delta(kind: Kind, now: Number, before: Number): String? {
         else -> {
             val n = d.roundToInt()
             when {
-                n > 0 -> "▲$n"
-                n < 0 -> "▼${-n}"
+                n > 0 -> "▲" + "%,d".format(n)
+                n < 0 -> "▼" + "%,d".format(-n)
                 else -> null
             }
         }
@@ -375,28 +453,34 @@ private fun load(context: Context, range: StatsRange, back: Int): StatsView {
 
     /** [day] 앞 7일(저장된 날만)의 합. 하루짜리 기간의 '최근 7일 평균'에 쓴다. 저장된 날이 없으면 null. */
     fun recent(day: Long): UsageTally.Result? = UsageTally.merge(UsageArchive.between(context, day - 7 * DAY, day - 1).map { it.second })
-    fun period(from: Long, to: Long): UsageTally.Result {
+
+    /**
+     * 저장된 날(+오늘)의 합. 저장된 날이 없으면 Android 기록이 남아 있을 만한 최근 7일 안에서만 새로 센다.
+     * 그보다 오래된 기간을 새로 세면 기록이 없어 화면이 내내 켜진 것처럼 잡혀(예: 한 달 700시간) null로 둔다.
+     */
+    fun periodOrNull(from: Long, to: Long): UsageTally.Result? {
         val days = UsageArchive.between(context, from, minOf(to, today - 1)).map { it.second }
         val withToday = if (to >= today) days + todayResult else days
-        return UsageTally.merge(withToday) ?: UsageTally.read(context, from, minOf(to, now), foldable)
+        return UsageTally.merge(withToday) ?: if (from >= today - 7 * DAY) UsageTally.read(context, from, minOf(to, now), foldable) else null
     }
+    fun period(from: Long, to: Long): UsageTally.Result = periodOrNull(from, to) ?: UsageTally.empty(todayResult.usageAccess)
     return when (range) {
         StatsRange.TODAY -> StatsView(todayResult, UsageTally.read(context, today - DAY, today - DAY + (now - today), foldable), recent(today), emptyList(), null, today, now)
-        StatsRange.YESTERDAY -> StatsView(period(today - DAY, today - 1), period(today - 2 * DAY, today - DAY - 1), recent(today - DAY), emptyList(), null, today - DAY, today - 1)
+        StatsRange.YESTERDAY -> StatsView(period(today - DAY, today - 1), periodOrNull(today - 2 * DAY, today - DAY - 1), recent(today - DAY), emptyList(), null, today - DAY, today - 1)
         StatsRange.WEEK -> {
             val from = UsageTally.dayStart(6)
-            StatsView(period(from, now), period(UsageTally.dayStart(13), from - 1), null, dailyTrend(context, from, now) { todayResult }, Copy.text(R.string.lab_stats_trend_daily), from, now)
+            StatsView(period(from, now), periodOrNull(UsageTally.dayStart(13), from - 1), null, dailyTrend(context, from, now) { todayResult }, Copy.text(R.string.lab_stats_trend_daily), from, now)
         }
         StatsRange.MONTH -> {
             val (from, to) = monthRange(back)
             val (pf, pt) = monthRange(back + 1)
-            StatsView(period(from, minOf(to, now)), period(pf, pt), null, dailyTrend(context, from, minOf(to, now)) { todayResult }, Copy.text(R.string.lab_stats_trend_daily), from, minOf(to, now))
+            StatsView(period(from, minOf(to, now)), periodOrNull(pf, pt), null, dailyTrend(context, from, minOf(to, now)) { todayResult }, Copy.text(R.string.lab_stats_trend_daily), from, minOf(to, now))
         }
         StatsRange.YEAR -> {
             val (from, to) = yearRange(back)
             val (pf, pt) = yearRange(back + 1)
             val start = maxOf(from, UsageArchive.firstDay(context) ?: today)
-            StatsView(period(from, minOf(to, now)), period(pf, pt), null, monthlyTrend(from, minOf(to, now), ::period), Copy.text(R.string.lab_stats_trend_monthly), start, minOf(to, now))
+            StatsView(period(from, minOf(to, now)), periodOrNull(pf, pt), null, monthlyTrend(start, minOf(to, now), ::period), Copy.text(R.string.lab_stats_trend_monthly), start, minOf(to, now))
         }
         StatsRange.ALL -> {
             val first = UsageArchive.firstDay(context) ?: today
@@ -488,8 +572,8 @@ private fun PeriodPicker(label: String, canNext: Boolean, onPrev: () -> Unit, on
 private fun minutesDelta(now: Long, before: Long): String? {
     val d = (now - before) / 60_000
     return when {
-        d >= 1 -> "▲${UsageFun.duration(d * 60_000)}"
-        d <= -1 -> "▼${UsageFun.duration(-d * 60_000)}"
+        d >= 1 -> "▲${statsDuration(d * 60_000)}"
+        d <= -1 -> "▼${statsDuration(-d * 60_000)}"
         else -> null
     }
 }
@@ -530,20 +614,33 @@ private fun Bars(values: List<Long>, labels: List<String>) {
     }
 }
 
-/** 순위 목록: 번호, 이름, 막대, 횟수. */
+/** 순위 목록: 번호, 앱 아이콘, 이름(길면 말줄임), 막대, 횟수. */
 @Composable
-private fun RankList(items: List<Pair<String, Int>>, unit: String) {
+private fun RankList(items: List<UsageTally.Rank>, unit: String) {
     val c = LocalLiquid.current
-    val max = items.maxOf { it.second }.coerceAtLeast(1)
+    val context = LocalContext.current
+    val iconPx = with(LocalDensity.current) { 24.dp.roundToPx() }
+    var icons by remember(items) { mutableStateOf<Map<String, ImageBitmap>>(emptyMap()) }
+    LaunchedEffect(items) {
+        icons = withContext(Dispatchers.IO) {
+            val pm = context.packageManager
+            items.mapNotNull { i -> runCatching { i.pkg to pm.getApplicationIcon(i.pkg).toBitmap(iconPx, iconPx).asImageBitmap() }.getOrNull() }.toMap()
+        }
+    }
+    val max = items.maxOf { it.count }.coerceAtLeast(1)
     Column(verticalArrangement = Arrangement.spacedBy(Gap.Tight)) {
-        items.forEachIndexed { i, (name, n) ->
+        items.forEachIndexed { i, item ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("${i + 1}", color = c.ink, fontWeight = FontWeight.Bold, modifier = Modifier.width(20.dp))
-                Text(name, color = c.ink, maxLines = 1, modifier = Modifier.weight(1f))
-                Box(Modifier.width(80.dp).height(8.dp).clip(RoundedCornerShape(4.dp)).background(c.line)) {
-                    Box(Modifier.fillMaxWidth(n.toFloat() / max).height(8.dp).clip(RoundedCornerShape(4.dp)).background(c.ink))
+                Text("${i + 1}", color = c.muted, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(18.dp))
+                Box(Modifier.size(24.dp).clip(RoundedCornerShape(6.dp)).background(c.line.copy(alpha = 0.5f))) {
+                    icons[item.pkg]?.let { Image(it, contentDescription = null, modifier = Modifier.fillMaxSize()) }
                 }
-                Text("$n$unit", color = c.muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 52.dp).padding(start = 6.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(item.name, color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Box(Modifier.padding(start = 6.dp).width(56.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(c.line)) {
+                    Box(Modifier.fillMaxWidth(item.count.toFloat() / max).height(6.dp).clip(RoundedCornerShape(3.dp)).background(c.ink))
+                }
+                Text("%,d".format(item.count) + unit, color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 52.dp).padding(start = 6.dp))
             }
         }
     }

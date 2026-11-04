@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 실험실 사용 통계 숫자 표·순위 문구(1.50.7에서 더함). 이름은 lab_stats_<용도>. -->
+<resources>
+    <string name="lab_stats_col_total">합계</string>
+    <string name="lab_stats_col_avg_day">하루 평균</string>
+    <string name="lab_stats_col_avg_recent">%1$d일 평균</string>
+    <string name="lab_stats_avg_tag">평균</string>
+    <string name="lab_stats_hours_only">%1$s시간</string>
+</resources>

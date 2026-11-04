@@ -222,6 +222,9 @@ object UsageTally {
     }
 
     /** 여러 결과(날짜별 기록 등)를 하나로 합친다. 비어 있으면 null. */
+    /** 기록이 하나도 없는 기간. */
+    fun empty(usageAccess: Boolean) = Result(usageAccess, 0, 0L, LongArray(24), 0, 0, 0, 0, null, 0, null, 0, null, emptyMap(), emptyMap(), null, null, null, days = 1)
+
     fun merge(list: List<Result>): Result? {
         if (list.isEmpty()) return null
         if (list.size == 1) return list[0]
@@ -252,10 +255,17 @@ object UsageTally {
     }
 
     /** 많은 순서 [n]개를 앱 이름으로. 이름을 못 찾으면 패키지 이름. */
-    fun top(context: Context, m: Map<String, Int>, n: Int): List<Pair<String, Int>> {
+    /** 순위 한 줄: 패키지(아이콘을 찾는 데 쓴다), 보이는 이름, 횟수. */
+    data class Rank(val pkg: String, val name: String, val count: Int)
+
+    fun top(context: Context, m: Map<String, Int>, n: Int): List<Rank> {
         if (m.isEmpty()) return emptyList()
+        val pm = context.packageManager
         val labels = runCatching { AppList.launcherApps(context).associate { it.pkg to it.label } }.getOrDefault(emptyMap())
-        return m.entries.sortedByDescending { it.value }.take(n).map { (labels[it.key] ?: it.key) to it.value }
+
+        // 홈 화면에 없는 앱(시스템 UI 등 알림을 보내는 앱)도 패키지 이름 대신 앱 이름으로
+        fun name(pkg: String) = labels[pkg] ?: runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrNull() ?: pkg
+        return m.entries.sortedByDescending { it.value }.take(n).map { Rank(it.key, name(it.key), it.value) }
     }
 
     /** 날짜별 저장용 JSON. 앱·알림은 많은 순서 30개만 남긴다(파일이 커지지 않게). */

@@ -4,10 +4,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,6 +35,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.liquid.Text
@@ -139,14 +142,25 @@ fun <T> LiquidChips(
                         content(option, cover)
                         return@Box
                     }
-                    Text(
-                        label(option),
-                        color = textColor,
-                        fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
+                    FitLabel(label(option), textColor, if (isSel) FontWeight.SemiBold else FontWeight.Medium)
                 }
             }
         }
+    }
+}
+
+/**
+ * 칩 글자: 칸보다 길면 한 줄을 지키며 글자만 줄인다(최대 60%까지). 좁은 화면에 글자를 크게 하면 칩이 여러 개일 때
+ * 글자가 칸 폭에 눌려 한 글자씩 세로로 서고 위아래가 잘렸다.
+ */
+@Composable
+private fun FitLabel(text: String, color: androidx.compose.ui.graphics.Color, weight: FontWeight) {
+    val measurer = rememberTextMeasurer()
+    val style = LocalTextStyle.current.copy(fontWeight = weight)
+    BoxWithConstraints(Modifier.padding(horizontal = 6.dp), contentAlignment = Alignment.Center) {
+        val maxPx = constraints.maxWidth
+        val natural = remember(text, style, maxPx) { measurer.measure(text, style, softWrap = false, maxLines = 1).size.width }
+        val k = if (natural > maxPx && natural > 0) (maxPx.toFloat() / natural).coerceAtLeast(0.6f) else 1f
+        Text(text, color = color, style = style.copy(fontSize = style.fontSize * k), maxLines = 1, softWrap = false)
     }
 }

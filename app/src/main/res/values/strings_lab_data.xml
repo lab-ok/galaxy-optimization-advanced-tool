@@ -16,8 +16,8 @@
     <string name="labdata_autoflex_mode_panel">GOAT 패널</string>
     <string name="labdata_autoflex_mode_flex">플렉스 모드</string>
     <string name="labdata_autoflex_notif_dim_title">깊게 접으면 밝기 고정</string>
-    <string name="labdata_autoflex_notif_flex_text">반쯤 접으면 플렉스 모드로 바뀝니다</string>
-    <string name="labdata_autoflex_notif_dim_text">50° 안쪽으로 접으면 밝기를 고정합니다</string>
+    <string name="labdata_autoflex_notif_flex_text">설정한 각도로 접으면 플렉스 모드로 전환합니다</string>
+    <string name="labdata_autoflex_notif_dim_text">50° 이하로 접으면 자동 밝기를 일시 중지합니다</string>
 
     <!-- BatteryMonitor: 충전 방식·배터리 상태 -->
     <string name="labdata_battery_plug_ac">충전기</string>
@@ -50,7 +50,7 @@
 
     <!-- FlexPanel: 플렉스 모드 바꾸기 알림 -->
     <string name="labdata_flexpanel_mode_channel">플렉스 모드 전환</string>
-    <string name="labdata_flexpanel_mode_notif_text">접었을 때 이 앱에 적용할 방식을 변경합니다</string>
+    <string name="labdata_flexpanel_mode_notif_text">아래 버튼으로 이 앱을 접었을 때의 동작을 변경할 수 있습니다</string>
 
     <!-- GoatFlexPanel: 넘기기 방식·유리 품질·앰비언트·강도 이름표 -->
     <string name="labdata_goatpanel_seek_tap">두 번 누르기</string>
@@ -60,7 +60,7 @@
     <string name="labdata_goatpanel_balanced">균형</string>
     <string name="labdata_goatpanel_quality_low">낮음</string>
     <string name="labdata_goatpanel_quality_high">높음</string>
-    <string name="labdata_goatpanel_ambient_fixed">고정 색</string>
+    <string name="labdata_goatpanel_ambient_fixed">앱 색상</string>
     <string name="labdata_goatpanel_ambient_poster">포스터</string>
     <string name="labdata_goatpanel_ambient_screen">화면 분석</string>
     <string name="labdata_goatpanel_intensity_subtle">은은</string>
@@ -87,9 +87,9 @@
     <string name="labdata_privacydot_unchanged">변경되지 않음</string>
 
     <!-- StatusBarHider: 상태 표시줄 숨기기 -->
-    <string name="labdata_statusbar_no_overlay">다른 앱 위에 표시 권한이 없습니다. Shizuku를 연결하세요.</string>
+    <string name="labdata_statusbar_no_overlay">\'다른 앱 위에 표시\' 권한이 없습니다. Shizuku를 연결하면 GOAT가 허용합니다.</string>
     <string name="labdata_statusbar_channel">상태 표시줄 숨기기</string>
-    <string name="labdata_statusbar_notif_title">상태 표시줄 숨기는 중</string>
+    <string name="labdata_statusbar_notif_title">상태 표시줄을 숨기는 중</string>
     <string name="labdata_statusbar_notif_text">뒤로 가기를 사용해도 다시 숨깁니다. 키보드가 열려 있는 동안에는 표시됩니다</string>
     <string name="labdata_statusbar_action_rehide">다시 숨기기</string>
     <string name="labdata_statusbar_action_stop">끄기</string>
@@ -106,18 +106,18 @@
     <string name="labdata_volume_rotation_270">오른쪽으로 돌린 가로</string>
 
     <!-- UsageFun: 사용 통계 한 줄 요약 -->
-    <string name="labdata_usage_headline_unfolds">휴대전화를 %1$d번 펼쳤습니다</string>
-    <string name="labdata_usage_headline_unlocks">잠금을 %1$d번 풀었습니다</string>
+    <string name="labdata_usage_headline_unfolds">휴대전화를 %1$,d번 펼쳤습니다</string>
+    <string name="labdata_usage_headline_unlocks">잠금을 %1$,d번 풀었습니다</string>
     <string name="labdata_usage_headline_screen">화면을 %1$s 사용했습니다</string>
-    <string name="labdata_usage_headline_notifications">알림을 %1$d개 받았습니다</string>
-    <string name="labdata_usage_headline_volume">볼륨 버튼을 %1$d번 눌렀습니다</string>
-    <string name="labdata_usage_headline_app_opens">앱을 %1$d번 열었습니다</string>
+    <string name="labdata_usage_headline_notifications">알림을 %1$,d개 받았습니다</string>
+    <string name="labdata_usage_headline_volume">볼륨 버튼을 %1$,d번 눌렀습니다</string>
+    <string name="labdata_usage_headline_app_opens">앱을 %1$,d번 열었습니다</string>
     <!-- UsageFun: 재미로 보는 숫자 -->
     <string name="labdata_usage_fact_peak_hour">화면을 가장 많이 사용한 시간대는 %1$s입니다.</string>
     <string name="labdata_usage_fact_per_unlock">잠금을 한 번 해제할 때마다 평균 %1$s 사용합니다.</string>
     <string name="labdata_usage_fact_apps_per_screen_on">화면을 한 번 켤 때마다 앱을 평균 %1$s개 엽니다.</string>
     <string name="labdata_usage_fact_top_app">%1$s 실행이 전체 실행의 %2$d%%를 차지합니다.</string>
-    <string name="labdata_usage_fact_top_noti">알림 %1$d개 중 %2$d%%가 %3$s 알림입니다.</string>
+    <string name="labdata_usage_fact_top_noti">알림 %1$,d개 중 %2$d%%가 %3$s 알림입니다.</string>
     <string name="labdata_usage_fact_charge_start">충전기는 평균 잔량 %1$d%%에서 연결했습니다.</string>
     <!-- UsageFun: 오늘의 칭호(이름·까닭) -->
     <string name="labdata_usage_title_fold_master">폴드 장인</string>
