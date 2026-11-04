@@ -25,13 +25,13 @@ object UsageFun {
     }
 
     /** 재미로 보는 숫자. 보여 줄 만한 것만(값이 없으면 뺀다). */
-    fun facts(r: UsageTally.Result): List<String> = buildList {
+    fun facts(r: UsageTally.Result, topApp: Pair<String, Int>?, topNoti: Pair<String, Int>?): List<String> = buildList {
         val peak = r.hourlyMs.indices.maxByOrNull { r.hourlyMs[it] }
         if (peak != null && r.hourlyMs[peak] > 0) add("가장 많이 본 때는 ${hourName(peak)}입니다.")
         if (r.unlocks > 0 && r.screenMs > 0) add("잠금을 한 번 풀면 평균 ${duration(r.screenMs / r.unlocks)} 봅니다.")
-        if (r.screenOn > 0 && r.appOpens > 0) add("화면을 한 번 켤 때마다 앱을 평균 ${oneDecimal(r.appOpens.toFloat() / r.screenOn)}개 엽니다.")
-        r.topApps.firstOrNull()?.let { (name, n) -> if (r.appOpens > 0) add("$name 실행이 전체의 ${n * 100 / r.appOpens}%입니다.") }
-        r.topNotifications.firstOrNull()?.let { (name, n) -> if (r.notifications > 0) add("알림 ${r.notifications}개 중 ${n * 100 / r.notifications}%가 $name 알림입니다.") }
+        if (r.screenOn >= 3 && r.appOpens > 0) add("화면을 한 번 켤 때마다 앱을 평균 ${oneDecimal(r.appOpens.toFloat() / r.screenOn)}개 엽니다.")
+        topApp?.let { (name, n) -> if (r.appOpens > 0) add("$name 실행이 전체의 ${n * 100 / r.appOpens}%입니다.") }
+        topNoti?.let { (name, n) -> if (r.notifications > 0) add("알림 ${r.notifications}개 중 ${n * 100 / r.notifications}%가 $name 알림입니다.") }
         r.chargeStartAvg?.let { add("충전기는 평균 $it%에서 꽂았습니다.") }
     }
 

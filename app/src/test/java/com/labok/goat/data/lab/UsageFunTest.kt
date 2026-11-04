@@ -6,12 +6,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UsageFunTest {
-    private fun result(unlocks: Int = 0, screenMs: Long = 0, notifications: Int = 0, hourly: LongArray = LongArray(24), unfolds: Int? = null) =
-        UsageTally.Result(
-            usageAccess = true, screenOn = 10, screenMs = screenMs, hourlyMs = hourly, unlocks = unlocks, appOpens = 20,
-            notifications = notifications, rotations = 0, unfolds = unfolds, boots = 0, charges = null, chargeStartAvg = null,
-            volume = null, topApps = listOf("카카오톡" to 5), topNotifications = emptyList()
-        )
+    private fun result(unlocks: Int = 0, screenMs: Long = 0, notifications: Int = 0, hourly: LongArray = LongArray(24), unfolds: Int? = null) = UsageTally.Result(
+        usageAccess = true, screenOn = 10, screenMs = screenMs, hourlyMs = hourly, unlocks = unlocks, appOpens = 20,
+        notifications = notifications, rotations = 0, unfolds = unfolds, boots = 0, charges = null, chargeStartSum = 0,
+        volume = null, apps = mapOf("com.kakao.talk" to 5), notis = emptyMap(), batteryUsed = null, batteryScreen = null, batteryCharged = null
+    )
 
     @Test
     fun deltaShowsDirection() {
@@ -43,5 +42,16 @@ class UsageFunTest {
         assertTrue("잠금 해제 달인" in names)
         assertTrue("화면 지킴이" in names)
         assertTrue("올빼미" !in names)
+    }
+
+    @Test
+    fun unfoldIgnoresDpi() {
+        // 폴드8: 바깥 화면 360dpi에서 sw 554dp(554x873), 안쪽 337dpi에서 sw 877dp(877x1162). 둘 다 500dp가 넘어도 펼침으로 센다
+        assertEquals(UsageTally.Shape.UNFOLDED, UsageTally.shapeChange(554, 554, 873, 1, 877, 877, 1162, 1))
+        assertEquals(UsageTally.Shape.FOLDED, UsageTally.shapeChange(877, 877, 1162, 1, 554, 554, 873, 1))
+        // 회전: 가장 짧은 변 그대로, 가로·세로 맞바뀜
+        assertEquals(UsageTally.Shape.ROTATED, UsageTally.shapeChange(554, 554, 873, 1, 554, 897, 530, 2))
+        // 글자 크기·배율만 바뀐 것(비율 같음)은 세지 않는다
+        assertEquals(UsageTally.Shape.SAME, UsageTally.shapeChange(554, 554, 873, 1, 700, 700, 1103, 1))
     }
 }

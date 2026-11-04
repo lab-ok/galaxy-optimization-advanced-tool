@@ -8,6 +8,8 @@ import android.os.Process
 import com.labok.goat.AppInfo
 import com.labok.goat.data.display.DpiManager
 import com.labok.goat.data.lab.BatteryHistory
+import com.labok.goat.data.lab.UsageArchive
+import com.labok.goat.data.lab.UsageTally
 import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.plan
@@ -60,12 +62,16 @@ object DiagnosticReport {
         }.onFailure { appendLine("읽기 실패: $it") }
         appendLine()
 
-        appendLine("## 배터리 기록(시스템, 실험실 배터리 모니터링)")
+        appendLine("## 배터리 기록(시스템, 실험실 사용 통계)")
         appendLine(runCatching { BatteryHistory.diagnose() }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
         appendLine("## 볼륨 버튼 회전")
         appendLine(runCatching { VolumeRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
+        appendLine()
+
+        appendLine("## 사용 통계(실험실)")
+        appendLine(runCatching { UsageTally.diagnose(context) + "\n" + UsageArchive.summary(context) }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
         appendLine("## 크래시 기록")

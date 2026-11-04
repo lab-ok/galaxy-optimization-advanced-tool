@@ -129,9 +129,6 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 
-    /** 실험실: 배터리 상태와 15분 기록(잔량 그래프·시간당 소모량). */
-    LAB_BATTERY(Copy.FEATURE_LAB_BATTERY, NavIcon.BATTERY),
-
     /** 실험실: 사용 통계(접기·잠금 해제·화면·앱·알림·충전·볼륨 버튼 횟수를 한 페이지로). */
     LAB_STATS(Copy.FEATURE_LAB_STATS, NavIcon.STATS),
 
@@ -147,11 +144,11 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_BATTERY, LAB_AMBIENT, LAB_STATS, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_AMBIENT, LAB_STATS, LAB_TOOLS)
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, FLEX, BATTERY, NOTE, STATS, VOLUME, INFO, GEAR, GLOW }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, FLEX, NOTE, STATS, VOLUME, INFO, GEAR, GLOW }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -422,7 +419,6 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.AIRPLANE -> airplane(color, s)
             NavIcon.EYE_OFF -> eyeOff(color, s)
             NavIcon.FLEX -> flex(color, s)
-            NavIcon.BATTERY -> battery(color, s)
             NavIcon.STATS -> stats(color, s)
             NavIcon.NOTE -> note(color, s)
             NavIcon.VOLUME -> volume(color, s)
@@ -660,14 +656,6 @@ private fun DrawScope.gear(c: Color, s: Stroke) {
 }
 
 /** 조사 도구: 플라스크, 안에 액체 선과 기포 둘. */
-/** 배터리 모니터링: 세운 배터리(위에 단자)와 안의 잔량 칸 두 개. */
-private fun DrawScope.battery(c: Color, s: Stroke) {
-    drawRoundRect(c, p(7f, 4.5f), Size(u(10f), u(16.5f)), CornerRadius(u(2.2f)), style = s)
-    drawLine(c, p(10f, 2.6f), p(14f, 2.6f), s.width, StrokeCap.Round)
-    drawLine(c, p(10f, 16.5f), p(14f, 16.5f), s.width * 1.4f, StrokeCap.Round)
-    drawLine(c, p(10f, 13f), p(14f, 13f), s.width * 1.4f, StrokeCap.Round)
-}
-
 /** 사용 통계: 바닥선 위 높이가 다른 막대 셋. */
 private fun DrawScope.stats(c: Color, s: Stroke) {
     drawLine(c, p(4f, 20f), p(20f, 20f), s.width, StrokeCap.Round)

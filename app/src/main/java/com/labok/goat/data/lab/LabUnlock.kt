@@ -28,6 +28,7 @@ object LabUnlock {
         unlocked = true
         prefs(context).edit().putBoolean("unlocked", true).apply()
         runCatching { MemoShare.setShareTarget(context, true) }
+        runCatching { UsageArchive.schedule(context) }
         return true
     }
 

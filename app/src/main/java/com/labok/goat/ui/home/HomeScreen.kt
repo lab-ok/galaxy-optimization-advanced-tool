@@ -69,7 +69,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -119,7 +118,6 @@ import com.labok.goat.ui.lab.AmbientScreen
 import com.labok.goat.ui.lab.ClipShareHelpSheet
 import com.labok.goat.ui.lab.FlexHelpSheet
 import com.labok.goat.ui.lab.LabAirplaneScreen
-import com.labok.goat.ui.lab.LabBatteryScreen
 import com.labok.goat.ui.lab.LabFlexScreen
 import com.labok.goat.ui.lab.LabIconsScreen
 import com.labok.goat.ui.lab.LabNoteScreen
@@ -321,7 +319,7 @@ internal fun HomeScreen(
             section(Copy.MENU_SECTION_TOOLS, NavItem.STATUS_ICONS, NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE)
             // 폴더블: 접는 폰에서만
             section(Copy.MENU_SECTION_FOLD, NavItem.AUTO_FLEX, labOf(NavItem.LAB_AMBIENT))
-            section(Copy.MENU_SECTION_SYSTEM, NavItem.GOS, NavItem.DOZE, labOf(NavItem.LAB_BATTERY))
+            section(Copy.MENU_SECTION_SYSTEM, NavItem.GOS, NavItem.DOZE)
             section(Copy.MENU_SECTION_SOUND, NavItem.CAMERA_MUTE, NavItem.AIRPLANE)
             section(Copy.MENU_SECTION_CLEAN, NavItem.APP_CLEANUP)
             section(Copy.MENU_SECTION_SHARE, NavItem.LAB_NOTE)
@@ -419,7 +417,7 @@ internal fun HomeScreen(
                 Copy.MENU_HELP to { sheet = Sheet.CLIP_HELP },
                 Copy.MENU_REPORT to report
             )
-            NavItem.LAB_TOOLS, NavItem.LAB_BATTERY, NavItem.LAB_AMBIENT, NavItem.LAB_STATS -> listOf(Copy.MENU_REPORT to report)
+            NavItem.LAB_TOOLS, NavItem.LAB_AMBIENT, NavItem.LAB_STATS -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -506,12 +504,11 @@ internal fun HomeScreen(
             Scaffold(
                 containerColor = c.bg,
                 topBar = {
-                    // 11-04 소장님 "상단 노티바(상태 표시줄)를 투명하게": 제목 줄은 예전처럼 흐린 띠(그라데이션 없음)로 두고,
-                    // 그 위 상태 표시줄 칸만 블러를 빼 아래 내용이 그대로 비치게 한다(설정 앱처럼). 블러 판은 자리를 차지하지 않는다(높이 0으로 배치).
+                    // 11-04 소장님 "상단 노티바(상태 표시줄)를 투명하게"(설정 앱처럼) + "여기까진 블러 먹여줘야지": 상태 표시줄 칸과 제목 줄을
+                    // 한 장의 블러로 덮되(그라데이션 없음) 덮는 색을 옅게 해 아래 내용이 흐리게 비친다. 블러 판은 자리를 차지하지 않는다(높이 0으로 배치).
                     Box {
                         val status = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                         val bar = status + TOP_BAR_HEIGHT
-                        val clear = status / bar
                         Box(
                             Modifier
                                 .fillMaxWidth()
@@ -520,9 +517,7 @@ internal fun HomeScreen(
                                     layout(p.width, 0) { p.place(0, 0) }
                                 }
                                 .height(bar)
-                                .hazeChild(haze, HazeStyle(backgroundColor = c.bg, tint = HazeTint(c.bg.copy(alpha = 0.7f)), blurRadius = 24.dp, noiseFactor = 0f)) {
-                                    mask = Brush.verticalGradient(0f to Color.Transparent, clear to Color.Transparent, clear to Color.Black, 1f to Color.Black)
-                                }
+                                .hazeChild(haze, HazeStyle(backgroundColor = c.bg, tint = HazeTint(c.bg.copy(alpha = TOP_TINT)), blurRadius = 24.dp, noiseFactor = 0f))
                         )
                         TopAppBar(
                             title = {
@@ -610,7 +605,6 @@ internal fun HomeScreen(
                             NavItem.STATUS_ICONS -> LabIconsScreen(inner)
                             NavItem.AUTO_FLEX -> LabFlexScreen(inner)
                             NavItem.LAB_TOOLS -> LabScreen(inner)
-                            NavItem.LAB_BATTERY -> LabBatteryScreen(inner)
                             NavItem.LAB_STATS -> UsageStatsScreen(inner)
                             NavItem.LAB_AMBIENT -> AmbientScreen(inner)
                             NavItem.LAB_NOTE -> LabNoteScreen(inner)
@@ -725,6 +719,9 @@ internal fun HomeScreen(
 
 /** 서랍·시트가 덮었을 때 뒤 화면 흐림 반지름. */
 private val BEHIND_BLUR = 14.dp
+
+/** 상태 표시줄·제목 줄을 덮는 색의 진하기. 예전 0.7은 거의 막힌 띠라, 아래 내용이 흐리게 비치도록 낮췄다. */
+private const val TOP_TINT = 0.45f
 
 /** Material 제목 줄 높이(상태 표시줄 아래). */
 private val TOP_BAR_HEIGHT = 64.dp

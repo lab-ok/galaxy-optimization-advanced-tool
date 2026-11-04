@@ -1,16 +1,12 @@
 package com.labok.goat.ui.lab
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,7 +38,7 @@ import kotlinx.coroutines.withContext
  * 아래: 15분 기록을 켜면 최근 24시간 잔량 그래프와 시간당 소모량·남은 시간 추정.
  */
 @Composable
-internal fun LabBatteryScreen(contentPadding: PaddingValues) {
+internal fun BatterySection() {
     val c = LocalLiquid.current
     val context = LocalContext.current
     var now by remember { mutableStateOf(BatteryMonitor.read(context)) }
@@ -55,15 +51,8 @@ internal fun LabBatteryScreen(contentPadding: PaddingValues) {
         }
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(contentPadding)
-            .padding(horizontal = 16.dp)
-            .padding(top = 4.dp, bottom = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    // 1.50.3부터 사용 통계 아래 '배터리' 칸으로 들어갔다(11-04 소장님 "배터리 모니터링을 사용 통계에 흡수")
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
             Text(Copy.LAB_BATTERY_NOW, fontWeight = FontWeight.SemiBold, color = c.ink)
             Spacer(Modifier.height(Gap.Item))
