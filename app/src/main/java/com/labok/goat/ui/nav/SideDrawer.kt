@@ -675,7 +675,7 @@ private fun DrawScope.note(c: Color, s: Stroke) {
 }
 
 /** [note]의 보드·집게·화살촉(24 격자, ic_tile_txt.xml과 같은 경로). */
-private val CLIP_SHARE_PATHS = listOf(
+internal val CLIP_SHARE_PATHS = listOf(
     "M7.5 4.5h-.5A2 2 0 0 0 5 6.5V19a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 19V3",
     "M8.7 2.5h3.6a1.2 1.2 0 0 1 1.2 1.2v1.6a1.2 1.2 0 0 1-1.2 1.2h-3.6a1.2 1.2 0 0 1-1.2-1.2v-1.6a1.2 1.2 0 0 1 1.2-1.2z",
     "M16.4 5.6L19 3l2.6 2.6"

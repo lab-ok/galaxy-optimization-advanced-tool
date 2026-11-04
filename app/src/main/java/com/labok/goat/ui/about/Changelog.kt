@@ -44,6 +44,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.49.3",
+        "2026-11-04",
+        "클립보드 공유 사용 방법에 그림을 넣었습니다(시험 버전).",
+        listOf(
+            "변경" to listOf(
+                "클립보드 공유 사용 방법을 그림으로 바꿨습니다: 타일 넣기 → 복사 → 타일 누르기 → 앱 고르기를 단계마다 그림으로 보여 줍니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.49.2",
         "2026-11-04",
         "클립보드 공유 안내를 보강했습니다(시험 버전).",

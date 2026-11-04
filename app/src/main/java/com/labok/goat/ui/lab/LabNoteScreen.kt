@@ -45,8 +45,6 @@ import com.labok.goat.R
 import com.labok.goat.data.lab.MemoShare
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
-import com.labok.goat.ui.components.HelpTopic
-import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -198,51 +196,4 @@ private fun requestTile(context: Context) {
             if (msg != null) Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
     }.onFailure { Toast.makeText(context, "추가하지 못했습니다. 알림창 편집 화면에서 직접 넣어 주세요.", Toast.LENGTH_SHORT).show() }
-}
-
-/** 클립보드 공유 사용 방법(점 세 개 메뉴 → 사용 방법). */
-@Composable
-internal fun ClipShareHelpSheet() {
-    SheetColumn(title = "사용 방법") {
-        HelpTopic(
-            "1. 하는 일",
-            "복사해 둔 내용을 파일로 만들어 곧바로 공유 창을 엽니다. 글은 TXT 파일로, 사진·파일은 원본 그대로 보냅니다. " +
-                "메신저에서 긴 글이 잘리거나 여러 메시지로 나뉠 때 파일 하나로 깔끔하게 보낼 수 있습니다."
-        )
-        HelpTopic(
-            "2. 가장 빠른 방법: 빠른 설정 타일",
-            "이 화면의 [빠른 설정에 타일 추가]를 누르면 알림창에 '클립보드 공유' 타일이 생깁니다. " +
-                "직접 넣으려면 알림창을 끝까지 내리고 연필(편집) 버튼을 눌러 타일을 끌어다 놓으세요.\n\n" +
-                "그다음부터는 ① 아무 앱에서 글이나 사진을 복사하고 ② 알림창을 내려 타일을 누른 뒤 ③ 공유 창에서 보낼 앱과 대화방을 고르면 됩니다."
-        )
-        HelpTopic(
-            "3. GOAT 아이콘 길게 누르기",
-            "홈 화면의 GOAT 아이콘을 길게 누르면 '클립보드 공유' 바로가기가 나옵니다. 바로가기를 끌어 홈 화면에 따로 놓아 둘 수도 있습니다."
-        )
-        HelpTopic(
-            "4. 이 화면에서 쓰기",
-            "[붙여넣고 공유]를 누르면 클립보드 내용을 바로 공유합니다. 아래 입력란에 글을 붙여넣어도 바로 TXT로 공유하고, " +
-                "직접 쓰거나 고친 글은 [파일로 공유]로 보냅니다."
-        )
-        HelpTopic(
-            "5. 다른 앱의 공유 메뉴",
-            "글을 '공유'할 수 있는 앱에서는 공유 목록의 'TXT로 공유'를 고르세요. 그 글을 TXT 파일로 바꿔 공유 창을 다시 엽니다."
-        )
-        HelpTopic(
-            "6. 보낼 수 있는 것",
-            "• 글·서식 있는 글: TXT 파일(서식은 빠지고 글만 남습니다)\n" +
-                "• 사진(갤러리·브라우저의 '이미지 복사'): 원본 이미지\n" +
-                "• 여러 장을 한꺼번에 복사한 사진: 한 번에 모두\n" +
-                "• 파일 앱에서 복사한 파일: 원본 파일"
-        )
-        HelpTopic(
-            "7. 알아 둘 점",
-            "가장 마지막에 복사한 것 하나만 보냅니다. 키보드의 클립보드 목록에 쌓인 예전 항목은 안드로이드가 막아 읽을 수 없습니다. " +
-                "공유할 때 'GOAT이 클립보드에서 붙여넣음' 안내가 뜨는 것은 안드로이드의 정상 알림입니다."
-        )
-        HelpTopic(
-            "8. 개인정보",
-            "파일은 휴대폰 안 GOAT 임시 폴더에만 잠깐 만들고, 공유를 마치고 돌아오면 바로 지웁니다. GOAT는 내용을 어디에도 따로 보내거나 저장하지 않습니다."
-        )
-    }
 }
