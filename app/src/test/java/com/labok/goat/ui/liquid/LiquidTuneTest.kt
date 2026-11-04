@@ -1,10 +1,16 @@
 package com.labok.goat.ui.liquid
 
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class LiquidTuneTest {
+    // 공통 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
+
     @Test fun defaultsGiveDefaultLook() {
         val d = LiquidLook.default
         val t = LiquidTune.look(LiquidTune.defaults())

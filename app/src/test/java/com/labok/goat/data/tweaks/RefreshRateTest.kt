@@ -2,11 +2,17 @@ package com.labok.goat.data.tweaks
 
 import com.labok.goat.data.tweaks.RefreshRate.Choice
 import com.labok.goat.data.tweaks.RefreshRate.Values
+import com.labok.goat.testing.TestStrings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class RefreshRateTest {
+    // 공통 문구가 리소스로 옮겨져 JVM 테스트에서는 xml을 직접 읽어 넣는다
+    @Before
+    fun strings() = TestStrings.install()
+
     @Test
     fun classifiesSettings() {
         assertEquals("값이 없으면 시스템 기본", Choice.SYSTEM, RefreshRate.classify(Values(null, null, null), 120))

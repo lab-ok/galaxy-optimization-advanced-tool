@@ -1,5 +1,6 @@
 package com.labok.goat.ui.text
 
+import com.labok.goat.R
 import java.util.Locale
 
 /**
@@ -7,504 +8,524 @@ import java.util.Locale
  * 표준 용어를 그대로 쓴다. 어조는 시스템 설정 앱처럼 "~합니다/~하세요".
  */
 object Copy {
-    // 상태
-    const val OUTER = "외부 화면"
-    const val INNER = "내부 화면"
-    const val CURRENT = "현재 화면"
-    const val STATUS_OK = "두 화면 표시 크기 일치"
-    const val STATUS_OK_SINGLE = "설정한 DPI로 표시 중"
-    const val STATUS_FIXING = "DPI 적용 중"
-    const val STATUS_NOT_APPLIED = "설정한 DPI와 다름"
-    const val STATUS_NEED_SETUP = "권한 설정 필요"
-    const val STATUS_NO_TARGET = "외부 화면 DPI 설정 필요"
-    const val STATUS_NO_TARGET_SINGLE = "DPI 설정 필요"
-    const val STATUS_HOLD = "자동 적용 보류"
-    const val STATUS_NEED_OTHER = "외부 화면만 적용됨"
+    /**
+     * 문구 읽기. 앱 시작 때 [App]이 리소스로 채운다(res/values/strings_common.xml, 다른 언어는 values-<언어>/).
+     * JVM 단위 테스트는 xml을 직접 읽는 도우미로 바꿔 끼운다.
+     */
+    var lookup: (Int) -> String = { error("Copy 문구를 읽기 전에 App이 lookup을 채워야 합니다") }
 
+    private fun s(id: Int): String = lookup(id)
+
+    /** 숫자·이름이 끼는 문구(리소스의 %1$d·%1$s 자리에 [args]를 넣는다). */
+    private fun f(id: Int, vararg args: Any): String = String.format(Locale.getDefault(), lookup(id), *args)
+
+    /**
+     * 화면 밖 코드(알림·토스트·데이터 계층)에서 리소스 문구를 읽는다. 컴포저블 안에서는 stringResource를 쓴다.
+     * [args]가 있으면 %1$d·%1$s 자리에 넣는다.
+     */
+    fun text(id: Int, vararg args: Any): String = if (args.isEmpty()) lookup(id) else f(id, *args)
+
+    // 상태
+    val OUTER: String get() = s(R.string.outer)
+    val INNER: String get() = s(R.string.inner)
+    val CURRENT: String get() = s(R.string.current)
+    val STATUS_OK: String get() = s(R.string.status_ok)
+    val STATUS_OK_SINGLE: String get() = s(R.string.status_ok_single)
+    val STATUS_FIXING: String get() = s(R.string.status_fixing)
+    val STATUS_NOT_APPLIED: String get() = s(R.string.status_not_applied)
+    val STATUS_NEED_SETUP: String get() = s(R.string.status_need_setup)
+    val STATUS_NO_TARGET: String get() = s(R.string.status_no_target)
+    val STATUS_NO_TARGET_SINGLE: String get() = s(R.string.status_no_target_single)
+    val STATUS_HOLD: String get() = s(R.string.status_hold)
+    val STATUS_NEED_OTHER: String get() = s(R.string.status_need_other)
     // 할 일
     /** '권한 설정 필요' 카드 본문. 홈 할 일과 기능 화면(애니메이션·흔들기·볼륨·해상도)이 함께 쓴다. */
-    const val TODO_SETUP_BODY = "Shizuku나 PC로 시스템 설정 권한을 한 번만 받으면 됩니다."
-    const val TODO_SETUP_ACTION = "설정 방법"
-    const val TODO_OTHER_TITLE = "화면 정보 수집 필요"
-    const val TODO_OTHER_BODY = "기기를 한 번 접었다 펼치면 내부 화면 DPI를 계산합니다."
-    const val TODO_HOLD_TITLE = "DPI 계산 보류"
-    const val TODO_HOLD_BODY = "화면 정보가 올바르지 않아 적용을 멈췄습니다. 화면 정보를 다시 수집하세요."
-    const val TODO_HOLD_ACTION = "다시 수집"
-    const val TODO_APPLY_TITLE = "설정값이 적용되지 않았습니다"
-    const val TODO_APPLY_ACTION = "지금 적용"
-    const val TODO_AUTO_TITLE = "자동 적용 꺼짐"
-    const val TODO_AUTO_BODY = "재부팅하면 기기 기본 DPI로 돌아갑니다."
-    const val TODO_AUTO_ACTION = "켜기"
-    const val TODO_CRASH_TITLE = "비정상 종료 기록이 있습니다"
-    const val TODO_CRASH_BODY = "문제 신고로 진단 파일을 보내 주세요."
+    val TODO_SETUP_BODY: String get() = s(R.string.todo_setup_body)
+    val TODO_SETUP_ACTION: String get() = s(R.string.todo_setup_action)
+    val TODO_OTHER_TITLE: String get() = s(R.string.todo_other_title)
+    val TODO_OTHER_BODY: String get() = s(R.string.todo_other_body)
+    val TODO_HOLD_TITLE: String get() = s(R.string.todo_hold_title)
+    val TODO_HOLD_BODY: String get() = s(R.string.todo_hold_body)
+    val TODO_HOLD_ACTION: String get() = s(R.string.todo_hold_action)
+    val TODO_APPLY_TITLE: String get() = s(R.string.todo_apply_title)
+    val TODO_APPLY_ACTION: String get() = s(R.string.todo_apply_action)
+    val TODO_AUTO_TITLE: String get() = s(R.string.todo_auto_title)
+    val TODO_AUTO_BODY: String get() = s(R.string.todo_auto_body)
+    val TODO_AUTO_ACTION: String get() = s(R.string.todo_auto_action)
+    val TODO_CRASH_TITLE: String get() = s(R.string.todo_crash_title)
+    val TODO_CRASH_BODY: String get() = s(R.string.todo_crash_body)
 
     // 외부 DPI 변경
-    const val EXTERNAL_TITLE = "외부에서 DPI가 변경됨"
-    const val EXTERNAL_BODY = "이 값을 기준으로 할지, 앱 설정으로 복원할지 고르세요."
-    const val STATUS_EXTERNAL = "외부에서 변경된 DPI"
+    val EXTERNAL_TITLE: String get() = s(R.string.external_title)
+    val EXTERNAL_BODY: String get() = s(R.string.external_body)
+    val STATUS_EXTERNAL: String get() = s(R.string.status_external)
 
     // 크기 설정
-    const val SIZE_TEST = "크기 테스트"
-    const val SIZE_TITLE = "표시 크기"
-    const val SIZE_OUTER = "외부 화면 DPI"
-    const val SIZE_SINGLE = "화면 DPI"
-    const val SIZE_OUTER_HINT = "값이 작을수록 글자와 아이콘이 작게 표시됩니다."
-    const val SIZE_INNER_TUNE = "내부 화면 보정"
-    const val SIZE_INNER_TUNE_HINT = "내부 화면이 크게 보이면 −, 작게 보이면 + 쪽으로 조정합니다."
-    const val SIZE_PREVIEW_OUTER = "외부"
-    const val SIZE_PREVIEW_INNER = "내부"
+    val SIZE_TEST: String get() = s(R.string.size_test)
+    val SIZE_TITLE: String get() = s(R.string.size_title)
+    val SIZE_OUTER: String get() = s(R.string.size_outer)
+    val SIZE_SINGLE: String get() = s(R.string.size_single)
+    val SIZE_OUTER_HINT: String get() = s(R.string.size_outer_hint)
+    val SIZE_INNER_TUNE: String get() = s(R.string.size_inner_tune)
+    val SIZE_INNER_TUNE_HINT: String get() = s(R.string.size_inner_tune_hint)
+    val SIZE_PREVIEW_OUTER: String get() = s(R.string.size_preview_outer)
+    val SIZE_PREVIEW_INNER: String get() = s(R.string.size_preview_inner)
 
     // 자동
-    const val AUTO_TITLE = "자동 적용"
-    const val AUTO_BODY = "재부팅하거나 화면이 바뀌면 설정한 DPI를 다시 적용합니다."
+    val AUTO_TITLE: String get() = s(R.string.auto_title)
+    val AUTO_BODY: String get() = s(R.string.auto_body)
 
     // 메뉴
-    const val FEATURE_DPI = "고급 화면 배율 설정"
-    const val FEATURE_APP_SIZE = "앱별 배율"
-    const val FEATURE_LAB_TOOLS = "조사 도구"
-    const val FEATURE_LAB_STATS = "사용 통계"
-    const val LAB_STATS_LOADING = "기록을 세는 중"
-    const val LAB_STATS_ARCHIVE_NOTE = "지난날 기록은 GOAT가 날마다 휴대폰 안에 저장한 것입니다."
-    const val LAB_STATS_BATTERY_TITLE = "배터리 자세히"
-    const val LAB_STATS_BATTERY_BODY = "지금 배터리, 마지막 충전 이후, 시간대별 사용량, 충전 기록"
-    const val LAB_STATS_NO_ACCESS_TITLE = "사용 기록 접근이 필요합니다"
-    const val LAB_STATS_NO_ACCESS_BODY = "Shizuku를 연결하면 GOAT가 사용 기록 접근을 스스로 켭니다."
-    const val LAB_STATS_CHARGE_NEED = "충전기 횟수는 Shizuku가 연결되어 있어야 셉니다."
-    const val LAB_STATS_VOLUME_NEED = "볼륨 버튼은 볼륨 버튼 회전을 켜 둔 동안 셉니다."
-    const val FEATURE_LAB_AMBIENT = "앰비언트 모드"
-    const val FEATURE_LAB_NOTE = "클립보드 공유"
-    const val LAB_NOTE_BODY = "복사한 글은 TXT 파일로, 사진·파일은 원본 그대로 공유합니다."
-    const val LAB_NOTE_PASTE_SHARE = "붙여넣고 공유"
-    const val LAB_NOTE_SHARE_MENU = "타일을 추가하면 어느 앱에서든 복사한 뒤 바로 공유합니다. 방법은 ⋮ → 사용 방법."
-    const val LAB_NOTE_SHARE = "파일로 공유"
-    const val LAB_NOTE_ADD_TILE = "빠른 설정에 타일 추가"
-    const val LAB_NOTE_HINT = "여기에 붙여넣으면 TXT 파일로 공유합니다."
+    val FEATURE_DPI: String get() = s(R.string.feature_dpi)
+    val FEATURE_APP_SIZE: String get() = s(R.string.feature_app_size)
+    val FEATURE_LAB_TOOLS: String get() = s(R.string.feature_lab_tools)
+    val FEATURE_LAB_STATS: String get() = s(R.string.feature_lab_stats)
+    val LAB_STATS_LOADING: String get() = s(R.string.lab_stats_loading)
+    val LAB_STATS_ARCHIVE_NOTE: String get() = s(R.string.lab_stats_archive_note)
+    val LAB_STATS_BATTERY_TITLE: String get() = s(R.string.lab_stats_battery_title)
+    val LAB_STATS_BATTERY_BODY: String get() = s(R.string.lab_stats_battery_body)
+    val LAB_STATS_NO_ACCESS_TITLE: String get() = s(R.string.lab_stats_no_access_title)
+    val LAB_STATS_NO_ACCESS_BODY: String get() = s(R.string.lab_stats_no_access_body)
+    val LAB_STATS_CHARGE_NEED: String get() = s(R.string.lab_stats_charge_need)
+    val LAB_STATS_VOLUME_NEED: String get() = s(R.string.lab_stats_volume_need)
+    val FEATURE_LAB_AMBIENT: String get() = s(R.string.feature_lab_ambient)
+    val FEATURE_LAB_NOTE: String get() = s(R.string.feature_lab_note)
+    val LAB_NOTE_BODY: String get() = s(R.string.lab_note_body)
+    val LAB_NOTE_PASTE_SHARE: String get() = s(R.string.lab_note_paste_share)
+    val LAB_NOTE_SHARE_MENU: String get() = s(R.string.lab_note_share_menu)
+    val LAB_NOTE_SHARE: String get() = s(R.string.lab_note_share)
+    val LAB_NOTE_ADD_TILE: String get() = s(R.string.lab_note_add_tile)
+    val LAB_NOTE_HINT: String get() = s(R.string.lab_note_hint)
 
     // 실험실: 배터리 모니터링
-    const val LAB_BATTERY_NOW = "지금 배터리"
-    const val FEATURE_SHAKE_ROTATE = "흔들어서 화면 회전"
-    const val FEATURE_CAMERA_MUTE = "카메라 촬영음 끄기"
-    const val FEATURE_HOME = "홈"
-    const val DRAWER_SEARCH = "설정 검색"
-    const val DRAWER_SEARCH_NONE = "찾는 설정이 없습니다."
-    const val APP_SIZE_HOME_TITLE = "홈 화면 아이콘 크기"
-    const val APP_SIZE_HOME_BODY = "홈 화면 앱에만 배율을 적용합니다. 다른 앱은 그대로입니다."
-    const val APP_SIZE_HOME_HINT = "숫자가 작을수록 작아집니다. 바꾸면 홈 화면이 잠깐 다시 시작됩니다."
-    const val FEATURE_ANIMATION = "애니메이션 속도"
-    const val FEATURE_APP_CLEANUP = "기본 앱 정리"
-    const val BLOAT_LOADING = "기본 앱을 확인하는 중…"
-    const val MENU_SECTION_SCREEN = "화면 크기"
-    const val MENU_SECTION_SYSTEM = "배터리·성능"
-    const val MENU_SECTION_FOLD = "폴더블"
-    const val MENU_SECTION_SOUND = "소리·연결"
-    const val MENU_SECTION_CLEAN = "앱 정리"
-    const val MENU_SECTION_SHARE = "공유"
-    const val NAV_LAB_TAG = "실험"
+    val LAB_BATTERY_NOW: String get() = s(R.string.lab_battery_now)
+    val FEATURE_SHAKE_ROTATE: String get() = s(R.string.feature_shake_rotate)
+    val FEATURE_CAMERA_MUTE: String get() = s(R.string.feature_camera_mute)
+    val FEATURE_HOME: String get() = s(R.string.feature_home)
+    val DRAWER_SEARCH: String get() = s(R.string.drawer_search)
+    val DRAWER_SEARCH_NONE: String get() = s(R.string.drawer_search_none)
+    val APP_SIZE_HOME_TITLE: String get() = s(R.string.app_size_home_title)
+    val APP_SIZE_HOME_BODY: String get() = s(R.string.app_size_home_body)
+    val APP_SIZE_HOME_HINT: String get() = s(R.string.app_size_home_hint)
+    val FEATURE_ANIMATION: String get() = s(R.string.feature_animation)
+    val FEATURE_APP_CLEANUP: String get() = s(R.string.feature_app_cleanup)
+    val BLOAT_LOADING: String get() = s(R.string.bloat_loading)
+    val MENU_SECTION_SCREEN: String get() = s(R.string.menu_section_screen)
+    val MENU_SECTION_SYSTEM: String get() = s(R.string.menu_section_system)
+    val MENU_SECTION_FOLD: String get() = s(R.string.menu_section_fold)
+    val MENU_SECTION_SOUND: String get() = s(R.string.menu_section_sound)
+    val MENU_SECTION_CLEAN: String get() = s(R.string.menu_section_clean)
+    val MENU_SECTION_SHARE: String get() = s(R.string.menu_section_share)
+    val NAV_LAB_TAG: String get() = s(R.string.nav_lab_tag)
 
     // 홈
-    const val HOME_PERMISSION = "시스템 설정 권한"
-    const val HOME_SHIZUKU = "Shizuku 연결"
+    val HOME_PERMISSION: String get() = s(R.string.home_permission)
+    val HOME_SHIZUKU: String get() = s(R.string.home_shizuku)
 
     // 기본 앱 정리
-    const val BLOAT_INTRO_TITLE = "쓰지 않는 기본 앱 끄기"
-    const val BLOAT_INTRO_BODY = "삭제하지 않고 사용만 중지합니다. 언제든 다시 켤 수 있습니다."
-    const val BLOAT_EMPTY_TITLE = "정리할 기본 앱이 없습니다"
-    const val BLOAT_EMPTY_BODY = "목록에 있는 기본 앱이 이 기기에 없습니다."
-    const val SHIZUKU_FAILED = "바꾸지 못했습니다. Shizuku 연결을 확인하세요"
-    const val BLOAT_RESTORE_ALL = "꺼 둔 앱 모두 다시 켜기"
+    val BLOAT_INTRO_TITLE: String get() = s(R.string.bloat_intro_title)
+    val BLOAT_INTRO_BODY: String get() = s(R.string.bloat_intro_body)
+    val BLOAT_EMPTY_TITLE: String get() = s(R.string.bloat_empty_title)
+    val BLOAT_EMPTY_BODY: String get() = s(R.string.bloat_empty_body)
+    val SHIZUKU_FAILED: String get() = s(R.string.shizuku_failed)
+    val BLOAT_RESTORE_ALL: String get() = s(R.string.bloat_restore_all)
 
     // 애니메이션 속도
-    const val ANIM_INTRO_TITLE = "애니메이션 빠르게"
-    const val ANIM_INTRO_BODY = "앱을 열고 닫을 때의 애니메이션 속도를 바꿉니다. 0.5배면 더 빠르게 느껴집니다."
-    const val ANIM_PRESET_TITLE = "속도 선택"
-    const val ANIM_KEEP_NOTE = "개발자 옵션을 끄거나 재부팅해도 고른 속도를 다시 맞춥니다."
-    const val ANIM_SLIDER_HINT = "왼쪽 끝은 끔, 가운데는 기본 1배입니다. 0.5배를 가장 많이 씁니다."
-    const val ANIM_DETAIL_TITLE = "하나씩 맞추기"
-    const val ANIM_DETAIL_BODY = "창·화면 전환·애니메이터 배율을 0~2배로 각각 조정합니다."
+    val ANIM_INTRO_TITLE: String get() = s(R.string.anim_intro_title)
+    val ANIM_INTRO_BODY: String get() = s(R.string.anim_intro_body)
+    val ANIM_PRESET_TITLE: String get() = s(R.string.anim_preset_title)
+    val ANIM_KEEP_NOTE: String get() = s(R.string.anim_keep_note)
+    val ANIM_SLIDER_HINT: String get() = s(R.string.anim_slider_hint)
+    val ANIM_DETAIL_TITLE: String get() = s(R.string.anim_detail_title)
+    val ANIM_DETAIL_BODY: String get() = s(R.string.anim_detail_body)
 
     // 카메라 촬영음 끄기
-    const val CAMERA_INTRO_TITLE = "무음 모드에서는 조용히 찍기"
-    const val CAMERA_INTRO_BODY = "국내 갤럭시의 강제 촬영음을 끄고, 촬영음이 기기 소리 설정을 따르게 합니다."
-    const val NEED_SHIZUKU_TITLE = "Shizuku 연결이 필요합니다"
+    val CAMERA_INTRO_TITLE: String get() = s(R.string.camera_intro_title)
+    val CAMERA_INTRO_BODY: String get() = s(R.string.camera_intro_body)
+    val NEED_SHIZUKU_TITLE: String get() = s(R.string.need_shizuku_title)
 
     /** 'Shizuku 연결이 필요합니다' 카드 본문. Shizuku로만 바꾸는 기능 화면이 함께 쓴다. */
-    const val NEED_SHIZUKU_BODY = "이 설정은 Shizuku로만 바꿀 수 있습니다."
-    const val SHIZUKU_CONNECT = "Shizuku 연결하기"
-    const val CAMERA_PC_TITLE = "PC로 한 번에 끄기"
-    const val CAMERA_PC_BODY = "Shizuku 대신 PC에서 아래 adb 명령을 한 번 실행해도 됩니다."
-    const val CAMERA_STATE_MUTED = "꺼져 있습니다. 무음·진동 모드에서는 소리 없이 촬영됩니다."
-    const val CAMERA_STATE_FORCED = "켜져 있습니다. 무음 모드에서도 촬영음이 납니다."
-    const val CAMERA_STATE_NONE = "이 기기에는 촬영음 강제 설정이 없습니다. 촬영음이 이미 소리 설정을 따릅니다."
-    const val SHIZUKU_STATE_UNKNOWN = "Shizuku가 연결되면 현재 상태를 확인합니다."
-    const val TOAST_LOGS_CLEARED = "작동 기록을 지웠습니다"
-    const val CAMERA_TOAST_MUTED = "촬영음 강제를 껐습니다"
-    const val CAMERA_TOAST_RESTORED = "촬영음 강제를 되돌렸습니다"
-    const val CAMERA_ETIQUETTE_TITLE = "꼭 지켜 주세요"
-    const val CAMERA_ETIQUETTE_BODY = "동의 없이 다른 사람을 몰래 촬영하면 처벌받습니다. 예절을 지키는 용도로만 쓰세요."
+    val NEED_SHIZUKU_BODY: String get() = s(R.string.need_shizuku_body)
+    val SHIZUKU_CONNECT: String get() = s(R.string.shizuku_connect)
+    val CAMERA_PC_TITLE: String get() = s(R.string.camera_pc_title)
+    val CAMERA_PC_BODY: String get() = s(R.string.camera_pc_body)
+    val CAMERA_STATE_MUTED: String get() = s(R.string.camera_state_muted)
+    val CAMERA_STATE_FORCED: String get() = s(R.string.camera_state_forced)
+    val CAMERA_STATE_NONE: String get() = s(R.string.camera_state_none)
+    val SHIZUKU_STATE_UNKNOWN: String get() = s(R.string.shizuku_state_unknown)
+    val TOAST_LOGS_CLEARED: String get() = s(R.string.toast_logs_cleared)
+    val CAMERA_TOAST_MUTED: String get() = s(R.string.camera_toast_muted)
+    val CAMERA_TOAST_RESTORED: String get() = s(R.string.camera_toast_restored)
+    val CAMERA_ETIQUETTE_TITLE: String get() = s(R.string.camera_etiquette_title)
+    val CAMERA_ETIQUETTE_BODY: String get() = s(R.string.camera_etiquette_body)
 
     // 흔들어서 화면 회전
-    const val SHAKE_INTRO_TITLE = "흔들 때에만 화면 회전"
-    const val SHAKE_INTRO_BODY = "화면 회전을 잠가 두고, 기기를 흔들 때에만 현재 방향으로 회전한 뒤 다시 잠급니다."
-    const val SHAKE_ON_BODY = "자동 회전을 끄고 화면을 잠갔습니다. 기기를 흔들면 화면이 회전합니다."
-    const val SHAKE_OFF_BODY = "켜면 자동 회전을 끄고 현재 방향으로 화면을 잠근 뒤 흔들기를 기다립니다."
-    const val SHAKE_SENSITIVITY_TITLE = "흔들기 민감도"
-    const val SHAKE_SENSITIVITY_BODY = "값이 클수록 약하게 흔들어도 회전합니다. 의도하지 않게 회전하면 값을 낮추세요."
-    const val SHAKE_SENSITIVITY_LABEL = "민감도"
-    const val SHAKE_CALIBRATE = "흔들어서 맞추기"
-    const val SHAKE_CALIBRATE_NOW = "평소 화면을 돌릴 때처럼 기기를 흔드세요."
-    const val FLUID_TUNE = "물방울 조절"
-    const val FLUID_TUNE_BODY = "물의 양과 성질을 바꿉니다. 흔들기 인식에는 영향이 없습니다."
-    const val FLUID_RESET = "기본값으로"
-    const val FLUID_WATER = "물의 양"
-    const val FLUID_VISCOSITY = "끈적임"
-    const val FLUID_TENSION = "뭉치는 힘"
-    const val FLUID_SCATTER = "흩어짐"
-    const val FLUID_SPLASH = "물방울 튀는 세기"
-    const val FLUID_GRAVITY = "중력"
-    const val FLUID_WOBBLE = "출렁임 지속"
-    const val FLUID_PULL = "가운데로 돌아오는 힘"
-    const val SHAKE_CALIBRATE_FAIL = "흔들림을 인식하지 못했습니다. 조금 더 세게 두세 번 흔든 뒤 다시 시도하세요."
-    const val SHAKE_AUTO_ON_TITLE = "자동 회전이 켜져 있습니다"
-    const val SHAKE_AUTO_ON_BODY = "이 상태에서는 흔들지 않아도 화면이 회전합니다."
-    const val SHAKE_AUTO_OFF_BUTTON = "자동 회전 끄기"
-    const val SHAKE_ADVANCED_TITLE = "고급 설정"
-    const val SHAKE_ADVANCED_BODY = "흔들기 인식 세부값입니다. 흔들어서 맞추기는 횟수·속도·손목 회전을 맞춥니다."
-    const val SHAKE_BEHAVIOR_TITLE = "회전할 때"
-    const val SHAKE_SWINGS_TITLE = "흔드는 횟수"
-    const val SHAKE_SWINGS_BODY = "이 횟수만큼 왕복해야 회전합니다. 많을수록 의도하지 않은 회전이 줄어듭니다."
-    const val SHAKE_PACE_TITLE = "흔드는 속도"
-    const val SHAKE_PACE_BODY = "값이 클수록 빠르게 흔들어야 하고, 작을수록 천천히 흔들어도 인식합니다."
-    const val SHAKE_TURN_TITLE = "손목 회전 기준"
-    const val SHAKE_TURN_BODY = "흔들 때 손목이 이 각도만큼 돌아야 합니다. 차·책상 진동은 무시합니다. 0이면 확인하지 않습니다."
-    const val SHAKE_TAPS_TITLE = "두드림·충격 무시"
-    const val SHAKE_TAPS_BODY = "뒷면을 두드리거나 바닥에 부딪힌 충격은 흔들기로 인식하지 않습니다."
-    const val SHAKE_ADVANCED_RESET = "고급 설정 기본값으로"
-    const val SHAKE_LARGE_TITLE = "큰 화면에서만 회전"
-    const val SHAKE_LARGE_BODY = "폴드를 펼쳤을 때나 태블릿처럼 화면이 클 때만 회전합니다."
-    const val SHAKE_VIBRATION_TITLE = "회전 진동 세기"
-    const val SHAKE_ROTATE_BUTTON_TITLE = "회전 버튼 숨기기"
-    const val SHAKE_ROTATE_BUTTON_BODY = "기기를 돌리면 잠깐 뜨는 회전 버튼을 숨깁니다."
-    const val SHAKE_VIBRATION_BODY = "화면이 회전할 때 흔든 리듬에 맞춰 진동합니다. 슬라이더를 움직이면 미리 진동합니다."
-    const val SHAKE_NOTIFY_NOTE = "켜 두는 동안 GOAT 알림 하나에 함께 표시됩니다."
-    const val MENU_HELP = "사용 방법"
-    const val MENU_GUIDE = "권한 설정"
-    const val MENU_GOAT_PANEL = "패널 설정"
-    const val MENU_SECTION_LAB = "실험실"
-    const val HOME_SETUP_TITLE = "처음 한 번만 준비하세요"
-    const val HOME_SETUP_BODY = "화면 배율 같은 기능은 시스템 설정 권한이 필요합니다. 몇 분이면 끝납니다."
-    const val HOME_SETUP_ACTION = "시작하기"
-    const val HOME_VIEW_ALL = "전체"
-    const val HOME_FAVORITES = "★ 자주 쓰는 기능"
-    const val HOME_SECTION_OPEN = "펼침"
-    const val HOME_SECTION_CLOSED = "접힘"
-    const val HOME_VIEW_ON = "활성화"
-    const val HOME_VIEW_OFF = "비활성화"
-    const val HOME_VIEW_EMPTY_TITLE = "켜진 기능이 없습니다"
-    const val HOME_VIEW_EMPTY_BODY = "'전체'에서 기능을 골라 켜세요."
-    const val HOME_VIEW_EMPTY_OFF_TITLE = "모든 기능이 켜져 있습니다"
-    const val HOME_VIEW_EMPTY_OFF_BODY = "꺼 둔 기능이 생기면 여기에 모입니다."
-    const val FEATURE_AIRPLANE = "비행기 모드 무선"
-    const val FEATURE_VOLUME_ROTATE = "볼륨 버튼 회전"
-    const val VOLUME_BODY = "화면을 돌려 볼륨 버튼이 위로 가면 오른쪽 버튼이 올리기가 됩니다."
-    const val VOLUME_ON = "볼륨 버튼 회전 켜기"
-    const val VOLUME_ON_DESC = "접근성 서비스로 볼륨 키만 받습니다. 화면 내용은 읽지 않습니다."
-    const val VOLUME_INVERT = "반대 방향으로"
-    const val VOLUME_INVERT_DESC = "가로로 돌렸을 때 방향이 거꾸로면 켜세요. 폴드 내부 화면 등에서 필요합니다."
-    const val VOLUME_CAMERA = "카메라에서는 그대로"
-    const val VOLUME_CAMERA_DESC = "카메라 앱의 볼륨 키 셔터는 바꾸지 않습니다."
+    val SHAKE_INTRO_TITLE: String get() = s(R.string.shake_intro_title)
+    val SHAKE_INTRO_BODY: String get() = s(R.string.shake_intro_body)
+    val SHAKE_ON_BODY: String get() = s(R.string.shake_on_body)
+    val SHAKE_OFF_BODY: String get() = s(R.string.shake_off_body)
+    val SHAKE_SENSITIVITY_TITLE: String get() = s(R.string.shake_sensitivity_title)
+    val SHAKE_SENSITIVITY_BODY: String get() = s(R.string.shake_sensitivity_body)
+    val SHAKE_SENSITIVITY_LABEL: String get() = s(R.string.shake_sensitivity_label)
+    val SHAKE_CALIBRATE: String get() = s(R.string.shake_calibrate)
+    val SHAKE_CALIBRATE_NOW: String get() = s(R.string.shake_calibrate_now)
+    val FLUID_TUNE: String get() = s(R.string.fluid_tune)
+    val FLUID_TUNE_BODY: String get() = s(R.string.fluid_tune_body)
+    val FLUID_RESET: String get() = s(R.string.fluid_reset)
+    val FLUID_WATER: String get() = s(R.string.fluid_water)
+    val FLUID_VISCOSITY: String get() = s(R.string.fluid_viscosity)
+    val FLUID_TENSION: String get() = s(R.string.fluid_tension)
+    val FLUID_SCATTER: String get() = s(R.string.fluid_scatter)
+    val FLUID_SPLASH: String get() = s(R.string.fluid_splash)
+    val FLUID_GRAVITY: String get() = s(R.string.fluid_gravity)
+    val FLUID_WOBBLE: String get() = s(R.string.fluid_wobble)
+    val FLUID_PULL: String get() = s(R.string.fluid_pull)
+    val SHAKE_CALIBRATE_FAIL: String get() = s(R.string.shake_calibrate_fail)
+    val SHAKE_AUTO_ON_TITLE: String get() = s(R.string.shake_auto_on_title)
+    val SHAKE_AUTO_ON_BODY: String get() = s(R.string.shake_auto_on_body)
+    val SHAKE_AUTO_OFF_BUTTON: String get() = s(R.string.shake_auto_off_button)
+    val SHAKE_ADVANCED_TITLE: String get() = s(R.string.shake_advanced_title)
+    val SHAKE_ADVANCED_BODY: String get() = s(R.string.shake_advanced_body)
+    val SHAKE_BEHAVIOR_TITLE: String get() = s(R.string.shake_behavior_title)
+    val SHAKE_SWINGS_TITLE: String get() = s(R.string.shake_swings_title)
+    val SHAKE_SWINGS_BODY: String get() = s(R.string.shake_swings_body)
+    val SHAKE_PACE_TITLE: String get() = s(R.string.shake_pace_title)
+    val SHAKE_PACE_BODY: String get() = s(R.string.shake_pace_body)
+    val SHAKE_TURN_TITLE: String get() = s(R.string.shake_turn_title)
+    val SHAKE_TURN_BODY: String get() = s(R.string.shake_turn_body)
+    val SHAKE_TAPS_TITLE: String get() = s(R.string.shake_taps_title)
+    val SHAKE_TAPS_BODY: String get() = s(R.string.shake_taps_body)
+    val SHAKE_ADVANCED_RESET: String get() = s(R.string.shake_advanced_reset)
+    val SHAKE_LARGE_TITLE: String get() = s(R.string.shake_large_title)
+    val SHAKE_LARGE_BODY: String get() = s(R.string.shake_large_body)
+    val SHAKE_VIBRATION_TITLE: String get() = s(R.string.shake_vibration_title)
+    val SHAKE_ROTATE_BUTTON_TITLE: String get() = s(R.string.shake_rotate_button_title)
+    val SHAKE_ROTATE_BUTTON_BODY: String get() = s(R.string.shake_rotate_button_body)
+    val SHAKE_VIBRATION_BODY: String get() = s(R.string.shake_vibration_body)
+    val SHAKE_NOTIFY_NOTE: String get() = s(R.string.shake_notify_note)
+    val MENU_HELP: String get() = s(R.string.menu_help)
+    val MENU_GUIDE: String get() = s(R.string.menu_guide)
+    val MENU_GOAT_PANEL: String get() = s(R.string.menu_goat_panel)
+    val MENU_SECTION_LAB: String get() = s(R.string.menu_section_lab)
+    val HOME_SETUP_TITLE: String get() = s(R.string.home_setup_title)
+    val HOME_SETUP_BODY: String get() = s(R.string.home_setup_body)
+    val HOME_SETUP_ACTION: String get() = s(R.string.home_setup_action)
+    val HOME_VIEW_ALL: String get() = s(R.string.home_view_all)
+    val HOME_FAVORITES: String get() = s(R.string.home_favorites)
+    val HOME_SECTION_OPEN: String get() = s(R.string.home_section_open)
+    val HOME_SECTION_CLOSED: String get() = s(R.string.home_section_closed)
+    val HOME_VIEW_ON: String get() = s(R.string.home_view_on)
+    val HOME_VIEW_OFF: String get() = s(R.string.home_view_off)
+    val HOME_VIEW_EMPTY_TITLE: String get() = s(R.string.home_view_empty_title)
+    val HOME_VIEW_EMPTY_BODY: String get() = s(R.string.home_view_empty_body)
+    val HOME_VIEW_EMPTY_OFF_TITLE: String get() = s(R.string.home_view_empty_off_title)
+    val HOME_VIEW_EMPTY_OFF_BODY: String get() = s(R.string.home_view_empty_off_body)
+    val FEATURE_AIRPLANE: String get() = s(R.string.feature_airplane)
+    val FEATURE_VOLUME_ROTATE: String get() = s(R.string.feature_volume_rotate)
+    val VOLUME_BODY: String get() = s(R.string.volume_body)
+    val VOLUME_ON: String get() = s(R.string.volume_on)
+    val VOLUME_ON_DESC: String get() = s(R.string.volume_on_desc)
+    val VOLUME_INVERT: String get() = s(R.string.volume_invert)
+    val VOLUME_INVERT_DESC: String get() = s(R.string.volume_invert_desc)
+    val VOLUME_CAMERA: String get() = s(R.string.volume_camera)
+    val VOLUME_CAMERA_DESC: String get() = s(R.string.volume_camera_desc)
 
     /** 기능 소개 카드의 주 스위치 아래 안내(재부팅 뒤 다시 켜기 옵션을 주 스위치로 합침, 2026-10-23). */
-    const val SWITCH_KEEP_NOTE = "켜 두면 재부팅이나 업데이트 뒤에도 다시 적용합니다."
-    const val VOLUME_PER_SCREEN = "아래 설정은 접었을 때와 펼쳤을 때 따로 정합니다."
-    const val VOLUME_CLOSED = "접었을 때"
-    const val VOLUME_OPEN = "펼쳤을 때"
-    const val VOLUME_DASH_ON = "켜짐"
-    const val DASH_OFF = "꺼짐"
-    const val FEATURE_STATUS_ICONS = "상태 표시줄"
-    const val LAB_OPENED = "실험실이 열렸습니다. 사이드바에서 찾을 수 있습니다."
-    const val FEATURE_AUTO_FLEX = "플렉스 모드"
-    const val LAB_FLEX_BODY = "기기를 접으면 위 화면에는 사용하던 앱이, 아래 화면에는 그 앱에 맞는 조작 패널이 표시됩니다."
-    const val LAB_FLEX_BODY2 = "폴드8은 반쯤 접어도 플렉스 모드로 바뀌지 않아, 정한 각도로 접으면 GOAT가 대신 전환합니다."
-    const val LAB_FLEX_SWITCH_BODY = "화면이 켜져 있는 동안 힌지 각도를 확인합니다. 펴거나 닫으면 원래대로 돌아옵니다."
-    const val REPORT_VIA_MAIL = "메일로 보내기"
-    const val REPORT_VIA_SHARE = "다른 앱으로 공유"
-    const val LAB_STATUS_HIDE = "상태 표시줄 숨기기"
-    const val LAB_STATUS_HIDE_BODY = "상태 표시줄을 숨겨 앱이 그 자리까지 씁니다. 위 가장자리를 쓸어내리면 잠시 보입니다."
-    const val LAB_STATUS_HIDE_NOTE = "Android 11부터는 키보드를 쓰는 동안과 설정 앱 등 일부 화면에서 상태 표시줄이 보입니다."
-    const val LAB_FLEX_RANGE_TITLE = "플렉스 모드가 켜지는 각도"
-    const val LAB_FLEX_RANGE_BODY = "세로 화면에서 접어 이 범위에 들어오면 플렉스 모드가 켜집니다."
-    const val LAB_FLEX_RANGE_HOW = "손잡이를 끌어 범위를 정하고, 길게 누르면 세밀하게 맞춥니다."
-    const val LAB_FLEX_RANGE_RESET = "기본값 30~125°로"
-    const val LAB_FLEX_TEST = "플렉스 모드 테스트하기"
+    val SWITCH_KEEP_NOTE: String get() = s(R.string.switch_keep_note)
+    val VOLUME_PER_SCREEN: String get() = s(R.string.volume_per_screen)
+    val VOLUME_CLOSED: String get() = s(R.string.volume_closed)
+    val VOLUME_OPEN: String get() = s(R.string.volume_open)
+    val VOLUME_DASH_ON: String get() = s(R.string.volume_dash_on)
+    val DASH_OFF: String get() = s(R.string.dash_off)
+    val FEATURE_STATUS_ICONS: String get() = s(R.string.feature_status_icons)
+    val LAB_OPENED: String get() = s(R.string.lab_opened)
+    val FEATURE_AUTO_FLEX: String get() = s(R.string.feature_auto_flex)
+    val LAB_FLEX_BODY: String get() = s(R.string.lab_flex_body)
+    val LAB_FLEX_BODY2: String get() = s(R.string.lab_flex_body2)
+    val LAB_FLEX_SWITCH_BODY: String get() = s(R.string.lab_flex_switch_body)
+    val REPORT_VIA_MAIL: String get() = s(R.string.report_via_mail)
+    val REPORT_VIA_SHARE: String get() = s(R.string.report_via_share)
+    val LAB_STATUS_HIDE: String get() = s(R.string.lab_status_hide)
+    val LAB_STATUS_HIDE_BODY: String get() = s(R.string.lab_status_hide_body)
+    val LAB_STATUS_HIDE_NOTE: String get() = s(R.string.lab_status_hide_note)
+    val LAB_FLEX_RANGE_TITLE: String get() = s(R.string.lab_flex_range_title)
+    val LAB_FLEX_RANGE_BODY: String get() = s(R.string.lab_flex_range_body)
+    val LAB_FLEX_RANGE_HOW: String get() = s(R.string.lab_flex_range_how)
+    val LAB_FLEX_RANGE_RESET: String get() = s(R.string.lab_flex_range_reset)
+    val LAB_FLEX_TEST: String get() = s(R.string.lab_flex_test)
 
     /** 플렉스 모드가 꺼져 있을 때 테스트 버튼 위 안내이자 꺼진 버튼을 눌렀을 때의 안내. */
-    const val LAB_FLEX_TEST_OFF = "플렉스 모드를 켜면 테스트할 수 있습니다."
-    const val LAB_FLEX_TEST_TITLE = "플렉스 모드 테스트"
-    const val LAB_FLEX_TEST_HOW = "기기를 천천히 접으세요. 범위에 들어오면 화면이 위아래로 나뉩니다."
-    const val LAB_FLEX_TEST_BOTTOM = "여기는 아래 화면입니다. 앱에서는 이 자리에 조작 패널이 표시됩니다."
-    const val LAB_FLEX_TEST_UNFOLD = "범위를 벗어나면 원래대로 돌아옵니다."
-    const val LAB_FLEX_TEST_CLOSE = "닫기"
-    const val LAB_FLEX_TEST_TURN = "플렉스 모드는 세로 화면에서 접을 때만 켜집니다. 화면을 세로로 돌리세요."
-    const val LAB_FLEX_DIM = "가까이 접으면 밝기 고정"
-    const val LAB_FLEX_DIM_BODY = "50° 안쪽으로 접으면 마주 보는 화면 빛에 밝기가 오르지 않게 자동 밝기를 잠시 멈춥니다."
-    const val LAB_FLEX_ON_TITLE = "지금 플렉스 모드입니다"
-    const val LAB_FLEX_ON_BODY = "위 화면에는 사용하던 앱이, 아래 화면에는 조작 패널이 표시됩니다. 범위를 벗어나면 꺼집니다."
-    const val LAB_FLEX_ON_BODY_CLICK = "까딱으로 켰습니다. 펼친 상태에서도 플렉스 모드를 씁니다. 한 번 더 까딱하면 꺼집니다."
-    const val LAB_FLEX_CLICK = "까딱으로 플렉스 모드"
-    const val LAB_FLEX_CLICK_BODY = "완전히 편 채 130~160°까지 살짝 접었다 3초 안에 다시 펴면(까딱) 켜지고, 한 번 더 하면 꺼집니다."
-    const val LAB_FLEX_APPS_TITLE = "앱별로 접었을 때 동작"
-    const val LAB_FLEX_APPS_BODY = "기본은 유튜브·카메라·갤러리만 플렉스 모드입니다. 접은 동안 알림에서도 바꿀 수 있습니다."
-    const val LAB_FLEX_UNSUPPORTED_TITLE = "폴드8 전용 기능입니다"
-    const val LAB_FLEX_UNSUPPORTED_BODY = "다른 폴드는 시스템이 플렉스 모드를 지원합니다. 접히지 않는 기기에서는 쓸 수 없습니다."
-    const val LAB_RESTORE = "처음대로"
-    const val LAB_RESTORED = "처음대로 되돌렸습니다."
-    const val LAB_WRITE_FAILED = "바꾸지 못했습니다. 권한과 Shizuku 연결을 확인하세요."
-    const val LAB_AIRPLANE_TITLE = "비행기 모드에서 켜 둘 무선"
-    const val LAB_AIRPLANE_BODY = "비행기 모드를 켜도 고른 무선은 끄지 않습니다. 모바일 데이터는 항상 꺼집니다."
-    const val LAB_AIRPLANE_ROW = "다음에 비행기 모드를 켤 때부터 적용됩니다."
-    const val LAB_ICONS_TITLE = "상태 표시줄 아이콘 숨기기"
-    const val LAB_ICONS_BODY = "고른 아이콘을 숨깁니다. One UI 버전에 따라 숨겨지지 않는 아이콘도 있습니다."
-    const val LAB_PRIVACY_DOT_BODY = "녹음·촬영할 때 오른쪽 위에 뜨는 초록 점 · Shizuku 필요"
-    const val LAB_PRIVACY_DOT_SWITCH = "마이크·카메라 사용 표시 숨기기"
-    const val SHAKE_FAST_TITLE = "빠른 회전"
-    const val SHAKE_FAST_BODY = "시스템을 기다리지 않고 센서로 기기 방향을 바로 계산해 회전합니다. 방향이 애매하면 시스템에 맡깁니다."
-    const val MENU_SECTION_TOOLS = "상태 표시줄·조작"
-    const val MENU_ADVANCED = "고급 정보"
-    const val MENU_REPORT = "문제 신고"
-    const val MENU_RESET = "초기화"
-    const val MENU_ABOUT = "앱 정보"
-    const val FEATURE_SETTINGS = "앱 설정"
-    const val SETTINGS_SECTION = "설정"
-    const val INFO_SECTION = "정보"
-    const val INFO_CHANGELOG = "변경 기록"
-    const val INFO_PERMISSIONS = "필요 권한"
-    const val MOTION_TITLE = "UI 유연성"
-    const val MOTION_BODY = "움직일 때 출렁이는 정도입니다. 0%는 단단하고 클수록 유연합니다. 속도는 그대로입니다."
-    const val HAPTIC_TITLE = "햅틱 세기"
-    const val HAPTIC_BODY = "누르거나 켜거나 고를 때의 진동 세기입니다. 0%는 끔이며, 기기 터치 진동 설정도 따릅니다."
-    const val MOTION_PREVIEW = "미리 보기: 눌러서 움직여 보세요"
-    const val SPEED_TITLE = "UI 애니메이션 속도"
-    const val GOAT_STYLE_TITLE = "염소 아이콘"
-    const val GOAT_STYLE_BODY = "앱 아이콘과 로고의 염소를 고릅니다. 홈 화면 아이콘은 다시 놓아야 할 수 있습니다."
-    const val GOAT_STYLE_ART = "지금"
-    const val GOAT_STYLE_CLASSIC = "이전"
-    const val GOAT_STYLE_SILHOUETTE = "실루엣"
-    const val GOAT_STYLE_GEAR = "톱니"
-    const val INK_TITLE = "잉크 색"
-    const val INK_BODY = "방울·선택 표시·버튼의 색입니다. 갤럭시 테마는 색상 팔레트에서 한 색을 고릅니다."
-    const val INK_TONE = "팔레트 색"
-    const val DEFAULT = "기본"
-    const val INK_THEME = "갤럭시 테마"
-    const val SPEED_BODY = "물방울 UI가 움직이는 속도입니다. 클수록 빠르고 작을수록 느립니다."
+    val LAB_FLEX_TEST_OFF: String get() = s(R.string.lab_flex_test_off)
+    val LAB_FLEX_TEST_TITLE: String get() = s(R.string.lab_flex_test_title)
+    val LAB_FLEX_TEST_HOW: String get() = s(R.string.lab_flex_test_how)
+    val LAB_FLEX_TEST_BOTTOM: String get() = s(R.string.lab_flex_test_bottom)
+    val LAB_FLEX_TEST_UNFOLD: String get() = s(R.string.lab_flex_test_unfold)
+    val LAB_FLEX_TEST_CLOSE: String get() = s(R.string.lab_flex_test_close)
+    val LAB_FLEX_TEST_TURN: String get() = s(R.string.lab_flex_test_turn)
+    val LAB_FLEX_DIM: String get() = s(R.string.lab_flex_dim)
+    val LAB_FLEX_DIM_BODY: String get() = s(R.string.lab_flex_dim_body)
+    val LAB_FLEX_ON_TITLE: String get() = s(R.string.lab_flex_on_title)
+    val LAB_FLEX_ON_BODY: String get() = s(R.string.lab_flex_on_body)
+    val LAB_FLEX_ON_BODY_CLICK: String get() = s(R.string.lab_flex_on_body_click)
+    val LAB_FLEX_CLICK: String get() = s(R.string.lab_flex_click)
+    val LAB_FLEX_CLICK_BODY: String get() = s(R.string.lab_flex_click_body)
+    val LAB_FLEX_APPS_TITLE: String get() = s(R.string.lab_flex_apps_title)
+    val LAB_FLEX_APPS_BODY: String get() = s(R.string.lab_flex_apps_body)
+    val LAB_FLEX_UNSUPPORTED_TITLE: String get() = s(R.string.lab_flex_unsupported_title)
+    val LAB_FLEX_UNSUPPORTED_BODY: String get() = s(R.string.lab_flex_unsupported_body)
+    val LAB_RESTORE: String get() = s(R.string.lab_restore)
+    val LAB_RESTORED: String get() = s(R.string.lab_restored)
+    val LAB_WRITE_FAILED: String get() = s(R.string.lab_write_failed)
+    val LAB_AIRPLANE_TITLE: String get() = s(R.string.lab_airplane_title)
+    val LAB_AIRPLANE_BODY: String get() = s(R.string.lab_airplane_body)
+    val LAB_AIRPLANE_ROW: String get() = s(R.string.lab_airplane_row)
+    val LAB_ICONS_TITLE: String get() = s(R.string.lab_icons_title)
+    val LAB_ICONS_BODY: String get() = s(R.string.lab_icons_body)
+    val LAB_PRIVACY_DOT_BODY: String get() = s(R.string.lab_privacy_dot_body)
+    val LAB_PRIVACY_DOT_SWITCH: String get() = s(R.string.lab_privacy_dot_switch)
+    val SHAKE_FAST_TITLE: String get() = s(R.string.shake_fast_title)
+    val SHAKE_FAST_BODY: String get() = s(R.string.shake_fast_body)
+    val MENU_SECTION_TOOLS: String get() = s(R.string.menu_section_tools)
+    val MENU_ADVANCED: String get() = s(R.string.menu_advanced)
+    val MENU_REPORT: String get() = s(R.string.menu_report)
+    val MENU_RESET: String get() = s(R.string.menu_reset)
+    val MENU_ABOUT: String get() = s(R.string.menu_about)
+    val FEATURE_SETTINGS: String get() = s(R.string.feature_settings)
+    val SETTINGS_SECTION: String get() = s(R.string.settings_section)
+    val INFO_SECTION: String get() = s(R.string.info_section)
+    val INFO_CHANGELOG: String get() = s(R.string.info_changelog)
+    val INFO_PERMISSIONS: String get() = s(R.string.info_permissions)
+    val MOTION_TITLE: String get() = s(R.string.motion_title)
+    val MOTION_BODY: String get() = s(R.string.motion_body)
+    val HAPTIC_TITLE: String get() = s(R.string.haptic_title)
+    val HAPTIC_BODY: String get() = s(R.string.haptic_body)
+    val MOTION_PREVIEW: String get() = s(R.string.motion_preview)
+    val SPEED_TITLE: String get() = s(R.string.speed_title)
+    val GOAT_STYLE_TITLE: String get() = s(R.string.goat_style_title)
+    val GOAT_STYLE_BODY: String get() = s(R.string.goat_style_body)
+    val GOAT_STYLE_ART: String get() = s(R.string.goat_style_art)
+    val GOAT_STYLE_CLASSIC: String get() = s(R.string.goat_style_classic)
+    val GOAT_STYLE_SILHOUETTE: String get() = s(R.string.goat_style_silhouette)
+    val GOAT_STYLE_GEAR: String get() = s(R.string.goat_style_gear)
+    val INK_TITLE: String get() = s(R.string.ink_title)
+    val INK_BODY: String get() = s(R.string.ink_body)
+    val INK_TONE: String get() = s(R.string.ink_tone)
+    val DEFAULT: String get() = s(R.string.default_label)
+    val INK_THEME: String get() = s(R.string.ink_theme)
+    val SPEED_BODY: String get() = s(R.string.speed_body)
 
     // 초기화
-    const val RESET_RELEARN = "화면 정보 초기화"
-    const val RESET_RELEARN_BODY = "학습한 해상도·PPI 정보를 지우고 다시 수집합니다. 설정한 DPI는 유지됩니다."
-    const val RESET_DEFAULT = "기본 DPI로 복원"
-    const val RESET_PERMISSION = "권한 초기화"
-    const val RESET_PERMISSION_BODY = "앱의 적용 기록과 설정을 지우고, 권한을 회수하는 PC 명령을 안내합니다."
-    const val RESET_PERMISSION_WARN = "자동 적용이 멈추고 적용 기록이 지워집니다. 다시 쓰려면 권한을 다시 받아야 합니다."
-    const val RESET_PERMISSION_CONFIRM = "권한을 초기화하시겠습니까? 되돌릴 수 없습니다."
-    const val RESET_PERMISSION_KEEP = "현재 적용된 DPI는 그대로 유지됩니다."
-    const val RESET_PERMISSION_LIMIT = "앱은 이 권한을 스스로 해제할 수 없습니다."
-    const val RESET_PERMISSION_STEP = "PC에서 아래 명령을 실행하면 권한이 회수되고 권한 설정 화면이 열립니다."
-    const val RESET_PERMISSION_WAITING = "권한 회수 대기 중"
-    const val CONTINUE = "계속"
-    const val CANCEL = "취소"
-    const val RESET_DEFAULT_BODY = "두 화면을 기기 기본 DPI로 되돌리고 자동 적용을 끕니다."
-    const val RESET_DEFAULT_BODY_SINGLE = "화면을 기기 기본 DPI로 되돌리고 자동 적용을 끕니다."
+    val RESET_RELEARN: String get() = s(R.string.reset_relearn)
+    val RESET_RELEARN_BODY: String get() = s(R.string.reset_relearn_body)
+    val RESET_DEFAULT: String get() = s(R.string.reset_default)
+    val RESET_PERMISSION: String get() = s(R.string.reset_permission)
+    val RESET_PERMISSION_BODY: String get() = s(R.string.reset_permission_body)
+    val RESET_PERMISSION_WARN: String get() = s(R.string.reset_permission_warn)
+    val RESET_PERMISSION_CONFIRM: String get() = s(R.string.reset_permission_confirm)
+    val RESET_PERMISSION_KEEP: String get() = s(R.string.reset_permission_keep)
+    val RESET_PERMISSION_LIMIT: String get() = s(R.string.reset_permission_limit)
+    val RESET_PERMISSION_STEP: String get() = s(R.string.reset_permission_step)
+    val RESET_PERMISSION_WAITING: String get() = s(R.string.reset_permission_waiting)
+    val CONTINUE: String get() = s(R.string.continue_label)
+    val CANCEL: String get() = s(R.string.cancel)
+    val RESET_DEFAULT_BODY: String get() = s(R.string.reset_default_body)
+    val RESET_DEFAULT_BODY_SINGLE: String get() = s(R.string.reset_default_body_single)
 
     // 알림(토스트)
-    const val TOAST_APPLIED = "적용했습니다"
-    const val TOAST_FAILED = "적용하지 못했습니다. 문제 신고로 알려 주세요"
-    const val TOAST_NO_PERMISSION = "먼저 권한을 설정하세요"
-    const val TOAST_BUSY = "잠시 후 다시 시도하세요"
-    const val TOAST_RELEARN = "화면 정보를 초기화했습니다. 기기를 접었다 펼치세요"
-    const val TOAST_RESET = "기본 DPI로 복원했습니다"
-    const val TOAST_PERMISSION_OK = "권한 설정을 마쳤습니다"
-    const val TOAST_ADOPTED = "바뀐 값을 기준으로 삼았습니다"
-    const val TOAST_RESTORED = "앱 설정으로 복원했습니다"
-    const val TOAST_PERMISSION_RESET = "앱 설정을 초기화했습니다. PC에서 권한을 회수하세요"
-    const val TOAST_PERMISSION_REMOVED = "권한이 회수되었습니다"
-    const val TOAST_COPIED = "복사했습니다"
-    const val TOAST_REPORT_SAVED = "다운로드/GOAT 폴더에 저장했습니다"
-    const val TOAST_REPORT_FAILED = "진단 파일을 만들지 못했습니다"
+    val TOAST_APPLIED: String get() = s(R.string.toast_applied)
+    val TOAST_FAILED: String get() = s(R.string.toast_failed)
+    val TOAST_NO_PERMISSION: String get() = s(R.string.toast_no_permission)
+    val TOAST_BUSY: String get() = s(R.string.toast_busy)
+    val TOAST_RELEARN: String get() = s(R.string.toast_relearn)
+    val TOAST_RESET: String get() = s(R.string.toast_reset)
+    val TOAST_PERMISSION_OK: String get() = s(R.string.toast_permission_ok)
+    val TOAST_ADOPTED: String get() = s(R.string.toast_adopted)
+    val TOAST_RESTORED: String get() = s(R.string.toast_restored)
+    val TOAST_PERMISSION_RESET: String get() = s(R.string.toast_permission_reset)
+    val TOAST_PERMISSION_REMOVED: String get() = s(R.string.toast_permission_removed)
+    val TOAST_COPIED: String get() = s(R.string.toast_copied)
+    val TOAST_REPORT_SAVED: String get() = s(R.string.toast_report_saved)
+    val TOAST_REPORT_FAILED: String get() = s(R.string.toast_report_failed)
 
     // 앱별 배율
-    const val APP_SIZE_INTRO_TITLE = "앱마다 배율을 따로"
-    const val APP_SIZE_INTRO_BODY = "삼성 '앱 화면 크게/작게'와 같은 설정입니다. 바꾼 값은 재부팅해도 유지됩니다."
-    const val APP_SIZE_CONNECT_BODY = "앱별 배율은 무료 앱 Shizuku를 연결해야 바꿀 수 있습니다."
-    const val APP_SIZE_UNSUPPORTED = "이 기기는 앱별 배율을 지원하지 않습니다. 폴드처럼 화면이 큰 삼성 기기에만 있는 기능입니다."
-    const val APP_SIZE_NOTIFY_TITLE = "알림창에서 바로 조절"
-    const val APP_SIZE_NOTIFY_BODY = "알림의 [작게]·[기본]·[크게]로 지금 보는 앱의 배율을 바꿉니다."
-    const val APP_SIZE_USAGE_NEEDED = "최근 사용 순 정렬에는 '사용 기록 접근'이 필요합니다."
-    const val APP_SIZE_BOOT_OFF = "Shizuku의 '부팅 시 시작'이 꺼져 있습니다. Shizuku 설정에서 켜 두세요."
-    const val APP_SIZE_ROW_HINT = "숫자가 작을수록 작게 보입니다. 바꾸면 이 앱이 다시 시작됩니다."
-    const val APP_SIZE_RESET_TITLE = "앱별 배율 초기화"
-    const val APP_SIZE_RESET_BODY = "배율을 바꾼 앱을 모두 기본 배율로 되돌립니다."
-    const val APP_SIZE_RESET_WARN = "열려 있던 앱은 다시 시작됩니다. 되돌리시겠습니까?"
-    const val APP_SIZE_RESET_ACTION = "모두 기본으로"
+    val APP_SIZE_INTRO_TITLE: String get() = s(R.string.app_size_intro_title)
+    val APP_SIZE_INTRO_BODY: String get() = s(R.string.app_size_intro_body)
+    val APP_SIZE_CONNECT_BODY: String get() = s(R.string.app_size_connect_body)
+    val APP_SIZE_UNSUPPORTED: String get() = s(R.string.app_size_unsupported)
+    val APP_SIZE_NOTIFY_TITLE: String get() = s(R.string.app_size_notify_title)
+    val APP_SIZE_NOTIFY_BODY: String get() = s(R.string.app_size_notify_body)
+    val APP_SIZE_USAGE_NEEDED: String get() = s(R.string.app_size_usage_needed)
+    val APP_SIZE_BOOT_OFF: String get() = s(R.string.app_size_boot_off)
+    val APP_SIZE_ROW_HINT: String get() = s(R.string.app_size_row_hint)
+    val APP_SIZE_RESET_TITLE: String get() = s(R.string.app_size_reset_title)
+    val APP_SIZE_RESET_BODY: String get() = s(R.string.app_size_reset_body)
+    val APP_SIZE_RESET_WARN: String get() = s(R.string.app_size_reset_warn)
+    val APP_SIZE_RESET_ACTION: String get() = s(R.string.app_size_reset_action)
 
     // 표시 크기 적용
-    const val SIZE_PENDING = "바꾼 값은 [적용]을 눌러야 화면에 반영됩니다."
-    const val SIZE_APPLY = "적용"
-    const val REVERT = "되돌리기"
-    const val APP_SIZE_FAILED = "바꾸지 못했습니다: "
-    const val APP_SIZE_AUTO_OFF_TITLE = "Shizuku가 켜지면 무선 디버깅 끄기"
-    const val APP_SIZE_AUTO_OFF_BODY = "무선 디버깅은 Shizuku를 시작할 때만 필요합니다. 일부 기기에서는 끄면 Shizuku도 멈춥니다."
-    const val AUTO_OFF_STOPS_SHIZUKU = "이 기기는 무선 디버깅을 끄면 Shizuku가 멈춰서, 무선 디버깅을 다시 켜고 이 옵션을 껐습니다."
+    val SIZE_PENDING: String get() = s(R.string.size_pending)
+    val SIZE_APPLY: String get() = s(R.string.size_apply)
+    val REVERT: String get() = s(R.string.revert)
+    val APP_SIZE_FAILED: String get() = s(R.string.app_size_failed)
+    val APP_SIZE_AUTO_OFF_TITLE: String get() = s(R.string.app_size_auto_off_title)
+    val APP_SIZE_AUTO_OFF_BODY: String get() = s(R.string.app_size_auto_off_body)
+    val AUTO_OFF_STOPS_SHIZUKU: String get() = s(R.string.auto_off_stops_shizuku)
 
     // 주사율 고정
-    const val FEATURE_REFRESH = "주사율 고정"
-    const val MENU_SECTION_DISPLAY = "화면 표시"
-    const val REFRESH_INTRO_TITLE = "화면을 더 부드럽게"
-    const val REFRESH_INTRO_BODY = "화면이 1초에 새로 그려지는 횟수를 정합니다. 높을수록 스크롤과 움직임이 매끄럽습니다."
-    const val REFRESH_UNSUPPORTED_TITLE = "바꿀 수 없는 화면입니다"
-    const val REFRESH_PICK_TITLE = "주사율 선택"
-    const val REFRESH_SYSTEM = "시스템 기본"
-    const val REFRESH_SYSTEM_DESC = "기기 설정을 따릅니다. 대개 움직일 때만 높이고 멈추면 낮춥니다."
-    const val REFRESH_SMOOTH = "항상 최고 주사율"
-    const val REFRESH_SMOOTH_DESC = "멈춰 있어도 최고 주사율을 유지해 스크롤과 터치가 가장 부드럽습니다."
-    const val REFRESH_SAVER = "60Hz 절전"
-    const val REFRESH_SAVER_DESC = "60Hz로 고정해 배터리를 아낍니다. 움직임은 조금 덜 부드럽습니다."
-    const val CAUTION_TITLE = "알아 두세요"
+    val FEATURE_REFRESH: String get() = s(R.string.feature_refresh)
+    val MENU_SECTION_DISPLAY: String get() = s(R.string.menu_section_display)
+    val REFRESH_INTRO_TITLE: String get() = s(R.string.refresh_intro_title)
+    val REFRESH_INTRO_BODY: String get() = s(R.string.refresh_intro_body)
+    val REFRESH_UNSUPPORTED_TITLE: String get() = s(R.string.refresh_unsupported_title)
+    val REFRESH_PICK_TITLE: String get() = s(R.string.refresh_pick_title)
+    val REFRESH_SYSTEM: String get() = s(R.string.refresh_system)
+    val REFRESH_SYSTEM_DESC: String get() = s(R.string.refresh_system_desc)
+    val REFRESH_SMOOTH: String get() = s(R.string.refresh_smooth)
+    val REFRESH_SMOOTH_DESC: String get() = s(R.string.refresh_smooth_desc)
+    val REFRESH_SAVER: String get() = s(R.string.refresh_saver)
+    val REFRESH_SAVER_DESC: String get() = s(R.string.refresh_saver_desc)
+    val CAUTION_TITLE: String get() = s(R.string.caution_title)
 
     /** 바꿀 수 없는 기기 안내(실제 최고 주사율을 적는다). */
-    fun refreshUnsupported(top: Int) = "이 기기 화면은 최고 ${top}Hz라 주사율을 바꿀 수 없습니다."
+    fun refreshUnsupported(top: Int) = f(R.string.refresh_unsupported_fmt, top)
 
     /** 고르기 카드의 지금 상태 줄. */
-    fun refreshNow(now: Int, top: Int) = "지금 화면 ${now}Hz · 이 기기 최고 ${top}Hz"
+    fun refreshNow(now: Int, top: Int) = f(R.string.refresh_now_fmt, now, top)
 
     /** '항상 최고'를 실제 값으로 적은 이름(화면 고르기 줄·홈 카드가 함께 쓴다). */
-    fun refreshAlways(top: Int) = "항상 ${top}Hz"
-    const val ICONS_DASH_NONE = "숨긴 아이콘 없음"
-    fun iconsDash(n: Int) = "숨긴 아이콘 ${n}개"
-    const val AIRPLANE_DASH_NONE = "비행기 모드 때 모두 끔"
-    const val AIRPLANE_DASH_DEFAULT = "기본 설정"
-    fun airplaneDash(kept: List<String>) = "${kept.joinToString("·")} 켜 둠"
-    const val LAB_PRIVACY_DOT_BLOCKED = "이 Android 버전에서는 시스템이 막아 바꿀 수 없습니다."
-    const val REFRESH_UNSUPPORTED_SHORT = "바꿀 수 없는 화면"
-    const val REFRESH_TOAST_EXTERNAL = "GOAT가 바꾼 값이 아니라 그대로 둡니다. 설정 앱에서 바꾸세요"
-    const val REFRESH_CAUTION_BODY = "높은 주사율은 배터리를 더 씁니다. 절전 모드·아주 낮은 밝기·일부 게임에서는 시스템이 주사율을 낮춥니다."
+    fun refreshAlways(top: Int) = f(R.string.refresh_always_fmt, top)
+    val ICONS_DASH_NONE: String get() = s(R.string.icons_dash_none)
+    fun iconsDash(n: Int) = f(R.string.icons_dash_fmt, n)
+    val AIRPLANE_DASH_NONE: String get() = s(R.string.airplane_dash_none)
+    val AIRPLANE_DASH_DEFAULT: String get() = s(R.string.airplane_dash_default)
+    fun airplaneDash(kept: List<String>) = f(R.string.airplane_dash_fmt, kept.joinToString("·"))
+    val LAB_PRIVACY_DOT_BLOCKED: String get() = s(R.string.lab_privacy_dot_blocked)
+    val REFRESH_UNSUPPORTED_SHORT: String get() = s(R.string.refresh_unsupported_short)
+    val REFRESH_TOAST_EXTERNAL: String get() = s(R.string.refresh_toast_external)
+    val REFRESH_CAUTION_BODY: String get() = s(R.string.refresh_caution_body)
 
     // GOS 끄기
-    const val FEATURE_GOS = "GOS 끄기"
-    const val UPDATE_TITLE = "업데이트"
-    const val UPDATE_CHECK = "업데이트 확인"
-    const val UPDATE_TEST_SUFFIX = " · 시험 버전"
-    const val UPDATE_CHANNEL_TITLE = "버전 채널"
-    const val UPDATE_CHANNEL_TEST = "실험실이 열려 있어 시험 버전도 받습니다."
-    fun updateBackToStable(v: String) = "지금은 시험 버전($v)입니다. 다음 안정 버전이 나오면 그 버전으로 업데이트됩니다."
-    const val UPDATE_TO_STABLE = "안정 버전으로 돌아가기"
-    const val UPDATE_TO_STABLE_BODY = "실험실을 숨기고 앞으로는 안정 버전만 받습니다. 지금 버전은 다음 안정 버전이 나올 때 바뀝니다."
-    const val UPDATE_TO_STABLE_OK = "돌아가기"
-    const val UPDATE_TO_STABLE_DONE = "실험실을 숨겼습니다. 다음 안정 버전부터 받습니다."
-    const val UPDATE_CHECKING = "새 버전 확인 중…"
-    const val UPDATE_NOW = "지금 업데이트"
-    const val UPDATE_DOWNLOADING = "다운로드 중"
+    val FEATURE_GOS: String get() = s(R.string.feature_gos)
+    val UPDATE_TITLE: String get() = s(R.string.update_title)
+    val UPDATE_CHECK: String get() = s(R.string.update_check)
+    val UPDATE_TEST_SUFFIX: String get() = s(R.string.update_test_suffix)
+    val UPDATE_CHANNEL_TITLE: String get() = s(R.string.update_channel_title)
+    val UPDATE_CHANNEL_TEST: String get() = s(R.string.update_channel_test)
+    fun updateBackToStable(v: String) = f(R.string.update_back_to_stable_fmt, v)
+    val UPDATE_TO_STABLE: String get() = s(R.string.update_to_stable)
+    val UPDATE_TO_STABLE_BODY: String get() = s(R.string.update_to_stable_body)
+    val UPDATE_TO_STABLE_OK: String get() = s(R.string.update_to_stable_ok)
+    val UPDATE_TO_STABLE_DONE: String get() = s(R.string.update_to_stable_done)
+    val UPDATE_CHECKING: String get() = s(R.string.update_checking)
+    val UPDATE_NOW: String get() = s(R.string.update_now)
+    val UPDATE_DOWNLOADING: String get() = s(R.string.update_downloading)
 
     /** 내려받는 중: "다운로드 중 42% · 8.9 / 21.1MB · 2.4MB/s"(속도를 아직 모르면 뺀다). */
     fun updateProgress(percent: Int, done: Float, total: Float, bps: Float): String {
         fun mb(b: Float) = String.format(Locale.ROOT, "%.1f", b / (1024 * 1024))
-        return "$UPDATE_DOWNLOADING $percent% · ${mb(done)} / ${mb(total)}MB" + if (bps > 0f) " · ${mb(bps)}MB/s" else ""
+        return f(R.string.update_progress_fmt, UPDATE_DOWNLOADING, percent, mb(done), mb(total)) + if (bps > 0f) f(R.string.update_speed_fmt, mb(bps)) else ""
     }
-    const val UPDATE_INSTALLING = "설치 중… 끝나면 GOAT가 다시 시작됩니다"
-    const val UPDATE_FAILED_TITLE = "업데이트하지 못했습니다"
-    const val UPDATE_CHECK_FAILED_TITLE = "새 버전을 확인하지 못했습니다"
-    const val UPDATE_RETRY = "다시 시도"
-    const val UPDATE_MANUAL = "GitHub에서 직접 받기"
-    fun updateTitle(v: String) = "새 버전 $v 업데이트가 있습니다"
-    fun updateLatest(v: String) = "지금 쓰는 $v 버전이 최신입니다."
-    fun updateCurrent(v: String) = "지금 쓰는 버전은 ${v}입니다. GitHub에서 새 버전을 확인합니다."
-    const val LOG_FILE_TITLE = "기록 파일 남기기"
-    const val LOG_FILE_BODY = "작동 기록을 다운로드/GOAT 폴더에 날짜별로 저장합니다. 문제 신고 때 함께 보내면 됩니다."
-    const val FEATURE_DOZE = "잠자기 모드 끄기"
-    const val DOZE_INTRO_TITLE = "알림이 늦게 오지 않게"
-    const val DOZE_INTRO_BODY = "화면이 꺼졌을 때 앱 동작을 모아 늦추는 잠자기 모드를 끕니다."
-    const val DOZE_STATE_OFF = "잠자기 모드가 꺼져 있습니다. 재부팅해도 Shizuku가 연결되면 다시 끕니다."
-    const val DOZE_STATE_ON = "기본값대로 켜져 있습니다. 화면이 꺼진 동안 알림이 늦게 올 수 있습니다."
-    const val DOZE_CAUTION_BODY = "화면이 꺼진 동안에도 앱이 깨어 있어 대기 중 배터리 소모가 크게 늘어납니다."
-    const val DOZE_CAUTION_BODY2 = "한 앱의 알림만 늦다면 그 앱의 배터리 설정을 '제한 없음'으로 두세요."
-    const val DOZE_CONFIRM_BODY = "알림 지연은 줄지만 대기 중 배터리가 더 빨리 닳습니다. 언제든 다시 켤 수 있습니다."
-    const val CONFIRM_TURN_OFF = "끄기"
-    const val DOZE_TOAST_OFF = "잠자기 모드를 껐습니다"
-    const val DOZE_TOAST_ON = "잠자기 모드를 다시 켰습니다"
-    const val DOZE_DASH_OFF = "잠자기 모드 꺼짐"
-    const val DOZE_DASH_ON = "잠자기 모드 켜짐"
-    const val DASH_WANTED_OFF = "꺼 두기로 함"
-    const val GOS_INTRO_TITLE = "게임 성능 제한 풀기"
-    const val GOS_INTRO_BODY = "게임 중 성능을 조절하는 게임 최적화 서비스(GOS)를 끕니다. 대신 발열이 늘 수 있습니다."
-    const val GOS_NONE_TITLE = "이 기기에는 GOS가 없습니다"
-    const val GOS_SWITCH_TITLE = "게임 최적화 서비스 끄기"
-    const val GOS_STATE_OFF = "꺼져 있습니다. 게임 성능을 제한하지 않습니다."
-    const val GOS_STATE_ON = "켜져 있습니다. 게임 중 성능이 제한될 수 있습니다."
-    const val GOS_CAUTION_BODY = "게임을 오래 하면 발열이 늘고 배터리가 빨리 닳을 수 있습니다. 게임 런처·부스터는 그대로입니다."
-    const val GOS_CONFIRM_BODY = "게임 성능 제한이 풀리는 대신 발열과 배터리 소모가 늘 수 있습니다. 언제든 다시 켤 수 있습니다."
-    const val GOS_TOAST_OFF = "GOS를 껐습니다"
-    const val GOS_TOAST_ON = "GOS를 다시 켰습니다"
-    const val GOS_DASH_OFF = "GOS 꺼짐"
-    const val GOS_DASH_ON = "GOS 켜짐"
-    const val GOS_DASH_NONE = "GOS 없는 기기"
-    const val DASH_NEED_SHIZUKU = "Shizuku 연결 필요"
+    val UPDATE_INSTALLING: String get() = s(R.string.update_installing)
+    val UPDATE_FAILED_TITLE: String get() = s(R.string.update_failed_title)
+    val UPDATE_CHECK_FAILED_TITLE: String get() = s(R.string.update_check_failed_title)
+    val UPDATE_RETRY: String get() = s(R.string.update_retry)
+    val UPDATE_MANUAL: String get() = s(R.string.update_manual)
+    fun updateTitle(v: String) = f(R.string.update_title_fmt, v)
+    fun updateLatest(v: String) = f(R.string.update_latest_fmt, v)
+    fun updateCurrent(v: String) = f(R.string.update_current_fmt, v)
+    val LOG_FILE_TITLE: String get() = s(R.string.log_file_title)
+    val LOG_FILE_BODY: String get() = s(R.string.log_file_body)
+    val FEATURE_DOZE: String get() = s(R.string.feature_doze)
+    val DOZE_INTRO_TITLE: String get() = s(R.string.doze_intro_title)
+    val DOZE_INTRO_BODY: String get() = s(R.string.doze_intro_body)
+    val DOZE_STATE_OFF: String get() = s(R.string.doze_state_off)
+    val DOZE_STATE_ON: String get() = s(R.string.doze_state_on)
+    val DOZE_CAUTION_BODY: String get() = s(R.string.doze_caution_body)
+    val DOZE_CAUTION_BODY2: String get() = s(R.string.doze_caution_body2)
+    val DOZE_CONFIRM_BODY: String get() = s(R.string.doze_confirm_body)
+    val CONFIRM_TURN_OFF: String get() = s(R.string.confirm_turn_off)
+    val DOZE_TOAST_OFF: String get() = s(R.string.doze_toast_off)
+    val DOZE_TOAST_ON: String get() = s(R.string.doze_toast_on)
+    val DOZE_DASH_OFF: String get() = s(R.string.doze_dash_off)
+    val DOZE_DASH_ON: String get() = s(R.string.doze_dash_on)
+    val DASH_WANTED_OFF: String get() = s(R.string.dash_wanted_off)
+    val GOS_INTRO_TITLE: String get() = s(R.string.gos_intro_title)
+    val GOS_INTRO_BODY: String get() = s(R.string.gos_intro_body)
+    val GOS_NONE_TITLE: String get() = s(R.string.gos_none_title)
+    val GOS_SWITCH_TITLE: String get() = s(R.string.gos_switch_title)
+    val GOS_STATE_OFF: String get() = s(R.string.gos_state_off)
+    val GOS_STATE_ON: String get() = s(R.string.gos_state_on)
+    val GOS_CAUTION_BODY: String get() = s(R.string.gos_caution_body)
+    val GOS_CONFIRM_BODY: String get() = s(R.string.gos_confirm_body)
+    val GOS_TOAST_OFF: String get() = s(R.string.gos_toast_off)
+    val GOS_TOAST_ON: String get() = s(R.string.gos_toast_on)
+    val GOS_DASH_OFF: String get() = s(R.string.gos_dash_off)
+    val GOS_DASH_ON: String get() = s(R.string.gos_dash_on)
+    val GOS_DASH_NONE: String get() = s(R.string.gos_dash_none)
+    val DASH_NEED_SHIZUKU: String get() = s(R.string.dash_need_shizuku)
 
     // 앱 다크 모드 강제
-    const val FEATURE_DARK = "앱 다크 모드 강제"
-    const val DARK_INTRO_TITLE = "밤에도 눈부시지 않게"
-    const val DARK_INTRO_BODY = "다크 모드를 지원하지 않는 앱도 시스템이 색을 바꿔 어둡게 표시합니다. 사진 색은 그대로입니다."
-    const val DARK_NIGHT_TITLE = "시스템 다크 모드"
-    const val DARK_NIGHT_ON = "켜져 있습니다. 기기 전체 설정이며, 강제 다크가 적용될 수 있습니다."
-    const val DARK_NIGHT_OFF = "꺼져 있습니다. 위 스위치를 켜면 함께 켜지고, 끄면 원래대로 돌아갑니다."
-    const val DARK_FORCE_TITLE = "다크 모드 없는 앱도 어둡게"
-    const val DARK_FORCE_ON = "켜져 있습니다. 열려 있던 앱은 다시 열면 어둡게 바뀝니다."
-    const val DARK_FORCE_WAITING = "켜져 있지만 시스템 다크 모드가 꺼져 있어 아직 적용되지 않습니다."
-    const val DARK_FORCE_OFF = "꺼져 있습니다. 켜면 시스템 다크 모드도 함께 켭니다."
-    const val DARK_CAUTION_TITLE = "화면 오류가 생길 수 있습니다"
-    const val DARK_CAUTION_BODY = "상태 표시줄 글자가 바탕과 같은 색이 되거나 홈 화면 폴더에 흰 네모가 보일 수 있습니다."
-    const val DARK_CAUTION_BODY2 = "시스템이 다른 앱의 색을 바꾸면서 생기는 현상이라 GOAT가 고칠 수 없습니다. 불편하면 끄세요."
-    const val DARK_NIGHT_OPEN = "디스플레이 설정 열기"
-    const val DARK_TOAST_NO_SETTINGS = "디스플레이 설정을 열지 못했습니다"
-    const val DARK_TOAST_FORCE_ON = "강제 다크를 켰습니다. 앱을 다시 열면 적용됩니다"
-    const val DARK_TOAST_FORCE_OFF = "강제 다크를 껐습니다"
-    const val DARK_DASH_ON = "다크 없는 앱도 어둡게"
-    const val DARK_DASH_WAITING = "시스템 다크 모드 꺼짐"
+    val FEATURE_DARK: String get() = s(R.string.feature_dark)
+    val DARK_INTRO_TITLE: String get() = s(R.string.dark_intro_title)
+    val DARK_INTRO_BODY: String get() = s(R.string.dark_intro_body)
+    val DARK_NIGHT_TITLE: String get() = s(R.string.dark_night_title)
+    val DARK_NIGHT_ON: String get() = s(R.string.dark_night_on)
+    val DARK_NIGHT_OFF: String get() = s(R.string.dark_night_off)
+    val DARK_FORCE_TITLE: String get() = s(R.string.dark_force_title)
+    val DARK_FORCE_ON: String get() = s(R.string.dark_force_on)
+    val DARK_FORCE_WAITING: String get() = s(R.string.dark_force_waiting)
+    val DARK_FORCE_OFF: String get() = s(R.string.dark_force_off)
+    val DARK_CAUTION_TITLE: String get() = s(R.string.dark_caution_title)
+    val DARK_CAUTION_BODY: String get() = s(R.string.dark_caution_body)
+    val DARK_CAUTION_BODY2: String get() = s(R.string.dark_caution_body2)
+    val DARK_NIGHT_OPEN: String get() = s(R.string.dark_night_open)
+    val DARK_TOAST_NO_SETTINGS: String get() = s(R.string.dark_toast_no_settings)
+    val DARK_TOAST_FORCE_ON: String get() = s(R.string.dark_toast_force_on)
+    val DARK_TOAST_FORCE_OFF: String get() = s(R.string.dark_toast_force_off)
+    val DARK_DASH_ON: String get() = s(R.string.dark_dash_on)
+    val DARK_DASH_WAITING: String get() = s(R.string.dark_dash_waiting)
 
     // 해상도 낮추기
-    const val FEATURE_RESOLUTION = "해상도 낮추기"
-    const val RES_INTRO_TITLE = "화소 수를 줄여 가볍게"
-    const val RES_INTRO_BODY = "글자·아이콘 크기는 그대로 두고 해상도만 낮춥니다. 게임 프레임과 배터리에 도움이 될 수 있습니다."
-    const val RES_FOLD_TITLE = "폴드는 지원하지 않습니다"
-    const val RES_FOLD_BODY = "두 화면이 어긋날 수 있어 막아 두었습니다."
-    const val RES_PICK_TITLE = "해상도 선택"
-    const val RES_ORIGINAL_DESC = "GOAT가 바꾸기 전 해상도로 돌아갑니다."
-    const val RES_CAUTION_BODY = "글자가 조금 덜 선명해지고 스크린샷도 같은 해상도로 찍힙니다. 바꾼 뒤 확인하지 않으면 되돌아갑니다."
-    const val RES_TOAST_FAILED = "바꾸지 못했습니다. 권한 설정을 확인하세요"
-    const val RES_APPS_TITLE = "앱별 배율을 쓰는 앱이 있습니다"
-    const val RES_APPS_OK = "그래도 바꾸기"
-    const val RES_CONFIRM_TITLE = "해상도 유지 확인"
-    const val RES_CONFIRM_KEEP = "유지"
-    const val RES_DASH_ORIGINAL = "원래 해상도"
-    const val RES_DASH_FOLD = "폴드는 지원 안 함"
-    fun resNow(w: Int, h: Int, bw: Int, bh: Int) = if (w == bw && h == bh) "지금 $w × $h" else "지금 $w × $h · 원래 $bw × $bh"
+    val FEATURE_RESOLUTION: String get() = s(R.string.feature_resolution)
+    val RES_INTRO_TITLE: String get() = s(R.string.res_intro_title)
+    val RES_INTRO_BODY: String get() = s(R.string.res_intro_body)
+    val RES_FOLD_TITLE: String get() = s(R.string.res_fold_title)
+    val RES_FOLD_BODY: String get() = s(R.string.res_fold_body)
+    val RES_PICK_TITLE: String get() = s(R.string.res_pick_title)
+    val RES_ORIGINAL_DESC: String get() = s(R.string.res_original_desc)
+    val RES_CAUTION_BODY: String get() = s(R.string.res_caution_body)
+    val RES_TOAST_FAILED: String get() = s(R.string.res_toast_failed)
+    val RES_APPS_TITLE: String get() = s(R.string.res_apps_title)
+    val RES_APPS_OK: String get() = s(R.string.res_apps_ok)
+    val RES_CONFIRM_TITLE: String get() = s(R.string.res_confirm_title)
+    val RES_CONFIRM_KEEP: String get() = s(R.string.res_confirm_keep)
+    val RES_DASH_ORIGINAL: String get() = s(R.string.res_dash_original)
+    val RES_DASH_FOLD: String get() = s(R.string.res_dash_fold)
+    fun resNow(w: Int, h: Int, bw: Int, bh: Int) = if (w == bw && h == bh) f(R.string.res_now_fmt, w, h) else f(R.string.res_now_changed_fmt, w, h, bw, bh)
 
     /** 해상도 선택지 이름. [percent]는 변 비율이고, 화면에는 그리는 점(넓이) 비율로 적는다. */
-    fun resOption(name: String?, w: Int, h: Int, percent: Int, points: Int = resPoints(percent)) = if (percent >= 100) "원래대로 $w × $h" else listOfNotNull(name, "$w × $h").joinToString(" ") + " · 화소 $points%"
-    fun resOptionDesc(percent: Int, points: Int = resPoints(percent)) = "화소 수가 약 ${100 - points}% 줄어듭니다."
+    fun resOption(name: String?, w: Int, h: Int, percent: Int, points: Int = resPoints(percent)) = if (percent >= 100) {
+        f(R.string.res_option_original_fmt, w, h)
+    } else {
+        listOfNotNull(name, f(R.string.res_size_fmt, w, h)).joinToString(" ") + f(R.string.res_points_suffix_fmt, points)
+    }
+    fun resOptionDesc(percent: Int, points: Int = resPoints(percent)) = f(R.string.res_option_desc_fmt, 100 - points)
 
     /** 변 비율 [percent]%일 때 그리는 점 수 비율(%). */
     fun resPoints(percent: Int) = percent * percent / 100
-    fun resAppsBody(n: Int) = "앱 ${n}개는 배율을 정해진 단계로만 바꿀 수 있어, 해상도를 낮추면 조금 커 보입니다."
-    fun resConfirmBody(left: Int) = "${left}초 안에 '유지'를 누르지 않으면 원래 해상도로 되돌립니다."
-    fun resDash(w: Int, percent: Int, points: Int = resPoints(percent)) = "$w · 화소 $points%"
+    fun resAppsBody(n: Int) = f(R.string.res_apps_body_fmt, n)
+    fun resConfirmBody(left: Int) = f(R.string.res_confirm_body_fmt, left)
+    fun resDash(w: Int, percent: Int, points: Int = resPoints(percent)) = f(R.string.res_dash_fmt, w, points)
 
     // 꺼진 버튼을 눌렀을 때 보여 주는 안내(왜 꺼졌는지, 어떻게 하면 켜지는지)
-    const val DISABLED_SHIZUKU = "Shizuku가 연결되지 않았습니다. Shizuku 앱에서 서비스를 시작한 뒤 다시 누르세요."
-    const val DISABLED_NO_PERMISSION = "시스템 설정 권한이 없습니다. 홈에서 권한을 먼저 받으세요."
-    const val DISABLED_NOTHING_CHANGED = "바꾼 설정이 없어 되돌릴 것이 없습니다."
-    const val DISABLED_NO_SIZED_APPS = "배율을 바꾼 앱이 없어 되돌릴 것이 없습니다."
-    const val DISABLED_NO_BEFORE = "먼저 [바꾸기 전 저장]을 누르세요."
-    const val DISABLED_SIZE_UNCHANGED = "폭을 바꾼 뒤에 저장할 수 있습니다."
-    const val DISABLED_SIZE_DEFAULT = "이미 기기 값을 쓰고 있습니다."
+    val DISABLED_SHIZUKU: String get() = s(R.string.disabled_shizuku)
+    val DISABLED_NO_PERMISSION: String get() = s(R.string.disabled_no_permission)
+    val DISABLED_NOTHING_CHANGED: String get() = s(R.string.disabled_nothing_changed)
+    val DISABLED_NO_SIZED_APPS: String get() = s(R.string.disabled_no_sized_apps)
+    val DISABLED_NO_BEFORE: String get() = s(R.string.disabled_no_before)
+    val DISABLED_SIZE_UNCHANGED: String get() = s(R.string.disabled_size_unchanged)
+    val DISABLED_SIZE_DEFAULT: String get() = s(R.string.disabled_size_default)
 
     /** 시트 끌기 손잡이의 화면 읽기 이름. */
-    const val SHEET_HANDLE = "시트 손잡이. 아래로 끌면 닫힙니다"
+    val SHEET_HANDLE: String get() = s(R.string.sheet_handle)
 }
