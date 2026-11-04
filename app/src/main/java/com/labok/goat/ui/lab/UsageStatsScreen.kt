@@ -217,10 +217,9 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
         // 2. 숫자 표: 값, 평균, 비교 기준 대비 변화를 한 줄에
         val avgNote = if (r.days > 1) stringResource(R.string.lab_stats_avg_per_day) else v.avgRef?.let { stringResource(R.string.lab_stats_avg_recent, it.days) }
         GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.lab_stats_numbers_title), fontWeight = FontWeight.SemiBold, color = c.ink, modifier = Modifier.weight(1f))
-                Text(listOfNotNull(avgNote, range.compare?.let { "▲▼ ${stringResource(it)}" }).joinToString(" · "), color = c.muted, style = MaterialTheme.typography.labelSmall)
-            }
+            // 설명은 제목 아래 줄에(좁은 화면·큰 글자에서 제목이 꺾이지 않게)
+            Text(stringResource(R.string.lab_stats_numbers_title), fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(listOfNotNull(avgNote, range.compare?.let { "▲▼ ${stringResource(it)}" }).joinToString(" · "), color = c.muted, style = MaterialTheme.typography.labelSmall)
             GROUPS.forEach { (group, metrics) ->
                 val shown = metrics.filter { it.get(r) != null }
                 if (shown.isEmpty()) return@forEach
@@ -306,8 +305,11 @@ private fun MetricRow(m: Metric, r: UsageTally.Result, base: UsageTally.Result?,
             StatGlyph(m.icon, c.ink, Modifier.size(18.dp))
         }
         Spacer(Modifier.width(10.dp))
-        Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-        avg?.let { Text(stringResource(R.string.lab_stats_avg_value, format(m.kind, it, m.unit)), color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(end = 10.dp)) }
+        // 평균은 이름 아래 줄에: 한 줄에 다 두면 좁은 화면·큰 글자에서 이름 칸이 0으로 눌려 글자가 세로로 선다
+        Column(Modifier.weight(1f).padding(end = 10.dp)) {
+            Text(m.label, color = c.ink, style = MaterialTheme.typography.bodyMedium)
+            avg?.let { Text(stringResource(R.string.lab_stats_avg_value, format(m.kind, it, m.unit)), color = c.muted, style = MaterialTheme.typography.labelSmall) }
+        }
         Text(format(m.kind, value, m.unit), color = c.ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
         Text(
             change ?: "",
