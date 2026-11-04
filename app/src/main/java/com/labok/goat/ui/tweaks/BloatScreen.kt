@@ -81,7 +81,7 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
         scope.launch {
             val ok = withContext(Dispatchers.IO) { Bloat.set(context, app, off, "스위치") }
             busy = null
-            if (!ok) Toast.makeText(context, Copy.BLOAT_FAILED, Toast.LENGTH_SHORT).show()
+            if (!ok) Toast.makeText(context, Copy.SHIZUKU_FAILED, Toast.LENGTH_SHORT).show()
             rescan()
         }
     }
@@ -140,10 +140,10 @@ internal fun BloatScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
             item(key = "connect") {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
-                        Text(Copy.CAMERA_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.BLOAT_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.CAMERA_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                        LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }

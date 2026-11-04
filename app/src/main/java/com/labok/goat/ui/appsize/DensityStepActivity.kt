@@ -73,7 +73,7 @@ class DensityStepActivity : Activity() {
         val base = if (now > 0) now else Resources.getSystem().configuration.densityDpi
         val next = AppDensityPolicy.next(base, step)
             ?: return "$label: 이미 가장 ${if (step < 0) "작습니다" else "큽니다"}($base)."
-        if (next == now) return "$label: 이미 ${if (now == 0) Copy.APP_SIZE_DEFAULT else "$now"}입니다."
+        if (next == now) return "$label: 이미 ${if (now == 0) Copy.DEFAULT else "$now"}입니다."
         // GOAT 자신이면 삼성이 GOAT를 닫아 아래에서 다시 열 수 없다. 셸에 다시 열기를 먼저 맡겨 둔다.
         val self = target == packageName
         if (self) ShizukuAccess.runLater(2, "am start -n $packageName/.ui.MainActivity")

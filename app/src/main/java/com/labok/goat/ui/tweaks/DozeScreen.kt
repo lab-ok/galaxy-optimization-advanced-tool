@@ -76,7 +76,7 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
             val ok = withContext(Dispatchers.IO) { Doze.set(context, off, "스위치") }
             busy = false
             pending = null
-            Toast.makeText(context, if (ok) (if (off) Copy.DOZE_TOAST_OFF else Copy.DOZE_TOAST_ON) else Copy.GOS_TOAST_FAILED, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, if (ok) (if (off) Copy.DOZE_TOAST_OFF else Copy.DOZE_TOAST_ON) else Copy.SHIZUKU_FAILED, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -96,19 +96,19 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     Spacer(Modifier.height(Gap.Item))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(Copy.DOZE_SWITCH_TITLE, fontWeight = FontWeight.SemiBold, color = if (ready && state != Doze.State.UNKNOWN) c.ink else c.muted)
+                            Text(Copy.FEATURE_DOZE, fontWeight = FontWeight.SemiBold, color = if (ready && state != Doze.State.UNKNOWN) c.ink else c.muted)
                             Text(
                                 when (state) {
                                     Doze.State.OFF -> Copy.DOZE_STATE_OFF
                                     Doze.State.ON -> Copy.DOZE_STATE_ON
-                                    Doze.State.UNKNOWN -> Copy.DOZE_STATE_UNKNOWN
+                                    Doze.State.UNKNOWN -> Copy.SHIZUKU_STATE_UNKNOWN
                                 },
                                 color = c.muted,
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
                         Spacer(Modifier.width(12.dp))
-                        LiquidSwitch(pending ?: (state == Doze.State.OFF), { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Doze.State.UNKNOWN, label = Copy.DOZE_SWITCH_TITLE)
+                        LiquidSwitch(pending ?: (state == Doze.State.OFF), { off -> if (off) confirm = true else apply(off = false) }, enabled = ready && !busy && state != Doze.State.UNKNOWN, label = Copy.FEATURE_DOZE)
                     }
 
                     Spacer(Modifier.height(Gap.Item))
@@ -120,10 +120,10 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
             item(key = "connect") {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
-                        Text(Copy.DOZE_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.DOZE_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.DOZE_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                        LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -131,7 +131,7 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
         item(key = "caution") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
-                    Text(Copy.DOZE_CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                     Text(Copy.DOZE_CAUTION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Text(Copy.DOZE_CAUTION_BODY2, color = c.muted, style = MaterialTheme.typography.bodySmall)
                 }
@@ -142,15 +142,15 @@ internal fun DozeScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     if (confirm) {
         AlertDialog(
             onDismissRequest = { confirm = false },
-            title = { Text(Copy.DOZE_CONFIRM_TITLE) },
+            title = { Text(Copy.FEATURE_DOZE) },
             text = { Text(Copy.DOZE_CONFIRM_BODY) },
             confirmButton = {
                 TextButton(onClick = {
                     confirm = false
                     apply(off = true)
-                }) { Text(Copy.DOZE_CONFIRM_OK) }
+                }) { Text(Copy.CONFIRM_TURN_OFF) }
             },
-            dismissButton = { TextButton(onClick = { confirm = false }) { Text(Copy.GOS_CONFIRM_CANCEL) } }
+            dismissButton = { TextButton(onClick = { confirm = false }) { Text(Copy.CANCEL) } }
         )
     }
 }

@@ -185,7 +185,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
             }
             now.onSuccess {
                 values = values + (app.pkg to it)
-                message = "${app.label}: ${if (it == 0) Copy.APP_SIZE_DEFAULT else "$it dpi"}"
+                message = "${app.label}: ${if (it == 0) Copy.DEFAULT else "$it dpi"}"
             }
                 .onFailure {
                     message = "${Copy.APP_SIZE_FAILED}${it.message}"
@@ -221,7 +221,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
             !ready -> item(key = "connect") {
                 Appear("connect", 1, shown) {
                     GlassCard {
-                        Text(Copy.APP_SIZE_CONNECT_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Spacer(Modifier.height(Gap.Item))
                         ShizukuBridgeArt()
                         Spacer(Modifier.height(Gap.Item))
@@ -303,7 +303,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                 LiquidChips(
                                     options = listOf(0) + AppDensityPolicy.STEPS,
                                     selected = homeValue?.takeIf { it == 0 || it in AppDensityPolicy.STEPS } ?: 0,
-                                    label = { if (it == 0) Copy.APP_SIZE_DEFAULT else "$it" },
+                                    label = { if (it == 0) Copy.DEFAULT else "$it" },
                                     onSelect = { dpi ->
                                         scope.launch {
                                             val now = withContext(Dispatchers.IO) {
@@ -314,7 +314,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                             }
                                             now.onSuccess {
                                                 homeValue = it
-                                                message = "${Copy.APP_SIZE_HOME_TITLE}: ${if (it == 0) Copy.APP_SIZE_DEFAULT else "$it dpi"}"
+                                                message = "${Copy.APP_SIZE_HOME_TITLE}: ${if (it == 0) Copy.DEFAULT else "$it dpi"}"
                                             }
                                                 .onFailure { message = "${Copy.APP_SIZE_FAILED}${it.message}" }
                                         }
@@ -457,7 +457,7 @@ private fun AppRow(
                         when (v) {
                             null -> "…"
                             -1 -> "?"
-                            0 -> Copy.APP_SIZE_DEFAULT
+                            0 -> Copy.DEFAULT
                             else -> "$v"
                         },
                         color = ink,
@@ -472,7 +472,7 @@ private fun AppRow(
                 LiquidChips(
                     options = listOf(0) + AppDensityPolicy.STEPS,
                     selected = value?.takeIf { it == 0 || it in AppDensityPolicy.STEPS } ?: 0,
-                    label = { if (it == 0) Copy.APP_SIZE_DEFAULT else "$it" },
+                    label = { if (it == 0) Copy.DEFAULT else "$it" },
                     onSelect = onSelect,
                     modifier = Modifier.fillMaxWidth()
                 )

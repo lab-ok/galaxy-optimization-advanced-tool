@@ -72,7 +72,7 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
         scope.launch {
             val ok = withContext(Dispatchers.IO) { Gos.set(context, off, "스위치") }
             busy = false
-            Toast.makeText(context, if (ok) (if (off) Copy.GOS_TOAST_OFF else Copy.GOS_TOAST_ON) else Copy.GOS_TOAST_FAILED, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, if (ok) (if (off) Copy.GOS_TOAST_OFF else Copy.GOS_TOAST_ON) else Copy.SHIZUKU_FAILED, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -99,7 +99,7 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                                     when (state) {
                                         Gos.State.OFF -> Copy.GOS_STATE_OFF
                                         Gos.State.ON -> Copy.GOS_STATE_ON
-                                        else -> Copy.GOS_STATE_UNKNOWN
+                                        else -> Copy.SHIZUKU_STATE_UNKNOWN
                                     },
                                     color = c.muted,
                                     style = MaterialTheme.typography.bodySmall
@@ -118,10 +118,10 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
             item(key = "connect") {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
-                        Text(Copy.GOS_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.GOS_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.GOS_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                        LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -140,7 +140,7 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
             item(key = "caution") {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
-                        Text(Copy.GOS_CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.GOS_CAUTION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -151,15 +151,15 @@ internal fun GosScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
     if (confirm) {
         AlertDialog(
             onDismissRequest = { confirm = false },
-            title = { Text(Copy.GOS_CONFIRM_TITLE) },
+            title = { Text(Copy.FEATURE_GOS) },
             text = { Text(Copy.GOS_CONFIRM_BODY) },
             confirmButton = {
                 TextButton(onClick = {
                     confirm = false
                     apply(off = true)
-                }) { Text(Copy.GOS_CONFIRM_OK) }
+                }) { Text(Copy.CONFIRM_TURN_OFF) }
             },
-            dismissButton = { TextButton(onClick = { confirm = false }) { Text(Copy.GOS_CONFIRM_CANCEL) } }
+            dismissButton = { TextButton(onClick = { confirm = false }) { Text(Copy.CANCEL) } }
         )
     }
 }

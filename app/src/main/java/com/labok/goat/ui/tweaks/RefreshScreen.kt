@@ -130,10 +130,10 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
             item(key = "permission") {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
-                        Text(Copy.REFRESH_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.REFRESH_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.REFRESH_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                        LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -166,7 +166,7 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
                                             haptics.snap()
                                         } else {
                                             haptics.reject()
-                                            Toast.makeText(context, Copy.REFRESH_TOAST_FAILED, Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, Copy.SHIZUKU_FAILED, Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 }
@@ -180,7 +180,7 @@ internal fun RefreshScreen(contentPadding: PaddingValues, onConnect: () -> Unit)
             item(key = "caution") {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
-                        Text(Copy.REFRESH_CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.REFRESH_CAUTION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
                 }

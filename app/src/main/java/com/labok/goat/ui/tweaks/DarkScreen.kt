@@ -67,7 +67,7 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
         scope.launch {
             val ok = withContext(Dispatchers.IO) { block() }
             busy = false
-            Toast.makeText(context, if (ok) okText else Copy.DARK_TOAST_FAILED, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, if (ok) okText else Copy.SHIZUKU_FAILED, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -88,7 +88,7 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
                     LiquidSwitchRow(
                         Copy.DARK_FORCE_TITLE,
                         when {
-                            state.forced == null -> Copy.DARK_FORCE_UNKNOWN
+                            state.forced == null -> Copy.SHIZUKU_STATE_UNKNOWN
                             state.forced == true && !state.night -> Copy.DARK_FORCE_WAITING
                             state.forced == true -> Copy.DARK_FORCE_ON
                             else -> Copy.DARK_FORCE_OFF
@@ -105,10 +105,10 @@ internal fun DarkScreen(contentPadding: PaddingValues, onConnect: () -> Unit) {
             item(key = "connect") {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
-                        Text(Copy.DARK_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.DARK_NEED_SHIZUKU, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.DARK_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                        LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }

@@ -161,7 +161,7 @@ internal fun ResolutionScreen(contentPadding: PaddingValues, permitted: Boolean,
             item(key = "caution") {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
-                        Text(Copy.RES_CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.CAUTION_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.RES_CAUTION_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -180,7 +180,7 @@ internal fun ResolutionScreen(contentPadding: PaddingValues, permitted: Boolean,
                     apply(o)
                 }) { Text(Copy.RES_APPS_OK) }
             },
-            dismissButton = { TextButton(onClick = { ask = null }) { Text(Copy.GOS_CONFIRM_CANCEL) } }
+            dismissButton = { TextButton(onClick = { ask = null }) { Text(Copy.CANCEL) } }
         )
     }
 }
@@ -208,7 +208,7 @@ fun ResolutionConfirm() {
         title = { Text(Copy.RES_CONFIRM_TITLE) },
         text = { Text(Copy.resConfirmBody(left.toInt())) },
         confirmButton = { TextButton(onClick = { Resolution.keep(context) }) { Text(Copy.RES_CONFIRM_KEEP) } },
-        dismissButton = { TextButton(onClick = { scope.launch(Dispatchers.IO) { Resolution.revert(context, "확인 창 되돌리기") } }) { Text(Copy.RES_CONFIRM_REVERT) } }
+        dismissButton = { TextButton(onClick = { scope.launch(Dispatchers.IO) { Resolution.revert(context, "확인 창 되돌리기") } }) { Text(Copy.REVERT) } }
     )
 }
 

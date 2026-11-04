@@ -131,7 +131,7 @@ internal data class Todo(
 /** 사용자가 할 일만. 앱을 못 쓰게 하는 것(준비)을 맨 위에. 할 일이 없으면 아무것도 보여 주지 않는다. */
 internal fun todosOf(state: UiState): List<Todo> = buildList {
     if (state.loading) return@buildList
-    if (!state.hasPermission) add(Todo("setup", Copy.TODO_SETUP_TITLE, Copy.TODO_SETUP_BODY, TodoAction.SETUP, Copy.TODO_SETUP_ACTION, blocking = true))
+    if (!state.hasPermission) add(Todo("setup", Copy.STATUS_NEED_SETUP, Copy.TODO_SETUP_BODY, TodoAction.SETUP, Copy.TODO_SETUP_ACTION, blocking = true))
     state.external?.let { e ->
         add(
             Todo(
@@ -154,7 +154,7 @@ internal fun todosOf(state: UiState): List<Todo> = buildList {
         add(Todo("apply", Copy.TODO_APPLY_TITLE, null, TodoAction.APPLY, Copy.TODO_APPLY_ACTION))
     }
     if (state.hasPermission && !state.auto && state.target != null) add(Todo("auto", Copy.TODO_AUTO_TITLE, Copy.TODO_AUTO_BODY, TodoAction.AUTO, Copy.TODO_AUTO_ACTION))
-    if (state.hasCrash) add(Todo("crash", Copy.TODO_CRASH_TITLE, Copy.TODO_CRASH_BODY, TodoAction.REPORT, Copy.TODO_CRASH_ACTION))
+    if (state.hasCrash) add(Todo("crash", Copy.TODO_CRASH_TITLE, Copy.TODO_CRASH_BODY, TodoAction.REPORT, Copy.MENU_REPORT))
 }
 
 /** 할 일 카드 안쪽 폭이 이보다 넓을 때만 버튼을 글 옆에 둔다. */
@@ -278,7 +278,7 @@ internal fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
                 Spacer(Modifier.height(Gap.Item))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     if (revertShown[0]) {
-                        LiquidButton(Copy.SIZE_REVERT, modifier = Modifier.weight(1f), primary = false, onClick = {
+                        LiquidButton(Copy.REVERT, modifier = Modifier.weight(1f), primary = false, onClick = {
                             state.target?.let { outer = it }
                             adjust = state.adjust
                         })
@@ -328,7 +328,7 @@ internal fun ResetSheet(
         }
     }
     SheetColumn {
-        Text(Copy.RESET_TITLE, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
+        Text(Copy.MENU_RESET, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = c.ink)
         Spacer(Modifier.height(Gap.Section))
         // 화면 학습 초기화는 두 화면을 배우는 폴드에서만
         if (foldable) {

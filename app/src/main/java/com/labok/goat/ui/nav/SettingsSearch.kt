@@ -31,7 +31,7 @@ object SettingsSearch {
             NavItem.APP_CLEANUP to listOf(Copy.BLOAT_INTRO_TITLE),
             NavItem.REFRESH to listOf(Copy.REFRESH_SYSTEM, Copy.REFRESH_SMOOTH, Copy.REFRESH_SAVER, "120Hz", "60Hz"),
             NavItem.GOS to listOf(Copy.GOS_SWITCH_TITLE),
-            NavItem.DOZE to listOf(Copy.DOZE_SWITCH_TITLE, "알림 늦음"),
+            NavItem.DOZE to listOf(Copy.FEATURE_DOZE, "알림 늦음"),
             NavItem.RESOLUTION to listOf(Copy.RES_PICK_TITLE, "FHD", "HD"),
             NavItem.DARK to listOf(Copy.DARK_FORCE_TITLE, Copy.DARK_NIGHT_TITLE),
             NavItem.AIRPLANE to AirplaneRadios.Radio.entries.map { "${it.label} 켜 두기" },

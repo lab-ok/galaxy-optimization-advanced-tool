@@ -60,7 +60,7 @@ object AppDensityNotifier {
         val v = runCatching { DensityShell.get(context, pkg) }.getOrNull()
         val size = when {
             v == null -> "배율 확인 불가"
-            v == 0 -> "${Copy.APP_SIZE_DEFAULT}(${Resources.getSystem().configuration.densityDpi})"
+            v == 0 -> "${Copy.DEFAULT}(${Resources.getSystem().configuration.densityDpi})"
             else -> "$v dpi"
         }
         return "$label · $size"

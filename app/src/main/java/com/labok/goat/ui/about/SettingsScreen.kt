@@ -154,7 +154,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                     LiquidChips(
                         options = UiInk.Mode.entries,
                         selected = UiInk.mode,
-                        label = { if (it == UiInk.Mode.THEME) Copy.INK_THEME else Copy.INK_DEFAULT },
+                        label = { if (it == UiInk.Mode.THEME) Copy.INK_THEME else Copy.DEFAULT },
                         onSelect = { UiInk.set(context, it) }
                     )
                     // 갤럭시 테마일 때: 색상 팔레트의 강조색 1~3을 진하게·중간 두 단계로 보여 주고 하나를 고른다

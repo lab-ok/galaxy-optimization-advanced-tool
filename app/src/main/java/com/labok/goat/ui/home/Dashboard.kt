@@ -206,17 +206,17 @@ internal fun Dashboard(
                 Gos.State.OFF -> Copy.GOS_DASH_OFF
                 Gos.State.ON -> Copy.GOS_DASH_ON
                 Gos.State.NONE -> Copy.GOS_DASH_NONE
-                Gos.State.UNKNOWN -> if (Gos.wanted(context)) Copy.GOS_DASH_WANTED else Copy.GOS_DASH_UNKNOWN
+                Gos.State.UNKNOWN -> if (Gos.wanted(context)) Copy.DASH_WANTED_OFF else Copy.DASH_NEED_SHIZUKU
             }
             NavItem.DOZE -> when (doze) {
                 Doze.State.OFF -> Copy.DOZE_DASH_OFF
                 Doze.State.ON -> Copy.DOZE_DASH_ON
-                Doze.State.UNKNOWN -> if (Doze.wanted(context)) Copy.DOZE_DASH_WANTED else Copy.GOS_DASH_UNKNOWN
+                Doze.State.UNKNOWN -> if (Doze.wanted(context)) Copy.DASH_WANTED_OFF else Copy.DASH_NEED_SHIZUKU
             }
             NavItem.DARK -> when (dark.forced) {
                 true -> if (dark.night) Copy.DARK_DASH_ON else Copy.DARK_DASH_WAITING
-                false -> Copy.DARK_DASH_OFF
-                null -> Copy.DARK_DASH_UNKNOWN
+                false -> Copy.DASH_OFF
+                null -> Copy.DASH_NEED_SHIZUKU
             }
             NavItem.RESOLUTION -> when {
                 !Resolution.supported(context) -> Copy.RES_DASH_FOLD
@@ -244,7 +244,7 @@ internal fun Dashboard(
                     AirplaneRadios.Radio.entries.filter { AirplaneRadios.kept(raw, it) }.map { it.label }
                 }.let { if (it.isEmpty()) Copy.AIRPLANE_DASH_NONE else Copy.airplaneDash(it) }
             }
-            NavItem.VOLUME_ROTATE -> if (VolumeRotate.enabled(context)) Copy.VOLUME_DASH_ON + if (VolumeRotate.invert(context)) " · 반대 방향" else "" else Copy.VOLUME_DASH_OFF
+            NavItem.VOLUME_ROTATE -> if (VolumeRotate.enabled(context)) Copy.VOLUME_DASH_ON + if (VolumeRotate.invert(context)) " · 반대 방향" else "" else Copy.DASH_OFF
             NavItem.AUTO_FLEX -> if (AutoFlex.enabled(context)) "켜짐 · ${AutoFlex.min(context)}~${AutoFlex.max(context)}°" + (if (AutoFlex.click(context)) " · 까딱" else "") else "꺼짐"
             else -> ""
         }

@@ -89,7 +89,7 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                                     CameraMute.State.MUTED -> Copy.CAMERA_STATE_MUTED
                                     CameraMute.State.FORCED -> Copy.CAMERA_STATE_FORCED
                                     CameraMute.State.NONE -> Copy.CAMERA_STATE_NONE
-                                    CameraMute.State.UNKNOWN -> Copy.CAMERA_STATE_UNKNOWN
+                                    CameraMute.State.UNKNOWN -> Copy.SHIZUKU_STATE_UNKNOWN
                                 },
                                 color = c.muted,
                                 style = MaterialTheme.typography.bodySmall
@@ -101,7 +101,7 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
                             scope.launch {
                                 val ok = withContext(Dispatchers.IO) { CameraMute.set(context, want, "스위치") }
                                 busy = false
-                                Toast.makeText(context, if (ok) (if (want) Copy.CAMERA_TOAST_MUTED else Copy.CAMERA_TOAST_RESTORED) else Copy.CAMERA_TOAST_FAILED, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, if (ok) (if (want) Copy.CAMERA_TOAST_MUTED else Copy.CAMERA_TOAST_RESTORED) else Copy.SHIZUKU_FAILED, Toast.LENGTH_SHORT).show()
                             }
                         }, enabled = ready && !busy && state != CameraMute.State.NONE, label = Copy.FEATURE_CAMERA_MUTE)
                     }
@@ -117,10 +117,10 @@ internal fun CameraMuteScreen(contentPadding: PaddingValues, onConnect: () -> Un
             item(key = "connect") {
                 Box(Modifier.widthIn(max = ContentMaxWidth)) {
                     GlassCard {
-                        Text(Copy.CAMERA_NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                         Text(Copy.CAMERA_NEED_SHIZUKU_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(Gap.Item))
-                        LiquidButton(Copy.CAMERA_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
+                        LiquidButton(Copy.SHIZUKU_CONNECT, onClick = onConnect, modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(Gap.Section))
                         Text(Copy.CAMERA_PC_TITLE, color = c.ink)
                         Text(Copy.CAMERA_PC_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)

@@ -333,7 +333,7 @@ internal fun HomeScreen(
         val menuItems = when (shown) {
             NavItem.DPI_MATCH -> listOfNotNull(
                 // 크기 테스트는 두 화면을 비교하는 도구라 폴드에서만
-                (Copy.MENU_TEST to { sheet = Sheet.TEST }).takeIf { state.foldable },
+                (Copy.SIZE_TEST to { sheet = Sheet.TEST }).takeIf { state.foldable },
                 Copy.MENU_ADVANCED to { sheet = Sheet.ADVANCED }
             ) + common(Sheet.HELP, Sheet.GUIDE, Sheet.RESET)
             NavItem.APP_SIZE -> common(Sheet.APP_HELP, Sheet.APP_GUIDE, Sheet.APP_RESET)
