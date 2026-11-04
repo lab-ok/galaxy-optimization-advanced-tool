@@ -132,6 +132,9 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 배터리 상태와 15분 기록(잔량 그래프·시간당 소모량). */
     LAB_BATTERY(Copy.FEATURE_LAB_BATTERY, NavIcon.BATTERY),
 
+    /** 실험실: 사용 통계(접기·잠금 해제·화면·앱·알림·충전·볼륨 버튼 횟수를 한 페이지로). */
+    LAB_STATS(Copy.FEATURE_LAB_STATS, NavIcon.STATS),
+
     /** 실험실: 앰비언트 모드(텐트 모드와 합침). 펼칠 때·세워 둘 때 안쪽 화면이 바깥 화면 색 간접등이 된다. */
     LAB_AMBIENT(Copy.FEATURE_LAB_AMBIENT, NavIcon.GLOW),
 
@@ -144,11 +147,11 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_BATTERY, LAB_AMBIENT, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_BATTERY, LAB_AMBIENT, LAB_STATS, LAB_TOOLS)
     }
 }
 
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, FLEX, BATTERY, NOTE, VOLUME, INFO, GEAR, GLOW }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, FLEX, BATTERY, NOTE, STATS, VOLUME, INFO, GEAR, GLOW }
 
 data class NavSection(val title: String, val items: List<NavItem>)
 
@@ -420,6 +423,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.EYE_OFF -> eyeOff(color, s)
             NavIcon.FLEX -> flex(color, s)
             NavIcon.BATTERY -> battery(color, s)
+            NavIcon.STATS -> stats(color, s)
             NavIcon.NOTE -> note(color, s)
             NavIcon.VOLUME -> volume(color, s)
             NavIcon.INFO -> info(color, s)
@@ -662,6 +666,14 @@ private fun DrawScope.battery(c: Color, s: Stroke) {
     drawLine(c, p(10f, 2.6f), p(14f, 2.6f), s.width, StrokeCap.Round)
     drawLine(c, p(10f, 16.5f), p(14f, 16.5f), s.width * 1.4f, StrokeCap.Round)
     drawLine(c, p(10f, 13f), p(14f, 13f), s.width * 1.4f, StrokeCap.Round)
+}
+
+/** 사용 통계: 바닥선 위 높이가 다른 막대 셋. */
+private fun DrawScope.stats(c: Color, s: Stroke) {
+    drawLine(c, p(4f, 20f), p(20f, 20f), s.width, StrokeCap.Round)
+    drawLine(c, p(7.5f, 16.5f), p(7.5f, 12f), s.width * 1.6f, StrokeCap.Round)
+    drawLine(c, p(12f, 16.5f), p(12f, 5f), s.width * 1.6f, StrokeCap.Round)
+    drawLine(c, p(16.5f, 16.5f), p(16.5f, 9f), s.width * 1.6f, StrokeCap.Round)
 }
 
 /** 클립보드 공유: 클립보드 오른쪽 변이 그대로 위로 솟는 화살표가 된다(1.49.1 시안 10번, 타일 아이콘 ic_tile_txt와 같은 그림). */

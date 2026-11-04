@@ -40,6 +40,7 @@ object SettingsSearch {
             NavItem.AUTO_FLEX to listOf(Copy.LAB_FLEX_DIM, Copy.LAB_FLEX_CLICK, Copy.LAB_FLEX_APPS_TITLE, Copy.LAB_FLEX_RANGE_TITLE),
             NavItem.LAB_NOTE to listOf("TXT로 공유", "텍스트 파일", "긴 글", "이미지 복사"),
             NavItem.LAB_TOOLS to listOf("설정 변경 비교", "시스템 함수 탐색"),
+            NavItem.LAB_STATS to listOf("접은 횟수", "잠금 해제 횟수", "화면 켠 시간", "볼륨 버튼 횟수", "통계"),
             NavItem.LAB_BATTERY to listOf("충전 기록", "시간대별 사용량"),
             NavItem.LAB_AMBIENT to listOf("텐트 모드", "스탠바이 시계", "간접등"),
             NavItem.SETTINGS to listOf(Copy.INK_TITLE, Copy.HAPTIC_TITLE, Copy.MOTION_TITLE, Copy.GOAT_STYLE_TITLE, Copy.LOG_FILE_TITLE, "업데이트 확인", "변경 기록", "권한 설정")

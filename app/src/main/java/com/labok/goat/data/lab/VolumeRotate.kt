@@ -174,6 +174,8 @@ class VolumeRotateService : AccessibilityService() {
             KeyEvent.KEYCODE_VOLUME_DOWN -> false
             else -> return false
         }
+        // 실험실 사용 통계: 볼륨 버튼을 누른 횟수(누를 때 한 번, 길게 눌러도 한 번)
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) UsageTally.countVolume(this)
         if (VolumeRotate.cameraExempt(this) && VolumeRotate.isCamera(foreground)) {
             if (event.action == KeyEvent.ACTION_DOWN) note("${if (up) "올리기" else "내리기"} · 카메라 앞($foreground) · 그대로")
             return false
