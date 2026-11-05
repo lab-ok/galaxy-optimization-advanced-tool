@@ -81,6 +81,7 @@ import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.Inset
 import com.labok.goat.ui.components.PillShape
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.components.featurePadding
@@ -364,7 +365,7 @@ internal fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, o
                                 Copy.APP_SIZE_RESET_ACTION,
                                 color = c.danger,
                                 style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onReset).padding(Inset.TextButton)
+                                modifier = Modifier.clip(RoundedCornerShape(Radius.Row)).clickable(onClick = onReset).padding(Inset.TextButton)
                             )
                         }
                     }
@@ -426,7 +427,7 @@ private fun AppRow(
 ) {
     val c = LocalLiquid.current
     val on = value != null && value > 0
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(Radius.Card)
     val border by animateColorAsState(if (expanded) c.ink.copy(alpha = 0.5f) else c.line, label = "row")
     Column(
         modifier

@@ -11,7 +11,8 @@ class SettingsSearchTest {
     @Before
     fun strings() = TestStrings.install()
 
-    private val all = NavItem.entries.filter { it != NavItem.HOME }
+    // NavItem은 만들 때 문구를 읽으므로, 이 테스트가 먼저 돌면 @Before보다 앞서 읽히지 않게 늦게 만든다
+    private val all by lazy { NavItem.entries.filter { it != NavItem.HOME } }
 
     @Test
     fun featureNameComesFirst() {
@@ -42,9 +43,10 @@ class SettingsSearchTest {
     @Test
     fun hiddenFeaturesAreNotSearched() {
         val visible = all.filter { it !in NavItem.LAB_ITEMS }
-        // 실험실 기능(배터리 모니터링)은 실험실을 열기 전에는 검색되지 않는다. 자동 플렉스(1.29.0)·TXT로 공유(1.49.0)는 정식 기능이라 늘 검색된다
-        assertTrue(SettingsSearch.search("충전 기록", visible).isEmpty())
-        assertTrue(SettingsSearch.search("충전 기록", all).any { it.item == NavItem.LAB_STATS })
+        // 실험실 기능(앰비언트 모드)은 실험실을 열기 전에는 검색되지 않는다. 자동 플렉스(1.29.0)·TXT로 공유(1.49.0)·사용 통계(1.50.9)는 정식 기능이라 늘 검색된다
+        assertTrue(SettingsSearch.search("텐트", visible).isEmpty())
+        assertTrue(SettingsSearch.search("텐트", all).any { it.item == NavItem.LAB_AMBIENT })
+        assertTrue(SettingsSearch.search("충전 기록", visible).any { it.item == NavItem.LAB_STATS })
         assertTrue(SettingsSearch.search("TXT로 공유", visible).any { it.item == NavItem.LAB_NOTE })
         assertTrue(SettingsSearch.search("까딱", visible).any { it.item == NavItem.AUTO_FLEX })
     }

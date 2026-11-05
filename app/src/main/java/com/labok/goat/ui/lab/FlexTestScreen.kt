@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.ui.appsize.Section
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -72,7 +73,7 @@ internal fun FlexTestScreen(onClose: () -> Unit) {
             Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .clip(RoundedCornerShape(28.dp))
+                .clip(RoundedCornerShape(Radius.Card))
                 .background(lerp(c.bg, c.ink, split)),
             contentAlignment = Alignment.Center
         ) {
@@ -113,7 +114,7 @@ internal fun FlexTestScreen(onClose: () -> Unit) {
                 Modifier
                     .fillMaxWidth()
                     .weight(split.coerceAtLeast(0.01f))
-                    .clip(RoundedCornerShape(28.dp))
+                    .clip(RoundedCornerShape(Radius.Card))
                     .background(c.surface)
                     .graphicsLayer { alpha = split },
                 contentAlignment = Alignment.Center

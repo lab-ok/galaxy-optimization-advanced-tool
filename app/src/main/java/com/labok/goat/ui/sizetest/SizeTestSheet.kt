@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -52,6 +51,7 @@ import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.InfoRow
 import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.PillShape
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.home.UiState
@@ -382,7 +382,7 @@ internal fun RowCountOverlay(onClose: () -> Unit) {
                 Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = Space.Edge, end = Space.Edge)
-                    .clip(RoundedCornerShape(18.dp))
+                    .clip(PillShape)
                     .background(c.ink)
                     .clickable(onClick = onClose)
                     .padding(Inset.Row),

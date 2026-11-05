@@ -206,16 +206,13 @@
     <string name="lab_stats_app_opens">앱 실행</string>
     <string name="lab_stats_avg_per_day">하루 평균</string>
     <string name="lab_stats_avg_recent">최근 %1$d일 평균</string>
-    <string name="lab_stats_avg_value">평균 %1$s</string>
     <string name="lab_stats_battery_used">배터리 사용</string>
     <string name="lab_stats_charges">충전기 연결</string>
-    <string name="lab_stats_collapse">접기</string>
     <string name="lab_stats_compare_month">지난달보다</string>
     <string name="lab_stats_compare_today">어제 이맘때보다</string>
     <string name="lab_stats_compare_week">이전 7일보다</string>
     <string name="lab_stats_compare_year">지난해보다</string>
     <string name="lab_stats_compare_yesterday">그저께보다</string>
-    <string name="lab_stats_expand">펼치기</string>
     <string name="lab_stats_facts_title">분석</string>
     <string name="lab_stats_group_apps">앱·알림</string>
     <string name="lab_stats_group_hands">기기 조작</string>

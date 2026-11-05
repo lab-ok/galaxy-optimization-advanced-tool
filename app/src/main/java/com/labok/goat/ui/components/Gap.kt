@@ -5,6 +5,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.dp
+import com.labok.goat.ui.liquid.LiquidShape
 
 /**
  * 화면 간격 가이드라인. 모든 화면·시트의 세로 간격은 이 값만 쓴다(숫자 dp를 직접 쓰지 않는다, [GapGuideTest]가 검사).
@@ -105,7 +106,23 @@ object Inset {
     val Box = 14.dp
 }
 
-/** 알약 모양(배지·태그·칭호). */
+/**
+ * 모서리 둥글기 표준(11-05 소장님 "모서리 둥글기도 맞춰라").
+ * | 구성요소 | 값 |
+ * |---|---|
+ * | 카드(GlassCard·목록 카드·요약 카드) | [Card] = LiquidShape.card |
+ * | 카드 안의 상자(경고 상자·명령 상자·묶음 상자·색 견본) | [Box] |
+ * | 누르는 줄·글자 버튼의 누름 범위 | [Row] |
+ * | 버튼·칩·배지·막대 | 양끝이 둥근 [PillShape] |
+ * | 아이콘 칸 | [Tile]의 Radius 값 |
+ */
+object Radius {
+    val Card = LiquidShape.card
+    val Box = 14.dp
+    val Row = 12.dp
+}
+
+/** 알약 모양(배지·태그·칭호·버튼·막대). */
 val PillShape = RoundedCornerShape(50)
 
 /** 아이콘 칸 크기 표준. */

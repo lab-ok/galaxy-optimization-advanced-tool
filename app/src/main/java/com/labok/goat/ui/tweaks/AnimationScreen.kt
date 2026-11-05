@@ -35,13 +35,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.labok.goat.R
 import com.labok.goat.data.tweaks.AnimationSpeed
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
@@ -135,7 +135,7 @@ internal fun AnimationScreen(contentPadding: PaddingValues, permitted: Boolean, 
                     Text(Copy.ANIM_KEEP_NOTE, color = c.muted, style = MaterialTheme.typography.labelSmall)
                     Spacer(Modifier.height(Gap.Section))
                     Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { detail = !detail },
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(Radius.Row)).clickable { detail = !detail },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(Modifier.weight(1f)) {

@@ -96,12 +96,7 @@ object MemoShare {
             clipData = ClipData.newRawUri("", files[0].uri).also { c -> files.drop(1).forEach { c.addItem(ClipData.Item(it.uri)) } }
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        return Intent.createChooser(send, Copy.text(R.string.labdata_memo_share_clipboard)).apply {
-            putExtra(
-                Intent.EXTRA_EXCLUDE_COMPONENTS,
-                arrayOf(ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity"), ComponentName(context, "com.labok.goat.ui.lab.TranscriptShareActivity"))
-            )
-        }
+        return Intent.createChooser(send, Copy.text(R.string.labdata_memo_share_clipboard)).withoutGoat(context)
     }
 
     /** 공유 창을 여는 인텐트. GOAT 자신은 받는 앱 목록에서 뺀다(다시 GOAT로 공유되는 고리를 막는다). */
@@ -112,13 +107,21 @@ object MemoShare {
             clipData = ClipData.newRawUri("", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        return Intent.createChooser(send, Copy.text(R.string.labdata_memo_share_txt)).apply {
-            putExtra(
-                Intent.EXTRA_EXCLUDE_COMPONENTS,
-                arrayOf(ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity"), ComponentName(context, "com.labok.goat.ui.lab.TranscriptShareActivity"))
-            )
-        }
+        return Intent.createChooser(send, Copy.text(R.string.labdata_memo_share_txt)).withoutGoat(context)
     }
+
+    /**
+     * 공유 창에서 GOAT 자신(TXT로 공유·전사문 저장·클립보드 공유)을 받는 앱 목록에서 뺀다.
+     * GOAT가 보낸 것이 다시 GOAT로 돌아오는 고리를 막는다(권한 설정 안내·문제 신고·실험 결과 공유도 같이 쓴다, 1.51.0 QA).
+     */
+    fun Intent.withoutGoat(context: Context): Intent = putExtra(
+        Intent.EXTRA_EXCLUDE_COMPONENTS,
+        arrayOf(
+            ComponentName(context, "com.labok.goat.ui.lab.MemoShareActivity"),
+            ComponentName(context, "com.labok.goat.ui.lab.TranscriptShareActivity"),
+            ComponentName(context, "com.labok.goat.ui.lab.ClipShareActivity")
+        )
+    )
 
     /** 공유가 끝나면 임시 파일을 모두 지운다. */
     fun clear(context: Context) {

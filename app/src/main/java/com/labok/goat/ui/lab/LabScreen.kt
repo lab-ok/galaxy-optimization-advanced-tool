@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.GoatFlexPanel
+import com.labok.goat.data.lab.MemoShare.withoutGoat
 import com.labok.goat.data.lab.OttFlexTest
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe
@@ -246,5 +247,5 @@ private fun share(context: Context, uri: Uri) {
         putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    context.startActivity(Intent.createChooser(send, "실험실 결과 보내기"))
+    context.startActivity(Intent.createChooser(send, "실험실 결과 보내기").withoutGoat(context))
 }

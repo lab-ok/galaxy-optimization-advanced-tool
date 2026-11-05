@@ -58,6 +58,7 @@ import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.components.featurePadding
@@ -260,7 +261,7 @@ private fun SectionTitle(text: String) {
 private fun InfoLink(label: String, detail: String, onClick: () -> Unit) {
     val c = LocalLiquid.current
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = Gap.RowPad),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(Radius.Row)).clickable(onClick = onClick).padding(vertical = Gap.RowPad),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {

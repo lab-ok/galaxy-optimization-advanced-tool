@@ -40,7 +40,8 @@ class GapGuideTest {
             Regex("""horizontalArrangement = Arrangement\.spacedBy\(\d+(\.\d+)?\.dp""") to "가로 간격은 Space.Between·Group",
             Regex("""padding\(horizontal = \d+(\.\d+)?\.dp""") to "가로 여백은 Space·Inset",
             Regex("""Spacer\(Modifier\.width\(Gap\.""") to "가로 간격에 세로 값(Gap)을 쓰지 않는다",
-            Regex("""size\(\d+\.dp\)\.clip\(RoundedCornerShape\(\d+(\.\d+)?\.dp\)\)""") to "아이콘 칸은 Tile 값"
+            Regex("""size\(\d+\.dp\)\.clip\(RoundedCornerShape\(\d+(\.\d+)?\.dp\)\)""") to "아이콘 칸은 Tile 값",
+            Regex("""RoundedCornerShape\(\d+(\.\d+)?\.dp\)""") to "모서리는 Radius·Tile·PillShape"
         )
         val problems = ui.walkTopDown().filter { f -> f.extension == "kt" && own.none { it in f.path } }.flatMap { f ->
             f.readLines().mapIndexedNotNull { i, line ->

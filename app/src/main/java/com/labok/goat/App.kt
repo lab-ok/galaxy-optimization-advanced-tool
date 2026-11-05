@@ -70,8 +70,8 @@ class App : Application() {
         UiGoat.load(this)
         NewBadge.load(this)
         LabUnlock.load(this)
-        // 실험실 사용 통계: 지난날 기록을 하루 한 번 저장한다(Android 사용 기록은 며칠만 남는다)
-        if (LabUnlock.unlocked) runCatching { UsageArchive.schedule(this) }
+        // 사용 통계: 지난날 기록을 하루 두 번 저장한다(Android 사용 기록은 며칠만 남는다)
+        runCatching { UsageArchive.schedule(this) }
         // 볼륨 버튼 회전: 강제 종료로 접근성 서비스가 빠졌으면 다시 켠다
         runCatching { VolumeRotate.restoreIfWanted(this) }
         // 예전 실험실 빠른 설정 격자가 바꿔 둔 설정이 남아 있으면 되돌린다(1.15.3에서 실험을 접음)

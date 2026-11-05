@@ -130,13 +130,28 @@ private fun LabPage(
     }
 }
 
+/**
+ * 시스템 설정 권한이 없을 때 맨 아래에 붙이는 '권한 설정 필요' 카드(애니메이션·흔들기 화면과 같은 모양).
+ * 이 화면들도 시스템 설정을 바꾸므로 권한 없이 스위치만 보이면 눌러도 바뀌지 않는다(1.51.0 QA).
+ */
+private fun permissionCard(permitted: Boolean, onGuide: () -> Unit): List<@Composable ColumnScope.() -> Unit> = if (permitted) {
+    emptyList()
+} else {
+    listOf {
+        Text(Copy.STATUS_NEED_SETUP, fontWeight = FontWeight.SemiBold, color = LocalLiquid.current.ink)
+        Text(Copy.TODO_SETUP_BODY, color = LocalLiquid.current.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidButton(Copy.MENU_GUIDE, onClick = onGuide, modifier = Modifier.fillMaxWidth())
+    }
+}
+
 /** 비행기 모드 때 켜 둘 무선. */
 @Composable
-internal fun LabAirplaneScreen(contentPadding: PaddingValues) {
+internal fun LabAirplaneScreen(contentPadding: PaddingValues, permitted: Boolean, onGuide: () -> Unit) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val w = rememberLabWriter()
-    LabPage(contentPadding) {
+    LabPage(contentPadding, more = permissionCard(permitted, onGuide)) {
         val raw = remember(w.version) { AirplaneRadios.setting.read(context) }
         Text(Copy.LAB_AIRPLANE_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
         Text(Copy.LAB_AIRPLANE_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
@@ -160,7 +175,7 @@ internal fun LabAirplaneScreen(contentPadding: PaddingValues) {
 
 /** 상태 표시줄 아이콘 숨기기. */
 @Composable
-internal fun LabIconsScreen(contentPadding: PaddingValues) {
+internal fun LabIconsScreen(contentPadding: PaddingValues, permitted: Boolean, onGuide: () -> Unit) {
     val c = LocalLiquid.current
     val context = LocalContext.current
     val w = rememberLabWriter()
@@ -205,7 +220,7 @@ internal fun LabIconsScreen(contentPadding: PaddingValues) {
         }
     }
     // 순서: 상단바 숨기기(가장 크게 바뀜) → 아이콘 숨기기 → 초록 점
-    LabPage(contentPadding, before = listOf(hideCard), more = listOf(dotCard)) {
+    LabPage(contentPadding, before = listOf(hideCard), more = listOf(dotCard) + permissionCard(permitted, onGuide)) {
         val raw = remember(w.version) { IconBlacklist.setting.read(context) }
         Text(Copy.LAB_ICONS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
         Text(Copy.LAB_ICONS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)

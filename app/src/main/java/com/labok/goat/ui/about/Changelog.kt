@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.SheetColumn
+import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
@@ -43,6 +44,29 @@ internal data class Release(val version: String, val date: String, val summary: 
 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
+    Release(
+        "GOAT 1.51.0",
+        "2026-11-06",
+        "사용 통계를 정식 기능으로 넣고, 화면 문구·여백·모서리를 표준으로 맞췄습니다.",
+        listOf(
+            "새 기능" to listOf(
+                "사용 통계: 화면 켠 시간, 잠금 해제·앱 실행·알림·화면 회전·펼치기·충전 횟수를 오늘·어제·7일·월·1년·전체로 보여 줍니다. 하루 평균, 이전 기간 대비 변화, 자주 연 앱과 알림이 많은 앱을 함께 보여 주고, 지난 기록은 기기 안에 계속 저장합니다."
+            ),
+            "변경" to listOf(
+                "화면 문구를 격식 있는 표준어로 고치고, 각 화면의 실제 동작에 맞게 다듬었습니다. 기능 이름도 바꿨습니다(고급 화면 배율, 강제 다크 모드, 비행기 모드 무선 유지).",
+                "여백·간격·모서리 둥글기를 구성요소별 표준 값으로 통일했습니다.",
+                "위쪽 제목 줄은 흐림 효과만 남기고 아래로 옅어지는 그라데이션을 없앴습니다. 상태 표시줄까지 함께 흐려집니다.",
+                "글자를 크게 하거나 화면이 좁아도 선택 칩의 글자가 잘리지 않게 했습니다.",
+                "다른 언어를 넣을 준비로 화면 문구를 모두 언어 리소스로 옮겼습니다.",
+                "숨은 기능을 다듬었습니다."
+            ),
+            "고침" to listOf(
+                "비행기 모드 무선 유지·상태 표시줄 화면에서 권한이 없을 때 '권한 설정 필요' 안내가 나오지 않던 문제를 고쳤습니다.",
+                "권한 설정 안내·문제 신고 공유 창에 GOAT 자신이 받는 앱으로 나오던 문제를 고쳤습니다.",
+                "해상도 목록의 '·' 앞 띄어쓰기가 빠지던 문제를 고쳤습니다."
+            )
+        )
+    ),
     Release(
         "GOAT 1.50.8",
         "2026-11-05",
@@ -2651,7 +2675,7 @@ private fun ReleaseCard(r: Release, initiallyOpen: Boolean) {
             }.padding(Gap.CardPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f).padding(end = Space.Inline)) {
                 Text("${r.version} · ${r.date}", fontWeight = FontWeight.SemiBold, color = c.ink)
                 Text(r.summary, color = c.muted, style = MaterialTheme.typography.bodySmall)
             }

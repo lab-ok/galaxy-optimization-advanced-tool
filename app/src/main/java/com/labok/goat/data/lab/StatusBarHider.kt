@@ -88,9 +88,6 @@ object StatusBarHider {
     /** 포커스가 앱으로 넘어가면 할 일(입력란을 다시 눌러 키보드를 띄운다, 접근성 서비스가 넘겨 준다). */
     private var afterYield: (() -> Unit)? = null
 
-    /** 이 창이 지금 포커스를 쥐고 있는지(메인 스레드). */
-    val holdingFocus: Boolean get() = view?.hasWindowFocus() == true
-
     /**
      * 다른 앱의 입력란이 눌렸을 때(접근성 이벤트, 메인 스레드): 포커스를 바로 내려놓고, 앱이 포커스를 받으면 [retrigger]로
      * 입력란을 다시 눌러 첫 누름에 키보드가 뜨게 한다. 키보드 요청 실패 기록을 기다리던 예전 방식보다 빠르다.

@@ -118,7 +118,6 @@
     <string name="labdata_usage_fact_apps_per_screen_on">화면을 한 번 켤 때마다 앱을 평균 %1$s개 엽니다.</string>
     <string name="labdata_usage_fact_top_app">%1$s 실행이 전체 실행의 %2$d%%를 차지합니다.</string>
     <string name="labdata_usage_fact_top_noti">알림 %1$,d개 중 %2$d%%가 %3$s 알림입니다.</string>
-    <string name="labdata_usage_fact_charge_start">충전기는 평균 잔량 %1$d%%에서 연결했습니다.</string>
     <!-- UsageFun: 오늘의 칭호(이름·까닭) -->
     <string name="labdata_usage_title_fold_master">폴드 장인</string>
     <string name="labdata_usage_title_fold_master_why">하루 %1$d번 펼침</string>

@@ -127,6 +127,7 @@ import com.labok.goat.ui.lab.LabIconsScreen
 import com.labok.goat.ui.lab.LabNoteScreen
 import com.labok.goat.ui.lab.LabScreen
 import com.labok.goat.ui.lab.StatusIconsHelpSheet
+import com.labok.goat.ui.lab.UsageStatsHelpSheet
 import com.labok.goat.ui.lab.UsageStatsScreen
 import com.labok.goat.ui.liquid.LiquidMenu
 import com.labok.goat.ui.liquid.LiquidToast
@@ -176,7 +177,7 @@ import kotlinx.coroutines.launch
 private const val WIDE_DP = 600
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, GOAT_PANEL, ICONS_HELP, AIRPLANE_HELP, VOLUME_HELP, CLIP_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, GOAT_PANEL, ICONS_HELP, AIRPLANE_HELP, VOLUME_HELP, CLIP_HELP, STATS_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -327,8 +328,9 @@ internal fun HomeScreen(
             section(Copy.MENU_SECTION_SOUND, NavItem.CAMERA_MUTE, NavItem.AIRPLANE)
             section(Copy.MENU_SECTION_CLEAN, NavItem.APP_CLEANUP)
             section(Copy.MENU_SECTION_SHARE, NavItem.LAB_NOTE)
+            section(Copy.text(R.string.menu_section_stats), NavItem.LAB_STATS)
             // 실험실: 조사 도구만. lab 빌드는 잠금과 상관없이 보인다
-            section(Copy.MENU_SECTION_LAB, labOf(NavItem.LAB_STATS), NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || lab })
+            section(Copy.MENU_SECTION_LAB, NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || lab })
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
         val common = { help: Sheet, guide: Sheet, reset: Sheet ->
@@ -421,7 +423,8 @@ internal fun HomeScreen(
                 Copy.MENU_HELP to { sheet = Sheet.CLIP_HELP },
                 Copy.MENU_REPORT to report
             )
-            NavItem.LAB_TOOLS, NavItem.LAB_AMBIENT, NavItem.LAB_STATS -> listOf(Copy.MENU_REPORT to report)
+            NavItem.LAB_STATS -> listOf(Copy.MENU_HELP to { sheet = Sheet.STATS_HELP }, Copy.MENU_REPORT to report)
+            NavItem.LAB_TOOLS, NavItem.LAB_AMBIENT -> listOf(Copy.MENU_REPORT to report)
             NavItem.SETTINGS -> listOf(Copy.MENU_REPORT to report)
         }
         // 기본 기능(화면 크기 맞추기) 화면. 기능 전환 애니메이션 안에서 그린다.
@@ -605,8 +608,8 @@ internal fun HomeScreen(
                             NavItem.DOZE -> DozeScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
-                            NavItem.AIRPLANE -> LabAirplaneScreen(inner)
-                            NavItem.STATUS_ICONS -> LabIconsScreen(inner)
+                            NavItem.AIRPLANE -> LabAirplaneScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
+                            NavItem.STATUS_ICONS -> LabIconsScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.AUTO_FLEX -> LabFlexScreen(inner)
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                             NavItem.LAB_STATS -> UsageStatsScreen(inner)
@@ -711,6 +714,7 @@ internal fun HomeScreen(
                     Sheet.AIRPLANE_HELP -> AirplaneHelpSheet()
                     Sheet.VOLUME_HELP -> VolumeRotateHelpSheet()
                     Sheet.CLIP_HELP -> ClipShareHelpSheet()
+                    Sheet.STATS_HELP -> UsageStatsHelpSheet()
                     Sheet.CHANGELOG -> ChangelogSheet()
                     Sheet.PERMISSIONS -> PermissionsSheet()
                     Sheet.DARK_HELP -> DarkHelpSheet()

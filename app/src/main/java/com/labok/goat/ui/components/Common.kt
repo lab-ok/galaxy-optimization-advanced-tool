@@ -59,7 +59,7 @@ internal fun InfoRow(key: String, value: String, emphasize: Boolean = false) {
 @Composable
 internal fun CommandBox(text: String, onCopy: () -> Unit, extra: @Composable (() -> Unit)? = null) {
     val c = LocalLiquid.current
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(Radius.Box)
     Column(
         Modifier
             .fillMaxWidth()

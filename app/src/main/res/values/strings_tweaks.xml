@@ -8,7 +8,7 @@
     <string name="tweaks_anim_help_off_title">3. 끔 설정과 주의 사항</string>
     <string name="tweaks_anim_help_permission_body">고급 화면 배율과 같은 시스템 설정 권한으로 변경하며, 재부팅 후에도 유지됩니다. 개발자 옵션을 끄면 기기가 기본값으로 되돌리지만, GOAT가 선택한 값을 다시 적용합니다.</string>
     <string name="tweaks_anim_help_permission_title">4. 권한과 유지</string>
-    <string name="tweaks_anim_help_three_body_fmt">개발자 옵션의 \'창 애니메이션 배율\', \'전환 애니메이션 배율\', \'애니메이터 길이 배율\'과 같은 설정입니다. 값을 하나 선택하면 세 설정이 함께 바뀌며, \'%1$s\'를 펼치면 각각 조정할 수 있습니다.</string>
+    <string name="tweaks_anim_help_three_body_fmt">개발자 옵션의 \'창 애니메이션 배율\', \'전환 애니메이션 배율\', \'애니메이터 길이 배율\'과 같은 설정입니다. 값을 하나 선택하면 세 설정이 함께 바뀌며, \'%1$s\' 항목을 펼치면 각각 조정할 수 있습니다.</string>
     <string name="tweaks_anim_help_three_title">2. 세 가지 설정</string>
     <string name="tweaks_anim_help_what_body">앱을 열고 닫거나 화면이 전환될 때의 애니메이션 속도를 변경합니다. 0.5배로 설정하면 애니메이션이 절반의 시간에 끝나 더 빠르게 느껴집니다. 가장 널리 쓰이는 값은 0.5배입니다.</string>
     <string name="tweaks_anim_now_custom_fmt">현재: 사용자 지정(%1$s)</string>

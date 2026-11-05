@@ -131,7 +131,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
     LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
 
-    /** 실험실: 사용 통계(접기·잠금 해제·화면·앱·알림·충전·볼륨 버튼 횟수를 한 페이지로). */
+    /** 사용 통계: 접기·잠금 해제·화면·앱·알림·충전·볼륨 버튼 횟수를 기간별로(1.50.9 실험실에서 정식으로). 열어 본 횟수 기록이 이름에 묶여 있어 이름은 그대로 둔다. */
     LAB_STATS(Copy.FEATURE_LAB_STATS, NavIcon.STATS),
 
     /** 실험실: 앰비언트 모드(텐트 모드와 합침). 펼칠 때·세워 둘 때 안쪽 화면이 바깥 화면 색 간접등이 된다. */
@@ -146,7 +146,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_AMBIENT, LAB_STATS, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_AMBIENT, LAB_TOOLS)
     }
 }
 
@@ -340,7 +340,7 @@ private fun SearchRow(hit: SettingsSearch.Hit, onClick: () -> Unit) {
             .fillMaxWidth()
             .heightIn(min = 52.dp)
             .liquidPress(interaction, sx = 1.02f, sy = 0.95f)
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(DRAWER_ROW_RADIUS))
             .clickable(interaction, null, onClick = onClick)
             .padding(start = DRAWER_EDGE, end = 16.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -377,7 +377,7 @@ private fun DrawerRow(
                 translationX = (1f - k) * -18.dp.toPx()
             }
             .liquidPress(interaction, sx = 1.02f, sy = 0.95f)
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(DRAWER_ROW_RADIUS))
             .clickable(interaction, null, onClick = onClick)
             // 선택 방울의 둥근 끝(반지름 24dp) 안쪽 깊숙이 아이콘을 둬 검은 경계와 붙어 보이지 않게 한다.
             .padding(start = DRAWER_EDGE, end = 16.dp),
@@ -809,3 +809,6 @@ private val DRAWER_EDGE = 22.dp
 
 /** 사이드바 검색칸 안쪽 여백. */
 private val DRAWER_SEARCH_PAD = PaddingValues(horizontal = 14.dp, vertical = 18.dp)
+
+/** 사이드바 줄 모서리: 선택 방울(높이 48dp)과 같은 반지름이라 누름 범위가 방울 모양과 겹친다. */
+private val DRAWER_ROW_RADIUS = 24.dp

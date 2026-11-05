@@ -11,6 +11,7 @@ import android.os.Vibrator
 import android.view.Display
 import androidx.core.app.NotificationCompat
 import com.labok.goat.R
+import com.labok.goat.data.lab.MemoShare.withoutGoat
 import com.labok.goat.data.log.DiagnosticReport
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.log.PublicLogFile
@@ -129,7 +130,7 @@ object OttFlexTest {
             return
         }
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        val chooser = Intent.createChooser(send, "OTT 플렉스 시험 결과 보내기").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val chooser = Intent.createChooser(send, "OTT 플렉스 시험 결과 보내기").withoutGoat(context).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
         notify(context, "시험이 끝났습니다. 눌러서 결과를 보내 주세요.", PendingIntent.getActivity(context, 31, chooser, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
     }
 

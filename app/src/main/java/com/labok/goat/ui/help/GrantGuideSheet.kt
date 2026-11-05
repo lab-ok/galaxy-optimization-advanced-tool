@@ -58,12 +58,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.R
+import com.labok.goat.data.lab.MemoShare.withoutGoat
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.about.DeveloperProfile
 import com.labok.goat.ui.art.ConnectionIllustration
 import com.labok.goat.ui.art.GuideSceneArt
 import com.labok.goat.ui.components.CommandBox
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.copyText
@@ -252,7 +254,7 @@ private fun TroubleCard(items: List<GrantGuideContent.Trouble>, onCopy: (String)
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(Radius.Row))
                     .clickable { open = if (expanded) null else tr.title }
                     .padding(vertical = Gap.RowPad),
                 verticalAlignment = Alignment.CenterVertically
@@ -329,7 +331,7 @@ private fun shareGuide(context: Context, c: GrantGuideContent.Connection, os: Gr
         putExtra(Intent.EXTRA_SUBJECT, Copy.text(R.string.help_grant_subject_fmt, DeveloperProfile.PRODUCT))
         putExtra(Intent.EXTRA_TEXT, GrantGuideContent.fullText(c, os, DeveloperProfile.PRODUCT))
     }
-    context.startActivity(Intent.createChooser(send, Copy.text(R.string.help_guide_share_chooser)))
+    context.startActivity(Intent.createChooser(send, Copy.text(R.string.help_guide_share_chooser)).withoutGoat(context))
 }
 
 private fun emailGuide(context: Context, c: GrantGuideContent.Connection, os: GrantGuideContent.PcOs) {

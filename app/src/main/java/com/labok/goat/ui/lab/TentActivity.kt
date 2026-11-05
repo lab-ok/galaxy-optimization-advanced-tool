@@ -23,6 +23,7 @@ import androidx.window.area.WindowAreaPresentationSessionCallback
 import androidx.window.area.WindowAreaSessionPresenter
 import androidx.window.core.ExperimentalWindowApi
 import com.labok.goat.data.lab.AutoFlex
+import com.labok.goat.data.lab.MemoShare.withoutGoat
 import com.labok.goat.data.lab.TentMode
 import com.labok.goat.data.log.DiagnosticReport
 import com.labok.goat.data.log.LogRepository
@@ -136,7 +137,7 @@ class TentActivity : ComponentActivity() {
                 withContext(Dispatchers.Main) {
                     if (uri == null) return@withContext say("진단 파일을 저장하지 못했습니다.")
                     val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    runCatching { startActivity(Intent.createChooser(send, "텐트 모드 시험 결과 보내기").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                    runCatching { startActivity(Intent.createChooser(send, "텐트 모드 시험 결과 보내기").withoutGoat(this@TentActivity).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
                     finish()
                 }
             }

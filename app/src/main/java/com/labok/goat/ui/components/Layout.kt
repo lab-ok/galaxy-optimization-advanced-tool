@@ -72,7 +72,7 @@ internal fun SheetColumn(
 @Composable
 internal fun DangerConfirmBox(message: String, note: String? = null, actions: @Composable RowScope.() -> Unit) {
     val c = LocalLiquid.current
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(Radius.Box)
     Column(
         Modifier
             .fillMaxWidth()

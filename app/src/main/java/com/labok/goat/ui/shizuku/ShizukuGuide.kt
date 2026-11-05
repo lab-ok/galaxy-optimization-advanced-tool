@@ -107,6 +107,8 @@ internal fun ShizukuGuide(
         // 무선 디버깅은 Wi-Fi에 연결돼 있어야만 켜진다(아니면 'Wi-Fi에 연결하세요'만 뜨고 꺼진다). 연결 상태를 읽으려면
         // 네트워크 상태 권한이 필요한데 GOAT는 쓰지 않으므로(읽으려다 앱이 종료됐다), 항상 먼저 알려 주고 Wi-Fi 설정으로 가는 길을 둔다
         Hint(stringResource(R.string.shizuku_step3_hint_wifi))
+        // [켜기]가 하는 일은 그 버튼이 있는 3단계 안에서 알린다(맨 아래에 두면 버튼이 접혀 있을 때도 보여 엉뚱했다, 1.51.0 QA)
+        Hint(stringResource(R.string.shizuku_footer))
         if (note == 1) Hint(stringResource(R.string.shizuku_step3_hint_manual), warn = true)
         Spacer(Modifier.height(Gap.Item))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.Between)) {
@@ -143,12 +145,6 @@ internal fun ShizukuGuide(
         Hint(stringResource(R.string.shizuku_step5_hint))
         Action(stringResource(R.string.shizuku_step5_action)) { ShizukuAccess.requestPermission() }
     }
-    Spacer(Modifier.height(Gap.Item))
-    Text(
-        stringResource(R.string.shizuku_footer),
-        color = c.muted,
-        style = MaterialTheme.typography.labelSmall
-    )
 }
 
 @Composable

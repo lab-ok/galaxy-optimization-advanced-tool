@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -206,7 +207,7 @@ private fun ReflectionPattern(kind: Int) {
     }
     if (kind == 6) {
         val colors = listOf(Color(0xFFE02020), Color(0xFF20B040), Color(0xFF2040E0), Color(0xFFE0C020))
-        var i by remember { mutableStateOf(0) }
+        var i by remember { mutableIntStateOf(0) }
         LaunchedEffect(Unit) {
             while (true) {
                 delay(1500)

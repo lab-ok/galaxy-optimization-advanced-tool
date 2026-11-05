@@ -48,9 +48,6 @@ class TentAmbientView(context: Context, private val swap: Boolean, private val m
             postInvalidateOnAnimation()
         }
 
-    /** 지금 보이는 밝기(사라짐 확인용). */
-    val shownLevel get() = shown
-
     /** 화면이 거의 검을 때 켜는 무드등 색. */
     var mood: Int = Color.rgb(255, 150, 70)
 

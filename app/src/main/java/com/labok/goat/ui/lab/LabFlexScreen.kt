@@ -73,6 +73,7 @@ import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.Tile
@@ -393,7 +394,7 @@ internal fun FlexHelpSheet() {
 private fun FlexAppRow(app: AppEntry, mode: Int, open: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier, onChange: (Int) -> Unit) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(Radius.Card)
     val border by animateColorAsState(if (open) c.ink.copy(alpha = 0.5f) else c.line, Springs.calm(reduce), label = "flexRowBorder")
     val squash = remember { Animatable(1f) }
     LaunchedEffect(open) {

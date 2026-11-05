@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import com.labok.goat.AppInfo
 import com.labok.goat.R
+import com.labok.goat.data.lab.MemoShare.withoutGoat
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.text.Copy
 
@@ -73,7 +74,7 @@ internal object ReportMail {
         // 파일 공유: 같은 첨부를 모든 앱이 보이는 공유 창으로 보낸다(메신저로 진단 파일을 바로 보낼 때)
         if (share) {
             LogRepository.from(context).add("${kind.label}: 파일 공유 창 (${attachments.size}개)")
-            context.startActivity(Intent.createChooser(Intent(mail).apply { removeExtra(Intent.EXTRA_EMAIL) }, Copy.text(R.string.about_mail_share_chooser)))
+            context.startActivity(Intent.createChooser(Intent(mail).apply { removeExtra(Intent.EXTRA_EMAIL) }, Copy.text(R.string.about_mail_share_chooser)).withoutGoat(context))
             return
         }
         val pm = context.packageManager

@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.rowListEdges
 import com.labok.goat.ui.liquid.Text
@@ -156,7 +157,7 @@ fun LiquidRadioRow(label: String, desc: String?, selected: Boolean, enabled: Boo
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(Radius.Row))
             .onGloballyPositioned { if (group != null) group.centers[label] = it.positionInParent().y + it.size.height / 2f }
             // 라디오 의미(선택됨·안 됨)를 접근성 서비스가 읽도록 selectable로 둔다
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, interactionSource = interaction, indication = null, onClick = onClick)

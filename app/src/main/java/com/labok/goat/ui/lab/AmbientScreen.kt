@@ -54,6 +54,7 @@ import com.labok.goat.data.lab.AmbientOpen
 import com.labok.goat.data.lab.TentDuo
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.featurePadding
 import com.labok.goat.ui.liquid.GlassCard
@@ -207,8 +208,8 @@ private fun ClockPicker(selected: Int, onPick: (Int) -> Unit) {
                             scaleX = 0.94f + 0.06f * pick
                             scaleY = 0.94f + 0.06f * pick
                         }
-                        .clip(RoundedCornerShape(14.dp))
-                        .border(2.dp, c.ink.copy(alpha = pick), RoundedCornerShape(14.dp))
+                        .clip(RoundedCornerShape(Radius.Box))
+                        .border(2.dp, c.ink.copy(alpha = pick), RoundedCornerShape(Radius.Box))
                 ) {
                     StandbyClock(i, now, 80, false)
                 }

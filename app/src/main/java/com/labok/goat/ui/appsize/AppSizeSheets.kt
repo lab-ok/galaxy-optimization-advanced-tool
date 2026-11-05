@@ -22,7 +22,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.R
 import com.labok.goat.data.appsize.DensityServer
@@ -34,6 +33,7 @@ import com.labok.goat.ui.components.DangerConfirmBox
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.copyText
 import com.labok.goat.ui.liquid.GlassCard
@@ -132,7 +132,7 @@ internal fun AppSizeGuideSheet() {
             if (showPc) stringResource(R.string.appsize_guide_pc_hide) else stringResource(R.string.appsize_guide_pc_show),
             color = c.muted,
             style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { showPc = !showPc }.padding(Inset.TextButton)
+            modifier = Modifier.clip(RoundedCornerShape(Radius.Row)).clickable { showPc = !showPc }.padding(Inset.TextButton)
         )
         if (showPc) {
             Text(

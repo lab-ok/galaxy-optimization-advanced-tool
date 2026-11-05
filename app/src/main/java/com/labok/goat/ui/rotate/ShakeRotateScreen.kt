@@ -46,7 +46,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.R
@@ -56,6 +55,7 @@ import com.labok.goat.domain.ShakeRotatePolicy
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.HelpTopic
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.featurePadding
@@ -299,7 +299,7 @@ internal fun ShakeRotateScreen(contentPadding: PaddingValues, onGuide: () -> Uni
                 GlassCard {
                     // 고급 설정(접었다 펴기): 흔들기를 알아보는 세부값(횟수·빠르기·손목 회전·탭 거르기)만 맨 아래에 접어 둔다. 자동 맞추기가 앞의 셋을 함께 맞춘다
                     Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { advanced = !advanced },
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(Radius.Row)).clickable { advanced = !advanced },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(Modifier.weight(1f)) {

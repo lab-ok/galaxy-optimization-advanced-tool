@@ -1,6 +1,8 @@
 package com.labok.goat.ui.lab
 
 import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -66,12 +68,16 @@ import com.labok.goat.data.lab.UsageTally
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.Inset
 import com.labok.goat.ui.components.PillShape
+import com.labok.goat.ui.components.Radius
+import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.liquid.GalaxyFont
 import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LocalLiquid
@@ -196,6 +202,11 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
             GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
                 Text(Copy.LAB_STATS_NO_ACCESS_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
                 Text(Copy.LAB_STATS_NO_ACCESS_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(Gap.Item))
+                // Shizuku가 없어도 사용자가 직접 허용할 수 있게 시스템 설정의 사용 기록 접근 화면을 연다
+                LiquidButton(stringResource(R.string.lab_stats_open_usage_access), modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                    runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                })
             }
             Spacer(Modifier.height(Gap.Card))
         }
@@ -206,7 +217,7 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
             Modifier
                 .widthIn(max = ContentMaxWidth)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(22.dp))
+                .clip(RoundedCornerShape(Radius.Card))
                 .background(c.ink)
                 .padding(Gap.CardPadding)
         ) {
@@ -641,8 +652,8 @@ private fun RankList(items: List<UsageTally.Rank>, unit: String) {
                 }
                 Spacer(Modifier.width(Space.Inline))
                 Text(item.name, color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                Box(Modifier.padding(start = Space.Inline).width(56.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(c.line)) {
-                    Box(Modifier.fillMaxWidth(item.count.toFloat() / max).height(6.dp).clip(RoundedCornerShape(3.dp)).background(c.ink))
+                Box(Modifier.padding(start = Space.Inline).width(56.dp).height(6.dp).clip(PillShape).background(c.line)) {
+                    Box(Modifier.fillMaxWidth(item.count.toFloat() / max).height(6.dp).clip(PillShape).background(c.ink))
                 }
                 Text("%,d".format(item.count) + unit, color = c.ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 52.dp).padding(start = Space.Inline))
             }
@@ -750,5 +761,15 @@ private fun StatGlyph(icon: StatIcon, color: Color, modifier: Modifier) {
                 else -> Unit
             }
         }
+    }
+}
+
+/** 사용 통계 사용 방법(점 세 개 메뉴). */
+@Composable
+internal fun UsageStatsHelpSheet() {
+    SheetColumn(title = stringResource(R.string.lab_help_title)) {
+        HelpTopic(stringResource(R.string.lab_help_what_title), stringResource(R.string.lab_stats_help_what_body))
+        HelpTopic(stringResource(R.string.lab_stats_help_store_title), stringResource(R.string.lab_stats_help_store_body))
+        HelpTopic(stringResource(R.string.lab_stats_help_permission_title), stringResource(R.string.lab_stats_help_permission_body))
     }
 }

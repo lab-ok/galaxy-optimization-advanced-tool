@@ -82,8 +82,6 @@ object Copy {
     val FEATURE_LAB_STATS: String get() = s(R.string.feature_lab_stats)
     val LAB_STATS_LOADING: String get() = s(R.string.lab_stats_loading)
     val LAB_STATS_ARCHIVE_NOTE: String get() = s(R.string.lab_stats_archive_note)
-    val LAB_STATS_BATTERY_TITLE: String get() = s(R.string.lab_stats_battery_title)
-    val LAB_STATS_BATTERY_BODY: String get() = s(R.string.lab_stats_battery_body)
     val LAB_STATS_NO_ACCESS_TITLE: String get() = s(R.string.lab_stats_no_access_title)
     val LAB_STATS_NO_ACCESS_BODY: String get() = s(R.string.lab_stats_no_access_body)
     val LAB_STATS_CHARGE_NEED: String get() = s(R.string.lab_stats_charge_need)

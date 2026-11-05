@@ -87,6 +87,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.AppInfo
 import com.labok.goat.R
 import com.labok.goat.data.appsize.AppDensityNotifier
+import com.labok.goat.data.appsize.AppUsage
 import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.ResolutionState
@@ -109,6 +110,7 @@ import com.labok.goat.ui.about.UpdateCard
 import com.labok.goat.ui.about.worthShowing
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.Radius
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.components.Tile
 import com.labok.goat.ui.components.featurePadding
@@ -206,6 +208,8 @@ internal fun Dashboard(
                 CameraMute.State.NONE -> Copy.text(R.string.home_dash_camera_none)
                 CameraMute.State.UNKNOWN -> if (CameraMute.wanted(context)) Copy.DASH_WANTED_OFF else Copy.DASH_NEED_SHIZUKU
             }
+            // 사용 통계: 권한이 없을 때만 알린다(있으면 기록을 세는 중이라 따로 적을 상태가 없다)
+            NavItem.LAB_STATS -> if (AppUsage.hasAccess(context)) "" else Copy.text(R.string.home_dash_stats_need_access)
             NavItem.APP_CLEANUP -> cleaned?.let { if (it == 0) Copy.text(R.string.home_dash_cleanup_none) else Copy.text(R.string.home_dash_cleanup_count_fmt, it) } ?: Copy.BLOAT_INTRO_TITLE
             NavItem.GOS -> when (gos) {
                 Gos.State.OFF -> Copy.GOS_DASH_OFF
@@ -538,7 +542,7 @@ private fun CategoryRow(item: NavItem, status: String, on: Boolean, onClick: (Of
     var origin by remember { mutableStateOf(Offset.Zero) }
     var size by remember { mutableStateOf(IntSize.Zero) }
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(Radius.Box))
             .onGloballyPositioned { origin = it.positionInRoot() }
             .onSizeChanged { size = it }
             .semantics(mergeDescendants = true) {
@@ -567,9 +571,6 @@ private fun CategoryRow(item: NavItem, status: String, on: Boolean, onClick: (Of
 
 /** 이 폭부터 홈 머리를 한 줄(로고·글·고리)로 놓는다. 그보다 좁으면 두 줄로 나눈다. */
 private val HERO_WIDE = 420.dp
-
-/** 보기를 바꾼 뒤 이 시간 안에 나타나는 카드만 방울처럼 맺힌다(ms). */
-private const val VIEW_SWITCH_MS = 600L
 
 /** 홈 타일 보기 방식. */
 private enum class HomeView(val label: String) { ALL(Copy.HOME_VIEW_ALL), ON(Copy.HOME_VIEW_ON), OFF(Copy.HOME_VIEW_OFF) }

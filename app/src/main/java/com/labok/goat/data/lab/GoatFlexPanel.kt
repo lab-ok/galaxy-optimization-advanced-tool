@@ -332,14 +332,17 @@ object GoatFlexPanel {
         val b = wm.maximumWindowMetrics.bounds
         val o = Owner().also { owner = it }
         val v = ComposeView(wctx).apply {
-            // 시스템이 패널 창을 숨기면(다른 앱이 겹쳐 띄우기 창 숨김을 켠 경우 등) 남긴다(11-03 YouTube에서 패널 안 보임 진단)
-            addOnAttachStateChangeListener(object : android.view.View.OnAttachStateChangeListener {
-                val l = android.view.ViewTreeObserver.OnWindowVisibilityChangeListener { vis ->
-                    if (vis != android.view.View.VISIBLE) LogRepository.from(context).add("GOAT 플렉스 패널: 시스템이 패널 창을 숨김($vis) · 앞 앱 $p")
-                }
-                override fun onViewAttachedToWindow(av: android.view.View) = av.viewTreeObserver.addOnWindowVisibilityChangeListener(l)
-                override fun onViewDetachedFromWindow(av: android.view.View) = av.viewTreeObserver.removeOnWindowVisibilityChangeListener(l)
-            })
+            // 시스템이 패널 창을 숨기면(다른 앱이 겹쳐 띄우기 창 숨김을 켠 경우 등) 남긴다(11-03 YouTube에서 패널 안 보임 진단).
+            // 창 표시 감시 등록은 Android 14(API 34)부터라 그 아래에서는 진단 기록만 건너뛴다(lint NewApi)
+            if (android.os.Build.VERSION.SDK_INT >= 34) {
+                addOnAttachStateChangeListener(object : android.view.View.OnAttachStateChangeListener {
+                    val l = android.view.ViewTreeObserver.OnWindowVisibilityChangeListener { vis ->
+                        if (vis != android.view.View.VISIBLE) LogRepository.from(context).add("GOAT 플렉스 패널: 시스템이 패널 창을 숨김($vis) · 앞 앱 $p")
+                    }
+                    override fun onViewAttachedToWindow(av: android.view.View) = av.viewTreeObserver.addOnWindowVisibilityChangeListener(l)
+                    override fun onViewDetachedFromWindow(av: android.view.View) = av.viewTreeObserver.removeOnWindowVisibilityChangeListener(l)
+                })
+            }
             setViewTreeLifecycleOwner(o)
             setViewTreeSavedStateRegistryOwner(o)
             setContent {

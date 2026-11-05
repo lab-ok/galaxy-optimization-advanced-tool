@@ -252,7 +252,6 @@ private object Glass {
     // 11-02: 장면 색 틴트가 들어간 밝은 카드(주황·파랑) 위에서 #8D8D8D 보조 글자가 묻혔다 — 더 밝은 회색으로
     val Muted = Color(0xFFC4C4C4)
     val Line = Color(0xFF424242)
-    val Accent = Color(0xFFEBEBEB)
     val Brand = Color(0xFFE50914)
 
     // 11-02 최종 통합 지시: 카드 모서리를 더 둥글고 유기적으로(GOAT 카드 22dp → 패널 타일 28dp). 작은 타일은 높이의 절반에서 멈춘다

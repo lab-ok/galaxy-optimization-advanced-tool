@@ -35,13 +35,15 @@ object NewBadge {
     const val INK_TONES = "ink_tones"
     const val VOLUME_ROTATE = "volume_rotate"
     const val SHARE_PROBE = "share_probe"
+    const val USAGE_STATS = "usage_stats"
 
     val NAV: Map<NavItem, List<String>> = mapOf(
         NavItem.STATUS_ICONS to listOf(STATUS_BAR_HIDE),
         NavItem.AUTO_FLEX to listOf(AUTO_FLEX),
         NavItem.SETTINGS to listOf(INK_TONES),
         NavItem.VOLUME_ROTATE to listOf(VOLUME_ROTATE),
-        NavItem.LAB_TOOLS to listOf(SHARE_PROBE)
+        NavItem.LAB_TOOLS to listOf(SHARE_PROBE),
+        NavItem.LAB_STATS to listOf(USAGE_STATS)
     )
 
     var seen by mutableStateOf(emptySet<String>())

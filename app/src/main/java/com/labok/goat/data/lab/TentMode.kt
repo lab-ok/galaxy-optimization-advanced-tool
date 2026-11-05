@@ -59,12 +59,6 @@ object TentMode {
     /** [current]가 아닌 화면 가운데 켜진 것(바깥 화면). 없으면 null. */
     fun otherDisplay(context: Context, current: Int): Int? = displays(context).filter { it.first != current && it.third == Display.STATE_ON }.minByOrNull { it.second.x * it.second.y }?.first
 
-    /** [pkg]의 첫 화면을 [displayId] 화면에 띄운다(Shizuku 셸이라 어느 화면에나 띄울 수 있다). 성공하면 null. */
-    fun launchOnDisplay(context: Context, pkg: String, displayId: Int): String? {
-        val comp = context.packageManager.getLaunchIntentForPackage(pkg)?.component?.flattenToShortString() ?: return "$pkg 앱이 없습니다."
-        return launchComponent(context, comp, displayId)
-    }
-
     /**
      * 화면 이름 [comp]를 [displayId] 화면에 띄운다. 앱이 다른 화면에 직접 띄우면 권한 거부가 나서(폴드8 실기 11-01) Shizuku 셸로 띄운다.
      * 유튜브의 첫 화면 이름에는 `$`가 들어 있어(Shell$HomeActivity) 셸이 변수로 읽지 않게 작은따옴표로 감싼다.
