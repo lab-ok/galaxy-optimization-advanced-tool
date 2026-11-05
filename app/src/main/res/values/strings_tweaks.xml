@@ -173,7 +173,7 @@
     <string name="rotate_art_stays">그대로</string>
     <string name="rotate_art_turned_by_itself">저절로 회전</string>
     <string name="rotate_calibrate_done_hint">이제 방금 흔든 세기보다 조금 약하게 흔들어도 회전합니다.</string>
-    <string name="rotate_calibrate_idle">기기를 움직이면 물방울도 움직입니다</string>
+    <string name="rotate_calibrate_idle">기기를 움직이면 물방울도 움직입니다.</string>
     <string name="rotate_calibrate_not_detected">흔들림을 인식하지 못했습니다</string>
     <string name="rotate_calibrate_ok">확인</string>
     <string name="rotate_calibrate_result_fmt">민감도를 %1$d%2$s 맞췄습니다</string>

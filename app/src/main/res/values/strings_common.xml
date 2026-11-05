@@ -431,7 +431,7 @@
     <string name="res_now_fmt">현재 %1$d × %2$d</string>
     <string name="res_option_desc_fmt">화소 수가 약 %1$d%% 줄어듭니다.</string>
     <string name="res_apps_body_fmt">앱 %1$d개는 배율을 정해진 단계로만 변경할 수 있어 해상도를 낮추면 다소 크게 보입니다.</string>
-    <string name="res_confirm_body_fmt">%1$d초 안에 \'유지\'를 누르지 않으면 원래 해상도로 되돌립니다.</string>
+    <string name="res_confirm_body_fmt">%1$d초 안에 [유지]를 누르지 않으면 원래 해상도로 되돌립니다.</string>
     <string name="res_dash_fmt">%1$d · 화소 %2$d%%</string>
     <string name="update_speed_fmt">\u0020· %1$sMB/s</string>
     <string name="res_now_changed_fmt">현재 %1$d × %2$d · 원래 %3$d × %4$d</string>
