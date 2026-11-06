@@ -32,16 +32,19 @@ object UnfoldLock {
 
     @Volatile private var pinned = false
 
-    /** 화면이 꺼질 때(힌지 감시가 부른다). 접힌 채였고 '깨우지 않기'면 닫힘 상태로 고정한다. */
+    /**
+     * 화면이 꺼질 때(힌지 감시가 부른다). 접힌 채였고 '깨우지 않기'면 닫힘 상태로 고정한다.
+     * 접혔는지는 시스템 접힘 상태로 판단한다. 힌지 감시의 기록(closed)은 화면이 켜져 있는 동안만 쌓여, 펼쳐 둔 채 꺼진 뒤 접고
+     * 바깥 화면을 켰다 끄면 힌지 값이 새로 오지 않아 '펼침'으로 남는다(11-06 소장님 "바깥 화면에서 전원 누르고 접었다 펴면 안 먹힘").
+     */
     fun onScreenOff(context: Context, closed: Boolean) {
         offWhileClosed = closed
-        if (mode(context) != MODE_NO_WAKE || !closed) return
+        if (mode(context) != MODE_NO_WAKE) return
         val app = context.applicationContext
         io.execute {
             if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
-            // 펼친 채 다시 끈 경우(힌지 감시가 펼침을 아직 못 받아 접힌 줄 아는 때)는 고정하지 않는다
             val now = ShizukuAccess.shell("cmd device_state state")?.out.orEmpty()
-            if (now.contains("Committed state") && !now.contains("name='CLOSED'")) return@execute
+            if (Regex("Committed state: .*name='(\\w+)'").find(now)?.groupValues?.get(1) != "CLOSED") return@execute
             pinned = pinState("CLOSED")
             if (pinned) watchHinge(app)
             LogRepository.from(app).add("실험 깨우지 않기: 접힌 채 꺼져 닫힘 상태로 고정 " + if (pinned) "성공" else "실패")
