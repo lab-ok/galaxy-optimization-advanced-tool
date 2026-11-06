@@ -192,8 +192,13 @@ object UnfoldLock {
      * 조사 파일 내용: 잠금·접힘과 관련 있어 보이는 시스템 설정 키, 키가드 상태, 기기 접힘 상태 목록.
      * 삼성이 펼칠 때 입력창을 띄우는 동작을 바꾸는 숨은 설정이 있는지 실기 값으로 찾는다.
      */
-    fun diagnose(): String = buildString {
+    fun diagnose(context: Context): String = buildString {
         appendLine("# GOAT 펼침 잠금화면 조사")
+        // 실험이 실제로 어떻게 돌았는지 함께 본다(앱 로그 중 이 실험 줄만, 최근 40줄)
+        appendLine("## 앱 로그(실험 줄)")
+        LogRepository.from(context).read().filter { "깨우지 않기" in it || "펼침 잠금화면" in it }.takeLast(40).forEach { appendLine(it) }
+        appendLine("## 화면·전원")
+        appendLine(ShizukuAccess.shell("dumpsys power | grep -iE 'mWakefulness=|mLastWakeTime|mLastSleepTime|mLastSleepReason|mLastWakeReason|Display Power' | head -8")?.out ?: "(읽지 못함)")
         for (ns in listOf("system", "secure", "global")) {
             appendLine("## settings $ns (잠금·접힘 관련)")
             appendLine(ShizukuAccess.shell("settings list $ns | grep -iE 'fold|unfold|cover|keyguard|lock|bouncer|flex|posture|continu|aod' ")?.out ?: "(읽지 못함)")

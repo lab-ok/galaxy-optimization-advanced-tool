@@ -213,7 +213,7 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("조사 파일 만들기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
                 scope.launch {
-                    val text = withContext(Dispatchers.IO) { UnfoldLock.diagnose() }
+                    val text = withContext(Dispatchers.IO) { UnfoldLock.diagnose(context) }
                     val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("unfold-lock"), text) }
                     uri?.let { share(context, it) }
                 }
