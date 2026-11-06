@@ -40,11 +40,19 @@ object UnfoldLock {
     fun onScreenOff(context: Context, closed: Boolean) {
         offWhileClosed = closed
         if (mode(context) != MODE_NO_WAKE) return
+        LogRepository.from(context).add("실험 깨우지 않기: 화면 꺼짐 알림 받음")
         val app = context.applicationContext
         io.execute {
-            if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
+            if (ShizukuAccess.status.value != ShizukuAccess.State.READY) {
+                LogRepository.from(app).add("실험 깨우지 않기: 화면 꺼짐, Shizuku 연결이 없어 고정하지 못함")
+                return@execute
+            }
             val now = ShizukuAccess.shell("cmd device_state state")?.out.orEmpty()
-            if (Regex("Committed state: .*name='(\\w+)'").find(now)?.groupValues?.get(1) != "CLOSED") return@execute
+            val committed = Regex("Committed state: .*name='(\\w+)'").find(now)?.groupValues?.get(1)
+            if (committed != "CLOSED") {
+                LogRepository.from(app).add("실험 깨우지 않기: 화면 꺼짐, 접힘 상태 $committed 라 고정하지 않음")
+                return@execute
+            }
             pinned = pinState("CLOSED")
             if (pinned) watchHinge(app)
             LogRepository.from(app).add("실험 깨우지 않기: 접힌 채 꺼져 닫힘 상태로 고정 " + if (pinned) "성공" else "실패")
@@ -69,7 +77,7 @@ object UnfoldLock {
             pinned = false
             pinnedName = null
             stopHinge(app)
-            if (was || r?.ok != true) LogRepository.from(app).add("실험 깨우지 않기: $why · 고정 풂 " + if (r?.ok == true) "성공" else "실패 ${r?.err?.take(80)}")
+            LogRepository.from(app).add("실험 깨우지 않기: $why · 고정 풂 " + if (r?.ok == true) "성공" else "실패 ${r?.err?.take(80)}")
         }
     }
 
@@ -214,7 +222,7 @@ object UnfoldLock {
      * 삼성이 펼칠 때 입력창을 띄우는 동작을 바꾸는 숨은 설정이 있는지 실기 값으로 찾는다.
      */
     fun diagnose(context: Context): String = buildString {
-        appendLine("# GOAT 펼침 잠금화면 조사")
+        appendLine("# GOAT 펼침 잠금화면 조사 · ${com.labok.goat.BuildConfig.VERSION_NAME}")
         // 실험이 실제로 어떻게 돌았는지 함께 본다(앱 로그 중 이 실험 줄만, 최근 40줄)
         appendLine("## 앱 로그(실험 줄)")
         LogRepository.from(context).read().filter { "깨우지 않기" in it || "펼침 잠금화면" in it }.takeLast(40).forEach { appendLine(it) }
