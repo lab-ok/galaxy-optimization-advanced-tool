@@ -47,14 +47,23 @@ object UnfoldLock {
         }
     }
 
-    /** 화면이 켜질 때(전원 버튼 등). 고정해 두었으면 푼다(펼쳐 둔 채면 이때 안쪽 화면으로 넘어간다). */
+    /**
+     * 화면이 켜질 때(전원 버튼 등). 고정해 두었으면 푼다(펼쳐 둔 채면 이때 안쪽 화면으로 넘어간다).
+     * 1.52.3은 푸는 명령을 `cmd device_state reset`으로 잘못 보내 실패해, 펼친 채 전원을 눌러도 바깥 화면만 켜졌다(11-06 소장님).
+     * 앱이 다시 시작돼 고정 여부를 잊어도 풀리도록, '안 깨움'이면 고정 기록과 상관없이 켜질 때마다 푼다.
+     */
     fun onScreenOn(context: Context) {
-        if (!pinned) return
-        val app = context.applicationContext
+        if (!pinned && mode(context) != MODE_NO_WAKE) return
+        unpin(context.applicationContext, "화면이 켜짐")
+    }
+
+    private fun unpin(app: Context, why: String) {
         io.execute {
-            val r = ShizukuAccess.shell("cmd device_state reset")
+            if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
+            val r = ShizukuAccess.shell("cmd device_state state reset")
+            val was = pinned
             pinned = false
-            LogRepository.from(app).add("실험 깨우지 않기: 화면이 켜져 고정을 풂 " + if (r?.ok == true) "성공" else "실패 ${r?.err?.take(80)}")
+            if (was || r?.ok != true) LogRepository.from(app).add("실험 깨우지 않기: $why · 고정 풂 " + if (r?.ok == true) "성공" else "실패 ${r?.err?.take(80)}")
         }
     }
 
@@ -69,6 +78,8 @@ object UnfoldLock {
     fun setMode(context: Context, mode: Int) {
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putInt("mode", mode).apply()
         LogRepository.from(context).add("실험 펼침 잠금화면: 방식 $mode")
+        // 다른 방식으로 바꾸면 남아 있을지 모르는 닫힘 고정을 푼다
+        if (mode != MODE_NO_WAKE) unpin(context.applicationContext, "방식 변경")
     }
 
     fun enabled(context: Context) = mode(context) != MODE_OFF
