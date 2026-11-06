@@ -419,9 +419,12 @@ object AutoFlex {
         private val screen = object : BroadcastReceiver() {
             override fun onReceive(c: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_SCREEN_ON) {
+                    UnfoldLock.onScreenOn(context)
                     listen()
                     if (syncDue(context)) worker.post { syncApps(context) }
                 } else {
+                    // 실험 '꺼진 채 유지': 접힌 채(20° 미만) 화면이 꺼졌는지 기억해 둔다. 펼쳐서 켜지면 다시 끈다
+                    UnfoldLock.onScreenOff(context, closedSeen)
                     stopListening()
                     worker.post { undim() }
                     // 화면을 끄면 까딱으로 켠 플렉스 모드도 끈다

@@ -187,18 +187,20 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             var unfoldMode by remember { mutableIntStateOf(UnfoldLock.mode(context)) }
             Text("펼침 잠금화면 실험", fontWeight = FontWeight.SemiBold, color = c.ink)
             Text(
-                "잠긴 채 펼치면 PIN 입력창 대신 시계·배경 잠금화면에 머물게 해 봅니다. 잠금은 풀지 않습니다. 방식을 고른 뒤 접었다 펼쳐 보고, 결과는 문제 신고의 앱 로그로 보내 주세요. Shizuku가 필요합니다.",
+                "안 깨움: 접힌 채 화면이 꺼지면 접힘 상태를 닫힘으로 고정해 펼쳐도 화면이 켜지지 않게 하고, 전원 버튼으로 켜면 풉니다. 다시 끔: 펼쳐서 켜지면 바로 다시 끕니다. 입력창 닫기·껐다 켜기: 잠긴 채 펼칠 때 PIN 입력창 대신 잠금화면에 머물게 합니다. 잠금은 풀지 않습니다. 결과는 문제 신고의 앱 로그로 보내 주세요. Shizuku가 필요합니다.",
                 color = c.muted,
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(Gap.Item))
             LiquidChips(
-                options = listOf(UnfoldLock.MODE_OFF, UnfoldLock.MODE_BACK, UnfoldLock.MODE_SCREEN),
+                options = listOf(UnfoldLock.MODE_OFF, UnfoldLock.MODE_NO_WAKE, UnfoldLock.MODE_STAY_OFF, UnfoldLock.MODE_BACK, UnfoldLock.MODE_SCREEN),
                 selected = unfoldMode,
                 label = {
                     when (it) {
+                        UnfoldLock.MODE_NO_WAKE -> "안 깨움"
+                        UnfoldLock.MODE_STAY_OFF -> "다시 끔"
                         UnfoldLock.MODE_BACK -> "입력창 닫기"
-                        UnfoldLock.MODE_SCREEN -> "화면 껐다 켜기"
+                        UnfoldLock.MODE_SCREEN -> "껐다 켜기"
                         else -> "끔"
                     }
                 },

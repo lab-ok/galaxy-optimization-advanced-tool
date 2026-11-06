@@ -20,6 +20,47 @@ object UnfoldLock {
     const val MODE_BACK = 1
     const val MODE_SCREEN = 2
 
+    /** 화면이 꺼진 채 접혀 있다가 펼쳐 켜지면 곧바로 다시 끈다(잠금 유지). 11-06 소장님: "화면 꺼진 상태에서 펼치면 화면 꺼진 채로" */
+    const val MODE_STAY_OFF = 3
+
+    /**
+     * 펼쳐도 아예 깨우지 않는다(11-06 소장님 "아예 웨이크업 안 되게"). 펼침으로 화면이 켜지는 것은 기기 접힘 상태가 닫힘 → 펼침으로
+     * 바뀔 때 시스템이 깨우기 때문이다. 접힌 채 화면이 꺼지면 접힘 상태를 '닫힘'으로 고정해 두고(셸 device_state 요청, 플렉스 모드가
+     * 반쯤 접힘을 거는 것과 같은 방식), 전원 버튼으로 화면이 켜지면 고정을 푼다. 시스템 설정 파일은 건드리지 않는다.
+     */
+    const val MODE_NO_WAKE = 4
+
+    @Volatile private var pinned = false
+
+    /** 화면이 꺼질 때(힌지 감시가 부른다). 접힌 채였고 '깨우지 않기'면 닫힘 상태로 고정한다. */
+    fun onScreenOff(context: Context, closed: Boolean) {
+        offWhileClosed = closed
+        if (mode(context) != MODE_NO_WAKE || !closed) return
+        val app = context.applicationContext
+        io.execute {
+            if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
+            val states = ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty()
+            val id = Regex("identifier=(\\d+), name='CLOSED'").find(states)?.groupValues?.get(1) ?: return@execute
+            val r = ShizukuAccess.shell("cmd device_state state $id")
+            pinned = r?.ok == true
+            LogRepository.from(app).add("실험 깨우지 않기: 접힌 채 꺼져 닫힘 상태로 고정 " + if (pinned) "성공" else "실패 ${r?.err?.take(80)}")
+        }
+    }
+
+    /** 화면이 켜질 때(전원 버튼 등). 고정해 두었으면 푼다(펼쳐 둔 채면 이때 안쪽 화면으로 넘어간다). */
+    fun onScreenOn(context: Context) {
+        if (!pinned) return
+        val app = context.applicationContext
+        io.execute {
+            val r = ShizukuAccess.shell("cmd device_state reset")
+            pinned = false
+            LogRepository.from(app).add("실험 깨우지 않기: 화면이 켜져 고정을 풂 " + if (r?.ok == true) "성공" else "실패 ${r?.err?.take(80)}")
+        }
+    }
+
+    /** 접힌 채 화면이 꺼졌는지(힌지 감시가 화면이 꺼질 때 기록한다). */
+    @Volatile var offWhileClosed = false
+
     private const val PREF = "unfold_lock"
     private val io = Executors.newSingleThreadExecutor()
 
@@ -35,7 +76,13 @@ object UnfoldLock {
     /** 닫힌 상태에서 펼쳐졌을 때 힌지 감시가 부른다(작업 스레드에서 처리). */
     fun onUnfold(context: Context) {
         val m = mode(context)
-        if (m == MODE_OFF) return
+        if (m == MODE_OFF || m == MODE_NO_WAKE) return
+        val wasOff = offWhileClosed
+        offWhileClosed = false
+        if (m == MODE_STAY_OFF && !wasOff) {
+            LogRepository.from(context).add("실험 펼침 잠금화면: 화면이 켜진 채 펼쳐 건너뜀(꺼진 채 유지)")
+            return
+        }
         val app = context.applicationContext
         val at = SystemClock.elapsedRealtime()
         io.execute {
@@ -51,6 +98,7 @@ object UnfoldLock {
             val before = bouncer()
             val r = when (m) {
                 MODE_BACK -> ShizukuAccess.shell("input keyevent 4")
+                MODE_STAY_OFF -> ShizukuAccess.shell("input keyevent 223")
                 else -> ShizukuAccess.shell("input keyevent 223; sleep 0.3; input keyevent 224")
             }
             Thread.sleep(400)
