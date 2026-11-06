@@ -50,10 +50,14 @@ object UnfoldLock {
             val now = ShizukuAccess.shell("cmd device_state state")?.out.orEmpty()
             val committed = Regex("Committed state: .*name='(\\w+)'").find(now)?.groupValues?.get(1)
             if (committed != "CLOSED") {
-                // 펼친 채 꺼졌다. 꺼진 채 접었다가 다시 펴면 화면 꺼짐 알림이 없어 고정할 때를 놓치므로(11-06 23:53 실기 "똑같다"),
-                // 힌지를 지켜보다가 접히면 그때 닫힘으로 고정한다
+                // 펼친 채 꺼졌다. 꺼진 채 접었다가 다시 펴면 화면 꺼짐 알림이 없어 고정할 때를 놓친다(11-06 23:53 실기 "똑같다").
+                // 1.52.11은 힌지를 지켜보다 접히면 고정하려 했지만, 꺼진 동안 접힘 값이 오지 않았다(11-07 00:01 실기, 로그 없음).
+                // 그래서 지금 상태(펼침)를 그대로 고정해 둔다. 이미 펼침이라 깨우지 않고, 꺼진 채 접었다 펴도 상태가 바뀌지 않아
+                // 깨우기가 일어나지 않는다. 전원으로 켜면 고정을 풀어 접혀 있으면 바깥 화면으로 간다. 접힘 값이 오면 닫힘으로 바꾼다.
+                val ok = committed == "OPENED" && pinState("OPENED")
+                pinned = ok
                 watchHinge(app)
-                LogRepository.from(app).add("실험 깨우지 않기: 펼친 채 꺼짐($committed), 접히면 고정하도록 힌지 감시")
+                LogRepository.from(app).add("실험 깨우지 않기: 펼친 채 꺼짐($committed), 펼침으로 고정 " + (if (ok) "성공" else "안 함") + " · 힌지 감시")
                 return@execute
             }
             pinned = pinState("CLOSED")
@@ -91,6 +95,7 @@ object UnfoldLock {
      * (추정), 화면이 켜져 버리면 곧바로 다시 꺼서 안쪽 화면 AOD로 돌린다. 펼친 채 다시 접으면 닫힘으로 되돌린다. 결과는 로그에 남긴다.
      */
     private var hingeListener: android.hardware.SensorEventListener? = null
+    private var lastZone = -1
 
     /** 지금 고정한 접힘 상태 이름(CLOSED·OPENED, 고정 안 했으면 null). */
     @Volatile private var pinnedName: String? = null
@@ -111,12 +116,26 @@ object UnfoldLock {
         val l = object : android.hardware.SensorEventListener {
             override fun onSensorChanged(e: android.hardware.SensorEvent) {
                 val a = e.values[0]
+                // 조사용: 감시를 시작한 뒤 처음 받은 값과 접힘·펼침 경계를 넘은 값만 남긴다
+                val zone = if (a < 20f) {
+                    0
+                } else if (a > 120f) {
+                    2
+                } else {
+                    1
+                }
+                if (zone != lastZone) {
+                    lastZone = zone
+                    LogRepository.from(app).add("실험 깨우지 않기: 힌지 ${a.toInt()}°")
+                }
                 if (a > 120f && pinned && pinnedName == "CLOSED") io.execute { toInner(app) }
                 if (a < 20f && pinnedName != "CLOSED") io.execute { toCover(app) }
             }
             override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) = Unit
         }
         hingeListener = l
+        lastZone = -1
+        LogRepository.from(app).add("실험 깨우지 않기: 힌지 감시 시작(" + (if (hinge.isWakeUpSensor) "깨우는 센서" else "보통 센서") + ")")
         sm.registerListener(l, hinge, android.hardware.SensorManager.SENSOR_DELAY_NORMAL)
     }
 
@@ -159,7 +178,10 @@ object UnfoldLock {
     private fun toCover(app: Context) {
         if (pinnedName == "CLOSED") return
         // 화면을 쓰고 있으면 고정하지 않는다(켜지면 감시를 멈추지만 그 사이에 들어온 값일 수 있다)
-        if (app.getSystemService(android.os.PowerManager::class.java).isInteractive) return
+        if (app.getSystemService(android.os.PowerManager::class.java).isInteractive) {
+            LogRepository.from(app).add("실험 깨우지 않기: 접힘 감지했지만 화면이 켜져 있어 고정하지 않음")
+            return
+        }
         val ok = pinState("CLOSED")
         pinned = ok
         LogRepository.from(app).add("실험 깨우지 않기: 꺼진 채 다시 접힘, 닫힘으로 고정 " + if (ok) "성공" else "실패")
