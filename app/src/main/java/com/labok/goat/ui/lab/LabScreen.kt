@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.GoatFlexPanel
 import com.labok.goat.data.lab.MemoShare.withoutGoat
@@ -33,12 +35,14 @@ import com.labok.goat.data.lab.OttFlexTest
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe
 import com.labok.goat.data.lab.TentMode
+import com.labok.goat.data.lab.UnfoldLock
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidButtonPair
+import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidProgressButton
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
@@ -176,6 +180,42 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             LiquidButton("GOAT 패널 미리 보기(8초)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { GoatFlexPanel.preview(context) })
             Spacer(Modifier.height(Gap.Item))
             LiquidButton("포스터 표시 미리 보기(8초)", primary = false, modifier = Modifier.fillMaxWidth(), onClick = { GoatFlexPanel.previewPoster(context) })
+        }
+        Spacer(Modifier.height(Gap.Card))
+        // 펼침 잠금화면 실험(11-06 소장님): 잠긴 채 펼칠 때 PIN 입력창 대신 시계·배경 잠금화면에 머물게 할 수 있는지 실기에서 비교한다
+        GlassCard {
+            var unfoldMode by remember { mutableIntStateOf(UnfoldLock.mode(context)) }
+            Text("펼침 잠금화면 실험", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(
+                "잠긴 채 펼치면 PIN 입력창 대신 시계·배경 잠금화면에 머물게 해 봅니다. 잠금은 풀지 않습니다. 방식을 고른 뒤 접었다 펼쳐 보고, 결과는 문제 신고의 앱 로그로 보내 주세요. Shizuku가 필요합니다.",
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(Gap.Item))
+            LiquidChips(
+                options = listOf(UnfoldLock.MODE_OFF, UnfoldLock.MODE_BACK, UnfoldLock.MODE_SCREEN),
+                selected = unfoldMode,
+                label = {
+                    when (it) {
+                        UnfoldLock.MODE_BACK -> "입력창 닫기"
+                        UnfoldLock.MODE_SCREEN -> "화면 껐다 켜기"
+                        else -> "끔"
+                    }
+                },
+                onSelect = {
+                    unfoldMode = it
+                    UnfoldLock.setMode(context, it)
+                    GoatService.sync(context)
+                }
+            )
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton("조사 파일 만들기", primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
+                scope.launch {
+                    val text = withContext(Dispatchers.IO) { UnfoldLock.diagnose() }
+                    val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("unfold-lock"), text) }
+                    uri?.let { share(context, it) }
+                }
+            })
         }
         Spacer(Modifier.height(Gap.Card))
         // 텐트 모드 시험(11-01 소장님): 폴드를 반쯤 접어 엎어 세우고 바깥은 시계·유튜브, 안쪽은 간접조명으로 두 화면을 함께 쓸 수 있는지 본다

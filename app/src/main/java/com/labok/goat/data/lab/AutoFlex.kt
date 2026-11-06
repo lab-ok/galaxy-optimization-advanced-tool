@@ -63,7 +63,7 @@ object AutoFlex {
     }
 
     /** 상주 서비스가 힌지를 들어야 하는지(자동 플렉스나 밝기 고정 중 하나라도 켜짐). */
-    fun engineNeeded(context: Context) = enabled(context) || dimLock(context)
+    fun engineNeeded(context: Context) = enabled(context) || dimLock(context) || UnfoldLock.enabled(context)
 
     internal const val DIM_ANGLE = 50f
 
@@ -504,9 +504,18 @@ object AutoFlex {
             onAngle(event.values[0])
         }
 
+        // 실험 펼침 잠금화면: 닫힌 상태(20° 미만)를 거쳐 크게 펼쳐지면(120° 넘음) 한 번 알린다
+        private var closedSeen = false
+
         private fun onAngle(a: Float) {
             angleFlow.value = a
             last = a
+            if (a < 20f) {
+                closedSeen = true
+            } else if (closedSeen && a > 120f) {
+                closedSeen = false
+                UnfoldLock.onUnfold(context)
+            }
             if (!inRange(a, min(context), max(context))) buzzedThisFold = false
             // 어느 쪽에서 범위로 들어왔는지: 범위보다 펼쳐져 있었으면 '접는 중', 범위보다 닫혀 있었으면 '펴는 중'
             if (a > max(context)) {

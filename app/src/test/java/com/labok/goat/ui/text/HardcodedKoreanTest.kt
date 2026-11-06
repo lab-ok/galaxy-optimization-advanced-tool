@@ -36,6 +36,7 @@ class HardcodedKoreanTest {
             "data/lab/OttFlexTest.kt",
             "data/lab/ShareProbe.kt",
             "data/lab/ApiProbe.kt",
+            "data/lab/UnfoldLock.kt",
             "data/log/DiagnosticReport.kt"
         )
 
