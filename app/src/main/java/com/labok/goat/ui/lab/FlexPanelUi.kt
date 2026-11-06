@@ -288,7 +288,10 @@ private fun ambK(i: Int) = tone(i).k
 private fun ambWeight(c: Color): Float {
     val o = AmbientColor.toOklab(android.graphics.Color.argb(255, (c.red * 255).toInt(), (c.green * 255).toInt(), (c.blue * 255).toInt()))
     val chroma = (hypot(o[1], o[2]) / 0.08f).coerceIn(0f, 1f)
-    val light = if (o[0] > 0.6f) 0.6f else 1f
+    // 밝은 화면은 덜 비친다. 11-06 소장님 "패널 번쩍번쩍": 예전에는 밝기 0.6을 넘는 순간 1 → 0.6으로 계단처럼 바뀌어,
+    // 밝기가 0.6 근처인 야외 장면에서 대표색이 조금만 흔들려도 패널 전체 반사가 40%씩 켜졌다 꺼졌다 했다. 0.5~0.7 사이를 부드럽게 잇는다
+    val t = ((o[0] - 0.5f) / 0.2f).coerceIn(0f, 1f)
+    val light = 1f - 0.4f * t * t * (3f - 2f * t)
     return (0.3f + 0.7f * chroma) * light
 }
 

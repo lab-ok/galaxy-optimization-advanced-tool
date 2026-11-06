@@ -115,11 +115,17 @@ fun LiquidSlider(
     val restText = measurer.measure(valueText(value), TextStyle(fontFamily = GalaxyFont, fontSize = 12.sp, fontWeight = FontWeight.Bold)).size.width
     val tw = with(density) { maxOf((if (active) 60 else 52).dp.toPx(), restText + 24.dp.toPx() + if (active) 8.dp.toPx() else 0f) }
     val tht = with(density) { (if (active) 24 else 30).dp.toPx() }
+    // 밖에서 값이 조금씩 바뀌는 조절바(재생 위치처럼 0.5초마다 한 칸씩)는 손잡이를 그 자리에 바로 놓는다. 매번 스프링으로 옮기면
+    // 물방울이 출렁여 손잡이가 움찔거렸다(11-06 소장님 "조절바가 움찔"). 손으로 끌 때와 크게 뛸 때(누름·되돌리기)는 그대로 흐른다
+    val placedX = remember { floatArrayOf(-1f) }
+    val snapPx = with(density) { 12.dp.toPx() }
     LaunchedEffect(value, width, active, dragX) {
         if (width <= 0f) return@LaunchedEffect
         blob.blob.gain = if (active) 7f else 1f
         val x = if (active && dragX >= 0f) dragX.coerceIn(edge, width - edge) else xOf(value)
-        blob.moveTo(x, trackY, tw, tht, animate = !reduce)
+        val small = !active && placedX[0] >= 0f && abs(x - placedX[0]) < snapPx
+        placedX[0] = x
+        blob.moveTo(x, trackY, tw, tht, animate = !reduce && !small)
     }
 
     Box(
