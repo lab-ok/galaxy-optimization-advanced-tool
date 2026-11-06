@@ -177,7 +177,7 @@ object ShizukuAccess {
 
     /** 맨 앞 작업: 앱, 화면 번호, 창 종류(1 전체 화면, 5 팝업 창, 6 분할 화면). */
     /** [home]: 홈 화면·최근 앱 화면 작업(topActivityType 2·3). 이때 [pkg]는 런처라 앱으로 다루지 않는다. */
-    data class FocusedTask(val pkg: String?, val displayId: Int, val windowingMode: Int, val basePkg: String? = pkg, val home: Boolean = false)
+    data class FocusedTask(val pkg: String?, val displayId: Int, val windowingMode: Int, val basePkg: String? = pkg, val home: Boolean = false, val topClass: String? = null)
 
     /** 맨 앞(포커스된) 작업(셸 권한, 작업 스레드). 못 읽으면 null. */
     fun focusedTask(): FocusedTask? = runCatching {
@@ -188,7 +188,7 @@ object ShizukuAccess {
         // 작업의 바탕 앱(권한 요청 창처럼 다른 앱 화면이 위에 떠도 작업 주인은 그대로)
         val base = runCatching { info.javaClass.getField("baseActivity").get(info) as ComponentName? }.getOrNull()
         val type = runCatching { info.javaClass.getField("topActivityType").getInt(info) }.getOrDefault(1)
-        FocusedTask(top?.packageName, info.javaClass.getField("displayId").getInt(info), mode, base?.packageName ?: top?.packageName, home = type == 2 || type == 3)
+        FocusedTask(top?.packageName, info.javaClass.getField("displayId").getInt(info), mode, base?.packageName ?: top?.packageName, home = type == 2 || type == 3, topClass = top?.className)
     }.getOrNull()
 
     /** 앱 호환성 설정 서비스(셸 권한). `am compat` 명령 대신 앱마다 한 번의 호출로 설정을 건다(명령은 앱당 수백 ms, 이것은 2ms 안팎). */

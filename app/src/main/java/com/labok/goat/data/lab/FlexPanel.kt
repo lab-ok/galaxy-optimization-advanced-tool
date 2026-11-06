@@ -86,6 +86,37 @@ object FlexPanel {
         return pkg.isEmpty() || AutoFlex.mode(context, pkg) == AutoFlex.MODE_OFF
     }
 
+    /**
+     * 앞 앱이 화면 방향을 고정했는지(작업 스레드). 맨 위 화면의 매니페스트 방향이 세로·가로·잠금 계열이면 고정으로 본다.
+     * 삼성 카메라·갤러리는 실행 중에 방향을 정해 매니페스트로는 안 보일 수 있어 기본 동작 앱(카메라·갤러리)도 고정으로 친다.
+     * 못 읽으면 false(예전처럼 화면 방향으로 판정).
+     */
+    fun frontLocksOrientation(context: Context): Boolean = runCatching {
+        if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return false
+        val t = ShizukuAccess.focusedTask() ?: return false
+        val pkg = t.basePkg ?: t.pkg ?: return false
+        if (pkg in FIXED_ORIENTATION_APPS) return true
+        val cls = t.topClass ?: return false
+        val o = context.packageManager.getActivityInfo(android.content.ComponentName(t.pkg ?: pkg, cls), 0).screenOrientation
+        o in FIXED_ORIENTATIONS
+    }.getOrDefault(false)
+
+    /** 실행 중에 방향을 고정하는 기본 동작 앱(삼성 카메라·갤러리). */
+    private val FIXED_ORIENTATION_APPS = setOf("com.sec.android.app.camera", "com.sec.android.gallery3d")
+
+    private val FIXED_ORIENTATIONS = setOf(
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT,
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE,
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT,
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT,
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE,
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_NOSENSOR,
+        android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LOCKED
+    )
+
     /** 접을 때: 앞 앱에 고른 모드를 적용하고, 접혀 있는 동안 앞 앱이 바뀌는지 지켜본다. */
     fun apply(context: Context) = queue.execute {
         folded = true

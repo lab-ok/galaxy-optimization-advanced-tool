@@ -545,7 +545,22 @@ object AutoFlex {
          * 기준은 화면 모양(세로)과 힌지 각도뿐이고, 자이로·중력은 쓰지 않는다. 예전에는 중력으로 '접는 선이 가로인지'까지 봐서
          * 플렉스 모드 중에 기울이면 풀렸다. 화면 모양도 **켤 때만** 본다 — 이미 켜진 뒤에는 각도(펴거나 닫음)로만 끈다.
          */
-        private fun orientationOk(): Boolean = screenPortrait()
+        // 화면 방향을 고정한 앱(카메라·갤러리 등)은 기기를 돌려도 화면이 따라 돌지 않아 '세로 화면'으로 읽히지 않는다.
+        // 그래서 1.42.x부터 이런 앱에서는 플렉스가 켜지지 않았다(유튜브로 먼저 켜야 했다, 11-06 갤러리 신고).
+        // 11-06 소장님 결정(1안): 방향 고정 앱이면 방향 조건을 건너뛰고 힌지 각도만으로 켠다. 센서는 쓰지 않는다
+        private fun orientationOk(): Boolean = screenPortrait() || frontLocked()
+
+        // 각도 이벤트는 초당 여러 번 와서, 앞 앱 방향 고정 여부는 0.5초 동안 기억해 두고 쓴다(시스템 호출을 줄인다)
+        private var lockedAt = 0L
+        private var lockedLast = false
+        private fun frontLocked(): Boolean {
+            val now = SystemClock.elapsedRealtime()
+            if (now - lockedAt > 500L) {
+                lockedLast = FlexPanel.frontLocksOrientation(context)
+                lockedAt = now
+            }
+            return lockedLast
+        }
 
         /** 기본 화면(안쪽)이 지금 세로 모양인지(논리 크기 기준, 회전 반영). 못 읽으면 막지 않는다. */
         private fun screenPortrait(): Boolean = runCatching {
@@ -630,6 +645,13 @@ object AutoFlex {
                 quiet = false
                 return
             }
+            // 진동은 켜기로 정한 순간 먼저 울린다(11-06 소장님 "진동 타이밍 좀 더 빠르게"). 예전에는 반쯤 접힘 명령(셸 두 번)과
+            // 가로 화면 되돌림 대기(최대 1.2초)가 끝난 뒤에 울려, 접고 나서 한참 뒤에 진동이 왔다
+            val earlyBuzz = on && !quiet && !buzzedThisFold
+            if (earlyBuzz) {
+                rangeBuzz(context, true)
+                buzzedThisFold = true
+            }
             val err = if (on) FlexPanel.forceHalfOpened(context) else FlexPanel.resetPosture(context)
             if (err == null) {
                 activeFlow.value = on
@@ -640,11 +662,6 @@ object AutoFlex {
                     "자동 플렉스 ${if (on) "켬" else "끔"}: 각도 ${last?.toInt()}° · 기본 센서 ${coarseLast?.toInt()}° · " +
                         "${if (latchedFlow.value) "까딱" else "범위"} · 화면 ${if (screenPortrait()) "세로" else "가로"}"
                 )
-                // 실사용에서는 들어올 때만 울린다(펴거나 닫으며 빠져나갈 때마다 울리면 거슬린다). 설정 화면은 따로 둘 다 울린다
-                if (!quiet && on && !buzzedThisFold) {
-                    rangeBuzz(context, true)
-                    buzzedThisFold = true
-                }
             }
             quiet = false
         }
