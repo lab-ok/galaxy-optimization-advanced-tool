@@ -99,7 +99,7 @@ object UnfoldLock {
                 val a = e.values[0]
                 if (!pinned) return
                 if (a > 120f && pinnedName == "CLOSED") io.execute { toInner(app) }
-                if (a < 20f && pinnedName == "OPENED") io.execute { toCover(app) }
+                if (a < 20f && pinnedName != "CLOSED") io.execute { toCover(app) }
             }
             override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) = Unit
         }
@@ -112,21 +112,40 @@ object UnfoldLock {
         hingeListener = null
     }
 
-    /** 고정한 채 실제로 펼쳐졌다: 펼침으로 고정을 바꿔 AOD를 안쪽 화면으로 넘기고, 켜져 버렸으면 다시 끈다. */
+    /*
+     * 1.52.5 실기(11-06 23:19): 'OPENED'로 바꾸자 곧바로 화면이 켜졌고(셸 요청도 펼침 깨우기를 거친다), 앱이 끄자 0.09초 뒤 다시
+     * 켜졌다. 안쪽 화면을 쓰면서 깨우기 목록에 없는 상태가 있는지, 펼칠 때마다 후보를 하나씩 바꿔 가며 시험하고 결과를 로그에 남긴다.
+     * 켜져 버리면 0.7초 간격으로 최대 세 번까지 다시 끈다.
+     */
+    private val INNER_CANDIDATES = listOf("CONCURRENT_INNER_DEFAULT", "TENT", "HALF_OPENED", "OPENED")
+
+    /** 고정한 채 실제로 펼쳐졌다: 안쪽 화면을 쓰는 상태로 고정을 바꾸고, 켜져 버렸으면 다시 끈다. */
     private fun toInner(app: Context) {
         if (!pinned || pinnedName != "CLOSED") return
-        val ok = pinState("OPENED")
+        val prefs = app.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+        val n = prefs.getInt("inner_try", 0)
+        prefs.edit().putInt("inner_try", n + 1).apply()
+        val target = INNER_CANDIDATES[n % INNER_CANDIDATES.size]
+        val ok = pinState(target)
         Thread.sleep(400)
-        val woke = app.getSystemService(android.os.PowerManager::class.java).isInteractive
-        if (woke) ShizukuAccess.shell("input keyevent 223")
+        val pm = app.getSystemService(android.os.PowerManager::class.java)
+        val woke = pm.isInteractive
+        var offs = 0
+        while (pm.isInteractive && offs < 3) {
+            ShizukuAccess.shell("input keyevent 223")
+            offs++
+            Thread.sleep(700)
+        }
+        val now = ShizukuAccess.shell("cmd device_state state")?.out.orEmpty().let { Regex("Committed state: .*name='(\\w+)'").find(it)?.groupValues?.get(1) }
         LogRepository.from(app).add(
-            "실험 깨우지 않기: 펼침 감지, 안쪽 화면으로 넘김 " + (if (ok) "성공" else "실패") + if (woke) " · 화면이 켜져 다시 끔" else " · 화면 켜지지 않음"
+            "실험 깨우지 않기: 펼침 감지, $target 로 넘김 " + (if (ok) "성공" else "실패") + " · 지금 상태 $now · " +
+                (if (woke) "화면이 켜져 ${offs}번 끔, 마지막에 " + (if (pm.isInteractive) "켜져 있음" else "꺼짐") else "화면 켜지지 않음")
         )
     }
 
     /** 펼침으로 고정한 채 다시 접었다: 닫힘으로 되돌려 바깥 화면 AOD를 쓴다. */
     private fun toCover(app: Context) {
-        if (!pinned || pinnedName != "OPENED") return
+        if (!pinned || pinnedName == "CLOSED") return
         val ok = pinState("CLOSED")
         LogRepository.from(app).add("실험 깨우지 않기: 다시 접힘, 닫힘으로 고정 " + if (ok) "성공" else "실패")
     }
