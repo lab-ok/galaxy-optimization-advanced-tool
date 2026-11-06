@@ -50,7 +50,10 @@ object UnfoldLock {
             val now = ShizukuAccess.shell("cmd device_state state")?.out.orEmpty()
             val committed = Regex("Committed state: .*name='(\\w+)'").find(now)?.groupValues?.get(1)
             if (committed != "CLOSED") {
-                LogRepository.from(app).add("실험 깨우지 않기: 화면 꺼짐, 접힘 상태 $committed 라 고정하지 않음")
+                // 펼친 채 꺼졌다. 꺼진 채 접었다가 다시 펴면 화면 꺼짐 알림이 없어 고정할 때를 놓치므로(11-06 23:53 실기 "똑같다"),
+                // 힌지를 지켜보다가 접히면 그때 닫힘으로 고정한다
+                watchHinge(app)
+                LogRepository.from(app).add("실험 깨우지 않기: 펼친 채 꺼짐($committed), 접히면 고정하도록 힌지 감시")
                 return@execute
             }
             pinned = pinState("CLOSED")
@@ -108,8 +111,7 @@ object UnfoldLock {
         val l = object : android.hardware.SensorEventListener {
             override fun onSensorChanged(e: android.hardware.SensorEvent) {
                 val a = e.values[0]
-                if (!pinned) return
-                if (a > 120f && pinnedName == "CLOSED") io.execute { toInner(app) }
+                if (a > 120f && pinned && pinnedName == "CLOSED") io.execute { toInner(app) }
                 if (a < 20f && pinnedName != "CLOSED") io.execute { toCover(app) }
             }
             override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) = Unit
@@ -153,11 +155,14 @@ object UnfoldLock {
         )
     }
 
-    /** 펼침으로 고정한 채 다시 접었다: 닫힘으로 되돌려 바깥 화면 AOD를 쓴다. */
+    /** 펼친 채 꺼져 있다가 접혔다: 닫힘으로 고정해 다음 펼침에 깨지 않게 하고 바깥 화면 AOD를 쓴다. */
     private fun toCover(app: Context) {
-        if (!pinned || pinnedName == "CLOSED") return
+        if (pinnedName == "CLOSED") return
+        // 화면을 쓰고 있으면 고정하지 않는다(켜지면 감시를 멈추지만 그 사이에 들어온 값일 수 있다)
+        if (app.getSystemService(android.os.PowerManager::class.java).isInteractive) return
         val ok = pinState("CLOSED")
-        LogRepository.from(app).add("실험 깨우지 않기: 다시 접힘, 닫힘으로 고정 " + if (ok) "성공" else "실패")
+        pinned = ok
+        LogRepository.from(app).add("실험 깨우지 않기: 꺼진 채 다시 접힘, 닫힘으로 고정 " + if (ok) "성공" else "실패")
     }
 
     /** 접힌 채 화면이 꺼졌는지(힌지 감시가 화면이 꺼질 때 기록한다). */
