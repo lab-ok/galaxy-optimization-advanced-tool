@@ -113,33 +113,32 @@ object UnfoldLock {
     }
 
     /*
-     * 1.52.5 실기(11-06 23:19): 'OPENED'로 바꾸자 곧바로 화면이 켜졌고(셸 요청도 펼침 깨우기를 거친다), 앱이 끄자 0.09초 뒤 다시
-     * 켜졌다. 안쪽 화면을 쓰면서 깨우기 목록에 없는 상태가 있는지, 펼칠 때마다 후보를 하나씩 바꿔 가며 시험하고 결과를 로그에 남긴다.
-     * 켜져 버리면 0.7초 간격으로 최대 세 번까지 다시 끈다.
+     * 1.52.7 실기(11-06 23:27~28, 소장님): 안쪽 화면을 쓰는 후보 중 화면을 깨우지 않은 것은 TENT뿐이었는데, TENT는 바깥 화면에
+     * AOD를 띄웠다. CONCURRENT_INNER_DEFAULT·HALF_OPENED·OPENED는 모두 깨웠고, 소장님은 OPENED가 가장 낫다고 했다.
+     * 그래서 OPENED로 넘기되, 켜지는 순간을 30ms 간격으로 지켜보다가 곧바로 꺼서 번쩍이는 시간을 줄인다.
+     * 끈 뒤 펼침 깨우기가 한 번 더 들어올 수 있어(1.52.5에서 0.09초 뒤 다시 켜짐) 1.5초 동안 최대 세 번까지 다시 끈다.
      */
-    private val INNER_CANDIDATES = listOf("CONCURRENT_INNER_DEFAULT", "TENT", "HALF_OPENED", "OPENED")
-
-    /** 고정한 채 실제로 펼쳐졌다: 안쪽 화면을 쓰는 상태로 고정을 바꾸고, 켜져 버렸으면 다시 끈다. */
     private fun toInner(app: Context) {
         if (!pinned || pinnedName != "CLOSED") return
-        val prefs = app.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-        val n = prefs.getInt("inner_try", 0)
-        prefs.edit().putInt("inner_try", n + 1).apply()
-        val target = INNER_CANDIDATES[n % INNER_CANDIDATES.size]
-        val ok = pinState(target)
-        Thread.sleep(400)
         val pm = app.getSystemService(android.os.PowerManager::class.java)
-        val woke = pm.isInteractive
+        val at = SystemClock.elapsedRealtime()
+        val ok = pinState("OPENED")
+        var wokeAt = -1L
         var offs = 0
-        while (pm.isInteractive && offs < 3) {
-            ShizukuAccess.shell("input keyevent 223")
-            offs++
-            Thread.sleep(700)
+        while (SystemClock.elapsedRealtime() - at < 1500 && offs < 3) {
+            if (pm.isInteractive) {
+                if (wokeAt < 0) wokeAt = SystemClock.elapsedRealtime() - at
+                ShizukuAccess.shell("input keyevent 223")
+                offs++
+                // 꺼짐이 반영될 때까지 기다려야 같은 켜짐을 두 번 세지 않는다
+                val sent = SystemClock.elapsedRealtime()
+                while (pm.isInteractive && SystemClock.elapsedRealtime() - sent < 300) Thread.sleep(20)
+            }
+            Thread.sleep(30)
         }
-        val now = ShizukuAccess.shell("cmd device_state state")?.out.orEmpty().let { Regex("Committed state: .*name='(\\w+)'").find(it)?.groupValues?.get(1) }
         LogRepository.from(app).add(
-            "실험 깨우지 않기: 펼침 감지, $target 로 넘김 " + (if (ok) "성공" else "실패") + " · 지금 상태 $now · " +
-                (if (woke) "화면이 켜져 ${offs}번 끔, 마지막에 " + (if (pm.isInteractive) "켜져 있음" else "꺼짐") else "화면 켜지지 않음")
+            "실험 깨우지 않기: 펼침 감지, OPENED로 넘김 " + (if (ok) "성공" else "실패") + " · " +
+                (if (wokeAt >= 0) "${wokeAt}ms에 켜져 ${offs}번 끔, 마지막에 " + (if (pm.isInteractive) "켜져 있음" else "꺼짐") else "화면 켜지지 않음")
         )
     }
 
