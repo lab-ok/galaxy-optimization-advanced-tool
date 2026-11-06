@@ -39,11 +39,12 @@ object UnfoldLock {
         val app = context.applicationContext
         io.execute {
             if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
-            val states = ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty()
-            val id = Regex("identifier=(\\d+), name='CLOSED'").find(states)?.groupValues?.get(1) ?: return@execute
-            val r = ShizukuAccess.shell("cmd device_state state $id")
-            pinned = r?.ok == true
-            LogRepository.from(app).add("실험 깨우지 않기: 접힌 채 꺼져 닫힘 상태로 고정 " + if (pinned) "성공" else "실패 ${r?.err?.take(80)}")
+            // 펼친 채 다시 끈 경우(힌지 감시가 펼침을 아직 못 받아 접힌 줄 아는 때)는 고정하지 않는다
+            val now = ShizukuAccess.shell("cmd device_state state")?.out.orEmpty()
+            if (now.contains("Committed state") && !now.contains("name='CLOSED'")) return@execute
+            pinned = pinState("CLOSED")
+            if (pinned) watchHinge(app)
+            LogRepository.from(app).add("실험 깨우지 않기: 접힌 채 꺼져 닫힘 상태로 고정 " + if (pinned) "성공" else "실패")
         }
     }
 
@@ -63,8 +64,71 @@ object UnfoldLock {
             val r = ShizukuAccess.shell("cmd device_state state reset")
             val was = pinned
             pinned = false
+            pinnedName = null
+            stopHinge(app)
             if (was || r?.ok != true) LogRepository.from(app).add("실험 깨우지 않기: $why · 고정 풂 " + if (r?.ok == true) "성공" else "실패 ${r?.err?.take(80)}")
         }
+    }
+
+    /*
+     * 바깥 화면 AOD(11-06 소장님 "안 깨움은 잘 되는데 바깥 화면 AOD가 계속 남는다", "펼치면 AOD는 안쪽 화면에 나와야 한다"):
+     * 닫힘으로 고정해 두면 시스템은 접혀 있다고 보고 바깥 화면에 AOD를 계속 띄운다. 고정한 동안 힌지를 따로 지켜보다가 실제로
+     * 펼쳐지면(120° 넘음) 고정을 '펼침'으로 바꿔 안쪽 화면으로 넘긴다. 셸 요청으로 바뀐 상태는 펼침 깨우기를 거치지 않기를 기대하지만
+     * (추정), 화면이 켜져 버리면 곧바로 다시 꺼서 안쪽 화면 AOD로 돌린다. 펼친 채 다시 접으면 닫힘으로 되돌린다. 결과는 로그에 남긴다.
+     */
+    private var hingeListener: android.hardware.SensorEventListener? = null
+
+    /** 지금 고정한 접힘 상태 이름(CLOSED·OPENED, 고정 안 했으면 null). */
+    @Volatile private var pinnedName: String? = null
+
+    private fun pinState(name: String): Boolean {
+        val states = ShizukuAccess.shell("cmd device_state print-states")?.out.orEmpty()
+        val id = Regex("identifier=(\\d+), name='$name'").find(states)?.groupValues?.get(1) ?: return false
+        val ok = ShizukuAccess.shell("cmd device_state state $id")?.ok == true
+        if (ok) pinnedName = name
+        return ok
+    }
+
+    private fun watchHinge(app: Context) {
+        if (hingeListener != null) return
+        val sm = app.getSystemService(android.hardware.SensorManager::class.java)
+        // 화면이 꺼진 동안에도 오도록 깨우는 힌지 센서를 먼저 고른다(없으면 보통 센서)
+        val hinge = sm.getDefaultSensor(android.hardware.Sensor.TYPE_HINGE_ANGLE, true) ?: sm.getDefaultSensor(android.hardware.Sensor.TYPE_HINGE_ANGLE) ?: return
+        val l = object : android.hardware.SensorEventListener {
+            override fun onSensorChanged(e: android.hardware.SensorEvent) {
+                val a = e.values[0]
+                if (!pinned) return
+                if (a > 120f && pinnedName == "CLOSED") io.execute { toInner(app) }
+                if (a < 20f && pinnedName == "OPENED") io.execute { toCover(app) }
+            }
+            override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) = Unit
+        }
+        hingeListener = l
+        sm.registerListener(l, hinge, android.hardware.SensorManager.SENSOR_DELAY_NORMAL)
+    }
+
+    private fun stopHinge(app: Context) {
+        hingeListener?.let { app.getSystemService(android.hardware.SensorManager::class.java).unregisterListener(it) }
+        hingeListener = null
+    }
+
+    /** 고정한 채 실제로 펼쳐졌다: 펼침으로 고정을 바꿔 AOD를 안쪽 화면으로 넘기고, 켜져 버렸으면 다시 끈다. */
+    private fun toInner(app: Context) {
+        if (!pinned || pinnedName != "CLOSED") return
+        val ok = pinState("OPENED")
+        Thread.sleep(400)
+        val woke = app.getSystemService(android.os.PowerManager::class.java).isInteractive
+        if (woke) ShizukuAccess.shell("input keyevent 223")
+        LogRepository.from(app).add(
+            "실험 깨우지 않기: 펼침 감지, 안쪽 화면으로 넘김 " + (if (ok) "성공" else "실패") + if (woke) " · 화면이 켜져 다시 끔" else " · 화면 켜지지 않음"
+        )
+    }
+
+    /** 펼침으로 고정한 채 다시 접었다: 닫힘으로 되돌려 바깥 화면 AOD를 쓴다. */
+    private fun toCover(app: Context) {
+        if (!pinned || pinnedName != "OPENED") return
+        val ok = pinState("CLOSED")
+        LogRepository.from(app).add("실험 깨우지 않기: 다시 접힘, 닫힘으로 고정 " + if (ok) "성공" else "실패")
     }
 
     /** 접힌 채 화면이 꺼졌는지(힌지 감시가 화면이 꺼질 때 기록한다). */
@@ -132,7 +196,7 @@ object UnfoldLock {
         appendLine("# GOAT 펼침 잠금화면 조사")
         for (ns in listOf("system", "secure", "global")) {
             appendLine("## settings $ns (잠금·접힘 관련)")
-            appendLine(ShizukuAccess.shell("settings list $ns | grep -iE 'fold|unfold|cover|keyguard|lock|bouncer|flex|posture|continu' ")?.out ?: "(읽지 못함)")
+            appendLine(ShizukuAccess.shell("settings list $ns | grep -iE 'fold|unfold|cover|keyguard|lock|bouncer|flex|posture|continu|aod' ")?.out ?: "(읽지 못함)")
         }
         appendLine("## device_state")
         appendLine(ShizukuAccess.shell("cmd device_state print-states; cmd device_state state")?.out ?: "(읽지 못함)")
