@@ -39,7 +39,7 @@ object Updater {
     /** 홈을 열거나 홈으로 돌아올 때 자동으로 확인하는 간격. */
     private const val AUTO_CHECK_MS = 30 * 60 * 1000L
 
-    data class Release(val version: String, val apkUrl: String, val size: Long, val sha256: String?, val notes: String, val page: String, val test: Boolean = false)
+    data class Release(val version: String, val apkUrl: String, val size: Long, val sha256: String?, val notes: String, val page: String, val test: Boolean = false, val apiUrl: String? = null)
 
     /** 시험 버전도 받는지: 실험실을 연 사람만. */
     fun testChannel() = LabUnlock.unlocked
@@ -105,7 +105,8 @@ object Updater {
                 sha256 = shaOf(notes),
                 notes = notes,
                 page = o.optString("html_url"),
-                test = o.optBoolean("prerelease")
+                test = o.optBoolean("prerelease"),
+                apiUrl = a.optString("url").takeIf { it.isNotEmpty() }
             )
         }
         return null
@@ -161,13 +162,41 @@ object Updater {
         dir.listFiles()?.forEach { it.delete() }
         val file = File(dir, "GOAT-${release.version}.apk")
         state.value = State.Downloading(release, 0f)
-        val downloaded = runCatching {
-            val c = (URL(release.apkUrl).openConnection() as HttpURLConnection).apply {
+        // 11-08: github.com의 이 저장소 웹 주소(releases/download)가 504를 내는 동안에도 API 주소는 받아졌다.
+        // 웹 주소가 실패하면 같은 파일을 API 주소(Accept: octet-stream)로 다시 받는다
+        val sources = listOfNotNull(release.apkUrl to false, release.apiUrl?.let { it to true })
+        var downloaded: Result<String> = Result.failure(IllegalStateException("no url"))
+        for ((url, api) in sources) {
+            downloaded = fetch(url, api, file, release)
+            if (downloaded.isSuccess) break
+            log.add("업데이트 ${release.version}: " + (if (api) "API 주소" else "웹 주소") + "로 받기 실패(${downloaded.exceptionOrNull()?.message?.take(80)})" + if (!api && release.apiUrl != null) ", API 주소로 다시 받음" else "")
+        }
+        val sha = downloaded.getOrElse {
+            state.value = State.Failed(Copy.text(R.string.update_download_failed), release)
+            log.add("업데이트 ${release.version}: 다운로드 실패")
+            return
+        }
+        if ((release.size > 0 && file.length() != release.size) || (release.sha256 != null && release.sha256 != sha)) {
+            file.delete()
+            state.value = State.Failed(Copy.text(R.string.update_download_mismatch), release)
+            log.add("업데이트 ${release.version}: 크기·SHA-256 불일치로 설치하지 않음")
+            return
+        }
+        afterDownload(context, release, file)
+    }
+
+    /** [url]에서 [file]로 받는다. 받은 파일의 SHA-256을 돌려준다. [api]면 GitHub API 주소라 파일 본문을 달라고 알린다. */
+    private fun fetch(url: String, api: Boolean, file: File, release: Release): Result<String> = runCatching {
+        file.delete()
+        run {
+            val c = (URL(url).openConnection() as HttpURLConnection).apply {
                 connectTimeout = 15_000
                 readTimeout = 30_000
                 instanceFollowRedirects = true
                 setRequestProperty("User-Agent", "GOAT/${BuildConfig.VERSION_NAME}")
+                if (api) setRequestProperty("Accept", "application/octet-stream")
             }
+            if (c.responseCode !in 200..299) throw java.io.IOException("HTTP ${c.responseCode}")
             val total = c.contentLengthLong.takeIf { it > 0 } ?: release.size
             val md = MessageDigest.getInstance("SHA-256")
             c.inputStream.use { input ->
@@ -187,17 +216,11 @@ object Updater {
             c.disconnect()
             md.digest().joinToString("") { "%02x".format(it) }
         }
-        val sha = downloaded.getOrElse {
-            state.value = State.Failed(Copy.text(R.string.update_download_failed), release)
-            log.add("업데이트 ${release.version}: 다운로드 실패(${it.message?.take(80)})")
-            return
-        }
-        if ((release.size > 0 && file.length() != release.size) || (release.sha256 != null && release.sha256 != sha)) {
-            file.delete()
-            state.value = State.Failed(Copy.text(R.string.update_download_mismatch), release)
-            log.add("업데이트 ${release.version}: 크기·SHA-256 불일치로 설치하지 않음")
-            return
-        }
+    }
+
+    /** 내려받아 확인을 마친 [file]을 설치한다. */
+    private fun afterDownload(context: Context, release: Release, file: File) {
+        val log = LogRepository.from(context)
         state.value = State.Installing(release)
         log.add("업데이트 ${release.version}: 다운로드 완료, 설치 시작(${if (ShizukuAccess.status.value == ShizukuAccess.State.READY) "Shizuku" else "시스템 설치 창"})")
         // 설치가 끝난 뒤 '업데이트됨 · 눌러서 열기' 알림을 띄울 수 있게, GOAT가 시작한 업데이트라고 표시해 둔다

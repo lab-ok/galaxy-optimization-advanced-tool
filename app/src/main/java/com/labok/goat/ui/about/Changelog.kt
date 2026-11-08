@@ -45,6 +45,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.52.24",
+        "2026-11-08",
+        "업데이트 받기를 더 튼튼하게 했습니다(시험 버전).",
+        listOf(
+            "고침" to listOf(
+                "GitHub 웹 주소가 잠시 응답하지 않을 때(504) 업데이트 다운로드가 실패하던 것을, 같은 파일을 GitHub API 주소로 다시 받도록 고쳤습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.52.23",
         "2026-11-08",
         "숨은 기능을 시험합니다(시험 버전).",
