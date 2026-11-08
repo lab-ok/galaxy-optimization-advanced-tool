@@ -103,19 +103,19 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
                     Text("한 번에 준비", fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text("아래 버튼을 차례로 누르면 됩니다. 키보드 목록에서 켜기와 입력기 고르기는 GOAT가 알아서 합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Text("위스퍼는 OpenAI의 음성 인식 모델입니다. 폰 안에서 위스퍼를 돌리는 앱 FUTO Voice Input을 씁니다(오프라인, 녹음을 밖으로 보내지 않음). 아래 버튼을 차례로 누르면 되고, 키보드 목록에서 켜기와 입력기 고르기는 GOAT가 알아서 합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(Gap.Item))
                     val steps = listOf(
-                        "1. FUTO Voice Input(위스퍼) 설치" to futoInstalled,
+                        "1. 위스퍼 음성 입력기(FUTO Voice Input) 설치" to futoInstalled,
                         "2. 키보드 목록에서 켜고 고르기(자동)" to (futoIme != null && futoIme in enabledIds && target == futoIme),
-                        "3. FUTO Voice Input에서 마이크 허용·음성 모델 받기" to futoMic,
+                        "3. 위스퍼 음성 입력기에서 마이크 허용·음성 모델 받기" to futoMic,
                         "4. 기능 켜기" to on
                     )
                     steps.forEach { (name, ok) -> Text((if (ok) "✓ " else "· ") + name, color = if (ok) c.ink else c.muted, style = MaterialTheme.typography.bodyMedium) }
                     Spacer(Modifier.height(Gap.Item))
                     when {
-                        !futoInstalled -> LiquidButton("FUTO Voice Input 설치하기", onClick = { openFutoStore() }, modifier = Modifier.fillMaxWidth())
-                        !futoMic -> LiquidButton("FUTO Voice Input 열어 마이크 허용하기", onClick = {
+                        !futoInstalled -> LiquidButton("위스퍼 음성 입력기 설치하기", onClick = { openFutoStore() }, modifier = Modifier.fillMaxWidth())
+                        !futoMic -> LiquidButton("위스퍼 음성 입력기 열어 마이크 허용하기", onClick = {
                             context.packageManager.getLaunchIntentForPackage(VoiceRedirect.FUTO)?.let { runCatching { context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
                         }, modifier = Modifier.fillMaxWidth())
                         !on -> LiquidButton("기능 켜기", onClick = {
@@ -179,7 +179,7 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
                     Spacer(Modifier.height(Gap.Item))
                     Row(horizontalArrangement = Arrangement.spacedBy(Gap.Tight)) {
                         LiquidButton("키보드 목록 열기", onClick = { openKeyboards() }, modifier = Modifier.weight(1f), primary = false)
-                        LiquidButton("FUTO Voice Input 받기", onClick = { openFutoStore() }, modifier = Modifier.weight(1f), primary = false)
+                        LiquidButton("위스퍼 입력기 받기", onClick = { openFutoStore() }, modifier = Modifier.weight(1f), primary = false)
                     }
                 }
             }
