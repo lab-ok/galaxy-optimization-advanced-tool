@@ -83,17 +83,28 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
     val futoIme = remember(tick) { VoiceRedirect.futoIme(context) }
     val futoMic = remember(tick) { VoiceRedirect.futoMicAllowed(context) }
     val triggerSeen = remember(tick) { VoiceRedirect.triggerSeen(context) }
-    LaunchedEffect(futoIme) {
-        val id = futoIme ?: return@LaunchedEffect
-        // 설치되면 GOAT가 키보드 목록에서 켜고 넘겨 줄 입력기로 고른다(설정 화면에 갈 필요 없음)
-        withContext(Dispatchers.IO) { runCatching { VoiceRedirect.enableIme(context, id) } }
-        // 아직 고르지 않았거나, 고른 것이 음성 모드가 없는 일반 키보드면 FUTO로 바꾼다
-        val chosenIsVoice = VoiceRedirect.allImes(context).firstOrNull { it.id == target }?.let { VoiceRedirect.hasVoice(it) } ?: false
-        if (target == null || !chosenIsVoice) {
-            target = id
-            VoiceRedirect.setTarget(context, id)
-        }
+    val modelDone = remember(tick) { VoiceRedirect.modelDone(context) }
+    var advanced by remember { mutableStateOf(false) }
+    // GOAT가 대신 할 수 있는 준비는 화면을 연 동안 5초마다 알아서 한다(키보드 목록 켜기·고르기·마이크 권한·Google 음성 입력 켜기·기능 켜기)
+    LaunchedEffect(tick / 5, futoInstalled) {
+        if (!futoInstalled) return@LaunchedEffect
+        withContext(Dispatchers.IO) { runCatching { VoiceRedirect.autoSetup(context) } }
+        on = VoiceRedirect.enabled(context)
+        target = VoiceRedirect.target(context)
     }
+    val autoDone = futoIme != null && futoIme in enabledIds && target == futoIme && on
+
+    // 처음 하는 사람을 위한 단계: 제목, 끝났는지, 지금 할 일 설명
+    data class Step(val title: String, val done: Boolean, val auto: Boolean = false)
+    val steps = listOf(
+        Step("위스퍼 입력기 설치", futoInstalled),
+        Step("키보드 목록에 켜고 고르기·기능 켜기", autoDone, auto = true),
+        Step("마이크 허용", futoMic),
+        Step("한국어 모델 받기", modelDone),
+        Step("삼성 키보드 음성 입력을 'Google 음성 입력'으로", triggerSeen),
+        Step("시험해 보기", triggerSeen)
+    )
+    val currentStep = steps.indexOfFirst { !it.done }
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -101,71 +112,91 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
         modifier = Modifier.fillMaxWidth()
     ) {
-        item(key = "setup") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) {
-                GlassCard {
-                    Text("한 번에 준비", fontWeight = FontWeight.SemiBold, color = c.ink)
-                    Text("위스퍼는 OpenAI의 음성 인식 모델입니다. 폰 안에서 위스퍼를 돌리는 앱 FUTO Voice Input을 씁니다(오프라인, 녹음을 밖으로 보내지 않음). 아래 버튼을 차례로 누르면 되고, 키보드 목록에서 켜기와 입력기 고르기는 GOAT가 알아서 합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(Gap.Item))
-                    val steps = listOf(
-                        "1. 위스퍼 음성 입력기(FUTO Voice Input) 설치" to futoInstalled,
-                        "2. 키보드 목록에서 켜고 고르기(자동)" to (futoIme != null && futoIme in enabledIds && target == futoIme),
-                        "3. 위스퍼 음성 입력기에서 마이크 허용·한국어(다국어) 모델 받기" to futoMic,
-                        "4. 삼성 키보드 음성 입력을 'Google 음성 입력'으로" to triggerSeen,
-                        "5. 기능 켜기" to on
-                    )
-                    steps.forEach { (name, ok) -> Text((if (ok) "✓ " else "· ") + name, color = if (ok) c.ink else c.muted, style = MaterialTheme.typography.bodyMedium) }
-                    Spacer(Modifier.height(Gap.Item))
-                    when {
-                        !futoInstalled -> LiquidButton("위스퍼 음성 입력기 설치하기", onClick = { openFutoStore() }, modifier = Modifier.fillMaxWidth())
-                        !futoMic -> LiquidButton("위스퍼 음성 입력기 열어 마이크 허용하기", onClick = {
-                            context.packageManager.getLaunchIntentForPackage(VoiceRedirect.FUTO)?.let { runCatching { context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
-                        }, modifier = Modifier.fillMaxWidth())
-                        !on -> LiquidButton("기능 켜기", onClick = {
-                            on = true
-                            VoiceRedirect.setEnabled(context, true)
-                            GoatService.sync(context)
-                        }, modifier = Modifier.fillMaxWidth(), enabled = targetOn)
-                        else -> Text("준비가 끝났습니다. 아무 입력 칸에서 삼성 키보드의 마이크를 눌러 보세요.", color = c.ink, style = MaterialTheme.typography.bodyMedium)
-                    }
-                    if (futoInstalled) {
-                        Spacer(Modifier.height(Gap.Item))
-                        Text(
-                            "4단계: 삼성 키보드가 '삼성 음성 입력'이면 마이크가 키보드 안에서 처리돼 GOAT가 넘길 수 없습니다. 언어 및 키보드 > 삼성 키보드 > 음성 입력에서 'Google 음성 입력'을 고르세요. 마이크를 한 번 눌러 넘어가면 ✓가 됩니다. 한국어로 받아 적으려면 위스퍼 입력기 설정에서 다국어 모델을 받으세요.",
-                            color = c.muted,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Spacer(Modifier.height(Gap.Item))
-                        LiquidButton("삼성 키보드 설정 열기", onClick = { openKeyboards() }, modifier = Modifier.fillMaxWidth(), primary = false)
-                    }
-                }
-            }
-        }
-        item(key = "switch") {
+        item(key = "hero") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
                     LiquidSwitchRow(
-                        "삼성 키보드 마이크를 위스퍼로",
-                        "삼성 키보드에서 마이크를 누르면 삼성 음성 입력 대신 아래에서 고른 음성 입력기로 넘깁니다. 말하기가 끝나면 삼성 키보드로 돌아옵니다.",
+                        "삼성 키보드 마이크로 위스퍼 받아쓰기",
+                        "삼성 키보드의 마이크를 누르면 위스퍼(OpenAI의 음성 인식, 폰 안에서 동작해 녹음을 밖으로 보내지 않음)가 받아 적고, 말을 마치면 삼성 키보드로 돌아옵니다.",
                         on,
                         enabled = on || targetOn,
                         onChange = {
                             on = it
                             VoiceRedirect.setEnabled(context, it)
+                            VoiceRedirect.setUserOff(context, !it)
                             GoatService.sync(context)
                         }
                     )
-                    if (!targetOn) {
+                    Spacer(Modifier.height(Gap.Item))
+                    Text(
+                        if (currentStep < 0) "✓ 준비가 끝났습니다. 아무 입력 칸에서 삼성 키보드의 마이크를 눌러 쓰면 됩니다." else "준비 ${steps.count { it.done }}/${steps.size} · 아래 단계를 차례로 따라 하세요.",
+                        color = if (currentStep < 0) c.ink else c.muted,
+                        fontWeight = if (currentStep < 0) FontWeight.SemiBold else FontWeight.Normal,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+        item(key = "steps") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text("준비하기", fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text("'자동'은 GOAT가 알아서 합니다. 나머지는 지금 할 단계만 펼쳐 보여 드립니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    steps.forEachIndexed { i, step ->
                         Spacer(Modifier.height(Gap.Item))
+                        val now = i == currentStep
                         Text(
-                            if (target == null) "먼저 아래에서 넘겨 줄 음성 입력기를 고르세요." else "고른 입력기가 키보드 목록에서 꺼져 있습니다. 키보드 목록에서 켜 주세요.",
-                            color = c.muted,
-                            style = MaterialTheme.typography.bodySmall
+                            (if (step.done) "✓ " else "${i + 1}. ") + step.title + if (step.auto) " (자동)" else "",
+                            color = if (step.done || now) c.ink else c.muted,
+                            fontWeight = if (now) FontWeight.SemiBold else FontWeight.Normal,
+                            style = MaterialTheme.typography.bodyMedium
                         )
+                        if (now) {
+                            val guide = when (i) {
+                                0 -> "아래 버튼을 누르면 Play 스토어가 열립니다. [설치]를 누르고, 설치가 끝나면 GOAT로 돌아오세요. 돌아오면 다음 단계는 GOAT가 이어서 합니다."
+                                1 -> if (VoiceRedirect.userOff(context)) "기능을 직접 끄셔서 자동으로 켜지 않았습니다. 맨 위 스위치를 켜 주세요." else "GOAT가 위스퍼 입력기를 키보드 목록에 켜고, 넘겨 줄 입력기로 고르고, 기능을 켜는 중입니다. 몇 초 기다려 주세요."
+                                2 -> "아래 버튼을 누르면 위스퍼 입력기 앱(FUTO Voice Input)이 열립니다. 마이크 권한을 묻는 창이 뜨면 [허용]을 누르고 GOAT로 돌아오세요."
+                                3 -> "기본 모델은 영어만 받아 적습니다. 아래 버튼으로 위스퍼 입력기 앱을 열고, 언어(Languages) 설정에서 한국어가 들어 있는 모델(Multilingual, 다국어)을 받으세요. Wi-Fi에서 1~2분 걸립니다. 화면 이름은 버전마다 조금 다를 수 있습니다. 다 받았으면 [받았어요]를 누르세요."
+                                4 -> "아래 버튼을 누르면 키보드 설정이 열립니다. ① '삼성 키보드'를 누르고 ② '음성 입력'을 누른 뒤 ③ 'Google 음성 입력'을 고르세요. 삼성 음성 입력으로 두면 마이크가 키보드 안에서 처리돼 GOAT가 위스퍼로 넘길 수 없습니다. 고른 뒤 다음 단계로 시험해 보세요."
+                                else -> "카톡 같은 아무 입력 칸에서 삼성 키보드의 마이크를 눌러 보세요. 위스퍼 화면이 뜨면 성공이고, 이 단계에 ✓가 생깁니다. 말을 마치면 삼성 키보드로 저절로 돌아옵니다."
+                            }
+                            Text(guide, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                            val openFuto = {
+                                context.packageManager.getLaunchIntentForPackage(VoiceRedirect.FUTO)?.let { runCatching { context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+                                Unit
+                            }
+                            when (i) {
+                                0 -> {
+                                    Spacer(Modifier.height(Gap.Item))
+                                    LiquidButton("Play 스토어에서 설치하기", onClick = { openFutoStore() }, modifier = Modifier.fillMaxWidth())
+                                }
+                                2 -> {
+                                    Spacer(Modifier.height(Gap.Item))
+                                    LiquidButton("위스퍼 입력기 열기", onClick = openFuto, modifier = Modifier.fillMaxWidth())
+                                }
+                                3 -> {
+                                    Spacer(Modifier.height(Gap.Item))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(Gap.Tight)) {
+                                        LiquidButton("위스퍼 입력기 열기", onClick = openFuto, modifier = Modifier.weight(1f), primary = false)
+                                        LiquidButton("받았어요", onClick = { VoiceRedirect.setModelDone(context, true) }, modifier = Modifier.weight(1f))
+                                    }
+                                }
+                                4, 5 -> {
+                                    Spacer(Modifier.height(Gap.Item))
+                                    LiquidButton("키보드 설정 열기", onClick = { openKeyboards() }, modifier = Modifier.fillMaxWidth(), primary = i == 4)
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+        item(key = "advanced") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                LiquidButton(if (advanced) "고급 접기" else "고급: 입력기 고르기·되는지 확인", onClick = { advanced = !advanced }, modifier = Modifier.fillMaxWidth(), primary = false)
+            }
+        }
+        if (!advanced) return@LazyColumn
         item(key = "target") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {

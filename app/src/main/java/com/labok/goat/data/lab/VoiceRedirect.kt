@@ -104,6 +104,46 @@ object VoiceRedirect {
         return ok
     }
 
+    // ── 자동 준비(11-08 소장님 "할 수 있는 건 최대한 GOAT가, 사람이 할 일은 처음 하는 사람도 쉽게") ──
+
+    /** 사용자가 직접 기능을 끈 적이 있으면 자동으로 다시 켜지 않는다. */
+    fun userOff(context: Context) = prefs(context).getBoolean("user_off", false)
+
+    fun setUserOff(context: Context, off: Boolean) {
+        prefs(context).edit().putBoolean("user_off", off).apply()
+    }
+
+    /** 한국어(다국어) 모델을 받았다고 사용자가 확인했는지(FUTO 안의 파일이라 GOAT가 볼 수 없다). */
+    fun modelDone(context: Context) = prefs(context).getBoolean("model_done", false)
+
+    fun setModelDone(context: Context, done: Boolean) {
+        prefs(context).edit().putBoolean("model_done", done).apply()
+    }
+
+    /** Google 음성 입력기 id(설치돼 있을 때): 삼성 키보드 음성 입력을 'Google 음성 입력'으로 두려면 키보드 목록에서 켜져 있어야 한다. */
+    fun googleVoiceIme(context: Context): String? = allImes(context).firstOrNull { it.packageName == "com.google.android.googlequicksearchbox" && hasVoice(it) }?.id
+
+    /**
+     * GOAT가 대신 할 수 있는 준비를 모두 한다(작업 스레드에서 부른다). 한 일은 앱 로그에 남긴다.
+     * 위스퍼 입력기를 키보드 목록에서 켜고 고르기, 마이크 권한 주기(Shizuku), Google 음성 입력 켜기, 기능 켜기.
+     */
+    fun autoSetup(context: Context) {
+        val futo = futoIme(context) ?: return
+        enableIme(context, futo)
+        val chosen = target(context)
+        val chosenIsVoice = allImes(context).firstOrNull { it.id == chosen }?.let { hasVoice(it) } ?: false
+        if (chosen == null || !chosenIsVoice) setTarget(context, futo)
+        if (!futoMicAllowed(context) && com.labok.goat.data.shizuku.ShizukuAccess.status.value == com.labok.goat.data.shizuku.ShizukuAccess.State.READY) {
+            val ok = com.labok.goat.data.shizuku.ShizukuAccess.shell("pm grant $FUTO android.permission.RECORD_AUDIO")?.ok == true
+            LogRepository.from(context).add("실험 위스퍼 음성 입력: 위스퍼 입력기에 마이크 권한 주기(Shizuku) " + if (ok) "성공" else "실패")
+        }
+        googleVoiceIme(context)?.let { enableIme(context, it) }
+        if (!enabled(context) && !userOff(context) && enabledImes(context).any { it.id == target(context) }) {
+            setEnabled(context, true)
+            runCatching { com.labok.goat.background.GoatService.sync(context) }
+        }
+    }
+
     /** 입력기를 [id]로 바꾼다(보안 설정 쓰기). 바뀌었는지 다시 읽어 돌려준다. */
     fun switchTo(context: Context, id: String): Boolean {
         selfId = id
