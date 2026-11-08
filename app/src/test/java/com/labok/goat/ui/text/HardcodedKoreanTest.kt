@@ -32,8 +32,6 @@ class HardcodedKoreanTest {
         val EXEMPT = listOf(
             "ui/about/Changelog.kt",
             "ui/lab/LabScreen.kt",
-            "ui/lab/VoiceScreen.kt",
-            "data/lab/VoiceRedirect.kt",
             "ui/lab/TentActivity.kt",
             "data/lab/OttFlexTest.kt",
             "data/lab/ShareProbe.kt",

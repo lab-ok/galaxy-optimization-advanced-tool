@@ -8,7 +8,9 @@ import android.os.SystemClock
 import android.provider.Settings
 import android.view.inputmethod.InputMethodInfo
 import android.view.inputmethod.InputMethodManager
+import com.labok.goat.R
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.ui.text.Copy
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -68,7 +70,7 @@ object VoiceRedirect {
     fun hasVoice(info: InputMethodInfo): Boolean = (0 until info.subtypeCount).any { info.getSubtypeAt(it).mode == "voice" }
 
     fun label(context: Context, id: String?): String {
-        if (id == null) return "(없음)"
+        if (id == null) return Copy.text(R.string.voice_55)
         val info = allImes(context).firstOrNull { it.id == id } ?: return id
         return info.loadLabel(context.packageManager).toString()
     }
@@ -170,7 +172,7 @@ object VoiceRedirect {
     val sawDirectVoice: StateFlow<Boolean> = direct.asStateFlow()
 
     fun startProbe(context: Context) {
-        events.value = listOf(line("기록 시작 · 지금 입력기: ${label(context, current(context))} (${current(context)})"))
+        events.value = listOf(line(Copy.text(R.string.voice_56, label(context, current(context)), current(context).orEmpty())))
         seen.value = false
         direct.value = false
         probing.value = true
@@ -180,11 +182,11 @@ object VoiceRedirect {
     fun stopProbe(context: Context) {
         probing.value = false
         val verdict = when {
-            direct.value -> "삼성 키보드 마이크가 위스퍼 입력기를 바로 엶 → 정상(가로채기 필요 없음)"
-            seen.value -> "마이크를 누르자 음성 입력기로 바뀜 → 가로채기 가능"
-            else -> "마이크를 눌러도 입력기가 바뀌지 않음 → 삼성 키보드 음성 입력이 '삼성 음성 입력'이면 키보드 안에서 처리돼 가로챌 수 없음. 'Google 음성 입력'으로 바꾼 뒤 다시 기록"
+            direct.value -> Copy.text(R.string.voice_57)
+            seen.value -> Copy.text(R.string.voice_58)
+            else -> Copy.text(R.string.voice_59)
         }
-        events.value = events.value + line("기록 끝 · $verdict")
+        events.value = events.value + line(Copy.text(R.string.voice_60, verdict))
         LogRepository.from(context).add("실험 위스퍼 음성 입력 조사: $verdict · " + events.value.joinToString(" / ").take(600))
         if (!enabled(context)) unwatch(context)
     }
@@ -246,7 +248,7 @@ object VoiceRedirect {
         if (probing.value) {
             if (trigger) seen.value = true
             if (!self && fromSamsung && cur != null && cur == target) direct.value = true
-            events.value = (events.value + line("${label(app, before)} → ${label(app, cur)}" + if (self) " (GOAT가 바꿈)" else "")).takeLast(40)
+            events.value = (events.value + line("${label(app, before)} → ${label(app, cur)}" + if (self) Copy.text(R.string.voice_61) else "")).takeLast(40)
         }
         if (!enabled(app) || target == null) {
             if (!isVoiceIme(app, cur) && cur != null) home = cur
