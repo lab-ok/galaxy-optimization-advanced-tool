@@ -2,6 +2,15 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.52.16 · 2026-11-08
+
+<sub>숨은 기능을 시험합니다(시험 버전).</sub>
+
+#### 변경
+
+- <sub>Shizuku 다시 연결 때 페어링이 풀린 경우의 안내를 더했습니다.</sub>
+- <sub>숨은 기능을 다듬었습니다.</sub>
+
 ### GOAT 1.52.15 · 2026-11-08
 
 <sub>Shizuku 연결 안내와 사용 통계 전환을 다듬었습니다(시험 버전).</sub>

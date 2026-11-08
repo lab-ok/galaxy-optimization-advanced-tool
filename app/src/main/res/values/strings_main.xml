@@ -408,6 +408,7 @@
     <string name="shizuku_lost_title">Shizuku 연결이 끊겼습니다</string>
     <string name="shizuku_lost_text_fmt">%1$s 기능이 동작하지 않습니다. 누르면 개발자 옵션과 무선 디버깅을 켜고 Shizuku를 엽니다. Shizuku에서 [시작]을 눌러 주세요.</string>
     <string name="shizuku_lost_action">다시 연결</string>
+    <string name="shizuku_reconnect_hint">Shizuku에서 [시작]을 누르세요. '페어링 단계를 먼저 진행하세요'가 뜨면 페어링이 풀린 것이니 Shizuku의 [페어링]부터 해 주세요(개발자 옵션을 끄면 페어링이 풀릴 수 있습니다).</string>
     <string name="shizuku_need_wifi">무선 디버깅은 Wi-Fi에 연결돼 있어야 켤 수 있습니다. Wi-Fi를 켠 뒤 알림을 다시 눌러 주세요.</string>
     <string name="update_done_channel">업데이트 완료</string>
     <string name="update_done_fmt">GOAT %1$s%2$s 업데이트했습니다</string>

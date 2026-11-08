@@ -40,6 +40,8 @@ class ShizukuReconnectActivity : Activity() {
             else -> {
                 val ok = ShizukuAccess.enableWirelessDebug(this)
                 log.add("Shizuku 다시 연결: 개발자 옵션·무선 디버깅 " + (if (ok) "켬" else "켜지 못함") + " · Shizuku 열기")
+                // 개발자 옵션을 끄면 무선 디버깅 페어링이 풀려 [시작]이 '페어링 단계를 먼저 진행하세요'로 실패한다(11-08 소장님 영상)
+                Toast.makeText(this, Copy.text(R.string.shizuku_reconnect_hint), Toast.LENGTH_LONG).show()
                 open(shizuku)
             }
         }

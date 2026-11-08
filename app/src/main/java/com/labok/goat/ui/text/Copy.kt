@@ -87,6 +87,7 @@ object Copy {
     val LAB_STATS_CHARGE_NEED: String get() = s(R.string.lab_stats_charge_need)
     val LAB_STATS_VOLUME_NEED: String get() = s(R.string.lab_stats_volume_need)
     val FEATURE_LAB_AMBIENT: String get() = s(R.string.feature_lab_ambient)
+    val FEATURE_LAB_VOICE: String get() = s(R.string.feature_lab_voice)
     val FEATURE_LAB_NOTE: String get() = s(R.string.feature_lab_note)
     val LAB_NOTE_BODY: String get() = s(R.string.lab_note_body)
     val LAB_NOTE_PASTE_SHARE: String get() = s(R.string.lab_note_paste_share)

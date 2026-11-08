@@ -137,6 +137,9 @@ enum class NavItem(val label: String, val icon: NavIcon) {
     /** 실험실: 앰비언트 모드(텐트 모드와 합침). 펼칠 때·세워 둘 때 안쪽 화면이 바깥 화면 색 간접등이 된다. */
     LAB_AMBIENT(Copy.FEATURE_LAB_AMBIENT, NavIcon.GLOW),
 
+    /** 실험실: 삼성 키보드 마이크를 위스퍼 음성 입력기로 넘기기와 그 조사(11-08 소장님). */
+    LAB_VOICE(Copy.FEATURE_LAB_VOICE, NavIcon.VOLUME),
+
     /** 클립보드 공유: 복사한 글·이미지·파일을 파일로 공유한다(1.49.0 실험실에서 정식으로, 'TXT로 공유'에서 이름 바꿈). 열어 본 횟수 기록이 이름에 묶여 있어 이름은 그대로 둔다. */
     LAB_NOTE(Copy.FEATURE_LAB_NOTE, NavIcon.NOTE),
 
@@ -146,7 +149,7 @@ enum class NavItem(val label: String, val icon: NavIcon) {
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */
-        val LAB_ITEMS = setOf(LAB_AMBIENT, LAB_TOOLS)
+        val LAB_ITEMS = setOf(LAB_AMBIENT, LAB_VOICE, LAB_TOOLS)
     }
 }
 

@@ -43,11 +43,14 @@ class GoatService : Service() {
         val rotate = ShakeRotate.enabled(this) && ShakeRotate.canWrite(this)
         val autoFlex = AutoFlex.engineNeeded(this)
         val ambientOpen = AmbientOpen.enabled(this)
-        if (!apps && !rotate && !autoFlex && !ambientOpen) {
+        // 실험실 위스퍼 음성 입력: 입력기 바뀜을 지켜보려면 GOAT 프로세스가 살아 있어야 한다
+        val voice = com.labok.goat.data.lab.VoiceRedirect.enabled(this)
+        if (voice) com.labok.goat.data.lab.VoiceRedirect.watch(this)
+        if (!apps && !rotate && !autoFlex && !ambientOpen && !voice) {
             stopSelf()
             return START_NOT_STICKY
         }
-        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "플렉스 모드".takeIf { autoFlex }, "앰비언트 모드".takeIf { ambientOpen }).joinToString("·")
+        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "플렉스 모드".takeIf { autoFlex }, "앰비언트 모드".takeIf { ambientOpen }, com.labok.goat.ui.text.Copy.FEATURE_LAB_VOICE.takeIf { voice }).joinToString("·")
         if (running != lastRunning) {
             LogRepository.from(this).add("GOAT 상주 서비스: $running")
             lastRunning = running
