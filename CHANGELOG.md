@@ -2,6 +2,15 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.52.14 · 2026-11-08
+
+<sub>Shizuku 연결이 끊기면 알려 드립니다(시험 버전).</sub>
+
+#### 추가
+
+- <sub>Shizuku 연결이 끊기면 알림으로 알려 드립니다. 알림을 누르면 무선 디버깅을 켜고 Shizuku를 열어, [시작]만 누르면 다시 연결됩니다.</sub>
+- <sub>재부팅 뒤 Shizuku가 다시 켜지지 않았을 때도 알려 드립니다.</sub>
+
 ### GOAT 1.52.13 · 2026-11-08
 
 <sub>숨은 기능을 시험합니다(시험 버전).</sub>

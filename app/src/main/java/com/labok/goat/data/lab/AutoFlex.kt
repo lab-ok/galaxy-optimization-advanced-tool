@@ -24,6 +24,7 @@ import com.labok.goat.R
 import com.labok.goat.data.appsize.AppList
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.data.shizuku.ShizukuNotice
 import com.labok.goat.ui.MainActivity
 import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.text.Copy
@@ -522,6 +523,7 @@ object AutoFlex {
             if (!inRange(a, min(context), max(context))) {
                 buzzedThisFold = false
                 warnedNoShizuku = false
+                ShizukuNotice.restored(context)
             }
             // 어느 쪽에서 범위로 들어왔는지: 범위보다 펼쳐져 있었으면 '접는 중', 범위보다 닫혀 있었으면 '펴는 중'
             if (a > max(context)) {
@@ -658,6 +660,7 @@ object AutoFlex {
                 if (on && !warnedNoShizuku) {
                     warnedNoShizuku = true
                     LogRepository.from(context).add("자동 플렉스: Shizuku 연결이 없어 반쯤 접힘을 걸지 못함(Shizuku 앱에서 다시 시작하세요) · 각도 ${last?.toInt()}°")
+                    ShizukuNotice.lost(context, Copy.text(R.string.feature_auto_flex))
                 }
                 return
             }

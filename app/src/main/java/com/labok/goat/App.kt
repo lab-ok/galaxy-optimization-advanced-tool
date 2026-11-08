@@ -22,6 +22,7 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.data.shizuku.ShizukuNotice
 import com.labok.goat.data.tweaks.AnimationKeepWorker
 import com.labok.goat.data.tweaks.AnimationSpeed
 import com.labok.goat.data.tweaks.Doze
@@ -92,7 +93,18 @@ class App : Application() {
         Thread { runCatching { AnimationSpeed.restoreIfReset(this) } }.start()
         DpiManager.exemptHiddenApis()
         // Shizuku가 켜지며(재부팅 뒤 자동 시작 포함) GOAT에 바인더를 건네면, 옵션에 따라 무선 디버깅을 끈다
-        if (ShizukuAccess.autoOffEnabled(this)) ShizukuAccess.watch(this)
+        // 연결이 끊기면 알리도록 늘 지켜본다(11-08). 예전에는 '무선 디버깅 끄기'를 켠 경우에만 지켜봤다
+        ShizukuAccess.watch(this)
+        // 재부팅 뒤 Shizuku가 스스로 켜지지 않은 경우: 2분 지나도 연결이 없고 예전에 써 왔으면 알린다
+        android.os.Handler(mainLooper).postDelayed({
+            runCatching {
+                ShizukuAccess.refresh()
+                if (ShizukuAccess.status.value != ShizukuAccess.State.READY && ShizukuNotice.everReady(this)) {
+                    LogRepository.from(this).add("Shizuku가 연결되지 않음(앱 시작 2분 뒤 ${ShizukuAccess.status.value})")
+                    ShizukuNotice.lost(this, null)
+                }
+            }
+        }, 120_000)
         // 배율을 바꿔 삼성이 GOAT를 닫았다가 다시 열린 경우 등: 켜 둔 알림창 배율 조절을 다시 띄운다
         AppDensityNotifier.start(this)
         ShakeRotate.start(this)

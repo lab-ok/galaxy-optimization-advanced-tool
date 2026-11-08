@@ -51,6 +51,7 @@ object ShizukuAccess {
         }.getOrDefault(false)
         if (started.compareAndSet(false, true)) {
             val app = context.applicationContext
+            appContext = app
             Shizuku.addBinderReceivedListenerSticky {
                 refresh()
                 autoDisableWirelessDebug(app)
@@ -61,7 +62,10 @@ object ShizukuAccess {
         refresh()
     }
 
+    @Volatile private var appContext: Context? = null
+
     fun refresh() {
+        val before = state.value
         state.value = when {
             Shizuku.pingBinder() && !Shizuku.isPreV11() ->
                 // 앱 시작 직후 binder는 받았지만 연결(attach)이 끝나기 전이면 checkSelfPermission이 'Not an attached client'를 던져
@@ -73,6 +77,17 @@ object ShizukuAccess {
                 }
             installed -> State.NOT_RUNNING
             else -> State.NOT_INSTALLED
+        }
+        // 연결 중에 끊기면 알리고, 다시 연결되면 알림을 지운다(11-08 소장님 "끊기면 끊겼다고, 다시 연결해 달라고 알려야")
+        val app = appContext ?: return
+        // 잠금 해제 전(재부팅 직후)에는 설정 파일을 못 읽어 앱이 죽을 수 있다(10-17 크래시): 실패해도 넘어간다
+        runCatching {
+            if (state.value == State.READY) {
+                ShizukuNotice.restored(app)
+            } else if (before == State.READY) {
+                LogRepository.from(app).add("Shizuku 연결이 끊김(${state.value})")
+                ShizukuNotice.lost(app, null)
+            }
         }
     }
 

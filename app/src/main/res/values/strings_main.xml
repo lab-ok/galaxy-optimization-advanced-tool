@@ -404,6 +404,10 @@
     <string name="ui_fluid_water_count_fmt">방울 %1$d개</string>
     <string name="update_check_no_apk">최신 릴리스에서 APK를 찾지 못했습니다.</string>
     <string name="update_check_offline">인터넷 연결을 확인하세요.</string>
+    <string name="shizuku_lost_channel">Shizuku 연결 끊김</string>
+    <string name="shizuku_lost_title">Shizuku 연결이 끊겼습니다</string>
+    <string name="shizuku_lost_text_fmt">%1$s 기능이 동작하지 않습니다. 누르면 무선 디버깅을 켜고 Shizuku를 엽니다. Shizuku에서 [시작]을 눌러 주세요.</string>
+    <string name="shizuku_lost_text">Shizuku가 필요한 기능이 동작하지 않습니다. 누르면 무선 디버깅을 켜고 Shizuku를 엽니다. Shizuku에서 [시작]을 눌러 주세요.</string>
     <string name="update_done_channel">업데이트 완료</string>
     <string name="update_done_fmt">GOAT %1$s%2$s 업데이트했습니다</string>
     <string name="update_done_tap_to_open">눌러서 열기</string>
