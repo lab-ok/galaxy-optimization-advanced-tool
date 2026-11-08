@@ -73,6 +73,34 @@ object VoiceRedirect {
     /** 고른 입력기가 키보드 목록에서 켜져 있는지(꺼져 있으면 시스템이 바꾸기를 받아 주지 않는다). */
     fun targetEnabled(context: Context): Boolean = target(context)?.let { t -> enabledImes(context).any { it.id == t } } ?: false
 
+    /** 위스퍼 음성 입력기 FUTO Voice Input(오프라인 위스퍼, voiceinput.futo.tech). */
+    const val FUTO = "org.futo.voiceinput"
+
+    fun futoInstalled(context: Context) = runCatching { context.packageManager.getPackageInfo(FUTO, 0) }.isSuccess
+
+    /** FUTO Voice Input의 입력기 id(설치돼 있을 때). */
+    fun futoIme(context: Context): String? = allImes(context).firstOrNull { it.packageName == FUTO }?.id
+
+    fun futoMicAllowed(context: Context) = context.packageManager.checkPermission(android.Manifest.permission.RECORD_AUDIO, FUTO) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+    /**
+     * 입력기 [id]를 키보드 목록에서 켠다(설정 화면에 가지 않고). 켜졌으면 true.
+     * 키보드 목록 설정(enabled_input_methods)은 targetSdk 34부터 앱이 읽을 수 없어(에뮬레이터에서 앱이 죽음), Shizuku가 있으면
+     * `ime enable`을 쓰고, 없으면 지금 켜진 입력기 목록에 [id]를 더해 보안 설정 쓰기로 덮어쓴다.
+     */
+    fun enableIme(context: Context, id: String): Boolean {
+        if (enabledImes(context).any { it.id == id }) return true
+        val viaShell = com.labok.goat.data.shizuku.ShizukuAccess.status.value == com.labok.goat.data.shizuku.ShizukuAccess.State.READY &&
+            com.labok.goat.data.shizuku.ShizukuAccess.shell("ime enable $id")?.ok == true
+        if (!viaShell) {
+            val list = (enabledImes(context).map { it.id } + id).joinToString(":")
+            runCatching { Settings.Secure.putString(context.contentResolver, Settings.Secure.ENABLED_INPUT_METHODS, list) }
+        }
+        val ok = enabledImes(context).any { it.id == id }
+        LogRepository.from(context).add("실험 위스퍼 음성 입력: 키보드 목록에서 $id 켜기(" + (if (viaShell) "Shizuku" else "설정 쓰기") + ") " + if (ok) "성공" else "실패")
+        return ok
+    }
+
     /** 입력기를 [id]로 바꾼다(보안 설정 쓰기). 바뀌었는지 다시 읽어 돌려준다. */
     fun switchTo(context: Context, id: String): Boolean {
         runCatching { Settings.Secure.putString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD, id) }

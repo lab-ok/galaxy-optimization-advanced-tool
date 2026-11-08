@@ -72,16 +72,27 @@ object ShizukuNotice {
             .setOnlyAlertOnce(true)
             .build()
         nm.notify(ID, n)
-        // 떠 있는 동안 15초마다 연결을 다시 확인해, 연결되면 지운다(연결 알림을 놓쳐도 남지 않게)
-        if (!checking) {
-            checking = true
-            val app = context.applicationContext
-            Handler(Looper.getMainLooper()).postDelayed({
-                checking = false
-                ShizukuAccess.refresh()
-                update(app)
-            }, 15_000)
-        }
+        scheduleCheck(context.applicationContext)
+    }
+
+    /**
+     * 떠 있는 동안 15초마다 연결을 다시 확인해, 연결되면 지운다(연결 신호를 놓쳐도 남지 않게).
+     * 확인할 때 알림을 다시 띄우지는 않는다: 1.52.18은 다시 띄워서, 사용자가 밀어 지운 알림이 15초마다 되살아났다
+     * (11-08 소장님 "왜 안 없어지고 더 생김"). 지운 알림은 연결 상태가 바뀔 때까지 다시 띄우지 않는다.
+     */
+    private fun scheduleCheck(app: Context) {
+        if (checking) return
+        checking = true
+        Handler(Looper.getMainLooper()).postDelayed({
+            checking = false
+            ShizukuAccess.refresh()
+            val nm = app.getSystemService(NotificationManager::class.java) ?: return@postDelayed
+            val shown = nm.activeNotifications.any { it.id == ID }
+            when {
+                ShizukuAccess.status.value == ShizukuAccess.State.READY -> nm.cancel(ID)
+                shown -> scheduleCheck(app)
+            }
+        }, 15_000)
     }
 
     @Volatile private var checking = false

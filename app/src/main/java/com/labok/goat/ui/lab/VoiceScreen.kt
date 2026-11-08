@@ -37,7 +37,9 @@ import com.labok.goat.ui.liquid.LiquidRadioGroup
 import com.labok.goat.ui.liquid.LiquidRadioRow
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /**
  * 실험실 '위스퍼 음성 입력'(11-08 소장님 "실험실 메뉴로 따로 만들고 조사 도구까지 녹여서 되는지 안 되는지 확인할 수 있게").
@@ -68,6 +70,28 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
     var trial by remember { mutableStateOf<String?>(null) }
     val targetOn = target != null && target in enabledIds
     val openKeyboards = { runCatching { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+    // Play 스토어 앱이 있으면 그 화면으로, 없으면 웹으로 연다
+    val openFutoStore = {
+        val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${VoiceRedirect.FUTO}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(market) }.onFailure {
+            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=${VoiceRedirect.FUTO}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        }
+    }
+    // 한 번에 준비(11-08 소장님 "설치까지 딸깍으로"): 설치 → 키보드 목록에 켜기(자동) → 마이크 허용 → 기능 켜기
+    val futoInstalled = remember(tick) { VoiceRedirect.futoInstalled(context) }
+    val futoIme = remember(tick) { VoiceRedirect.futoIme(context) }
+    val futoMic = remember(tick) { VoiceRedirect.futoMicAllowed(context) }
+    LaunchedEffect(futoIme) {
+        val id = futoIme ?: return@LaunchedEffect
+        // 설치되면 GOAT가 키보드 목록에서 켜고 넘겨 줄 입력기로 고른다(설정 화면에 갈 필요 없음)
+        withContext(Dispatchers.IO) { runCatching { VoiceRedirect.enableIme(context, id) } }
+        // 아직 고르지 않았거나, 고른 것이 음성 모드가 없는 일반 키보드면 FUTO로 바꾼다
+        val chosenIsVoice = VoiceRedirect.allImes(context).firstOrNull { it.id == target }?.let { VoiceRedirect.hasVoice(it) } ?: false
+        if (target == null || !chosenIsVoice) {
+            target = id
+            VoiceRedirect.setTarget(context, id)
+        }
+    }
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -75,6 +99,35 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
         verticalArrangement = Arrangement.spacedBy(Gap.Card),
         modifier = Modifier.fillMaxWidth()
     ) {
+        item(key = "setup") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text("한 번에 준비", fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text("아래 버튼을 차례로 누르면 됩니다. 키보드 목록에서 켜기와 입력기 고르기는 GOAT가 알아서 합니다.", color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    val steps = listOf(
+                        "1. FUTO Voice Input(위스퍼) 설치" to futoInstalled,
+                        "2. 키보드 목록에서 켜고 고르기(자동)" to (futoIme != null && futoIme in enabledIds && target == futoIme),
+                        "3. FUTO Voice Input에서 마이크 허용·음성 모델 받기" to futoMic,
+                        "4. 기능 켜기" to on
+                    )
+                    steps.forEach { (name, ok) -> Text((if (ok) "✓ " else "· ") + name, color = if (ok) c.ink else c.muted, style = MaterialTheme.typography.bodyMedium) }
+                    Spacer(Modifier.height(Gap.Item))
+                    when {
+                        !futoInstalled -> LiquidButton("FUTO Voice Input 설치하기", onClick = { openFutoStore() }, modifier = Modifier.fillMaxWidth())
+                        !futoMic -> LiquidButton("FUTO Voice Input 열어 마이크 허용하기", onClick = {
+                            context.packageManager.getLaunchIntentForPackage(VoiceRedirect.FUTO)?.let { runCatching { context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+                        }, modifier = Modifier.fillMaxWidth())
+                        !on -> LiquidButton("기능 켜기", onClick = {
+                            on = true
+                            VoiceRedirect.setEnabled(context, true)
+                            GoatService.sync(context)
+                        }, modifier = Modifier.fillMaxWidth(), enabled = targetOn)
+                        else -> Text("준비가 끝났습니다. 아무 입력 칸에서 삼성 키보드의 마이크를 눌러 보세요.", color = c.ink, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
         item(key = "switch") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {
                 GlassCard {
@@ -126,9 +179,7 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
                     Spacer(Modifier.height(Gap.Item))
                     Row(horizontalArrangement = Arrangement.spacedBy(Gap.Tight)) {
                         LiquidButton("키보드 목록 열기", onClick = { openKeyboards() }, modifier = Modifier.weight(1f), primary = false)
-                        LiquidButton("FUTO Voice Input 받기", onClick = {
-                            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://voiceinput.futo.org/")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                        }, modifier = Modifier.weight(1f), primary = false)
+                        LiquidButton("FUTO Voice Input 받기", onClick = { openFutoStore() }, modifier = Modifier.weight(1f), primary = false)
                     }
                 }
             }
