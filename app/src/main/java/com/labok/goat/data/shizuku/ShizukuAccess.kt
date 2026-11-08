@@ -55,6 +55,11 @@ object ShizukuAccess {
             Shizuku.addBinderReceivedListenerSticky {
                 refresh()
                 autoDisableWirelessDebug(app)
+                // 받은 직후에는 연결(attach) 전이라 '연결 안 됨'으로 읽힐 수 있다: 잠시 뒤 다시 읽어 연결됐으면 끊김 알림을 지운다
+                // (11-08 소장님 "연결 확인됐으면 알림 삭제해")
+                val h = Handler(Looper.getMainLooper())
+                h.postDelayed({ refresh() }, 1_500)
+                h.postDelayed({ refresh() }, 5_000)
             }
             Shizuku.addBinderDeadListener { refresh() }
             Shizuku.addRequestPermissionResultListener { _, _ -> refresh() }

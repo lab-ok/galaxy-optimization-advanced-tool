@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import com.labok.goat.R
 import com.labok.goat.data.appsize.AppDensityNotifier
@@ -70,5 +72,17 @@ object ShizukuNotice {
             .setOnlyAlertOnce(true)
             .build()
         nm.notify(ID, n)
+        // 떠 있는 동안 15초마다 연결을 다시 확인해, 연결되면 지운다(연결 알림을 놓쳐도 남지 않게)
+        if (!checking) {
+            checking = true
+            val app = context.applicationContext
+            Handler(Looper.getMainLooper()).postDelayed({
+                checking = false
+                ShizukuAccess.refresh()
+                update(app)
+            }, 15_000)
+        }
     }
+
+    @Volatile private var checking = false
 }
