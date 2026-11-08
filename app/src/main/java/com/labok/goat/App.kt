@@ -106,6 +106,8 @@ class App : Application() {
         // 배율을 바꿔 삼성이 GOAT를 닫았다가 다시 열린 경우 등: 켜 둔 알림창 배율 조절을 다시 띄운다
         AppDensityNotifier.start(this)
         ShakeRotate.start(this)
+        // 실험실 위스퍼 음성 입력: 켜 두었으면 상주 서비스가 입력기 바뀜을 지켜보게 한다(앱이 다시 뜬 뒤에도)
+        if (com.labok.goat.data.lab.VoiceRedirect.enabled(this)) runCatching { com.labok.goat.background.GoatService.sync(this) }
         // 카메라 촬영음 끄기: 재부팅·업데이트로 돌아오면 Shizuku가 연결될 때 다시 끈다
         CameraMute.watch(this)
         // GOS 끄기: 재부팅·업데이트로 다시 켜지면 Shizuku가 연결될 때 다시 끈다

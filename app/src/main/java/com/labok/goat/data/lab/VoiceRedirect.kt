@@ -31,6 +31,9 @@ object VoiceRedirect {
 
     fun enabled(context: Context) = prefs(context).getBoolean("on", false)
 
+    /** 삼성 키보드 마이크로 음성 입력기로 바뀌는 것을 한 번이라도 봤는지(가로챌 수 있는 설정인지). */
+    fun triggerSeen(context: Context) = prefs(context).getBoolean("trigger_seen", false)
+
     fun setEnabled(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("on", on).apply()
         LogRepository.from(context).add("실험 위스퍼 음성 입력: " + if (on) "켬" else "끔")
@@ -103,6 +106,8 @@ object VoiceRedirect {
 
     /** 입력기를 [id]로 바꾼다(보안 설정 쓰기). 바뀌었는지 다시 읽어 돌려준다. */
     fun switchTo(context: Context, id: String): Boolean {
+        selfId = id
+        selfAt = SystemClock.elapsedRealtime()
         runCatching { Settings.Secure.putString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD, id) }
         return current(context) == id
     }
@@ -136,8 +141,8 @@ object VoiceRedirect {
         probing.value = false
         val verdict = when {
             direct.value -> "삼성 키보드 마이크가 위스퍼 입력기를 바로 엶 → 정상(가로채기 필요 없음)"
-            seen.value -> "삼성 음성 입력이 별도 입력기로 바뀜 → 가로채기 가능"
-            else -> "입력기가 바뀐 기록 없음 → 마이크를 눌렀는데도 없다면 위스퍼가 키보드 목록에서 켜져 있는지 확인"
+            seen.value -> "마이크를 누르자 음성 입력기로 바뀜 → 가로채기 가능"
+            else -> "마이크를 눌러도 입력기가 바뀌지 않음 → 삼성 키보드 음성 입력이 '삼성 음성 입력'이면 키보드 안에서 처리돼 가로챌 수 없음. 'Google 음성 입력'으로 바꾼 뒤 다시 기록"
         }
         events.value = events.value + line("기록 끝 · $verdict")
         LogRepository.from(context).add("실험 위스퍼 음성 입력 조사: $verdict · " + events.value.joinToString(" / ").take(600))
@@ -175,42 +180,63 @@ object VoiceRedirect {
         redirected = false
     }
 
+    /** 음성 입력기인지(음성 모드가 있는 입력기, 삼성 음성 입력 포함). */
+    private fun isVoiceIme(app: Context, id: String?): Boolean {
+        if (id == null) return false
+        if (id.startsWith(SAMSUNG_VOICE)) return true
+        return allImes(app).firstOrNull { it.id == id }?.let { hasVoice(it) } ?: false
+    }
+
+    /*
+     * 11-08 실기 영상: 삼성 키보드를 '삼성 음성 입력'으로 두면 마이크를 눌러도 입력기가 바뀌지 않았다(키보드 안에서 처리, 가로챌 틈 없음).
+     * 'Google 음성 입력'으로 두면 마이크가 Google 음성 입력기로 입력기를 바꾼다(추정, 조사로 확인). 그래서 삼성 키보드에서
+     * 고른 입력기가 아닌 음성 입력기로 바뀌면 모두 가로챈다. GOAT가 직접 바꾼 것([switchTo], 2초 안)은 조사·판정에서 뺀다
+     * (예전에는 [고른 입력기로 바꾸기] 시험을 마이크로 잘못 셌다).
+     */
     private fun onImeChanged(app: Context) {
         val cur = current(app)
         val before = lastId
         if (cur == before) return
         lastId = cur
-        val isVoice = cur?.startsWith(SAMSUNG_VOICE) == true
-        if (probing.value) {
-            if (isVoice) seen.value = true
-            if (before?.startsWith("com.samsung.android.honeyboard") == true && cur != null && allImes(app).firstOrNull { it.id == cur }?.let { hasVoice(it) } == true) direct.value = true
-            events.value = (events.value + line("${label(app, before)} → ${label(app, cur)} ($cur)")).takeLast(40)
-        }
+        val self = cur != null && cur == selfId && SystemClock.elapsedRealtime() - selfAt < 2_000
+        val fromSamsung = before?.startsWith("com.samsung.android.honeyboard") == true
         val target = target(app)
+        val trigger = !self && cur != null && cur != target && isVoiceIme(app, cur) && (fromSamsung || cur.startsWith(SAMSUNG_VOICE))
+        if (trigger && !prefs(app).getBoolean("trigger_seen", false)) prefs(app).edit().putBoolean("trigger_seen", true).apply()
+        if (probing.value) {
+            if (trigger) seen.value = true
+            if (!self && fromSamsung && cur != null && cur == target) direct.value = true
+            events.value = (events.value + line("${label(app, before)} → ${label(app, cur)}" + if (self) " (GOAT가 바꿈)" else "")).takeLast(40)
+        }
         if (!enabled(app) || target == null) {
-            if (!isVoice && cur != null) home = cur
+            if (!isVoiceIme(app, cur) && cur != null) home = cur
             return
         }
         when {
-            // 위스퍼 입력기가 끝나 삼성 음성 입력으로 돌아왔다(입력기는 끝나면 '앞 입력기'로 돌아간다): 삼성 키보드로 되돌린다
+            self -> Unit
+            // 위스퍼 입력기가 끝나 앞 입력기(Google·삼성 음성 입력)로 돌아왔다: 삼성 키보드로 되돌린다
             redirected && cur != target -> {
                 redirected = false
-                if (isVoice || cur == null) {
+                if (cur == null || isVoiceIme(app, cur)) {
                     val back = home
                     if (back != null) switchTo(app, back)
                     LogRepository.from(app).add("실험 위스퍼 음성 입력: 끝, ${label(app, back)}(으)로 되돌림 · 걸린 시간 ${(SystemClock.elapsedRealtime() - redirectedAt) / 1000}초")
                 }
             }
-            // 삼성 키보드에서 마이크를 눌러 삼성 음성 입력으로 바뀌었다: 고른 입력기로 넘긴다
-            isVoice -> {
+            // 삼성 키보드에서 마이크를 눌러 다른 음성 입력기로 바뀌었다: 고른 입력기로 넘긴다
+            trigger -> {
                 val ok = switchTo(app, target)
                 redirected = ok
                 redirectedAt = SystemClock.elapsedRealtime()
-                LogRepository.from(app).add("실험 위스퍼 음성 입력: 삼성 음성 입력 → ${label(app, target)} " + if (ok) "넘김" else "넘기지 못함(키보드 목록에서 켜져 있는지 확인)")
+                LogRepository.from(app).add("실험 위스퍼 음성 입력: ${label(app, cur)} → ${label(app, target)} " + if (ok) "넘김" else "넘기지 못함(키보드 목록에서 켜져 있는지 확인)")
             }
-            cur != null && cur != target -> home = cur
+            cur != null && cur != target && !isVoiceIme(app, cur) -> home = cur
         }
     }
+
+    @Volatile private var selfId: String? = null
+
+    @Volatile private var selfAt = 0L
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 }

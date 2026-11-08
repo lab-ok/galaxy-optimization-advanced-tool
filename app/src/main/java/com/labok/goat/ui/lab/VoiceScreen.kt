@@ -82,6 +82,7 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
     val futoInstalled = remember(tick) { VoiceRedirect.futoInstalled(context) }
     val futoIme = remember(tick) { VoiceRedirect.futoIme(context) }
     val futoMic = remember(tick) { VoiceRedirect.futoMicAllowed(context) }
+    val triggerSeen = remember(tick) { VoiceRedirect.triggerSeen(context) }
     LaunchedEffect(futoIme) {
         val id = futoIme ?: return@LaunchedEffect
         // 설치되면 GOAT가 키보드 목록에서 켜고 넘겨 줄 입력기로 고른다(설정 화면에 갈 필요 없음)
@@ -109,8 +110,9 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
                     val steps = listOf(
                         "1. 위스퍼 음성 입력기(FUTO Voice Input) 설치" to futoInstalled,
                         "2. 키보드 목록에서 켜고 고르기(자동)" to (futoIme != null && futoIme in enabledIds && target == futoIme),
-                        "3. 위스퍼 음성 입력기에서 마이크 허용·음성 모델 받기" to futoMic,
-                        "4. 기능 켜기" to on
+                        "3. 위스퍼 음성 입력기에서 마이크 허용·한국어(다국어) 모델 받기" to futoMic,
+                        "4. 삼성 키보드 음성 입력을 'Google 음성 입력'으로" to triggerSeen,
+                        "5. 기능 켜기" to on
                     )
                     steps.forEach { (name, ok) -> Text((if (ok) "✓ " else "· ") + name, color = if (ok) c.ink else c.muted, style = MaterialTheme.typography.bodyMedium) }
                     Spacer(Modifier.height(Gap.Item))
@@ -125,6 +127,16 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
                             GoatService.sync(context)
                         }, modifier = Modifier.fillMaxWidth(), enabled = targetOn)
                         else -> Text("준비가 끝났습니다. 아무 입력 칸에서 삼성 키보드의 마이크를 눌러 보세요.", color = c.ink, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    if (futoInstalled) {
+                        Spacer(Modifier.height(Gap.Item))
+                        Text(
+                            "4단계: 삼성 키보드가 '삼성 음성 입력'이면 마이크가 키보드 안에서 처리돼 GOAT가 넘길 수 없습니다. 언어 및 키보드 > 삼성 키보드 > 음성 입력에서 'Google 음성 입력'을 고르세요. 마이크를 한 번 눌러 넘어가면 ✓가 됩니다. 한국어로 받아 적으려면 위스퍼 입력기 설정에서 다국어 모델을 받으세요.",
+                            color = c.muted,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton("삼성 키보드 설정 열기", onClick = { openKeyboards() }, modifier = Modifier.fillMaxWidth(), primary = false)
                     }
                 }
             }
@@ -191,10 +203,10 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
                     Text("되는지 확인", fontWeight = FontWeight.SemiBold, color = c.ink)
                     Spacer(Modifier.height(Gap.Tight))
                     val checks = listOf(
-                        "삼성 음성 입력이 별도 입력기로 등록됨" to (samsungIme != null),
+                        "삼성 음성 입력이 별도 입력기로 등록됨(없어도 'Google 음성 입력'으로 하면 됨)" to (samsungIme != null),
                         "보안 설정 쓰기 권한" to (context.checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS) == android.content.pm.PackageManager.PERMISSION_GRANTED),
                         "넘겨 줄 입력기를 고르고 켜 둠" to targetOn,
-                        "마이크를 누를 때 위스퍼로 넘어감(아래 기록: 바로 또는 GOAT가 넘김)" to (sawDirect || saw)
+                        "마이크를 누를 때 음성 입력기로 바뀜(아래 기록, GOAT 시험 버튼으로 바꾼 것은 빼고)" to (sawDirect || saw)
                     )
                     checks.forEach { (name, ok) ->
                         Text((if (ok) "✓ " else "✗ ") + name, color = if (ok) c.ink else c.muted, style = MaterialTheme.typography.bodyMedium)
