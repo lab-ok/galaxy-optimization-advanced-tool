@@ -54,6 +54,8 @@ class GoatService : Service() {
         }
         // 켜진 기능에 맞는 알림으로 바꾼다(같은 번호라 알림은 하나로 남는다)
         startForegroundNow()
+        // Shizuku 끊김 알림이 떠 있으면 켜진 기능에 맞게 고친다
+        com.labok.goat.data.shizuku.ShizukuNotice.refreshIfShown(this)
 
         // 자동 플렉스는 반쯤 접힘을 Shizuku로 걸어서, Shizuku 연결을 지켜본다
         if (apps || autoFlex || ambientOpen) {

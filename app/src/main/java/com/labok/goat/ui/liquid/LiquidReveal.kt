@@ -27,10 +27,10 @@ import kotlinx.coroutines.launch
 /**
  * 물방울 번짐 전환: 화면을 [origin] 자리의 작은 물방울([SoftBlob]) 안에만 그리고, 그 물방울을 화면 전체로 키운다.
  * 크기 변화의 85%는 모양째 옮기고 나머지만 힘으로 따라오게 해, 가장자리가 살짝 출렁이며 번진다.
- * 다 번지면 자르기를 멈춘다. [active]가 false이거나 동작 줄이기가 켜져 있으면 바로 그린다.
+ * 다 번지면 자르기를 멈춘다. [reach]를 주면 그 거리(px)까지만 번지고 나머지는 다 번진 뒤 한 번에 그린다. [active]가 false이거나 동작 줄이기가 켜져 있으면 바로 그린다.
  */
 @Composable
-fun Modifier.liquidReveal(active: Boolean, origin: (Size) -> Offset): Modifier {
+fun Modifier.liquidReveal(active: Boolean, reach: Float? = null, origin: (Size) -> Offset): Modifier {
     if (!active || LocalReduceMotion.current) return this
     val start = with(LocalDensity.current) { 10.dp.toPx() }
     val blob = rememberSoftBlob()
@@ -45,6 +45,8 @@ fun Modifier.liquidReveal(active: Boolean, origin: (Size) -> Offset): Modifier {
         val o = origin(size)
         // 가장 먼 모서리까지 덮어야 한다
         far = maxOf(hypot(o.x, o.y), hypot(size.width - o.x, o.y), hypot(o.x, size.height - o.y), hypot(size.width - o.x, size.height - o.y))
+        // 스크롤로 길게 이어지는 내용은 화면에 보이는 높이까지만 번지게 한다([reach]): 끝까지 재면 보이는 부분이 순식간에 덮여 번짐이 보이지 않는다
+        if (reach != null) far = minOf(far, reach)
         blob.blob.gain = 4f
         blob.blob.damping = 3f
         blob.moveTo(o.x, o.y, start * 2, start * 2, animate = false)

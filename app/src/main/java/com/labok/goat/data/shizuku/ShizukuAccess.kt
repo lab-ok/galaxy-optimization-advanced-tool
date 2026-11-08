@@ -83,10 +83,10 @@ object ShizukuAccess {
         // 잠금 해제 전(재부팅 직후)에는 설정 파일을 못 읽어 앱이 죽을 수 있다(10-17 크래시): 실패해도 넘어간다
         runCatching {
             if (state.value == State.READY) {
-                ShizukuNotice.restored(app)
+                ShizukuNotice.update(app)
             } else if (before == State.READY) {
                 LogRepository.from(app).add("Shizuku 연결이 끊김(${state.value})")
-                ShizukuNotice.lost(app, null)
+                ShizukuNotice.update(app)
             }
         }
     }

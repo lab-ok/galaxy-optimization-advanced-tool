@@ -45,6 +45,18 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.52.15",
+        "2026-11-08",
+        "Shizuku 연결 안내와 사용 통계 전환을 다듬었습니다(시험 버전).",
+        listOf(
+            "변경" to listOf(
+                "Shizuku가 필요한 기능을 켜 둔 채 연결이 끊기면, 다시 연결될 때까지 알림이 떠 있습니다. 알림에 동작하지 않는 기능 이름이 나옵니다.",
+                "알림의 [다시 연결]을 누르면 개발자 옵션과 무선 디버깅을 켜고 Shizuku를 엽니다. Wi-Fi가 꺼져 있으면 Wi-Fi 설정부터 엽니다.",
+                "사용 통계에서 탭과 기간을 바꾸면 누른 자리에서 새 내용이 물방울처럼 번져 나옵니다. 불러오는 동안 화면이 비지 않습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.52.14",
         "2026-11-08",
         "Shizuku 연결이 끊기면 알려 드립니다(시험 버전).",

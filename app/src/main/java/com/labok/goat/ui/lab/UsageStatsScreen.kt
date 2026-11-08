@@ -3,6 +3,12 @@ package com.labok.goat.ui.lab
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +54,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -82,6 +90,7 @@ import com.labok.goat.ui.liquid.LiquidChips
 import com.labok.goat.ui.liquid.LiquidLoader
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.liquid.liquidReveal
 import com.labok.goat.ui.nav.NavGlyph
 import com.labok.goat.ui.nav.NavIcon
 import com.labok.goat.ui.text.Copy
@@ -157,12 +166,15 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
     var range by remember { mutableStateOf(StatsRange.TODAY) }
     // 월·1년 보기에서 몇 달·몇 해 전을 보는지(0 = 이번)
     var back by remember { mutableIntStateOf(0) }
-    var view by remember { mutableStateOf<StatsView?>(null) }
+    // 불러온 기간 보기(어느 기간인지와 함께). 새 기간을 불러오는 동안에는 앞 보기를 그대로 두고, 다 불러오면 번짐 전환으로 바꾼다
+    var page by remember { mutableStateOf<StatsPage?>(null) }
     // 11-04 소장님 "배터리 사용내역은 탭바로 분리": 사용·배터리 두 탭(배터리 숫자는 배터리 탭에만 둔다)
     var tab by remember { mutableIntStateOf(0) }
+    // 새 보기가 번져 나오는 가로 위치(0 왼쪽 ~ 1 오른쪽): 누른 칩 자리에서 번진다(11-08 소장님 "탭 넘어갈 때 리퀴드하게")
+    var revealX by remember { mutableFloatStateOf(0.5f) }
     LaunchedEffect(range, back) {
-        view = null
-        view = withContext(Dispatchers.IO) { load(context, range, back) }
+        val v = withContext(Dispatchers.IO) { load(context, range, back) }
+        page = StatsPage(range, back, v)
     }
     Column(
         Modifier
@@ -174,28 +186,72 @@ internal fun UsageStatsScreen(contentPadding: PaddingValues) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth().padding(bottom = Gap.Item)) {
-            LiquidChips(options = listOf(0, 1), selected = tab, label = { if (it == 0) Copy.text(R.string.lab_stats_tab_usage) else Copy.text(R.string.lab_stats_tab_battery) }, onSelect = { tab = it })
-        }
-        if (tab == 1) {
-            BatteryTab()
-            return@Column
-        }
-        Box(Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth().padding(bottom = Gap.Item)) {
-            LiquidChips(options = StatsRange.entries, selected = range, label = { Copy.text(it.label) }, onSelect = {
-                range = it
-                back = 0
+            LiquidChips(options = listOf(0, 1), selected = tab, label = { if (it == 0) Copy.text(R.string.lab_stats_tab_usage) else Copy.text(R.string.lab_stats_tab_battery) }, onSelect = {
+                revealX = (it + 0.5f) / 2
+                tab = it
             })
         }
-        if (range == StatsRange.MONTH || range == StatsRange.YEAR) {
-            PeriodPicker(periodLabel(range, back), canNext = back > 0, onPrev = { back++ }, onNext = { if (back > 0) back-- })
-            Spacer(Modifier.height(Gap.Item))
+        if (tab == 0) {
+            Box(Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth().padding(bottom = Gap.Item)) {
+                LiquidChips(options = StatsRange.entries, selected = range, label = { Copy.text(it.label) }, onSelect = {
+                    revealX = (it.ordinal + 0.5f) / StatsRange.entries.size
+                    range = it
+                    back = 0
+                })
+            }
+            if (range == StatsRange.MONTH || range == StatsRange.YEAR) {
+                PeriodPicker(periodLabel(range, back), canNext = back > 0, onPrev = {
+                    revealX = 0f
+                    back++
+                }, onNext = {
+                    if (back > 0) {
+                        revealX = 1f
+                        back--
+                    }
+                })
+                Spacer(Modifier.height(Gap.Item))
+            }
         }
-        val v = view
-        if (v == null) {
+        val p = page
+        if (tab == 0 && p == null) {
             Spacer(Modifier.height(Gap.Section))
             LiquidLoader(Copy.LAB_STATS_LOADING)
             return@Column
         }
+        // 탭·기간을 바꾸면 새 보기가 누른 칩 자리에서 물방울로 번져 앞 보기를 덮는다(홈에서 기능 화면으로 갈 때와 같은 전환)
+        AnimatedContent(
+            targetState = if (tab == 1) null else p,
+            contentKey = { it?.let { k -> k.range to k.back } },
+            transitionSpec = {
+                (EnterTransition.None togetherWith fadeOut(tween(1, delayMillis = 700))).apply { targetContentZIndex = 1f }
+            },
+            label = "statsPage"
+        ) { target ->
+            val entering = remember { transition.currentState == EnterExitState.PreEnter }
+            val reach = with(LocalDensity.current) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .liquidReveal(entering, reach = reach) { size -> Offset(size.width * revealX, 0f) }
+                    .background(c.bg),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (target == null) BatteryTab() else StatsBody(target.range, target.view)
+            }
+        }
+    }
+}
+
+/** 불러온 기간 보기와 그 기간(전환할 때 어느 보기인지 가린다). */
+private class StatsPage(val range: StatsRange, val back: Int, val view: StatsView)
+
+/** 사용 탭 본문: 요약·숫자 표·시간대·발견·앱 순위. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun StatsBody(range: StatsRange, v: StatsView) {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val r = v.now
         val b = v.base
         if (!r.usageAccess) {

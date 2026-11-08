@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Shizuku 다시 연결: 무선 디버깅은 Wi-Fi에서만 켜져서 Wi-Fi 연결 여부를 본다 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- 사용자 권한 창으로는 받을 수 없다. adb shell pm grant 로 1회 부여한다. -->
     <uses-permission

@@ -9,26 +9,47 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import com.labok.goat.R
+import com.labok.goat.data.appsize.AppDensityNotifier
+import com.labok.goat.data.camera.CameraMute
+import com.labok.goat.data.lab.AmbientOpen
+import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.shizuku.ShizukuReconnectActivity
 import com.labok.goat.ui.text.Copy
 
 /**
- * Shizuku 연결이 끊겨 기능이 동작하지 못했을 때 알림(11-08 소장님 "플렉스 모드 안 되면 GOAT가 알려줬어야 하는 것 아니냐").
- * 예전에는 Shizuku가 끊기면 플렉스 모드가 조용히 건너뛰어, 사용자는 왜 안 되는지 알 수 없었다.
- * 끊긴 동안 한 번만 띄우고, 누르면 Shizuku 앱을 연다. Shizuku가 다시 연결되면 알림을 지우고 다음 끊김에 다시 띄운다.
+ * Shizuku 연결이 끊긴 동안 계속 떠 있는 알림(11-08 소장님 "끊기면 끊겼다고, 다시 연결해 달라고 알려야", "상시로 띄워도 좋다",
+ * "개발자 옵션까지 한 번에 다시 설정할 수 있게").
+ * 켜 둔 기능 중 Shizuku가 필요한 것이 있으면 그 이름을 알리고, 누르면 [ShizukuReconnectActivity]가 개발자 옵션·무선 디버깅을 켜고
+ * Shizuku를 연다. 다시 연결되면 저절로 지운다.
  */
 object ShizukuNotice {
-    private const val PREF = "shizuku_notice"
     private const val CHANNEL_ID = "shizuku_lost"
     private const val ID = 4420
 
-    /** Shizuku 연결이 없어 [feature](기능 이름, 모르면 null)가 동작하지 못했거나 연결이 끊겼다. 끊긴 동안 처음 한 번만 알린다. */
-    fun lost(context: Context, feature: String?) {
-        val p = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-        if (p.getBoolean("shown", false)) return
-        if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
+    /** 켜 둔 기능 가운데 Shizuku가 있어야 동작하는 것들의 이름. */
+    fun affected(context: Context): List<String> = listOfNotNull(
+        Copy.text(R.string.feature_auto_flex).takeIf { AutoFlex.enabled(context) },
+        Copy.text(R.string.feature_app_size).takeIf { AppDensityNotifier.enabled(context) },
+        Copy.text(R.string.feature_lab_ambient).takeIf { AmbientOpen.enabled(context) },
+        Copy.text(R.string.feature_camera_mute).takeIf { CameraMute.wanted(context) }
+    )
+
+    /** 알림이 떠 있을 때만 다시 맞춘다(기능을 끄고 켤 때: 영향받는 기능 이름을 고치거나, 모두 껐으면 지운다). */
+    fun refreshIfShown(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
+        if (nm.activeNotifications.any { it.id == ID }) update(context)
+    }
+
+    /** 지금 상태에 맞게 알림을 띄우거나 지운다: 연결이 없고 영향받는 기능이 있으면 띄운다. 어느 스레드에서 불러도 된다. */
+    fun update(context: Context) {
+        val nm = context.getSystemService(NotificationManager::class.java) ?: return
+        val names = if (ShizukuAccess.status.value == ShizukuAccess.State.READY) emptyList() else affected(context)
+        if (names.isEmpty()) {
+            nm.cancel(ID)
+            return
+        }
+        if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, Copy.text(R.string.shizuku_lost_channel), NotificationManager.IMPORTANCE_DEFAULT))
         val open = PendingIntent.getActivity(
             context,
@@ -36,7 +57,7 @@ object ShizukuNotice {
             Intent(context, ShizukuReconnectActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        val body = if (feature != null) Copy.text(R.string.shizuku_lost_text_fmt, feature) else Copy.text(R.string.shizuku_lost_text)
+        val body = Copy.text(R.string.shizuku_lost_text_fmt, names.joinToString(", "))
         val n = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_goat)
             .setLargeIcon(UiGoat.notificationIcon(context))
@@ -44,21 +65,10 @@ object ShizukuNotice {
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(open)
-            .setAutoCancel(true)
+            .addAction(0, Copy.text(R.string.shizuku_lost_action), open)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
             .build()
         nm.notify(ID, n)
-        p.edit().putBoolean("shown", true).apply()
-    }
-
-    /** Shizuku를 한 번이라도 연결해 쓴 적이 있는지(없으면 재부팅 뒤 미연결을 알리지 않는다). */
-    fun everReady(context: Context) = context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getBoolean("ever_ready", false)
-
-    /** Shizuku가 다시 연결됐다: 알림을 지우고, 다음에 끊기면 다시 알릴 수 있게 한다. */
-    fun restored(context: Context) {
-        val p = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-        if (!p.getBoolean("ever_ready", false)) p.edit().putBoolean("ever_ready", true).apply()
-        if (!p.getBoolean("shown", false)) return
-        p.edit().putBoolean("shown", false).apply()
-        context.getSystemService(NotificationManager::class.java)?.cancel(ID)
     }
 }
