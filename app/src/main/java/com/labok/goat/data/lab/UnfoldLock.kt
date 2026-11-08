@@ -78,7 +78,10 @@ object UnfoldLock {
 
     private fun unpin(app: Context, why: String) {
         io.execute {
-            if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return@execute
+            if (ShizukuAccess.status.value != ShizukuAccess.State.READY) {
+                if (pinned) LogRepository.from(app).add("실험 깨우지 않기: $why · Shizuku 연결이 없어 고정을 풀지 못함")
+                return@execute
+            }
             val r = ShizukuAccess.shell("cmd device_state state reset")
             val was = pinned
             pinned = false

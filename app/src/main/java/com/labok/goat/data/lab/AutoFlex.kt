@@ -519,7 +519,10 @@ object AutoFlex {
                 closedSeen = false
                 UnfoldLock.onUnfold(context)
             }
-            if (!inRange(a, min(context), max(context))) buzzedThisFold = false
+            if (!inRange(a, min(context), max(context))) {
+                buzzedThisFold = false
+                warnedNoShizuku = false
+            }
             // 어느 쪽에서 범위로 들어왔는지: 범위보다 펼쳐져 있었으면 '접는 중', 범위보다 닫혀 있었으면 '펴는 중'
             if (a > max(context)) {
                 cameFromOpen = true
@@ -645,9 +648,20 @@ object AutoFlex {
 
         override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
 
+        private var warnedNoShizuku = false
+
         private fun set(on: Boolean) {
             if (on == activeFlow.value) return
-            if (ShizukuAccess.status.value != ShizukuAccess.State.READY) return
+            if (ShizukuAccess.status.value != ShizukuAccess.State.READY) {
+                // 예전에는 아무 기록 없이 넘어가 '플렉스 모드가 안 된다'는 신고에 원인이 남지 않았다(11-08 소장님 진단: Shizuku 끊김).
+                // 접을 때마다 한 번만 남긴다
+                if (on && !warnedNoShizuku) {
+                    warnedNoShizuku = true
+                    LogRepository.from(context).add("자동 플렉스: Shizuku 연결이 없어 반쯤 접힘을 걸지 못함(Shizuku 앱에서 다시 시작하세요) · 각도 ${last?.toInt()}°")
+                }
+                return
+            }
+            warnedNoShizuku = false
             // 방향은 decide 한 곳에서만 본다(화면이 돌면 decide가 다시 돌아 기다리던 켜기를 취소한다)
             // '사용 안 함'으로 둔 앱과 홈 화면: 반쯤 접힘을 걸지 않고 울리지도 않는다. 켜진 것으로만 두어 알림에서 다른 모드로 바꿀 수 있게 한다
             if (on && FlexPanel.frontIsOff(context)) {
