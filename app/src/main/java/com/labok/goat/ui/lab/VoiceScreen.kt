@@ -67,6 +67,7 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
     val probing by VoiceRedirect.probeOn.collectAsStateWithLifecycle()
     val log by VoiceRedirect.probeLog.collectAsStateWithLifecycle()
     val saw by VoiceRedirect.sawSamsungVoice.collectAsStateWithLifecycle()
+    val sawDirect by VoiceRedirect.sawDirectVoice.collectAsStateWithLifecycle()
     var trial by remember { mutableStateOf<String?>(null) }
     val targetOn = target != null && target in enabledIds
     val openKeyboards = { runCatching { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
@@ -193,7 +194,7 @@ internal fun VoiceScreen(contentPadding: PaddingValues) {
                         "삼성 음성 입력이 별도 입력기로 등록됨" to (samsungIme != null),
                         "보안 설정 쓰기 권한" to (context.checkSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS) == android.content.pm.PackageManager.PERMISSION_GRANTED),
                         "넘겨 줄 입력기를 고르고 켜 둠" to targetOn,
-                        "마이크를 누를 때 삼성 음성 입력으로 바뀜(아래 기록)" to saw
+                        "마이크를 누를 때 위스퍼로 넘어감(아래 기록: 바로 또는 GOAT가 넘김)" to (sawDirect || saw)
                     )
                     checks.forEach { (name, ok) ->
                         Text((if (ok) "✓ " else "✗ ") + name, color = if (ok) c.ink else c.muted, style = MaterialTheme.typography.bodyMedium)

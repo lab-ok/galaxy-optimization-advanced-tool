@@ -116,17 +116,29 @@ object VoiceRedirect {
 
     /** 조사 중 삼성 음성 입력으로 바뀐 적이 있는지. */
     val sawSamsungVoice: StateFlow<Boolean> = seen.asStateFlow()
+    private val direct = MutableStateFlow(false)
+
+    /**
+     * 조사 중 삼성 키보드가 음성 모드 입력기(위스퍼 등)로 바로 넘어간 적이 있는지.
+     * 11-08 실기: 위스퍼를 키보드 목록에 켜 두자 삼성 키보드 마이크가 삼성 음성 입력을 거치지 않고 위스퍼를 바로 열었다(가로채기 필요 없음).
+     */
+    val sawDirectVoice: StateFlow<Boolean> = direct.asStateFlow()
 
     fun startProbe(context: Context) {
         events.value = listOf(line("기록 시작 · 지금 입력기: ${label(context, current(context))} (${current(context)})"))
         seen.value = false
+        direct.value = false
         probing.value = true
         watch(context)
     }
 
     fun stopProbe(context: Context) {
         probing.value = false
-        val verdict = if (seen.value) "삼성 음성 입력이 별도 입력기로 바뀜 → 가로채기 가능" else "삼성 음성 입력으로 바뀐 기록 없음 → 이 방식으로는 가로챌 수 없음(마이크를 눌렀는데도 없다면)"
+        val verdict = when {
+            direct.value -> "삼성 키보드 마이크가 위스퍼 입력기를 바로 엶 → 정상(가로채기 필요 없음)"
+            seen.value -> "삼성 음성 입력이 별도 입력기로 바뀜 → 가로채기 가능"
+            else -> "입력기가 바뀐 기록 없음 → 마이크를 눌렀는데도 없다면 위스퍼가 키보드 목록에서 켜져 있는지 확인"
+        }
         events.value = events.value + line("기록 끝 · $verdict")
         LogRepository.from(context).add("실험 위스퍼 음성 입력 조사: $verdict · " + events.value.joinToString(" / ").take(600))
         if (!enabled(context)) unwatch(context)
@@ -171,6 +183,7 @@ object VoiceRedirect {
         val isVoice = cur?.startsWith(SAMSUNG_VOICE) == true
         if (probing.value) {
             if (isVoice) seen.value = true
+            if (before?.startsWith("com.samsung.android.honeyboard") == true && cur != null && allImes(app).firstOrNull { it.id == cur }?.let { hasVoice(it) } == true) direct.value = true
             events.value = (events.value + line("${label(app, before)} → ${label(app, cur)} ($cur)")).takeLast(40)
         }
         val target = target(app)
