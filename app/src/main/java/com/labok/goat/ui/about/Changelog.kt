@@ -45,6 +45,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.54.0",
+        "2026-11-11",
+        "두 화면을 같은 DPI로 맞출 수 있습니다.",
+        listOf(
+            "추가" to listOf(
+                "고급 화면 배율에 「두 화면 같은 DPI」를 더했습니다. 켜면 내부 화면도 외부와 같은 값을 써서, DPI가 바뀔 때 화면을 새로 띄우는 앱이 접고 펼 때 새로 고침되지 않게 합니다.",
+                "내부 화면 보정 범위를 ±20에서 ±40으로 넓혔습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.53.1",
         "2026-11-11",
         "두 화면을 같은 DPI로 맞출 수 있습니다(시험 버전).",
