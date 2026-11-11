@@ -93,6 +93,19 @@ object RelaunchTrace {
         }.toList()
     }
 
+    /**
+     * GOAT 자기 프로세스·화면이 언제 만들어지고 닫혔는지(시스템 이벤트 로그, 최근 [OWN_SHOWN]줄).
+     * 업데이트 뒤 메인 화면이 두 번 뜬다는 신고(11-12 소장님)를 실기에서 확인하려고 넣었다. 에뮬레이터에서는 한 번만 만들어졌다.
+     */
+    fun ownLaunches(pkg: String): String {
+        val tags = "am_kill am_proc_start am_proc_died wm_create_activity wm_restart_activity wm_new_intent wm_finish_activity wm_destroy_activity wm_relaunch_activity wm_relaunch_resume_activity"
+        val r = ShizukuAccess.shell("logcat -d -b events -v time -s $tags") ?: return "Shizuku 연결이 없어 읽지 못함"
+        val lines = r.out.lineSequence().filter { pkg in it }.toList()
+        return if (lines.isEmpty()) "(기록 없음)" else lines.takeLast(OWN_SHOWN).joinToString("\n")
+    }
+
+    private const val OWN_SHOWN = 60
+
     /** ActivityInfo.CONFIG_* 비트(이벤트 로그의 마지막 값). */
     private val CHANGE_NAMES = listOf(
         0x1000 to "DPI(밀도)",

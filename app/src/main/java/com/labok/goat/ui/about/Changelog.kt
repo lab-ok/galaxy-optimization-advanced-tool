@@ -56,6 +56,22 @@ internal data class En(val summary: String, val sections: List<Pair<String, List
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.57.4",
+        "2026-11-12",
+        "앱 안에서 언어를 바꾸면 메뉴 이름도 바로 바뀝니다(시험 버전).",
+        listOf(
+            "고침" to listOf("앱을 켜 둔 채 언어를 바꾸면 왼쪽 메뉴·홈 카드 이름, 홈의 전체·활성화·비활성화, 주사율 선택지가 이전 언어로 남던 것을 고쳤습니다."),
+            "변경" to listOf("문제 신고 진단 파일에 GOAT 화면이 언제 열리고 닫혔는지 기록을 더했습니다.")
+        ),
+        en = En(
+            "Menu names now change right away when you switch the language in the app (test version).",
+            listOf(
+                "Fixed" to listOf("After switching the language while the app was open, the side menu and Home card names, the All/On/Off tabs and the refresh rate options stayed in the previous language."),
+                "Changed" to listOf("The diagnostic file in Report a Problem now records when GOAT's screens opened and closed.")
+            )
+        )
+    ),
+    Release(
         "GOAT 1.57.3",
         "2026-11-12",
         "언어 설정 위치를 옮겼습니다(시험 버전).",

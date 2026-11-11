@@ -27,10 +27,12 @@ object RefreshRate {
     private val lock = Any()
 
     /** 고를 수 있는 방식. */
-    enum class Choice(val label: String, val desc: String) {
-        SYSTEM(Copy.REFRESH_SYSTEM, Copy.REFRESH_SYSTEM_DESC),
-        SMOOTH(Copy.REFRESH_SMOOTH, Copy.REFRESH_SMOOTH_DESC),
-        SAVER(Copy.REFRESH_SAVER, Copy.REFRESH_SAVER_DESC)
+    enum class Choice(private val labelOf: () -> String, private val descOf: () -> String) {
+        SYSTEM({ Copy.REFRESH_SYSTEM }, { Copy.REFRESH_SYSTEM_DESC }),
+        SMOOTH({ Copy.REFRESH_SMOOTH }, { Copy.REFRESH_SMOOTH_DESC }),
+        SAVER({ Copy.REFRESH_SAVER }, { Copy.REFRESH_SAVER_DESC });
+        val label get() = labelOf()
+        val desc get() = descOf()
     }
 
     /** 이 기기 기본 화면이 지원하는 주사율(정수 Hz, 오름차순). */

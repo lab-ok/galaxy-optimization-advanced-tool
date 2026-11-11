@@ -78,6 +78,10 @@ object DiagnosticReport {
         appendLine(runCatching { RelaunchTrace.diagnose(context) }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
+        appendLine("## GOAT 화면 생성·종료 기록")
+        appendLine(runCatching { RelaunchTrace.ownLaunches(context.packageName) }.getOrElse { "읽기 실패: $it" })
+        appendLine()
+
         appendLine("## 크래시 기록")
         appendLine(CrashRecorder.read(context).ifBlank { "(없음)" })
         appendLine()

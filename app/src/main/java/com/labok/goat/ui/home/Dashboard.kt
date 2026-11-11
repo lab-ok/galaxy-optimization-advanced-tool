@@ -573,7 +573,7 @@ private fun CategoryRow(item: NavItem, status: String, on: Boolean, onClick: (Of
 private val HERO_WIDE = 420.dp
 
 /** 홈 타일 보기 방식. */
-private enum class HomeView(val label: String) { ALL(Copy.HOME_VIEW_ALL), ON(Copy.HOME_VIEW_ON), OFF(Copy.HOME_VIEW_OFF) }
+private enum class HomeView(private val labelOf: () -> String) { ALL({ Copy.HOME_VIEW_ALL }), ON({ Copy.HOME_VIEW_ON }), OFF({ Copy.HOME_VIEW_OFF }); val label get() = labelOf() }
 
 /** 켜진 기능 비율 고리: 잉크 호가 출렁이며 차오르고, 가운데에 켜진 수/전체 수. */
 @Composable

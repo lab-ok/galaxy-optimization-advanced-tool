@@ -2,6 +2,18 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.57.4 · 2026-11-12
+
+<sub>앱 안에서 언어를 바꾸면 메뉴 이름도 바로 바뀝니다(시험 버전). / Menu names now change right away when you switch the language in the app (test version).</sub>
+
+#### 고침 / Fixed
+
+- <sub>앱을 켜 둔 채 언어를 바꾸면 왼쪽 메뉴·홈 카드 이름, 홈의 전체·활성화·비활성화, 주사율 선택지가 이전 언어로 남던 것을 고쳤습니다. / After switching the language while the app was open, the side menu and Home card names, the All/On/Off tabs and the refresh rate options stayed in the previous language.</sub>
+
+#### 변경 / Changed
+
+- <sub>문제 신고 진단 파일에 GOAT 화면이 언제 열리고 닫혔는지 기록을 더했습니다. / The diagnostic file in Report a Problem now records when GOAT's screens opened and closed.</sub>
+
 ### GOAT 1.57.3 · 2026-11-12
 
 <sub>언어 설정 위치를 옮겼습니다(시험 버전). / Moved the language setting (test version).</sub>

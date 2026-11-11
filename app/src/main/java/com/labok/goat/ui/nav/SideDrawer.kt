@@ -79,73 +79,76 @@ import kotlin.math.sin
  * 사이드바 항목 = 앱의 기능(화면) 단위. 기능 안의 세부 설정·도구는 각 화면의 점 세 개 메뉴에 둔다.
  * [icon]은 앱 그림과 같은 선 굵기로 직접 그린다.
  */
-enum class NavItem(val label: String, val icon: NavIcon) {
+enum class NavItem(private val labelOf: () -> String, val icon: NavIcon) {
     /** 메인 화면: 모든 기능의 지금 상태를 한눈에 보고 바로 들어간다. */
-    HOME(Copy.FEATURE_HOME, NavIcon.HOME),
+    HOME({ Copy.FEATURE_HOME }, NavIcon.HOME),
 
     /** 접고 펼 때도 두 화면의 표시 크기(DPI)를 일관되게 맞추는 기본 기능. */
-    DPI_MATCH(Copy.FEATURE_DPI, NavIcon.FOLD),
+    DPI_MATCH({ Copy.FEATURE_DPI }, NavIcon.FOLD),
 
     /** 앱마다 화면 크기를 따로 두는 기능(삼성 '앱 화면 크게/작게', Shizuku 필요). */
-    APP_SIZE(Copy.FEATURE_APP_SIZE, NavIcon.APPS),
+    APP_SIZE({ Copy.FEATURE_APP_SIZE }, NavIcon.APPS),
 
     /** 창·전환·애니메이터 배율(전역 설정). */
-    ANIMATION(Copy.FEATURE_ANIMATION, NavIcon.SPEED),
+    ANIMATION({ Copy.FEATURE_ANIMATION }, NavIcon.SPEED),
 
     /** 평소에는 회전을 잠가 두고, 흔들면 폰이 놓인 방향으로 한 번 돌린다. */
-    SHAKE_ROTATE(Copy.FEATURE_SHAKE_ROTATE, NavIcon.ROTATE),
+    SHAKE_ROTATE({ Copy.FEATURE_SHAKE_ROTATE }, NavIcon.ROTATE),
 
     /** 국내 모델의 강제 촬영음을 끈다(Shizuku 셸로 숨은 시스템 설정을 바꾼다). */
-    CAMERA_MUTE(Copy.FEATURE_CAMERA_MUTE, NavIcon.CAMERA),
+    CAMERA_MUTE({ Copy.FEATURE_CAMERA_MUTE }, NavIcon.CAMERA),
 
     /** 쓰지 않는 기본 앱 끄기(Shizuku, 되돌릴 수 있음). */
-    APP_CLEANUP(Copy.FEATURE_APP_CLEANUP, NavIcon.CLEAN),
+    APP_CLEANUP({ Copy.FEATURE_APP_CLEANUP }, NavIcon.CLEAN),
 
     /** 화면 주사율의 위·아래 한계를 고정한다(Shizuku 셸). */
-    REFRESH(Copy.FEATURE_REFRESH, NavIcon.REFRESH),
+    REFRESH({ Copy.FEATURE_REFRESH }, NavIcon.REFRESH),
 
     /** 게임 중 성능을 낮추는 GOS를 끈다(Shizuku, 기본 앱 정리와 같은 끄기). */
-    GOS(Copy.FEATURE_GOS, NavIcon.GAME),
+    GOS({ Copy.FEATURE_GOS }, NavIcon.GAME),
 
     /** 잠자기 모드(Doze)를 꺼 알림이 늦게 오지 않게 한다(Shizuku, 재부팅 뒤 다시 끄기). */
-    DOZE(Copy.FEATURE_DOZE, NavIcon.BELL),
+    DOZE({ Copy.FEATURE_DOZE }, NavIcon.BELL),
 
     /** 해상도를 낮추고 밀도도 같은 비율로 줄인다(시스템 설정 권한, 폴드 제외). */
-    RESOLUTION(Copy.FEATURE_RESOLUTION, NavIcon.PIXELS),
+    RESOLUTION({ Copy.FEATURE_RESOLUTION }, NavIcon.PIXELS),
 
     /** 다크 모드 없는 앱도 시스템이 어둡게 그리게 한다(Shizuku setprop). */
-    DARK(Copy.FEATURE_DARK, NavIcon.MOON),
+    DARK({ Copy.FEATURE_DARK }, NavIcon.MOON),
 
     /** 비행기 모드를 켜도 고른 무선(와이파이·블루투스·NFC)은 그대로 둔다(시스템 설정 권한, 실험실에서 정식으로). */
-    AIRPLANE(Copy.FEATURE_AIRPLANE, NavIcon.AIRPLANE),
+    AIRPLANE({ Copy.FEATURE_AIRPLANE }, NavIcon.AIRPLANE),
 
     /** 화면을 돌리면 볼륨 버튼의 올리기·내리기를 화면 방향에 맞춘다(접근성 서비스, 1.16.1 실험실에서 정식으로). */
-    VOLUME_ROTATE(Copy.FEATURE_VOLUME_ROTATE, NavIcon.VOLUME),
+    VOLUME_ROTATE({ Copy.FEATURE_VOLUME_ROTATE }, NavIcon.VOLUME),
 
     /** 폴드8을 반쯤 접으면 플렉스 모드를 대신 켠다(Shizuku 셸, 힌지 각도, 1.29.0 실험실에서 정식으로). */
-    AUTO_FLEX(Copy.FEATURE_AUTO_FLEX, NavIcon.FLEX),
+    AUTO_FLEX({ Copy.FEATURE_AUTO_FLEX }, NavIcon.FLEX),
 
     /** 상태 표시줄의 고른 아이콘을 숨긴다(시스템 설정 권한, 실험실에서 정식으로). */
-    STATUS_ICONS(Copy.FEATURE_STATUS_ICONS, NavIcon.EYE_OFF),
+    STATUS_ICONS({ Copy.FEATURE_STATUS_ICONS }, NavIcon.EYE_OFF),
 
     /** 실험실: 기능을 만들 때 쓰는 조사 도구(사이드바에는 lab 빌드에서만 보인다). */
-    LAB_TOOLS(Copy.FEATURE_LAB_TOOLS, NavIcon.FLASK),
+    LAB_TOOLS({ Copy.FEATURE_LAB_TOOLS }, NavIcon.FLASK),
 
     /** 사용 통계: 접기·잠금 해제·화면·앱·알림·충전·볼륨 버튼 횟수를 기간별로(1.50.9 실험실에서 정식으로). 열어 본 횟수 기록이 이름에 묶여 있어 이름은 그대로 둔다. */
-    LAB_STATS(Copy.FEATURE_LAB_STATS, NavIcon.STATS),
+    LAB_STATS({ Copy.FEATURE_LAB_STATS }, NavIcon.STATS),
 
     /** 실험실: 앰비언트 모드(텐트 모드와 합침). 펼칠 때·세워 둘 때 안쪽 화면이 바깥 화면 색 간접등이 된다. */
-    LAB_AMBIENT(Copy.FEATURE_LAB_AMBIENT, NavIcon.GLOW),
+    LAB_AMBIENT({ Copy.FEATURE_LAB_AMBIENT }, NavIcon.GLOW),
 
     /** 실험실: 삼성 키보드 마이크를 위스퍼 음성 입력기로 넘기기와 그 조사(11-08 소장님). */
-    LAB_VOICE(Copy.FEATURE_LAB_VOICE, NavIcon.VOLUME),
+    LAB_VOICE({ Copy.FEATURE_LAB_VOICE }, NavIcon.VOLUME),
 
     /** 클립보드 공유: 복사한 글·이미지·파일을 파일로 공유한다(1.49.0 실험실에서 정식으로, 'TXT로 공유'에서 이름 바꿈). 열어 본 횟수 기록이 이름에 묶여 있어 이름은 그대로 둔다. */
-    LAB_NOTE(Copy.FEATURE_LAB_NOTE, NavIcon.NOTE),
+    LAB_NOTE({ Copy.FEATURE_LAB_NOTE }, NavIcon.NOTE),
 
     /** 앱 설정: 앱 정보·업데이트·기록 파일·UI 탄성(사이드바 맨 아래에서 연다, 홈 카드에는 없다). */
-    SETTINGS(Copy.FEATURE_SETTINGS, NavIcon.GEAR)
+    SETTINGS({ Copy.FEATURE_SETTINGS }, NavIcon.GEAR)
     ;
+
+    /** 이름은 그릴 때마다 읽는다. 처음 만들 때 담아 두면 그때 언어로 굳는다(1.57.3 영어에서 메뉴가 한국어). */
+    val label get() = labelOf()
 
     companion object {
         /** 실험실 묶음 항목(홈 타일에는 넣지 않는다). */

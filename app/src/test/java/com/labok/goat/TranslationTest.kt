@@ -55,6 +55,16 @@ class TranslationTest {
     }
 
     @Test
+    fun localizedTextIsNotFrozenAtInit() {
+        // enum 항목·객체 값에 Copy 문구를 담으면 처음 만들 때 언어로 굳는다(1.57.3 앱 안에서 영어로 바꿔도 메뉴가 한국어). { Copy.X }로 그릴 때 읽는다
+        val frozen = Regex("""(?:\b[A-Z][A-Z0-9_]+\(|^(?: {4})?(?:private |internal )?val \w+ = \w+\()(?:[^{}]*?[,(]\s*)?Copy\.[A-Z][A-Z0-9_]*\s*[,)]""")
+        val bad = ModuleSources.modules.flatMap { m -> File(m, "src/main/java").walkTopDown().filter { it.extension == "kt" }.toList() }.flatMap { f ->
+            f.readLines().mapIndexedNotNull { i, line -> "${f.path}:${i + 1}: ${line.trim()}".takeIf { frozen.containsMatchIn(line) } }
+        }
+        assertTrue("Copy 문구를 만들 때 담아 두면 언어를 바꿔도 그대로입니다. { Copy.X }로 감싸세요:\n" + bad.joinToString("\n"), bad.isEmpty())
+    }
+
+    @Test
     fun manifestLabelsUseResources() {
         // 공유 메뉴·타일·서비스 이름은 매니페스트에 글자로 쓰면 번역되지 않는다(1.57.1 「TXT로 공유」 등이 영어에서도 한국어로 나옴)
         val bad = ModuleSources.modules.mapNotNull { m -> File(m, "src/main/AndroidManifest.xml").takeIf { it.isFile } }.flatMap { f ->
