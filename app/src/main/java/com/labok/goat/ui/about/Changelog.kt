@@ -56,6 +56,42 @@ internal data class En(val summary: String, val sections: List<Pair<String, List
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.58.0",
+        "2026-11-12",
+        "영어를 지원합니다.",
+        listOf(
+            "추가" to listOf(
+                "앱 문구를 영어로 볼 수 있습니다. 앱 설정 → 언어에서 시스템 언어 따르기·한국어·English를 고를 수 있고, 언어마다 국기가 함께 나옵니다. Android 13부터는 시스템 설정의 앱별 언어에서도 바꿀 수 있습니다. 한국어·영어가 아닌 언어를 쓰는 기기에서는 영어로 나옵니다.",
+                "앱이 영어일 때 공유 메뉴·빠른 설정 타일 이름과 변경 기록도 영어로 나옵니다."
+            ),
+            "고침" to listOf(
+                "GOAT 안에서 업데이트하면 끝난 뒤 메인 화면이 뜨고 잠시 뒤 하나 더 겹쳐 뜨던 것을 고쳤습니다. 이 수정은 이번 버전에서 다음 버전으로 업데이트할 때부터 적용됩니다.",
+                "좁은 화면·큰 글자에서 고급 화면 배율 맨 위 카드의 글이 글자 단위로 끊기던 것을 고쳤습니다."
+            ),
+            "변경" to listOf(
+                "앱 설정의 「언어」는 「정보」 바로 위에 있습니다.",
+                "문제 신고 진단 파일에 GOAT 화면이 언제 열리고 닫혔는지 기록을 더했습니다."
+            )
+        ),
+        en = En(
+            "English is now supported.",
+            listOf(
+                "Added" to listOf(
+                    "The app can now be shown in English. In App Settings → Language, choose Follow system language, 한국어 or English, each shown with its flag. From Android 13 you can also change it in the system's per-app language settings. On devices set to a language other than Korean or English, the app is shown in English.",
+                    "When the app is in English, the share menu and Quick Settings tile names and the changelog are in English too."
+                ),
+                "Fixed" to listOf(
+                    "After updating from inside GOAT, the main screen opened and then a second one opened on top a moment later. This fix takes effect from the next update after this version.",
+                    "On narrow screens or with large text, the text in the top card of Advanced Display Scale broke in the middle of words."
+                ),
+                "Changed" to listOf(
+                    "Language in App Settings is now just above About.",
+                    "The diagnostic file in Report a Problem now records when GOAT's screens opened and closed."
+                )
+            )
+        )
+    ),
+    Release(
         "GOAT 1.57.5",
         "2026-11-12",
         "업데이트 뒤 메인 화면이 두 번 뜨지 않습니다(시험 버전).",

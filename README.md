@@ -66,7 +66,7 @@ Open the ⋮ menu → Report a Problem. An email with a diagnostic file attached
 
 ## What's new
 
-See the [changelog (CHANGELOG.md)](CHANGELOG.md) for what changed in each version (currently written in Korean).
+See the [changelog (CHANGELOG.md)](CHANGELOG.md) for what changed in each version (in Korean and English from 1.57.1; earlier versions in Korean only).
 
 ## For developers
 

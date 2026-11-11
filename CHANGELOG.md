@@ -2,6 +2,25 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.58.0 · 2026-11-12
+
+<sub>영어를 지원합니다. / English is now supported.</sub>
+
+#### 추가 / Added
+
+- <sub>앱 문구를 영어로 볼 수 있습니다. 앱 설정 → 언어에서 시스템 언어 따르기·한국어·English를 고를 수 있고, 언어마다 국기가 함께 나옵니다. Android 13부터는 시스템 설정의 앱별 언어에서도 바꿀 수 있습니다. 한국어·영어가 아닌 언어를 쓰는 기기에서는 영어로 나옵니다. / The app can now be shown in English. In App Settings → Language, choose Follow system language, 한국어 or English, each shown with its flag. From Android 13 you can also change it in the system's per-app language settings. On devices set to a language other than Korean or English, the app is shown in English.</sub>
+- <sub>앱이 영어일 때 공유 메뉴·빠른 설정 타일 이름과 변경 기록도 영어로 나옵니다. / When the app is in English, the share menu and Quick Settings tile names and the changelog are in English too.</sub>
+
+#### 고침 / Fixed
+
+- <sub>GOAT 안에서 업데이트하면 끝난 뒤 메인 화면이 뜨고 잠시 뒤 하나 더 겹쳐 뜨던 것을 고쳤습니다. 이 수정은 이번 버전에서 다음 버전으로 업데이트할 때부터 적용됩니다. / After updating from inside GOAT, the main screen opened and then a second one opened on top a moment later. This fix takes effect from the next update after this version.</sub>
+- <sub>좁은 화면·큰 글자에서 고급 화면 배율 맨 위 카드의 글이 글자 단위로 끊기던 것을 고쳤습니다. / On narrow screens or with large text, the text in the top card of Advanced Display Scale broke in the middle of words.</sub>
+
+#### 변경 / Changed
+
+- <sub>앱 설정의 「언어」는 「정보」 바로 위에 있습니다. / Language in App Settings is now just above About.</sub>
+- <sub>문제 신고 진단 파일에 GOAT 화면이 언제 열리고 닫혔는지 기록을 더했습니다. / The diagnostic file in Report a Problem now records when GOAT's screens opened and closed.</sub>
+
 ### GOAT 1.57.5 · 2026-11-12
 
 <sub>업데이트 뒤 메인 화면이 두 번 뜨지 않습니다(시험 버전). / The main screen no longer opens twice after an update (test version).</sub>
