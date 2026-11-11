@@ -87,13 +87,6 @@
     <string name="labdata_privacydot_unchanged">변경되지 않음</string>
 
     <!-- StatusBarHider: 상태 표시줄 숨기기 -->
-    <string name="labdata_statusbar_no_overlay">\'다른 앱 위에 표시\' 권한이 없습니다. Shizuku를 연결하면 GOAT가 허용합니다.</string>
-    <string name="labdata_statusbar_need_shizuku">상단바 숨기기는 Shizuku 연결이 필요합니다. 연결 없이 숨기면 다른 앱에서 키보드가 뜨지 않습니다.</string>
-    <string name="labdata_statusbar_channel">상태 표시줄 숨기기</string>
-    <string name="labdata_statusbar_notif_title">상태 표시줄을 숨기는 중</string>
-    <string name="labdata_statusbar_notif_text">뒤로 가기를 사용해도 다시 숨깁니다. 키보드가 열려 있는 동안에는 표시됩니다</string>
-    <string name="labdata_statusbar_action_rehide">다시 숨기기</string>
-    <string name="labdata_statusbar_action_stop">끄기</string>
 
     <!-- Transcript: 전사문 변환(화자 이름·저장 파일 이름) -->
     <string name="labdata_transcript_me">나</string>

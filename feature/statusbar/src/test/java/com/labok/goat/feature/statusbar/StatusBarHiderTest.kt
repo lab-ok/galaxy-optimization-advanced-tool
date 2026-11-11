@@ -1,4 +1,4 @@
-package com.labok.goat.data.lab
+package com.labok.goat.feature.statusbar
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

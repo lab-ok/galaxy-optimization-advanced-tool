@@ -48,7 +48,7 @@ import com.labok.goat.data.lab.AirplaneRadios
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.LabSetting
 import com.labok.goat.data.lab.PrivacyDot
-import com.labok.goat.data.lab.StatusBarHider
+import com.labok.goat.feature.statusbar.StatusBarHider
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.Gap

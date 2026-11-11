@@ -1,4 +1,4 @@
-package com.labok.goat.data.lab
+package com.labok.goat.feature.statusbar
 
 import android.accessibilityservice.AccessibilityService
 import android.content.ComponentName
@@ -6,7 +6,6 @@ import android.content.Context
 import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import com.labok.goat.data.log.LogRepository
 
 /**
  * 상단바 숨기기 입력 도우미(접근성 서비스). 숨기기 창이 포커스를 쥔 동안 다른 앱의 입력란이 눌리면 포커스를 바로 넘기고
@@ -22,7 +21,7 @@ class StatusBarInputService : AccessibilityService() {
         val node = event.source
         if (node == null) {
             // 실기에서 원인을 볼 수 있게 남긴다(입력란 누름마다 한 줄이라 숨기기 창이 포커스를 쥔 동안만)
-            if (StatusBarHider.holdingFocus) LogRepository.from(this).add("상단바 숨기기: 입력 도우미가 누른 곳을 읽지 못함(${event.packageName})")
+            if (StatusBarHider.holdingFocus) StatusBarHost.note(this, "상단바 숨기기: 입력 도우미가 누른 곳을 읽지 못함(${event.packageName})")
             return
         }
         if (!node.isEditable) return
@@ -35,6 +34,8 @@ class StatusBarInputService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     companion object {
+        private const val LEGACY = "com.labok.goat/com.labok.goat.data.lab.StatusBarInputService"
+
         fun component(context: Context) = ComponentName(context, StatusBarInputService::class.java)
 
         /** 접근성 설정에 켜져 있는지. */
@@ -48,12 +49,13 @@ class StatusBarInputService : AccessibilityService() {
             val r = context.contentResolver
             val c = component(context)
             val others = Settings.Secure.getString(r, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
-                .split(':').filter { it.isNotBlank() && ComponentName.unflattenFromString(it) != c }
+                // 1.56.0까지의 이름(앱 모듈 data.lab)으로 남은 등록도 함께 지운다
+                .split(':').filter { it.isNotBlank() && ComponentName.unflattenFromString(it) != c && it != LEGACY }
             Settings.Secure.putString(r, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, (if (on) others + c.flattenToString() else others).joinToString(":"))
             if (on) Settings.Secure.putInt(r, Settings.Secure.ACCESSIBILITY_ENABLED, 1)
             enabled(context) == on
         }.getOrDefault(false).also { ok ->
-            LogRepository.from(context).add("상단바 숨기기: 입력 도우미 ${if (on) "켬" else "끔"}${if (ok) "" else " 실패"}")
+            StatusBarHost.note(context, "상단바 숨기기: 입력 도우미 ${if (on) "켬" else "끔"}${if (ok) "" else " 실패"}")
         }
     }
 }

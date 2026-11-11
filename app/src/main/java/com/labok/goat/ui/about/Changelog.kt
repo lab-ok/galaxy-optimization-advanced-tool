@@ -45,6 +45,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.56.1",
+        "2026-11-11",
+        "앱 내부 구조를 정리했습니다(시험 버전).",
+        listOf(
+            "변경" to listOf(
+                "상단바 숨기기를 별도 기능 모듈로 나눴습니다. 동작은 같습니다. 접근성 설정의 입력 도우미 이름(구성요소)이 바뀌어, 예전 등록은 상단바 숨기기를 켜거나 끌 때 자동으로 정리됩니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.56.0",
         "2026-11-11",
         "상단바 숨기기 중 입력칸을 한 번만 눌러도 키보드가 뜹니다.",

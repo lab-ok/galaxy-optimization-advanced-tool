@@ -15,7 +15,7 @@ import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.lab.AmbientOpen
 import com.labok.goat.data.lab.AutoFlex
-import com.labok.goat.data.lab.StatusBarHider
+import com.labok.goat.feature.statusbar.StatusBarHider
 import com.labok.goat.ui.liquid.UiGoat
 import com.labok.goat.ui.shizuku.ShizukuReconnectActivity
 import com.labok.goat.ui.text.Copy
@@ -36,7 +36,7 @@ object ShizukuNotice {
         Copy.text(R.string.feature_app_size).takeIf { AppDensityNotifier.enabled(context) },
         Copy.text(R.string.feature_lab_ambient).takeIf { AmbientOpen.enabled(context) },
         Copy.text(R.string.feature_camera_mute).takeIf { CameraMute.wanted(context) },
-        Copy.text(R.string.labdata_statusbar_channel).takeIf { StatusBarHider.on.value }
+        Copy.text(com.labok.goat.feature.statusbar.R.string.labdata_statusbar_channel).takeIf { StatusBarHider.on.value }
     )
 
     /** 알림이 떠 있을 때만 다시 맞춘다(기능을 끄고 켤 때: 영향받는 기능 이름을 고치거나, 모두 껐으면 지운다). */

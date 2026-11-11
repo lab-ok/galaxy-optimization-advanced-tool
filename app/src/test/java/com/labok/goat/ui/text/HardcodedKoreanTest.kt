@@ -11,6 +11,10 @@ import org.junit.Test
 class HardcodedKoreanTest {
     private val root = listOf(File("src/main/java"), File("app/src/main/java")).first { it.isDirectory }
 
+    /** 기능 모듈(feature 아래 각 모듈)의 소스도 같은 규칙으로 본다(허용 기준 없음: 새 모듈은 처음부터 문구를 리소스에 둔다). */
+    private val featureRoots = listOf(File("../feature"), File("feature")).firstOrNull { it.isDirectory }
+        ?.listFiles()?.map { File(it, "src/main/java") }?.filter { it.isDirectory }.orEmpty()
+
     @Test
     fun noNewKoreanLiterals() {
         val baseline = listOf(File("src/test/resources/korean_literal_baseline.txt"), File("app/src/test/resources/korean_literal_baseline.txt"))
@@ -24,11 +28,23 @@ class HardcodedKoreanTest {
             val allowed = baseline[path] ?: 0
             if (n > allowed) "$path: 한국어 문자열 ${n}개(허용 ${allowed}개)" else null
         }.toList()
+        val featureOver = featureRoots.flatMap { r ->
+            r.walkTopDown().filter { it.extension == "kt" && FEATURE_EXEMPT.none { e -> it.path.endsWith(e) } }.mapNotNull { f ->
+                val n = count(f.readText())
+                if (n > 0) "${f.path}: 한국어 문자열 ${n}개(기능 모듈은 허용 0)" else null
+            }.toList()
+        }
+        assertTrue("기능 모듈 코드에 한국어 문구가 있습니다:\n" + featureOver.joinToString("\n"), featureOver.isEmpty())
         assertTrue("코드에 한국어 문구가 늘었습니다. res/values/strings_*.xml로 옮기세요:\n" + over.joinToString("\n"), over.isEmpty())
     }
 
     companion object {
         /** 화면 문구가 아닌 파일: 변경 기록(언어별 파일로 따로), 개발자 조사 도구, 진단 파일. */
+        /** 기능 모듈에서 기록(진단 파일)용 문구만 담은 파일: 상단바 숨기기의 포커스 판단 설명(StatusBarFocus.why)은 GOAT 기록에만 쓴다. */
+        val FEATURE_EXEMPT = listOf(
+            "feature/statusbar/StatusBarHider.kt"
+        )
+
         val EXEMPT = listOf(
             "ui/about/Changelog.kt",
             "ui/lab/LabScreen.kt",

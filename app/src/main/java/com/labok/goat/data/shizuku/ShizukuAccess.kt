@@ -12,7 +12,7 @@ import com.labok.goat.R
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.appsize.AppUsage
-import com.labok.goat.data.lab.StatusBarHider
+import com.labok.goat.feature.statusbar.StatusBarHider
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.AppDensityPolicy
 import com.labok.goat.ui.text.Copy

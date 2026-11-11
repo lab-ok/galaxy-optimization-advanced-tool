@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- 상단바 숨기기 알림의 [다시 숨기기]·[끄기] -->
+        <receiver
+            android:name=".StatusBarHider$Receiver"
+            android:exported="false" />
+        <!-- 상단바 숨기기 입력 도우미(접근성 서비스). 숨기기를 켜고 끌 때 GOAT가 시스템 설정 권한으로 함께 켜고 끈다(StatusBarInputService) -->
+        <service
+            android:name=".StatusBarInputService"
+            android:exported="true"
+            android:label="@string/status_bar_input_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/status_bar_input_service" />
+        </service>
+    </application>
+</manifest>
