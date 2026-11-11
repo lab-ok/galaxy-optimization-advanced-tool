@@ -2,4 +2,8 @@
     <string name="app_name">GOAT</string>
     <string name="volume_rotate_desc">GOAT: 화면을 돌리면 볼륨 버튼의 올리기·내리기를 화면 방향에 맞춰 바꿉니다. 볼륨 키만 받고 화면 내용은 읽지 않습니다.</string>
     <string name="volume_rotate_label">GOAT 볼륨 버튼 회전</string>
+    <string name="label_flex_panel">GOAT 플렉스 패널</string>
+    <string name="label_share_txt">TXT로 공유</string>
+    <string name="label_save_transcript">전사문 저장(나·상대)</string>
+    <string name="label_share_clipboard">클립보드 공유</string>
 </resources>

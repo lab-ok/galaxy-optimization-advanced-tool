@@ -2,4 +2,8 @@
     <string name="app_name">GOAT</string>
     <string name="volume_rotate_desc">GOAT: When you rotate the screen, swaps volume up and down to match the screen orientation. Only receives volume key presses and never reads screen content.</string>
     <string name="volume_rotate_label">GOAT Volume Button Rotation</string>
+    <string name="label_flex_panel">GOAT Flex Panel</string>
+    <string name="label_share_txt">Share as TXT</string>
+    <string name="label_save_transcript">Save Transcript (Me·Other)</string>
+    <string name="label_share_clipboard">Share Clipboard</string>
 </resources>

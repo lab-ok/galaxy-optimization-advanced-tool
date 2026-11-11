@@ -53,4 +53,13 @@ class TranslationTest {
         }
         assertTrue("서식 인자가 다릅니다:\n" + problems.joinToString("\n"), problems.isEmpty())
     }
+
+    @Test
+    fun manifestLabelsUseResources() {
+        // 공유 메뉴·타일·서비스 이름은 매니페스트에 글자로 쓰면 번역되지 않는다(1.57.1 「TXT로 공유」 등이 영어에서도 한국어로 나옴)
+        val bad = ModuleSources.modules.mapNotNull { m -> File(m, "src/main/AndroidManifest.xml").takeIf { it.isFile } }.flatMap { f ->
+            Regex("""android:label="([^"@][^"]*)"""").findAll(f.readText()).map { "${f.path}: ${it.groupValues[1]}" }.toList()
+        }
+        assertTrue("매니페스트 이름은 @string으로 쓰세요:\n" + bad.joinToString("\n"), bad.isEmpty())
+    }
 }

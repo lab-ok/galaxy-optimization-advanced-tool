@@ -2,6 +2,15 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.57.2 · 2026-11-12
+
+<sub>공유 메뉴 이름과 변경 기록도 영어로 나옵니다(시험 버전). / Share menu names and the changelog now appear in English too (test version).</sub>
+
+#### 고침 / Fixed
+
+- <sub>공유 메뉴·빠른 설정 타일에 뜨는 이름이 영어 화면에서도 한국어로 나오던 것을 고쳤습니다. / Names in the share menu and Quick Settings tile stayed in Korean on English screens.</sub>
+- <sub>앱이 영어일 때 변경 기록도 영어로 보입니다(1.57.1부터). / When the app is in English, the changelog is shown in English too (from 1.57.1).</sub>
+
 ### GOAT 1.57.1 · 2026-11-12
 
 <sub>영어를 지원합니다(시험 버전).</sub>

@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
@@ -40,10 +41,40 @@ import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.delay
 
 /** 변경 기록 한 판. [sections]는 (묶음 이름, 바뀐 점들). */
-internal data class Release(val version: String, val date: String, val summary: String, val sections: List<Pair<String, List<String>>>)
+internal data class Release(
+    val version: String,
+    val date: String,
+    val summary: String,
+    val sections: List<Pair<String, List<String>>>,
+    /** 영어판(1.57.1부터 판마다 함께 쓴다, 11-11 소장님 「영문판이면 체인지로그도 앞으로는 영문으로」). 없으면 한국어를 보인다. */
+    val en: En? = null
+)
+
+/** 변경 기록 한 판의 영어 문구. 묶음 이름은 Added·Changed·Fixed. */
+internal data class En(val summary: String, val sections: List<Pair<String, List<String>>>)
 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
+    Release(
+        "GOAT 1.57.2",
+        "2026-11-12",
+        "공유 메뉴 이름과 변경 기록도 영어로 나옵니다(시험 버전).",
+        listOf(
+            "고침" to listOf(
+                "공유 메뉴·빠른 설정 타일에 뜨는 이름(TXT로 공유·클립보드 공유·전사문 저장·GOAT 플렉스 패널)이 영어 화면에서도 한국어로 나오던 것을 고쳤습니다.",
+                "앱이 영어일 때 변경 기록도 영어로 보입니다(1.57.1부터)."
+            )
+        ),
+        en = En(
+            "Share menu names and the changelog now appear in English too (test version).",
+            listOf(
+                "Fixed" to listOf(
+                    "Names shown in the share menu and Quick Settings tile (Share as TXT, Share Clipboard, Save Transcript, GOAT Flex Panel) stayed in Korean on English screens.",
+                    "When the app is in English, the changelog is shown in English too (from 1.57.1)."
+                )
+            )
+        )
+    ),
     Release(
         "GOAT 1.57.1",
         "2026-11-12",
@@ -52,6 +83,15 @@ internal val CHANGELOG = listOf(
             "추가" to listOf(
                 "앱 문구를 영어로 볼 수 있습니다. 앱 설정 → 언어에서 시스템 언어 따르기·한국어·English 중에서 고를 수 있고, 언어마다 국기가 함께 나옵니다. Android 13부터는 시스템 설정의 앱별 언어에서도 바꿀 수 있습니다. 한국어·영어가 아닌 언어를 쓰는 기기에서는 영어로 나옵니다.",
                 "좁은 화면·큰 글자에서 고급 화면 배율 맨 위 카드의 글이 글자 단위로 끊기던 것을 고쳤습니다."
+            )
+        ),
+        en = En(
+            "English support (test version).",
+            listOf(
+                "Added" to listOf(
+                    "GOAT is now available in English. Choose System language, 한국어 or English (with flags) in App Settings → Language. From Android 13 you can also change it in the system's per-app language settings. Devices set to other languages show English.",
+                    "Fixed text breaking letter by letter in the top card of Advanced Display Scale on narrow screens with large fonts."
+                )
             )
         )
     ),
@@ -3081,6 +3121,10 @@ internal fun ChangelogSheet() {
 @Composable
 private fun ReleaseCard(r: Release, initiallyOpen: Boolean) {
     val c = LocalLiquid.current
+    // 앱이 한국어가 아니면 영어판이 있는 판은 영어로 보인다
+    val english = LocalConfiguration.current.locales[0].language != "ko"
+    val summary = if (english) r.en?.summary ?: r.summary else r.summary
+    val sections = if (english) r.en?.sections ?: r.sections else r.sections
     var open by remember { mutableStateOf(initiallyOpen) }
     // 펼친 내용이 화면 아래로 숨지 않게, 펼침이 끝날 무렵 카드 전체가 보이도록 목록을 굴린다
     val bring = remember { BringIntoViewRequester() }
@@ -3102,14 +3146,14 @@ private fun ReleaseCard(r: Release, initiallyOpen: Boolean) {
         ) {
             Column(Modifier.weight(1f).padding(end = Space.Inline)) {
                 Text("${r.version} · ${r.date}", fontWeight = FontWeight.SemiBold, color = c.ink)
-                Text(r.summary, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                Text(summary, color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
             val turn by animateFloatAsState(if (open) 180f else 0f, label = "chevron")
             Icon(Icons.Outlined.KeyboardArrowDown, null, tint = c.ink, modifier = Modifier.graphicsLayer { rotationZ = turn })
         }
         AnimatedVisibility(open, enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(), exit = shrinkVertically() + fadeOut()) {
             Column(Modifier.padding(start = Gap.CardPadding, end = Gap.CardPadding, bottom = Gap.CardPadding)) {
-                r.sections.forEachIndexed { i, (title, items) ->
+                sections.forEachIndexed { i, (title, items) ->
                     // 첫 묶음은 머리 줄의 아래 여백이 위 간격을 대신한다
                     if (i > 0) Spacer(Modifier.height(Gap.Item))
                     Text(title, fontWeight = FontWeight.SemiBold, color = c.ink, style = MaterialTheme.typography.bodyMedium)
