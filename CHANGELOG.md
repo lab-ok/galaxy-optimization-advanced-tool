@@ -2,6 +2,14 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.57.5 · 2026-11-12
+
+<sub>업데이트 뒤 메인 화면이 두 번 뜨지 않습니다(시험 버전). / The main screen no longer opens twice after an update (test version).</sub>
+
+#### 고침 / Fixed
+
+- <sub>GOAT 안에서 업데이트하면 끝난 뒤 메인 화면이 뜨고 잠시 뒤 하나 더 겹쳐 뜨던 것을 고쳤습니다. 시스템이 GOAT를 먼저 다시 열었으면 GOAT는 더 열지 않습니다. / After updating from inside GOAT, the main screen opened and then a second one opened on top a moment later. If the system has already reopened GOAT, GOAT no longer opens another one.</sub>
+
 ### GOAT 1.57.4 · 2026-11-12
 
 <sub>앱 안에서 언어를 바꾸면 메뉴 이름도 바로 바뀝니다(시험 버전). / Menu names now change right away when you switch the language in the app (test version).</sub>

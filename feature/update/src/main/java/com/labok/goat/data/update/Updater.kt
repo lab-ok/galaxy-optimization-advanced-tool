@@ -261,8 +261,11 @@ object Updater {
     /** 새 버전([version])이 깔리면 [pkg]를 여는 떼어 낸 감시 셸(뒤에 설치 명령을 이어 붙인다). 시험할 수 있게 문자열만 만든다. */
     fun relaunchAfter(pkg: String, version: String): String {
         // 감시 스크립트는 작은따옴표로 감싸 바깥 셸이 $(seq 60)을 미리 풀지 않게 한다(미리 풀면 줄바꿈 때문에 for 문이 깨졌다)
+        // 삼성은 업데이트 뒤 SystemUI가 GOAT를 먼저 다시 연다. 그 위에 하나 더 열면 메인 화면이 두 번 뜬다(11-12 소장님 Fold8 진단 파일:
+        // SystemUI가 런처 항목을 열고 2.3초 뒤 감시 셸이 MainActivity를 또 열었다). 2초 기다린 뒤 GOAT 화면이 없을 때만 연다
         val watch = "for i in \$(seq 60); do sleep 1; " +
-            "dumpsys package $pkg | grep -q \"versionName=$version\$\" && { am start -n $pkg/.ui.MainActivity; exit 0; }; done"
+            "dumpsys package $pkg | grep -q \"versionName=$version\$\" && { sleep 2; " +
+            "dumpsys activity activities | grep -q \"Hist.*$pkg/\" || am start -n $pkg/.ui.MainActivity; exit 0; }; done"
         return "setsid sh -c '$watch' </dev/null >/dev/null 2>&1 & "
     }
 

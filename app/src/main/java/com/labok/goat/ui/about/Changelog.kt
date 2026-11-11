@@ -56,6 +56,16 @@ internal data class En(val summary: String, val sections: List<Pair<String, List
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.57.5",
+        "2026-11-12",
+        "업데이트 뒤 메인 화면이 두 번 뜨지 않습니다(시험 버전).",
+        listOf("고침" to listOf("GOAT 안에서 업데이트하면 끝난 뒤 메인 화면이 뜨고 잠시 뒤 하나 더 겹쳐 뜨던 것을 고쳤습니다. 시스템이 GOAT를 먼저 다시 열었으면 GOAT는 더 열지 않습니다.")),
+        en = En(
+            "The main screen no longer opens twice after an update (test version).",
+            listOf("Fixed" to listOf("After updating from inside GOAT, the main screen opened and then a second one opened on top a moment later. If the system has already reopened GOAT, GOAT no longer opens another one."))
+        )
+    ),
+    Release(
         "GOAT 1.57.4",
         "2026-11-12",
         "앱 안에서 언어를 바꾸면 메뉴 이름도 바로 바뀝니다(시험 버전).",

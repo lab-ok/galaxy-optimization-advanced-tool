@@ -33,7 +33,7 @@ class InstallFailureTest {
         val cmd = Updater.relaunchAfter("com.labok.goat", "1.6.0")
         assertEquals(
             "setsid sh -c 'for i in \$(seq 60); do sleep 1; dumpsys package com.labok.goat | grep -q \"versionName=1.6.0\$\" && " +
-                "{ am start -n com.labok.goat/.ui.MainActivity; exit 0; }; done' </dev/null >/dev/null 2>&1 & ",
+                "{ sleep 2; dumpsys activity activities | grep -q \"Hist.*com.labok.goat/\" || am start -n com.labok.goat/.ui.MainActivity; exit 0; }; done' </dev/null >/dev/null 2>&1 & ",
             cmd
         )
     }
