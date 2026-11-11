@@ -5,6 +5,21 @@ import org.junit.Test
 
 class StatusBarHiderTest {
     @Test
+    fun lastTouchUpFromRecentQueue() {
+        val out = """
+              RecentQueue: length=3
+                MotionEvent(deviceId=-1, eventTime=1, source=TOUCHSCREEN, displayId=0, action=DOWN, flags=0x0, pointers=[0: (100.0, 200.0)]), policyFlags=0x6b000000, age=900ms
+                MotionEvent(deviceId=-1, eventTime=1, source=TOUCHSCREEN, displayId=1, action=UP, flags=0x0, pointers=[0: (640.5, 903.0)]), policyFlags=0x6b000000, age=800ms
+                KeyEvent(deviceId=-1, action=UP, keyCode=BACK(4)), age=100ms
+        """.trimIndent()
+        val tap = StatusBarFocus.lastTouchUp(out)!!
+        assertEquals(listOf(1, 640, 903), listOf(tap.display, tap.x, tap.y))
+        // 오래된 누름은 다시 누르지 않는다
+        assertEquals(null, StatusBarFocus.lastTouchUp(out.replace("age=800ms", "age=9000ms")))
+        assertEquals(null, StatusBarFocus.lastTouchUp("RecentQueue: length=0"))
+    }
+
+    @Test
     fun foldSecondDisplayNullFocusIsSkipped() {
         // 실기(SM-F971N, Android 17): 쓰지 않는 화면의 null 줄이 먼저 나온다
         val out = """

@@ -251,12 +251,16 @@ object StatusBarHider {
                     val id = lastFailedShowId() ?: return@Thread
                     if (id > lastImeFail) {
                         lastImeFail = id
+                        // 첫 누름의 키보드 요청은 이미 실패했다: 포커스가 앱으로 넘어가면 같은 자리를 한 번 더 눌러 첫 누름에 뜨게 한다
+                        // (11-11 소장님 실기 "두세 번 눌러야 올라옴"). 다른 앱 누름 좌표는 바깥 누름 이벤트에 오지 않아 입력 기록에서 읽는다
+                        val tap = ShizukuAccess.shell("dumpsys input")?.out?.let(StatusBarFocus::lastTouchUp)
                         main.post {
                             if (view !== v || !onFlow.value) return@post
                             lastKeyBack = false
                             inputGraceUntil = SystemClock.uptimeMillis() + INPUT_GRACE_MS
+                            if (tap != null) afterYield = { Thread { ShizukuAccess.shell("input -d ${tap.display} tap ${tap.x} ${tap.y}") }.start() }
                             stepAside(context, v)
-                            LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 키보드를 띄우려고 포커스 해제")
+                            LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 키보드를 띄우려고 포커스 해제" + (tap?.let { " · 같은 자리(${it.x},${it.y}) 다시 누름" } ?: ""))
                         }
                         return@Thread
                     }
@@ -404,6 +408,23 @@ internal object StatusBarFocus {
         .filter { "TYPE_SHOW - STATUS_FAIL" in it && "com.labok.goat" !in it }
         .mapNotNull { Regex("""#(\d+) TYPE_SHOW""").find(it)?.groupValues?.get(1)?.toIntOrNull() }
         .maxOrNull() ?: 0
+
+    /** 다시 누를 자리(화면 번호·좌표). */
+    class Tap(val display: Int, val x: Int, val y: Int)
+
+    /**
+     * `dumpsys input`의 최근 이벤트(RecentQueue)에서 [MAX_TAP_AGE_MS] 안에 손을 뗀 마지막 터치 화면 누름. 없으면 null.
+     * 줄 모양: `MotionEvent(… source=TOUCHSCREEN, displayId=0, action=UP, … pointers=[0: (640.0, 903.0)]), …, age=5149ms`
+     */
+    fun lastTouchUp(out: String): Tap? = out.lines().lastOrNull { "MotionEvent(" in it && "source=TOUCHSCREEN" in it && "action=UP," in it }?.let { line ->
+        val age = Regex("""age=(\d+)ms""").find(line)?.groupValues?.get(1)?.toLongOrNull() ?: return null
+        if (age > MAX_TAP_AGE_MS) return null
+        val display = Regex("""displayId=(-?\d+)""").find(line)?.groupValues?.get(1)?.toIntOrNull() ?: return null
+        val p = Regex("""pointers=\[0: \((-?[\d.]+), (-?[\d.]+)\)""").find(line) ?: return null
+        Tap(display.coerceAtLeast(0), p.groupValues[1].toFloat().toInt(), p.groupValues[2].toFloat().toInt())
+    }
+
+    private const val MAX_TAP_AGE_MS = 3_000L
 
     fun parse(out: String): State {
         val lines = out.lines()
