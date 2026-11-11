@@ -56,6 +56,16 @@ internal data class En(val summary: String, val sections: List<Pair<String, List
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.57.3",
+        "2026-11-12",
+        "언어 설정 위치를 옮겼습니다(시험 버전).",
+        listOf("변경" to listOf("앱 설정의 「언어」를 맨 위에서 「정보」 바로 위로 옮겼습니다.")),
+        en = En(
+            "Moved the language setting (test version).",
+            listOf("Changed" to listOf("Moved Language in App Settings from the top to just above About."))
+        )
+    ),
+    Release(
         "GOAT 1.57.2",
         "2026-11-12",
         "공유 메뉴 이름과 변경 기록도 영어로 나옵니다(시험 버전).",

@@ -2,6 +2,14 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.57.3 · 2026-11-12
+
+<sub>언어 설정 위치를 옮겼습니다(시험 버전). / Moved the language setting (test version).</sub>
+
+#### 변경 / Changed
+
+- <sub>앱 설정의 「언어」를 맨 위에서 「정보」 바로 위로 옮겼습니다. / Moved Language in App Settings from the top to just above About.</sub>
+
 ### GOAT 1.57.2 · 2026-11-12
 
 <sub>공유 메뉴 이름과 변경 기록도 영어로 나옵니다(시험 버전). / Share menu names and the changelog now appear in English too (test version).</sub>
