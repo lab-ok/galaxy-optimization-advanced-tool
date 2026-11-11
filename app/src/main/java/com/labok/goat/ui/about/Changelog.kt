@@ -45,6 +45,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.56.0",
+        "2026-11-11",
+        "상단바 숨기기 중 입력칸을 한 번만 눌러도 키보드가 뜹니다.",
+        listOf(
+            "고침" to listOf(
+                "상단바 숨기기를 켠 동안 입력칸을 두세 번 눌러야 키보드가 뜨던 문제를 고쳤습니다. 상단바 숨기기를 켜면 「GOAT 상단바 숨기기 입력 도우미」(접근성 서비스)가 함께 켜져, 입력칸을 누르는 순간 키보드에 자리를 비켜 줍니다. 숨기기를 끄면 같이 꺼집니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.55.4",
         "2026-11-11",
         "상단바 숨기기 입력 도우미가 다른 앱 입력칸을 알아보게 고쳤습니다(시험 버전).",
