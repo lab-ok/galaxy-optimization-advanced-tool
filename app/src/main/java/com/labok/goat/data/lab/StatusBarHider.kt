@@ -41,6 +41,8 @@ import kotlinx.coroutines.flow.asStateFlow
  * 포커스를 다시 받아 다시 숨는다. 키보드가 열려 있거나 알림창·시스템 창이 포커스를 가진 동안은 [POLL_MS]마다 다시 확인한다
  * (포커스를 빼앗으면 입력이 끊기거나 시스템 창이 키를 못 받는다). 상태는 Shizuku 셸로만 알 수 있어, Shizuku가 없으면
  * 뒤로 가기 뒤에만 다시 숨는다. [다시 숨기기]로 창을 다시 띄워도 다시 숨는다. 포커스가 바뀌는 때를 GOAT 기록에 남긴다.
+ * Shizuku가 없으면 입력란을 눌러도 포커스를 내줄 방법이 없어 키보드가 뜨지 않는다(11-11 폴드8 신고, Shizuku 없음).
+ * 그래서 Shizuku 없이는 켜지 않고, 켜 둔 채 끊기면 포커스를 내려놓고 기다렸다가 다시 연결되면 다시 숨는다.
  */
 object StatusBarHider {
     private const val CHANNEL_ID = "status_bar_hide"
@@ -65,9 +67,12 @@ object StatusBarHider {
     private val onFlow = MutableStateFlow(false)
     val on: StateFlow<Boolean> = onFlow.asStateFlow()
 
+    private fun shizukuReady() = ShizukuAccess.status.value == ShizukuAccess.State.READY
+
     /** 켠다. 성공하면 null, 실패하면 이유. 다른 앱 위에 표시 권한은 Shizuku로 준다. */
     fun start(context: Context): String? {
         val app = context.applicationContext
+        if (!shizukuReady()) return Copy.text(R.string.labdata_statusbar_need_shizuku)
         if (!Settings.canDrawOverlays(app)) {
             ShizukuAccess.shell("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
             if (!Settings.canDrawOverlays(app)) return Copy.text(R.string.labdata_statusbar_no_overlay)
@@ -102,6 +107,31 @@ object StatusBarHider {
         LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 바로 포커스 해제")
     }
 
+    /** Shizuku 연결이 끊기면 포커스를 내려놓는다(상단바가 보이지만 키보드는 뜬다). */
+    fun onShizukuLost(context: Context) {
+        if (!onFlow.value) return
+        val app = context.applicationContext
+        main.post {
+            regrabGen++
+            view?.let { stepAside(app, it) }
+            LogRepository.from(app).add("상단바 숨기기: Shizuku 연결이 끊겨 키보드를 막지 않도록 숨기기를 멈춤")
+        }
+    }
+
+    /**
+     * Shizuku가 다시 연결되면 다시 숨는다. 바로 창을 다시 띄우지 않고 평소 다시 숨기기 확인에 맡긴다
+     * (키보드가 열려 있거나 설정 앱처럼 다른 앱 위 표시를 막는 화면이면 비킬 때까지 기다렸다 숨는다).
+     */
+    fun onShizukuReady(context: Context) {
+        if (!onFlow.value) return
+        val app = context.applicationContext
+        main.post {
+            if (view?.hasWindowFocus() == true) return@post
+            LogRepository.from(app).add("상단바 숨기기: Shizuku가 다시 연결돼 다시 숨기기를 확인함")
+            scheduleRegrab(app, afterBack = false)
+        }
+    }
+
     fun stop(context: Context) {
         val app = context.applicationContext
         regrabGen++
@@ -131,6 +161,12 @@ object StatusBarHider {
                 log.add("상단바 숨기기: 포커스 ${if (hasWindowFocus) "받음(숨김)" else "잃음(상단바 보일 수 있음)"}")
                 if (hasWindowFocus) {
                     regrabGen++
+                    // Shizuku 없이 포커스를 쥐면 입력란을 눌러도 키보드가 뜨지 않는다: 바로 내려놓는다
+                    if (!shizukuReady()) {
+                        stepAside(context, this)
+                        log.add("상단바 숨기기: Shizuku가 없어 키보드를 막지 않도록 포커스를 바로 내려놓음")
+                        return
+                    }
                     hideBars(this)
                 } else {
                     afterYield?.let { r ->
@@ -274,11 +310,8 @@ object StatusBarHider {
                                 inputGraceUntil = 0L
                                 check(POLL_MS)
                             }
-                            // Shizuku가 없으면 뒤로 가기 뒤에만 다시 숨는다(키보드 입력 중에는 빼앗지 않는다)
-                            else -> {
-                                LogRepository.from(context).add("상단바 숨기기: Shizuku가 없어 ${if (afterBack) "뒤로 가기 뒤라 다시 숨김" else "다시 숨기지 않음"}")
-                                if (afterBack) regrab(context, 1)
-                            }
+                            // Shizuku가 없으면 다시 숨지 않는다(포커스를 다시 쥐면 키보드가 뜨지 않는다). 다시 연결되면 [onShizukuReady]가 숨긴다
+                            else -> LogRepository.from(context).add("상단바 숨기기: Shizuku가 없어 다시 숨기지 않음(키보드 보호)")
                         }
                     }
                 }.start()

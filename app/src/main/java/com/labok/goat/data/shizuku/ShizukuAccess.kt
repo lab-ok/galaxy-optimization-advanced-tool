@@ -12,6 +12,7 @@ import com.labok.goat.R
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
 import com.labok.goat.data.appsize.AppUsage
+import com.labok.goat.data.lab.StatusBarHider
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.AppDensityPolicy
 import com.labok.goat.ui.text.Copy
@@ -89,9 +90,11 @@ object ShizukuAccess {
         runCatching {
             if (state.value == State.READY) {
                 ShizukuNotice.update(app)
+                if (before != State.READY) StatusBarHider.onShizukuReady(app)
             } else if (before == State.READY) {
                 LogRepository.from(app).add("Shizuku 연결이 끊김(${state.value})")
                 ShizukuNotice.update(app)
+                StatusBarHider.onShizukuLost(app)
             }
         }
     }

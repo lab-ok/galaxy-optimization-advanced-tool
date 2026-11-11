@@ -45,6 +45,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.55.0",
+        "2026-11-11",
+        "상단바 숨기기가 키보드를 막던 문제를 고쳤습니다.",
+        listOf(
+            "고침" to listOf(
+                "Shizuku가 연결되지 않은 채 상단바 숨기기를 켜면 다른 앱 입력칸을 눌러도 키보드가 뜨지 않던 문제를 고쳤습니다. 이제 Shizuku 없이는 켜지지 않고, 켜 둔 채 연결이 끊기면 숨기기를 잠시 멈췄다가 다시 연결되면 다시 숨깁니다.",
+                "Shizuku 끊김 알림의 동작하지 않는 기능 목록에 상단바 숨기기를 넣었습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.54.0",
         "2026-11-11",
         "두 화면을 같은 DPI로 맞출 수 있습니다.",
