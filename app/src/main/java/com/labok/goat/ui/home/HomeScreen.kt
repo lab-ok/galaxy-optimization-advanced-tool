@@ -1,5 +1,7 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.feature.statusbar.StatusBarHideCard
+import com.labok.goat.AppBuild
 import android.Manifest
 import android.content.Context
 import android.hardware.display.DisplayManager
@@ -88,7 +90,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.labok.goat.BuildConfig
 import com.labok.goat.R
 import com.labok.goat.background.ExternalChangeNotifier
 import com.labok.goat.data.lab.LabUnlock
@@ -332,7 +333,7 @@ internal fun HomeScreen(
             section(Copy.MENU_SECTION_SHARE, NavItem.LAB_NOTE)
             section(Copy.text(R.string.menu_section_stats), NavItem.LAB_STATS)
             // 실험실: 조사 도구만. lab 빌드는 잠금과 상관없이 보인다
-            section(Copy.MENU_SECTION_LAB, labOf(NavItem.LAB_VOICE), NavItem.LAB_TOOLS.takeIf { BuildConfig.LAB || lab })
+            section(Copy.MENU_SECTION_LAB, labOf(NavItem.LAB_VOICE), NavItem.LAB_TOOLS.takeIf { AppBuild.lab || lab })
         }
         // 점 세 개 메뉴: 지금 기능만의 도구를 먼저, 공통 항목(사용 방법·권한 설정·문제 신고·초기화)은 같은 순서로 뒤에 둔다.
         val common = { help: Sheet, guide: Sheet, reset: Sheet ->
@@ -611,7 +612,7 @@ internal fun HomeScreen(
                             NavItem.RESOLUTION -> ResolutionScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.DARK -> DarkScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.AIRPLANE -> LabAirplaneScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
-                            NavItem.STATUS_ICONS -> LabIconsScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE })
+                            NavItem.STATUS_ICONS -> LabIconsScreen(inner, permitted = state.hasPermission, onGuide = { sheet = Sheet.GUIDE }, hideCard = { StatusBarHideCard() })
                             NavItem.AUTO_FLEX -> LabFlexScreen(inner)
                             NavItem.LAB_TOOLS -> LabScreen(inner)
                             NavItem.LAB_STATS -> UsageStatsScreen(inner)

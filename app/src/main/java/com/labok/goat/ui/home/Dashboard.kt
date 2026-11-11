@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.data.appsize.DensityShell
 import android.content.Context
 import android.os.SystemClock
 import androidx.compose.animation.AnimatedVisibility
@@ -88,7 +89,6 @@ import com.labok.goat.AppInfo
 import com.labok.goat.R
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.appsize.AppUsage
-import com.labok.goat.data.appsize.DensityShell
 import com.labok.goat.data.camera.CameraMute
 import com.labok.goat.data.display.ResolutionState
 import com.labok.goat.data.lab.AirplaneRadios

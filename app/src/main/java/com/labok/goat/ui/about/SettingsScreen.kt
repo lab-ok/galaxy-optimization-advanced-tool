@@ -1,5 +1,6 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.AppBuild
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -52,7 +53,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import com.labok.goat.BuildConfig
 import com.labok.goat.R
 import com.labok.goat.data.log.PublicLogFile
 import com.labok.goat.data.shizuku.ShizukuAccess
@@ -237,7 +237,7 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
                 GlassCard {
                     Column(Modifier.rowListEdges()) {
                         val perms = AppPermissions.all
-                        InfoLink(Copy.MENU_ABOUT, stringResource(R.string.about_info_link_fmt, BuildConfig.VERSION_NAME), onAbout)
+                        InfoLink(Copy.MENU_ABOUT, stringResource(R.string.about_info_link_fmt, AppBuild.versionName), onAbout)
                         InfoLink(Copy.INFO_CHANGELOG, CHANGELOG.first().let { stringResource(R.string.about_changelog_latest_fmt, it.version.removePrefix("GOAT "), it.date) }, onChangelog)
                         InfoLink(Copy.INFO_PERMISSIONS, stringResource(R.string.about_permissions_count_fmt, perms.size, perms.count { AppPermissions.granted(context, it) }), onPermissions)
                     }

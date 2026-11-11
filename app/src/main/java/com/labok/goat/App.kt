@@ -1,5 +1,13 @@
 package com.labok.goat
 
+import com.labok.goat.data.appsize.DensityShell
+import com.labok.goat.data.log.DiagnosticReport
+import com.labok.goat.ui.nav.NavItem
+import com.labok.goat.ui.nav.FeatureSupport
+import com.labok.goat.data.lab.UsageTally
+import com.labok.goat.background.GoatService
+import com.labok.goat.ui.MainActivity
+import com.labok.goat.data.lab.MemoShare
 import com.labok.goat.feature.statusbar.StatusBarHider
 import android.app.Application
 import android.app.NotificationManager
@@ -39,10 +47,37 @@ import com.labok.goat.ui.nav.NewBadge
 import com.labok.goat.ui.text.Copy
 
 class App : Application() {
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        // 기능·공통 모듈은 BuildConfig를 볼 수 없어, 다른 구성요소(제공자 포함)보다 먼저 빌드 정보를 넣어 둔다
+        AppBuild.versionName = BuildConfig.VERSION_NAME
+        AppBuild.versionCode = BuildConfig.VERSION_CODE
+        AppBuild.lab = BuildConfig.LAB
+    }
+
     override fun onCreate() {
         super.onCreate()
         // 공통 문구를 리소스(언어별)에서 읽게 한다. 다른 무엇보다 먼저(크래시 기록·부팅 처리도 문구를 쓴다)
         Copy.lookup = resources::getString
+        // 기능 모듈이 앱에 부탁하는 일(첫 화면, 상주 서비스, 볼륨 키 세기, 앱별 배율 알림 덧붙임, 기능 지원 여부)
+        AppHooks.mainActivity = MainActivity::class.java
+        AppHooks.syncService = { GoatService.sync(it) }
+        AppHooks.countVolume = { UsageTally.countVolume(it) }
+        AppHooks.densityNoteExtras = { ctx ->
+            listOfNotNull(
+                Copy.text(R.string.appsize_notif_shake_on).takeIf { ShakeRotate.enabled(ctx) },
+                Copy.text(R.string.appsize_notif_flex_on).takeIf { AutoFlex.enabled(ctx) }
+            ).joinToString(" · ").ifBlank { null }
+        }
+        AppHooks.savedAppDensityCount = { DensityShell.savedCount(it) }
+        AppHooks.diagnosticReport = { DiagnosticReport.build(it) }
+        AppHooks.shizukuNoticeUpdate = { ShizukuNotice.update(it) }
+        AppHooks.featureSupport = { ctx, name, ok -> runCatching { FeatureSupport.note(ctx, NavItem.valueOf(name), ok) } }
+        // 실험실을 열고 닫을 때: 전사문 저장 공유 메뉴, 처음 열면 사용 통계 보관 예약
+        LabUnlock.onChange = { ctx, open, first ->
+            MemoShare.setShareTarget(ctx, open)
+            if (first) UsageArchive.schedule(ctx)
+        }
         // Shizuku 연결·끊김 때 할 일(공통 모듈은 기능을 모르므로 여기서 이어 준다)
         ShizukuAccess.addListener { app, before, now ->
             ShizukuNotice.update(app)

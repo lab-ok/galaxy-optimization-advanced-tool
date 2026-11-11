@@ -1,0 +1,73 @@
+package com.labok.goat.domain
+
+import com.labok.goat.core.R
+import com.labok.goat.ui.text.Copy
+
+/** DPI 값 검증과 "지금 무엇을 해야 하는가" 판단. Android 의존성이 없어 단위 테스트로 검증한다. */
+object DpiPolicy {
+    /**
+     * 받는 DPI 범위. 최소는 안드로이드 표준 밀도 중 가장 낮은 ldpi(120)로, 태블릿처럼 큰 화면을 아주 넓게 쓰는 경우까지 받는다.
+     * 실제 조절바의 최대는 기기마다 [maxForShortSide]로 더 낮춘다(앱이 깨지지 않는 범위).
+     */
+    const val MIN_DPI = 120
+    const val MAX_DPI = 640
+
+    /**
+     * 이 기기에서 쓸 수 있는 가장 큰 DPI: 화면의 짧은 변이 320dp 이상이어야 한다(Android 호환성 정의, smallest width ≥ 320dp).
+     * 짧은 변 [shortSidePx] 픽셀 × 160 ÷ 320. 예) 폴드8 외부 화면 1248px → 624, 1600px 태블릿 → 640(상한).
+     */
+    fun maxForShortSide(shortSidePx: Int): Int = (shortSidePx * 160 / MIN_SMALLEST_WIDTH_DP).coerceIn(MIN_DPI, MAX_DPI)
+
+    /** 앱이 깨지지 않는 가장 좁은 화면 너비(dp). */
+    const val MIN_SMALLEST_WIDTH_DP = 320
+
+    /** 같은 창(window) 안에서 허용하는 최대 적용 횟수. Samsung과 서로 덮어쓰는 무한 반복을 막는다. */
+    const val MAX_APPLIES_PER_WINDOW = 5
+    const val APPLY_WINDOW_MS = 60_000L
+
+    /** 부팅 뒤 확인 시점(초). 0초 즉시, 5·15·30초 재확인, 60초 최종 확인. */
+    val BOOT_CHECK_OFFSETS_SEC = listOf(0L, 5L, 15L, 30L, 60L)
+
+    sealed interface Validation {
+        data class Ok(val dpi: Int) : Validation
+        data class Error(val message: String) : Validation
+    }
+
+    fun validate(input: String?): Validation {
+        val text = input?.trim().orEmpty()
+        if (text.isEmpty()) return Validation.Error(Copy.text(R.string.domain_dpi_input_empty))
+        val dpi = text.toIntOrNull() ?: return Validation.Error(Copy.text(R.string.domain_dpi_input_not_number))
+        if (dpi < MIN_DPI || dpi > MAX_DPI) {
+            return Validation.Error(Copy.text(R.string.domain_dpi_input_range_fmt, MIN_DPI, MAX_DPI))
+        }
+        return Validation.Ok(dpi)
+    }
+
+    fun isValid(dpi: Int): Boolean = dpi in MIN_DPI..MAX_DPI
+
+    enum class Decision { EXTERNAL_CHANGE, BLOCKED, SKIP_DISABLED, NO_PERMISSION, NO_TARGET, UNKNOWN_CURRENT, ALREADY_OK, RATE_LIMITED, APPLY }
+
+    fun decide(
+        automatic: Boolean,
+        autoEnabled: Boolean,
+        hasPermission: Boolean,
+        target: Int?,
+        current: Int?,
+        recentApplyTimes: List<Long>,
+        now: Long
+    ): Decision {
+        if (automatic && !autoEnabled) return Decision.SKIP_DISABLED
+        if (!hasPermission) return Decision.NO_PERMISSION
+        if (target == null || !isValid(target)) return Decision.NO_TARGET
+        if (current == null) return Decision.UNKNOWN_CURRENT
+        if (current == target) return Decision.ALREADY_OK
+        // 반복 방지는 자동 적용에만 건다. 사용자가 직접 바꾸는 것은 막지 않는다.
+        if (automatic && recentAppliesInWindow(recentApplyTimes, now) >= MAX_APPLIES_PER_WINDOW) return Decision.RATE_LIMITED
+        return Decision.APPLY
+    }
+
+    fun recentAppliesInWindow(times: List<Long>, now: Long): Int = times.count { now - it in 0 until APPLY_WINDOW_MS }
+
+    /** 저장할 적용 기록. 창 밖의 오래된 기록은 버린다. */
+    fun pruneApplyTimes(times: List<Long>, now: Long): List<Long> = times.filter { now - it in 0 until APPLY_WINDOW_MS }.takeLast(MAX_APPLIES_PER_WINDOW * 2)
+}

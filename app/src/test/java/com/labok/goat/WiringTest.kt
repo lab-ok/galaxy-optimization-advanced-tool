@@ -49,17 +49,26 @@ class WiringTest {
 
     private fun stripComments(code: String) = code.replace(Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL), "").replace(Regex("""//[^\n]*"""), "")
 
+    /** 모든 모듈 소스에 있는 클래스·객체의 전체 이름(중첩은 $로). 앱 매니페스트는 다른 모듈에 있는 클래스도 선언한다. */
+    private val classNames: Set<String> by lazy {
+        sources.values.flatMap { text ->
+            val pkg = Regex("""^package ([\w.]+)""", RegexOption.MULTILINE).find(text)?.groupValues?.get(1) ?: return@flatMap emptyList()
+            val top = Regex("""^(?:[a-z]+ )*(?:class|object) (\w+)""", RegexOption.MULTILINE).findAll(text).map { "$pkg.${it.groupValues[1]}" }.toList()
+            val nested = Regex("""^    (?:[a-z]+ )*(?:class|object) (\w+)""", RegexOption.MULTILINE).findAll(text).flatMap { n -> top.map { "$it$${n.groupValues[1]}" } }.toList()
+            top + nested
+        }.toSet()
+    }
+
+    /** 모듈의 namespace(매니페스트의 '.이름'이 이 앞에 붙는다). */
+    private fun namespace(module: File) = Regex("""namespace = "([\w.]+)"""").find(File(module, "build.gradle.kts").readText())?.groupValues?.get(1).orEmpty()
+
     @Test
     fun manifestComponentsHaveClasses() {
-        // activity-alias(바로가기 아이콘)는 클래스가 없는 별칭이라 뺀다. 각 모듈의 '.이름'이 그 모듈 소스에 있는지 본다
+        // activity-alias(바로가기 아이콘)는 클래스가 없는 별칭이라 뺀다. 이름은 그 모듈 namespace 기준으로 풀어 모든 모듈 소스에서 찾는다
         val missing = manifests.flatMap { (m, text) ->
-            val src = File(m, "src/main/java").walkTopDown().filter { it.extension == "kt" }.map { it.readText() }.joinToString("\n")
-            Regex("""<(?:application|activity|service|receiver|provider)\s+android:name="\.([\w.$]+)"""").findAll(text).map { it.groupValues[1] }
-                .filterNot { name ->
-                    val simple = name.substringAfterLast('.').substringBefore('$')
-                    val ok = Regex("""(class|object) $simple\b""").containsMatchIn(src)
-                    ok && (!name.contains('$') || Regex("""class ${name.substringAfter('$')}\b""").containsMatchIn(src))
-                }.map { "${m.name}: $it" }.toList()
+            val ns = namespace(m)
+            Regex("""<(?:application|activity|service|receiver|provider)\s+android:name="\.([\w.$]+)"""").findAll(text)
+                .map { "$ns.${it.groupValues[1]}" }.filterNot { it in classNames }.map { "${m.name}: $it" }.toList()
         }
         assertTrue("매니페스트에 있지만 클래스가 없는 구성요소:\n" + missing.joinToString("\n"), missing.isEmpty())
     }
@@ -70,6 +79,16 @@ class WiringTest {
         val undeclared = sources.flatMap { (_, text) -> kinds.findAll(text).map { it.groupValues[1] }.toList() }
             .filterNot { c -> manifests.any { (_, text) -> Regex("""android:name="[^"]*[.$]$c"""").containsMatchIn(text) } }
         assertTrue("매니페스트에 선언하지 않은 서비스·리시버:\n" + undeclared.joinToString("\n"), undeclared.isEmpty())
+    }
+
+    @Test
+    fun featureModulesDependOnlyOnCore() {
+        // 기능 모듈은 :core에만 기댄다. 다른 기능이나 앱이 필요하면 AppHooks로 앱에 부탁한다(11-11 모듈 분리)
+        val bad = modules.filter { it.parentFile?.name == "feature" }.flatMap { m ->
+            Regex("""project\("(:[\w:]+)"\)""").findAll(File(m, "build.gradle.kts").readText()).map { it.groupValues[1] }
+                .filter { it != ":core" }.map { "${m.name} → $it" }.toList()
+        }
+        assertTrue("기능 모듈이 :core 말고 다른 모듈에 기댑니다:\n" + bad.joinToString("\n"), bad.isEmpty())
     }
 
     @Test
@@ -86,8 +105,8 @@ class WiringTest {
     companion object {
         /** 지금 남아 있는 고아 함수(이 목록을 늘리지 않는다. 지우거나 쓰게 되면 여기서도 뺀다). */
         private val ORPHAN_BASELINE = setOf(
-            "app/src/main/java/com/labok/goat/data/lab/VoiceRedirect.kt: targetEnabled",
-            "app/src/main/java/com/labok/goat/data/lab/TentMode.kt: launchComponent"
+            "feature/voice/src/main/java/com/labok/goat/data/lab/VoiceRedirect.kt: targetEnabled",
+            "feature/flex/src/main/java/com/labok/goat/data/lab/TentMode.kt: launchComponent"
         )
 
         private val CONTRACTS = listOf(

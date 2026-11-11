@@ -1,0 +1,483 @@
+package com.labok.goat.ui.appsize
+
+import com.labok.goat.AppHooks
+import com.labok.goat.ui.components.Section
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.labok.goat.core.R
+import com.labok.goat.data.notify.Notify
+import com.labok.goat.data.appsize.AppDensityNotifier
+import com.labok.goat.data.appsize.AppList
+import com.labok.goat.data.appsize.AppUsage
+import com.labok.goat.data.appsize.DensityShell
+import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.domain.AppDensityPolicy
+import com.labok.goat.ui.components.ContentMaxWidth
+import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.PillShape
+import com.labok.goat.ui.components.Radius
+import com.labok.goat.ui.components.Space
+import com.labok.goat.ui.components.Tile
+import com.labok.goat.ui.components.featurePadding
+import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.LiquidButton
+import com.labok.goat.ui.liquid.LiquidChips
+import com.labok.goat.ui.liquid.LiquidLoader
+import com.labok.goat.ui.liquid.LiquidSwitch
+import com.labok.goat.ui.liquid.LiquidTextField
+import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.LocalReduceMotion
+import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.text.Copy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+
+/**
+ * 앱별 화면 배율 설정: 삼성 '앱 화면 크게/작게'와 같은 설정을 GOAT에서 바꾼다.
+ * - 셸 권한(Shizuku 또는 PC 도우미)이 없으면 연결 안내 카드만 보여 주고 [onGuide]로 연결 시트를 연다.
+ * - 있으면: 알림창 조절, 검색, '적용된 앱', '최근 사용 순' 목록. 앱을 누르면 기본·320~510이 펼쳐진다.
+ * 목록은 LazyColumn이라 앱이 '적용된 앱'과 '최근 사용 순' 사이를 오갈 때 자리 이동이 애니메이션된다.
+ */
+@Composable
+fun AppSizeScreen(contentPadding: PaddingValues, onGuide: () -> Unit, onReset: () -> Unit) {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val shell by DensityShell.connected.collectAsStateWithLifecycle()
+    val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
+    val changed by DensityShell.changes.collectAsStateWithLifecycle()
+    val ready = shell != null || shizuku == ShizukuAccess.State.READY
+    var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
+    var values by remember { mutableStateOf(emptyMap<String, Int>()) }
+    var supported by remember { mutableStateOf<Boolean?>(null) }
+    var open by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf("") }
+    var usage by remember { mutableStateOf(AppUsage.hasAccess(context)) }
+    var notify by remember { mutableStateOf(AppDensityNotifier.enabled(context)) }
+    var resumed by remember { mutableIntStateOf(0) }
+    var bootOn by remember { mutableStateOf(true) }
+    // 처음 나타난 카드는 다시 등장 애니메이션을 하지 않는다(목록을 스크롤해 다시 보일 때)
+    val shown = remember { mutableSetOf<String>() }
+    val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        LogRepository.from(context).add("알림 권한 요청(알림창 앱 배율): ${if (granted) "허용" else "거부"}")
+        if (granted) {
+            notify = true
+            AppDensityNotifier.setEnabled(context, true)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        ShizukuAccess.watch(context)
+        AppDensityNotifier.start(context) // 켜 둔 알림 조절이 업데이트 등으로 멈춰 있으면 다시 띄운다
+    }
+    // 다른 곳(알림창·삼성 설정)에서 바꾸고 돌아와도 바로 보이도록 돌아올 때마다 다시 읽는다
+    LifecycleResumeEffect(Unit) {
+        usage = AppUsage.hasAccess(context)
+        bootOn = ShizukuAccess.bootStartOn(context)
+        resumed++
+        onPauseOrDispose { }
+    }
+    LaunchedEffect(usage) { apps = withContext(Dispatchers.IO) { loadApps(context) } }
+    // Shizuku로 연결되면 사용 기록 접근(최근 사용 순·알림 조절에 필요)을 스스로 허용한다
+    LaunchedEffect(shizuku) {
+        if (shizuku == ShizukuAccess.State.READY && !usage) usage = withContext(Dispatchers.IO) { ShizukuAccess.grantUsageAccess(context) }
+    }
+    LaunchedEffect(ready, shell, apps, changed, resumed) {
+        val list = apps
+        if (!ready || list == null) {
+            supported = null
+            values = emptyMap()
+            return@LaunchedEffect
+        }
+        // 이전 값은 그대로 두고 새 값으로 한꺼번에 바꾼다(다시 읽는 동안 '…'로 깜빡이지 않게). 읽기는 IO, 대입은 메인에서.
+        val (ok, read) = withContext(Dispatchers.IO) {
+            val ok = !DensityShell.rejected(context) && runCatching { DensityShell.supported() }.getOrDefault(false)
+            ok to if (ok) list.associate { it.pkg to runCatching { DensityShell.get(context, it.pkg) }.getOrDefault(-1) } else emptyMap()
+        }
+        supported = ok
+        // 쓸 수 없는 기기로 판정되면 기억해 메뉴에서 숨긴다(실험실이면 보임)
+        if (!ok) AppHooks.featureSupport(context, "APP_SIZE", false)
+        if (ok) values = read
+    }
+
+    // 홈 화면 앱(One UI 홈 등, 기본 홈): 앱 목록에 아이콘이 없어 따로 다룬다. 이 앱에만 배율을 걸면 홈 화면 아이콘·글자만 작아진다.
+    val home = remember {
+        context.packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY)
+            ?.activityInfo?.packageName?.takeIf { it != "android" }
+    }
+    var homeValue by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(ready, supported, changed, resumed) {
+        if (ready && supported == true && home != null) homeValue = withContext(Dispatchers.IO) { runCatching { DensityShell.get(context, home) }.getOrNull() }
+    }
+
+    fun applyDensity(app: AppEntry, dpi: Int) {
+        scope.launch {
+            val now = withContext(Dispatchers.IO) {
+                runCatching {
+                    DensityShell.set(context, app.pkg, dpi)
+                    DensityShell.get(context, app.pkg)
+                }
+            }
+            now.onSuccess {
+                values = values + (app.pkg to it)
+                message = "${app.label}: ${if (it == 0) Copy.DEFAULT else "$it dpi"}"
+            }
+                .onFailure {
+                    message = "${Copy.APP_SIZE_FAILED}${it.message}"
+                    if (DensityShell.rejected(context)) supported = false
+                }
+        }
+    }
+
+    val q = query.trim()
+    val list = apps.orEmpty().filter { q.isEmpty() || it.label.contains(q, ignoreCase = true) || it.pkg.contains(q, ignoreCase = true) }
+    val applied = list.filter { (values[it.pkg] ?: 0) > 0 }
+    val rest = list.filter { (values[it.pkg] ?: 0) <= 0 }
+
+    LazyColumn(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        contentPadding = featurePadding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(Gap.Card),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        item(key = "intro") {
+            Appear("intro", 0, shown) {
+                GlassCard {
+                    // 다른 기능 화면과 같은 순서: 제목 → 설명 → 그림
+                    Text(Copy.APP_SIZE_INTRO_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(Copy.APP_SIZE_INTRO_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    // 왼쪽 앱만 배율이 바뀌고 오른쪽 앱은 기본 그대로: 기능을 한눈에
+                    AppScaleArt()
+                }
+            }
+        }
+        when {
+            !ready -> item(key = "connect") {
+                Appear("connect", 1, shown) {
+                    GlassCard {
+                        Text(Copy.NEED_SHIZUKU_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Spacer(Modifier.height(Gap.Item))
+                        ShizukuBridgeArt()
+                        Spacer(Modifier.height(Gap.Item))
+                        Text(Copy.APP_SIZE_CONNECT_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(Gap.Item))
+                        LiquidButton(Copy.SHIZUKU_CONNECT, modifier = Modifier.fillMaxWidth(), onClick = onGuide)
+                    }
+                }
+            }
+            // 지원 여부를 확인하는 동안에는 불러오는 표시만 둔다(지원 기기용 카드가 잠깐 보였다가 '쓸 수 없습니다'로 바뀌던 깜빡임)
+            supported == null -> item(key = "loading") {
+                LiquidLoader(stringResource(R.string.appsize_loading_apps), Modifier.padding(vertical = Gap.Item))
+            }
+            supported == false -> item(key = "unsupported") {
+                Appear("unsupported", 1, shown) {
+                    GlassCard {
+                        Text(stringResource(R.string.appsize_unsupported_title), fontWeight = FontWeight.SemiBold, color = c.ink)
+                        Text(Copy.APP_SIZE_UNSUPPORTED, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+            else -> {
+                item(key = "notify") {
+                    Appear("notify", 1, shown) {
+                        GlassCard {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(Copy.APP_SIZE_NOTIFY_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                                    Text(Copy.APP_SIZE_NOTIFY_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                                }
+                                Spacer(Modifier.width(Space.IconText))
+                                LiquidSwitch(notify, { on ->
+                                    if (on && !Notify.canNotify(context) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        notify = on
+                                        AppDensityNotifier.setEnabled(context, on)
+                                    }
+                                }, label = Copy.APP_SIZE_NOTIFY_TITLE)
+                            }
+                            // 켜기 전에는 알림창 조절이 어떻게 동작하는지 그림으로 보여 준다
+                            AnimatedVisibility(!notify) {
+                                Column {
+                                    Spacer(Modifier.height(Gap.Item))
+                                    NotifyArt()
+                                }
+                            }
+                            if (!usage) {
+                                Spacer(Modifier.height(Gap.Item))
+                                Text(Copy.APP_SIZE_USAGE_NEEDED, color = c.danger, style = MaterialTheme.typography.bodySmall)
+                                Spacer(Modifier.height(Gap.Item))
+                                LiquidButton(stringResource(R.string.appsize_allow_usage_access), modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                                    scope.launch {
+                                        usage = withContext(Dispatchers.IO) { shizuku == ShizukuAccess.State.READY && ShizukuAccess.grantUsageAccess(context) }
+                                        if (!usage) runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+                                    }
+                                })
+                            }
+                            if (shell == null && !bootOn) {
+                                Spacer(Modifier.height(Gap.Item))
+                                Text(Copy.APP_SIZE_BOOT_OFF, color = c.danger, style = MaterialTheme.typography.bodySmall)
+                            }
+                            if (shell != null) {
+                                Spacer(Modifier.height(Gap.Item))
+                                LiquidButton(stringResource(R.string.appsize_stop_pc_helper), modifier = Modifier.fillMaxWidth(), primary = false, onClick = {
+                                    scope.launch(Dispatchers.IO) { DensityShell.stop() }
+                                })
+                            }
+                        }
+                    }
+                }
+                if (home != null) {
+                    item(key = "home") {
+                        Appear("home", 2, shown) {
+                            GlassCard {
+                                Text(Copy.APP_SIZE_HOME_TITLE, fontWeight = FontWeight.SemiBold, color = c.ink)
+                                Text(Copy.APP_SIZE_HOME_BODY, color = c.muted, style = MaterialTheme.typography.bodySmall)
+                                Spacer(Modifier.height(Gap.Item))
+                                LiquidChips(
+                                    options = listOf(0) + AppDensityPolicy.STEPS,
+                                    selected = homeValue?.takeIf { it == 0 || it in AppDensityPolicy.STEPS } ?: 0,
+                                    label = { if (it == 0) Copy.DEFAULT else "$it" },
+                                    onSelect = { dpi ->
+                                        scope.launch {
+                                            val now = withContext(Dispatchers.IO) {
+                                                runCatching {
+                                                    DensityShell.set(context, home, dpi)
+                                                    DensityShell.get(context, home)
+                                                }
+                                            }
+                                            now.onSuccess {
+                                                homeValue = it
+                                                message = "${Copy.APP_SIZE_HOME_TITLE}: ${if (it == 0) Copy.DEFAULT else "$it dpi"}"
+                                            }
+                                                .onFailure { message = "${Copy.APP_SIZE_FAILED}${it.message}" }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                Spacer(Modifier.height(Gap.Item))
+                                Text(Copy.APP_SIZE_HOME_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+                item(key = "search") {
+                    Appear("search", 2, shown) {
+                        Column(Modifier.widthIn(max = ContentMaxWidth)) {
+                            LiquidTextField(
+                                query,
+                                { query = it },
+                                stringResource(R.string.appsize_search_hint),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                leading = { Icon(Icons.Outlined.Search, null, tint = c.muted, modifier = Modifier.size(20.dp)) }
+                            )
+                            AnimatedVisibility(message.isNotEmpty()) {
+                                Column {
+                                    Spacer(Modifier.height(Gap.Item))
+                                    Text(message, color = c.ink, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = Space.Inline))
+                                }
+                            }
+                        }
+                    }
+                }
+                if (apps == null) {
+                    item(key = "loading") {
+                        LiquidLoader(stringResource(R.string.appsize_loading_apps), Modifier.padding(vertical = Gap.Item))
+                    }
+                }
+                if (applied.isNotEmpty()) {
+                    item(key = "h-applied") {
+                        Section(stringResource(R.string.appsize_applied_fmt, applied.size), Modifier.animateItem()) {
+                            Text(
+                                Copy.APP_SIZE_RESET_ACTION,
+                                color = c.danger,
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.clip(RoundedCornerShape(Radius.Row)).clickable(onClick = onReset).padding(Inset.TextButton)
+                            )
+                        }
+                    }
+                    items(applied, key = { it.pkg }) { app ->
+                        AppRow(app, values[app.pkg], open == app.pkg, { open = if (open == app.pkg) null else app.pkg }, { applyDensity(app, it) }, Modifier.animateItem())
+                    }
+                }
+                item(key = "h-rest") { Section(if (usage) stringResource(R.string.appsize_sort_recent) else stringResource(R.string.appsize_sort_name), Modifier.animateItem()) }
+                if (apps != null && rest.isEmpty()) {
+                    item(key = "empty") {
+                        Text(stringResource(R.string.appsize_no_match), color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(6.dp))
+                    }
+                }
+                items(rest, key = { it.pkg }) { app ->
+                    AppRow(app, values[app.pkg], open == app.pkg, { open = if (open == app.pkg) null else app.pkg }, { applyDensity(app, it) }, Modifier.animateItem())
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 처음 나타날 때 차례로 떠오르며 들어온다([order]번째, 70ms 간격). 한 번 나타난 [key]는 [shown]에 남겨,
+ * 목록을 스크롤해 다시 보일 때는 애니메이션 없이 바로 보인다.
+ */
+@Composable
+private fun Appear(key: String, order: Int, shown: MutableSet<String>, content: @Composable () -> Unit) {
+    val reduce = LocalReduceMotion.current
+    val k = remember { Animatable(if (reduce || key in shown) 1f else 0f) }
+    shown += key
+    LaunchedEffect(Unit) { k.animateTo(1f, tween(360, delayMillis = 70 * order, easing = FastOutSlowInEasing)) }
+    Box(
+        Modifier.widthIn(max = ContentMaxWidth).graphicsLayer {
+            alpha = k.value
+            translationY = (1f - k.value) * 18.dp.toPx()
+        }
+    ) { content() }
+}
+
+
+/** 앱 한 줄: 아이콘·이름·마지막 사용·지금 크기. 누르면 단계 선택이 펼쳐진다. */
+@Composable
+private fun AppRow(
+    app: AppEntry,
+    value: Int?,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val c = LocalLiquid.current
+    val on = value != null && value > 0
+    val shape = RoundedCornerShape(Radius.Card)
+    val border by animateColorAsState(if (expanded) c.ink.copy(alpha = 0.5f) else c.line, label = "row")
+    Column(
+        modifier
+            .widthIn(max = ContentMaxWidth)
+            .fillMaxWidth()
+            .clip(shape)
+            .background(c.surface)
+            .border(1.dp, border, shape)
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle)
+                .padding(Inset.Row),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(Modifier.size(Tile.App).clip(RoundedCornerShape(Tile.AppRadius))) { app.icon?.let { Image(it, null, Modifier.size(38.dp)) } }
+            Spacer(Modifier.width(Space.IconText))
+            Column(Modifier.weight(1f)) {
+                Text(app.label, color = c.ink, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (app.lastUsed > 0) Text(ago(app.lastUsed), color = c.muted, style = MaterialTheme.typography.labelSmall)
+            }
+            Spacer(Modifier.width(Space.Inline))
+            // 크기 표시: 바뀌면 숫자가 위아래로 갈리며 바뀌고, 적용된 앱은 잉크색으로 채워진다
+            val fill by animateColorAsState(if (on) c.ink else c.line.copy(alpha = 0.5f), label = "pill")
+            val ink by animateColorAsState(if (on) c.onInk else c.muted, label = "pillText")
+            Box(Modifier.clip(PillShape).background(fill).padding(Inset.Pill)) {
+                AnimatedContent(
+                    value,
+                    transitionSpec = { (slideInVertically { it } + fadeIn()) togetherWith (slideOutVertically { -it } + fadeOut()) },
+                    label = "value"
+                ) { v ->
+                    Text(
+                        when (v) {
+                            null -> "…"
+                            -1 -> "?"
+                            0 -> Copy.DEFAULT
+                            else -> "$v"
+                        },
+                        color = ink,
+                        fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+        }
+        AnimatedVisibility(expanded, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+            Column(Modifier.padding(start = 10.dp, end = 10.dp, bottom = 12.dp)) {
+                LiquidChips(
+                    options = listOf(0) + AppDensityPolicy.STEPS,
+                    selected = value?.takeIf { it == 0 || it in AppDensityPolicy.STEPS } ?: 0,
+                    label = { if (it == 0) Copy.DEFAULT else "$it" },
+                    onSelect = onSelect,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(Gap.Item))
+                Text(Copy.APP_SIZE_ROW_HINT, color = c.muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 4.dp))
+            }
+        }
+    }
+}
+
+

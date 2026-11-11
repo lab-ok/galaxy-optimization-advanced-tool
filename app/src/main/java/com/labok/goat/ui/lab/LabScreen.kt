@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.GoatFlexPanel
-import com.labok.goat.data.lab.MemoShare.withoutGoat
+import com.labok.goat.data.lab.withoutGoat
 import com.labok.goat.data.lab.OttFlexTest
 import com.labok.goat.data.lab.SettingsSnapshot
 import com.labok.goat.data.lab.ShareProbe

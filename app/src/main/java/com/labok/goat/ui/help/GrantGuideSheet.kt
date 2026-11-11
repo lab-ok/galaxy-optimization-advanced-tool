@@ -58,7 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.R
-import com.labok.goat.data.lab.MemoShare.withoutGoat
+import com.labok.goat.data.lab.withoutGoat
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.about.DeveloperProfile
 import com.labok.goat.ui.art.ConnectionIllustration

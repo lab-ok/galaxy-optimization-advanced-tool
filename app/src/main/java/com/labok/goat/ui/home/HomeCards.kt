@@ -1,5 +1,6 @@
 package com.labok.goat.ui.home
 
+import com.labok.goat.ui.text.Particle
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -34,7 +35,6 @@ import androidx.compose.ui.unit.sp
 import com.labok.goat.R
 import com.labok.goat.data.display.PermissionReset
 import com.labok.goat.data.settings.SettingsRepository
-import com.labok.goat.data.update.UpdateNotice
 import com.labok.goat.domain.DpiPolicy
 import com.labok.goat.domain.PanelSpec
 import com.labok.goat.domain.ScreenGeometry
@@ -140,15 +140,15 @@ internal fun todosOf(state: UiState): List<Todo> = buildList {
                 "external",
                 Copy.EXTERNAL_TITLE,
                 if (state.foldable) {
-                    Copy.text(R.string.home_external_body_fold_fmt, e.role.label, e.from, e.to, UpdateNotice.ro("${e.to}"), Copy.EXTERNAL_BODY)
+                    Copy.text(R.string.home_external_body_fold_fmt, e.role.label, e.from, e.to, Particle.ro("${e.to}"), Copy.EXTERNAL_BODY)
                 } else {
-                    Copy.text(R.string.home_external_body_single_fmt, e.from, e.to, UpdateNotice.ro("${e.to}"), Copy.EXTERNAL_BODY)
+                    Copy.text(R.string.home_external_body_single_fmt, e.from, e.to, Particle.ro("${e.to}"), Copy.EXTERNAL_BODY)
                 },
                 TodoAction.ADOPT,
                 Copy.text(R.string.notif_external_adopt_fmt, e.to),
                 blocking = true,
                 second = TodoAction.RESTORE,
-                secondLabel = Copy.text(R.string.notif_external_restore_fmt, e.from, UpdateNotice.ro("${e.from}"))
+                secondLabel = Copy.text(R.string.notif_external_restore_fmt, e.from, Particle.ro("${e.from}"))
             )
         )
     }

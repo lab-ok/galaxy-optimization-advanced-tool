@@ -1,0 +1,101 @@
+package com.labok.goat.ui.lab
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.labok.goat.core.R
+import com.labok.goat.data.lab.BatteryMonitor
+import com.labok.goat.ui.components.ContentMaxWidth
+import com.labok.goat.ui.components.Gap
+import com.labok.goat.ui.components.Inset
+import com.labok.goat.ui.components.Space
+import com.labok.goat.ui.liquid.GlassCard
+import com.labok.goat.ui.liquid.LocalLiquid
+import com.labok.goat.ui.liquid.Text
+import com.labok.goat.ui.text.Copy
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+
+/**
+ * 실험실 '배터리 모니터링'. 위: 지금 상태(잔량·충전·온도·전압·전류·전력, 2초마다 다시 읽음).
+ * 가운데: 마지막 충전 이후 쓴 양·화면 켜짐/꺼짐·이 패턴의 예상 시간·앱별 순위(시스템 배터리 통계, Shizuku).
+ * 아래: 15분 기록을 켜면 최근 24시간 잔량 그래프와 시간당 소모량·남은 시간 추정.
+ */
+@Composable
+fun BatterySection() {
+    val c = LocalLiquid.current
+    val context = LocalContext.current
+    var now by remember { mutableStateOf(BatteryMonitor.read(context)) }
+    LaunchedEffect(Unit) {
+        // 화면을 여는 동안 2초마다 다시 읽는다
+        withContext(Dispatchers.IO) { BatteryMonitor.retireLogging(context) }
+        while (true) {
+            now = BatteryMonitor.read(context)
+            delay(2_000)
+        }
+    }
+
+    // 1.50.3부터 사용 통계 아래 '배터리' 칸으로 들어갔다(11-04 소장님 "배터리 모니터링을 사용 통계에 흡수")
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        GlassCard(modifier = Modifier.widthIn(max = ContentMaxWidth)) {
+            Text(Copy.LAB_BATTERY_NOW, fontWeight = FontWeight.SemiBold, color = c.ink)
+            Spacer(Modifier.height(Gap.Item))
+            val s = now
+            if (s == null) {
+                Text(stringResource(R.string.lab_battery_status_unknown), color = c.ink)
+            } else {
+                // 맨 위 그림(시안 8): 사용 중·충전 중에 따라 다른 물 막대 애니메이션
+                BatteryBarsArt(s.level, s.charging)
+                Spacer(Modifier.height(Gap.Item))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text("${s.level}", fontSize = 52.sp, fontWeight = FontWeight.Bold, color = c.ink)
+                    Text("%", color = c.muted, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = Space.Unit, bottom = 10.dp))
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        if (s.charging) s.plug?.let { stringResource(R.string.lab_battery_status_charging_plug, it) } ?: stringResource(R.string.lab_battery_status_charging) else stringResource(R.string.lab_battery_status_using),
+                        color = c.ink,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                }
+                Spacer(Modifier.height(Gap.Item))
+                Metric(stringResource(R.string.lab_battery_metric_temp), s.tempC?.let { String.format(Locale.KOREA, "%.1f°C", it) })
+                Metric(stringResource(R.string.lab_battery_metric_voltage), s.voltageMv?.let { String.format(Locale.KOREA, "%.2fV", it / 1000f) })
+                Metric(stringResource(R.string.lab_battery_metric_current), s.currentMa?.let { "${if (it > 0) "+" else ""}$it mA" })
+                Metric(stringResource(R.string.lab_battery_metric_power), s.watts?.let { String.format(Locale.KOREA, "%+.1fW", it) })
+            }
+        }
+        // 배터리 수명 카드는 뺐다: 삼성 기기의 남은 전하량은 화면 잔량으로 만든 값이라 수명을 추정할 수 없고(2026-10-20 조사),
+        // 삼성 수명값은 설정에서도 볼 수 있다. 충전 실측 용량(1.17.8)도 뺐다(1.17.9)
+        BatterySinceCharge(now?.level, now?.charging == true)
+    }
+}
+
+@Composable
+private fun Metric(name: String, value: String?) {
+    val c = LocalLiquid.current
+    Row(Modifier.fillMaxWidth().padding(vertical = Inset.TableRow), verticalAlignment = Alignment.CenterVertically) {
+        Text(name, color = c.muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+        Text(value ?: stringResource(R.string.lab_battery_metric_unknown), color = c.ink, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+    }
+}

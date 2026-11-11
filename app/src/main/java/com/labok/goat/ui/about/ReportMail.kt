@@ -9,7 +9,7 @@ import android.net.Uri
 import android.os.Build
 import com.labok.goat.AppInfo
 import com.labok.goat.R
-import com.labok.goat.data.lab.MemoShare.withoutGoat
+import com.labok.goat.data.lab.withoutGoat
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.text.Copy
 
