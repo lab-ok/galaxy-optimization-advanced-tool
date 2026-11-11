@@ -21,6 +21,9 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
+import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.shizuku.ShizukuAccess
+import com.labok.goat.ui.liquid.UiGoat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,21 +67,21 @@ object StatusBarHider {
     private val onFlow = MutableStateFlow(false)
     val on: StateFlow<Boolean> = onFlow.asStateFlow()
 
-    private fun shizukuReady() = StatusBarHost.shizukuReady()
+    private fun shizukuReady() = ShizukuAccess.status.value == ShizukuAccess.State.READY
 
     /** 켠다. 성공하면 null, 실패하면 이유. 다른 앱 위에 표시 권한은 Shizuku로 준다. */
     fun start(context: Context): String? {
         val app = context.applicationContext
         if (!shizukuReady()) return app.getString(R.string.labdata_statusbar_need_shizuku)
         if (!Settings.canDrawOverlays(app)) {
-            StatusBarHost.shell("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
+            ShizukuAccess.shell("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
             if (!Settings.canDrawOverlays(app)) return app.getString(R.string.labdata_statusbar_no_overlay)
         }
         StatusBarInputService.setEnabled(app, true)
         main.post { attach(app) }
         onFlow.value = true
         notify(app)
-        StatusBarHost.note(app, "상단바 숨기기 켬")
+        LogRepository.from(app).add("상단바 숨기기 켬")
         return null
     }
 
@@ -102,7 +105,7 @@ object StatusBarHider {
         afterYield = retrigger
         lastKeyBack = false
         stepAside(context.applicationContext, v)
-        StatusBarHost.note(context, "상단바 숨기기: 입력란을 눌러 바로 포커스 해제")
+        LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 바로 포커스 해제")
     }
 
     /** Shizuku 연결이 끊기면 포커스를 내려놓는다(상단바가 보이지만 키보드는 뜬다). */
@@ -112,7 +115,7 @@ object StatusBarHider {
         main.post {
             regrabGen++
             view?.let { stepAside(app, it) }
-            StatusBarHost.note(app, "상단바 숨기기: Shizuku 연결이 끊겨 키보드를 막지 않도록 숨기기를 멈춤")
+            LogRepository.from(app).add("상단바 숨기기: Shizuku 연결이 끊겨 키보드를 막지 않도록 숨기기를 멈춤")
         }
     }
 
@@ -125,7 +128,7 @@ object StatusBarHider {
         val app = context.applicationContext
         main.post {
             if (view?.hasWindowFocus() == true) return@post
-            StatusBarHost.note(app, "상단바 숨기기: Shizuku가 다시 연결돼 다시 숨기기를 확인함")
+            LogRepository.from(app).add("상단바 숨기기: Shizuku가 다시 연결돼 다시 숨기기를 확인함")
             scheduleRegrab(app, afterBack = false)
         }
     }
@@ -137,7 +140,7 @@ object StatusBarHider {
         onFlow.value = false
         StatusBarInputService.setEnabled(app, false)
         app.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
-        StatusBarHost.note(app, "상단바 숨기기 끔")
+        LogRepository.from(app).add("상단바 숨기기 끔")
     }
 
     /** 창을 다시 띄워 포커스를 다시 받는다(키 입력으로 내려놓은 뒤). */
@@ -156,13 +159,13 @@ object StatusBarHider {
         val v = object : View(context) {
             override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
                 super.onWindowFocusChanged(hasWindowFocus)
-                StatusBarHost.note(context, "상단바 숨기기: 포커스 ${if (hasWindowFocus) "받음(숨김)" else "잃음(상단바 보일 수 있음)"}")
+                LogRepository.from(context).add("상단바 숨기기: 포커스 ${if (hasWindowFocus) "받음(숨김)" else "잃음(상단바 보일 수 있음)"}")
                 if (hasWindowFocus) {
                     regrabGen++
                     // Shizuku 없이 포커스를 쥐면 입력란을 눌러도 키보드가 뜨지 않는다: 바로 내려놓는다
                     if (!shizukuReady()) {
                         stepAside(context, this)
-                        StatusBarHost.note(context, "상단바 숨기기: Shizuku가 없어 키보드를 막지 않도록 포커스를 바로 내려놓음")
+                        LogRepository.from(context).add("상단바 숨기기: Shizuku가 없어 키보드를 막지 않도록 포커스를 바로 내려놓음")
                         return
                     }
                     hideBars(this)
@@ -194,7 +197,7 @@ object StatusBarHider {
                         main.postDelayed({ sendPendingBack() }, BACK_FALLBACK_MS)
                     }
                     stepAside(context, this)
-                    StatusBarHost.note(context, "상단바 숨기기: 키(${KeyEvent.keyCodeToString(event.keyCode)}) 입력으로 포커스 해제")
+                    LogRepository.from(context).add("상단바 숨기기: 키(${KeyEvent.keyCodeToString(event.keyCode)}) 입력으로 포커스 해제")
                 }
                 return true
             }
@@ -211,7 +214,7 @@ object StatusBarHider {
             layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
             title = "GOAT status bar hider"
         }
-        runCatching { wm.addView(v, lp) }.onFailure { StatusBarHost.note(context, "상단바 숨기기: 창을 띄우지 못함(${it.message})") }.onSuccess {
+        runCatching { wm.addView(v, lp) }.onFailure { LogRepository.from(context).add("상단바 숨기기: 창을 띄우지 못함(${it.message})") }.onSuccess {
             view = v
             v.post { hideBars(v) }
             // 지금까지의 키보드 요청 실패 기록은 기준으로만 둔다(이후 새로 생긴 것만 본다)
@@ -254,7 +257,7 @@ object StatusBarHider {
                             lastKeyBack = false
                             inputGraceUntil = SystemClock.uptimeMillis() + INPUT_GRACE_MS
                             stepAside(context, v)
-                            StatusBarHost.note(context, "상단바 숨기기: 입력란을 눌러 키보드를 띄우려고 포커스 해제")
+                            LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 키보드를 띄우려고 포커스 해제")
                         }
                         return@Thread
                     }
@@ -267,14 +270,14 @@ object StatusBarHider {
 
     /** ImeTracker 기록 중 다른 앱의 마지막 '키보드 띄우기 실패' 번호. 셸을 쓸 수 없으면 null. */
     private fun lastFailedShowId(): Int? {
-        val out = StatusBarHost.shell("dumpsys input_method | grep -E '#[0-9]+ TYPE_SHOW - STATUS_FAIL'") ?: return null
+        val out = ShizukuAccess.shell("dumpsys input_method | grep -E '#[0-9]+ TYPE_SHOW - STATUS_FAIL'")?.out ?: return null
         return StatusBarFocus.lastFailedShow(out)
     }
 
     private fun sendPendingBack() {
         if (!pendingBack) return
         pendingBack = false
-        Thread { StatusBarHost.shell("input keyevent 4") }.start()
+        Thread { ShizukuAccess.shell("input keyevent 4") }.start()
     }
 
     /** 포커스를 잃은 뒤 다시 숨기기를 예약한다. 포커스를 다시 받으면([regrabGen]이 바뀌면) 멈춘다. */
@@ -293,7 +296,7 @@ object StatusBarHider {
                     main.post {
                         if (gen != regrabGen || !onFlow.value) return@post
                         // 기다리는 이유가 바뀔 때만 기록한다(실기에서 왜 다시 숨지 않는지 보이게)
-                        state?.why?.takeIf { it != lastWhy }?.let { StatusBarHost.note(context, "상단바 숨기기: $it") }
+                        state?.why?.takeIf { it != lastWhy }?.let { LogRepository.from(context).add("상단바 숨기기: $it") }
                         lastWhy = state?.why
                         when {
                             // 다시 띄웠는데도 포커스가 안 오면(다른 앱 위 표시를 막는 설정 화면 등) 점점 느리게 확인한다
@@ -309,7 +312,7 @@ object StatusBarHider {
                                 check(POLL_MS)
                             }
                             // Shizuku가 없으면 다시 숨지 않는다(포커스를 다시 쥐면 키보드가 뜨지 않는다). 다시 연결되면 [onShizukuReady]가 숨긴다
-                            else -> StatusBarHost.note(context, "상단바 숨기기: Shizuku가 없어 다시 숨기지 않음(키보드 보호)")
+                            else -> LogRepository.from(context).add("상단바 숨기기: Shizuku가 없어 다시 숨기지 않음(키보드 보호)")
                         }
                     }
                 }.start()
@@ -323,7 +326,7 @@ object StatusBarHider {
      * 셸을 쓸 수 없으면 null.
      */
     private fun focusState(): StatusBarFocus.State? {
-        val out = StatusBarHost.shell("dumpsys window | grep mCurrentFocus=; dumpsys input_method | grep mInputShown=") ?: return null
+        val out = ShizukuAccess.shell("dumpsys window | grep mCurrentFocus=; dumpsys input_method | grep mInputShown=")?.out ?: return null
         return StatusBarFocus.parse(out)
     }
 
@@ -335,7 +338,7 @@ object StatusBarHider {
         if (view == null) return
         detach(context)
         attach(context)
-        if (tries <= 3) StatusBarHost.note(context, "상단바 숨기기: 창을 다시 띄움(${tries}번째)")
+        if (tries <= 3) LogRepository.from(context).add("상단바 숨기기: 창을 다시 띄움(${tries}번째)")
     }
 
     private fun detach(context: Context) {
@@ -354,8 +357,8 @@ object StatusBarHider {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val n: Notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(StatusBarHost.host.smallIcon)
-            .setLargeIcon(StatusBarHost.host.largeIcon(context))
+            .setSmallIcon(R.drawable.ic_stat_goat)
+            .setLargeIcon(UiGoat.notificationIcon(context))
             .setContentTitle(context.getString(R.string.labdata_statusbar_notif_title))
             .setContentText(context.getString(R.string.labdata_statusbar_notif_text))
             .setOngoing(true)

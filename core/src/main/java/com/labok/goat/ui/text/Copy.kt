@@ -1,6 +1,6 @@
 package com.labok.goat.ui.text
 
-import com.labok.goat.R
+import com.labok.goat.core.R
 import java.util.Locale
 
 /**

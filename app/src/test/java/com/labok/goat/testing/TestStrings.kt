@@ -10,11 +10,17 @@ import javax.xml.parsers.DocumentBuilderFactory
  * 테스트에서 `@Before fun strings() = TestStrings.install()`로 쓴다.
  */
 object TestStrings {
-    private val dir: File by lazy { listOf(File("src/main/res/values"), File("app/src/main/res/values")).first { it.isDirectory } }
+    /** 리소스는 :core에 모여 있다(11-11 모듈 분리). 기능 모듈이 따로 가진 문구도 함께 읽는다. */
+    private val repo: File by lazy { listOf(File(".."), File(".")).first { File(it, "core/src/main/res/values").isDirectory } }
+    private val dir: File by lazy { File(repo, "core/src/main/res/values") }
+    private val featureDirs: List<File> by lazy {
+        File(repo, "feature").listFiles().orEmpty().map { File(it, "src/main/res/values") }.filter { it.isDirectory }
+    }
 
     /** 리소스 이름 → 문구(기본 언어, 모든 strings*.xml). */
     val all: Map<String, String> by lazy {
-        dir.listFiles { f -> f.name.startsWith("strings") && f.name.endsWith(".xml") }!!.fold(HashMap()) { m, f -> m.apply { putAll(read(f)) } }
+        (listOf(dir) + featureDirs).flatMap { d -> d.listFiles { f -> f.name.startsWith("strings") && f.name.endsWith(".xml") }.orEmpty().toList() }
+            .fold(HashMap()) { m, f -> m.apply { putAll(read(f)) } }
     }
 
     /** 공통 문구(strings_common.xml, 예전 Copy.kt 상수)만. */

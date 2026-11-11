@@ -1,7 +1,7 @@
 package com.labok.goat.ui.liquid
 
 import android.content.Context
-import com.labok.goat.R
+import com.labok.goat.core.R
 import com.labok.goat.ui.text.Copy
 
 /**

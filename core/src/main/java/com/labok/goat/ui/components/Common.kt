@@ -23,13 +23,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.labok.goat.R
+import com.labok.goat.core.R
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 
 /** 이름–값 한 줄(고급 정보·앱 정보). 숫자는 고정폭 숫자(tabular). */
 @Composable
-internal fun InfoRow(key: String, value: String, emphasize: Boolean = false) {
+fun InfoRow(key: String, value: String, emphasize: Boolean = false) {
     val c = LocalLiquid.current
     Row(
         Modifier
@@ -57,7 +57,7 @@ internal fun InfoRow(key: String, value: String, emphasize: Boolean = false) {
  * 복사는 원래 한 줄 그대로 한다. 버튼([extra], 복사)은 아래 오른쪽에 둔다.
  */
 @Composable
-internal fun CommandBox(text: String, onCopy: () -> Unit, extra: @Composable (() -> Unit)? = null) {
+fun CommandBox(text: String, onCopy: () -> Unit, extra: @Composable (() -> Unit)? = null) {
     val c = LocalLiquid.current
     val shape = RoundedCornerShape(Radius.Box)
     Column(
@@ -91,7 +91,7 @@ internal fun CommandBox(text: String, onCopy: () -> Unit, extra: @Composable (()
 }
 
 /** 화면 표시용 줄바꿈: 18자를 넘는 낱말 앞에서 줄을 바꾼다. */
-internal fun displayCommand(text: String): String = text.split(' ').fold(StringBuilder()) { sb, word ->
+fun displayCommand(text: String): String = text.split(' ').fold(StringBuilder()) { sb, word ->
     if (sb.isNotEmpty()) sb.append(if (word.length > 18) '\n' else ' ')
     sb.append(word)
 }.toString()

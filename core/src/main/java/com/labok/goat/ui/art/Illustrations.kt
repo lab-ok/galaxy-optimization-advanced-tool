@@ -30,7 +30,7 @@ import com.labok.goat.ui.liquid.LocalReduceMotion
  * 연결이 끝나면(권한 부여 완료) 폰 화면에 체크가 뜬다.
  */
 @Composable
-internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
+fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
     val c = LocalLiquid.current
     val reduce = LocalReduceMotion.current
     val t0 by rememberInfiniteTransition(label = "conn").animateFloat(
@@ -111,7 +111,7 @@ internal fun ConnectionIllustration(wireless: Boolean, done: Boolean) {
  * 차이가 눈에 보이도록 실제보다 과장해서 그린다.
  */
 @Composable
-internal fun DensityIllustration(corrected: Float) {
+fun DensityIllustration(corrected: Float) {
     val lc = LocalLiquid.current
     val glyph = lc.ink.copy(alpha = 0.55f)
     val shape = LocalDeviceShape.current

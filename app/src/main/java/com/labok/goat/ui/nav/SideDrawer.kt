@@ -395,7 +395,7 @@ private fun DrawerRow(
             Text(Copy.NAV_LAB_TAG, color = fg.copy(alpha = 0.6f), style = MaterialTheme.typography.labelSmall)
         }
         // 새 기능이 들어온 항목은 이름 옆에 점을 찍는다(그 화면을 보고 나가면 사라진다)
-        if (NewBadge.navNew(item)) {
+        if (NewBadge.navNew(NEW_BADGE_NAV[item])) {
             Spacer(Modifier.width(Space.Inline))
             NewDot()
         }
@@ -815,3 +815,13 @@ private val DRAWER_SEARCH_PAD = PaddingValues(horizontal = 14.dp, vertical = 18.
 
 /** 사이드바 줄 모서리: 선택 방울(높이 48dp)과 같은 반지름이라 누름 범위가 방울 모양과 겹친다. */
 private val DRAWER_ROW_RADIUS = 24.dp
+
+/** 사이드바 항목마다 새 기능 점을 띄울 키([NewBadge]). 새 기능을 넣을 때 [NewBadge.ALL]과 함께 더한다. */
+val NEW_BADGE_NAV: Map<NavItem, List<String>> = mapOf(
+    NavItem.STATUS_ICONS to listOf(NewBadge.STATUS_BAR_HIDE),
+    NavItem.AUTO_FLEX to listOf(NewBadge.AUTO_FLEX),
+    NavItem.SETTINGS to listOf(NewBadge.INK_TONES),
+    NavItem.VOLUME_ROTATE to listOf(NewBadge.VOLUME_ROTATE),
+    NavItem.LAB_TOOLS to listOf(NewBadge.SHARE_PROBE),
+    NavItem.LAB_STATS to listOf(NewBadge.USAGE_STATS)
+)

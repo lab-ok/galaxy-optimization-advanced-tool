@@ -71,7 +71,7 @@ fun FoldDeviceArt(
 }
 
 /** 화면 안 아이콘 격자와 글자 줄. 아이콘 크기는 화면 크기와 관계없이 같다(= 두 화면 크기를 맞춘 상태). */
-internal fun DrawScope.iconRows(topLeft: Offset, area: Size, s: Float, color: Color, rows: Int = 3) {
+fun DrawScope.iconRows(topLeft: Offset, area: Size, s: Float, color: Color, rows: Int = 3) {
     if (s < 1f) return
     val gap = s * 0.55f
     var y = topLeft.y + gap * 1.3f

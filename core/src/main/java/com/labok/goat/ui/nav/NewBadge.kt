@@ -19,14 +19,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.labok.goat.R
+import com.labok.goat.core.R
 import com.labok.goat.ui.components.Space
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 
 /**
  * 새 기능 점: 새로 들어온 기능은 사이드바 항목 옆과 화면 안 카드 위에 점을 찍고, 그 화면을 보고 나가면 지운다.
- * 사이드바 항목과 카드는 같은 키를 쓴다. 새 기능을 넣을 때 [NAV]에 키를 더한다(오래된 키는 지워도 된다).
+ * 사이드바 항목과 카드는 같은 키를 쓴다. 새 기능을 넣을 때 [ALL]과 앱의 NEW_BADGE_NAV에 키를 더한다(오래된 키는 지워도 된다).
  * 새로 설치한 사람에게는 모두 새것이라 점을 찍지 않는다(설치 시각과 업데이트 시각이 같으면 모두 본 것으로 둔다).
  */
 object NewBadge {
@@ -37,14 +37,8 @@ object NewBadge {
     const val SHARE_PROBE = "share_probe"
     const val USAGE_STATS = "usage_stats"
 
-    val NAV: Map<NavItem, List<String>> = mapOf(
-        NavItem.STATUS_ICONS to listOf(STATUS_BAR_HIDE),
-        NavItem.AUTO_FLEX to listOf(AUTO_FLEX),
-        NavItem.SETTINGS to listOf(INK_TONES),
-        NavItem.VOLUME_ROTATE to listOf(VOLUME_ROTATE),
-        NavItem.LAB_TOOLS to listOf(SHARE_PROBE),
-        NavItem.LAB_STATS to listOf(USAGE_STATS)
-    )
+    /** 지금 쓰는 모든 새 기능 키(처음 설치한 사람에게는 모두 본 것으로 둔다). 사이드바 항목과의 짝은 앱의 [NEW_BADGE_NAV]에 둔다. */
+    val ALL = listOf(STATUS_BAR_HIDE, AUTO_FLEX, INK_TONES, VOLUME_ROTATE, SHARE_PROBE, USAGE_STATS)
 
     var seen by mutableStateOf(emptySet<String>())
         private set
@@ -54,17 +48,17 @@ object NewBadge {
         if (!p.getBoolean("init", false)) {
             val info = runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
             val fresh = info == null || info.firstInstallTime == info.lastUpdateTime
-            p.edit().putBoolean("init", true).apply { if (fresh) putStringSet("seen", NAV.values.flatten().toSet()) }.apply()
+            p.edit().putBoolean("init", true).apply { if (fresh) putStringSet("seen", ALL.toSet()) }.apply()
         }
         seen = p.getStringSet("seen", emptySet()).orEmpty()
     }
 
     fun isNew(key: String) = key !in seen
 
-    fun navNew(item: NavItem) = NAV[item]?.any { isNew(it) } == true
+    fun navNew(keys: List<String>?) = keys?.any { isNew(it) } == true
 
-    fun markSeen(context: Context, item: NavItem) {
-        val keys = NAV[item] ?: return
+    fun markSeen(context: Context, keys: List<String>?) {
+        keys ?: return
         if (keys.none { isNew(it) }) return
         seen = seen + keys
         prefs(context).edit().putStringSet("seen", seen).apply()

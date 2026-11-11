@@ -199,16 +199,3 @@ class SettingsRepository(private val store: KeyValueStore) {
         fun from(context: Context): SettingsRepository = SettingsRepository(PrefsStore(Storage.prefs(context)))
     }
 }
-
-object Storage {
-    private fun dpContext(context: Context): Context = context.applicationContext.createDeviceProtectedStorageContext()
-
-    fun prefs(context: Context): SharedPreferences = dpContext(context).getSharedPreferences("settings", Context.MODE_PRIVATE)
-
-    fun logFile(context: Context) = File(dpContext(context).filesDir, "dpi_log.txt")
-
-    fun crashFile(context: Context) = File(dpContext(context).filesDir, "crash_log.txt")
-
-    /** 잠금 해제 전에 쌓아 둔, 공용 로그 파일로 옮길 내용. */
-    fun pendingPublicLog(context: Context) = File(dpContext(context).filesDir, "pending_public.log")
-}

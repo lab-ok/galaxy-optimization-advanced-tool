@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.graphics.drawable.toBitmap
-import com.labok.goat.R
+import com.labok.goat.core.R
 
 /**
  * 염소 아이콘 모양(앱 설정): 1.14.0 전의 선 그림 염소([Style.CLASSIC], 기본), 캐릭터 그림([Style.ART]),

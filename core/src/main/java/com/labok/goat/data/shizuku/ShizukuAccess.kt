@@ -8,11 +8,9 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import com.labok.goat.R
+import com.labok.goat.core.R
 import com.labok.goat.data.HiddenApi
 import com.labok.goat.data.UserId
-import com.labok.goat.data.appsize.AppUsage
-import com.labok.goat.feature.statusbar.StatusBarHider
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.domain.AppDensityPolicy
 import com.labok.goat.ui.text.Copy
@@ -70,6 +68,16 @@ object ShizukuAccess {
 
     @Volatile private var appContext: Context? = null
 
+    /**
+     * 연결됐을 때(READY로 확인될 때마다)와 READY에서 끊겼을 때 부를 기능들. 공통 모듈은 기능을 모르므로 앱이 시작할 때 등록한다
+     * (끊김 알림 ShizukuNotice, 상단바 숨기기 등). 인자는 (앱 컨텍스트, 이전 상태, 지금 상태).
+     */
+    private val listeners = java.util.concurrent.CopyOnWriteArrayList<(Context, State, State) -> Unit>()
+
+    fun addListener(listener: (Context, State, State) -> Unit) {
+        listeners += listener
+    }
+
     fun refresh() {
         val before = state.value
         state.value = when {
@@ -89,12 +97,10 @@ object ShizukuAccess {
         // 잠금 해제 전(재부팅 직후)에는 설정 파일을 못 읽어 앱이 죽을 수 있다(10-17 크래시): 실패해도 넘어간다
         runCatching {
             if (state.value == State.READY) {
-                ShizukuNotice.update(app)
-                if (before != State.READY) StatusBarHider.onShizukuReady(app)
+                listeners.forEach { it(app, before, State.READY) }
             } else if (before == State.READY) {
                 LogRepository.from(app).add("Shizuku 연결이 끊김(${state.value})")
-                ShizukuNotice.update(app)
-                StatusBarHider.onShizukuLost(app)
+                listeners.forEach { it(app, before, state.value) }
             }
         }
     }
@@ -196,7 +202,7 @@ object ShizukuAccess {
         if (Shizuku.pingBinder()) runCatching { Shizuku.requestPermission(REQUEST) }
     }
 
-    internal fun atm(): Any = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
+    fun atm(): Any = HiddenApi.asInterface("android.app.IActivityTaskManager", ShizukuBinderWrapper(SystemServiceHelper.getSystemService("activity_task")))
 
     /** 맨 앞 작업: 앱, 화면 번호, 창 종류(1 전체 화면, 5 팝업 창, 6 분할 화면). */
     /** [home]: 홈 화면·최근 앱 화면 작업(topActivityType 2·3). 이때 [pkg]는 런처라 앱으로 다루지 않는다. */
@@ -253,7 +259,8 @@ object ShizukuAccess {
         }.getOrDefault(43)
         val m = ops.javaClass.methods.first { it.name == "setMode" && it.parameterTypes.size == 4 }
         m.invoke(ops, code, android.os.Process.myUid(), context.packageName, AppOpsManager.MODE_ALLOWED)
-        AppUsage.hasAccess(context)
+        context.getSystemService(AppOpsManager::class.java)
+            .unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName) == AppOpsManager.MODE_ALLOWED
     }.getOrDefault(false).also { LogRepository.from(context).add("Shizuku로 사용 기록 접근 허용: ${if (it) "성공" else "실패"}") }
 
     /**

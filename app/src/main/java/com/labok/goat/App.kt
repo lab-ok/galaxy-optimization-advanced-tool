@@ -1,6 +1,6 @@
 package com.labok.goat
 
-import com.labok.goat.feature.statusbar.StatusBarHost
+import com.labok.goat.feature.statusbar.StatusBarHider
 import android.app.Application
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
@@ -43,8 +43,12 @@ class App : Application() {
         super.onCreate()
         // 공통 문구를 리소스(언어별)에서 읽게 한다. 다른 무엇보다 먼저(크래시 기록·부팅 처리도 문구를 쓴다)
         Copy.lookup = resources::getString
-        // 기능 모듈이 쓸 앱 공통 기능(Shizuku 셸·기록·알림 아이콘)을 넘긴다
-        StatusBarHost.host = AppStatusBarHost
+        // Shizuku 연결·끊김 때 할 일(공통 모듈은 기능을 모르므로 여기서 이어 준다)
+        ShizukuAccess.addListener { app, before, now ->
+            ShizukuNotice.update(app)
+            if (now == ShizukuAccess.State.READY && before != ShizukuAccess.State.READY) StatusBarHider.onShizukuReady(app)
+            if (before == ShizukuAccess.State.READY && now != ShizukuAccess.State.READY) StatusBarHider.onShizukuLost(app)
+        }
         CrashRecorder.install(this)
         // 부팅 직후 잠금 해제 전(Direct Boot)에는 부팅 수신기 때문에 앱이 먼저 뜨는데, 이때 일반 저장소(설정)는 열 수 없어
         // 아래 초기화가 'credential encrypted storage' 예외로 앱을 죽였다(10-17 실기기 크래시). 잠금이 풀린 뒤에 한 번 한다.

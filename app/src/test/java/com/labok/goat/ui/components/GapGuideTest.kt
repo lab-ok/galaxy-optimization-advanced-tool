@@ -1,5 +1,6 @@
 package com.labok.goat.ui.components
 
+import com.labok.goat.testing.ModuleSources
 import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -9,7 +10,10 @@ import org.junit.Test
  * 새 화면을 만들 때도 Gap 값만 쓰게 해 카드 사이·안쪽 여백·글 간격이 화면마다 달라지지 않게 한다.
  */
 class GapGuideTest {
-    private val ui = File("src/main/java/com/labok/goat/ui")
+    // 화면 소스는 여러 모듈(:app·:core·:feature:*)에 나뉘어 있다
+    private val uiDirs = ModuleSources.javaRoots.map { File(it, "com/labok/goat/ui") }.filter { it.isDirectory }
+    private fun uiFiles() = uiDirs.asSequence().flatMap { it.walkTopDown() }
+    private fun rel(f: File) = f.path.substringAfter("com/labok/goat/ui/")
 
     private val rules = listOf(
         Regex("""Spacer\(Modifier\.height\(\d+(\.\d+)?\.dp\)\)""") to "세로 Spacer는 Gap 값을 쓴다",
@@ -19,10 +23,10 @@ class GapGuideTest {
 
     @Test
     fun screensUseGapTokens() {
-        assertTrue("UI 소스를 찾지 못함: ${ui.absolutePath}", ui.isDirectory)
-        val problems = ui.walkTopDown().filter { it.extension == "kt" && it.name != "Gap.kt" }.flatMap { f ->
+        assertTrue("UI 소스를 찾지 못함: ${ModuleSources.javaRoots}", uiDirs.isNotEmpty())
+        val problems = uiFiles().filter { it.extension == "kt" && it.name != "Gap.kt" }.flatMap { f ->
             f.readLines().mapIndexedNotNull { i, line ->
-                rules.firstOrNull { (re, _) -> re.containsMatchIn(line) }?.let { (_, why) -> "${f.relativeTo(ui)}:${i + 1} $why" }
+                rules.firstOrNull { (re, _) -> re.containsMatchIn(line) }?.let { (_, why) -> "${rel(f)}:${i + 1} $why" }
             }
         }.toList()
         assertTrue("간격 가이드라인 위반:\n" + problems.joinToString("\n"), problems.isEmpty())
@@ -43,9 +47,9 @@ class GapGuideTest {
             Regex("""size\(\d+\.dp\)\.clip\(RoundedCornerShape\(\d+(\.\d+)?\.dp\)\)""") to "아이콘 칸은 Tile 값",
             Regex("""RoundedCornerShape\(\d+(\.\d+)?\.dp\)""") to "모서리는 Radius·Tile·PillShape"
         )
-        val problems = ui.walkTopDown().filter { f -> f.extension == "kt" && own.none { it in f.path } }.flatMap { f ->
+        val problems = uiFiles().filter { f -> f.extension == "kt" && own.none { it in f.path } }.flatMap { f ->
             f.readLines().mapIndexedNotNull { i, line ->
-                rules.firstOrNull { (re, _) -> re.containsMatchIn(line) }?.let { (_, why) -> "${f.relativeTo(ui)}:${i + 1} $why" }
+                rules.firstOrNull { (re, _) -> re.containsMatchIn(line) }?.let { (_, why) -> "${rel(f)}:${i + 1} $why" }
             }
         }.toList()
         assertTrue("가로 간격 표준 위반:\n" + problems.joinToString("\n"), problems.isEmpty())
@@ -56,10 +60,10 @@ class GapGuideTest {
     fun noSpacerBetweenDescriptions() {
         val spacer = Regex("""^\s*Spacer\(Modifier\.height\(Gap\.\w+\)\)\s*$""")
         fun desc(line: String) = line.trimStart().startsWith("Text(") && "c.muted" in line
-        val problems = ui.walkTopDown().filter { it.extension == "kt" }.flatMap { f ->
+        val problems = uiFiles().filter { it.extension == "kt" }.flatMap { f ->
             val lines = f.readLines()
             (1 until lines.size - 1).filter { i -> spacer.matches(lines[i]) && desc(lines[i - 1]) && desc(lines[i + 1]) }
-                .map { i -> "${f.relativeTo(ui)}:${i + 1} 설명 문단 사이 Spacer" }
+                .map { i -> "${rel(f)}:${i + 1} 설명 문단 사이 Spacer" }
         }.toList()
         assertTrue("간격 규칙 2 위반:\n" + problems.joinToString("\n"), problems.isEmpty())
     }
@@ -68,9 +72,9 @@ class GapGuideTest {
     @Test
     fun noPaddingTopSpacing() {
         val bad = Regex("""^\s*(Text|LiquidButton|Column|Row)\(.*padding\(top = \d""")
-        val problems = ui.walkTopDown().filter { it.extension == "kt" && "/art/" !in it.path && "/liquid/" !in it.path }.flatMap { f ->
+        val problems = uiFiles().filter { it.extension == "kt" && "/art/" !in it.path && "/liquid/" !in it.path }.flatMap { f ->
             // 가로 줄(Row) 안에서 옆 요소와 글줄을 맞추는 미세 정렬(weight를 가진 칸)은 세로 간격이 아니라 제외한다
-            f.readLines().mapIndexedNotNull { i, line -> if (bad.containsMatchIn(line) && "weight(" !in line) "${f.relativeTo(ui)}:${i + 1}" else null }
+            f.readLines().mapIndexedNotNull { i, line -> if (bad.containsMatchIn(line) && "weight(" !in line) "${rel(f)}:${i + 1}" else null }
         }.toList()
         assertTrue("간격 규칙 B 위반(padding(top)으로 간격):\n" + problems.joinToString("\n"), problems.isEmpty())
     }
@@ -103,7 +107,7 @@ class GapGuideTest {
             return i
         }
         val problems = mutableListOf<String>()
-        ui.walkTopDown().filter { it.extension == "kt" && "/art/" !in it.path }.forEach { f ->
+        uiFiles().filter { it.extension == "kt" && "/art/" !in it.path }.forEach { f ->
             val lines = f.readLines()
             for (i in lines.indices) {
                 val isC = control.containsMatchIn(lines[i])
@@ -134,7 +138,7 @@ class GapGuideTest {
                     isC && nT && "c.ink" in next && "c.muted" !in next -> "Gap.Section"
                     else -> "Gap.Item"
                 }
-                if (gap != want) problems += "${f.relativeTo(ui)}:${i + 1} ${if (isC) "조작" else "글"}→${if (nC) "조작" else "글"} 간격 ${gap ?: "없음"} (규칙: $want)"
+                if (gap != want) problems += "${rel(f)}:${i + 1} ${if (isC) "조작" else "글"}→${if (nC) "조작" else "글"} 간격 ${gap ?: "없음"} (규칙: $want)"
             }
         }
         assertTrue("간격 규칙표 위반:\n" + problems.joinToString("\n"), problems.isEmpty())

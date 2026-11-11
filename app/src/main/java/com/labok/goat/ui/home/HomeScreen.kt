@@ -142,6 +142,7 @@ import com.labok.goat.ui.nav.GLASS_ALPHA
 import com.labok.goat.ui.nav.NavGlyph
 import com.labok.goat.ui.nav.NavItem
 import com.labok.goat.ui.nav.NavSection
+import com.labok.goat.ui.nav.NEW_BADGE_NAV
 import com.labok.goat.ui.nav.NewBadge
 import com.labok.goat.ui.nav.SideDrawerContent
 import com.labok.goat.ui.rotate.ShakeCalibrationSheet
@@ -206,7 +207,7 @@ internal fun HomeScreen(
     val badgeContext = LocalContext.current
     DisposableEffect(feature) {
         val shown = feature
-        onDispose { NewBadge.markSeen(badgeContext, shown) }
+        onDispose { NewBadge.markSeen(badgeContext, NEW_BADGE_NAV[shown]) }
     }
     // 화면에 보이는 기능. 사이드바에서 고르면 방울 이동을 보여 준 뒤 사이드바가 닫히면서 바뀐다(물방울 번짐 전환).
     var shown by rememberSaveable { mutableStateOf(NavItem.HOME) }

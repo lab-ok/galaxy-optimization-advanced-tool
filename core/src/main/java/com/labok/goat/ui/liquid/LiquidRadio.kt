@@ -51,13 +51,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 /** 라디오 묶음 안의 줄들이 자기 동그라미 위치·선택·눌림을 알리는 곳([LiquidRadioGroup]이 읽어 방울을 그린다). */
-internal class RadioGroupState {
+class RadioGroupState {
     val centers = mutableStateMapOf<String, Float>()
     var selected by mutableStateOf<String?>(null)
     var pressed by mutableStateOf<String?>(null)
 }
 
-internal val LocalRadioGroup = staticCompositionLocalOf<RadioGroupState?> { null }
+val LocalRadioGroup = staticCompositionLocalOf<RadioGroupState?> { null }
 
 /**
  * 라디오 묶음(리퀴드 엔진, Trafix radio와 같은 움직임): 위에서 내려다본 물방울 하나가 고른 줄의 동그라미에 앉아 있다.

@@ -34,10 +34,10 @@ import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
 
 /** 넓은 내부 화면에서도 읽기 좋은 카드 최대 폭(모든 기능 화면 공통). */
-internal val ContentMaxWidth = 640.dp
+val ContentMaxWidth = 640.dp
 
 /** 기능 화면 목록의 여백: 좌우 16dp, 제목 줄·내비게이션 막대 아래로 내용이 비치도록 위아래는 안쪽 여백에 더한다. */
-internal fun featurePadding(inner: PaddingValues) = PaddingValues(
+fun featurePadding(inner: PaddingValues) = PaddingValues(
     start = Space.Edge,
     end = Space.Edge,
     top = inner.calculateTopPadding() + 4.dp,
@@ -46,7 +46,7 @@ internal fun featurePadding(inner: PaddingValues) = PaddingValues(
 
 /** 아래에서 올라오는 시트의 공통 골격: 세로 스크롤, 좌우 20dp, 내비게이션 막대 위로 28dp. [title]이 있으면 맨 위에 큰 제목. */
 @Composable
-internal fun SheetColumn(
+fun SheetColumn(
     modifier: Modifier = Modifier,
     title: String? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
@@ -70,7 +70,7 @@ internal fun SheetColumn(
 
 /** 되돌리기 어려운 동작을 한 번 더 묻는 빨간 상자: "⚠ [message]", 설명([note]), 그 아래 버튼 줄([actions]). */
 @Composable
-internal fun DangerConfirmBox(message: String, note: String? = null, actions: @Composable RowScope.() -> Unit) {
+fun DangerConfirmBox(message: String, note: String? = null, actions: @Composable RowScope.() -> Unit) {
     val c = LocalLiquid.current
     val shape = RoundedCornerShape(Radius.Box)
     Column(
@@ -90,7 +90,7 @@ internal fun DangerConfirmBox(message: String, note: String? = null, actions: @C
 /**
  * 글자를 클립보드에 복사한다. Android 13부터는 시스템이 복사 확인을 띄우므로, 앱이 따로 알려야 하면(12 이하) true.
  */
-internal fun copyText(context: Context, text: String, label: String = "GOAT"): Boolean {
+fun copyText(context: Context, text: String, label: String = "GOAT"): Boolean {
     context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText(label, text))
     return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
 }
@@ -100,10 +100,10 @@ internal fun copyText(context: Context, text: String, label: String = "GOAT"): B
  * GOAT가 아니라 홈 화면으로 가 버렸다(에뮬레이터에서 확인). 매번 새 작업으로 열어(CLEAR_TASK) 할 일을 마치고
  * 뒤로 가기를 누르면 GOAT로 돌아오게 한다.
  */
-internal fun settingsIntent(action: String) = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+fun settingsIntent(action: String) = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
 /** 개발자 옵션 화면을 연다. 개발자 옵션이 꺼져 있으면 켜는 곳(휴대전화 정보)으로 보낸다. */
-internal fun openDeveloperOptions(context: Context) {
+fun openDeveloperOptions(context: Context) {
     val devOn = Settings.Global.getInt(context.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
     val intent = settingsIntent(if (devOn) Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS else Settings.ACTION_DEVICE_INFO_SETTINGS)
     try {
@@ -115,7 +115,7 @@ internal fun openDeveloperOptions(context: Context) {
 
 /** 사용 방법 한 항목: 제목, 움직이는 그림([art]), 설명. 초보자도 그림만 보고 알 수 있게 그림을 설명 위에 둔다. */
 @Composable
-internal fun HelpTopic(title: String, body: String, art: (@Composable () -> Unit)? = null) {
+fun HelpTopic(title: String, body: String, art: (@Composable () -> Unit)? = null) {
     val c = LocalLiquid.current
     GlassCard {
         Text(title, fontWeight = FontWeight.SemiBold, color = c.ink)

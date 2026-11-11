@@ -19,7 +19,7 @@ import com.labok.goat.ui.liquid.LiquidColors
  * @param glow 0~1. 안쪽 회색 테두리가 굵고 진해진다(사용 중인 화면의 숨쉬기).
  * @return 화면(안쪽) 영역
  */
-internal fun DrawScope.deviceFrame(
+fun DrawScope.deviceFrame(
     c: LiquidColors,
     topLeft: Offset,
     size: Size,
@@ -43,7 +43,7 @@ internal fun DrawScope.deviceFrame(
 }
 
 /** 모니터 틀: [deviceFrame] 아래에 같은 잉크색 받침대. 화면 영역을 돌려준다. */
-internal fun DrawScope.monitorFrame(c: LiquidColors, center: Offset, width: Float): Rect {
+fun DrawScope.monitorFrame(c: LiquidColors, center: Offset, width: Float): Rect {
     val h = width * 0.62f
     val tl = Offset(center.x - width / 2, center.y - h / 2 - width * 0.06f)
     val screen = deviceFrame(c, tl, Size(width, h))

@@ -52,7 +52,7 @@ fun Text(
  * 한글 글자 사이에 WORD JOINER를 넣어 어절 안에서 줄이 끊기지 않게 한다.
  * 영문·숫자나 닫는 따옴표·괄호 바로 뒤에 붙은 한글(조사)도 붙여, 'GPL-3.0' / '으로'처럼 조사만 다음 줄로 떨어지지 않게 한다.
  */
-internal fun keepAll(s: String): String {
+fun keepAll(s: String): String {
     if (s.none { it.isHangul() }) return s
     val b = StringBuilder(s.length + s.length / 2)
     for (i in s.indices) {

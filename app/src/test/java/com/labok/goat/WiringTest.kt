@@ -1,5 +1,6 @@
 package com.labok.goat
 
+import com.labok.goat.testing.ModuleSources
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -17,7 +18,7 @@ class WiringTest {
 
     /** 저장소 맨 위(app·feature 모듈이 있는 곳). 계약의 파일 경로는 여기서부터 적는다. */
     private val repo = app.parentFile
-    private val modules = listOf(app) + (File(repo, "feature").listFiles()?.filter { File(it, "src/main").isDirectory }.orEmpty())
+    private val modules = ModuleSources.modules
     private val main = File(app, "src/main/java")
     private val sources = modules.flatMap { m -> File(m, "src/main/java").walkTopDown().filter { it.extension == "kt" }.toList() }.associateWith { it.readText() }
     // 이 파일은 계약 문자열에 함수 이름을 담고 있어 쓰임 세기에서 뺀다
@@ -107,12 +108,7 @@ class WiringTest {
             ),
             Contract(
                 "app/src/main/java/com/labok/goat/App.kt",
-                listOf("StatusBarHost.host = AppStatusBarHost"),
-                "상단바 숨기기 모듈이 앱 공통 기능(Shizuku·기록·알림 아이콘)을 쓰려면 앱 시작 때 연결해야 한다(없으면 모듈이 죽음)"
-            ),
-            Contract(
-                "app/src/main/java/com/labok/goat/data/shizuku/ShizukuAccess.kt",
-                listOf("StatusBarHider.onShizukuLost(", "StatusBarHider.onShizukuReady("),
+                listOf("ShizukuAccess.addListener", "StatusBarHider.onShizukuLost(", "StatusBarHider.onShizukuReady(", "ShizukuNotice.update("),
                 "Shizuku가 끊기면 상단바 숨기기가 키보드를 막지 않게(1.55.0)"
             )
         )

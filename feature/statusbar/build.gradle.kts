@@ -1,4 +1,4 @@
-// 상단바 숨기기 기능 모듈. 앱 공통 코드(Shizuku·기록·알림 아이콘)는 직접 쓰지 않고 [StatusBarHost]로 앱이 넘겨준다
+// 상단바 숨기기 기능 모듈. 공통 코드는 :core에서 쓰고, 앱이나 다른 기능 모듈은 모른다
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -23,7 +23,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.kotlinx.coroutines.core)
+    // 공통 코드(Shizuku·기록·리퀴드·문구)는 :core에서 그대로 쓴다
+    implementation(project(":core"))
     testImplementation(libs.junit)
 }

@@ -5,6 +5,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
+import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.shizuku.ShizukuAccess
 import android.view.accessibility.AccessibilityNodeInfo
 
 /**
@@ -21,7 +23,7 @@ class StatusBarInputService : AccessibilityService() {
         val node = event.source
         if (node == null) {
             // 실기에서 원인을 볼 수 있게 남긴다(입력란 누름마다 한 줄이라 숨기기 창이 포커스를 쥔 동안만)
-            if (StatusBarHider.holdingFocus) StatusBarHost.note(this, "상단바 숨기기: 입력 도우미가 누른 곳을 읽지 못함(${event.packageName})")
+            if (StatusBarHider.holdingFocus) LogRepository.from(this).add("상단바 숨기기: 입력 도우미가 누른 곳을 읽지 못함(${event.packageName})")
             return
         }
         if (!node.isEditable) return
@@ -55,7 +57,7 @@ class StatusBarInputService : AccessibilityService() {
             if (on) Settings.Secure.putInt(r, Settings.Secure.ACCESSIBILITY_ENABLED, 1)
             enabled(context) == on
         }.getOrDefault(false).also { ok ->
-            StatusBarHost.note(context, "상단바 숨기기: 입력 도우미 ${if (on) "켬" else "끔"}${if (ok) "" else " 실패"}")
+            LogRepository.from(context).add("상단바 숨기기: 입력 도우미 ${if (on) "켬" else "끔"}${if (ok) "" else " 실패"}")
         }
     }
 }

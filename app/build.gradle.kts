@@ -82,6 +82,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core"))
     implementation(project(":feature:statusbar"))
     implementation(libs.androidx.core.ktx)
     // UI: Jetpack Compose + Material 3 (dynamic color, edge-to-edge)

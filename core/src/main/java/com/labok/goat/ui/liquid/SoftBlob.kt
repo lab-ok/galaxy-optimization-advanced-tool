@@ -387,8 +387,8 @@ class SoftBlob(private val n: Int = N) {
 class SoftBlobState {
     val blob = SoftBlob()
     var frame by mutableLongStateOf(0L)
-        internal set
-    internal var wake by mutableLongStateOf(0L)
+        set
+    var wake by mutableLongStateOf(0L)
 }
 
 @Composable

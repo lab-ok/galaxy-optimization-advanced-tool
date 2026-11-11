@@ -43,7 +43,7 @@ import com.labok.goat.ui.liquid.LocalReduceMotion
 
 /** 0→1을 [periodMs]마다 반복하는 진행값. */
 @Composable
-internal fun artLoop(periodMs: Int, reverse: Boolean = false): Float {
+fun artLoop(periodMs: Int, reverse: Boolean = false): Float {
     val reduce = LocalReduceMotion.current
     val t by rememberInfiniteTransition(label = "art").animateFloat(
         0f,
@@ -59,7 +59,7 @@ internal fun artLoop(periodMs: Int, reverse: Boolean = false): Float {
  * 따르지 않는다. 애니메이션 속도 그림처럼 그 배율 자체를 보여 주는 그림에 쓴다(배율이 두 번 걸리지 않게).
  */
 @Composable
-internal fun realTimeLoop(periodMs: Int): Float {
+fun realTimeLoop(periodMs: Int): Float {
     var t by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(periodMs) {
         val start = withFrameNanos { it }
@@ -72,20 +72,20 @@ internal fun realTimeLoop(periodMs: Int): Float {
 }
 
 @Composable
-internal fun ArtCanvas(height: Dp = 150.dp, draw: DrawScope.(LiquidColors, TextMeasurer) -> Unit) {
+fun ArtCanvas(height: Dp = 150.dp, draw: DrawScope.(LiquidColors, TextMeasurer) -> Unit) {
     val c = LocalLiquid.current
     val tm = rememberTextMeasurer()
     Canvas(Modifier.fillMaxWidth().height(height)) { draw(c, tm) }
 }
 
 /** 가운데 정렬 글자. */
-internal fun DrawScope.artLabel(tm: TextMeasurer, text: String, center: Offset, color: Color, sizeSp: Int = 11, bold: Boolean = false) {
+fun DrawScope.artLabel(tm: TextMeasurer, text: String, center: Offset, color: Color, sizeSp: Int = 11, bold: Boolean = false) {
     val l = tm.measure(text, TextStyle(fontFamily = GalaxyFont, color = color, fontSize = (sizeSp / fontScale).sp, fontWeight = if (bold) FontWeight.Bold else FontWeight.Medium))
     drawText(l, topLeft = Offset(center.x - l.size.width / 2f, center.y - l.size.height / 2f))
 }
 
 /** 값 표시 알약. */
-internal fun DrawScope.artPill(tm: TextMeasurer, c: LiquidColors, text: String, center: Offset, filled: Boolean) {
+fun DrawScope.artPill(tm: TextMeasurer, c: LiquidColors, text: String, center: Offset, filled: Boolean) {
     val l = tm.measure(text, TextStyle(fontFamily = GalaxyFont, color = if (filled) c.onInk else c.muted, fontSize = (10f / fontScale).sp, fontWeight = FontWeight.Bold))
     val w = l.size.width + 14.dp.toPx()
     val h = l.size.height + 6.dp.toPx()
