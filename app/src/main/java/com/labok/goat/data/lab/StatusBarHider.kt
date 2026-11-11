@@ -64,6 +64,8 @@ object StatusBarHider {
 
     /** 마지막으로 포커스를 내려놓게 한 키가 뒤로 가기였는지. */
     private var lastKeyBack = false
+    /** 숨기기 창이 지금 포커스를 쥐고 있는지(입력 도우미가 기록 여부를 정할 때 쓴다). */
+    val holdingFocus: Boolean get() = view?.hasWindowFocus() == true
     private val onFlow = MutableStateFlow(false)
     val on: StateFlow<Boolean> = onFlow.asStateFlow()
 

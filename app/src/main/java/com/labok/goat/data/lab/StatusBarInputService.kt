@@ -19,7 +19,12 @@ class StatusBarInputService : AccessibilityService() {
         event ?: return
         if (event.eventType != AccessibilityEvent.TYPE_VIEW_CLICKED && event.eventType != AccessibilityEvent.TYPE_VIEW_FOCUSED) return
         if (!StatusBarHider.on.value || event.packageName == packageName) return
-        val node = event.source ?: return
+        val node = event.source
+        if (node == null) {
+            // 실기에서 원인을 볼 수 있게 남긴다(입력란 누름마다 한 줄이라 숨기기 창이 포커스를 쥔 동안만)
+            if (StatusBarHider.holdingFocus) LogRepository.from(this).add("상단바 숨기기: 입력 도우미가 누른 곳을 읽지 못함(${event.packageName})")
+            return
+        }
         if (!node.isEditable) return
         StatusBarHider.yieldForInput(this) {
             node.refresh()

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 상단바 숨기기 입력 도우미(StatusBarInputService): 누름·초점 이벤트에서 입력란인지만 본다. 화면 글자는 읽지 않는다 -->
+<!-- 상단바 숨기기 입력 도우미(StatusBarInputService): 누름·초점 이벤트에서 입력란인지만 본다. 화면 글자는 읽지 않는다.
+     숨기기 창이 포커스(활성 창)를 쥔 동안 다른 앱 창의 입력란을 보려면 flagRetrieveInteractiveWindows가 있어야 한다
+     (없으면 이벤트의 source가 null, 1.55.3 실기). 1.27.0의 상단바 제스처 서비스도 이 플래그를 썼다 -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeViewClicked|typeViewFocused"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:canRetrieveWindowContent="true"
     android:description="@string/status_bar_input_desc"
