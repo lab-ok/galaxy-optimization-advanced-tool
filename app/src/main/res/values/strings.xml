@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">GOAT</string>
     <string name="volume_rotate_desc">GOAT: 화면을 돌리면 볼륨 버튼의 올리기·내리기를 화면 방향에 맞춰 바꿉니다. 볼륨 키만 받고 화면 내용은 읽지 않습니다.</string>
+    <string name="status_bar_input_label">GOAT 상단바 숨기기 입력 도우미</string>
+    <string name="status_bar_input_desc">GOAT: 상단바를 숨긴 동안 입력칸을 누르면 바로 키보드가 뜨게 합니다. 누른 곳이 입력칸인지만 보고 화면 내용은 읽지 않습니다.</string>
     <string name="volume_rotate_label">GOAT 볼륨 버튼 회전</string>
 </resources>

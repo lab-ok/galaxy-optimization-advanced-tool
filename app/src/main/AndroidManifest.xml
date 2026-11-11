@@ -306,6 +306,19 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+        <!-- 상단바 숨기기 입력 도우미(접근성 서비스). 숨기기를 켜고 끌 때 GOAT가 시스템 설정 권한으로 함께 켜고 끈다(StatusBarInputService) -->
+        <service
+            android:name=".data.lab.StatusBarInputService"
+            android:exported="true"
+            android:label="@string/status_bar_input_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/status_bar_input_service" />
+        </service>
         <!-- 볼륨 버튼 회전(접근성 서비스). GOAT가 시스템 설정 권한으로 켜고 끈다(VolumeRotate) -->
         <service
             android:name=".data.lab.VolumeRotateService"

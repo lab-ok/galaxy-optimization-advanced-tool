@@ -77,6 +77,7 @@ object StatusBarHider {
             ShizukuAccess.shell("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
             if (!Settings.canDrawOverlays(app)) return Copy.text(R.string.labdata_statusbar_no_overlay)
         }
+        StatusBarInputService.setEnabled(app, true)
         main.post { attach(app) }
         onFlow.value = true
         notify(app)
@@ -137,6 +138,7 @@ object StatusBarHider {
         regrabGen++
         main.post { detach(app) }
         onFlow.value = false
+        StatusBarInputService.setEnabled(app, false)
         app.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
         LogRepository.from(app).add("상단바 숨기기 끔")
     }
@@ -251,19 +253,12 @@ object StatusBarHider {
                     val id = lastFailedShowId() ?: return@Thread
                     if (id > lastImeFail) {
                         lastImeFail = id
-                        // 첫 누름의 키보드 요청은 이미 실패했다: 포커스가 앱으로 넘어가면 같은 자리를 한 번 더 눌러 첫 누름에 뜨게 한다
-                        // (11-11 소장님 실기 "두세 번 눌러야 올라옴"). 다른 앱 누름 좌표는 바깥 누름 이벤트에 오지 않아 입력 기록에서 읽는다
-                        val input = ShizukuAccess.shell("dumpsys input")?.out
-                        val tap = input?.let(StatusBarFocus::lastTouchUp)
-                        // 1.55.1 실기(SM-F971N, Android 17)에서 좌표를 못 읽었다: 못 읽으면 입력 기록의 모양을 남겨 다음에 맞춘다
-                        if (tap == null) LogRepository.from(context).add("상단바 숨기기: 다시 누를 자리를 못 읽음 · ${StatusBarFocus.recentSample(input)}")
                         main.post {
                             if (view !== v || !onFlow.value) return@post
                             lastKeyBack = false
                             inputGraceUntil = SystemClock.uptimeMillis() + INPUT_GRACE_MS
-                            if (tap != null) afterYield = { Thread { ShizukuAccess.shell("input -d ${tap.display} tap ${tap.x} ${tap.y}") }.start() }
                             stepAside(context, v)
-                            LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 키보드를 띄우려고 포커스 해제" + (tap?.let { " · 같은 자리(${it.x},${it.y}) 다시 누름" } ?: ""))
+                            LogRepository.from(context).add("상단바 숨기기: 입력란을 눌러 키보드를 띄우려고 포커스 해제")
                         }
                         return@Thread
                     }
@@ -411,33 +406,6 @@ internal object StatusBarFocus {
         .filter { "TYPE_SHOW - STATUS_FAIL" in it && "com.labok.goat" !in it }
         .mapNotNull { Regex("""#(\d+) TYPE_SHOW""").find(it)?.groupValues?.get(1)?.toIntOrNull() }
         .maxOrNull() ?: 0
-
-    /** 다시 누를 자리(화면 번호·좌표). */
-    class Tap(val display: Int, val x: Int, val y: Int)
-
-    /**
-     * `dumpsys input`의 최근 이벤트(RecentQueue)에서 [MAX_TAP_AGE_MS] 안에 손을 뗀 마지막 터치 화면 누름. 없으면 null.
-     * 줄 모양: `MotionEvent(… source=TOUCHSCREEN, displayId=0, action=UP, … pointers=[0: (640.0, 903.0)]), …, age=5149ms`
-     */
-    fun lastTouchUp(out: String): Tap? = out.lines().lastOrNull { "MotionEvent" in it && "TOUCHSCREEN" in it && UP.containsMatchIn(it) }?.let { line ->
-        val age = Regex("""age=(\d+)ms""").find(line)?.groupValues?.get(1)?.toLongOrNull() ?: return null
-        if (age > MAX_TAP_AGE_MS) return null
-        val display = Regex("""displayId=(-?\d+)""").find(line)?.groupValues?.get(1)?.toIntOrNull() ?: return null
-        val p = Regex("""pointers=\[0:\s*\((-?[\d.]+),\s*(-?[\d.]+)\)""").find(line) ?: return null
-        Tap(display.coerceAtLeast(0), p.groupValues[1].toFloat().toInt(), p.groupValues[2].toFloat().toInt())
-    }
-
-    private const val MAX_TAP_AGE_MS = 3_000L
-    private val UP = Regex("""action=(ACTION_)?UP\b""")
-
-    /** 좌표를 못 읽었을 때 기록할 입력 기록 견본: RecentQueue 머리줄과 마지막 MotionEvent 줄(앞 300자). */
-    fun recentSample(out: String?): String {
-        if (out == null) return "no shell output"
-        val lines = out.lines()
-        val head = lines.firstOrNull { "RecentQueue" in it }?.trim() ?: "no RecentQueue line"
-        val motion = lines.lastOrNull { "MotionEvent" in it }?.trim()?.take(300) ?: "no MotionEvent line"
-        return "$head | $motion"
-    }
 
     fun parse(out: String): State {
         val lines = out.lines()

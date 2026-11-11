@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 상단바 숨기기 입력 도우미(StatusBarInputService): 누름·초점 이벤트에서 입력란인지만 본다. 화면 글자는 읽지 않는다 -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeViewClicked|typeViewFocused"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/status_bar_input_desc"
+    android:notificationTimeout="0" />
