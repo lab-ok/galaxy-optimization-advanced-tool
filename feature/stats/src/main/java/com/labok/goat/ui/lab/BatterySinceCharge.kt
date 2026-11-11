@@ -172,7 +172,7 @@ private fun Card(title: String, desc: String? = null, content: @Composable Colum
 @Composable
 private fun ColumnScope.SinceChargeSummary(s: SinceCharge, level: Int?, charging: Boolean) {
     val c = LocalLiquid.current
-    val since = SimpleDateFormat(stringResource(R.string.lab_battery_fmt_since), Locale.KOREA).format(Date(s.startClock))
+    val since = SimpleDateFormat(stringResource(R.string.lab_battery_fmt_since), Locale.getDefault()).format(Date(s.startClock))
     Text(stringResource(R.string.lab_battery_since_summary, since, duration(s.onBatteryMs)), color = c.muted, style = MaterialTheme.typography.bodySmall)
     Spacer(Modifier.height(Gap.Item))
     Row(verticalAlignment = Alignment.Bottom) {
@@ -196,8 +196,8 @@ private fun ColumnScope.SinceChargeSummary(s: SinceCharge, level: Int?, charging
 @Composable
 private fun ChargeRow(ch: BatteryHistory.Charge) {
     val c = LocalLiquid.current
-    val day = SimpleDateFormat("M/d a h:mm", Locale.KOREA)
-    val time = SimpleDateFormat("a h:mm", Locale.KOREA)
+    val day = SimpleDateFormat("M/d a h:mm", Locale.getDefault())
+    val time = SimpleDateFormat("a h:mm", Locale.getDefault())
     val sameDay = SimpleDateFormat("yyyyMMdd", Locale.US).let { it.format(Date(ch.start)) == it.format(Date(ch.end)) }
     val range = "${day.format(Date(ch.start))}~" + if (ch.ongoing) {
         stringResource(R.string.lab_battery_charge_now)

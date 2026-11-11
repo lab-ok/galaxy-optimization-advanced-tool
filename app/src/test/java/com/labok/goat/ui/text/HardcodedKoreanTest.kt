@@ -41,6 +41,8 @@ class HardcodedKoreanTest {
             "data/lab/UnfoldLock.kt",
             "data/log/DiagnosticReport.kt",
             "data/log/RelaunchTrace.kt",
+            // 언어 선택 목록의 언어 이름은 그 언어로 쓴다(한국어·English, 어느 언어 화면에서도 같음)
+            "ui/text/AppLanguage.kt",
             // 상단바 숨기기의 포커스 판단 설명(StatusBarFocus.why)은 GOAT 기록에만 쓴다
             "feature/statusbar/StatusBarHider.kt"
         )

@@ -79,10 +79,10 @@ fun BatterySection() {
                     )
                 }
                 Spacer(Modifier.height(Gap.Item))
-                Metric(stringResource(R.string.lab_battery_metric_temp), s.tempC?.let { String.format(Locale.KOREA, "%.1f°C", it) })
-                Metric(stringResource(R.string.lab_battery_metric_voltage), s.voltageMv?.let { String.format(Locale.KOREA, "%.2fV", it / 1000f) })
+                Metric(stringResource(R.string.lab_battery_metric_temp), s.tempC?.let { String.format(Locale.getDefault(), "%.1f°C", it) })
+                Metric(stringResource(R.string.lab_battery_metric_voltage), s.voltageMv?.let { String.format(Locale.getDefault(), "%.2fV", it / 1000f) })
                 Metric(stringResource(R.string.lab_battery_metric_current), s.currentMa?.let { "${if (it > 0) "+" else ""}$it mA" })
-                Metric(stringResource(R.string.lab_battery_metric_power), s.watts?.let { String.format(Locale.KOREA, "%+.1fW", it) })
+                Metric(stringResource(R.string.lab_battery_metric_power), s.watts?.let { String.format(Locale.getDefault(), "%+.1fW", it) })
             }
         }
         // 배터리 수명 카드는 뺐다: 삼성 기기의 남은 전하량은 화면 잔량으로 만든 값이라 수명을 추정할 수 없고(2026-10-20 조사),

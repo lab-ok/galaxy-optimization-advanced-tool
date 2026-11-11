@@ -86,7 +86,7 @@ fun BatteryHistorySection(all: List<BatteryHistory.Point>, now: Long, since: Lon
     Spacer(Modifier.height(Gap.Item))
     val fmtDayHour = stringResource(R.string.lab_battery_fmt_day_hour)
     val fmtHour = stringResource(R.string.lab_battery_fmt_hour)
-    val hourFmt = remember(bucketMs, fmtDayHour, fmtHour) { SimpleDateFormat(if (bucketMs >= 86_400_000L) fmtDayHour else fmtHour, Locale.KOREA) }
+    val hourFmt = remember(bucketMs, fmtDayHour, fmtHour) { SimpleDateFormat(if (bucketMs >= 86_400_000L) fmtDayHour else fmtHour, Locale.getDefault()) }
     val pick = selected?.let { buckets.getOrNull(it) }
     if (pick == null) {
         Text(stringResource(R.string.lab_battery_bucket_hint, bucketMs / 3_600_000), color = c.muted, style = MaterialTheme.typography.bodySmall)
@@ -158,7 +158,7 @@ private fun LiquidBucketColumns(buckets: List<BatteryHistory.Bucket>, selected: 
     val daily = buckets.size > 1 && buckets[1].start - buckets[0].start >= 86_400_000L
     val fmtDay = stringResource(R.string.lab_battery_fmt_day)
     val fmtHour = stringResource(R.string.lab_battery_fmt_hour)
-    val hourFmt = remember(daily, fmtDay, fmtHour) { SimpleDateFormat(if (daily) fmtDay else fmtHour, Locale.KOREA) }
+    val hourFmt = remember(daily, fmtDay, fmtHour) { SimpleDateFormat(if (daily) fmtDay else fmtHour, Locale.getDefault()) }
     // 눈금 글자는 글자 크기 설정을 따라 커지지 않게(그래프 칸은 그대로라 날짜끼리 겹쳤다)
     val small = TextStyle(fontFamily = GalaxyFont, fontSize = (10f / LocalDensity.current.fontScale).sp, color = c.muted)
     val labelEvery = ((buckets.size + 3) / 4).coerceAtLeast(1)

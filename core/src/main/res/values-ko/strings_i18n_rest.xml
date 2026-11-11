@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 영어 추가 준비로 코드에서 옮긴 나머지 문구(app·core·작은 기능 모듈). 이름은 i18n_<영역>_<용도>. -->
+<resources>
+    <!-- 전사문 저장: 원래 파일 이름이 없을 때 쓰는 이름(%1$s = yyMMdd-HHmm) -->
+    <string name="i18n_share_transcript_fallback_name">전사문-%1$s</string>
+</resources>

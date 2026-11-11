@@ -74,10 +74,13 @@ internal fun StatusCard(state: UiState, onAuto: (Boolean) -> Unit) {
         else -> Copy.STATUS_FIXING
     }
     GlassCard {
+        // 좁은 폭·큰 글자에서는 그림을 줄여 오른쪽 글 칸을 넓힌다(영어처럼 긴 단어가 글자 단위로 끊기던 것, 11-11 영어 화면 점검)
+        BoxWithConstraints {
+        val narrow = maxWidth < 300.dp
         Row(verticalAlignment = Alignment.CenterVertically) {
             FoldDeviceArt(
                 unfolded = unfolded,
-                height = 118.dp
+                height = if (narrow) 84.dp else 118.dp
             )
             Spacer(Modifier.width(Space.Group))
             Column(Modifier.weight(1f)) {
@@ -98,7 +101,9 @@ internal fun StatusCard(state: UiState, onAuto: (Boolean) -> Unit) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         state.dpi?.current?.toString() ?: "—",
-                        fontSize = 52.sp,
+                        maxLines = 1,
+                        softWrap = false,
+                        fontSize = if (narrow) 40.sp else 52.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-1.5).sp,
                         color = c.ink
@@ -109,6 +114,7 @@ internal fun StatusCard(state: UiState, onAuto: (Boolean) -> Unit) {
                 }
                 Text(line, color = c.ink, style = MaterialTheme.typography.bodyMedium)
             }
+        }
         }
         // 켜고 끄기는 다른 기능처럼 그림 카드 안에 둔다(1.19.0 소장님 지정, DPI 화면만 따로 카드에 남아 있었다 10-30)
         Spacer(Modifier.height(Gap.Item))

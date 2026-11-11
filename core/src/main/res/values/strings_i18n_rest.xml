@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_share_transcript_fallback_name">transcript-%1$s</string>
+</resources>

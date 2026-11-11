@@ -1,5 +1,8 @@
 package com.labok.goat.ui.about
 
+import com.labok.goat.ui.liquid.LiquidRadioRow
+import com.labok.goat.ui.liquid.LiquidRadioGroup
+import com.labok.goat.ui.text.AppLanguage
 import com.labok.goat.AppBuild
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
@@ -99,6 +102,29 @@ internal fun SettingsScreen(contentPadding: PaddingValues, onAbout: () -> Unit, 
         modifier = Modifier.fillMaxWidth()
     ) {
         item(key = "settingsTitle") { SectionTitle(Copy.SETTINGS_SECTION) }
+        item(key = "language") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) {
+                GlassCard {
+                    Text(stringResource(R.string.settings_language_title), fontWeight = FontWeight.SemiBold, color = c.ink)
+                    Text(stringResource(R.string.settings_language_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(Gap.Item))
+                    // 언어마다 그 나라 국기를 앞에 붙인다(11-11 소장님). 시스템 기본은 지구본
+                    var lang by remember { mutableStateOf(AppLanguage.current(context)) }
+                    LiquidRadioGroup {
+                        AppLanguage.Option.entries.forEach { o ->
+                            val name = if (o == AppLanguage.Option.SYSTEM) stringResource(R.string.settings_language_system) else o.label
+                            LiquidRadioRow("${o.flag}  $name", null, lang == o, true) {
+                                if (lang == o) return@LiquidRadioRow
+                                lang = o
+                                AppLanguage.set(context, o)
+                                // Android 12 이하는 시스템이 다시 그리지 않으므로 화면을 다시 띄운다
+                                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) (context as? android.app.Activity)?.recreate()
+                            }
+                        }
+                    }
+                }
+            }
+        }
         item(key = "update") { Box(Modifier.widthIn(max = ContentMaxWidth)) { UpdateCard(manual = true) } }
         item(key = "motion") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) {

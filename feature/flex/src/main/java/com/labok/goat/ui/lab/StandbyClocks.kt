@@ -114,7 +114,7 @@ private val Mute = Color(0xFF7C7C80)
 private fun hh(t: LocalDateTime) = "${t.hour}"
 private fun mm(t: LocalDateTime) = "%02d".format(t.minute)
 private fun ss(t: LocalDateTime) = "%02d".format(t.second)
-private fun dayKo(t: LocalDateTime) = t.dayOfWeek.getDisplayName(JTextStyle.FULL, Locale.KOREAN)
+private fun dayKo(t: LocalDateTime) = t.dayOfWeek.getDisplayName(JTextStyle.FULL, Locale.getDefault())
 private fun dateKo(t: LocalDateTime) = Copy.text(R.string.lab_date_month_day, t.monthValue, t.dayOfMonth)
 
 /** 화면 높이에 비례한 글자 크기(시안은 높이 1248 기준). */

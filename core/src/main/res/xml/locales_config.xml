@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 앱이 지원하는 언어(Android 13+ 시스템 설정의 '앱 언어'에 이 목록이 나온다). 기본 문구는 한국어(values), 영어는 values-en -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="ko" />
+    <locale android:name="en" />
+</locale-config>

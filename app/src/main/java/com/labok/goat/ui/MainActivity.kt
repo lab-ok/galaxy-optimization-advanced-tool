@@ -11,6 +11,11 @@ import com.labok.goat.ui.liquid.LiquidTheme
 import com.labok.goat.ui.tweaks.ResolutionConfirm
 
 class MainActivity : ComponentActivity() {
+    // Android 12 이하에서 앱에서 고른 언어를 적용한다(13+는 시스템 앱별 언어가 처리)
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.labok.goat.ui.text.AppLanguage.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)

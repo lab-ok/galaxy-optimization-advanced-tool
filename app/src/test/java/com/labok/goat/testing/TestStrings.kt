@@ -11,10 +11,11 @@ import javax.xml.parsers.DocumentBuilderFactory
  */
 object TestStrings {
     /** 리소스는 :core에 모여 있다(11-11 모듈 분리). 기능 모듈이 따로 가진 문구도 함께 읽는다. */
-    private val repo: File by lazy { listOf(File(".."), File(".")).first { File(it, "core/src/main/res/values").isDirectory } }
-    private val dir: File by lazy { File(repo, "core/src/main/res/values") }
+    private val repo: File by lazy { listOf(File(".."), File(".")).first { File(it, "core/src/main/res/values-ko").isDirectory } }
+    // 한국어 문구는 values-ko(기본 values는 영어, 11-11 영어 지원). 테스트는 한국어 문구로 확인한다
+    private val dir: File by lazy { File(repo, "core/src/main/res/values-ko") }
     private val featureDirs: List<File> by lazy {
-        File(repo, "feature").listFiles().orEmpty().map { File(it, "src/main/res/values") }.filter { it.isDirectory }
+        File(repo, "feature").listFiles().orEmpty().map { File(it, "src/main/res/values-ko") }.filter { it.isDirectory }
     }
 
     /** 리소스 이름 → 문구(기본 언어, 모든 strings*.xml). */

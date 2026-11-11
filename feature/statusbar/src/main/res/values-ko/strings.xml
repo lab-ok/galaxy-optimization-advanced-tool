@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 상단바 숨기기 기능 모듈의 문구 -->
+<resources>
+    <string name="labdata_statusbar_no_overlay">\'다른 앱 위에 표시\' 권한이 없습니다. Shizuku를 연결하면 GOAT가 허용합니다.</string>
+    <string name="labdata_statusbar_need_shizuku">상단바 숨기기는 Shizuku 연결이 필요합니다. 연결 없이 숨기면 다른 앱에서 키보드가 뜨지 않습니다.</string>
+    <string name="labdata_statusbar_channel">상태 표시줄 숨기기</string>
+    <string name="labdata_statusbar_notif_title">상태 표시줄을 숨기는 중</string>
+    <string name="labdata_statusbar_notif_text">뒤로 가기를 사용해도 다시 숨깁니다. 키보드가 열려 있는 동안에는 표시됩니다</string>
+    <string name="labdata_statusbar_action_rehide">다시 숨기기</string>
+    <string name="labdata_statusbar_action_stop">끄기</string>
+    <string name="status_bar_input_label">GOAT 상단바 숨기기 입력 도우미</string>
+    <string name="status_bar_input_desc">GOAT: 상단바를 숨긴 동안 입력칸을 누르면 바로 키보드가 뜨게 합니다. 누른 곳이 입력칸인지만 보고 화면 내용은 읽지 않습니다.</string>
+</resources>

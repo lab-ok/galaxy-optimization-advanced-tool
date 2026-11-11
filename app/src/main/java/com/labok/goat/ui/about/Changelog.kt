@@ -45,6 +45,17 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.57.1",
+        "2026-11-12",
+        "영어를 지원합니다(시험 버전).",
+        listOf(
+            "추가" to listOf(
+                "앱 문구를 영어로 볼 수 있습니다. 앱 설정 → 언어에서 시스템 언어 따르기·한국어·English 중에서 고를 수 있고, 언어마다 국기가 함께 나옵니다. Android 13부터는 시스템 설정의 앱별 언어에서도 바꿀 수 있습니다. 한국어·영어가 아닌 언어를 쓰는 기기에서는 영어로 나옵니다.",
+                "좁은 화면·큰 글자에서 고급 화면 배율 맨 위 카드의 글이 글자 단위로 끊기던 것을 고쳤습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.57.0",
         "2026-11-11",
         "앱 내부 구조를 기능별로 정리했습니다.",

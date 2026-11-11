@@ -134,7 +134,7 @@ private fun TranscriptSheet(shared: Intent?, onClose: () -> Unit) {
                             saving = true
                             scope.launch {
                                 val out = if (p == null) l.text else Transcript.convert(p, me!!)
-                                val file = Transcript.fileName(l.name, "전사문-" + SimpleDateFormat("yyMMdd-HHmm", Locale.KOREA).format(Date()))
+                                val file = Transcript.fileName(l.name, Copy.text(R.string.i18n_share_transcript_fallback_name, SimpleDateFormat("yyMMdd-HHmm", Locale.KOREA).format(Date())))
                                 val ok = withContext(Dispatchers.IO) { save(context, file, out) }
                                 if (ok && p != null) TranscriptPrefs.remember(context, me!!)
                                 LogRepository.from(context).add(

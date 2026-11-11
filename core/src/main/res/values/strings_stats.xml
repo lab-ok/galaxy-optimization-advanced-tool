@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 실험실 사용 통계 숫자 표·순위 문구(1.50.7에서 더함). 이름은 lab_stats_<용도>. -->
 <resources>
-    <string name="lab_stats_col_total">합계</string>
-    <string name="lab_stats_col_avg_day">하루 평균</string>
-    <string name="lab_stats_col_avg_recent">%1$d일 평균</string>
-    <string name="lab_stats_avg_tag">평균</string>
-    <string name="lab_stats_hours_only">%1$s시간</string>
-    <string name="menu_section_stats">기록</string>
-    <string name="lab_stats_open_usage_access">사용 기록 접근 열기</string>
-    <string name="lab_stats_help_what_body">화면을 켠 시간, 화면 켬·잠금 해제 횟수, 앱 실행, 알림, 화면 회전, 펼치기(폴더블), 볼륨 버튼, 충전 횟수를 기간별로 집계합니다. 하루 평균과 이전 기간 대비 변화를 함께 표시합니다.</string>
-    <string name="lab_stats_help_store_title">2. 기록 보관</string>
-    <string name="lab_stats_help_store_body">Android는 사용 기록을 며칠만 보관하므로 GOAT가 매일 지난 기록을 기기 안 파일에 저장합니다. 저장한 기록은 기기 밖으로 전송하지 않으며, 1년·전체 보기는 저장을 시작한 날부터 집계합니다.</string>
-    <string name="lab_stats_help_permission_title">3. 필요한 권한</string>
-    <string name="lab_stats_help_permission_body">사용 기록 접근 권한이 필요합니다. Shizuku가 연결되어 있으면 GOAT가 자동으로 허용하며, 그렇지 않으면 [사용 기록 접근 열기]에서 GOAT를 직접 허용하세요. 충전 횟수와 배터리 사용량은 Shizuku 연결이, 볼륨 버튼 횟수는 볼륨 버튼 회전이 켜져 있어야 집계됩니다.</string>
-    <string name="home_dash_stats_need_access">사용 기록 접근 필요</string>
+    <string name="lab_stats_col_total">Total</string>
+    <string name="lab_stats_col_avg_day">Daily avg</string>
+    <string name="lab_stats_col_avg_recent">%1$d-day avg</string>
+    <string name="lab_stats_avg_tag">Avg</string>
+    <string name="lab_stats_hours_only">%1$s h</string>
+    <string name="menu_section_stats">Activity</string>
+    <string name="lab_stats_open_usage_access">Open Usage Access</string>
+    <string name="lab_stats_help_what_body">Counts screen-on time, screen-ons and unlocks, app launches, notifications, screen rotations, unfolds (foldables), volume button presses, and charges by period. Shows the daily average and the change from the previous period.</string>
+    <string name="lab_stats_help_store_title">2. Data storage</string>
+    <string name="lab_stats_help_store_body">Android keeps usage data for only a few days, so GOAT saves past data to a file on your device every day. Saved data never leaves your device. The 1-year and All views count from the day saving started.</string>
+    <string name="lab_stats_help_permission_title">3. Required permissions</string>
+    <string name="lab_stats_help_permission_body">Usage access is required. If Shizuku is connected, GOAT grants it automatically; otherwise, allow GOAT in [Open Usage Access]. Charge count and battery usage require Shizuku, and volume button count requires Volume Button Rotation to be on.</string>
+    <string name="home_dash_stats_need_access">Usage access needed</string>
 </resources>
