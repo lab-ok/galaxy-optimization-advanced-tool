@@ -36,6 +36,10 @@
     <string name="size_single">화면 DPI</string>
     <string name="size_outer_hint">값이 작을수록 글자와 아이콘이 작게 표시됩니다.</string>
     <string name="size_inner_tune">내부 화면 보정</string>
+    <string name="size_same_dpi">두 화면 같은 DPI</string>
+    <string name="size_same_dpi_hint">접고 펼 때 앱이 새로 고침되면 켜세요. 내부 화면도 외부와 같은 값을 써서 글씨가 조금 커집니다.</string>
+    <string name="domain_same_dpi_note">두 화면 같은 DPI(보정 끔)</string>
+    <string name="log_same_dpi_fmt">두 화면 같은 DPI: %1$s → %2$s</string>
     <string name="size_inner_tune_hint">내부 화면이 크게 보이면 −, 작게 보이면 + 쪽으로 조정합니다.</string>
     <string name="size_preview_outer">외부</string>
     <string name="size_preview_inner">내부</string>

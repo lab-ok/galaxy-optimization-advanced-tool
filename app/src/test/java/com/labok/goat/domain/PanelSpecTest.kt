@@ -70,6 +70,14 @@ class PanelSpecTest {
     )
 
     @Test
+    fun sameDpiUsesReferenceOnBothScreens() {
+        // 두 화면 같은 DPI를 켜면 보정·미세조정 없이 내부도 외부 값을 쓴다(11-11 폴드6: +20으로도 350에 못 미침)
+        assertEquals(360, plan(adjust = 20).copy(sameDpi = true).targetFor(inner).dpi)
+        assertEquals(360, plan().copy(sameDpi = true).targetFor(outer).dpi)
+        assertEquals(374, plan(adjust = 40).targetFor(inner).dpi)
+    }
+
+    @Test
     fun specBasedTargetForFold5() {
         // 360 × 372.6 / 401.0 = 334.46 → 334 (보고값 기준이면 340)
         assertEquals(334, plan().targetFor(inner).dpi)

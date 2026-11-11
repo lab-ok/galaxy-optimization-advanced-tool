@@ -68,6 +68,8 @@ object Copy {
     val SIZE_OUTER_HINT: String get() = s(R.string.size_outer_hint)
     val SIZE_INNER_TUNE: String get() = s(R.string.size_inner_tune)
     val SIZE_INNER_TUNE_HINT: String get() = s(R.string.size_inner_tune_hint)
+    val SIZE_SAME_DPI: String get() = s(R.string.size_same_dpi)
+    val SIZE_SAME_DPI_HINT: String get() = s(R.string.size_same_dpi_hint)
     val SIZE_PREVIEW_OUTER: String get() = s(R.string.size_preview_outer)
     val SIZE_PREVIEW_INNER: String get() = s(R.string.size_preview_inner)
 

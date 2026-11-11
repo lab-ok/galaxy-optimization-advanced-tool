@@ -133,6 +133,11 @@ class SettingsRepository(private val store: KeyValueStore) {
         get() = store.getInt(KEY_ADJUST) ?: 0
         set(v) = store.putInt(KEY_ADJUST, v.coerceIn(-MAX_ADJUST, MAX_ADJUST))
 
+    /** 켜면 보정 없이 두 화면에 같은 DPI를 쓴다(DPI가 바뀌면 화면을 새로 띄우는 앱용, 11-11 폴드6 신고). */
+    var sameDpi: Boolean
+        get() = store.getBoolean(KEY_SAME_DPI, false)
+        set(v) = store.putBoolean(KEY_SAME_DPI, v)
+
     var applyTimes: List<Long>
         get() = store.getString(KEY_APPLY_TIMES).orEmpty().split(',').mapNotNull { it.toLongOrNull() }
         set(v) = store.putString(KEY_APPLY_TIMES, v.joinToString(","))
@@ -185,10 +190,11 @@ class SettingsRepository(private val store: KeyValueStore) {
         private const val KEY_DIAGONALS = "diagonals"
         private const val KEY_INACTIVE_PPI = "inactive_ppi"
         private const val KEY_ADJUST = "adjust"
+        private const val KEY_SAME_DPI = "same_dpi"
         private const val KEY_APPLIED = "applied_dpi"
         private const val KEY_EXTERNAL = "external_change"
         private const val KEY_RULER_PPI = "ruler_ppi"
-        const val MAX_ADJUST = 20
+        const val MAX_ADJUST = 40
 
         fun from(context: Context): SettingsRepository = SettingsRepository(PrefsStore(Storage.prefs(context)))
     }

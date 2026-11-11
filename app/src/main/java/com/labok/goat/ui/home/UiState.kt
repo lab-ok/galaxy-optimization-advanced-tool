@@ -18,6 +18,7 @@ data class UiState(
     val target: Int? = null,
     val reference: ScreenPolicy.Role = ScreenPolicy.Role.OUTER,
     val adjust: Int = 0,
+    val sameDpi: Boolean = false,
     val plan: DensityPlan? = null,
     val activeScreen: ScreenInfo? = null,
     /** 지금 켜진 디스플레이에 적용할 밀도(보정 반영). */

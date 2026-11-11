@@ -19,6 +19,7 @@ import com.labok.goat.domain.DpiPolicy
 import com.labok.goat.domain.ScreenLearner
 import com.labok.goat.domain.ScreenPolicy
 import com.labok.goat.domain.plan
+import com.labok.goat.R
 import com.labok.goat.ui.text.Copy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -107,8 +108,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         _messages.value = text
     }
 
-    /** 외부 화면 크기와 내부 화면 미세조정을 함께 저장하고 한 번에 적용한다([적용] 버튼). */
-    fun commitSize(outer: Int, adjust: Int) {
+    /** 외부 화면 크기·내부 화면 미세조정·두 화면 같은 DPI를 함께 저장하고 한 번에 적용한다([적용] 버튼). */
+    fun commitSize(outer: Int, adjust: Int, same: Boolean) {
         if (!DpiPolicy.isValid(outer)) return
         val a = adjust.coerceIn(-SettingsRepository.MAX_ADJUST, SettingsRepository.MAX_ADJUST)
         if (settings.targetDpi != outer) {
@@ -118,6 +119,10 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         if (settings.adjust != a) {
             logRepo.add("내부 화면 미세조정: ${settings.adjust} → $a")
             settings.adjust = a
+        }
+        if (settings.sameDpi != same) {
+            logRepo.add(Copy.text(R.string.log_same_dpi_fmt, settings.sameDpi, same))
+            settings.sameDpi = same
         }
         apply(quiet = false)
     }
@@ -273,6 +278,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             target = settings.targetDpi,
             reference = settings.reference,
             adjust = settings.adjust,
+            sameDpi = settings.sameDpi,
             plan = plan,
             activeScreen = screen,
             effective = plan?.targetFor(screen),

@@ -85,12 +85,14 @@ object ScreenPolicy {
         reference: Role,
         screens: List<ScreenInfo>,
         active: ScreenInfo?,
-        adjust: Int = 0
+        adjust: Int = 0,
+        sameDpi: Boolean = false
     ): Target {
         if (active == null || !isPlausible(active)) return Target(referenceDpi, "화면 정보를 읽지 못해 보정 없이 적용", null)
         val role = roleOf(screens, active.key)
             ?: return Target(referenceDpi, "반대쪽 화면 정보가 아직 없어 보정 없이 적용(한 번 접었다 펴 주세요)", null)
         if (role == reference) return Target(referenceDpi, null, role)
+        if (sameDpi) return Target(referenceDpi, Copy.text(R.string.domain_same_dpi_note), role)
         val ref = screenFor(screens, reference) ?: return Target(referenceDpi, "기준 화면 정보 없음", role)
         val ratio = active.ppi / ref.ppi
         val scaled = scale(referenceDpi, ref.ppi, active.ppi) + adjust

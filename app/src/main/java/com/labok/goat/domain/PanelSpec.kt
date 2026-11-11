@@ -94,7 +94,9 @@ data class DensityPlan(
     val reference: ScreenPolicy.Role,
     /** 보정 대상(기준이 아닌) 화면에 더할 미세조정 값(dpi). */
     val adjust: Int,
-    val panels: List<PanelSpec.Resolved>
+    val panels: List<PanelSpec.Resolved>,
+    /** 켜면 보정 없이 두 화면 모두 [referenceDpi]를 쓴다. */
+    val sameDpi: Boolean = false
 ) {
     val screens: List<ScreenInfo> get() = panels.map { it.screen }
 
@@ -105,7 +107,7 @@ data class DensityPlan(
      */
     fun targetFor(seen: ScreenInfo?): ScreenPolicy.Target {
         val active = seen?.let { s -> screens.find { it.key == s.key } ?: s }
-        val t = ScreenPolicy.effectiveTarget(referenceDpi, reference, screens, active, adjust)
+        val t = ScreenPolicy.effectiveTarget(referenceDpi, reference, screens, active, adjust, sameDpi)
         val scale = seen?.scale ?: 1f
         if (scale == 1f) return t
         val dpi = (t.dpi * scale).roundToInt()
@@ -132,5 +134,5 @@ fun SettingsRepository.resolvedPanels(): List<PanelSpec.Resolved> {
 
 fun SettingsRepository.plan(): DensityPlan? {
     val base = targetDpi ?: return null
-    return DensityPlan(referenceDpi = base, reference = reference, adjust = adjust, panels = resolvedPanels())
+    return DensityPlan(referenceDpi = base, reference = reference, adjust = adjust, panels = resolvedPanels(), sameDpi = sameDpi)
 }

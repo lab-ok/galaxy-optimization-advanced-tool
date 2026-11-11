@@ -227,10 +227,11 @@ internal fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
     val sliderRange = DpiPolicy.MIN_DPI..(shortSide?.let { DpiPolicy.maxForShortSide(it) } ?: DpiPolicy.MAX_DPI)
     var outer by remember(state.target) { mutableIntStateOf(state.target ?: 360) }
     var adjust by remember(state.adjust) { mutableIntStateOf(state.adjust) }
+    var same by remember(state.sameDpi) { mutableStateOf(state.sameDpi) }
     val outerPanel = state.plan?.panels?.let { ps -> ScreenPolicy.screenFor(ps.map { it.screen }, ScreenPolicy.Role.OUTER)?.let { s -> ps.first { it.screen.key == s.key } } }
     val innerPanel = state.plan?.panels?.let { ps -> ScreenPolicy.screenFor(ps.map { it.screen }, ScreenPolicy.Role.INNER)?.let { s -> ps.first { it.screen.key == s.key } } }
     // 끄는 동안의 미리보기 값으로 내부 화면 크기를 계산한다.
-    val previewPlan = state.plan?.copy(referenceDpi = outer, adjust = adjust)
+    val previewPlan = state.plan?.copy(referenceDpi = outer, adjust = adjust, sameDpi = same)
     val innerDpi = innerPanel?.let { previewPlan?.targetFor(it.screen)?.dpi }
 
     GlassCard {
@@ -268,12 +269,14 @@ internal fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
                 valueText = { if (it > 0) "+$it" else "$it" },
                 centered = true,
                 description = Copy.SIZE_INNER_TUNE,
-                enabled = state.hasPermission && innerPanel != null
+                enabled = state.hasPermission && innerPanel != null && !same
             )
+            Spacer(Modifier.height(Gap.Item))
+            LiquidSwitchRow(Copy.SIZE_SAME_DPI, Copy.SIZE_SAME_DPI_HINT, same, enabled = state.hasPermission, onChange = { same = it })
         }
         // 조절바는 값만 바꾸고, [적용]을 눌러야 화면에 반영한다(끄는 도중 화면이 계속 바뀌지 않게).
         // 처음 설치해 저장된 값이 없을 때도 지금 값을 바로 적용할 수 있게 버튼을 보인다.
-        val pending = state.hasPermission && (state.target == null || outer != state.target || adjust != state.adjust)
+        val pending = state.hasPermission && (state.target == null || outer != state.target || adjust != state.adjust || same != state.sameDpi)
         // 처음 적용하면 접히는 동안 목표가 생겨 '되돌리기'가 잠깐 나타났다(1.24.8 점검). 보이는 동안 정한 버튼 구성을 접힐 때도 쓴다
         val revertShown = remember { booleanArrayOf(false) }
         if (pending) revertShown[0] = state.target != null
@@ -287,9 +290,10 @@ internal fun SizeCard(state: UiState, vm: HomeViewModel, onTest: () -> Unit) {
                         LiquidButton(Copy.REVERT, modifier = Modifier.weight(1f), primary = false, onClick = {
                             state.target?.let { outer = it }
                             adjust = state.adjust
+                            same = state.sameDpi
                         })
                     }
-                    LiquidButton(Copy.SIZE_APPLY, modifier = Modifier.weight(1f), onClick = { vm.commitSize(outer, adjust) })
+                    LiquidButton(Copy.SIZE_APPLY, modifier = Modifier.weight(1f), onClick = { vm.commitSize(outer, adjust, same) })
                 }
             }
         }

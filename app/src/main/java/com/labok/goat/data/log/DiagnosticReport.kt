@@ -38,7 +38,7 @@ object DiagnosticReport {
         appendLine()
 
         appendLine("## 설정")
-        appendLine("기준 화면=${settings.reference} 기준 밀도=${settings.targetDpi} 미세조정=${settings.adjust}")
+        appendLine("기준 화면=${settings.reference} 기준 밀도=${settings.targetDpi} 미세조정=${settings.adjust} 두 화면 같은 DPI=${settings.sameDpi}")
         appendLine("자동 복구=${settings.autoRecover} 부팅 적용=${settings.applyOnBoot} 접기/펼치기 확인=${settings.watchFold}")
         appendLine("비활성 보고 PPI=${settings.inactivePpi}")
         appendLine()
