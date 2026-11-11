@@ -74,6 +74,10 @@ object DiagnosticReport {
         appendLine(runCatching { UsageTally.diagnose(context) + "\n" + UsageArchive.summary(context) }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
+        appendLine("## 접기·펼치기 전후 앱 화면")
+        appendLine(runCatching { RelaunchTrace.diagnose(context) }.getOrElse { "읽기 실패: $it" })
+        appendLine()
+
         appendLine("## 크래시 기록")
         appendLine(CrashRecorder.read(context).ifBlank { "(없음)" })
         appendLine()

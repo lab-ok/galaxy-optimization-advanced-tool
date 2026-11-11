@@ -45,6 +45,16 @@ internal data class Release(val version: String, val date: String, val summary: 
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.52.26",
+        "2026-11-11",
+        "진단 파일로 접기·펼치기 새로 고침 원인을 찾습니다(시험 버전).",
+        listOf(
+            "추가" to listOf(
+                "문제 신고 진단 파일에 최근 접기·펼치기 기록을 더했습니다. 그때 다시 만들어진 앱 화면(새로 고침)과 원인(바뀐 DPI·화면 크기 등)이 함께 남습니다."
+            )
+        )
+    ),
+    Release(
         "GOAT 1.52.25",
         "2026-11-08",
         "숨은 기능을 시험합니다(시험 버전).",

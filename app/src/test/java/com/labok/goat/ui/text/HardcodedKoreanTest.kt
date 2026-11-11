@@ -37,7 +37,8 @@ class HardcodedKoreanTest {
             "data/lab/ShareProbe.kt",
             "data/lab/ApiProbe.kt",
             "data/lab/UnfoldLock.kt",
-            "data/log/DiagnosticReport.kt"
+            "data/log/DiagnosticReport.kt",
+            "data/log/RelaunchTrace.kt"
         )
 
         private val HANGUL = Regex("[가-힣]")
