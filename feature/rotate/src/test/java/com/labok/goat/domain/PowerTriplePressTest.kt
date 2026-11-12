@@ -89,4 +89,21 @@ class PowerTriplePressTest {
         }
     }
 
+    @Test fun parsesSingleDeviceOutputUsingTheSelectedDevice() {
+        val device = "/dev/input/event8"
+        for (value in listOf("DOWN", "UP", "REPEAT")) {
+            assertEquals(PowerTriplePress.Event(device, 1234567L, value),
+                PowerTriplePress.parse("[ 1234.567890] EV_KEY KEY_POWER $value", device))
+        }
+        assertNull(PowerTriplePress.parse("[ 1234.567890] EV_KEY KEY_POWER DOWN"))
+        assertNull(PowerTriplePress.parse("[ 1234.567890] EV_ABS ABS_MT_POSITION_X 00000001", device))
+        assertNull(PowerTriplePress.parse("[ 1234.567890] EV_KEY KEY_VOLUMEUP DOWN", device))
+    }
+
+    @Test fun rejectsPrefixedEventsFromADifferentDevice() {
+        val line = "[ 1234.567890] /dev/input/event2: EV_KEY KEY_POWER DOWN"
+        assertNull(PowerTriplePress.parse(line, "/dev/input/event8"))
+        assertNotNull(PowerTriplePress.parse(line, "/dev/input/event2"))
+    }
+
 }

@@ -43,13 +43,18 @@ class PowerRotateEngine(private val context: Context, private val onTriplePress:
     private fun monitor(token: Int) {
         var opened: PowerInputBridge? = null
         try {
+            // Discover capabilities once per session; never fall back to reading every input device.
+            val capabilities = ShizukuAccess.shell("getevent -pl")
+            if (capabilities?.ok != true) error("Power input discovery failed")
+            val devicePaths = PowerInputDevice.findAll(capabilities.out)
+            if (devicePaths.isEmpty()) error("No KEY_POWER input device found")
             val session = PowerInputBridge()
             opened = session
             synchronized(lock) {
                 if (token != generation) return
                 bridge = session
             }
-            if (ShizukuAccess.shell(session.launchCommand())?.ok != true) error("Power reader launch failed")
+            if (ShizukuAccess.shell(session.launchCommand(devicePaths))?.ok != true) error("Power reader launch failed")
             val detector = PowerTriplePress()
             session.read(onConnected = {
                 main.post {
@@ -61,7 +66,12 @@ class PowerRotateEngine(private val context: Context, private val onTriplePress:
             }) { line ->
                 if (token != generation) return@read
                 if (line.contains("Permission denied", true) || line.contains("could not open", true)) error("Input access denied")
-                val event = PowerTriplePress.parse(line) ?: return@read
+                // Single-device getevent output has no path prefix; the helper tags each line.
+                val separator = line.indexOf('\t')
+                if (separator < 0) return@read
+                val devicePath = line.substring(0, separator)
+                if (devicePath !in devicePaths) return@read
+                val event = PowerTriplePress.parse(line.substring(separator + 1), devicePath) ?: return@read
                 // Kernel CLOCK_MONOTONIC pauses in deep sleep; elapsedRealtime must bound the gesture.
                 val result = detector.feed(event, SystemClock.elapsedRealtime())
                 if (result == PowerTriplePress.Result.NONE) return@read

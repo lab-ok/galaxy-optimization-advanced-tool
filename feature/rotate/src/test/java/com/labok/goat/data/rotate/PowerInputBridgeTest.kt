@@ -12,6 +12,23 @@ import org.junit.Test
 class PowerInputBridgeTest {
     private val token = "test_session_0123456789abcdef"
 
+    @Test fun refusesToLaunchWithAnInvalidOrMissingDevicePath() {
+        PowerInputBridge(token).use { bridge ->
+            try {
+                bridge.launchCommand(emptyList())
+                fail("Missing devices must not launch an unrestricted reader")
+            } catch (_: IllegalArgumentException) { }
+            for (path in listOf("", "/dev/input", "/dev/input/event0 /dev/input/event1", "/dev/input/event0;reboot")) {
+                try {
+                    bridge.launchCommand(listOf(path))
+                    fail("Invalid device path must not launch a reader: $path")
+                } catch (_: IllegalArgumentException) {
+                    // Never allow an unrestricted reader or shell metacharacters.
+                }
+            }
+        }
+    }
+
     @Test fun rejectsAnotherLocalClientAndOnlyDeliversAuthenticatedEvents() {
         val bridge = PowerInputBridge(token)
         val executor = Executors.newSingleThreadExecutor()

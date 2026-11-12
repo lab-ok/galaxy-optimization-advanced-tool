@@ -51,14 +51,17 @@ class PowerTriplePress {
     companion object {
         const val WINDOW_MS = 1500L
         const val MAX_HOLD_MS = 500L
-        private val LINE = Regex("""\[\s*(\d+)\.(\d+)\]\s+(/dev/input/event\d+):\s+EV_KEY\s+KEY_POWER\s+(DOWN|UP|REPEAT)\s*""")
+        private val LINE = Regex("""\[\s*(\d+)\.(\d+)\]\s+(?:(/dev/input/event\d+):\s+)?EV_KEY\s+KEY_POWER\s+(DOWN|UP|REPEAT)\s*""")
 
         /** Ignores touch, volume, sync and non-event diagnostic lines. */
-        fun parse(line: String): Event? {
+        fun parse(line: String, devicePath: String? = null): Event? {
             val m = LINE.matchEntire(line.trim()) ?: return null
+            // getevent omits the device prefix when launched with a single explicit device path.
+            val device = m.groupValues[3].ifEmpty { devicePath ?: return null }
+            if (devicePath != null && device != devicePath) return null
             val seconds = m.groupValues[1].toLongOrNull() ?: return null
             val fraction = m.groupValues[2].padEnd(3, '0').take(3).toLongOrNull() ?: return null
-            return Event(m.groupValues[3], seconds * 1000 + fraction, m.groupValues[4])
+            return Event(device, seconds * 1000 + fraction, m.groupValues[4])
         }
     }
 }

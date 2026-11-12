@@ -40,6 +40,8 @@ The app is available in English and Korean. Change it in App Settings → Langua
 
 Power-button detection keeps working after wireless debugging or Shizuku is stopped. Shizuku is needed again to restart detection after a reboot or GOAT process termination.
 
+At startup, detection uses `getevent -pl` to find input devices advertising `KEY_POWER`, then reads only those devices using explicit paths. Multiple power-key sources are supported without opening unrelated touch devices. If no power-key device is found, detection stops instead of monitoring all inputs.
+
 ## Getting started
 
 1. Download the latest `GOAT-x.x.x.apk` from [Releases](../../releases/latest) and install it. The first time, you need to allow installing apps from unknown sources.

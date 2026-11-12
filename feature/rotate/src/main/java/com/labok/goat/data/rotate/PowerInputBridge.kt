@@ -22,9 +22,11 @@ internal class PowerInputBridge(private val token: String = newToken()) : Closea
     private var client: Socket? = null
     val port: Int get() = server.localPort
 
-    /** No user text is interpolated; the random token is restricted to shell-safe characters. */
-    fun launchCommand(): String {
+    /** Only validated device paths and a shell-safe random token are interpolated. */
+    fun launchCommand(devicePaths: List<String>): String {
         require(token.matches(Regex("[A-Za-z0-9_-]{16,128}")))
+        require(devicePaths.isNotEmpty() && devicePaths.all { it.matches(Regex("/dev/input/event\\d+")) })
+        val readers = devicePaths.distinct().joinToString("\n") { "read_device $it &" }
         val script = """
             cleanup() {
                 trap - EXIT HUP INT TERM
@@ -32,7 +34,13 @@ internal class PowerInputBridge(private val token: String = newToken()) : Closea
             }
             trap cleanup EXIT
             trap 'exit 0' HUP INT TERM
-            (printf '%s\n' '$token'; exec getevent -lt 2>&1) |
+            read_device() {
+                getevent -lt "${'$'}1" 2>&1 |
+                    while IFS= read -r line; do printf '%s\t%s\n' "${'$'}1" "${'$'}line"; done
+            }
+            (printf '%s\n' '$token'
+             $readers
+             wait) |
                 toybox nc -4 -n -w 5 -q 1 127.0.0.1 $port > /dev/null &
             transport_pid=${'$'}!
             while kill -0 "${'$'}transport_pid" 2>/dev/null; do sleep 1; done
