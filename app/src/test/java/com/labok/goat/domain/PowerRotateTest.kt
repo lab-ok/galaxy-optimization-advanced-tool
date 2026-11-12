@@ -64,4 +64,21 @@ class PowerRotateTest {
         assertFalse(com.labok.goat.data.rotate.ShakeRotate.enabled(context))
     }
 
+
+    @Test fun anEstablishedReaderDoesNotRequireShizukuToRemainConnected() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val previous = PowerRotate.status.value
+        context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putBoolean("on", true).commit()
+        try {
+            PowerRotate.status.value = PowerRotate.Status.LISTENING
+            assertFalse(PowerRotate.needsShizuku(context))
+            PowerRotate.status.value = PowerRotate.Status.WAITING
+            assertTrue(PowerRotate.needsShizuku(context))
+            context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putBoolean("on", false).commit()
+            assertFalse(PowerRotate.needsShizuku(context))
+        } finally {
+            PowerRotate.status.value = previous
+        }
+    }
+
 }

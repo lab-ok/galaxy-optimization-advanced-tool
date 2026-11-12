@@ -157,6 +157,7 @@ internal fun Dashboard(
     val c = LocalLiquid.current
     val context = LocalContext.current
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
+    val powerInput by PowerRotate.status.collectAsStateWithLifecycle()
     val camera by CameraMute.status.collectAsStateWithLifecycle()
     val gos by Gos.status.collectAsStateWithLifecycle()
     val dark by ForceDark.status.collectAsStateWithLifecycle()
@@ -205,7 +206,7 @@ internal fun Dashboard(
             NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) Copy.text(R.string.home_dash_shake_on_fmt, ShakeRotate.level(context)) + (if (ShakeRotate.largeOnly(context)) Copy.text(R.string.home_dash_suffix_large_only) else "") else Copy.DASH_OFF
             NavItem.POWER_ROTATE -> when {
                 !PowerRotate.enabled(context) -> Copy.DASH_OFF
-                ShizukuAccess.status.value != ShizukuAccess.State.READY -> Copy.DASH_NEED_SHIZUKU
+                powerInput != PowerRotate.Status.LISTENING && shizuku != ShizukuAccess.State.READY -> Copy.DASH_NEED_SHIZUKU
                 else -> Copy.text(if (ShakeRotate.autoRotateOn(context)) R.string.power_rotate_auto_on else R.string.power_rotate_locked)
             }
             NavItem.CAMERA_MUTE -> when (camera) {
