@@ -64,4 +64,15 @@ class PowerRotateTest {
         assertFalse(com.labok.goat.data.rotate.ShakeRotate.enabled(context))
     }
 
+    @Test fun timingChoiceSurvivesReloadAndUnknownValuesUseTheOriginalWindow() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals(PowerRotate.Window.SHORT, PowerRotate.window(context))
+        PowerRotate.setWindow(context, PowerRotate.Window.MEDIUM)
+        assertEquals(2500L, PowerRotate.window(context).millis)
+        PowerRotate.setWindow(context, PowerRotate.Window.LONG)
+        assertEquals(4000L, PowerRotate.window(context).millis)
+        context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putString("window", "unknown").commit()
+        assertEquals(PowerRotate.Window.SHORT, PowerRotate.window(context))
+    }
+
 }

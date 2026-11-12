@@ -11,6 +11,7 @@ import com.labok.goat.data.lab.BatteryHistory
 import com.labok.goat.data.lab.UsageArchive
 import com.labok.goat.data.lab.UsageTally
 import com.labok.goat.data.lab.VolumeRotate
+import com.labok.goat.data.rotate.PowerRotate
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.domain.plan
 import com.labok.goat.domain.resolvedPanels
@@ -68,6 +69,10 @@ object DiagnosticReport {
 
         appendLine("## 볼륨 버튼 회전")
         appendLine(runCatching { VolumeRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
+        appendLine()
+
+        appendLine("## 전원 버튼 회전 (앱 이벤트 실험)")
+        appendLine(runCatching { PowerRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
         appendLine("## 사용 통계(실험실)")

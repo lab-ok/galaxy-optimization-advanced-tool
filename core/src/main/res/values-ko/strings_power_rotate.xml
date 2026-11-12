@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="power_rotate_title">전원 버튼 3번으로 회전 고정</string>
-    <string name="power_rotate_body">실험 모드: 1.5초 안에 화면이 켜지거나 꺼진 횟수 3회로 전원 버튼을 추정해 선택한 동작을 실행합니다.</string>
+    <string name="power_rotate_body">실험 모드: %1$s초 안에 화면이 켜지거나 꺼진 횟수 3회로 전원 버튼을 추정해 선택한 동작을 실행합니다.</string>
     <string name="power_rotate_auto_on">자동 회전 ON · 화면 회전 고정 OFF</string>
     <string name="power_rotate_locked">자동 회전 OFF · 화면 회전 고정 ON</string>
     <string name="power_rotate_permission">흔들기 회전과 같은 시스템 설정 변경 권한을 한 번 허용해 주세요. 감지는 GOAT 안에서 실행되며 Shizuku나 ADB 연결이 필요하지 않습니다.</string>
@@ -20,4 +20,22 @@
     <string name="power_rotate_once_feedback">기기를 든 방향으로 회전한 뒤 고정합니다.</string>
     <string name="power_rotate_detection_mode">앱 이벤트 감지 · 실험</string>
     <string name="power_rotate_permission_needed">설정 변경 권한 필요</string>
+    <string name="power_rotate_diag_counts">수신한 화면 이벤트 %1$d회 · 3회 판정 %2$d회</string>
+    <string name="power_rotate_diag_last">최근: %1$s · %2$d/3 · 간격 %3$s · %4$s</string>
+    <string name="power_rotate_diag_copy">감지 기록 복사</string>
+    <string name="power_rotate_diag_copied">감지 기록을 복사했습니다</string>
+    <string name="power_rotate_screen_on">화면 켜짐</string>
+    <string name="power_rotate_screen_off">화면 꺼짐</string>
+    <string name="power_rotate_diag_duplicate">같은 상태 중복 무시</string>
+    <string name="power_rotate_diag_first">첫 번째 변화</string>
+    <string name="power_rotate_diag_second">두 번째 변화</string>
+    <string name="power_rotate_diag_matched">3회 판정 완료</string>
+    <string name="power_rotate_diag_expired">시간 초과로 다시 시작</string>
+    <string name="power_rotate_diag_reset">시간 기준 초기화</string>
+    <string name="power_rotate_window_title">감지 시간 범위</string>
+    <string name="power_rotate_window_note">화면 전환이 늦는지 확인하려면 시간을 늘려 시험할 수 있습니다. 시간이 길수록 다른 화면 변화가 섞여 오탐이 늘 수 있습니다. 변경하면 진행 중인 판정은 초기화됩니다.</string>
+    <string name="power_rotate_window_seconds">%1$s초</string>
+    <string name="power_rotate_window_default">기본 시간</string>
+    <string name="power_rotate_window_medium">화면 전환 지연 확인</string>
+    <string name="power_rotate_window_long">긴 시간 범위로 확인</string>
 </resources>

@@ -65,4 +65,29 @@ class ScreenTripleTransitionTest {
         detector.feed(true, 300)
         assertEquals(ScreenTripleTransition.Result.TRIPLE, detector.feed(false, 500))
     }
+
+    @Test fun aLongerWindowAcceptsTransitionsThatExceedTheDefault() {
+        val short = ScreenTripleTransition(true)
+        val longer = ScreenTripleTransition(true, 2500)
+        for (detector in listOf(short, longer)) {
+            detector.feed(false, 100)
+            detector.feed(true, 1000)
+        }
+        assertEquals(ScreenTripleTransition.Result.FIRST, short.feed(false, 1900))
+        assertEquals(ScreenTripleTransition.Decision.WINDOW_EXPIRED, short.decision)
+        assertEquals(1, short.count)
+        assertEquals(ScreenTripleTransition.Result.TRIPLE, longer.feed(false, 1900))
+        assertEquals(ScreenTripleTransition.Decision.TRIPLE, longer.decision)
+    }
+
+    @Test fun diagnosticsDistinguishDuplicatesFromTheSecondTransition() {
+        val detector = ScreenTripleTransition(true)
+        detector.feed(false, 100)
+        detector.feed(false, 200)
+        assertEquals(ScreenTripleTransition.Decision.DUPLICATE, detector.decision)
+        assertEquals(1, detector.count)
+        detector.feed(true, 300)
+        assertEquals(ScreenTripleTransition.Decision.SECOND, detector.decision)
+        assertEquals(2, detector.count)
+    }
 }

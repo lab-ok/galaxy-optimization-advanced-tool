@@ -38,7 +38,7 @@ GOAT lets you change settings that Galaxy phones either don't offer or normally 
 
 The app is available in English and Korean. Change it in App Settings → Language, or in Android's per-app language settings.
 
-Experimental app mode counts three screen ON/OFF transitions within 1.5 seconds. It runs inside GOAT with the one-time settings permission, without Shizuku, input-device readers, or an ADB connection. These events do not identify physical power presses: notifications, fingerprint unlock and screen timeouts may cause false triggers; long presses cannot be distinguished. See [the experiment and validation notes](docs/app-level-power-input-experiment.md).
+Experimental app mode counts three screen ON/OFF transitions within a selected window (1.5 seconds by default; 2.5 and 4 seconds are also available). It runs inside GOAT with the one-time settings permission, without Shizuku, input-device readers, or an ADB connection. These events do not identify physical power presses: notifications, fingerprint unlock and screen timeouts may cause false triggers; long presses cannot be distinguished. See [the experiment and validation notes](docs/app-level-power-input-experiment.md).
 
 
 ## Getting started

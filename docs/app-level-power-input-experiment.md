@@ -2,7 +2,11 @@
 
 The power shortcut now uses an **experimental screen-state heuristic inside GOAT**. It has no input-device reader, shell helper, local socket, or running Shizuku requirement. The one-time system-settings permission is still needed to change rotation, as for Shake to rotate.
 
-This does **not** receive actual physical power-key events. Three alternating screen ON/OFF transitions within 1.5 seconds are interpreted as a candidate gesture. Notifications, fingerprint unlock, screen timeout, and other screen-state changes can cause false triggers. Long presses cannot be distinguished, and physical presses that do not cause the expected screen transitions can be missed. The user explicitly accepted these limitations for this experimental mode.
+This does **not** receive actual physical power-key events. Three alternating screen ON/OFF transitions within the selected time window are interpreted as a candidate gesture. The default remains 1.5 seconds; preview 2 also offers 2.5 and 4 seconds for investigation. Notifications, fingerprint unlock, screen timeout, and other screen-state changes can cause false triggers. Long presses cannot be distinguished, and physical presses that do not cause the expected screen transitions can be missed. The user explicitly accepted these limitations for this experimental mode.
+
+## Galaxy follow-up: diagnosis is still pending
+
+On 2026-11-13, the contributor reported that preview 1 did not work on a Galaxy Z Fold8 Ultra. We do not yet have that device's event trace, permission state, or foreground/background comparison. Preview 2 adds on-device diagnostics and selectable timing; it is **not a confirmed fix for that device**. See [the diagnosis guide](app-input-galaxy-diagnostics.md).
 
 ## Why ordinary key callbacks were not used
 

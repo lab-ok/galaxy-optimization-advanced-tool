@@ -4,6 +4,7 @@ import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,6 +22,7 @@ import com.labok.goat.ui.components.ContentMaxWidth
 import com.labok.goat.ui.components.HelpTopic
 import com.labok.goat.ui.components.SheetColumn
 import com.labok.goat.ui.components.featurePadding
+import com.labok.goat.ui.components.copyText
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.core.R
 import com.labok.goat.data.rotate.PowerRotate
 import com.labok.goat.data.rotate.ShakeRotate
+import com.labok.goat.domain.ScreenTripleTransition
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
@@ -63,6 +66,9 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
     var autoOn by remember { mutableStateOf(ShakeRotate.autoRotateOn(context)) }
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     val status by PowerRotate.status.collectAsStateWithLifecycle()
+    val detection by PowerRotate.detection.collectAsStateWithLifecycle()
+    val changed by PowerRotate.changed.collectAsStateWithLifecycle()
+    val window = remember(changed) { PowerRotate.window(context) }
     LifecycleResumeEffect(Unit) {
         enabled = PowerRotate.enabled(context)
         permitted = ShakeRotate.canWrite(context)
@@ -84,7 +90,7 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
         Spacer(Modifier.height(Gap.Item))
         LiquidSwitchRow(
             stringResource(R.string.power_rotate_title),
-            stringResource(R.string.power_rotate_body),
+            stringResource(R.string.power_rotate_body, window.seconds),
             enabled,
             enabled || ready
         ) { on ->
@@ -105,6 +111,13 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
                 PowerRotate.Status.ERROR -> R.string.power_rotate_input_error
             }
             Text(stringResource(label), color = if (status == PowerRotate.Status.ERROR) c.danger else c.muted, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.power_rotate_diag_counts, detection.events, detection.candidates), color = c.muted, style = MaterialTheme.typography.bodySmall)
+            detection.screenOn?.let { on ->
+                Text(stringResource(R.string.power_rotate_diag_last,
+                    stringResource(if (on) R.string.power_rotate_screen_on else R.string.power_rotate_screen_off),
+                    detection.count, detection.intervalMs?.let { "${it}ms" } ?: "—",
+                    decisionText(detection.decision)), color = c.muted, style = MaterialTheme.typography.bodySmall)
+            }
         }
         if (!ready) {
             Spacer(Modifier.height(Gap.Item))
@@ -122,6 +135,12 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
         }
         Spacer(Modifier.height(Gap.Item))
         Text(stringResource(R.string.power_rotate_note), color = c.muted, style = MaterialTheme.typography.labelSmall)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidButton(stringResource(R.string.power_rotate_diag_copy), primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
+            if (copyText(context, PowerRotate.diagnose(context))) {
+                Toast.makeText(context, R.string.power_rotate_diag_copied, Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }
 
@@ -141,8 +160,48 @@ fun PowerRotateScreen(contentPadding: PaddingValues, onGuide: () -> Unit) {
         item(key = "action") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateModeCard() }
         }
+        item(key = "window") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateWindowCard() }
+        }
     }
 }
+
+@Composable
+private fun PowerRotateWindowCard() {
+    val context = LocalContext.current
+    val c = LocalLiquid.current
+    val changed by PowerRotate.changed.collectAsStateWithLifecycle()
+    val selected = remember(changed) { PowerRotate.window(context) }
+    GlassCard {
+        Text(stringResource(R.string.power_rotate_window_title), color = c.ink, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(Gap.Item))
+        Text(stringResource(R.string.power_rotate_window_note), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidRadioGroup {
+            PowerRotate.Window.entries.forEach { window ->
+                LiquidRadioRow(
+                    stringResource(R.string.power_rotate_window_seconds, window.seconds),
+                    stringResource(when (window) {
+                        PowerRotate.Window.SHORT -> R.string.power_rotate_window_default
+                        PowerRotate.Window.MEDIUM -> R.string.power_rotate_window_medium
+                        PowerRotate.Window.LONG -> R.string.power_rotate_window_long
+                    }), selected == window, true
+                ) { PowerRotate.setWindow(context, window) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun decisionText(decision: ScreenTripleTransition.Decision?): String = stringResource(when (decision) {
+    ScreenTripleTransition.Decision.DUPLICATE -> R.string.power_rotate_diag_duplicate
+    ScreenTripleTransition.Decision.FIRST -> R.string.power_rotate_diag_first
+    ScreenTripleTransition.Decision.SECOND -> R.string.power_rotate_diag_second
+    ScreenTripleTransition.Decision.TRIPLE -> R.string.power_rotate_diag_matched
+    ScreenTripleTransition.Decision.WINDOW_EXPIRED -> R.string.power_rotate_diag_expired
+    ScreenTripleTransition.Decision.CLOCK_RESET -> R.string.power_rotate_diag_reset
+    null -> R.string.power_rotate_waiting
+})
 
 @Composable
 private fun PowerRotateModeCard() {
@@ -188,9 +247,10 @@ private fun PowerRotateArt() {
 
 @Composable
 fun PowerRotateHelpSheet() {
+    val window = PowerRotate.window(LocalContext.current)
     SheetColumn(title = Copy.MENU_HELP) {
         HelpTopic(stringResource(R.string.power_rotate_detection_mode), stringResource(R.string.power_rotate_note))
-        HelpTopic(stringResource(R.string.power_rotate_title), stringResource(R.string.power_rotate_body)) { PowerRotateArt() }
+        HelpTopic(stringResource(R.string.power_rotate_title), stringResource(R.string.power_rotate_body, window.seconds)) { PowerRotateArt() }
         HelpTopic(stringResource(R.string.power_rotate_mode_toggle), stringResource(R.string.power_rotate_mode_toggle_body))
         HelpTopic(stringResource(R.string.power_rotate_mode_once), stringResource(R.string.power_rotate_mode_once_body))
         HelpTopic(Copy.MENU_GUIDE, stringResource(R.string.power_rotate_permission))

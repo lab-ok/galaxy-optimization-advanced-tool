@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="power_rotate_title">Triple-press power to lock rotation</string>
-    <string name="power_rotate_body">Experimental: run the selected action after three screen ON/OFF transitions within 1.5 seconds. App events approximate power presses.</string>
+    <string name="power_rotate_body">Experimental: run the selected action after three screen ON/OFF transitions within %1$s seconds. App events approximate power presses.</string>
     <string name="power_rotate_auto_on">Auto-rotate ON · Rotation lock OFF</string>
     <string name="power_rotate_locked">Auto-rotate OFF · Rotation lock ON</string>
     <string name="power_rotate_permission">Grant system settings permission once, as for Shake to rotate. Detection runs inside GOAT without a running Shizuku or ADB connection.</string>
@@ -20,4 +20,22 @@
     <string name="power_rotate_once_feedback">Rotating to the device direction, then locking.</string>
     <string name="power_rotate_detection_mode">App event detection · Experimental</string>
     <string name="power_rotate_permission_needed">System settings permission needed</string>
+    <string name="power_rotate_diag_counts">Screen events received: %1$d · Gesture matches: %2$d</string>
+    <string name="power_rotate_diag_last">Last: %1$s · %2$d/3 · Gap %3$s · %4$s</string>
+    <string name="power_rotate_diag_copy">Copy detection diagnostics</string>
+    <string name="power_rotate_diag_copied">Detection diagnostics copied</string>
+    <string name="power_rotate_screen_on">Screen ON</string>
+    <string name="power_rotate_screen_off">Screen OFF</string>
+    <string name="power_rotate_diag_duplicate">Duplicate state ignored</string>
+    <string name="power_rotate_diag_first">First transition</string>
+    <string name="power_rotate_diag_second">Second transition</string>
+    <string name="power_rotate_diag_matched">Three transitions matched</string>
+    <string name="power_rotate_diag_expired">Time window exceeded; restarted</string>
+    <string name="power_rotate_diag_reset">Elapsed time reset</string>
+    <string name="power_rotate_window_title">Detection time window</string>
+    <string name="power_rotate_window_note">Try a longer window to investigate slow screen transitions. A longer window can also include unrelated events and cause more false triggers. Changing this setting resets the current sequence.</string>
+    <string name="power_rotate_window_seconds">%1$s seconds</string>
+    <string name="power_rotate_window_default">Default timing</string>
+    <string name="power_rotate_window_medium">Test delayed screen transitions</string>
+    <string name="power_rotate_window_long">Test a wider time range</string>
 </resources>
