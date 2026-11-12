@@ -28,6 +28,7 @@ import com.labok.goat.data.lab.UsageArchive
 import com.labok.goat.data.lab.VolumeRotate
 import com.labok.goat.data.log.CrashRecorder
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.rotate.PowerRotate
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.settings.SettingsRepository
 import com.labok.goat.data.shizuku.ShizukuAccess
@@ -81,6 +82,7 @@ class App : Application() {
         // Shizuku 연결·끊김 때 할 일(공통 모듈은 기능을 모르므로 여기서 이어 준다)
         ShizukuAccess.addListener { app, before, now ->
             ShizukuNotice.update(app)
+            if (PowerRotate.enabled(app) && before != now) GoatService.sync(app)
             if (now == ShizukuAccess.State.READY && before != ShizukuAccess.State.READY) StatusBarHider.onShizukuReady(app)
             if (before == ShizukuAccess.State.READY && now != ShizukuAccess.State.READY) StatusBarHider.onShizukuLost(app)
         }
@@ -148,6 +150,7 @@ class App : Application() {
         // 배율을 바꿔 삼성이 GOAT를 닫았다가 다시 열린 경우 등: 켜 둔 알림창 배율 조절을 다시 띄운다
         AppDensityNotifier.start(this)
         ShakeRotate.start(this)
+        if (PowerRotate.enabled(this)) GoatService.sync(this)
         // 실험실 위스퍼 음성 입력: 켜 두었으면 상주 서비스가 입력기 바뀜을 지켜보게 한다(앱이 다시 뜬 뒤에도)
         if (com.labok.goat.data.lab.VoiceRedirect.enabled(this)) runCatching { com.labok.goat.background.GoatService.sync(this) }
         // 카메라 촬영음 끄기: 재부팅·업데이트로 돌아오면 Shizuku가 연결될 때 다시 끈다

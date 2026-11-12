@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="power_rotate_title">Triple-press power to lock rotation</string>
+    <string name="power_rotate_body">Press and release the power button three times within 1.5 seconds to run your selected rotation action. Works independently of shake detection.</string>
+    <string name="power_rotate_auto_on">Auto-rotate ON · Rotation lock OFF</string>
+    <string name="power_rotate_locked">Auto-rotate OFF · Rotation lock ON</string>
+    <string name="power_rotate_permission">Requires Shizuku to be connected and system settings permission.</string>
+    <string name="power_rotate_note">Power button screen on/off and system shortcuts still work. If double-press launches the camera, turn that shortcut off in Side button settings.</string>
+    <string name="power_rotate_waiting">Preparing input detection. Check Shizuku and system settings permission.</string>
+    <string name="power_rotate_listening">Listening for power button presses</string>
+    <string name="power_rotate_input_error">Cannot read button input on this device. Check Shizuku; retrying automatically.</string>
+    <string name="power_rotate_failed">Could not change rotation. Check system settings permission.</string>
+    <string name="power_rotate_notification">Triple-press the power button to toggle rotation lock.</string>
+    <string name="power_rotate_connect">Connect Shizuku</string>
+    <string name="power_rotate_action">Action on three presses</string>
+    <string name="power_rotate_mode_toggle">Auto-rotate ON/OFF</string>
+    <string name="power_rotate_mode_toggle_body">Switch between locking the current direction and auto-rotate.</string>
+    <string name="power_rotate_mode_once">Rotate once, like shake rotation</string>
+    <string name="power_rotate_mode_once_body">Turn to the direction you are holding the device, then lock again. Uses the same rotation settings as Shake to rotate; shaking does not need to be enabled.</string>
+    <string name="power_rotate_once_feedback">Rotating to the device direction, then locking.</string>
+</resources>
