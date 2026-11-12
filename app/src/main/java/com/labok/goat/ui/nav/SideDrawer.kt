@@ -70,6 +70,7 @@ import com.labok.goat.ui.liquid.Text
 import com.labok.goat.ui.liquid.liquidPress
 import com.labok.goat.ui.liquid.moveTo
 import com.labok.goat.ui.liquid.rememberSoftBlob
+import com.labok.goat.R
 import com.labok.goat.ui.text.Copy
 import kotlin.math.abs
 import kotlin.math.cos
@@ -94,6 +95,9 @@ enum class NavItem(private val labelOf: () -> String, val icon: NavIcon) {
 
     /** 평소에는 회전을 잠가 두고, 흔들면 폰이 놓인 방향으로 한 번 돌린다. */
     SHAKE_ROTATE({ Copy.FEATURE_SHAKE_ROTATE }, NavIcon.ROTATE),
+
+    /** Triple power press toggles system auto-rotation. */
+    POWER_ROTATE({ Copy.text(R.string.power_rotate_title) }, NavIcon.POWER_PRESS),
 
     /** 국내 모델의 강제 촬영음을 끈다(Shizuku 셸로 숨은 시스템 설정을 바꾼다). */
     CAMERA_MUTE({ Copy.FEATURE_CAMERA_MUTE }, NavIcon.CAMERA),

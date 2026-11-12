@@ -148,6 +148,8 @@ import com.labok.goat.ui.nav.NewBadge
 import com.labok.goat.ui.nav.SideDrawerContent
 import com.labok.goat.ui.rotate.ShakeCalibrationSheet
 import com.labok.goat.ui.rotate.ShakeRotateHelpSheet
+import com.labok.goat.ui.rotate.PowerRotateScreen
+import com.labok.goat.ui.rotate.PowerRotateHelpSheet
 import com.labok.goat.ui.rotate.ShakeRotateScreen
 import com.labok.goat.ui.rotate.VolumeRotateHelpSheet
 import com.labok.goat.ui.rotate.VolumeRotateScreen
@@ -180,7 +182,7 @@ import kotlinx.coroutines.launch
 private const val WIDE_DP = 600
 
 /** 하단 시트 종류. 한 번에 하나만 연다. */
-private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, GOAT_PANEL, ICONS_HELP, AIRPLANE_HELP, VOLUME_HELP, CLIP_HELP, STATS_HELP }
+private enum class Sheet { HELP, GUIDE, TEST, ADVANCED, RESET, ABOUT, APP_HELP, APP_GUIDE, APP_RESET, POWER_HELP, SHAKE_HELP, SHAKE_CALIBRATE, CAMERA_HELP, ANIM_HELP, BLOAT_HELP, REFRESH_HELP, GOS_HELP, DARK_HELP, RES_HELP, DOZE_HELP, CHANGELOG, PERMISSIONS, FLEX_HELP, GOAT_PANEL, ICONS_HELP, AIRPLANE_HELP, VOLUME_HELP, CLIP_HELP, STATS_HELP }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -324,7 +326,7 @@ internal fun HomeScreen(
             // 화면 표시: 부드러움(주사율·애니메이션)과 색(다크)
             section(Copy.MENU_SECTION_DISPLAY, NavItem.REFRESH, NavItem.ANIMATION, NavItem.DARK)
             // 상단바·조작: 손으로 다루는 것(상단바·회전·버튼)
-            section(Copy.MENU_SECTION_TOOLS, NavItem.STATUS_ICONS, NavItem.SHAKE_ROTATE, NavItem.VOLUME_ROTATE)
+            section(Copy.MENU_SECTION_TOOLS, NavItem.STATUS_ICONS, NavItem.SHAKE_ROTATE, NavItem.POWER_ROTATE, NavItem.VOLUME_ROTATE)
             // 폴더블: 접는 폰에서만
             section(Copy.MENU_SECTION_FOLD, NavItem.AUTO_FLEX, labOf(NavItem.LAB_AMBIENT))
             section(Copy.MENU_SECTION_SYSTEM, NavItem.GOS, NavItem.DOZE)
@@ -352,6 +354,11 @@ internal fun HomeScreen(
             ) + common(Sheet.HELP, Sheet.GUIDE, Sheet.RESET)
             NavItem.APP_SIZE -> common(Sheet.APP_HELP, Sheet.APP_GUIDE, Sheet.APP_RESET)
             // 권한은 고급 화면 배율 설정과 같은 시스템 설정 권한이라 같은 권한 설정 안내를 연다. 초기화할 것은 없다.
+            NavItem.POWER_ROTATE -> listOf(
+                Copy.MENU_HELP to { sheet = Sheet.POWER_HELP },
+                Copy.MENU_GUIDE to { sheet = Sheet.APP_GUIDE },
+                Copy.MENU_REPORT to report
+            )
             NavItem.SHAKE_ROTATE -> listOf(
                 Copy.MENU_HELP to { sheet = Sheet.SHAKE_HELP },
                 Copy.MENU_GUIDE to { sheet = Sheet.GUIDE },
@@ -597,6 +604,7 @@ internal fun HomeScreen(
                         when (f) {
                             NavItem.DPI_MATCH -> dpiMatchList(inner)
                             NavItem.APP_SIZE -> AppSizeScreen(inner, onGuide = { sheet = Sheet.APP_GUIDE }, onReset = { sheet = Sheet.APP_RESET })
+                            NavItem.POWER_ROTATE -> PowerRotateScreen(inner, onGuide = { sheet = Sheet.GUIDE })
                             NavItem.SHAKE_ROTATE -> ShakeRotateScreen(inner, onGuide = { sheet = Sheet.GUIDE }, onCalibrate = { sheet = Sheet.SHAKE_CALIBRATE })
                             NavItem.CAMERA_MUTE -> CameraMuteScreen(inner, onConnect = { sheet = Sheet.APP_GUIDE })
                             NavItem.HOME -> Dashboard(inner, state, sections, onOpen = { item, at ->
@@ -704,6 +712,7 @@ internal fun HomeScreen(
                         sheet = null
                         vm.say(msg)
                     })
+                    Sheet.POWER_HELP -> PowerRotateHelpSheet()
                     Sheet.SHAKE_HELP -> ShakeRotateHelpSheet()
                     Sheet.SHAKE_CALIBRATE -> ShakeCalibrationSheet(onClose = { sheet = null })
                     Sheet.CAMERA_HELP -> CameraMuteHelpSheet()

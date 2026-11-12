@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="power_rotate_title">전원 버튼 3번으로 회전 고정</string>
+    <string name="power_rotate_body">1.5초 안에 전원 버튼을 짧게 3번 누르면 아래에서 선택한 회전 동작을 실행합니다. 흔들기 기능과 별도로 켜고 끌 수 있습니다.</string>
+    <string name="power_rotate_auto_on">자동 회전 ON · 화면 회전 고정 OFF</string>
+    <string name="power_rotate_locked">자동 회전 OFF · 화면 회전 고정 ON</string>
+    <string name="power_rotate_permission">Shizuku 연결과 시스템 설정 권한이 필요합니다.</string>
+    <string name="power_rotate_note">전원 버튼의 화면 켜기·끄기와 시스템 단축 동작은 그대로 작동합니다. 두 번 누를 때 카메라가 열리면 측면 버튼 설정에서 해당 동작을 꺼 주세요.</string>
+    <string name="power_rotate_waiting">버튼 감지를 준비하고 있습니다. Shizuku 연결과 시스템 설정 권한을 확인해 주세요.</string>
+    <string name="power_rotate_listening">전원 버튼 누름을 감지하고 있습니다</string>
+    <string name="power_rotate_input_error">버튼 입력을 읽을 수 없습니다. Shizuku를 확인해 주세요. 자동으로 다시 연결합니다.</string>
+    <string name="power_rotate_failed">회전 설정을 바꾸지 못했습니다. 시스템 설정 권한을 확인해 주세요.</string>
+    <string name="power_rotate_notification">전원 버튼을 3번 눌러 화면 회전 고정을 켜고 끕니다.</string>
+    <string name="power_rotate_connect">Shizuku 연결</string>
+    <string name="power_rotate_action">3회 누를 때 동작</string>
+    <string name="power_rotate_mode_toggle">자동 회전 ON/OFF</string>
+    <string name="power_rotate_mode_toggle_body">현재 방향 고정과 자동 회전을 전환합니다.</string>
+    <string name="power_rotate_mode_once">흔들어서 회전처럼 한 번 회전</string>
+    <string name="power_rotate_mode_once_body">기기를 든 방향으로 한 번 돌린 뒤 다시 고정합니다. 흔들어서 화면 회전의 회전 방식을 사용하며, 흔들기 기능은 켜지 않아도 됩니다.</string>
+    <string name="power_rotate_once_feedback">기기를 든 방향으로 회전한 뒤 고정합니다.</string>
+</resources>

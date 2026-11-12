@@ -76,7 +76,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /** 사이드바·카드·화면이 함께 쓰는 기능 아이콘(공통 모듈, 11-11 모듈 분리 때 SideDrawer.kt에서 옮김). */
-enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, FLEX, NOTE, STATS, VOLUME, INFO, GEAR, GLOW }
+enum class NavIcon { HOME, FOLD, APPS, SPEED, ROTATE, POWER_PRESS, CAMERA, CLEAN, REFRESH, GAME, MOON, BELL, PIXELS, FLASK, AIRPLANE, EYE_OFF, FLEX, NOTE, STATS, VOLUME, INFO, GEAR, GLOW }
 
 /** 메뉴 아이콘(24dp). 앱 그림과 같은 둥근 선으로 그린다. */
 @Composable
@@ -95,6 +95,7 @@ fun NavGlyph(icon: NavIcon, color: Color, modifier: Modifier = Modifier) {
             NavIcon.FOLD -> fold(color, s)
             NavIcon.APPS -> apps(color, s)
             NavIcon.ROTATE -> rotate(color, s)
+            NavIcon.POWER_PRESS -> powerPress(color, s)
             NavIcon.CAMERA -> camera(color, s)
             NavIcon.FLASK -> flask(color, s)
             NavIcon.AIRPLANE -> airplane(color, s)
@@ -165,6 +166,14 @@ private fun DrawScope.rotate(c: Color, s: Stroke) {
     }
     arcWithHead(-75f, 55f)
     arcWithHead(105f, 55f)
+}
+
+/** Smartphone with a side power button: the same simple rounded strokes as the other icons. */
+private fun DrawScope.powerPress(c: Color, s: Stroke) {
+    drawRoundRect(c, p(5f, 3f), Size(u(11f), u(18f)), CornerRadius(u(2.5f)), style = s)
+    drawLine(c, p(18.5f, 7.5f), p(18.5f, 11.5f), s.width, StrokeCap.Round)
+    drawArc(c, -45f, 270f, false, p(7.5f, 10f), Size(u(6f), u(6f)), style = s)
+    drawLine(c, p(10.5f, 8f), p(10.5f, 12f), s.width, StrokeCap.Round)
 }
 
 /** 카메라 촬영음 끄기: 카메라와 오른쪽 위로 그은 사선(소리 끔). */
