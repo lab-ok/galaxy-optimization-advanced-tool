@@ -1,0 +1,50 @@
+[
+  {
+    "elapsed_ms": 10944735,
+    "utc_ms": 1794493578195,
+    "source": "accessibility_key",
+    "detail": "KEYCODE_VOLUME_UP DOWN repeat=0"
+  },
+  {
+    "elapsed_ms": 10944816,
+    "utc_ms": 1794493578276,
+    "source": "accessibility_key",
+    "detail": "KEYCODE_VOLUME_UP UP repeat=0"
+  },
+  {
+    "elapsed_ms": 10944818,
+    "utc_ms": 1794493578278,
+    "source": "activity_key",
+    "detail": "KEYCODE_VOLUME_UP DOWN repeat=0"
+  },
+  {
+    "elapsed_ms": 10944820,
+    "utc_ms": 1794493578279,
+    "source": "activity_key",
+    "detail": "KEYCODE_VOLUME_UP UP repeat=0"
+  },
+  {
+    "elapsed_ms": 10946131,
+    "utc_ms": 1794493579590,
+    "source": "screen_broadcast",
+    "detail": "android.intent.action.SCREEN_OFF"
+  },
+  {
+    "elapsed_ms": 10946429,
+    "utc_ms": 1794493579889,
+    "source": "screen_broadcast",
+    "detail": "android.intent.action.SCREEN_ON"
+  },
+  {
+    "elapsed_ms": 10947025,
+    "utc_ms": 1794493580484,
+    "source": "screen_broadcast",
+    "detail": "android.intent.action.SCREEN_OFF"
+  },
+  {
+    "elapsed_ms": 10947025,
+    "utc_ms": 1794493580484,
+    "source": "screen_triple_candidate",
+    "detail": "Three screen transitions; physical key identity is unknown"
+  }
+]

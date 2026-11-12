@@ -76,9 +76,11 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
         context.contentResolver.registerContentObserver(Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION), false, observer)
         onDispose { context.contentResolver.unregisterContentObserver(observer) }
     }
-    val ready = permitted && (status == PowerRotate.Status.LISTENING || shizuku == ShizukuAccess.State.READY)
+    val ready = permitted
     GlassCard {
         PowerRotateArt()
+        Spacer(Modifier.height(Gap.Item))
+        Text(stringResource(R.string.power_rotate_detection_mode), color = c.muted, style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.height(Gap.Item))
         LiquidSwitchRow(
             stringResource(R.string.power_rotate_title),
@@ -187,6 +189,7 @@ private fun PowerRotateArt() {
 @Composable
 fun PowerRotateHelpSheet() {
     SheetColumn(title = Copy.MENU_HELP) {
+        HelpTopic(stringResource(R.string.power_rotate_detection_mode), stringResource(R.string.power_rotate_note))
         HelpTopic(stringResource(R.string.power_rotate_title), stringResource(R.string.power_rotate_body)) { PowerRotateArt() }
         HelpTopic(stringResource(R.string.power_rotate_mode_toggle), stringResource(R.string.power_rotate_mode_toggle_body))
         HelpTopic(stringResource(R.string.power_rotate_mode_once), stringResource(R.string.power_rotate_mode_once_body))

@@ -13,7 +13,7 @@ import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.liquid.UiGoat
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** Independent of shake rotation: triple power press toggles the system rotation lock. */
+/** Experimental app-level screen-transition shortcut, independent of shake detection. */
 object PowerRotate {
     enum class Mode { TOGGLE, ONCE }
 
@@ -21,9 +21,6 @@ object PowerRotate {
     val status = MutableStateFlow(Status.OFF)
 
     fun enabled(context: Context) = context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).getBoolean("on", false)
-
-    /** A running local stream no longer needs Shizuku or wireless debugging. */
-    fun needsShizuku(context: Context) = enabled(context) && status.value != Status.LISTENING
 
     fun setEnabled(context: Context, on: Boolean) {
         context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putBoolean("on", on).apply()

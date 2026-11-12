@@ -1,122 +1,92 @@
 package com.labok.goat.data.rotate
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Handler
-import android.os.SystemClock
 import android.os.Looper
+import android.os.PowerManager
+import android.os.SystemClock
 import android.widget.Toast
-import com.labok.goat.AppHooks
 import com.labok.goat.core.R
 import com.labok.goat.data.log.LogRepository
-import com.labok.goat.data.shizuku.ShizukuAccess
-import com.labok.goat.domain.PowerTriplePress
+import com.labok.goat.domain.ScreenTripleTransition
 
-/** Reads actual power keys over a direct local stream that survives Shizuku disconnection. */
+/** App-only experiment: screen transitions approximate presses without opening input devices. */
 class PowerRotateEngine(private val context: Context, private val onTriplePress: (Int) -> Boolean) {
     private val main = Handler(Looper.getMainLooper())
-    private val lock = Any()
-    @Volatile private var generation = 0
-    private var bridge: PowerInputBridge? = null
-    private var worker: Thread? = null
+    private var registered = false
+    private var detector: ScreenTripleTransition? = null
     private var rotation = 0
-    private val retry = Runnable { refresh() }
 
-    /** Shizuku bootstraps a reader; losing its Binder must not stop an established session. */
+    private val screen = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val on = when (intent.action) {
+                Intent.ACTION_SCREEN_ON -> true
+                Intent.ACTION_SCREEN_OFF -> false
+                else -> return
+            }
+            if (!registered || !PowerRotate.enabled(context)) return
+            if (!ShakeRotate.canWrite(context)) {
+                stop()
+                PowerRotate.status.value = PowerRotate.Status.WAITING
+                return
+            }
+            when (detector?.feed(on, SystemClock.elapsedRealtime())) {
+                ScreenTripleTransition.Result.FIRST -> rotation = ShakeRotate.currentRotation(context)
+                ScreenTripleTransition.Result.TRIPLE -> {
+                    val captured = rotation
+                    // A freshly lit screen needs sensor samples for the one-shot direction path.
+                    val delay = if (on && PowerRotate.mode(context) == PowerRotate.Mode.ONCE) 250L else 0L
+                    main.postDelayed({ perform(captured) }, delay)
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    /** No Shizuku state check: the already granted settings permission is sufficient. */
     fun refresh() {
-        val state = ShizukuAccess.status.value
-        if (!ShakeRotate.canWrite(context) || state == ShizukuAccess.State.NEEDS_PERMISSION) {
+        if (!ShakeRotate.canWrite(context)) {
             stop()
             PowerRotate.status.value = PowerRotate.Status.WAITING
             return
         }
-        if (worker != null) return
-        if (state != ShizukuAccess.State.READY) {
-            PowerRotate.status.value = PowerRotate.Status.WAITING
-            return
+        if (registered) return
+        detector = ScreenTripleTransition(context.getSystemService(PowerManager::class.java).isInteractive)
+        val filter = IntentFilter(Intent.ACTION_SCREEN_ON).apply { addAction(Intent.ACTION_SCREEN_OFF) }
+        try {
+            if (Build.VERSION.SDK_INT >= 33) context.registerReceiver(screen, filter, Context.RECEIVER_NOT_EXPORTED)
+            else context.registerReceiver(screen, filter)
+            registered = true
+            PowerRotate.status.value = PowerRotate.Status.LISTENING
+            LogRepository.from(context).add("Power rotation: experimental app screen-event detection started")
+        } catch (e: Exception) {
+            detector = null
+            PowerRotate.status.value = PowerRotate.Status.ERROR
+            LogRepository.from(context).add("Power rotation screen events: ${e.message}")
         }
-        main.removeCallbacks(retry)
-        val token = generation
-        PowerRotate.status.value = PowerRotate.Status.WAITING
-        worker = Thread({ monitor(token) }, "GOAT-PowerRotate").also { it.start() }
     }
 
-    private fun monitor(token: Int) {
-        var opened: PowerInputBridge? = null
-        try {
-            // Discover capabilities once per session; never fall back to reading every input device.
-            val capabilities = ShizukuAccess.shell("getevent -pl")
-            if (capabilities?.ok != true) error("Power input discovery failed")
-            val devicePaths = PowerInputDevice.findAll(capabilities.out)
-            if (devicePaths.isEmpty()) error("No KEY_POWER input device found")
-            val session = PowerInputBridge()
-            opened = session
-            synchronized(lock) {
-                if (token != generation) return
-                bridge = session
-            }
-            if (ShizukuAccess.shell(session.launchCommand(devicePaths))?.ok != true) error("Power reader launch failed")
-            val detector = PowerTriplePress()
-            session.read(onConnected = {
-                main.post {
-                    if (token == generation) {
-                        PowerRotate.status.value = PowerRotate.Status.LISTENING
-                        AppHooks.shizukuNoticeUpdate(context)
-                    }
-                }
-            }) { line ->
-                if (token != generation) return@read
-                if (line.contains("Permission denied", true) || line.contains("could not open", true)) error("Input access denied")
-                // Single-device getevent output has no path prefix; the helper tags each line.
-                val separator = line.indexOf('\t')
-                if (separator < 0) return@read
-                val devicePath = line.substring(0, separator)
-                if (devicePath !in devicePaths) return@read
-                val event = PowerTriplePress.parse(line.substring(separator + 1), devicePath) ?: return@read
-                // Kernel CLOCK_MONOTONIC pauses in deep sleep; elapsedRealtime must bound the gesture.
-                val result = detector.feed(event, SystemClock.elapsedRealtime())
-                if (result == PowerTriplePress.Result.NONE) return@read
-                main.post {
-                    if (token != generation || !PowerRotate.enabled(context)) return@post
-                    when (result) {
-                        PowerTriplePress.Result.FIRST_DOWN -> rotation = ShakeRotate.currentRotation(context)
-                        PowerTriplePress.Result.TRIPLE -> {
-                            val ok = onTriplePress(rotation)
-                            val text = when {
-                                !ok -> R.string.power_rotate_failed
-                                PowerRotate.mode(context) == PowerRotate.Mode.ONCE -> R.string.power_rotate_once_feedback
-                                ShakeRotate.autoRotateOn(context) -> R.string.power_rotate_auto_on
-                                else -> R.string.power_rotate_locked
-                            }
-                            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
-                        }
-                        PowerTriplePress.Result.NONE -> Unit
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            if (token == generation) LogRepository.from(context).add("Power rotation input: ${e.message}")
-        } finally {
-            opened?.close()
-            synchronized(lock) { if (bridge === opened) bridge = null }
-            main.post {
-                if (token == generation) {
-                    worker = null
-                    PowerRotate.status.value = if (ShizukuAccess.status.value == ShizukuAccess.State.READY) PowerRotate.Status.ERROR else PowerRotate.Status.WAITING
-                    AppHooks.shizukuNoticeUpdate(context)
-                    main.postDelayed(retry, 5000)
-                }
-            }
+    private fun perform(captured: Int) {
+        if (!registered || !PowerRotate.enabled(context) || !ShakeRotate.canWrite(context)) return
+        val ok = onTriplePress(captured)
+        val text = when {
+            !ok -> R.string.power_rotate_failed
+            PowerRotate.mode(context) == PowerRotate.Mode.ONCE -> R.string.power_rotate_once_feedback
+            ShakeRotate.autoRotateOn(context) -> R.string.power_rotate_auto_on
+            else -> R.string.power_rotate_locked
         }
+        LogRepository.from(context).add("Power rotation screen-event candidate: action=${PowerRotate.mode(context)}, success=$ok")
+        Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
     }
 
     fun stop() {
-        synchronized(lock) {
-            generation++
-            bridge?.close()
-            bridge = null
-        }
-        worker?.interrupt()
-        worker = null
+        if (registered) runCatching { context.unregisterReceiver(screen) }
+        registered = false
+        detector = null
         main.removeCallbacksAndMessages(null)
         PowerRotate.status.value = PowerRotate.Status.OFF
     }

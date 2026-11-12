@@ -1,0 +1,28 @@
+[
+  {
+    "phase": "foreground",
+    "physical_power_kernel_events": 6,
+    "activity_power": 0,
+    "accessibility_power": 0,
+    "activity_volume_control": 2,
+    "accessibility_volume_control": 2,
+    "screen_events": 3,
+    "screen_triple_candidates": 1
+  },
+  {
+    "phase": "background",
+    "physical_power_kernel_events": 6,
+    "activity_power": 0,
+    "accessibility_power": 0,
+    "activity_volume_control": 0,
+    "accessibility_volume_control": 2,
+    "screen_events": 3,
+    "screen_triple_candidates": 1
+  },
+  {
+    "phase": "non-power screen transitions",
+    "physical_power_kernel_events": 0,
+    "screen_events": 3,
+    "false_triple_candidates": 1
+  }
+]
