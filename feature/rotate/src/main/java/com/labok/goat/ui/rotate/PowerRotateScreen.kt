@@ -76,7 +76,7 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
         context.contentResolver.registerContentObserver(Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION), false, observer)
         onDispose { context.contentResolver.unregisterContentObserver(observer) }
     }
-    val ready = permitted && shizuku == ShizukuAccess.State.READY
+    val ready = permitted && (status == PowerRotate.Status.LISTENING || shizuku == ShizukuAccess.State.READY)
     GlassCard {
         PowerRotateArt()
         Spacer(Modifier.height(Gap.Item))

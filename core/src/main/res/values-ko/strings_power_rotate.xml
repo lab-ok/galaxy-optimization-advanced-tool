@@ -4,11 +4,11 @@
     <string name="power_rotate_body">1.5초 안에 전원 버튼을 짧게 3번 누르면 아래에서 선택한 회전 동작을 실행합니다. 흔들기 기능과 별도로 켜고 끌 수 있습니다.</string>
     <string name="power_rotate_auto_on">자동 회전 ON · 화면 회전 고정 OFF</string>
     <string name="power_rotate_locked">자동 회전 OFF · 화면 회전 고정 ON</string>
-    <string name="power_rotate_permission">Shizuku 연결과 시스템 설정 권한이 필요합니다.</string>
+    <string name="power_rotate_permission">처음 버튼 감지를 시작할 때 Shizuku 연결과 시스템 설정 권한이 필요합니다. 감지가 시작되면 무선 디버깅과 Shizuku를 꺼도 동작합니다. 재부팅하거나 GOAT 프로세스가 종료되면 Shizuku를 연결해 감지를 다시 시작해 주세요.</string>
     <string name="power_rotate_note">전원 버튼의 화면 켜기·끄기와 시스템 단축 동작은 그대로 작동합니다. 두 번 누를 때 카메라가 열리면 측면 버튼 설정에서 해당 동작을 꺼 주세요.</string>
-    <string name="power_rotate_waiting">버튼 감지를 준비하고 있습니다. Shizuku 연결과 시스템 설정 권한을 확인해 주세요.</string>
-    <string name="power_rotate_listening">전원 버튼 누름을 감지하고 있습니다</string>
-    <string name="power_rotate_input_error">버튼 입력을 읽을 수 없습니다. Shizuku를 확인해 주세요. 자동으로 다시 연결합니다.</string>
+    <string name="power_rotate_waiting">버튼 감지를 시작해야 합니다. Shizuku 연결과 시스템 설정 권한을 확인해 주세요.</string>
+    <string name="power_rotate_listening">전원 버튼 감지 중 · 무선 디버깅을 꺼도 동작합니다</string>
+    <string name="power_rotate_input_error">버튼 감지가 중단됐습니다. Shizuku를 연결해 다시 시작해 주세요. 연결 중에는 자동으로 다시 시도합니다.</string>
     <string name="power_rotate_failed">회전 설정을 바꾸지 못했습니다. 시스템 설정 권한을 확인해 주세요.</string>
     <string name="power_rotate_notification">전원 버튼을 3번 눌러 화면 회전 고정을 켜고 끕니다.</string>
     <string name="power_rotate_connect">Shizuku 연결</string>

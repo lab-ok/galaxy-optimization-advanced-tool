@@ -22,6 +22,9 @@ object PowerRotate {
 
     fun enabled(context: Context) = context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).getBoolean("on", false)
 
+    /** A running local stream no longer needs Shizuku or wireless debugging. */
+    fun needsShizuku(context: Context) = enabled(context) && status.value != Status.LISTENING
+
     fun setEnabled(context: Context, on: Boolean) {
         context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putBoolean("on", on).apply()
         AppHooks.syncService(context)

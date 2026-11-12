@@ -25,7 +25,7 @@ GOAT lets you change settings that Galaxy phones either don't offer or normally 
 | **Force dark mode** | Darkens apps that don't support dark mode. | Shizuku |
 | **Status bar** | Hides the whole status bar at the top, or only the icons you pick (alarm, vibrate, Bluetooth…). | One-time permission; hiding the bar needs Shizuku |
 | **Shake to rotate** | Keeps rotation locked, and rotates only when you shake the phone while holding it the way you want. | One-time permission |
-| **Triple-press power to lock rotation** | Choose what three power presses within 1.5 seconds do: toggle auto-rotate or rotate once and lock, like Shake to rotate. Enable it from its own sidebar screen. | One-time permission, Shizuku |
+| **Triple-press power to lock rotation** | Choose what three power presses within 1.5 seconds do: toggle auto-rotate or rotate once and lock, like Shake to rotate. Enable it from its own sidebar screen. | One-time permission; Shizuku to start detection |
 | **Volume button rotation** | When you rotate the screen, the volume up/down buttons follow the new direction. | One-time permission |
 | **Flex mode** | On Folds that don't report the half-folded state (like the Galaxy Z Fold8), standing the phone like a laptop splits YouTube, Camera and Gallery into top and bottom halves. | Fold, Shizuku |
 | **Mute camera shutter** | Turns off the forced shutter sound on Korean Galaxy models so it follows silent/vibrate mode. | Shizuku |
@@ -37,6 +37,8 @@ GOAT lets you change settings that Galaxy phones either don't offer or normally 
 | **Usage stats** | Shows how long your screen was on and which apps you opened most. The data never leaves your phone. | Usage access |
 
 The app is available in English and Korean. Change it in App Settings → Language, or in Android's per-app language settings.
+
+Power-button detection keeps working after wireless debugging or Shizuku is stopped. Shizuku is needed again to restart detection after a reboot or GOAT process termination.
 
 ## Getting started
 
