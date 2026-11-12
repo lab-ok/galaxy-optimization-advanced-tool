@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import com.labok.goat.ui.liquid.LiquidSlider
 import com.labok.goat.ui.liquid.LiquidRadioGroup
 import com.labok.goat.ui.liquid.LiquidRadioRow
 import androidx.compose.ui.platform.LocalContext
@@ -42,9 +43,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.core.R
+import com.labok.goat.data.rotate.GestureBarService
 import com.labok.goat.data.rotate.PowerRotate
 import com.labok.goat.data.rotate.ShakeRotate
-import com.labok.goat.domain.ScreenTripleTransition
+import com.labok.goat.domain.TripleTap
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
@@ -63,6 +65,7 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
     var enabled by remember { mutableStateOf(PowerRotate.enabled(context)) }
     var permitted by remember { mutableStateOf(ShakeRotate.canWrite(context)) }
     var showShizuku by remember { mutableStateOf(false) }
+    var accessibility by remember { mutableStateOf(GestureBarService.enabled(context)) }
     var autoOn by remember { mutableStateOf(ShakeRotate.autoRotateOn(context)) }
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     val status by PowerRotate.status.collectAsStateWithLifecycle()
@@ -70,6 +73,7 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
     val changed by PowerRotate.changed.collectAsStateWithLifecycle()
     val window = remember(changed) { PowerRotate.window(context) }
     LifecycleResumeEffect(Unit) {
+        accessibility = GestureBarService.enabled(context)
         enabled = PowerRotate.enabled(context)
         permitted = ShakeRotate.canWrite(context)
         autoOn = ShakeRotate.autoRotateOn(context)
@@ -112,11 +116,10 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
             }
             Text(stringResource(label), color = if (status == PowerRotate.Status.ERROR) c.danger else c.muted, style = MaterialTheme.typography.bodySmall)
             Text(stringResource(R.string.power_rotate_diag_counts, detection.events, detection.candidates), color = c.muted, style = MaterialTheme.typography.bodySmall)
-            detection.screenOn?.let { on ->
-                Text(stringResource(R.string.power_rotate_diag_last,
-                    stringResource(if (on) R.string.power_rotate_screen_on else R.string.power_rotate_screen_off),
-                    detection.count, detection.intervalMs?.let { "${it}ms" } ?: "—",
-                    decisionText(detection.decision)), color = c.muted, style = MaterialTheme.typography.bodySmall)
+            if (detection.events > 0) {
+                Text(stringResource(R.string.power_rotate_diag_last, detection.count,
+                    detection.intervalMs?.let { "${it}ms" } ?: "—", decisionText(detection.decision)),
+                    color = c.muted, style = MaterialTheme.typography.bodySmall)
             }
         }
         if (!ready) {
@@ -132,6 +135,12 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
                     ShizukuGuide(shizuku, stringResource(R.string.power_rotate_permission))
                 }
             }
+        }
+        if (!accessibility) {
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton(stringResource(R.string.gesture_bar_accessibility_button), modifier = Modifier.fillMaxWidth(), onClick = {
+                context.startActivity(GestureBarService.settings(context))
+            })
         }
         Spacer(Modifier.height(Gap.Item))
         Text(stringResource(R.string.power_rotate_note), color = c.muted, style = MaterialTheme.typography.labelSmall)
@@ -160,9 +169,44 @@ fun PowerRotateScreen(contentPadding: PaddingValues, onGuide: () -> Unit) {
         item(key = "action") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateModeCard() }
         }
+        item(key = "area") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) { GestureBarAreaCard() }
+        }
         item(key = "window") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateWindowCard() }
         }
+    }
+}
+
+@Composable
+private fun GestureBarAreaCard() {
+    val context = LocalContext.current
+    val c = LocalLiquid.current
+    val changed by PowerRotate.changed.collectAsStateWithLifecycle()
+    var area by remember(changed) { mutableStateOf(PowerRotate.area(context)) }
+    val widthLabel = stringResource(R.string.gesture_bar_width)
+    val heightLabel = stringResource(R.string.gesture_bar_height)
+    GlassCard {
+        Text(stringResource(R.string.gesture_bar_area_title), color = c.ink, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.gesture_bar_area_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidSwitchRow(stringResource(R.string.gesture_bar_area_visible), stringResource(R.string.gesture_bar_area_visible_body), area.visible, true) {
+            area = area.copy(visible = it); PowerRotate.setArea(context, area)
+        }
+        Spacer(Modifier.height(Gap.Section))
+        Text(widthLabel, color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidSlider(area.widthDp, 48..360, { area = area.copy(widthDp = it) },
+            { PowerRotate.setArea(context, area) }, { "$it dp" }, widthLabel)
+        Spacer(Modifier.height(Gap.Section))
+        Text(heightLabel, color = c.ink, style = MaterialTheme.typography.labelMedium)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidSlider(area.heightDp, 8..96, { area = area.copy(heightDp = it) },
+            { PowerRotate.setArea(context, area) }, { "$it dp" }, heightLabel)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidButton(stringResource(R.string.gesture_bar_area_reset), primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
+            area = PowerRotate.Area(); PowerRotate.setArea(context, area)
+        })
     }
 }
 
@@ -193,13 +237,12 @@ private fun PowerRotateWindowCard() {
 }
 
 @Composable
-private fun decisionText(decision: ScreenTripleTransition.Decision?): String = stringResource(when (decision) {
-    ScreenTripleTransition.Decision.DUPLICATE -> R.string.power_rotate_diag_duplicate
-    ScreenTripleTransition.Decision.FIRST -> R.string.power_rotate_diag_first
-    ScreenTripleTransition.Decision.SECOND -> R.string.power_rotate_diag_second
-    ScreenTripleTransition.Decision.TRIPLE -> R.string.power_rotate_diag_matched
-    ScreenTripleTransition.Decision.WINDOW_EXPIRED -> R.string.power_rotate_diag_expired
-    ScreenTripleTransition.Decision.CLOCK_RESET -> R.string.power_rotate_diag_reset
+private fun decisionText(decision: TripleTap.Decision?): String = stringResource(when (decision) {
+    TripleTap.Decision.FIRST -> R.string.power_rotate_diag_first
+    TripleTap.Decision.SECOND -> R.string.power_rotate_diag_second
+    TripleTap.Decision.TRIPLE -> R.string.power_rotate_diag_matched
+    TripleTap.Decision.WINDOW_EXPIRED -> R.string.power_rotate_diag_expired
+    TripleTap.Decision.CANCELLED -> R.string.power_rotate_diag_reset
     null -> R.string.power_rotate_waiting
 })
 
@@ -239,8 +282,8 @@ private fun PowerRotateArt() {
         drawRoundRect(c.surface, top, Size(w, h), CornerRadius(10.dp.toPx()))
         drawRoundRect(c.ink, top, Size(w, h), CornerRadius(10.dp.toPx()), style = stroke)
         drawLine(c.muted, center + Offset(-12.dp.toPx(), -50.dp.toPx()), center + Offset(12.dp.toPx(), -50.dp.toPx()), 2.dp.toPx())
-        drawRoundRect(c.ink, center + Offset(w / 2 + 2.dp.toPx(), -25.dp.toPx()), Size(3.dp.toPx(), 22.dp.toPx()), CornerRadius(2.dp.toPx()))
-        artLabel(tm, "3×", center + Offset(68.dp.toPx(), -14.dp.toPx()), c.ink, sizeSp = 22, bold = true)
+        drawLine(c.ink, center + Offset(-14.dp.toPx(), 53.dp.toPx()), center + Offset(14.dp.toPx(), 53.dp.toPx()), 4.dp.toPx(), androidx.compose.ui.graphics.StrokeCap.Round)
+        artLabel(tm, "3×", center + Offset(68.dp.toPx(), 42.dp.toPx()), c.ink, sizeSp = 22, bold = true)
         artLabel(tm, "↻", center, c.ink, sizeSp = 38, bold = false)
     }
 }

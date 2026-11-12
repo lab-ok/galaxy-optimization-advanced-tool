@@ -1,0 +1,108 @@
+[
+  {
+    "test": "new title and explicit accessibility setup shown",
+    "passed": true
+  },
+  {
+    "test": "three real bar taps toggle auto rotate off without Shizuku",
+    "passed": true
+  },
+  {
+    "test": "another triple toggles auto rotate on",
+    "passed": true
+  },
+  {
+    "test": "home swipe cancels pending two taps and reaches launcher",
+    "passed": true
+  },
+  {
+    "test": "tap after cancelled swipe does not complete old sequence",
+    "passed": true
+  },
+  {
+    "test": "taps outside center area do not rotate",
+    "passed": true
+  },
+  {
+    "test": "long hold breaks pending sequence",
+    "passed": true
+  },
+  {
+    "test": "power presses and screen transitions no longer rotate",
+    "passed": true
+  },
+  {
+    "test": "overlay diagnostics identify successful action and app permission",
+    "passed": true
+  },
+  {
+    "test": "width and height sliders resize the actual overlay",
+    "passed": true,
+    "bounds": [
+      700,
+      1989,
+      1375,
+      2152
+    ]
+  },
+  {
+    "test": "expanded area receives real taps while GOAT is in background",
+    "passed": true
+  },
+  {
+    "test": "diagnostics report saved dimensions and visible preview",
+    "passed": true
+  },
+  {
+    "test": "reset restores default touch dimensions",
+    "passed": true,
+    "bounds": [
+      819,
+      2094,
+      1257,
+      2152
+    ]
+  },
+  {
+    "test": "one-shot rotates then locks at direction 1",
+    "passed": true,
+    "rotation": 1
+  },
+  {
+    "test": "one-shot rotates then locks at direction 0",
+    "passed": true,
+    "rotation": 0
+  },
+  {
+    "test": "screen off removes overlay",
+    "passed": true
+  },
+  {
+    "test": "overlay follows folded display after waking and remains usable",
+    "passed": true,
+    "bounds": [
+      321,
+      2366,
+      759,
+      2424
+    ]
+  },
+  {
+    "test": "unfolding restores centered bottom bounds",
+    "passed": true,
+    "bounds": [
+      819,
+      2094,
+      1257,
+      2152
+    ]
+  },
+  {
+    "test": "disabling feature removes overlay",
+    "passed": true
+  },
+  {
+    "test": "re-enabling restores overlay without Shizuku",
+    "passed": true
+  }
+]

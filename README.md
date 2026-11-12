@@ -25,7 +25,7 @@ GOAT lets you change settings that Galaxy phones either don't offer or normally 
 | **Force dark mode** | Darkens apps that don't support dark mode. | Shizuku |
 | **Status bar** | Hides the whole status bar at the top, or only the icons you pick (alarm, vibrate, Bluetooth…). | One-time permission; hiding the bar needs Shizuku |
 | **Shake to rotate** | Keeps rotation locked, and rotates only when you shake the phone while holding it the way you want. | One-time permission |
-| **Triple-press power to lock rotation** | Experimental app-event detection: three screen ON/OFF transitions toggle auto-rotate or rotate once and lock. False triggers are possible. | One-time system settings permission |
+| **Triple-tap gesture bar to lock rotation** | Tap the center of the bottom gesture bar three times to toggle auto-rotate or rotate once and lock. Adjustable area with preview. | Accessibility service + one-time settings permission |
 | **Volume button rotation** | When you rotate the screen, the volume up/down buttons follow the new direction. | One-time permission |
 | **Flex mode** | On Folds that don't report the half-folded state (like the Galaxy Z Fold8), standing the phone like a laptop splits YouTube, Camera and Gallery into top and bottom halves. | Fold, Shizuku |
 | **Mute camera shutter** | Turns off the forced shutter sound on Korean Galaxy models so it follows silent/vibrate mode. | Shizuku |
@@ -38,7 +38,7 @@ GOAT lets you change settings that Galaxy phones either don't offer or normally 
 
 The app is available in English and Korean. Change it in App Settings → Language, or in Android's per-app language settings.
 
-Experimental app mode counts three screen ON/OFF transitions within a selected window (1.5 seconds by default; 2.5 and 4 seconds are also available). It runs inside GOAT with the one-time settings permission, without Shizuku, input-device readers, or an ADB connection. These events do not identify physical power presses: notifications, fingerprint unlock and screen timeouts may cause false triggers; long presses cannot be distinguished. See [the experiment and validation notes](docs/app-level-power-input-experiment.md).
+Experimental gesture-bar mode receives touches through a small accessibility overlay. Adjust its width and height, preview the actual area, and choose a 1.5/2.5/4-second tap window. Detection and resizing run inside the app without an ADB connection or running Shizuku. Enable gesture navigation, the dedicated accessibility service and the existing rotation settings permission. Larger areas can intercept app controls; long-hold shortcuts and Samsung behavior require device testing. See [the implementation, setup and validation notes](docs/gesture-bar-rotation.md).
 
 
 ## Getting started

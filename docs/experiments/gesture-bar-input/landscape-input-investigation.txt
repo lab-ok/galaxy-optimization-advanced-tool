@@ -1,0 +1,55 @@
+GOAT gesture-bar diagnostics preview1
+app=1.58.1 (286)
+device=Google sdk_gphone64_arm64; Android=16 SDK=36
+pid=28621 enabled=true status=LISTENING mode=ONCE windowMs=1500
+area=Area(widthDp=180, heightDp=24, visible=false)
+accessibilityEnabled=true
+settingsPermission=true interactive=true
+autoRotate=false currentRotation=1 userRotation=1
+displayState=2
+backgroundRestricted=false
+ignoringBatteryOptimizations=false
+processImportance=100
+events=19 candidates=4 count=0/3 intervalMs=391 decision=CANCELLED actionSucceeded=true
+Recent gesture records (maximum 20):
+44008587ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+44010549ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+44012223ms pid=28621 overlay_started x=700 y=2094 width=675 height=58
+44014119ms pid=28621 overlay_started x=700 y=2094 width=675 height=58
+44015051ms pid=28621 overlay_started x=700 y=1989 width=675 height=163
+44018738ms pid=28621 tap gapMs=null decision=FIRST windowMs=1500
+44019126ms pid=28621 tap gapMs=387 decision=SECOND windowMs=1500
+44019507ms pid=28621 tap gapMs=382 decision=TRIPLE windowMs=1500
+44019516ms pid=28621 action=TOGGLE success=true rotation=0
+44025905ms pid=28621 overlay_started x=700 y=1989 width=675 height=163
+44035602ms pid=28621 overlay_started x=700 y=1989 width=675 height=163
+44039327ms pid=28621 overlay_started x=700 y=1989 width=675 height=163
+44040247ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+44044831ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+44047762ms pid=28621 tap gapMs=null decision=FIRST windowMs=1500
+44048150ms pid=28621 tap gapMs=395 decision=SECOND windowMs=1500
+44048541ms pid=28621 tap gapMs=391 decision=TRIPLE windowMs=1500
+44048558ms pid=28621 action=ONCE success=true rotation=0
+44049209ms pid=28621 overlay_started x=857 y=2018 width=438 height=58
+44079706ms pid=28621 overlay_started x=857 y=2018 width=438 height=58
+Persisted lifecycle/input records (maximum 20):
+11-13 08:37:25 Power rotation: pid=28621 overlay_started x=700 y=2094 width=675 height=58
+11-13 08:37:27 Power rotation: pid=28621 overlay_started x=700 y=2094 width=675 height=58
+11-13 08:37:28 Power rotation: pid=28621 overlay_started x=700 y=1989 width=675 height=163
+11-13 08:37:32 Power rotation: pid=28621 tap gapMs=null decision=FIRST windowMs=1500
+11-13 08:37:32 Power rotation: pid=28621 tap gapMs=387 decision=SECOND windowMs=1500
+11-13 08:37:32 Power rotation: pid=28621 tap gapMs=382 decision=TRIPLE windowMs=1500
+11-13 08:37:32 Power triple press: autoRotate=false, success=true, rotation=0
+11-13 08:37:32 Power rotation: pid=28621 action=TOGGLE success=true rotation=0
+11-13 08:37:39 Power rotation: pid=28621 overlay_started x=700 y=1989 width=675 height=163
+11-13 08:37:49 Power rotation: pid=28621 overlay_started x=700 y=1989 width=675 height=163
+11-13 08:37:52 Power rotation: pid=28621 overlay_started x=700 y=1989 width=675 height=163
+11-13 08:37:53 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:37:58 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:38:01 Power rotation: pid=28621 tap gapMs=null decision=FIRST windowMs=1500
+11-13 08:38:01 Power rotation: pid=28621 tap gapMs=395 decision=SECOND windowMs=1500
+11-13 08:38:02 Power rotation: pid=28621 tap gapMs=391 decision=TRIPLE windowMs=1500
+11-13 08:38:02 흔들어서 화면 회전(빠른 회전): 세로(0) → 가로(1)
+11-13 08:38:02 Power rotation: pid=28621 action=ONCE success=true rotation=0
+11-13 08:38:02 Power rotation: pid=28621 overlay_started x=857 y=2018 width=438 height=58
+11-13 08:38:33 Power rotation: pid=28621 overlay_started x=857 y=2018 width=438 height=58

@@ -17,10 +17,10 @@ import com.labok.goat.AppHooks
 import com.labok.goat.core.R
 import com.labok.goat.data.log.LogRepository
 import com.labok.goat.ui.liquid.UiGoat
-import com.labok.goat.domain.ScreenTripleTransition
+import com.labok.goat.domain.TripleTap
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** Experimental app-level screen-transition shortcut, independent of shake detection. */
+/** App-level gesture-bar triple-tap shortcut, independent of shake detection. */
 object PowerRotate {
     enum class Mode { TOGGLE, ONCE }
     enum class Window(val millis: Long, val seconds: String) {
@@ -29,8 +29,8 @@ object PowerRotate {
 
     data class Detection(
         val events: Int = 0, val candidates: Int = 0, val count: Int = 0,
-        val screenOn: Boolean? = null, val intervalMs: Long? = null,
-        val decision: ScreenTripleTransition.Decision? = null,
+        val intervalMs: Long? = null,
+        val decision: TripleTap.Decision? = null,
         val actionSucceeded: Boolean? = null, val history: List<String> = emptyList()
     )
     val detection = MutableStateFlow(Detection())
@@ -69,7 +69,21 @@ object PowerRotate {
         if (enabled(context)) AppHooks.syncService(context)
     }
 
-    /** Main-thread receiver updates; immutable snapshots can also be read by report workers. */
+    data class Area(val widthDp: Int = 180, val heightDp: Int = 24, val visible: Boolean = false)
+    fun area(context: Context): Area {
+        val prefs = context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE)
+        return Area(prefs.getInt("area_width", 180).coerceIn(48, 360),
+            prefs.getInt("area_height", 24).coerceIn(8, 96), prefs.getBoolean("area_visible", false))
+    }
+    fun setArea(context: Context, value: Area) {
+        context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit()
+            .putInt("area_width", value.widthDp.coerceIn(48, 360))
+            .putInt("area_height", value.heightDp.coerceIn(8, 96)).putBoolean("area_visible", value.visible).apply()
+        changed.value++
+        GestureBarService.areaChanged()
+    }
+
+    /** Main-thread overlay updates; immutable snapshots can also be read by report workers. */
     internal fun record(context: Context, message: String, update: (Detection) -> Detection = { it }) {
         val next = update(detection.value)
         val line = "pid=${android.os.Process.myPid()} $message"
@@ -81,11 +95,13 @@ object PowerRotate {
     fun diagnose(context: Context): String = buildString {
         val power = context.getSystemService(PowerManager::class.java)
         val state = detection.value
-        appendLine("GOAT screen-input diagnostics preview2")
+        appendLine("GOAT gesture-bar diagnostics preview1")
         val info = runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
         appendLine("app=${info?.versionName} (${info?.longVersionCode})")
         appendLine("device=${Build.MANUFACTURER} ${Build.MODEL}; Android=${Build.VERSION.RELEASE} SDK=${Build.VERSION.SDK_INT}")
         appendLine("pid=${android.os.Process.myPid()} enabled=${enabled(context)} status=${status.value} mode=${mode(context)} windowMs=${window(context).millis}")
+        appendLine("area=${area(context)}")
+        appendLine("accessibilityEnabled=${GestureBarService.enabled(context)}")
         appendLine("settingsPermission=${ShakeRotate.canWrite(context)} interactive=${power.isInteractive}")
         appendLine("autoRotate=${ShakeRotate.autoRotateOn(context)} currentRotation=${ShakeRotate.currentRotation(context)} userRotation=" + Settings.System.getInt(context.contentResolver, Settings.System.USER_ROTATION, 0))
         appendLine("displayState=" + runCatching { context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)?.state }.getOrNull())
@@ -97,8 +113,8 @@ object PowerRotate {
             process.importance
         }.getOrNull()
         appendLine("processImportance=$importance")
-        appendLine("events=${state.events} candidates=${state.candidates} count=${state.count}/3 lastScreenOn=${state.screenOn} intervalMs=${state.intervalMs} decision=${state.decision} actionSucceeded=${state.actionSucceeded}")
-        appendLine("Recent receiver records (maximum 20):")
+        appendLine("events=${state.events} candidates=${state.candidates} count=${state.count}/3 intervalMs=${state.intervalMs} decision=${state.decision} actionSucceeded=${state.actionSucceeded}")
+        appendLine("Recent gesture records (maximum 20):")
         state.history.forEach(::appendLine)
         appendLine("Persisted lifecycle/input records (maximum 20):")
         // These match existing persisted log text; they are not localized UI messages.

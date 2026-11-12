@@ -1,0 +1,9 @@
+{"elapsed_ms":43191665,"utc_ms":1794525825125,"source":"overlay_bounds","detail":"818,2092 440x60"}
+{"elapsed_ms":43196872,"utc_ms":1794525830332,"source":"overlay_touch","detail":"action=0 raw=1037.9365,2129.9336"}
+{"elapsed_ms":43196941,"utc_ms":1794525830401,"source":"overlay_touch","detail":"action=1 raw=1037.9365,2129.9336"}
+{"elapsed_ms":43197102,"utc_ms":1794525830562,"source":"overlay_touch","detail":"action=0 raw=1037.9365,2129.9336"}
+{"elapsed_ms":43197167,"utc_ms":1794525830626,"source":"overlay_touch","detail":"action=1 raw=1037.9365,2129.9336"}
+{"elapsed_ms":43197353,"utc_ms":1794525830813,"source":"overlay_touch","detail":"action=0 raw=1037.9365,2129.9336"}
+{"elapsed_ms":43197395,"utc_ms":1794525830855,"source":"overlay_touch","detail":"action=1 raw=1037.9365,2129.9336"}
+{"elapsed_ms":43206707,"utc_ms":1794525840167,"source":"overlay_touch","detail":"action=0 raw=1037.9365,2129.9336"}
+{"elapsed_ms":43206748,"utc_ms":1794525840207,"source":"overlay_touch","detail":"action=3 raw=1037.9365,2099.921"}

@@ -1,106 +1,71 @@
 package com.labok.goat.data.rotate
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.hardware.display.DisplayManager
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.os.PowerManager
-import android.os.SystemClock
+import android.view.MotionEvent
+import android.view.ViewConfiguration
 import android.widget.Toast
-import android.view.Display
 import com.labok.goat.core.R
-import com.labok.goat.domain.ScreenTripleTransition
+import com.labok.goat.domain.TripleTap
 
-/** App-only experiment: screen transitions approximate presses without opening input devices. */
+/** Owned by the common foreground service; input comes only from our small accessibility overlay. */
 class PowerRotateEngine(private val context: Context, private val onTriplePress: (Int) -> Boolean) {
-    private val main = Handler(Looper.getMainLooper())
-    private var registered = false
-    private var detector: ScreenTripleTransition? = null
-    private var rotation = 0
+    private var detector: TripleTap? = null
     private var activeWindow = 0L
-    private var lastEventAt: Long? = null
+    private var rotation = 0
+    private var lastTapAt: Long? = null
+    private var running = false
 
-    private val screen = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val on = when (intent.action) {
-                Intent.ACTION_SCREEN_ON -> true
-                Intent.ACTION_SCREEN_OFF -> false
-                else -> return
-            }
-            if (!registered || !PowerRotate.enabled(context)) return
-            val now = SystemClock.elapsedRealtime()
-            val gap = lastEventAt?.let { now - it }
-            lastEventAt = now
-            if (!ShakeRotate.canWrite(context)) {
-                PowerRotate.record(context, "screen=$on gapMs=$gap permission_missing") {
-                    it.copy(events = it.events + 1, screenOn = on, intervalMs = gap, count = 0, decision = null)
-                }
-                stop()
-                PowerRotate.status.value = PowerRotate.Status.WAITING
-                return
-            }
-            val policy = detector ?: return
-            val result = policy.feed(on, now)
-            val interactive = context.getSystemService(PowerManager::class.java).isInteractive
-            val display = runCatching { context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)?.state }.getOrNull()
-            PowerRotate.record(context, "screen=$on gapMs=$gap decision=${policy.decision} count=${policy.count}/3 windowMs=$activeWindow interactive=$interactive display=$display") {
-                it.copy(events = it.events + 1, screenOn = on, intervalMs = gap,
-                    count = if (result == ScreenTripleTransition.Result.TRIPLE) 3 else policy.count,
-                    candidates = it.candidates + if (result == ScreenTripleTransition.Result.TRIPLE) 1 else 0,
-                    decision = policy.decision,
-                    actionSucceeded = if (result == ScreenTripleTransition.Result.TRIPLE) null else it.actionSucceeded)
-            }
-            when (result) {
-                ScreenTripleTransition.Result.FIRST -> rotation = ShakeRotate.currentRotation(context)
-                ScreenTripleTransition.Result.TRIPLE -> {
-                    val captured = rotation
-                    // A freshly lit screen needs sensor samples for the one-shot direction path.
-                    val delay = if (on && PowerRotate.mode(context) == PowerRotate.Mode.ONCE) 250L else 0L
-                    main.postDelayed({ perform(captured) }, delay)
-                }
-                else -> Unit
-            }
-        }
-    }
-
-    /** No Shizuku state check: the already granted settings permission is sufficient. */
     fun refresh() {
-        if (!ShakeRotate.canWrite(context)) {
+        if (!PowerRotate.enabled(context) || !ShakeRotate.canWrite(context)) {
             stop()
             PowerRotate.status.value = PowerRotate.Status.WAITING
-            PowerRotate.record(context, "waiting: settings permission missing")
             return
         }
         val window = PowerRotate.window(context).millis
-        if (registered && activeWindow == window) return
-        main.removeCallbacksAndMessages(null)
-        activeWindow = window
-        lastEventAt = null
-        detector = ScreenTripleTransition(context.getSystemService(PowerManager::class.java).isInteractive, window)
-        if (registered) {
-            PowerRotate.record(context, "window updated: ${window}ms; sequence reset") { it.copy(count = 0, decision = null) }
-            return
+        if (!running || window != activeWindow) {
+            activeWindow = window
+            detector = TripleTap(window, ViewConfiguration.get(context).scaledTouchSlop.toFloat(), ViewConfiguration.getLongPressTimeout().toLong())
+            lastTapAt = null
         }
-        val filter = IntentFilter(Intent.ACTION_SCREEN_ON).apply { addAction(Intent.ACTION_SCREEN_OFF) }
-        try {
-            if (Build.VERSION.SDK_INT >= 33) context.registerReceiver(screen, filter, Context.RECEIVER_NOT_EXPORTED)
-            else context.registerReceiver(screen, filter)
-            registered = true
-            PowerRotate.status.value = PowerRotate.Status.LISTENING
-            PowerRotate.record(context, "listener_started windowMs=$window") { it.copy(count = 0, decision = null) }
-        } catch (e: Exception) {
-            detector = null
-            PowerRotate.status.value = PowerRotate.Status.ERROR
-            PowerRotate.record(context, "listener_failed: ${e.message}")
+        running = true
+        GestureBarService.attach(this)
+    }
+
+    fun touch(event: MotionEvent): Boolean {
+        if (!running || !PowerRotate.enabled(context)) return false
+        if (!ShakeRotate.canWrite(context)) { stop(); PowerRotate.status.value = PowerRotate.Status.WAITING; return false }
+        val policy = detector ?: return false
+        if (event.pointerCount != 1) { cancel(); return true }
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                if (policy.count == 0) rotation = ShakeRotate.currentRotation(context)
+                policy.down(event.rawX, event.rawY, event.eventTime)
+            }
+            MotionEvent.ACTION_MOVE -> policy.move(event.rawX, event.rawY)
+            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_DOWN -> cancel()
+            MotionEvent.ACTION_UP -> {
+                val matched = policy.up(event.rawX, event.rawY, event.eventTime)
+                if (policy.decision == TripleTap.Decision.CANCELLED) return true
+                if (policy.decision == TripleTap.Decision.FIRST || policy.decision == TripleTap.Decision.WINDOW_EXPIRED) rotation = ShakeRotate.currentRotation(context)
+                val gap = lastTapAt?.let { event.eventTime - it }
+                lastTapAt = event.eventTime
+                PowerRotate.record(context, "tap gapMs=$gap decision=${policy.decision} windowMs=$activeWindow") {
+                    it.copy(events = it.events + 1, intervalMs = gap, count = if (matched) 3 else policy.count,
+                        decision = policy.decision, candidates = it.candidates + if (matched) 1 else 0)
+                }
+                if (matched) perform(rotation)
+            }
         }
+        return true
+    }
+
+    fun cancel() {
+        detector?.cancel()
+        lastTapAt = null
+        PowerRotate.detection.value = PowerRotate.detection.value.copy(count = 0, decision = TripleTap.Decision.CANCELLED)
     }
 
     private fun perform(captured: Int) {
-        if (!registered || !PowerRotate.enabled(context) || !ShakeRotate.canWrite(context)) return
         val ok = runCatching { onTriplePress(captured) }
             .onFailure { PowerRotate.record(context, "action_exception: ${it.javaClass.simpleName}: ${it.message}") }
             .getOrDefault(false)
@@ -115,12 +80,10 @@ class PowerRotateEngine(private val context: Context, private val onTriplePress:
     }
 
     fun stop() {
-        if (registered) PowerRotate.record(context, "listener_stopped") { it.copy(count = 0, decision = null) }
-        if (registered) runCatching { context.unregisterReceiver(screen) }
-        registered = false
+        running = false
+        cancel()
         detector = null
-        lastEventAt = null
-        main.removeCallbacksAndMessages(null)
+        GestureBarService.detach(this)
         PowerRotate.status.value = PowerRotate.Status.OFF
     }
 }

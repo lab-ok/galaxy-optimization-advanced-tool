@@ -1,0 +1,39 @@
+GOAT gesture-bar diagnostics preview1
+app=1.58.1 (286)
+device=Google sdk_gphone64_arm64; Android=16 SDK=36
+pid=30271 enabled=true status=LISTENING mode=TOGGLE windowMs=1500
+area=Area(widthDp=180, heightDp=24, visible=false)
+accessibilityEnabled=true
+settingsPermission=true interactive=true
+autoRotate=false currentRotation=0 userRotation=0
+displayState=2
+backgroundRestricted=false
+ignoringBatteryOptimizations=false
+processImportance=100
+events=0 candidates=0 count=0/3 intervalMs=null decision=CANCELLED actionSucceeded=null
+Recent gesture records (maximum 20):
+44344882ms pid=30271 overlay_started x=819 y=2094 width=438 height=58
+44347282ms pid=30271 overlay_started x=819 y=2094 width=438 height=58
+44375008ms pid=30271 overlay_started x=819 y=2094 width=438 height=58
+44435062ms pid=30271 overlay_started x=819 y=2094 width=438 height=58
+Persisted lifecycle/input records (maximum 20):
+11-13 08:39:45 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:40:11 Power rotation: pid=28621 overlay_started x=321 y=2366 width=438 height=58
+11-13 08:40:50 Power rotation: pid=28621 overlay_started x=321 y=2366 width=438 height=58
+11-13 08:40:50 Power rotation: pid=28621 tap gapMs=null decision=FIRST windowMs=1500
+11-13 08:40:51 Power rotation: pid=28621 tap gapMs=381 decision=SECOND windowMs=1500
+11-13 08:40:51 Power rotation: pid=28621 tap gapMs=394 decision=TRIPLE windowMs=1500
+11-13 08:40:51 Power triple press: autoRotate=true, success=true, rotation=0
+11-13 08:40:51 Power rotation: pid=28621 action=TOGGLE success=true rotation=0
+11-13 08:40:53 Power rotation: pid=28621 overlay_started x=0 y=0 width=438 height=58
+11-13 08:40:53 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:40:59 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:41:00 GOAT 상주 서비스 멈춤
+11-13 08:41:03 GOAT 상주 서비스: Triple-tap gesture bar to lock rotation
+11-13 08:41:03 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:42:39 GOAT 상주 서비스: 하단 제스처 바 3회 터치로 회전 고정
+11-13 08:42:58 GOAT 상주 서비스: Triple-tap gesture bar to lock rotation
+11-13 08:42:58 Power rotation: pid=30271 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:43:00 Power rotation: pid=30271 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:43:28 Power rotation: pid=30271 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:44:28 Power rotation: pid=30271 overlay_started x=819 y=2094 width=438 height=58

@@ -1,5 +1,7 @@
 # Galaxy app-input diagnostics — preview 2
 
+> Historical power/screen-event experiment. The current branch replaces this input with [adjustable gesture-bar triple taps](gesture-bar-rotation.md).
+
 The contributor reports that the first app-input preview does not work on a Galaxy Z Fold8 Ultra. The device is not connected to this workspace, and no device event trace has been supplied. The cause is **unconfirmed**: event delivery, the 1.5-second limit, settings permission, rotation writes, and background-service lifetime still need to be distinguished.
 
 This preview provides diagnosis tools inside GOAT, so gathering the relevant data does not require enabling ADB or Shizuku.

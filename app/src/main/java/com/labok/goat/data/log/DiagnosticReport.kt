@@ -71,7 +71,7 @@ object DiagnosticReport {
         appendLine(runCatching { VolumeRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
         appendLine()
 
-        appendLine("## 전원 버튼 회전 (앱 이벤트 실험)")
+        appendLine("## 제스처 바 3회 터치 회전")
         appendLine(runCatching { PowerRotate.diagnose(context) }.getOrElse { "읽기 실패: $it" })
         appendLine()
 

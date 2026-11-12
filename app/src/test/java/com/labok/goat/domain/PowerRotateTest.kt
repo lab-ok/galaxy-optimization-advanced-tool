@@ -75,4 +75,14 @@ class PowerRotateTest {
         assertEquals(PowerRotate.Window.SHORT, PowerRotate.window(context))
     }
 
+    @Test fun areaChangesPersistAndAreBounded() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals(PowerRotate.Area(), PowerRotate.area(context))
+        PowerRotate.setArea(context, PowerRotate.Area(240, 48, true))
+        assertEquals(PowerRotate.Area(240, 48, true), PowerRotate.area(context))
+        PowerRotate.setArea(context, PowerRotate.Area(9999, -20, false))
+        assertEquals(PowerRotate.Area(360, 8, false), PowerRotate.area(context))
+        PowerRotate.setArea(context, PowerRotate.Area())
+        assertEquals(PowerRotate.Area(), PowerRotate.area(context))
+    }
 }
