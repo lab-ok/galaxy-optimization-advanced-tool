@@ -24,7 +24,7 @@ import com.labok.goat.domain.ShakeRotatePolicy
  * 화면이 켜져 있을 때만 가속도 센서를 듣는다. 흔들면 그 순간만 시스템 자동 회전을 켜서, 시스템이 폰을 든 방향대로
  * 화면을 돌리게 둔 뒤 그 방향에 다시 잠근다(세로로 든 채 흔들면 세로 그대로). 돌아갔으면 흔든 리듬대로 진동한다.
  */
-class ShakeEngine(private val context: Context) : SensorEventListener {
+class ShakeEngine(private val context: Context, private val acceptShake: () -> Boolean = { true }) : SensorEventListener {
     private val detector = ShakeRotatePolicy.Detector().also { applyLevel(it) }
 
     /** 근접 센서가 가려져 있으면(주머니·가방 속) 흔들어도 돌리지 않는다. */
@@ -109,6 +109,7 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
                     gy += (v[1] - gy) * 0.1f
                 }
                 gravityAt = now
+                if (!acceptShake()) return
                 val shook = detector.feed(v[0], v[1], v[2], now)
                 detector.lastMiss?.let { missed(it) }
                 if (!shook) return
@@ -122,6 +123,7 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
                     return
                 }
                 if (ShakeRotate.calibrating || turning) return
+                if (PowerRotate.enabled(context) && PowerRotate.mode(context) == PowerRotate.Mode.TOGGLE && ShakeRotate.autoRotateOn(context)) return
                 beginTurn()
             }
         }
@@ -149,7 +151,7 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
             if (displayId != Display.DEFAULT_DISPLAY || ShakeRotate.currentRotation(context) == before) return
             // 돌아간 뒤 바로 잠그면 시스템이 마저 돌리는 중일 수 있어 잠깐 기다린다
             main.removeCallbacks(timeout)
-            main.postDelayed({ finishTurn() }, SETTLE_MS)
+            main.postDelayed(timeout, SETTLE_MS)
         }
         override fun onDisplayAdded(displayId: Int) = Unit
         override fun onDisplayRemoved(displayId: Int) = Unit
@@ -183,6 +185,25 @@ class ShakeEngine(private val context: Context) : SensorEventListener {
         displays.registerDisplayListener(rotated, main)
         // 이미 든 방향과 화면 방향이 같으면 돌아가지 않는다: 그때는 이 시간이 지나면 그대로 다시 잠근다
         main.postDelayed(timeout, WAIT_MS)
+    }
+
+    /** The power shortcut shares the same direction detection and settle/lock path as a shake. */
+    fun rotateOnce(): Boolean {
+        if (!ShakeRotate.canWrite(context)) return false
+        cancelForPowerToggle()
+        // beginTurn's same-direction fast path assumes the screen is already locked.
+        if (!ShakeRotate.lock(context, ShakeRotate.currentRotation(context))) return false
+        beginTurn()
+        return true
+    }
+
+    /** A power-button toggle takes precedence over a pending shake rotation. Main thread only. */
+    fun cancelForPowerToggle() {
+        if (!turning) return
+        displays.unregisterDisplayListener(rotated)
+        main.removeCallbacks(timeout)
+        turning = false
+        ShakeRotate.turning = false
     }
 
     private fun finishTurn() {

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="power_rotate_title">Triple-press power to lock rotation</string>
+    <string name="power_rotate_body">Press and release the power button three times within 1.5 seconds to run your selected rotation action. Works independently of shake detection.</string>
+    <string name="power_rotate_auto_on">Auto-rotate ON · Rotation lock OFF</string>
+    <string name="power_rotate_locked">Auto-rotate OFF · Rotation lock ON</string>
+    <string name="power_rotate_permission">Connect Shizuku once to start button detection and grant system settings permission. After detection starts, wireless debugging and Shizuku can be turned off. After a reboot or GOAT process termination, connect Shizuku again to restart detection.</string>
+    <string name="power_rotate_note">Power button screen on/off and system shortcuts still work. If double-press launches the camera, turn that shortcut off in Side button settings.</string>
+    <string name="power_rotate_waiting">Button detection needs to be started. Connect Shizuku and check system settings permission.</string>
+    <string name="power_rotate_listening">Listening for power button presses · Wireless debugging can be turned off</string>
+    <string name="power_rotate_input_error">Button detection stopped. Connect Shizuku to start it again; retrying automatically while connected.</string>
+    <string name="power_rotate_failed">Could not change rotation. Check system settings permission.</string>
+    <string name="power_rotate_notification">Triple-press the power button to toggle rotation lock.</string>
+    <string name="power_rotate_connect">Connect Shizuku</string>
+    <string name="power_rotate_action">Action on three presses</string>
+    <string name="power_rotate_mode_toggle">Auto-rotate ON/OFF</string>
+    <string name="power_rotate_mode_toggle_body">Switch between locking the current direction and auto-rotate.</string>
+    <string name="power_rotate_mode_once">Rotate once, like shake rotation</string>
+    <string name="power_rotate_mode_once_body">Turn to the direction you are holding the device, then lock again. Uses the same rotation settings as Shake to rotate; shaking does not need to be enabled.</string>
+    <string name="power_rotate_once_feedback">Rotating to the device direction, then locking.</string>
+</resources>

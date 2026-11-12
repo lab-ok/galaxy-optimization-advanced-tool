@@ -28,6 +28,7 @@ object SettingsSearch {
                 Copy.text(R.string.search_shake_vibration),
                 Copy.text(R.string.search_shake_droplet)
             ),
+            NavItem.POWER_ROTATE to listOf(Copy.text(R.string.power_rotate_auto_on), Copy.text(R.string.power_rotate_locked), Copy.text(R.string.power_rotate_mode_once)),
             NavItem.CAMERA_MUTE to listOf(Copy.text(R.string.search_camera_shutter_sound), Copy.text(R.string.search_camera_shutter)),
             NavItem.APP_CLEANUP to listOf(Copy.BLOAT_INTRO_TITLE),
             NavItem.REFRESH to listOf(Copy.REFRESH_SYSTEM, Copy.REFRESH_SMOOTH, Copy.REFRESH_SAVER, "120Hz", "60Hz"),

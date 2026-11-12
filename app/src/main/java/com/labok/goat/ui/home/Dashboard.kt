@@ -95,6 +95,7 @@ import com.labok.goat.data.lab.AirplaneRadios
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.lab.IconBlacklist
 import com.labok.goat.data.lab.VolumeRotate
+import com.labok.goat.data.rotate.PowerRotate
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.data.tweaks.AnimationSpeed
@@ -156,6 +157,7 @@ internal fun Dashboard(
     val c = LocalLiquid.current
     val context = LocalContext.current
     val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
+    val powerInput by PowerRotate.status.collectAsStateWithLifecycle()
     val camera by CameraMute.status.collectAsStateWithLifecycle()
     val gos by Gos.status.collectAsStateWithLifecycle()
     val dark by ForceDark.status.collectAsStateWithLifecycle()
@@ -202,6 +204,11 @@ internal fun Dashboard(
             }
             NavItem.ANIMATION -> AnimationSpeed.label(AnimationSpeed.read(context, AnimationSpeed.Kind.WINDOW))
             NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) Copy.text(R.string.home_dash_shake_on_fmt, ShakeRotate.level(context)) + (if (ShakeRotate.largeOnly(context)) Copy.text(R.string.home_dash_suffix_large_only) else "") else Copy.DASH_OFF
+            NavItem.POWER_ROTATE -> when {
+                !PowerRotate.enabled(context) -> Copy.DASH_OFF
+                powerInput != PowerRotate.Status.LISTENING && shizuku != ShizukuAccess.State.READY -> Copy.DASH_NEED_SHIZUKU
+                else -> Copy.text(if (ShakeRotate.autoRotateOn(context)) R.string.power_rotate_auto_on else R.string.power_rotate_locked)
+            }
             NavItem.CAMERA_MUTE -> when (camera) {
                 CameraMute.State.MUTED -> Copy.text(R.string.home_dash_camera_muted)
                 CameraMute.State.FORCED -> Copy.text(R.string.home_dash_camera_forced)
@@ -266,6 +273,7 @@ internal fun Dashboard(
             NavItem.APP_SIZE -> DensityShell.savedCount(context) > 0 || AppDensityNotifier.enabled(context)
             NavItem.ANIMATION -> AnimationSpeed.read(context, AnimationSpeed.Kind.WINDOW) != 1f
             NavItem.SHAKE_ROTATE -> ShakeRotate.enabled(context)
+            NavItem.POWER_ROTATE -> PowerRotate.enabled(context)
             NavItem.CAMERA_MUTE -> camera == CameraMute.State.MUTED || (camera == CameraMute.State.UNKNOWN && CameraMute.wanted(context))
             NavItem.APP_CLEANUP -> (cleaned ?: 0) > 0
             NavItem.GOS -> gos == Gos.State.OFF || (gos == Gos.State.UNKNOWN && Gos.wanted(context))

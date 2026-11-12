@@ -12,6 +12,8 @@ import com.labok.goat.data.appsize.ForegroundWatcher
 import com.labok.goat.data.lab.AmbientOpen
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.data.log.LogRepository
+import com.labok.goat.data.rotate.PowerRotate
+import com.labok.goat.data.rotate.PowerRotateEngine
 import com.labok.goat.data.rotate.ShakeEngine
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.shizuku.ShizukuAccess
@@ -28,6 +30,7 @@ class GoatService : Service() {
     private val binderReceived = Shizuku.OnBinderReceivedListener { watchApps() }
     private val permission = Shizuku.OnRequestPermissionResultListener { _, _ -> watchApps() }
     private var shake: ShakeEngine? = null
+    private var power: PowerRotateEngine? = null
     private var flex: AutoFlex.Engine? = null
     private var ambient: AmbientOpen.Engine? = null
     private var shizukuHooked = false
@@ -41,16 +44,17 @@ class GoatService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val apps = AppDensityNotifier.enabled(this)
         val rotate = ShakeRotate.enabled(this) && ShakeRotate.canWrite(this)
+        val powerRotate = PowerRotate.enabled(this)
         val autoFlex = AutoFlex.engineNeeded(this)
         val ambientOpen = AmbientOpen.enabled(this)
         // 실험실 위스퍼 음성 입력: 입력기 바뀜을 지켜보려면 GOAT 프로세스가 살아 있어야 한다
         val voice = com.labok.goat.data.lab.VoiceRedirect.enabled(this)
         if (voice) com.labok.goat.data.lab.VoiceRedirect.watch(this)
-        if (!apps && !rotate && !autoFlex && !ambientOpen && !voice) {
+        if (!apps && !rotate && !powerRotate && !autoFlex && !ambientOpen && !voice) {
             stopSelf()
             return START_NOT_STICKY
         }
-        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, "플렉스 모드".takeIf { autoFlex }, "앰비언트 모드".takeIf { ambientOpen }, com.labok.goat.ui.text.Copy.FEATURE_LAB_VOICE.takeIf { voice }).joinToString("·")
+        val running = listOfNotNull("알림창 앱 배율".takeIf { apps }, "흔들어서 화면 회전".takeIf { rotate }, getString(com.labok.goat.R.string.power_rotate_title).takeIf { powerRotate }, "플렉스 모드".takeIf { autoFlex }, "앰비언트 모드".takeIf { ambientOpen }, com.labok.goat.ui.text.Copy.FEATURE_LAB_VOICE.takeIf { voice }).joinToString("·")
         if (running != lastRunning) {
             LogRepository.from(this).add("GOAT 상주 서비스: $running")
             lastRunning = running
@@ -86,9 +90,10 @@ class GoatService : Service() {
             ambient = null
         }
 
-        if (rotate) {
+        val powerOnce = powerRotate && PowerRotate.mode(this) == PowerRotate.Mode.ONCE && ShakeRotate.canWrite(this)
+        if (rotate || powerOnce) {
             (
-                shake ?: ShakeEngine(this).also {
+                shake ?: ShakeEngine(this) { ShakeRotate.enabled(this) }.also {
                     shake = it
                     it.start()
                 }
@@ -96,6 +101,21 @@ class GoatService : Service() {
         } else {
             shake?.stop()
             shake = null
+        }
+        if (powerRotate) {
+            if (power == null) power = PowerRotateEngine(this) { rotation ->
+                when (PowerRotate.mode(this)) {
+                    PowerRotate.Mode.TOGGLE -> {
+                        shake?.cancelForPowerToggle()
+                        PowerRotate.toggle(this, rotation)
+                    }
+                    PowerRotate.Mode.ONCE -> shake?.rotateOnce() ?: false
+                }
+            }
+            power?.refresh()
+        } else {
+            power?.stop()
+            power = null
         }
         return START_STICKY
     }
@@ -123,6 +143,8 @@ class GoatService : Service() {
     override fun onDestroy() {
         LogRepository.from(this).add("GOAT 상주 서비스 멈춤")
         ForegroundWatcher.stop()
+        power?.stop()
+        power = null
         shake?.stop()
         shake = null
         flex?.stop()
@@ -139,7 +161,7 @@ class GoatService : Service() {
     companion object {
         /** 켜진 기능이 하나라도 있으면 서비스를 띄우거나 설정을 다시 읽게 하고, 없으면 멈춘다. */
         fun sync(context: Context) {
-            val any = AppDensityNotifier.enabled(context) ||
+            val any = PowerRotate.enabled(context) || AppDensityNotifier.enabled(context) ||
                 (ShakeRotate.enabled(context) && ShakeRotate.canWrite(context)) ||
                 AutoFlex.engineNeeded(context) ||
                 AmbientOpen.enabled(context)
@@ -158,6 +180,8 @@ class GoatService : Service() {
             ShakeRotate.buildNotification(context)
         } else if (AutoFlex.engineNeeded(context)) {
             AutoFlex.buildNotification(context)
+        } else if (PowerRotate.enabled(context)) {
+            PowerRotate.buildNotification(context)
         } else {
             AmbientOpen.buildNotification(context)
         }
