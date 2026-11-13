@@ -206,7 +206,7 @@ internal fun Dashboard(
             NavItem.SHAKE_ROTATE -> if (ShakeRotate.enabled(context)) Copy.text(R.string.home_dash_shake_on_fmt, ShakeRotate.level(context)) + (if (ShakeRotate.largeOnly(context)) Copy.text(R.string.home_dash_suffix_large_only) else "") else Copy.DASH_OFF
             NavItem.POWER_ROTATE -> when {
                 !PowerRotate.enabled(context) -> Copy.DASH_OFF
-                !ShakeRotate.canWrite(context) -> Copy.text(R.string.power_rotate_permission_needed)
+                !PowerRotate.canWriteRotation(context) || !PowerRotate.canDraw(context) -> Copy.text(R.string.power_rotate_permission_needed)
                 powerInput != PowerRotate.Status.LISTENING -> Copy.text(R.string.power_rotate_waiting)
                 else -> Copy.text(if (ShakeRotate.autoRotateOn(context)) R.string.power_rotate_auto_on else R.string.power_rotate_locked)
             }

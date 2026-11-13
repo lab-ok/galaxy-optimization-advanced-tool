@@ -7,16 +7,17 @@ import android.widget.Toast
 import com.labok.goat.core.R
 import com.labok.goat.domain.TripleTap
 
-/** Owned by the common foreground service; input comes only from our small accessibility overlay. */
+/** Owned by the common foreground service; input comes only from our ordinary app overlay. */
 class PowerRotateEngine(private val context: Context, private val onTriplePress: (Int) -> Boolean) {
     private var detector: TripleTap? = null
     private var activeWindow = 0L
     private var rotation = 0
     private var lastTapAt: Long? = null
     private var running = false
+    private val overlay = GestureBarOverlay(context, { touch(it) }, { cancel() })
 
     fun refresh() {
-        if (!PowerRotate.enabled(context) || !ShakeRotate.canWrite(context)) {
+        if (!PowerRotate.enabled(context) || !PowerRotate.canWriteRotation(context) || !PowerRotate.canDraw(context)) {
             stop()
             PowerRotate.status.value = PowerRotate.Status.WAITING
             return
@@ -28,12 +29,13 @@ class PowerRotateEngine(private val context: Context, private val onTriplePress:
             lastTapAt = null
         }
         running = true
-        GestureBarService.attach(this)
+        overlay.refresh()
     }
 
     fun touch(event: MotionEvent): Boolean {
         if (!running || !PowerRotate.enabled(context)) return false
-        if (!ShakeRotate.canWrite(context)) { stop(); PowerRotate.status.value = PowerRotate.Status.WAITING; return false }
+        if (!android.provider.Settings.canDrawOverlays(context)) { stop(); PowerRotate.status.value = PowerRotate.Status.WAITING; return false }
+        if (!PowerRotate.canWriteRotation(context)) { stop(); PowerRotate.status.value = PowerRotate.Status.WAITING; return false }
         val policy = detector ?: return false
         if (event.pointerCount != 1) { cancel(); return true }
         when (event.actionMasked) {
@@ -83,7 +85,7 @@ class PowerRotateEngine(private val context: Context, private val onTriplePress:
         running = false
         cancel()
         detector = null
-        GestureBarService.detach(this)
+        overlay.stop()
         PowerRotate.status.value = PowerRotate.Status.OFF
     }
 }

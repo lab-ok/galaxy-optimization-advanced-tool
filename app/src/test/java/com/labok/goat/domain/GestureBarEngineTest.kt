@@ -1,5 +1,8 @@
 package com.labok.goat.domain
 
+import android.app.AppOpsManager
+import android.os.Process
+import org.robolectric.shadows.ShadowSettings
 import android.Manifest
 import android.app.Application
 import android.content.Context
@@ -8,6 +11,7 @@ import android.os.Looper
 import android.view.MotionEvent
 import androidx.test.core.app.ApplicationProvider
 import com.labok.goat.data.rotate.PowerRotate
+import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.data.rotate.PowerRotateEngine
 import org.junit.Assert.*
 import org.junit.Test
@@ -19,8 +23,12 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = Application::class)
 class GestureBarEngineTest {
-    private fun context(): Context = ApplicationProvider.getApplicationContext<Application>().also {
-        shadowOf(it).grantPermissions(Manifest.permission.WRITE_SECURE_SETTINGS)
+    private fun context(normal: Boolean = false): Context = ApplicationProvider.getApplicationContext<Application>().also {
+        if (normal) shadowOf(it).denyPermissions(Manifest.permission.WRITE_SECURE_SETTINGS)
+        else shadowOf(it).grantPermissions(Manifest.permission.WRITE_SECURE_SETTINGS)
+        shadowOf(it.getSystemService(AppOpsManager::class.java)).setMode(AppOpsManager.OPSTR_WRITE_SETTINGS,
+            Process.myUid(), it.packageName, if (normal) AppOpsManager.MODE_ALLOWED else AppOpsManager.MODE_ERRORED)
+        ShadowSettings.setCanDrawOverlays(true)
         it.getSharedPreferences("power_rotate", 0).edit().clear().putBoolean("on", true).commit()
         PowerRotate.detection.value = PowerRotate.Detection()
     }
@@ -68,6 +76,23 @@ class GestureBarEngineTest {
         val c = context(); var calls = 0; val e = PowerRotateEngine(c) { if (++calls == 1) error("device write failed") else true }
         try { e.refresh(); repeat(3) { tap(e, it * 200L) }; assertEquals(false, PowerRotate.detection.value.actionSucceeded)
             repeat(3) { tap(e, 1000L + it * 200L) }; assertEquals(true, PowerRotate.detection.value.actionSucceeded)
+        } finally { e.stop() }
+    }
+    @Test fun normalUserSettingsGrantWorksWithoutSecurePermissionOrAccessibility() {
+        val c = context(normal = true); var calls = 0
+        assertFalse(ShakeRotate.canWrite(c))
+        assertTrue(PowerRotate.canWriteRotation(c))
+        val e = PowerRotateEngine(c) { calls++; true }
+        try { e.refresh(); repeat(3) { tap(e, it * 200L) }; assertEquals(1, calls) }
+        finally { e.stop() }
+    }
+    @Test fun revokingOverlayPermissionCancelsTheSequenceAndRegrantStartsFresh() {
+        val c = context(); var calls = 0; val e = PowerRotateEngine(c) { calls++; true }
+        try {
+            e.refresh(); tap(e, 0); tap(e, 200); ShadowSettings.setCanDrawOverlays(false); tap(e, 400)
+            assertEquals(0, calls); assertEquals(PowerRotate.Status.WAITING, PowerRotate.status.value)
+            ShadowSettings.setCanDrawOverlays(true); e.refresh(); tap(e, 600); assertEquals(0, calls)
+            tap(e, 800); tap(e, 1000); assertEquals(1, calls)
         } finally { e.stop() }
     }
 }

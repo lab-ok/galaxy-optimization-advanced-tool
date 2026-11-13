@@ -1,7 +1,5 @@
 package com.labok.goat.ui.rotate
 
-import android.content.Intent
-import android.net.Uri
 import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
@@ -45,39 +43,34 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.labok.goat.core.R
-import com.labok.goat.data.rotate.GestureBarService
 import com.labok.goat.data.rotate.PowerRotate
 import com.labok.goat.data.rotate.ShakeRotate
 import com.labok.goat.domain.TripleTap
-import com.labok.goat.data.shizuku.ShizukuAccess
 import com.labok.goat.ui.components.Gap
 import com.labok.goat.ui.liquid.GlassCard
 import com.labok.goat.ui.liquid.LiquidButton
 import com.labok.goat.ui.liquid.LiquidSwitchRow
 import com.labok.goat.ui.liquid.LocalLiquid
 import com.labok.goat.ui.liquid.Text
-import com.labok.goat.ui.shizuku.ShizukuGuide
 import com.labok.goat.ui.text.Copy
 
 /** Uses the same controls and spacing as the other rotation settings. */
 @Composable
-private fun PowerRotateCard(onGuide: () -> Unit) {
+private fun PowerRotateCard() {
     val context = LocalContext.current
     val c = LocalLiquid.current
     var enabled by remember { mutableStateOf(PowerRotate.enabled(context)) }
-    var permitted by remember { mutableStateOf(ShakeRotate.canWrite(context)) }
-    var showShizuku by remember { mutableStateOf(false) }
-    var accessibility by remember { mutableStateOf(GestureBarService.enabled(context)) }
+    var permitted by remember { mutableStateOf(PowerRotate.canWriteRotation(context)) }
+    var overlay by remember { mutableStateOf(PowerRotate.canDraw(context)) }
     var autoOn by remember { mutableStateOf(ShakeRotate.autoRotateOn(context)) }
-    val shizuku by ShizukuAccess.status.collectAsStateWithLifecycle()
     val status by PowerRotate.status.collectAsStateWithLifecycle()
     val detection by PowerRotate.detection.collectAsStateWithLifecycle()
     val changed by PowerRotate.changed.collectAsStateWithLifecycle()
     val window = remember(changed) { PowerRotate.window(context) }
     LifecycleResumeEffect(Unit) {
-        accessibility = GestureBarService.enabled(context)
+        overlay = PowerRotate.canDraw(context)
         enabled = PowerRotate.enabled(context)
-        permitted = ShakeRotate.canWrite(context)
+        permitted = PowerRotate.canWriteRotation(context)
         autoOn = ShakeRotate.autoRotateOn(context)
         onPauseOrDispose { }
     }
@@ -88,7 +81,7 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
         context.contentResolver.registerContentObserver(Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION), false, observer)
         onDispose { context.contentResolver.unregisterContentObserver(observer) }
     }
-    val ready = permitted
+    val ready = permitted && overlay
     GlassCard {
         PowerRotateArt()
         Spacer(Modifier.height(Gap.Item))
@@ -127,22 +120,14 @@ private fun PowerRotateCard(onGuide: () -> Unit) {
         if (!ready) {
             Spacer(Modifier.height(Gap.Item))
             Text(stringResource(R.string.power_rotate_permission), color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(Gap.Item))
-            if (!permitted) LiquidButton(Copy.MENU_GUIDE, onClick = onGuide, modifier = Modifier.fillMaxWidth())
-            if (shizuku != ShizukuAccess.State.READY) {
-                if (!permitted) Spacer(Modifier.height(Gap.Item))
-                LiquidButton(stringResource(R.string.power_rotate_connect), onClick = { showShizuku = !showShizuku }, modifier = Modifier.fillMaxWidth())
-                if (showShizuku) {
-                    Spacer(Modifier.height(Gap.Item))
-                    ShizukuGuide(shizuku, stringResource(R.string.power_rotate_permission))
-                }
+            if (!overlay) {
+                Spacer(Modifier.height(Gap.Item))
+                PermissionButton(overlay = true)
             }
-        }
-        if (!accessibility) {
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton(stringResource(R.string.gesture_bar_accessibility_button), modifier = Modifier.fillMaxWidth(), onClick = {
-                context.startActivity(GestureBarService.settings(context))
-            })
+            if (!permitted) {
+                Spacer(Modifier.height(Gap.Item))
+                PermissionButton(overlay = false)
+            }
         }
         Spacer(Modifier.height(Gap.Item))
         Text(stringResource(R.string.power_rotate_note), color = c.muted, style = MaterialTheme.typography.labelSmall)
@@ -166,10 +151,10 @@ fun PowerRotateScreen(contentPadding: PaddingValues, onGuide: () -> Unit) {
         modifier = Modifier.fillMaxWidth()
     ) {
         item(key = "powerRotate") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateCard(onGuide) }
+            Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateCard() }
         }
         item(key = "setup") {
-            Box(Modifier.widthIn(max = ContentMaxWidth)) { GestureBarSetupCard(onGuide) }
+            Box(Modifier.widthIn(max = ContentMaxWidth)) { GestureBarSetupCard() }
         }
         item(key = "action") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateModeCard() }
@@ -183,47 +168,54 @@ fun PowerRotateScreen(contentPadding: PaddingValues, onGuide: () -> Unit) {
     }
 }
 
-/** Keep the Samsung permission steps on the tool page, where first-time users need them. */
 @Composable
-private fun GestureBarSetupCard(onGuide: () -> Unit) {
+private fun PermissionButton(overlay: Boolean) {
+    val context = LocalContext.current
+    LiquidButton(stringResource(if (overlay) R.string.gesture_bar_overlay_button else R.string.gesture_bar_write_button),
+        modifier = Modifier.fillMaxWidth(), onClick = {
+            if (!PowerRotate.openPermission(context, overlay)) Toast.makeText(context, R.string.gesture_bar_permission_failed, Toast.LENGTH_SHORT).show()
+        })
+}
+
+/** Only the two user-controlled special-access pages needed for this feature. */
+@Composable
+private fun GestureBarSetupCard() {
     val context = LocalContext.current
     val c = LocalLiquid.current
-    var permitted by remember { mutableStateOf(ShakeRotate.canWrite(context)) }
+    var permitted by remember { mutableStateOf(PowerRotate.canWriteRotation(context)) }
+    var overlay by remember { mutableStateOf(PowerRotate.canDraw(context)) }
     LifecycleResumeEffect(Unit) {
-        permitted = ShakeRotate.canWrite(context)
+        permitted = PowerRotate.canWriteRotation(context)
+        overlay = PowerRotate.canDraw(context)
         onPauseOrDispose { }
     }
     GlassCard {
         Text(stringResource(R.string.gesture_bar_setup_title), color = c.ink, fontWeight = FontWeight.SemiBold)
         Text(stringResource(R.string.gesture_bar_setup_intro), color = c.muted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(Gap.Section))
-        Text(stringResource(R.string.gesture_bar_setup_nav_title), color = c.ink, fontWeight = FontWeight.SemiBold)
-        Text(stringResource(R.string.gesture_bar_setup_nav_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(Gap.Section))
-        Text(stringResource(R.string.gesture_bar_setup_unlock_title), color = c.ink, fontWeight = FontWeight.SemiBold)
-        Text(stringResource(R.string.gesture_bar_setup_unlock_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.gesture_bar_setup_overlay_title), color = c.ink, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.gesture_bar_setup_overlay_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(if (overlay) R.string.gesture_bar_permission_granted else R.string.gesture_bar_permission_needed), color = c.muted, style = MaterialTheme.typography.labelSmall)
         Spacer(Modifier.height(Gap.Item))
-        LiquidButton(stringResource(R.string.gesture_bar_setup_app_info), primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
-            context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        })
+        PermissionButton(overlay = true)
         Spacer(Modifier.height(Gap.Section))
-        Text(stringResource(R.string.gesture_bar_setup_access_title), color = c.ink, fontWeight = FontWeight.SemiBold)
-        Text(stringResource(R.string.gesture_bar_setup_access_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.gesture_bar_setup_write_title), color = c.ink, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.gesture_bar_setup_write_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(if (permitted) R.string.gesture_bar_permission_granted else R.string.gesture_bar_permission_needed), color = c.muted, style = MaterialTheme.typography.labelSmall)
         Spacer(Modifier.height(Gap.Item))
-        LiquidButton(stringResource(R.string.gesture_bar_accessibility_button), modifier = Modifier.fillMaxWidth(), onClick = {
-            context.startActivity(GestureBarService.settings(context))
-        })
+        PermissionButton(overlay = false)
         Spacer(Modifier.height(Gap.Section))
         Text(stringResource(R.string.gesture_bar_setup_use_title), color = c.ink, fontWeight = FontWeight.SemiBold)
         Text(stringResource(R.string.gesture_bar_setup_use_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
-        if (!permitted) {
-            Text(stringResource(R.string.gesture_bar_setup_permission), color = c.muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(Gap.Item))
-            LiquidButton(stringResource(R.string.gesture_bar_setup_permission_button), primary = false, modifier = Modifier.fillMaxWidth(), onClick = onGuide)
-        }
-        Spacer(Modifier.height(Gap.Section))
+        Text(stringResource(R.string.gesture_bar_setup_nav_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
         Text(stringResource(R.string.gesture_bar_setup_note), color = c.muted, style = MaterialTheme.typography.labelSmall)
+        if (!overlay || !permitted) {
+            Text(stringResource(R.string.gesture_bar_setup_restricted), color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton(stringResource(R.string.gesture_bar_app_info), primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
+                if (!PowerRotate.openAppInfo(context)) Toast.makeText(context, R.string.gesture_bar_permission_failed, Toast.LENGTH_SHORT).show()
+            })
+        }
     }
 }
 

@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- 실험실 상단바 숨기기: 포커스를 받는 1px 투명 창을 다른 앱 위에 띄운다(권한은 Shizuku appops로 준다) -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <!-- 흔들어서 화면 회전: 돌렸을 때 짧게 진동으로 알린다 -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- 앱 안 업데이트: GitHub 릴리스에서 새 버전을 확인하고 APK를 내려받는다(그 밖의 통신은 하지 않는다) -->
@@ -315,12 +316,6 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/volume_rotate_service" />
-        </service>
-        <service android:name=".data.rotate.GestureBarService"
-            android:exported="true" android:label="@string/power_rotate_title"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
-            <meta-data android:name="android.accessibilityservice" android:resource="@xml/gesture_bar_service" />
         </service>
         <!-- 공유용 임시 파일(실험실 TXT로 공유) -->
         <provider

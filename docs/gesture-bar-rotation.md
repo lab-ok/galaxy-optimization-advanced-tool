@@ -1,5 +1,7 @@
 # Gesture-bar triple-tap rotation (experimental)
 
+> The current draft replaces the accessibility-based implementation described below with [ordinary overlays and a normal system-settings grant](gesture-bar-minimum-permissions.md). The following results describe the earlier previews.
+
 Replaces the power-button/screen-transition experiment at the contributor's request. Triple-tap the **center of the bottom gesture bar** to either toggle auto-rotation/current-direction lock or rotate once using the existing ShakeEngine and lock again. Shaking itself can stay disabled. The dedicated tool screen, menu icon, help, status, search labels and both English/Korean strings follow the existing GOAT controls.
 
 ## App-level input

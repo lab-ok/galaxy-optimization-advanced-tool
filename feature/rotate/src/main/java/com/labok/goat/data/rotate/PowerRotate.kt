@@ -1,5 +1,7 @@
 package com.labok.goat.data.rotate
 
+import android.content.Intent
+import android.net.Uri
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -38,6 +40,21 @@ object PowerRotate {
 
     enum class Status { OFF, WAITING, LISTENING, ERROR }
     val status = MutableStateFlow(Status.OFF)
+
+    /** Normal, user-controlled special access is sufficient; retain existing privileged grants for compatibility. */
+    fun canWriteRotation(context: Context) = ShakeRotate.canWriteRotation(context)
+    fun canDraw(context: Context) = Settings.canDrawOverlays(context)
+    fun openPermission(context: Context, overlay: Boolean): Boolean {
+        val action = if (overlay) Settings.ACTION_MANAGE_OVERLAY_PERMISSION else Settings.ACTION_MANAGE_WRITE_SETTINGS
+        return openSettings(context, action)
+    }
+    fun openAppInfo(context: Context) = openSettings(context, Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+    private fun openSettings(context: Context, action: String): Boolean = runCatching {
+        context.startActivity(Intent(action, Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+    }.getOrElse {
+        runCatching { context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true }.getOrDefault(false)
+    }
 
     fun enabled(context: Context) = context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).getBoolean("on", false)
 
@@ -80,7 +97,7 @@ object PowerRotate {
             .putInt("area_width", value.widthDp.coerceIn(48, 360))
             .putInt("area_height", value.heightDp.coerceIn(8, 96)).putBoolean("area_visible", value.visible).apply()
         changed.value++
-        GestureBarService.areaChanged()
+        if (enabled(context)) AppHooks.syncService(context)
     }
 
     /** Main-thread overlay updates; immutable snapshots can also be read by report workers. */
@@ -95,14 +112,14 @@ object PowerRotate {
     fun diagnose(context: Context): String = buildString {
         val power = context.getSystemService(PowerManager::class.java)
         val state = detection.value
-        appendLine("GOAT gesture-bar diagnostics preview1")
+        appendLine("GOAT gesture-bar minimum-permission diagnostics preview3")
         val info = runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
         appendLine("app=${info?.versionName} (${info?.longVersionCode})")
         appendLine("device=${Build.MANUFACTURER} ${Build.MODEL}; Android=${Build.VERSION.RELEASE} SDK=${Build.VERSION.SDK_INT}")
         appendLine("pid=${android.os.Process.myPid()} enabled=${enabled(context)} status=${status.value} mode=${mode(context)} windowMs=${window(context).millis}")
         appendLine("area=${area(context)}")
-        appendLine("accessibilityEnabled=${GestureBarService.enabled(context)}")
-        appendLine("settingsPermission=${ShakeRotate.canWrite(context)} interactive=${power.isInteractive}")
+        appendLine("overlayPermission=${canDraw(context)} writeSettings=${Settings.System.canWrite(context)} secureSettings=${ShakeRotate.canWrite(context)}")
+        appendLine("settingsPermission=${canWriteRotation(context)} interactive=${power.isInteractive}")
         appendLine("autoRotate=${ShakeRotate.autoRotateOn(context)} currentRotation=${ShakeRotate.currentRotation(context)} userRotation=" + Settings.System.getInt(context.contentResolver, Settings.System.USER_ROTATION, 0))
         appendLine("displayState=" + runCatching { context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)?.state }.getOrNull())
         appendLine("backgroundRestricted=" + runCatching { context.getSystemService(ActivityManager::class.java).isBackgroundRestricted }.getOrNull())
@@ -123,7 +140,7 @@ object PowerRotate {
 
     /** Runs on the main thread, alongside ShakeEngine's rotation writes. */
     fun toggle(context: Context, rotation: Int): Boolean {
-        if (!ShakeRotate.canWrite(context)) return false
+        if (!canWriteRotation(context)) return false
         val auto = ShakeRotate.autoRotateOn(context)
         val ok = runCatching {
             if (auto) {

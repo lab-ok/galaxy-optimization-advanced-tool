@@ -25,7 +25,7 @@ GOAT lets you change settings that Galaxy phones either don't offer or normally 
 | **Force dark mode** | Darkens apps that don't support dark mode. | Shizuku |
 | **Status bar** | Hides the whole status bar at the top, or only the icons you pick (alarm, vibrate, Bluetooth…). | One-time permission; hiding the bar needs Shizuku |
 | **Shake to rotate** | Keeps rotation locked, and rotates only when you shake the phone while holding it the way you want. | One-time permission |
-| **Triple-tap gesture bar to lock rotation** | Tap the center of the bottom gesture bar three times to toggle auto-rotate or rotate once and lock. Adjustable area with preview. | Accessibility service + one-time settings permission |
+| **Triple-tap gesture bar to lock rotation** | Tap the center of the bottom gesture bar three times to toggle auto-rotate or rotate once and lock. Adjustable area with preview. | Display over other apps + Modify system settings |
 | **Volume button rotation** | When you rotate the screen, the volume up/down buttons follow the new direction. | One-time permission |
 | **Flex mode** | On Folds that don't report the half-folded state (like the Galaxy Z Fold8), standing the phone like a laptop splits YouTube, Camera and Gallery into top and bottom halves. | Fold, Shizuku |
 | **Mute camera shutter** | Turns off the forced shutter sound on Korean Galaxy models so it follows silent/vibrate mode. | Shizuku |
@@ -38,7 +38,7 @@ GOAT lets you change settings that Galaxy phones either don't offer or normally 
 
 The app is available in English and Korean. Change it in App Settings → Language, or in Android's per-app language settings.
 
-Experimental gesture-bar mode receives touches through a small accessibility overlay. Adjust its width and height, preview the actual area, and choose a 1.5/2.5/4-second tap window. Detection and resizing run inside the app without an ADB connection or running Shizuku. Enable gesture navigation, the dedicated accessibility service and the existing rotation settings permission. Larger areas can intercept app controls; long-hold shortcuts and Samsung behavior require device testing. See [the implementation, setup and validation notes](docs/gesture-bar-rotation.md).
+Experimental gesture-bar mode uses an ordinary app overlay and a user-granted system-settings permission. It does not require accessibility, privileged settings access or a running ADB/Shizuku connection. The tab includes setup buttons, adjustable width/height and area preview. Android may still request restricted-settings confirmation for sideloaded overlays. See [setup, limitations and validation](docs/gesture-bar-minimum-permissions.md).
 
 
 ## Getting started
