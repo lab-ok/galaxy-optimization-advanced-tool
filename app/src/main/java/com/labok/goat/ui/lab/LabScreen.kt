@@ -208,6 +208,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             })
         }
         Spacer(Modifier.height(Gap.Card))
+        SensorLiveCard()
+        Spacer(Modifier.height(Gap.Card))
         // 손 쥠 센서 시험(11-13 소장님): grip_sensor로 측면 손 닿음·쥠을 구분할 수 있는지(닿아 있을 때만 자동 회전 검토)
         GlassCard {
             Text("손 쥠 센서 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
