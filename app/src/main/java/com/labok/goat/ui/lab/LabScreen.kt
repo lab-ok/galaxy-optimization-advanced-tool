@@ -33,6 +33,7 @@ import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.ApiProbe
 import com.labok.goat.data.lab.FingerTouchProbe
 import com.labok.goat.data.lab.GoatFlexPanel
+import com.labok.goat.data.lab.GripProbe
 import com.labok.goat.data.lab.withoutGoat
 import com.labok.goat.data.lab.OttFlexTest
 import com.labok.goat.data.lab.SettingsSnapshot
@@ -81,6 +82,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
     var tentInfo by remember { mutableStateOf("") }
     var fingerProgress by remember { mutableStateOf<Float?>(null) }
     var fingerStatus by remember { mutableStateOf("") }
+    var gripProgress by remember { mutableStateOf<Float?>(null) }
+    var gripStatus by remember { mutableStateOf("") }
 
     Column(
         Modifier
@@ -205,6 +208,38 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             })
         }
         Spacer(Modifier.height(Gap.Card))
+        // 손 쥠 센서 시험(11-13 소장님): grip_sensor로 측면 손 닿음·쥠을 구분할 수 있는지(닿아 있을 때만 자동 회전 검토)
+        GlassCard {
+            Text("손 쥠 센서 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(
+                "누르면 진동이 울릴 때마다 다음 단계로 넘어가며 단계마다 ${GripProbe.PHASE_SECONDS}초씩 기록합니다.\n" + GripProbe.PHASES.joinToString("\n") + "\n끝나면 길게 진동하고 결과 파일 공유 창이 열립니다.",
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(Gap.Item))
+            LiquidProgressButton("시험 시작", progress = gripProgress, status = gripStatus, modifier = Modifier.fillMaxWidth(), onClick = {
+                if (gripProgress != null) return@LiquidProgressButton
+                gripProgress = 0f
+                scope.launch {
+                    val text = withContext(Dispatchers.IO) {
+                        GripProbe.run(context) { i ->
+                            buzz(context)
+                            scope.launch {
+                                gripStatus = GripProbe.PHASES[i]
+                                gripProgress = i / GripProbe.PHASES.size.toFloat()
+                            }
+                        }
+                    }
+                    buzz(context, 400)
+                    gripStatus = "파일 저장 중"
+                    val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-grip"), text) }
+                    gripProgress = null
+                    gripStatus = ""
+                    uri?.let { share(context, it) }
+                }
+            })
+        }
+        Spacer(Modifier.height(Gap.Card))
         // OTT 플렉스 시험(11-02 소장님): 넷플릭스·디즈니+ 등에서 플렉스 모드로 할 수 있는 것을 차례로 시험하고 결과를 보낸다(OTT는 화면 찍기가 막혀 상태만 기록)
         GlassCard {
             Text("OTT 플렉스 시험", fontWeight = FontWeight.SemiBold, color = c.ink)
@@ -323,8 +358,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
 }
 
 /** 기록 시작·끝을 손으로 알 수 있게 짧게 울린다(화면을 보지 않고 센서를 만지는 동안). */
-private fun buzz(context: Context) {
-    runCatching { context.getSystemService(Vibrator::class.java).vibrate(VibrationEffect.createOneShot(120, VibrationEffect.DEFAULT_AMPLITUDE)) }
+private fun buzz(context: Context, ms: Long = 120) {
+    runCatching { context.getSystemService(Vibrator::class.java).vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE)) }
 }
 
 private fun share(context: Context, uri: Uri) {

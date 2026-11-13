@@ -39,6 +39,7 @@ class HardcodedKoreanTest {
             "data/lab/ShareProbe.kt",
             "data/lab/ApiProbe.kt",
             "data/lab/FingerTouchProbe.kt",
+            "data/lab/GripProbe.kt",
             "data/lab/UnfoldLock.kt",
             "data/log/DiagnosticReport.kt",
             "data/log/RelaunchTrace.kt",
