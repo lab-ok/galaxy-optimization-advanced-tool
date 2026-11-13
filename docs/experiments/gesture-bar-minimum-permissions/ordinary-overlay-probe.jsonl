@@ -1,0 +1,11 @@
+{"elapsed_ms":80671047,"utc_ms":1794563304506,"source":"bounds","detail":"above=false nav=78 x=818 y=2092 w=440 h=60"}
+{"elapsed_ms":80671176,"utc_ms":1794563304636,"source":"touch","detail":"action=0 x=1037.9365 y=2129.9336"}
+{"elapsed_ms":80671260,"utc_ms":1794563304720,"source":"touch","detail":"action=1 x=1037.9365 y=2129.9336"}
+{"elapsed_ms":80671471,"utc_ms":1794563304930,"source":"touch","detail":"action=0 x=1037.9365 y=2129.9336"}
+{"elapsed_ms":80671558,"utc_ms":1794563305017,"source":"touch","detail":"action=1 x=1037.9365 y=2129.9336"}
+{"elapsed_ms":80671764,"utc_ms":1794563305223,"source":"touch","detail":"action=0 x=1037.9365 y=2129.9336"}
+{"elapsed_ms":80671862,"utc_ms":1794563305321,"source":"touch","detail":"action=1 x=1037.9365 y=2129.9336"}
+{"elapsed_ms":80682645,"utc_ms":1794563316105,"source":"touch","detail":"action=0 x=1037.9365 y=2129.9336"}
+{"elapsed_ms":80682675,"utc_ms":1794563316134,"source":"touch","detail":"action=3 x=1037.9365 y=2099.921"}
+{"elapsed_ms":80788085,"utc_ms":1794563421544,"source":"rotation","detail":"secure=false writeSettings=true userRotationWrite=true toggleWrite=true actualAuto=1"}
+{"elapsed_ms":80788412,"utc_ms":1794563421872,"source":"bounds","detail":"above=false nav=78 x=818 y=2092 w=440 h=60"}

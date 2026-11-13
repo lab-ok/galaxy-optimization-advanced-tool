@@ -170,10 +170,11 @@ private fun DrawScope.rotate(c: Color, s: Stroke) {
 
 /** Smartphone with a side power button: the same simple rounded strokes as the other icons. */
 private fun DrawScope.powerPress(c: Color, s: Stroke) {
-    drawRoundRect(c, p(5f, 3f), Size(u(11f), u(18f)), CornerRadius(u(2.5f)), style = s)
-    drawLine(c, p(18.5f, 7.5f), p(18.5f, 11.5f), s.width, StrokeCap.Round)
-    drawArc(c, -45f, 270f, false, p(7.5f, 10f), Size(u(6f), u(6f)), style = s)
-    drawLine(c, p(10.5f, 8f), p(10.5f, 12f), s.width, StrokeCap.Round)
+    drawRoundRect(c, p(5f, 2f), Size(u(14f), u(20f)), CornerRadius(u(2.5f)), style = s)
+    drawLine(c, p(9f, 18f), p(15f, 18f), s.width, StrokeCap.Round)
+    drawCircle(c, u(0.8f), p(9f, 13f))
+    drawCircle(c, u(0.8f), p(12f, 13f))
+    drawCircle(c, u(0.8f), p(15f, 13f))
 }
 
 /** 카메라 촬영음 끄기: 카메라와 오른쪽 위로 그은 사선(소리 끔). */

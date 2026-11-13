@@ -1,0 +1,28 @@
+[
+  {
+    "test": "Korean setup card shows beginner instructions and blocked-access recovery",
+    "passed": true
+  },
+  {
+    "test": "app-info button opens Android settings for GOAT",
+    "passed": true,
+    "focus": "mCurrentFocus=Window{a731e84 u0 com.android.settings/com.android.settings.spa.SpaActivity}"
+  },
+  {
+    "test": "accessibility button opens Android accessibility settings",
+    "passed": true,
+    "focus": "mCurrentFocus=Window{5e62d95 u0 com.android.settings/com.android.settings.Settings$AccessibilitySettingsActivity}"
+  },
+  {
+    "test": "fourth step explains action selection, triple tap and adjustable target",
+    "passed": true
+  },
+  {
+    "test": "English guide includes equivalent restricted-setting instructions",
+    "passed": true
+  },
+  {
+    "test": "rotation shortcut still works after settings navigation",
+    "passed": true
+  }
+]

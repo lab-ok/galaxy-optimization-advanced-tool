@@ -90,10 +90,10 @@ class GoatService : Service() {
             ambient = null
         }
 
-        val powerOnce = powerRotate && PowerRotate.mode(this) == PowerRotate.Mode.ONCE && ShakeRotate.canWrite(this)
+        val powerOnce = powerRotate && PowerRotate.mode(this) == PowerRotate.Mode.ONCE && PowerRotate.canWriteRotation(this) && PowerRotate.canDraw(this)
         if (rotate || powerOnce) {
             (
-                shake ?: ShakeEngine(this) { ShakeRotate.enabled(this) }.also {
+                shake ?: ShakeEngine(this) { ShakeRotate.enabled(this) && ShakeRotate.canWrite(this) }.also {
                     shake = it
                     it.start()
                 }
