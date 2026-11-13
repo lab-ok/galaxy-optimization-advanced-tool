@@ -1,0 +1,30 @@
+[
+  {
+    "test": "default window still toggles without Shizuku",
+    "passed": true
+  },
+  {
+    "test": "default window rejects slow transitions",
+    "passed": true
+  },
+  {
+    "test": "copy button exposes timing expiry and device permission state",
+    "passed": true
+  },
+  {
+    "test": "longer selected window accepts slower transitions",
+    "passed": true
+  },
+  {
+    "test": "copied diagnostics identify successful action and selected timing",
+    "passed": true
+  },
+  {
+    "test": "four-second option is applied",
+    "passed": true
+  },
+  {
+    "test": "configured timing and diagnostic lifecycle survive app reopening without Shizuku",
+    "passed": true
+  }
+]

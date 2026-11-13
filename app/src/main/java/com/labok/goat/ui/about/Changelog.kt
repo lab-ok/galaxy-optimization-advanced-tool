@@ -56,6 +56,24 @@ internal data class En(val summary: String, val sections: List<Pair<String, List
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.58.1",
+        "2026-11-12",
+        "전원 버튼을 세 번 눌러 화면 회전을 바꿉니다(시험 버전).",
+        listOf(
+            "추가" to listOf(
+                "「전원 버튼 세 번으로 회전」: 전원 버튼을 1.5초 안에 세 번 누르면 자동 회전을 켜고 끄거나, 흔들어서 회전처럼 지금 든 방향으로 한 번 돌린 뒤 다시 잠급니다. Shizuku가 필요합니다. 외부 기여자 Arc-Jung 님이 만들어 주셨습니다."
+            )
+        ),
+        en = En(
+            "Press the power button three times to change screen rotation (test version).",
+            listOf(
+                "Added" to listOf(
+                    "Triple-press power to rotate: press the power button three times within 1.5 seconds to turn auto-rotate on or off, or to rotate once to the way you're holding the phone and lock again, like shake to rotate. Requires Shizuku. Contributed by Arc-Jung."
+                )
+            )
+        )
+    ),
+    Release(
         "GOAT 1.58.0",
         "2026-11-12",
         "영어를 지원합니다.",

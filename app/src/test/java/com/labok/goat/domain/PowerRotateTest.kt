@@ -64,21 +64,25 @@ class PowerRotateTest {
         assertFalse(com.labok.goat.data.rotate.ShakeRotate.enabled(context))
     }
 
-
-    @Test fun anEstablishedReaderDoesNotRequireShizukuToRemainConnected() {
+    @Test fun timingChoiceSurvivesReloadAndUnknownValuesUseTheOriginalWindow() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val previous = PowerRotate.status.value
-        context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putBoolean("on", true).commit()
-        try {
-            PowerRotate.status.value = PowerRotate.Status.LISTENING
-            assertFalse(PowerRotate.needsShizuku(context))
-            PowerRotate.status.value = PowerRotate.Status.WAITING
-            assertTrue(PowerRotate.needsShizuku(context))
-            context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putBoolean("on", false).commit()
-            assertFalse(PowerRotate.needsShizuku(context))
-        } finally {
-            PowerRotate.status.value = previous
-        }
+        assertEquals(PowerRotate.Window.SHORT, PowerRotate.window(context))
+        PowerRotate.setWindow(context, PowerRotate.Window.MEDIUM)
+        assertEquals(2500L, PowerRotate.window(context).millis)
+        PowerRotate.setWindow(context, PowerRotate.Window.LONG)
+        assertEquals(4000L, PowerRotate.window(context).millis)
+        context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putString("window", "unknown").commit()
+        assertEquals(PowerRotate.Window.SHORT, PowerRotate.window(context))
     }
 
+    @Test fun areaChangesPersistAndAreBounded() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals(PowerRotate.Area(), PowerRotate.area(context))
+        PowerRotate.setArea(context, PowerRotate.Area(240, 48, true))
+        assertEquals(PowerRotate.Area(240, 48, true), PowerRotate.area(context))
+        PowerRotate.setArea(context, PowerRotate.Area(9999, -20, false))
+        assertEquals(PowerRotate.Area(360, 8, false), PowerRotate.area(context))
+        PowerRotate.setArea(context, PowerRotate.Area())
+        assertEquals(PowerRotate.Area(), PowerRotate.area(context))
+    }
 }
