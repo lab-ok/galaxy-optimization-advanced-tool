@@ -2,6 +2,14 @@
 
 <sub>앱 안의 앱 설정 → 정보 → 변경 기록과 같은 내용입니다(원본: `app/src/main/java/com/labok/goat/ui/about/Changelog.kt`).</sub>
 
+### GOAT 1.58.2 · 2026-11-13
+
+<sub>숨은 기능을 다듬었습니다(시험 버전). / Polished hidden features (test version).</sub>
+
+#### 변경 / Changed
+
+- <sub>숨은 기능을 다듬었습니다. / Polished hidden features.</sub>
+
 ### GOAT 1.58.1 · 2026-11-12
 
 <sub>전원 버튼을 세 번 눌러 화면 회전을 바꿉니다(시험 버전). / Press the power button three times to change screen rotation (test version).</sub>

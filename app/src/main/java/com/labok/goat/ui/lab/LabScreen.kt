@@ -3,6 +3,8 @@ package com.labok.goat.ui.lab
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.labok.goat.background.GoatService
 import com.labok.goat.data.lab.ApiProbe
+import com.labok.goat.data.lab.FingerTouchProbe
 import com.labok.goat.data.lab.GoatFlexPanel
 import com.labok.goat.data.lab.withoutGoat
 import com.labok.goat.data.lab.OttFlexTest
@@ -51,6 +54,7 @@ import com.labok.goat.ui.nav.NewTag
 import com.labok.goat.ui.text.Copy
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -75,6 +79,8 @@ internal fun LabScreen(contentPadding: PaddingValues) {
     var shareProgress by remember { mutableStateOf<Float?>(null) }
     var shareStatus by remember { mutableStateOf("") }
     var tentInfo by remember { mutableStateOf("") }
+    var fingerProgress by remember { mutableStateOf<Float?>(null) }
+    var fingerStatus by remember { mutableStateOf("") }
 
     Column(
         Modifier
@@ -161,6 +167,39 @@ internal fun LabScreen(contentPadding: PaddingValues) {
                     apiStatus = "파일 저장 중"
                     val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-api"), text) }
                     apiProgress = null
+                    uri?.let { share(context, it) }
+                }
+            })
+        }
+        Spacer(Modifier.height(Gap.Card))
+        // 지문 센서 터치 조사(11-13 소장님): 인증 없이 센서에 닿기만 해도 시스템이 알아채는지(닿아 있을 때만 자동 회전 검토)
+        GlassCard {
+            Text("지문 센서 터치 조사", fontWeight = FontWeight.SemiBold, color = c.ink)
+            Text(
+                "누르면 진동과 함께 ${FingerTouchProbe.SECONDS}초 동안 기록합니다. 그동안 화면은 만지지 말고, 측면 지문 센서(전원 버튼)를 누르지 말고 손가락으로 톡톡 닿았다 떼기와 위아래로 쓸기를 여러 번 해 주세요. 끝나면 다시 진동하고 결과 파일 공유 창이 열립니다.",
+                color = c.muted,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(Gap.Item))
+            LiquidProgressButton("기록 시작", progress = fingerProgress, status = fingerStatus, modifier = Modifier.fillMaxWidth(), onClick = {
+                if (fingerProgress != null) return@LiquidProgressButton
+                fingerProgress = 0f
+                fingerStatus = "센서를 만져 주세요"
+                buzz(context)
+                scope.launch {
+                    val ticker = launch {
+                        repeat(FingerTouchProbe.SECONDS * 10) { i ->
+                            delay(100)
+                            fingerProgress = (i + 1) / (FingerTouchProbe.SECONDS * 10f)
+                        }
+                    }
+                    val text = withContext(Dispatchers.IO) { FingerTouchProbe.run() }
+                    ticker.cancel()
+                    buzz(context)
+                    fingerStatus = "파일 저장 중"
+                    val uri = withContext(Dispatchers.IO) { PublicLogFile.saveNew(context, PublicLogFile.timestampedName("lab-finger"), text) }
+                    fingerProgress = null
+                    fingerStatus = ""
                     uri?.let { share(context, it) }
                 }
             })
@@ -281,6 +320,11 @@ internal fun LabScreen(contentPadding: PaddingValues) {
             })
         }
     }
+}
+
+/** 기록 시작·끝을 손으로 알 수 있게 짧게 울린다(화면을 보지 않고 센서를 만지는 동안). */
+private fun buzz(context: Context) {
+    runCatching { context.getSystemService(Vibrator::class.java).vibrate(VibrationEffect.createOneShot(120, VibrationEffect.DEFAULT_AMPLITUDE)) }
 }
 
 private fun share(context: Context, uri: Uri) {

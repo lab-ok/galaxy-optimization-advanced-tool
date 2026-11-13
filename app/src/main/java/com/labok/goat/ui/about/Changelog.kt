@@ -56,6 +56,16 @@ internal data class En(val summary: String, val sections: List<Pair<String, List
 /** 판마다 바뀐 점. 새 판은 맨 앞에 더한다. */
 internal val CHANGELOG = listOf(
     Release(
+        "GOAT 1.58.2",
+        "2026-11-13",
+        "숨은 기능을 다듬었습니다(시험 버전).",
+        listOf("변경" to listOf("숨은 기능을 다듬었습니다.")),
+        en = En(
+            "Polished hidden features (test version).",
+            listOf("Changed" to listOf("Polished hidden features."))
+        )
+    ),
+    Release(
         "GOAT 1.58.1",
         "2026-11-12",
         "전원 버튼을 세 번 눌러 화면 회전을 바꿉니다(시험 버전).",
