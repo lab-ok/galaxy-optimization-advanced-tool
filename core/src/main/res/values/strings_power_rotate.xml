@@ -44,4 +44,18 @@
     <string name="gesture_bar_width">Detection width</string>
     <string name="gesture_bar_height">Detection height</string>
     <string name="gesture_bar_area_reset">Reset detection area</string>
+    <string name="gesture_bar_setup_title">First-time setup</string>
+    <string name="gesture_bar_setup_intro">Follow these four steps. If a step is already done, move to the next one.</string>
+    <string name="gesture_bar_setup_nav_title">1. Turn on the bottom gesture bar</string>
+    <string name="gesture_bar_setup_nav_body">On a Galaxy, open Settings → Display → Navigation bar → Swipe gestures. If you already use the bottom bar, skip this step.</string>
+    <string name="gesture_bar_setup_unlock_title">2. Unblock accessibility, if needed</string>
+    <string name="gesture_bar_setup_unlock_body">Only needed if you see “App access denied” or the service is greyed out. Tap “Open GOAT app info” below → top-right ⋮ → Allow restricted settings, then confirm your identity. If that menu is absent, try step 3.</string>
+    <string name="gesture_bar_setup_app_info">Open GOAT app info</string>
+    <string name="gesture_bar_setup_access_title">3. Enable the gesture-bar service</string>
+    <string name="gesture_bar_setup_access_body">Tap the button below → Installed apps (or Downloaded apps) → Triple-tap gesture bar to lock rotation → turn it on and confirm. The volume-button and status-bar services are separate; you only need the gesture-bar service for this feature.</string>
+    <string name="gesture_bar_setup_use_title">4. Return to GOAT and try it</string>
+    <string name="gesture_bar_setup_use_body">Turn on this feature, choose either rotation action, then tap the center of the bottom bar three times quickly. To find the touch target, turn on “Show touch area” below and adjust its width and height.</string>
+    <string name="gesture_bar_setup_permission">If GOAT shows “System settings permission needed”, complete the permission guide below first. If you already granted it for Shake to rotate, you can keep using it.</string>
+    <string name="gesture_bar_setup_permission_button">Rotation permission guide</string>
+    <string name="gesture_bar_setup_note">Touch detection works without wireless debugging. If you force-stop GOAT, you may need to enable its accessibility service again.</string>
 </resources>

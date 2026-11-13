@@ -44,4 +44,18 @@
     <string name="gesture_bar_width">인식 폭</string>
     <string name="gesture_bar_height">인식 높이</string>
     <string name="gesture_bar_area_reset">인식 영역 초기화</string>
+    <string name="gesture_bar_setup_title">처음 설정하기</string>
+    <string name="gesture_bar_setup_intro">아래 4단계를 순서대로 따라 해 주세요. 이미 설정한 단계는 넘어가도 돼요.</string>
+    <string name="gesture_bar_setup_nav_title">1. 하단 제스처 바 켜기</string>
+    <string name="gesture_bar_setup_nav_body">갤럭시 설정 → 디스플레이 → 내비게이션 바 → 스와이프 제스처를 선택해요. 이미 하단 바를 쓰고 있다면 넘어가세요.</string>
+    <string name="gesture_bar_setup_unlock_title">2. 접근성이 차단되면 먼저 풀기</string>
+    <string name="gesture_bar_setup_unlock_body">“앱의 액세스가 거부됨”이 뜨거나 항목이 회색일 때만 필요해요. 아래 “GOAT 앱 정보 열기” → 오른쪽 위 ⋮ → 제한된 설정 허용 → 본인 인증을 진행해요. 해당 메뉴가 없으면 3단계를 먼저 해 보세요.</string>
+    <string name="gesture_bar_setup_app_info">GOAT 앱 정보 열기</string>
+    <string name="gesture_bar_setup_access_title">3. 접근성 서비스 켜기</string>
+    <string name="gesture_bar_setup_access_body">아래 버튼 → 설치된 앱 → 하단 제스처 바 3회 터치로 회전 고정 → 사용 중으로 켜고 허용해요. 볼륨 버튼 회전이나 상단바 숨기기를 켜는 것이 아니라, 이름에 “제스처 바”가 들어간 항목을 켜 주세요.</string>
+    <string name="gesture_bar_setup_use_title">4. GOAT로 돌아와서 사용하기</string>
+    <string name="gesture_bar_setup_use_body">이 화면의 기능 스위치를 켜고 원하는 회전 동작을 골라요. 하단 바 가운데를 빠르게 3번 톡톡톡 터치해 보세요. 위치가 헷갈리면 아래 “인식 영역 표시”를 켜서 확인하고 폭·높이를 조절해요.</string>
+    <string name="gesture_bar_setup_permission">“설정 변경 권한 필요”가 보이면 아래 권한 설정 안내를 먼저 완료해 주세요. 흔들어서 회전에서 이미 권한을 허용했다면 그대로 쓸 수 있어요.</string>
+    <string name="gesture_bar_setup_permission_button">회전 권한 설정 안내</string>
+    <string name="gesture_bar_setup_note">터치 감지는 무선 디버깅 없이 동작해요. GOAT를 강제 종료한 뒤에는 접근성 서비스를 다시 켜야 할 수 있어요.</string>
 </resources>

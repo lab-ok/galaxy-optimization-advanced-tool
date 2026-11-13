@@ -1,5 +1,7 @@
 package com.labok.goat.ui.rotate
 
+import android.content.Intent
+import android.net.Uri
 import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
@@ -166,6 +168,9 @@ fun PowerRotateScreen(contentPadding: PaddingValues, onGuide: () -> Unit) {
         item(key = "powerRotate") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateCard(onGuide) }
         }
+        item(key = "setup") {
+            Box(Modifier.widthIn(max = ContentMaxWidth)) { GestureBarSetupCard(onGuide) }
+        }
         item(key = "action") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateModeCard() }
         }
@@ -175,6 +180,50 @@ fun PowerRotateScreen(contentPadding: PaddingValues, onGuide: () -> Unit) {
         item(key = "window") {
             Box(Modifier.widthIn(max = ContentMaxWidth)) { PowerRotateWindowCard() }
         }
+    }
+}
+
+/** Keep the Samsung permission steps on the tool page, where first-time users need them. */
+@Composable
+private fun GestureBarSetupCard(onGuide: () -> Unit) {
+    val context = LocalContext.current
+    val c = LocalLiquid.current
+    var permitted by remember { mutableStateOf(ShakeRotate.canWrite(context)) }
+    LifecycleResumeEffect(Unit) {
+        permitted = ShakeRotate.canWrite(context)
+        onPauseOrDispose { }
+    }
+    GlassCard {
+        Text(stringResource(R.string.gesture_bar_setup_title), color = c.ink, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.gesture_bar_setup_intro), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Section))
+        Text(stringResource(R.string.gesture_bar_setup_nav_title), color = c.ink, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.gesture_bar_setup_nav_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Section))
+        Text(stringResource(R.string.gesture_bar_setup_unlock_title), color = c.ink, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.gesture_bar_setup_unlock_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidButton(stringResource(R.string.gesture_bar_setup_app_info), primary = false, modifier = Modifier.fillMaxWidth(), onClick = {
+            context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        })
+        Spacer(Modifier.height(Gap.Section))
+        Text(stringResource(R.string.gesture_bar_setup_access_title), color = c.ink, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.gesture_bar_setup_access_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(Gap.Item))
+        LiquidButton(stringResource(R.string.gesture_bar_accessibility_button), modifier = Modifier.fillMaxWidth(), onClick = {
+            context.startActivity(GestureBarService.settings(context))
+        })
+        Spacer(Modifier.height(Gap.Section))
+        Text(stringResource(R.string.gesture_bar_setup_use_title), color = c.ink, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.gesture_bar_setup_use_body), color = c.muted, style = MaterialTheme.typography.bodySmall)
+        if (!permitted) {
+            Text(stringResource(R.string.gesture_bar_setup_permission), color = c.muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(Gap.Item))
+            LiquidButton(stringResource(R.string.gesture_bar_setup_permission_button), primary = false, modifier = Modifier.fillMaxWidth(), onClick = onGuide)
+        }
+        Spacer(Modifier.height(Gap.Section))
+        Text(stringResource(R.string.gesture_bar_setup_note), color = c.muted, style = MaterialTheme.typography.labelSmall)
     }
 }
 

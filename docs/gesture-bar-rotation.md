@@ -8,6 +8,12 @@ A dedicated `GestureBarService` uses `TYPE_ACCESSIBILITY_OVERLAY` for a small to
 
 Enable gesture navigation, grant the existing rotation settings permission once, enable this feature, and explicitly enable GOAT's gesture-bar accessibility service in Android Accessibility settings. Some sideloaded installs require **App info → menu → Allow restricted settings** first. Input detection and resizing do **not** execute ADB/shell commands or require a running Shizuku process. The existing one-time settings permission may still need GOAT's permission guide/Shizuku setup. Do not interpret app-level input as removal of the permission needed to change rotation.
 
+The tool tab also contains **First-time setup / 처음 설정하기**, a four-step guide: enable gesture navigation, unblock restricted settings only if denied, enable the specifically named gesture-bar accessibility service, then return to GOAT to choose an action and test. **Open GOAT app info** opens GOAT's own Android app-info screen, and the accessibility button opens Android Accessibility settings. Both buttons only navigate; they do not grant permissions. The guide stays available after setup and offers the existing rotation-permission guide when that permission is missing. Korean and English text are provided.
+
+The setup paths follow [Android’s restricted-settings instructions](https://support.google.com/android/answer/12623953?hl=en) and [Samsung’s gesture-navigation instructions](https://www.samsung.com/us/support/answer/ANS10002427/).
+
+The contributor subsequently reported that the feature works on their Galaxy after allowing restricted settings. This is user-reported confirmation; it does not independently verify every Samsung security mode or navigation shortcut.
+
 The accessibility service does not retrieve screen content, request key filtering, use touch exploration, subscribe to every touchscreen event, poll, hold a wake lock, or request system-gesture exclusion. Only touch events delivered to its own small overlay are processed. The old screen ON/OFF rotation trigger is removed; screen broadcasts only hide/recreate the overlay across sleep/unlock. The common foreground service and accessibility connection coordinate lifecycle without a shell input reader.
 
 Three completed single-finger taps must fit within the selected 1.5/2.5/4-second window. Moving past Android's touch slop, holding for the long-press timeout, multiple pointers, system cancellation, screen state/configuration changes and area resizing break the sequence. Disabling the feature removes its touch area. Force-stopping the app can remove the service from Android's enabled accessibility list; re-enable it in Accessibility settings after reopening. Revoking rotation permission prevents the action. Diagnostic history is bounded and can still be copied from the app.
@@ -36,3 +42,11 @@ The Android API specifically states that [sources requested through `setMotionEv
 | ![Rotation actions](screenshots/gesture-bar-rotation-toggle.png) | ![Area width and height](screenshots/gesture-bar-area-adjusted.png) |
 
 ![One-shot action selected](screenshots/gesture-bar-rotation-once.png)
+
+## Setup-guide follow-up
+
+The in-app four-step guide was checked on the actual updated release APK. All **6 existing spacing/localization checks** passed, the R8 release build passed, and the APK certificate matched preview 1. **6 emulator checks** confirmed Korean instructions, GOAT-specific app-info navigation, accessibility-settings navigation, final usage/area guidance, equivalent English instructions and continued triple-tap operation after returning from settings. See the [follow-up results](experiments/gesture-bar-input/setup-guide/).
+
+| Korean setup guide | English setup guide |
+| --- | --- |
+| ![Korean guide](screenshots/gesture-bar-setup-guide-ko.png) | ![English guide](screenshots/gesture-bar-setup-guide-en.png) |
