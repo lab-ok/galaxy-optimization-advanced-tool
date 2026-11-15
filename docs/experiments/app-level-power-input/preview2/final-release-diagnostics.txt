@@ -1,0 +1,39 @@
+GOAT screen-input diagnostics preview2
+app=1.58.1 (286)
+device=Google sdk_gphone64_arm64; Android=16 SDK=36
+pid=27815 enabled=true status=LISTENING mode=TOGGLE windowMs=1500
+settingsPermission=true interactive=true
+autoRotate=false currentRotation=0 userRotation=0
+displayState=2
+backgroundRestricted=false
+ignoringBatteryOptimizations=false
+processImportance=100
+events=4 candidates=1 count=1/3 lastScreenOn=true intervalMs=1349 decision=FIRST actionSucceeded=true
+Recent receiver records (maximum 20):
+41882116ms pid=27815 listener_started windowMs=1500
+41892689ms pid=27815 screen=false gapMs=null decision=FIRST count=1/3 windowMs=1500 interactive=false display=1
+41893049ms pid=27815 screen=true gapMs=348 decision=SECOND count=2/3 windowMs=1500 interactive=true display=2
+41893513ms pid=27815 screen=false gapMs=474 decision=TRIPLE count=0/3 windowMs=1500 interactive=false display=1
+41893595ms pid=27815 action=TOGGLE success=true rotation=0
+41894869ms pid=27815 screen=true gapMs=1349 decision=FIRST count=1/3 windowMs=1500 interactive=true display=2
+Persisted lifecycle/input records (maximum 20):
+11-13 07:52:34 Power rotation window: 4000ms
+11-13 07:52:34 Power rotation: pid=26655 window updated: 4000ms; sequence reset
+11-13 07:52:51 GOAT 상주 서비스: 전원 버튼 3번으로 회전 고정
+11-13 07:52:51 Power rotation: pid=27333 listener_started windowMs=4000
+11-13 07:53:10 Power rotation window: 1500ms
+11-13 07:53:10 Power rotation: pid=27333 window updated: 1500ms; sequence reset
+11-13 07:53:20 Power rotation window: 2500ms
+11-13 07:53:20 Power rotation: pid=27333 window updated: 2500ms; sequence reset
+11-13 07:53:24 Power rotation window: 1500ms
+11-13 07:53:24 Power rotation: pid=27333 window updated: 1500ms; sequence reset
+11-13 08:01:03 GOAT 상주 서비스: 전원 버튼 3번으로 회전 고정
+11-13 08:01:03 Power rotation: pid=27672 listener_started windowMs=1500
+11-13 08:01:55 GOAT 상주 서비스: 전원 버튼 3번으로 회전 고정
+11-13 08:01:55 Power rotation: pid=27815 listener_started windowMs=1500
+11-13 08:02:06 Power rotation: pid=27815 screen=false gapMs=null decision=FIRST count=1/3 windowMs=1500 interactive=false display=1
+11-13 08:02:06 Power rotation: pid=27815 screen=true gapMs=348 decision=SECOND count=2/3 windowMs=1500 interactive=true display=2
+11-13 08:02:06 Power rotation: pid=27815 screen=false gapMs=474 decision=TRIPLE count=0/3 windowMs=1500 interactive=false display=1
+11-13 08:02:07 Power triple press: autoRotate=false, success=true, rotation=0
+11-13 08:02:07 Power rotation: pid=27815 action=TOGGLE success=true rotation=0
+11-13 08:02:08 Power rotation: pid=27815 screen=true gapMs=1349 decision=FIRST count=1/3 windowMs=1500 interactive=true display=2

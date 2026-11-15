@@ -1,0 +1,45 @@
+{
+  "totals": {
+    "tests": 237,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  "relevant_suites": [
+    {
+      "name": "com.labok.goat.domain.PowerRotateTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.labok.goat.ui.components.GapGuideTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.labok.goat.ui.text.HardcodedKoreanTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.labok.goat.domain.GestureBarEngineTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.labok.goat.domain.TripleTapTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ]
+}

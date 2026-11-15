@@ -13,7 +13,6 @@ import androidx.core.app.NotificationCompat
 import com.labok.goat.R
 import com.labok.goat.data.appsize.AppDensityNotifier
 import com.labok.goat.data.camera.CameraMute
-import com.labok.goat.data.rotate.PowerRotate
 import com.labok.goat.data.lab.AmbientOpen
 import com.labok.goat.data.lab.AutoFlex
 import com.labok.goat.feature.statusbar.StatusBarHider
@@ -33,7 +32,6 @@ object ShizukuNotice {
 
     /** 켜 둔 기능 가운데 Shizuku가 있어야 동작하는 것들의 이름. */
     fun affected(context: Context): List<String> = listOfNotNull(
-        Copy.text(R.string.power_rotate_title).takeIf { PowerRotate.needsShizuku(context) },
         Copy.text(R.string.feature_auto_flex).takeIf { AutoFlex.enabled(context) },
         Copy.text(R.string.feature_app_size).takeIf { AppDensityNotifier.enabled(context) },
         Copy.text(R.string.feature_lab_ambient).takeIf { AmbientOpen.enabled(context) },

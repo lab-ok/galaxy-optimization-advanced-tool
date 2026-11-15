@@ -1,0 +1,10 @@
+[
+  {
+    "test": "final release toggles and keeps diagnostics without a privileged reader",
+    "passed": true
+  },
+  {
+    "test": "final release copy button returns diagnostic preview2",
+    "passed": true
+  }
+]

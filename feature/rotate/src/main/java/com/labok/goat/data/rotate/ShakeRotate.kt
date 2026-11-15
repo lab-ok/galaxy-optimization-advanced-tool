@@ -33,6 +33,9 @@ object ShakeRotate {
 
     fun canWrite(context: Context) = context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
 
+    /** Rotation writes use System settings; secure-only controls keep using canWrite(). */
+    fun canWriteRotation(context: Context) = canWrite(context) || Settings.System.canWrite(context)
+
     fun enabled(context: Context) = prefs(context).getBoolean("on", false)
 
     /** 민감도 저장 이름. 1~20 단계(예전 판정)에서 1~30 단계로 바뀌어 예전 값은 뜻이 달라 새 이름을 쓴다. */

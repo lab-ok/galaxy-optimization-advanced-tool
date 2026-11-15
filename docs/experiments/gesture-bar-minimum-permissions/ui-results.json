@@ -1,0 +1,10 @@
+[
+  {
+    "test": "area preview is enabled and dimensions persist in ordinary-overlay diagnostics",
+    "passed": true
+  },
+  {
+    "test": "English setup explains the two normal special accesses and no accessibility requirement",
+    "passed": true
+  }
+]

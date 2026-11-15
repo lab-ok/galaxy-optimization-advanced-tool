@@ -1,0 +1,38 @@
+[
+  {
+    "elapsed_ms": 10951252,
+    "utc_ms": 1794493584711,
+    "source": "accessibility_key",
+    "detail": "KEYCODE_VOLUME_UP DOWN repeat=0"
+  },
+  {
+    "elapsed_ms": 10951341,
+    "utc_ms": 1794493584800,
+    "source": "accessibility_key",
+    "detail": "KEYCODE_VOLUME_UP UP repeat=0"
+  },
+  {
+    "elapsed_ms": 10952615,
+    "utc_ms": 1794493586075,
+    "source": "screen_broadcast",
+    "detail": "android.intent.action.SCREEN_OFF"
+  },
+  {
+    "elapsed_ms": 10952998,
+    "utc_ms": 1794493586458,
+    "source": "screen_broadcast",
+    "detail": "android.intent.action.SCREEN_ON"
+  },
+  {
+    "elapsed_ms": 10953519,
+    "utc_ms": 1794493586979,
+    "source": "screen_broadcast",
+    "detail": "android.intent.action.SCREEN_OFF"
+  },
+  {
+    "elapsed_ms": 10953519,
+    "utc_ms": 1794493586979,
+    "source": "screen_triple_candidate",
+    "detail": "Three screen transitions; physical key identity is unknown"
+  }
+]

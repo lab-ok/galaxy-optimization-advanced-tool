@@ -5,12 +5,20 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.labok.goat.background.GoatService
+import com.labok.goat.data.rotate.PowerRotate
 import com.labok.goat.data.update.UpdateNotice
 import com.labok.goat.ui.home.HomeScreen
 import com.labok.goat.ui.liquid.LiquidTheme
 import com.labok.goat.ui.tweaks.ResolutionConfirm
 
 class MainActivity : ComponentActivity() {
+    override fun onResume() {
+        super.onResume()
+        // Restore an enabled app-event listener when returning after a background-service stop.
+        if (PowerRotate.enabled(this)) GoatService.sync(this)
+    }
+
     // Android 12 이하에서 앱에서 고른 언어를 적용한다(13+는 시스템 앱별 언어가 처리)
     override fun attachBaseContext(newBase: android.content.Context) {
         super.attachBaseContext(com.labok.goat.ui.text.AppLanguage.wrap(newBase))

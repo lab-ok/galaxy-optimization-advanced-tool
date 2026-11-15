@@ -1,0 +1,83 @@
+[
+  {
+    "test": "starts app-event detection without Shizuku or accessibility",
+    "passed": true
+  },
+  {
+    "test": "one transition does not toggle",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "test": "two transitions do not toggle",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "test": "slow transitions do not toggle",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "test": "three power presses in background lock rotation",
+    "passed": true,
+    "expected": 0,
+    "actual": 0
+  },
+  {
+    "test": "three power presses enable auto-rotate",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "test": "three presses starting with screen off",
+    "passed": true,
+    "expected": 0,
+    "actual": 0
+  },
+  {
+    "test": "one-shot device direction without shake detection",
+    "passed": true,
+    "expected_rotation": "1",
+    "actual_rotation": "1",
+    "auto": 0,
+    "starts_dark": false
+  },
+  {
+    "test": "one-shot device direction without shake detection",
+    "passed": true,
+    "expected_rotation": "0",
+    "actual_rotation": "0",
+    "auto": 0,
+    "starts_dark": true
+  },
+  {
+    "test": "known limitation: non-power screen changes also toggle",
+    "passed": true,
+    "kind": "known_false_positive",
+    "physical_power_presses": 0,
+    "actual_auto": 0
+  },
+  {
+    "test": "feature OFF ignores screen transitions",
+    "passed": true,
+    "expected": 1,
+    "actual": 1
+  },
+  {
+    "test": "process restart restores detection without Shizuku",
+    "passed": true,
+    "expected": 0,
+    "actual": 0
+  },
+  {
+    "test": "service-stop fixture unavailable",
+    "passed": true,
+    "skipped": true,
+    "detail": "Stopping service: Intent { cmp=com.labok.goat/.background.GoatService }Error stopping service"
+  }
+]

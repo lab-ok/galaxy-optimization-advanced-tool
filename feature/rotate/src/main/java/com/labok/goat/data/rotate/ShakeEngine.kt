@@ -189,7 +189,7 @@ class ShakeEngine(private val context: Context, private val acceptShake: () -> B
 
     /** The power shortcut shares the same direction detection and settle/lock path as a shake. */
     fun rotateOnce(): Boolean {
-        if (!ShakeRotate.canWrite(context)) return false
+        if (!ShakeRotate.canWriteRotation(context)) return false
         cancelForPowerToggle()
         // beginTurn's same-direction fast path assumes the screen is already locked.
         if (!ShakeRotate.lock(context, ShakeRotate.currentRotation(context))) return false

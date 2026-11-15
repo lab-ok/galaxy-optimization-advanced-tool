@@ -1,0 +1,9 @@
+{
+  "initial_observation": {
+    "test": "one-shot rotates then locks at direction 0",
+    "passed": false,
+    "rotation": 1
+  },
+  "diagnosis": "The emulator gRPC touch coordinates are in native panel axes. No landscape overlay tap events were delivered until transforming coordinates for display rotation. Source app unchanged; corrected raw taps rotated back to portrait.",
+  "evidence": "landscape-input-investigation.txt"
+}

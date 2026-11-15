@@ -1,0 +1,55 @@
+GOAT gesture-bar minimum-permission diagnostics preview3
+app=1.58.1 (286)
+device=Google sdk_gphone64_arm64; Android=16 SDK=36
+pid=7083 enabled=true status=LISTENING mode=TOGGLE windowMs=1500
+area=Area(widthDp=180, heightDp=24, visible=false)
+overlayPermission=true writeSettings=true secureSettings=false
+settingsPermission=true interactive=true
+autoRotate=false currentRotation=0 userRotation=0
+displayState=2
+backgroundRestricted=false
+ignoringBatteryOptimizations=false
+processImportance=100
+events=20 candidates=5 count=0/3 intervalMs=393 decision=CANCELLED actionSucceeded=true
+Recent gesture records (maximum 20):
+82078451ms pid=7083 tap gapMs=384 decision=SECOND windowMs=1500
+82078834ms pid=7083 tap gapMs=386 decision=TRIPLE windowMs=1500
+82078863ms pid=7083 action=ONCE success=true rotation=0
+82079482ms pid=7083 application_overlay_started x=857 y=2018 width=438 height=58
+82082421ms pid=7083 tap gapMs=null decision=FIRST windowMs=1500
+82082815ms pid=7083 tap gapMs=392 decision=SECOND windowMs=1500
+82083204ms pid=7083 tap gapMs=391 decision=TRIPLE windowMs=1500
+82083240ms pid=7083 action=ONCE success=true rotation=1
+82084480ms pid=7083 application_overlay_started x=819 y=2094 width=438 height=58
+82095725ms pid=7083 application_overlay_started x=819 y=2094 width=438 height=58
+82097088ms pid=7083 application_overlay_started x=321 y=2366 width=438 height=58
+82097503ms pid=7083 tap gapMs=null decision=FIRST windowMs=1500
+82097897ms pid=7083 tap gapMs=393 decision=SECOND windowMs=1500
+82098301ms pid=7083 tap gapMs=393 decision=TRIPLE windowMs=1500
+82098361ms pid=7083 action=TOGGLE success=true rotation=0
+82100084ms pid=7083 application_overlay_started x=819 y=2094 width=438 height=58
+82109972ms pid=7083 application_overlay_started x=819 y=2094 width=438 height=58
+82125767ms pid=7083 application_overlay_started x=700 y=2094 width=675 height=58
+82128617ms pid=7083 application_overlay_started x=700 y=1989 width=675 height=163
+82132311ms pid=7083 application_overlay_started x=819 y=2094 width=438 height=58
+Persisted lifecycle/input records (maximum 20):
+11-13 19:11:55 Power rotation: pid=7083 tap gapMs=null decision=FIRST windowMs=1500
+11-13 19:11:56 Power rotation: pid=7083 tap gapMs=392 decision=SECOND windowMs=1500
+11-13 19:11:56 Power rotation: pid=7083 tap gapMs=391 decision=TRIPLE windowMs=1500
+11-13 19:11:56 흔들어서 화면 회전(빠른 회전): 가로(1) → 세로(0)
+11-13 19:11:56 Power rotation: pid=7083 action=ONCE success=true rotation=1
+11-13 19:11:57 Power rotation: pid=7083 application_overlay_started x=819 y=2094 width=438 height=58
+11-13 19:12:09 Power rotation: pid=7083 application_overlay_started x=819 y=2094 width=438 height=58
+11-13 19:12:10 Power rotation: pid=7083 application_overlay_started x=321 y=2366 width=438 height=58
+11-13 19:12:10 Power rotation: pid=7083 tap gapMs=null decision=FIRST windowMs=1500
+11-13 19:12:11 Power rotation: pid=7083 tap gapMs=393 decision=SECOND windowMs=1500
+11-13 19:12:11 Power rotation: pid=7083 tap gapMs=393 decision=TRIPLE windowMs=1500
+11-13 19:12:11 Power triple press: autoRotate=true, success=true, rotation=0
+11-13 19:12:11 Power rotation: pid=7083 action=TOGGLE success=true rotation=0
+11-13 19:12:13 Power rotation: pid=7083 application_overlay_started x=819 y=2094 width=438 height=58
+11-13 19:12:19 GOAT 상주 서비스 멈춤
+11-13 19:12:23 GOAT 상주 서비스: 하단 제스처 바 3회 터치로 회전 고정
+11-13 19:12:23 Power rotation: pid=7083 application_overlay_started x=819 y=2094 width=438 height=58
+11-13 19:12:39 Power rotation: pid=7083 application_overlay_started x=700 y=2094 width=675 height=58
+11-13 19:12:42 Power rotation: pid=7083 application_overlay_started x=700 y=1989 width=675 height=163
+11-13 19:12:45 Power rotation: pid=7083 application_overlay_started x=819 y=2094 width=438 height=58

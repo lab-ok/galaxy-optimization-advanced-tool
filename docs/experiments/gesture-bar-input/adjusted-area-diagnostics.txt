@@ -1,0 +1,55 @@
+GOAT gesture-bar diagnostics preview1
+app=1.58.1 (286)
+device=Google sdk_gphone64_arm64; Android=16 SDK=36
+pid=28621 enabled=true status=LISTENING mode=TOGGLE windowMs=1500
+area=Area(widthDp=277, heightDp=67, visible=true)
+accessibilityEnabled=true
+settingsPermission=true interactive=true
+autoRotate=false currentRotation=0 userRotation=0
+displayState=2
+backgroundRestricted=false
+ignoringBatteryOptimizations=false
+processImportance=100
+events=16 candidates=3 count=0/3 intervalMs=382 decision=CANCELLED actionSucceeded=true
+Recent gesture records (maximum 20):
+43893767ms pid=28621 tap gapMs=238 decision=SECOND windowMs=1500
+43894822ms pid=28621 tap gapMs=1055 decision=FIRST windowMs=1500
+43897415ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+43899060ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+43905727ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+43927330ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+43928176ms pid=28621 tap gapMs=null decision=FIRST windowMs=1500
+43930102ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+43952830ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+44007642ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+44008587ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+44010549ms pid=28621 overlay_started x=819 y=2094 width=438 height=58
+44012223ms pid=28621 overlay_started x=700 y=2094 width=675 height=58
+44014119ms pid=28621 overlay_started x=700 y=2094 width=675 height=58
+44015051ms pid=28621 overlay_started x=700 y=1989 width=675 height=163
+44018738ms pid=28621 tap gapMs=null decision=FIRST windowMs=1500
+44019126ms pid=28621 tap gapMs=387 decision=SECOND windowMs=1500
+44019507ms pid=28621 tap gapMs=382 decision=TRIPLE windowMs=1500
+44019516ms pid=28621 action=TOGGLE success=true rotation=0
+44025905ms pid=28621 overlay_started x=700 y=1989 width=675 height=163
+Persisted lifecycle/input records (maximum 20):
+11-13 08:35:28 Power rotation: pid=28621 tap gapMs=1055 decision=FIRST windowMs=1500
+11-13 08:35:30 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:35:32 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:35:39 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:36:00 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:36:01 Power rotation: pid=28621 tap gapMs=null decision=FIRST windowMs=1500
+11-13 08:36:03 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:36:26 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:37:21 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:37:22 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:37:24 Power rotation: pid=28621 overlay_started x=819 y=2094 width=438 height=58
+11-13 08:37:25 Power rotation: pid=28621 overlay_started x=700 y=2094 width=675 height=58
+11-13 08:37:27 Power rotation: pid=28621 overlay_started x=700 y=2094 width=675 height=58
+11-13 08:37:28 Power rotation: pid=28621 overlay_started x=700 y=1989 width=675 height=163
+11-13 08:37:32 Power rotation: pid=28621 tap gapMs=null decision=FIRST windowMs=1500
+11-13 08:37:32 Power rotation: pid=28621 tap gapMs=387 decision=SECOND windowMs=1500
+11-13 08:37:32 Power rotation: pid=28621 tap gapMs=382 decision=TRIPLE windowMs=1500
+11-13 08:37:32 Power triple press: autoRotate=false, success=true, rotation=0
+11-13 08:37:32 Power rotation: pid=28621 action=TOGGLE success=true rotation=0
+11-13 08:37:39 Power rotation: pid=28621 overlay_started x=700 y=1989 width=675 height=163

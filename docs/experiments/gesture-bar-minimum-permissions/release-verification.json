@@ -1,0 +1,13 @@
+{
+  "apk": "GOAT-1.58.1-gesture-bar-preview.3-release.apk",
+  "sha256": "100a060c0a73ee3159d622136e8cab1223b1cf6fedfba7f1a322c38cc187c806",
+  "certificateSha256": "2909b532b2a6b1747ee2b634b9104ef88efda0192ffd86f1831347751b388cee",
+  "unitTestsPassed": 236,
+  "unitTestsSkipped": 1,
+  "runtimeChecksPassed": 24,
+  "uiChecksPassed": 2,
+  "accessibilityEnabled": false,
+  "secureSettingsPermission": false,
+  "normalOverlayPermission": true,
+  "normalWriteSettingsPermission": true
+}

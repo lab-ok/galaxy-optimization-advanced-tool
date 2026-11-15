@@ -1,5 +1,8 @@
 package com.labok.goat.domain
 
+import android.app.AppOpsManager
+import android.os.Process
+import org.junit.Before
 import android.Manifest
 import android.content.Context
 import android.provider.Settings
@@ -15,6 +18,12 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = android.app.Application::class)
 class PowerRotateTest {
+    @Before fun noNormalSettingsGrantByDefault() {
+        val c = ApplicationProvider.getApplicationContext<Context>()
+        shadowOf(c.getSystemService(AppOpsManager::class.java)).setMode(AppOpsManager.OPSTR_WRITE_SETTINGS,
+            Process.myUid(), c.packageName, AppOpsManager.MODE_ERRORED)
+    }
+
     @Test fun togglesFromActualSystemStateAndLocksTheCapturedDirection() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         shadowOf(context as android.app.Application).grantPermissions(Manifest.permission.WRITE_SECURE_SETTINGS)
@@ -64,21 +73,38 @@ class PowerRotateTest {
         assertFalse(com.labok.goat.data.rotate.ShakeRotate.enabled(context))
     }
 
-
-    @Test fun anEstablishedReaderDoesNotRequireShizukuToRemainConnected() {
+    @Test fun timingChoiceSurvivesReloadAndUnknownValuesUseTheOriginalWindow() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val previous = PowerRotate.status.value
-        context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putBoolean("on", true).commit()
-        try {
-            PowerRotate.status.value = PowerRotate.Status.LISTENING
-            assertFalse(PowerRotate.needsShizuku(context))
-            PowerRotate.status.value = PowerRotate.Status.WAITING
-            assertTrue(PowerRotate.needsShizuku(context))
-            context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putBoolean("on", false).commit()
-            assertFalse(PowerRotate.needsShizuku(context))
-        } finally {
-            PowerRotate.status.value = previous
-        }
+        assertEquals(PowerRotate.Window.SHORT, PowerRotate.window(context))
+        PowerRotate.setWindow(context, PowerRotate.Window.MEDIUM)
+        assertEquals(2500L, PowerRotate.window(context).millis)
+        PowerRotate.setWindow(context, PowerRotate.Window.LONG)
+        assertEquals(4000L, PowerRotate.window(context).millis)
+        context.getSharedPreferences("power_rotate", Context.MODE_PRIVATE).edit().putString("window", "unknown").commit()
+        assertEquals(PowerRotate.Window.SHORT, PowerRotate.window(context))
     }
 
+    @Test fun areaChangesPersistAndAreBounded() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals(PowerRotate.Area(), PowerRotate.area(context))
+        PowerRotate.setArea(context, PowerRotate.Area(240, 48, true))
+        assertEquals(PowerRotate.Area(240, 48, true), PowerRotate.area(context))
+        PowerRotate.setArea(context, PowerRotate.Area(9999, -20, false))
+        assertEquals(PowerRotate.Area(360, 8, false), PowerRotate.area(context))
+        PowerRotate.setArea(context, PowerRotate.Area())
+        assertEquals(PowerRotate.Area(), PowerRotate.area(context))
+    }
+    @Test fun standardUserGrantCanToggleAndLockWithoutSecurePermission() {
+        val c = ApplicationProvider.getApplicationContext<Context>()
+        shadowOf(c as android.app.Application).denyPermissions(Manifest.permission.WRITE_SECURE_SETTINGS)
+        shadowOf(c.getSystemService(AppOpsManager::class.java)).setMode(AppOpsManager.OPSTR_WRITE_SETTINGS,
+            Process.myUid(), c.packageName, AppOpsManager.MODE_ALLOWED)
+        assertTrue(PowerRotate.canWriteRotation(c))
+        assertFalse(com.labok.goat.data.rotate.ShakeRotate.canWrite(c))
+        Settings.System.putInt(c.contentResolver, Settings.System.ACCELEROMETER_ROTATION, 1)
+        assertTrue(PowerRotate.toggle(c, 2))
+        assertEquals(0, Settings.System.getInt(c.contentResolver, Settings.System.ACCELEROMETER_ROTATION))
+        assertEquals(2, Settings.System.getInt(c.contentResolver, Settings.System.USER_ROTATION))
+        assertTrue(PowerRotate.toggle(c, 0))
+    }
 }

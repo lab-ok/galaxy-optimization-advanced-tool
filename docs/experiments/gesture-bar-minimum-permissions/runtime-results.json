@@ -1,0 +1,126 @@
+[
+  {
+    "test": "setup explains ordinary overlay and system-settings permissions without accessibility",
+    "passed": true
+  },
+  {
+    "test": "overlay permission button opens Android special-access settings",
+    "passed": true,
+    "focus": "mCurrentFocus=Window{fae908a u0 com.android.settings/com.android.settings.spa.SpaActivity}"
+  },
+  {
+    "test": "write-settings button opens Android special-access settings",
+    "passed": true,
+    "focus": "mCurrentFocus=Window{a80241f u0 com.android.settings/com.android.settings.spa.SpaActivity}"
+  },
+  {
+    "test": "ordinary overlay starts without accessibility",
+    "passed": true,
+    "bounds": [
+      819,
+      2094,
+      1257,
+      2152
+    ]
+  },
+  {
+    "test": "background triple tap locks rotation using normal settings access only",
+    "passed": true
+  },
+  {
+    "test": "second triple enables auto-rotation",
+    "passed": true
+  },
+  {
+    "test": "diagnostics prove no secure-settings grant and normal accesses allowed",
+    "passed": true
+  },
+  {
+    "test": "home swipe remains usable and does not complete a pending triple",
+    "passed": true
+  },
+  {
+    "test": "outside-area taps do not rotate",
+    "passed": true
+  },
+  {
+    "test": "long hold cancels pending taps",
+    "passed": true
+  },
+  {
+    "test": "overlay revocation removes touch target while app is in background",
+    "passed": true
+  },
+  {
+    "test": "returning after overlay regrant restores target",
+    "passed": true
+  },
+  {
+    "test": "settings-access revocation removes touch target",
+    "passed": true
+  },
+  {
+    "test": "normal settings regrant resumes without privileged permission",
+    "passed": true
+  },
+  {
+    "test": "normal-permission one-shot rotates and locks at 1",
+    "passed": true,
+    "rotation": 1
+  },
+  {
+    "test": "normal-permission one-shot rotates and locks at 0",
+    "passed": true,
+    "rotation": 0
+  },
+  {
+    "test": "sleep removes the overlay",
+    "passed": true
+  },
+  {
+    "test": "unlock restores overlay",
+    "passed": true
+  },
+  {
+    "test": "folded outer display receives taps with accessibility off",
+    "passed": true,
+    "bounds": [
+      321,
+      2366,
+      759,
+      2424
+    ]
+  },
+  {
+    "test": "unfolded overlay returns to centered bottom bounds",
+    "passed": true,
+    "bounds": [
+      819,
+      2094,
+      1257,
+      2152
+    ]
+  },
+  {
+    "test": "feature off removes ordinary overlay",
+    "passed": true
+  },
+  {
+    "test": "feature on restores ordinary overlay",
+    "passed": true
+  },
+  {
+    "test": "area width and height controls resize the ordinary overlay",
+    "passed": true,
+    "bounds": [
+      700,
+      1989,
+      1375,
+      2152
+    ]
+  },
+  {
+    "test": "final state still has accessibility off, secure permission absent and no Shizuku",
+    "passed": true
+  }
+]
