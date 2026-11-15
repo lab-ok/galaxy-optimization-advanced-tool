@@ -158,7 +158,9 @@ object BatteryStatsReader {
     fun uidName(context: Context, uid: Int): String {
         systemUidLabel(uid)?.let { return it }
         val pm = context.packageManager
-        val pkg = pm.getPackagesForUid(uid)?.firstOrNull() ?: return Copy.text(R.string.labdata_batterystats_deleted_app)
+        // 보안 폴더·듀얼 앱 같은 다른 사용자 공간의 uid는 조회하면 SecurityException(11-15 Fold8 신고 크래시 기록)
+        val pkg = runCatching { pm.getPackagesForUid(uid) }.getOrElse { return Copy.text(R.string.labdata_batterystats_other_user_app) }
+            ?.firstOrNull() ?: return Copy.text(R.string.labdata_batterystats_deleted_app)
         return runCatching {
             @Suppress("DEPRECATION")
             pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()

@@ -46,6 +46,7 @@
     <string name="labdata_batterystats_uid_phone">Phone &amp; telephony</string>
     <string name="labdata_batterystats_uid_media">Media</string>
     <string name="labdata_batterystats_uid_system">System (%1$d)</string>
+    <string name="labdata_batterystats_other_user_app">App in another profile (Secure Folder, dual apps)</string>
     <string name="labdata_batterystats_deleted_app">Removed apps</string>
 
     <!-- FlexPanel: Flex mode switch notification -->

@@ -316,7 +316,8 @@ private val ICON_DP = 32.dp
 /** 앱 uid의 아이콘. 시스템 묶음(uid 1000 등)은 안드로이드 시스템 아이콘, 지워진 앱은 null. 작업 스레드에서 부른다. */
 private fun appIcon(context: Context, uid: Int): ImageBitmap? {
     val pm = context.packageManager
-    val pkg = if (BatteryStatsReader.systemUidLabel(uid) != null) "android" else pm.getPackagesForUid(uid)?.firstOrNull() ?: return null
+    // 보안 폴더·듀얼 메신저 같은 다른 사용자 공간의 앱 uid는 시스템이 SecurityException을 던진다(11-15 Fold8 신고 크래시 기록) → 아이콘 없이 둔다
+    val pkg = if (BatteryStatsReader.systemUidLabel(uid) != null) "android" else runCatching { pm.getPackagesForUid(uid)?.firstOrNull() }.getOrNull() ?: return null
     val px = (32 * context.resources.displayMetrics.density).toInt().coerceAtLeast(48)
     return runCatching { pm.getApplicationIcon(pkg).toBitmap(px, px).asImageBitmap() }.getOrNull()
 }

@@ -46,6 +46,7 @@
     <string name="labdata_batterystats_uid_phone">전화·통신</string>
     <string name="labdata_batterystats_uid_media">미디어</string>
     <string name="labdata_batterystats_uid_system">시스템(%1$d)</string>
+    <string name="labdata_batterystats_other_user_app">다른 공간의 앱(보안 폴더·듀얼 앱)</string>
     <string name="labdata_batterystats_deleted_app">삭제된 앱</string>
 
     <!-- FlexPanel: 플렉스 모드 바꾸기 알림 -->
